@@ -25,7 +25,11 @@ const AdminEvents = () => {
         .select(`
           *,
           instructor:instructors(name),
-          location:locations(name)
+          location:locations(name),
+          event_registrations(
+            id,
+            payment_status
+          )
         `)
         .order('start_date', { ascending: false });
 
@@ -36,6 +40,43 @@ const AdminEvents = () => {
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy');
+  };
+
+  const getRegistrationBadge = (registrations: any[]) => {
+    if (!registrations) return null;
+    
+    const totalCount = registrations.length;
+    const paidCount = registrations.filter(r => r.payment_status === 'paid').length;
+    
+    let variant: "default" | "secondary" | "destructive" = "secondary";
+    let className = "";
+    
+    if (totalCount === 0) {
+      variant = "secondary";
+      className = "bg-gray-100 text-gray-600";
+    } else if (totalCount >= 16) {
+      variant = "default";
+      className = "bg-green-100 text-green-700";
+    } else if (totalCount >= 6) {
+      variant = "default";
+      className = "bg-blue-100 text-blue-700";
+    } else {
+      variant = "default";
+      className = "bg-yellow-100 text-yellow-700";
+    }
+
+    return (
+      <div className="flex flex-col items-center space-y-1">
+        <Badge variant={variant} className={className}>
+          {totalCount} registered
+        </Badge>
+        {totalCount > 0 && (
+          <span className="text-xs text-gray-500">
+            {paidCount} paid
+          </span>
+        )}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -70,6 +111,7 @@ const AdminEvents = () => {
               <TableHead>Instructor</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Price</TableHead>
+              <TableHead>Registrations</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -83,6 +125,9 @@ const AdminEvents = () => {
                 <TableCell>{event.location?.name || 'TBA'}</TableCell>
                 <TableCell>
                   {formatPrice(event.price_cents || 0, event.currency || 'usd')}
+                </TableCell>
+                <TableCell>
+                  {getRegistrationBadge(event.event_registrations)}
                 </TableCell>
                 <TableCell>
                   <Badge variant={event.is_published ? 'default' : 'secondary'}>
@@ -109,7 +154,7 @@ const AdminEvents = () => {
             ))}
             {!events?.length && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   No events found. <Link to="/admin/events/new" className="text-primary hover:underline">Create your first event</Link>
                 </TableCell>
               </TableRow>
