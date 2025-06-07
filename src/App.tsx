@@ -50,6 +50,8 @@ const App = () => (
               <Route path="events/new" element={<CreateEvent />} />
               <Route path="events/:id/edit" element={<EditEvent />} />
               <Route path="instructors" element={<AdminInstructors />} />
+              <Route path="instructors/new" element={<CreateInstructor />} />
+              <Route path="instructors/:id/edit" element={<EditInstructor />} />
               <Route path="locations" element={<AdminLocations />} />
               <Route path="templates" element={<AdminTemplates />} />
             </Route>
