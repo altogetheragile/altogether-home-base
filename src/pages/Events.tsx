@@ -1,4 +1,3 @@
-
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,10 +67,10 @@ const Events = () => {
                     <CardHeader>
                       <div className="flex justify-between items-start mb-2">
                         <Badge variant="secondary">
-                          {event.event_templates?.event_types?.name || 'Event'}
+                          {event.event_template?.event_types?.name || 'Event'}
                         </Badge>
                         <Badge variant="outline">
-                          {event.event_templates?.formats?.name || 'TBD'}
+                          {event.event_template?.formats?.name || 'TBD'}
                         </Badge>
                       </div>
                       <CardTitle className="text-xl">{event.title}</CardTitle>
@@ -90,13 +89,13 @@ const Events = () => {
                             }
                           </span>
                         </div>
-                        {event.event_templates?.duration_days && (
+                        {event.event_template?.duration_days && (
                           <div className="flex items-center text-muted-foreground">
                             <Clock className="h-4 w-4 mr-2" />
                             <span>
-                              {event.event_templates.duration_days === 1 
+                              {event.event_template.duration_days === 1 
                                 ? 'Full Day' 
-                                : `${event.event_templates.duration_days} Days`
+                                : `${event.event_template.duration_days} Days`
                               }
                             </span>
                           </div>

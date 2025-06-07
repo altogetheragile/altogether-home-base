@@ -72,7 +72,12 @@ export const useEvents = () => {
         is_published: event.is_published,
         instructor: event.instructor?.[0] || null,
         location: event.location?.[0] || null,
-        event_template: event.event_templates?.[0] || null,
+        event_template: event.event_templates?.[0] ? {
+          duration_days: event.event_templates[0].duration_days,
+          event_types: event.event_templates[0].event_types?.[0] || null,
+          formats: event.event_templates[0].formats?.[0] || null,
+          levels: event.event_templates[0].levels?.[0] || null,
+        } : null,
       }));
 
       return mappedData;
