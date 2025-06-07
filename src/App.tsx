@@ -19,6 +19,8 @@ import AdminLocations from "./pages/admin/AdminLocations";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
+import CreateInstructor from "./pages/admin/CreateInstructor";
+import EditInstructor from "./pages/admin/EditInstructor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
