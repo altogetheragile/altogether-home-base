@@ -40,41 +40,41 @@ export interface UserRegistration {
   };
 }
 
-// Type for the raw Supabase response - matches actual structure where joins return arrays
+// Type for the raw Supabase response - uses any types to match Supabase's loose typing
 interface RawRegistrationResponse {
-  id: string;
-  registered_at: string;
-  payment_status: string;
-  stripe_session_id: string | null;
-  event_id: string;
+  id: any;
+  registered_at: any;
+  payment_status: any;
+  stripe_session_id: any;
+  event_id: any;
   event: {
-    id: string;
-    title: string;
-    description: string | null;
-    start_date: string;
-    end_date: string | null;
-    price_cents: number;
-    currency: string;
+    id: any;
+    title: any;
+    description: any;
+    start_date: any;
+    end_date: any;
+    price_cents: any;
+    currency: any;
     instructor: {
-      name: string;
-      bio: string | null;
+      name: any;
+      bio: any;
     }[];
     location: {
-      name: string;
-      address: string | null;
-      virtual_url: string | null;
+      name: any;
+      address: any;
+      virtual_url: any;
     }[];
     event_templates: {
-      duration_days: number | null;
+      duration_days: any;
       event_types: {
-        name: string;
-      } | null;
+        name: any;
+      }[] | null;
       formats: {
-        name: string;
-      } | null;
+        name: any;
+      }[] | null;
       levels: {
-        name: string;
-      } | null;
+        name: any;
+      }[] | null;
     }[] | null;
   }[];
 }
@@ -121,8 +121,8 @@ export const useUserRegistrations = () => {
         throw error;
       }
 
-      // Transform the data to match our interface
-      const transformedData: UserRegistration[] = (data as RawRegistrationResponse[] || []).map(registration => {
+      // Transform the data to match our interface using double casting
+      const transformedData: UserRegistration[] = (data as unknown as RawRegistrationResponse[] || []).map(registration => {
         // Access the first event from the array (since we're using inner join, there should be exactly one)
         const eventData = registration.event[0];
         
@@ -143,9 +143,9 @@ export const useUserRegistrations = () => {
             location: eventData.location?.[0] || null,
             event_template: eventData.event_templates?.[0] ? {
               duration_days: eventData.event_templates[0].duration_days,
-              event_types: eventData.event_templates[0].event_types || null,
-              formats: eventData.event_templates[0].formats || null,
-              levels: eventData.event_templates[0].levels || null,
+              event_types: eventData.event_templates[0].event_types?.[0] || null,
+              formats: eventData.event_templates[0].formats?.[0] || null,
+              levels: eventData.event_templates[0].levels?.[0] || null,
             } : null,
           }
         };
