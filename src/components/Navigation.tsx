@@ -1,8 +1,9 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ const Navigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
+  const { data: userRole } = useUserRole();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -67,6 +69,20 @@ const Navigation = () => {
               >
                 Blog
               </Link>
+              
+              {/* Admin Link - Only show for admin users */}
+              {userRole === 'admin' && (
+                <Link
+                  to="/admin/events"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.startsWith("/admin")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
             </div>
 
             {/* Auth Section */}
@@ -85,6 +101,17 @@ const Navigation = () => {
                     <User className="h-4 w-4 mr-2" />
                     My Profile
                   </DropdownMenuItem>
+                  {userRole === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/events">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="h-4 w-4 mr-2" />
@@ -149,6 +176,21 @@ const Navigation = () => {
               >
                 Blog
               </Link>
+              
+              {/* Admin Link - Mobile */}
+              {userRole === 'admin' && (
+                <Link
+                  to="/admin/events"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    location.pathname.startsWith("/admin")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
               
               {/* Mobile Auth Section */}
               <div className="border-t border-border pt-2 mt-2">
