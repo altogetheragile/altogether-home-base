@@ -18,7 +18,7 @@ export interface EventData {
     address: string | null;
     virtual_url: string | null;
   } | null;
-  event_templates: {
+  event_template: {
     event_types: {
       name: string;
     } | null;
@@ -62,7 +62,20 @@ export const useEvents = () => {
         throw error;
       }
 
-      return data as EventData[];
+      // Map the data to transform arrays to single objects
+      const mappedData: EventData[] = (data || []).map(event => ({
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        start_date: event.start_date,
+        end_date: event.end_date,
+        is_published: event.is_published,
+        instructor: event.instructor?.[0] || null,
+        location: event.location?.[0] || null,
+        event_template: event.event_templates?.[0] || null,
+      }));
+
+      return mappedData;
     },
   });
 };
