@@ -9,6 +9,8 @@ export interface EventData {
   start_date: string;
   end_date: string | null;
   is_published: boolean;
+  price_cents: number;
+  currency: string;
   instructor: {
     name: string;
     bio: string | null;
@@ -45,6 +47,8 @@ export const useEvents = () => {
           start_date,
           end_date,
           is_published,
+          price_cents,
+          currency,
           instructor:instructors(name, bio),
           location:locations(name, address, virtual_url),
           event_templates(
@@ -70,6 +74,8 @@ export const useEvents = () => {
         start_date: event.start_date,
         end_date: event.end_date,
         is_published: event.is_published,
+        price_cents: event.price_cents || 0,
+        currency: event.currency || 'usd',
         instructor: event.instructor?.[0] || null,
         location: event.location?.[0] || null,
         event_template: event.event_templates?.[0] ? {
