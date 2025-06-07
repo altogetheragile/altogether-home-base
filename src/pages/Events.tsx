@@ -5,7 +5,7 @@ import { useEvents } from "@/hooks/useEvents";
 import { useEventRegistration } from "@/hooks/useEventRegistration";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import EventsHeader from "@/components/events/EventsHeader";
 import EventsList from "@/components/events/EventsList";
@@ -16,21 +16,30 @@ const Events = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const verificationAttempted = useRef(false);
 
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
     const sessionId = searchParams.get('session_id');
 
+    // Prevent multiple verification attempts
+    if (verificationAttempted.current) return;
+
     if (success === 'true' && sessionId) {
-      verifyPayment(sessionId).then((result) => {
-        if (result?.payment_status === 'paid') {
-          toast({
-            title: "Registration successful!",
-            description: "You have successfully registered for the event.",
-          });
-        }
-      });
+      verificationAttempted.current = true;
+      
+      // Add a small delay before verification to allow Stripe to process
+      setTimeout(() => {
+        verifyPayment(sessionId).then((result) => {
+          if (result?.payment_status === 'paid') {
+            toast({
+              title: "Registration successful!",
+              description: "You have successfully registered for the event.",
+            });
+          }
+        });
+      }, 2000); // 2 second delay
     }
 
     if (canceled === 'true') {
