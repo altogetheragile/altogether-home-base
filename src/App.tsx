@@ -12,6 +12,7 @@ import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             
             {/* Protected Admin Routes */}
             <Route path="/admin" element={

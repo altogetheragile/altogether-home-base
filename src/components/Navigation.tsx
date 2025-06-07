@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -70,6 +70,20 @@ const Navigation = () => {
                 Blog
               </Link>
               
+              {/* Dashboard Link - Only show for authenticated users */}
+              {user && (
+                <Link
+                  to="/dashboard"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive("/dashboard")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Dashboard
+                </Link>
+              )}
+              
               {/* Admin Link - Only show for admin users */}
               {userRole === 'admin' && (
                 <Link
@@ -97,9 +111,11 @@ const Navigation = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <User className="h-4 w-4 mr-2" />
-                    My Profile
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      My Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   {userRole === 'admin' && (
                     <>
@@ -176,6 +192,21 @@ const Navigation = () => {
               >
                 Blog
               </Link>
+              
+              {/* Dashboard Link - Mobile */}
+              {user && (
+                <Link
+                  to="/dashboard"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isActive("/dashboard")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Dashboard
+                </Link>
+              )}
               
               {/* Admin Link - Mobile */}
               {userRole === 'admin' && (

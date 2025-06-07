@@ -1,0 +1,114 @@
+
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+export interface UserRegistration {
+  id: string;
+  registered_at: string;
+  payment_status: string;
+  stripe_session_id: string | null;
+  event: {
+    id: string;
+    title: string;
+    description: string | null;
+    start_date: string;
+    end_date: string | null;
+    price_cents: number;
+    currency: string;
+    instructor: {
+      name: string;
+      bio: string | null;
+    } | null;
+    location: {
+      name: string;
+      address: string | null;
+      virtual_url: string | null;
+    } | null;
+    event_template: {
+      duration_days: number | null;
+      event_types: {
+        name: string;
+      } | null;
+      formats: {
+        name: string;
+      } | null;
+      levels: {
+        name: string;
+      } | null;
+    } | null;
+  };
+}
+
+export const useUserRegistrations = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['user-registrations', user?.id],
+    queryFn: async () => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .select(`
+          id,
+          registered_at,
+          payment_status,
+          stripe_session_id,
+          event_id,
+          events!inner(
+            id,
+            title,
+            description,
+            start_date,
+            end_date,
+            price_cents,
+            currency,
+            instructor:instructors(name, bio),
+            location:locations(name, address, virtual_url),
+            event_templates(
+              duration_days,
+              event_types(name),
+              formats(name),
+              levels(name)
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('registered_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user registrations:', error);
+        throw error;
+      }
+
+      // Transform the data to match our interface
+      const transformedData: UserRegistration[] = (data || []).map(registration => ({
+        id: registration.id,
+        registered_at: registration.registered_at,
+        payment_status: registration.payment_status,
+        stripe_session_id: registration.stripe_session_id,
+        event: {
+          id: registration.events.id,
+          title: registration.events.title,
+          description: registration.events.description,
+          start_date: registration.events.start_date,
+          end_date: registration.events.end_date,
+          price_cents: registration.events.price_cents || 0,
+          currency: registration.events.currency || 'usd',
+          instructor: registration.events.instructor?.[0] || null,
+          location: registration.events.location?.[0] || null,
+          event_template: registration.events.event_templates?.[0] ? {
+            duration_days: registration.events.event_templates[0].duration_days,
+            event_types: registration.events.event_templates[0].event_types?.[0] || null,
+            formats: registration.events.event_templates[0].formats?.[0] || null,
+            levels: registration.events.event_templates[0].levels?.[0] || null,
+          } : null,
+        }
+      }));
+
+      return transformedData;
+    },
+    enabled: !!user,
+  });
+};
