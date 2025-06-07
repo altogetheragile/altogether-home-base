@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, User, DollarSign } from "lucide-react";
+import { Calendar, MapPin, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,8 +68,7 @@ const EventCard = ({ event }: EventCardProps) => {
               <span>{event.instructor.name}</span>
             </div>
           )}
-          <div className="flex items-center text-lg font-semibold text-primary">
-            <DollarSign className="h-4 w-4 mr-2" />
+          <div className="text-lg font-semibold text-primary">
             <span>{formatPrice(event.price_cents || 0, event.currency)}</span>
           </div>
         </div>
