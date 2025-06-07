@@ -56,7 +56,7 @@ export const useUserRegistrations = () => {
           payment_status,
           stripe_session_id,
           event_id,
-          events!inner(
+          event:events!inner(
             id,
             title,
             description,
@@ -84,8 +84,8 @@ export const useUserRegistrations = () => {
 
       // Transform the data to match our interface
       const transformedData: UserRegistration[] = (data || []).map(registration => {
-        // Since events is returned as an array, get the first (and only) event
-        const eventData = registration.events[0];
+        // Since we used 'event:events!inner(...)', events is returned as a single object
+        const eventData = registration.event;
         
         return {
           id: registration.id,
@@ -100,13 +100,13 @@ export const useUserRegistrations = () => {
             end_date: eventData.end_date,
             price_cents: eventData.price_cents || 0,
             currency: eventData.currency || 'usd',
-            instructor: eventData.instructor?.[0] || null,
-            location: eventData.location?.[0] || null,
+            instructor: eventData.instructor || null,
+            location: eventData.location || null,
             event_template: eventData.event_templates?.[0] ? {
               duration_days: eventData.event_templates[0].duration_days,
-              event_types: eventData.event_templates[0].event_types?.[0] || null,
-              formats: eventData.event_templates[0].formats?.[0] || null,
-              levels: eventData.event_templates[0].levels?.[0] || null,
+              event_types: eventData.event_templates[0].event_types || null,
+              formats: eventData.event_templates[0].formats || null,
+              levels: eventData.event_templates[0].levels || null,
             } : null,
           }
         };
