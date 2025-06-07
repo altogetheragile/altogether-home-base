@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEventRegistration } from "@/hooks/useEventRegistration";
 import { EventData } from "@/hooks/useEvents";
+import { formatPrice } from "@/utils/currency";
 
 interface EventCardProps {
   event: EventData;
@@ -16,15 +17,6 @@ interface EventCardProps {
 const EventCard = ({ event }: EventCardProps) => {
   const { registerForEvent, loading: registrationLoading } = useEventRegistration();
   const { user } = useAuth();
-
-  const formatPrice = (priceCents: number, currency: string = 'usd') => {
-    if (priceCents === 0) return 'Free';
-    const price = priceCents / 100;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-    }).format(price);
-  };
 
   return (
     <Card className="border-border hover:shadow-lg transition-shadow">

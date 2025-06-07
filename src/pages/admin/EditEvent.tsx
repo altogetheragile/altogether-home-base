@@ -82,7 +82,9 @@ const EditEvent = () => {
       return data;
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] }); // Main events list
       queryClient.invalidateQueries({ queryKey: ['event', id] });
       toast({
         title: "Event updated successfully",
@@ -244,9 +246,11 @@ const EditEvent = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="usd">USD</SelectItem>
-                  <SelectItem value="eur">EUR</SelectItem>
-                  <SelectItem value="gbp">GBP</SelectItem>
+                  <SelectItem value="usd">USD ($)</SelectItem>
+                  <SelectItem value="eur">EUR (€)</SelectItem>
+                  <SelectItem value="gbp">GBP (£)</SelectItem>
+                  <SelectItem value="cad">CAD (C$)</SelectItem>
+                  <SelectItem value="aud">AUD (A$)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

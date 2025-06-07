@@ -11,6 +11,7 @@ import { useEvent } from "@/hooks/useEvent";
 import { useEventRegistration } from "@/hooks/useEventRegistration";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
+import { formatPrice } from "@/utils/currency";
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();

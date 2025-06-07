@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { formatPrice } from '@/utils/currency';
 
 const AdminEvents = () => {
   const { data: events, isLoading } = useQuery({
@@ -35,13 +36,6 @@ const AdminEvents = () => {
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy');
-  };
-
-  const formatPrice = (priceCents: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-    }).format(priceCents / 100);
   };
 
   if (isLoading) {
@@ -88,7 +82,7 @@ const AdminEvents = () => {
                 <TableCell>{event.instructor?.name || 'TBA'}</TableCell>
                 <TableCell>{event.location?.name || 'TBA'}</TableCell>
                 <TableCell>
-                  {event.price_cents ? formatPrice(event.price_cents, event.currency) : 'Free'}
+                  {formatPrice(event.price_cents || 0, event.currency || 'usd')}
                 </TableCell>
                 <TableCell>
                   <Badge variant={event.is_published ? 'default' : 'secondary'}>
