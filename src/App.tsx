@@ -14,6 +14,9 @@ import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
+import AdminInstructors from "./pages/admin/AdminInstructors";
+import AdminLocations from "./pages/admin/AdminLocations";
+import AdminTemplates from "./pages/admin/AdminTemplates";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import NotFound from "./pages/NotFound";
@@ -44,6 +47,9 @@ const App = () => (
               <Route path="events" element={<AdminEvents />} />
               <Route path="events/new" element={<CreateEvent />} />
               <Route path="events/:id/edit" element={<EditEvent />} />
+              <Route path="instructors" element={<AdminInstructors />} />
+              <Route path="locations" element={<AdminLocations />} />
+              <Route path="templates" element={<AdminTemplates />} />
             </Route>
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
