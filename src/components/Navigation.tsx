@@ -1,15 +1,29 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut, loading } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <nav className="bg-white shadow-sm border-b border-border sticky top-0 z-50">
@@ -21,7 +35,7 @@ const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center space-x-8">
             <div className="flex items-center space-x-8">
               <Link
                 to="/"
@@ -54,6 +68,37 @@ const Navigation = () => {
                 Blog
               </Link>
             </div>
+
+            {/* Auth Section */}
+            {loading ? (
+              <div className="w-8 h-8 bg-muted animate-pulse rounded" />
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>{user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <User className="h-4 w-4 mr-2" />
+                    My Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <Button variant="outline" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -104,6 +149,36 @@ const Navigation = () => {
               >
                 Blog
               </Link>
+              
+              {/* Mobile Auth Section */}
+              <div className="border-t border-border pt-2 mt-2">
+                {loading ? (
+                  <div className="px-3 py-2">Loading...</div>
+                ) : user ? (
+                  <>
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      Signed in as {user.email}
+                    </div>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/auth"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         )}

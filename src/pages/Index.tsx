@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Users, Target, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
@@ -29,11 +32,19 @@ const Index = () => {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/blog">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Read Our Blog
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/blog">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  Read Our Blog
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  Sign In / Register
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>
