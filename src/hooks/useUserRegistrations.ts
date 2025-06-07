@@ -83,29 +83,34 @@ export const useUserRegistrations = () => {
       }
 
       // Transform the data to match our interface
-      const transformedData: UserRegistration[] = (data || []).map(registration => ({
-        id: registration.id,
-        registered_at: registration.registered_at,
-        payment_status: registration.payment_status,
-        stripe_session_id: registration.stripe_session_id,
-        event: {
-          id: registration.events.id,
-          title: registration.events.title,
-          description: registration.events.description,
-          start_date: registration.events.start_date,
-          end_date: registration.events.end_date,
-          price_cents: registration.events.price_cents || 0,
-          currency: registration.events.currency || 'usd',
-          instructor: registration.events.instructor?.[0] || null,
-          location: registration.events.location?.[0] || null,
-          event_template: registration.events.event_templates?.[0] ? {
-            duration_days: registration.events.event_templates[0].duration_days,
-            event_types: registration.events.event_templates[0].event_types?.[0] || null,
-            formats: registration.events.event_templates[0].formats?.[0] || null,
-            levels: registration.events.event_templates[0].levels?.[0] || null,
-          } : null,
-        }
-      }));
+      const transformedData: UserRegistration[] = (data || []).map(registration => {
+        // Since events is returned as an array, get the first (and only) event
+        const eventData = registration.events[0];
+        
+        return {
+          id: registration.id,
+          registered_at: registration.registered_at,
+          payment_status: registration.payment_status,
+          stripe_session_id: registration.stripe_session_id,
+          event: {
+            id: eventData.id,
+            title: eventData.title,
+            description: eventData.description,
+            start_date: eventData.start_date,
+            end_date: eventData.end_date,
+            price_cents: eventData.price_cents || 0,
+            currency: eventData.currency || 'usd',
+            instructor: eventData.instructor?.[0] || null,
+            location: eventData.location?.[0] || null,
+            event_template: eventData.event_templates?.[0] ? {
+              duration_days: eventData.event_templates[0].duration_days,
+              event_types: eventData.event_templates[0].event_types?.[0] || null,
+              formats: eventData.event_templates[0].formats?.[0] || null,
+              levels: eventData.event_templates[0].levels?.[0] || null,
+            } : null,
+          }
+        };
+      });
 
       return transformedData;
     },
