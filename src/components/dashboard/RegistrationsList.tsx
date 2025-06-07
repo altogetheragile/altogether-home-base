@@ -2,10 +2,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import RegistrationCard from "./RegistrationCard";
-import { UserRegistration } from "@/hooks/useUserRegistrations";
+import { UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
 
 interface RegistrationsListProps {
-  registrations?: UserRegistration[];
+  registrations?: UserRegistrationWithEvent[];
   isLoading: boolean;
 }
 
@@ -59,10 +59,10 @@ const RegistrationsList = ({ registrations, isLoading }: RegistrationsListProps)
   // Separate upcoming and past events
   const now = new Date();
   const upcomingRegistrations = registrations.filter(
-    registration => new Date(registration.event.start_date) > now
+    registration => registration.event && new Date(registration.event.start_date) > now
   );
   const pastRegistrations = registrations.filter(
-    registration => new Date(registration.event.start_date) <= now
+    registration => registration.event && new Date(registration.event.start_date) <= now
   );
 
   return (

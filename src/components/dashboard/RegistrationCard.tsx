@@ -5,17 +5,34 @@ import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, User, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
-import { UserRegistration } from "@/hooks/useUserRegistrations";
+import { UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
 import { formatPrice } from "@/utils/currency";
 
 interface RegistrationCardProps {
-  registration: UserRegistration;
+  registration: UserRegistrationWithEvent;
 }
 
 const RegistrationCard = ({ registration }: RegistrationCardProps) => {
   const { event, payment_status, registered_at } = registration;
+  
+  // Don't render if event data is missing
+  if (!event) {
+    return (
+      <Card className="border-border opacity-50">
+        <CardHeader>
+          <CardTitle className="text-xl">Event Not Found</CardTitle>
+          <CardDescription>
+            Registered on {format(new Date(registered_at), 'MMMM d, yyyy')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">The event details could not be loaded.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const isUpcoming = new Date(event.start_date) > new Date();
-  const isVirtual = event.location?.virtual_url;
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
@@ -56,32 +73,6 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
             </span>
           </div>
           
-          {event.event_template?.duration_days && (
-            <div className="flex items-center text-muted-foreground">
-              <Clock className="h-4 w-4 mr-2" />
-              <span>
-                {event.event_template.duration_days === 1 
-                  ? 'Full Day' 
-                  : `${event.event_template.duration_days} Days`
-                }
-              </span>
-            </div>
-          )}
-          
-          {event.location && (
-            <div className="flex items-center text-muted-foreground">
-              <MapPin className="h-4 w-4 mr-2" />
-              <span>{event.location.name}</span>
-            </div>
-          )}
-          
-          {event.instructor && (
-            <div className="flex items-center text-muted-foreground">
-              <User className="h-4 w-4 mr-2" />
-              <span>{event.instructor.name}</span>
-            </div>
-          )}
-          
           <div className="text-lg font-semibold text-primary">
             <span>{formatPrice(event.price_cents, event.currency)}</span>
           </div>
@@ -93,20 +84,6 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
               View Details
             </Button>
           </Link>
-          
-          {isVirtual && isUpcoming && payment_status === 'paid' && (
-            <a 
-              href={event.location.virtual_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex-1"
-            >
-              <Button className="w-full">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Join Event
-              </Button>
-            </a>
-          )}
         </div>
       </CardContent>
     </Card>

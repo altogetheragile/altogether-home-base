@@ -3,156 +3,79 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export interface UserRegistration {
+export interface BasicRegistration {
   id: string;
+  event_id: string;
   registered_at: string;
   payment_status: string;
   stripe_session_id: string | null;
-  event: {
-    id: string;
-    title: string;
-    description: string | null;
-    start_date: string;
-    end_date: string | null;
-    price_cents: number;
-    currency: string;
-    instructor: {
-      name: string;
-      bio: string | null;
-    } | null;
-    location: {
-      name: string;
-      address: string | null;
-      virtual_url: string | null;
-    } | null;
-    event_template: {
-      duration_days: number | null;
-      event_types: {
-        name: string;
-      } | null;
-      formats: {
-        name: string;
-      } | null;
-      levels: {
-        name: string;
-      } | null;
-    } | null;
-  };
 }
 
-// Type for the raw Supabase response - uses any types to match Supabase's loose typing
-interface RawRegistrationResponse {
-  id: any;
-  registered_at: any;
-  payment_status: any;
-  stripe_session_id: any;
-  event_id: any;
-  event: {
-    id: any;
-    title: any;
-    description: any;
-    start_date: any;
-    end_date: any;
-    price_cents: any;
-    currency: any;
-    instructor: {
-      name: any;
-      bio: any;
-    }[];
-    location: {
-      name: any;
-      address: any;
-      virtual_url: any;
-    }[];
-    event_templates: {
-      duration_days: any;
-      event_types: {
-        name: any;
-      }[] | null;
-      formats: {
-        name: any;
-      }[] | null;
-      levels: {
-        name: any;
-      }[] | null;
-    }[] | null;
-  }[];
+export interface EventDetails {
+  id: string;
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  price_cents: number;
+  currency: string;
+}
+
+export interface UserRegistrationWithEvent extends BasicRegistration {
+  event: EventDetails | null;
 }
 
 export const useUserRegistrations = () => {
   const { user } = useAuth();
 
-  return useQuery({
+  return useQuery<UserRegistrationWithEvent[]>({
     queryKey: ['user-registrations', user?.id],
+    enabled: !!user,
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      console.log('Fetching registrations for user:', user.id);
+
+      // STEP 1: Fetch user's raw registrations
+      const { data: registrations, error } = await supabase
         .from('event_registrations')
-        .select(`
-          id,
-          registered_at,
-          payment_status,
-          stripe_session_id,
-          event_id,
-          event:events!inner(
-            id,
-            title,
-            description,
-            start_date,
-            end_date,
-            price_cents,
-            currency,
-            instructor:instructors(name, bio),
-            location:locations(name, address, virtual_url),
-            event_templates(
-              duration_days,
-              event_types(name),
-              formats(name),
-              levels(name)
-            )
-          )
-        `)
+        .select('id, event_id, registered_at, payment_status, stripe_session_id')
         .eq('user_id', user.id)
         .order('registered_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching user registrations:', error);
+        console.error('Error fetching registrations:', error);
         throw error;
       }
 
-      // Transform the data to match our interface using double casting
-      const transformedData: UserRegistration[] = (data as unknown as RawRegistrationResponse[] || []).map(registration => {
-        // Access the first event from the array (since we're using inner join, there should be exactly one)
-        const eventData = registration.event[0];
-        
-        return {
-          id: registration.id,
-          registered_at: registration.registered_at,
-          payment_status: registration.payment_status,
-          stripe_session_id: registration.stripe_session_id,
-          event: {
-            id: eventData.id,
-            title: eventData.title,
-            description: eventData.description,
-            start_date: eventData.start_date,
-            end_date: eventData.end_date,
-            price_cents: eventData.price_cents || 0,
-            currency: eventData.currency || 'usd',
-            instructor: eventData.instructor?.[0] || null,
-            location: eventData.location?.[0] || null,
-            event_template: eventData.event_templates?.[0] ? {
-              duration_days: eventData.event_templates[0].duration_days,
-              event_types: eventData.event_templates[0].event_types?.[0] || null,
-              formats: eventData.event_templates[0].formats?.[0] || null,
-              levels: eventData.event_templates[0].levels?.[0] || null,
-            } : null,
-          }
-        };
-      });
+      console.log('Raw registrations fetched:', registrations?.length || 0);
 
-      return transformedData;
-    },
-    enabled: !!user,
+      if (!registrations || registrations.length === 0) return [];
+
+      // STEP 2: Fetch related events in one query
+      const eventIds = registrations.map(r => r.event_id).filter(Boolean);
+      console.log('Fetching events for IDs:', eventIds);
+
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('id, title, start_date, end_date, price_cents, currency')
+        .in('id', eventIds);
+
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
+        throw eventsError;
+      }
+
+      console.log('Events fetched:', eventsData?.length || 0);
+
+      // STEP 3: Join registrations with events
+      const eventMap = new Map(eventsData?.map(e => [e.id, e]) || []);
+      const enriched = registrations.map(reg => ({
+        ...reg,
+        event: eventMap.get(reg.event_id) || null,
+      }));
+
+      console.log('Final enriched registrations:', enriched.length);
+      return enriched;
+    }
   });
 };
