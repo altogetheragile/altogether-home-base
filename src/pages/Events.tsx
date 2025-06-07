@@ -1,4 +1,3 @@
-
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -161,21 +160,28 @@ const Events = () => {
                         </div>
                       </div>
                       
-                      {user ? (
-                        <Button 
-                          className="w-full" 
-                          onClick={() => registerForEvent(event.id)}
-                          disabled={registrationLoading}
-                        >
-                          {registrationLoading ? "Processing..." : "Register Now"}
-                        </Button>
-                      ) : (
-                        <Link to="/auth">
-                          <Button className="w-full">
-                            Sign In to Register
+                      <div className="flex gap-3">
+                        <Link to={`/events/${event.id}`} className="flex-1">
+                          <Button variant="outline" className="w-full">
+                            View Details
                           </Button>
                         </Link>
-                      )}
+                        {user ? (
+                          <Button 
+                            className="flex-1"
+                            onClick={() => registerForEvent(event.id)}
+                            disabled={registrationLoading}
+                          >
+                            {registrationLoading ? "Processing..." : "Register"}
+                          </Button>
+                        ) : (
+                          <Link to="/auth" className="flex-1">
+                            <Button className="w-full">
+                              Sign In
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
