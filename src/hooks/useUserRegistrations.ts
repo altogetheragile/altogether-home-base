@@ -40,7 +40,7 @@ export interface UserRegistration {
   };
 }
 
-// Type for the raw Supabase response
+// Type for the raw Supabase response - matches actual structure where joins return arrays
 interface RawRegistrationResponse {
   id: string;
   registered_at: string;
@@ -58,12 +58,12 @@ interface RawRegistrationResponse {
     instructor: {
       name: string;
       bio: string | null;
-    } | null;
+    }[];
     location: {
       name: string;
       address: string | null;
       virtual_url: string | null;
-    } | null;
+    }[];
     event_templates: {
       duration_days: number | null;
       event_types: {
@@ -76,7 +76,7 @@ interface RawRegistrationResponse {
         name: string;
       } | null;
     }[] | null;
-  };
+  }[];
 }
 
 export const useUserRegistrations = () => {
@@ -123,8 +123,8 @@ export const useUserRegistrations = () => {
 
       // Transform the data to match our interface
       const transformedData: UserRegistration[] = (data as RawRegistrationResponse[] || []).map(registration => {
-        // Access the event data directly from the aliased response
-        const eventData = registration.event;
+        // Access the first event from the array (since we're using inner join, there should be exactly one)
+        const eventData = registration.event[0];
         
         return {
           id: registration.id,
@@ -139,8 +139,8 @@ export const useUserRegistrations = () => {
             end_date: eventData.end_date,
             price_cents: eventData.price_cents || 0,
             currency: eventData.currency || 'usd',
-            instructor: eventData.instructor || null,
-            location: eventData.location || null,
+            instructor: eventData.instructor?.[0] || null,
+            location: eventData.location?.[0] || null,
             event_template: eventData.event_templates?.[0] ? {
               duration_days: eventData.event_templates[0].duration_days,
               event_types: eventData.event_templates[0].event_types || null,
