@@ -1,20 +1,63 @@
+
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, User } from "lucide-react";
+import { Calendar, MapPin, Clock, User, DollarSign } from "lucide-react";
 import { useEvents } from "@/hooks/useEvents";
+import { useEventRegistration } from "@/hooks/useEventRegistration";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const Events = () => {
   const { data: events, isLoading, error } = useEvents();
+  const { registerForEvent, verifyPayment, loading: registrationLoading } = useEventRegistration();
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    const sessionId = searchParams.get('session_id');
+
+    if (success === 'true' && sessionId) {
+      verifyPayment(sessionId).then((result) => {
+        if (result?.payment_status === 'paid') {
+          toast({
+            title: "Registration successful!",
+            description: "You have successfully registered for the event.",
+          });
+        }
+      });
+    }
+
+    if (canceled === 'true') {
+      toast({
+        title: "Registration canceled",
+        description: "Your registration was canceled. You can try again anytime.",
+        variant: "destructive",
+      });
+    }
+  }, [searchParams, verifyPayment, toast]);
 
   if (error) {
     console.error('Events page error:', error);
   }
+
+  const formatPrice = (priceCents: number, currency: string = 'usd') => {
+    if (priceCents === 0) return 'Free';
+    const price = priceCents / 100;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(price);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -112,12 +155,27 @@ const Events = () => {
                             <span>{event.instructor.name}</span>
                           </div>
                         )}
+                        <div className="flex items-center text-lg font-semibold text-primary">
+                          <DollarSign className="h-4 w-4 mr-2" />
+                          <span>{formatPrice(event.price_cents || 0, event.currency)}</span>
+                        </div>
                       </div>
-                      <Link to="/auth">
-                        <Button className="w-full">
-                          Sign In to Register
+                      
+                      {user ? (
+                        <Button 
+                          className="w-full" 
+                          onClick={() => registerForEvent(event.id)}
+                          disabled={registrationLoading}
+                        >
+                          {registrationLoading ? "Processing..." : "Register Now"}
                         </Button>
-                      </Link>
+                      ) : (
+                        <Link to="/auth">
+                          <Button className="w-full">
+                            Sign In to Register
+                          </Button>
+                        </Link>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

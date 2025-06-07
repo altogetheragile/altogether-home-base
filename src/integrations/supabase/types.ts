@@ -81,6 +81,13 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_event_registrations_event_id"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_templates: {
@@ -186,36 +193,42 @@ export type Database = {
       events: {
         Row: {
           created_at: string | null
+          currency: string | null
           description: string | null
           end_date: string | null
           id: string
           instructor_id: string | null
           is_published: boolean | null
           location_id: string | null
+          price_cents: number | null
           start_date: string
           template_id: string | null
           title: string
         }
         Insert: {
           created_at?: string | null
+          currency?: string | null
           description?: string | null
           end_date?: string | null
           id?: string
           instructor_id?: string | null
           is_published?: boolean | null
           location_id?: string | null
+          price_cents?: number | null
           start_date: string
           template_id?: string | null
           title: string
         }
         Update: {
           created_at?: string | null
+          currency?: string | null
           description?: string | null
           end_date?: string | null
           id?: string
           instructor_id?: string | null
           is_published?: boolean | null
           location_id?: string | null
+          price_cents?: number | null
           start_date?: string
           template_id?: string | null
           title?: string
