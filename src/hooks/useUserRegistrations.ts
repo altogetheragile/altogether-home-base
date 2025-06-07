@@ -40,6 +40,45 @@ export interface UserRegistration {
   };
 }
 
+// Type for the raw Supabase response
+interface RawRegistrationResponse {
+  id: string;
+  registered_at: string;
+  payment_status: string;
+  stripe_session_id: string | null;
+  event_id: string;
+  event: {
+    id: string;
+    title: string;
+    description: string | null;
+    start_date: string;
+    end_date: string | null;
+    price_cents: number;
+    currency: string;
+    instructor: {
+      name: string;
+      bio: string | null;
+    } | null;
+    location: {
+      name: string;
+      address: string | null;
+      virtual_url: string | null;
+    } | null;
+    event_templates: {
+      duration_days: number | null;
+      event_types: {
+        name: string;
+      } | null;
+      formats: {
+        name: string;
+      } | null;
+      levels: {
+        name: string;
+      } | null;
+    }[] | null;
+  };
+}
+
 export const useUserRegistrations = () => {
   const { user } = useAuth();
 
@@ -83,8 +122,8 @@ export const useUserRegistrations = () => {
       }
 
       // Transform the data to match our interface
-      const transformedData: UserRegistration[] = (data || []).map(registration => {
-        // Since we used 'event:events!inner(...)', events is returned as a single object
+      const transformedData: UserRegistration[] = (data as RawRegistrationResponse[] || []).map(registration => {
+        // Access the event data directly from the aliased response
         const eventData = registration.event;
         
         return {
