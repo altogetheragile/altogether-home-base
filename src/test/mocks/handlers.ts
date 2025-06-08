@@ -33,16 +33,17 @@ export const handlers = [
     return HttpResponse.json({})
   }),
 
-  // Mock events API
+  // Mock events API - Fixed to properly handle Supabase 'in' filter
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
     const url = new URL(request.url)
-    const eventIds = url.searchParams.get('id')
+    const idParam = url.searchParams.get('id')
     
     console.log('Events API called with params:', url.searchParams.toString())
+    console.log('ID param value:', idParam)
     
-    // Handle the 'in' filter for multiple event IDs
-    if (eventIds?.includes('event-1') || url.searchParams.toString().includes('in.(')) {
-      console.log('Returning events data for event-1')
+    // Handle Supabase 'in' filter format: id=in.(event-1,event-2)
+    if (idParam && idParam.startsWith('in.(') && idParam.includes('event-1')) {
+      console.log('Returning events data for in filter containing event-1')
       return HttpResponse.json([
         {
           id: 'event-1',
@@ -55,7 +56,23 @@ export const handlers = [
       ])
     }
     
-    // Default events response
+    // Handle direct event ID query
+    if (idParam === 'event-1' || url.searchParams.toString().includes('event-1')) {
+      console.log('Returning events data for direct event-1 query')
+      return HttpResponse.json([
+        {
+          id: 'event-1',
+          title: 'Test Event',
+          start_date: '2024-02-01',
+          end_date: '2024-02-01',
+          price_cents: 10000,
+          currency: 'usd'
+        }
+      ])
+    }
+    
+    // Default events response for general queries
+    console.log('Returning default events list')
     return HttpResponse.json([
       {
         id: 'event-1',

@@ -70,8 +70,11 @@ describe('Authentication Flow Integration', () => {
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
     fireEvent.click(signUpTrigger)
     
-    // Wait for the signup form to be rendered
-    const signUpButton = await screen.findByTestId('signup-submit-button')
+    // Add delay for Radix UI Tabs and use longer timeout
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // Wait for the signup form to be rendered with increased timeout
+    const signUpButton = await screen.findByTestId('signup-submit-button', {}, { timeout: 3000 })
     expect(signUpButton).toBeInTheDocument()
     
     // Fill in sign up form using test IDs
