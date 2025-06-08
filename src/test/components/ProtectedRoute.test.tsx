@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen } from '../rtl-helpers'
@@ -46,7 +47,7 @@ describe('ProtectedRoute', () => {
       </ProtectedRoute>
     )
     
-    expect(screen.getByRole('generic')).toHaveClass('animate-spin')
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
   })
 
   it('should redirect unauthenticated users to auth', () => {

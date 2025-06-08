@@ -46,8 +46,8 @@ describe('Authentication Flow Integration', () => {
     render(<Auth />)
     
     // Fill in sign in form
-    const emailInput = screen.getByPlaceholder('Email')
-    const passwordInput = screen.getByPlaceholder('Password')
+    const emailInput = screen.getByLabelText('Email')
+    const passwordInput = screen.getByLabelText('Password')
     
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'password123' } })
@@ -76,8 +76,8 @@ describe('Authentication Flow Integration', () => {
     })
     
     // Fill in sign up form
-    const emailInput = screen.getByPlaceholder('Email')
-    const passwordInput = screen.getByPlaceholder('Password')
+    const emailInput = screen.getByLabelText('Email')
+    const passwordInput = screen.getByLabelText('Password')
     
     fireEvent.change(emailInput, { target: { value: 'newuser@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'newpassword123' } })

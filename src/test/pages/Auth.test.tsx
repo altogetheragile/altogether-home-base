@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen, fireEvent, waitFor } from '../rtl-helpers'
@@ -37,8 +38,8 @@ describe('Auth Page', () => {
   it('should render sign in form by default', () => {
     render(<Auth />)
     
-    expect(screen.getByPlaceholder('Email')).toBeInTheDocument()
-    expect(screen.getByPlaceholder('Password')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument()
   })
 
@@ -56,8 +57,8 @@ describe('Auth Page', () => {
   it('should handle form submission', async () => {
     render(<Auth />)
     
-    const emailInput = screen.getByPlaceholder('Email')
-    const passwordInput = screen.getByPlaceholder('Password')
+    const emailInput = screen.getByLabelText('Email')
+    const passwordInput = screen.getByLabelText('Password')
     const submitButton = screen.getByRole('button', { name: 'Sign In' })
     
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } })

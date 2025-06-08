@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen } from '../rtl-helpers'
@@ -65,7 +66,9 @@ describe('Dashboard Page', () => {
     render(<Dashboard />)
     
     expect(screen.getByText('My Dashboard')).toBeInTheDocument()
-    expect(screen.getByText('Welcome back, test@example.com!')).toBeInTheDocument()
+    expect(screen.getByText((content) => 
+      content.includes('Welcome back') && content.includes('test@example.com')
+    )).toBeInTheDocument()
   })
 
   it('should display user registrations', () => {

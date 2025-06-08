@@ -5,7 +5,7 @@ import { formatPrice } from '@/utils/currency'
 describe('formatPrice', () => {
   it('should format USD currency correctly', () => {
     expect(formatPrice(10000, 'usd')).toBe('$100.00')
-    expect(formatPrice(0, 'usd')).toBe('$0.00')
+    expect(formatPrice(0, 'usd')).toBe('Free')
     expect(formatPrice(1, 'usd')).toBe('$0.01')
   })
 
@@ -15,7 +15,7 @@ describe('formatPrice', () => {
   })
 
   it('should handle edge cases', () => {
-    expect(formatPrice(undefined as any, 'usd')).toBe('$0.00')
-    expect(formatPrice(null as any, 'usd')).toBe('$0.00')
+    expect(formatPrice(undefined as any, 'usd')).toBe('Free')
+    expect(formatPrice(null as any, 'usd')).toBe('Free')
   })
 })

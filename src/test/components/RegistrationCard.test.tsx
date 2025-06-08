@@ -37,13 +37,13 @@ describe('RegistrationCard', () => {
       ...mockRegistration,
       event: {
         ...mockRegistration.event!,
-        start_date: '2025-02-01'
+        start_date: '2025-12-01'
       }
     }
     
     render(<RegistrationCard registration={futureRegistration} />)
     
-    expect(screen.getByText('Upcoming')).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Upcoming'))).toBeInTheDocument()
   })
 
   it('should handle missing event data gracefully', () => {

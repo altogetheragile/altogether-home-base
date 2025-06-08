@@ -6,9 +6,9 @@ import { useUserRegistrations } from '@/hooks/useUserRegistrations'
 import { server } from '../mocks/server'
 import React from 'react'
 
-// Mock the auth context
+// Mock the auth context with a valid UUID
 const mockUser = {
-  id: 'mock-user-id',
+  id: '12345678-1234-1234-1234-123456789012',
   email: 'test@example.com'
 }
 
