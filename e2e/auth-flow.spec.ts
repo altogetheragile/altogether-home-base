@@ -19,11 +19,11 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
     
     // Switch to sign up mode
-    await page.getByText('Sign up').click()
+    await page.getByRole('tab', { name: 'Sign Up' }).click()
     await expect(page.getByRole('button', { name: 'Sign Up' })).toBeVisible()
     
     // Switch back to sign in
-    await page.getByText('Sign in').click()
+    await page.getByRole('tab', { name: 'Sign In' }).click()
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
   })
 })

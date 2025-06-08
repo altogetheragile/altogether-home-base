@@ -5,14 +5,15 @@ import { screen, fireEvent, waitFor } from '../rtl-helpers'
 import Auth from '@/pages/Auth'
 import React from 'react'
 
-// Mock the auth context
+// Mock the auth context at the top level
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
+  useAuth: vi.fn(() => ({
     user: null,
     loading: false,
     signIn: vi.fn(),
     signUp: vi.fn()
-  })
+  })),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 // Mock react-router-dom
@@ -34,8 +35,8 @@ describe('Auth Page', () => {
   it('should toggle to sign up mode', async () => {
     render(<Auth />)
     
-    const signUpLink = screen.getByText('Sign up')
-    fireEvent.click(signUpLink)
+    const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
+    fireEvent.click(signUpTrigger)
     
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Sign Up' })).toBeInTheDocument()
@@ -44,7 +45,7 @@ describe('Auth Page', () => {
 
   it('should handle form submission', async () => {
     const mockSignIn = vi.fn()
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
+    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
       user: null,
       loading: false,
       signIn: mockSignIn,

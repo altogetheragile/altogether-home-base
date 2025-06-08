@@ -18,18 +18,27 @@ vi.mock('react-router-dom', () => ({
   useLocation: () => ({ state: null })
 }))
 
+// Mock the auth context at the top level
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({
+    user: null,
+    loading: false,
+    signIn: vi.fn(),
+    signUp: vi.fn()
+  })),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
+}))
+
 describe('Authentication Flow Integration', () => {
   it('should complete sign in flow with valid credentials', async () => {
     const mockSignIn = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
     
-    vi.mock('@/contexts/AuthContext', () => ({
-      useAuth: () => ({
-        user: null,
-        loading: false,
-        signIn: mockSignIn,
-        signUp: vi.fn()
-      })
-    }))
+    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
+      user: null,
+      loading: false,
+      signIn: mockSignIn,
+      signUp: vi.fn()
+    })
 
     render(<Auth />)
     
@@ -53,20 +62,18 @@ describe('Authentication Flow Integration', () => {
   it('should complete sign up flow', async () => {
     const mockSignUp = vi.fn().mockResolvedValue({ user: { id: 'new-user' } })
     
-    vi.mock('@/contexts/AuthContext', () => ({
-      useAuth: () => ({
-        user: null,
-        loading: false,
-        signIn: vi.fn(),
-        signUp: mockSignUp
-      })
-    }))
+    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
+      user: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: mockSignUp
+    })
 
     render(<Auth />)
     
     // Switch to sign up mode
-    const signUpLink = screen.getByText('Sign up')
-    fireEvent.click(signUpLink)
+    const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
+    fireEvent.click(signUpTrigger)
     
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Sign Up' })).toBeInTheDocument()

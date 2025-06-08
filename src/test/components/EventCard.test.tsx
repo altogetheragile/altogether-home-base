@@ -6,18 +6,19 @@ import EventCard from '@/components/events/EventCard'
 import { EventData } from '@/hooks/useEvents'
 import React from 'react'
 
-// Mock the hooks
+// Mock the hooks at the top level before any imports
 vi.mock('@/hooks/useEventRegistration', () => ({
-  useEventRegistration: () => ({
+  useEventRegistration: vi.fn(() => ({
     registerForEvent: vi.fn(),
     loading: false
-  })
+  }))
 }))
 
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
+  useAuth: vi.fn(() => ({
     user: { id: 'test-user', email: 'test@example.com' }
-  })
+  })),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 const mockEvent: EventData = {
@@ -65,13 +66,17 @@ describe('EventCard', () => {
   })
 
   it('should handle register button click', () => {
-    const { registerForEvent } = require('@/hooks/useEventRegistration').useEventRegistration()
+    const mockRegisterForEvent = vi.fn()
+    vi.mocked(vi.mocked(require('@/hooks/useEventRegistration')).useEventRegistration).mockReturnValue({
+      registerForEvent: mockRegisterForEvent,
+      loading: false
+    })
     
     render(<EventCard event={mockEvent} />)
     
     const registerButton = screen.getByText('Register')
     fireEvent.click(registerButton)
     
-    expect(registerForEvent).toHaveBeenCalledWith('event-1')
+    expect(mockRegisterForEvent).toHaveBeenCalledWith('event-1')
   })
 })

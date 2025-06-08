@@ -28,19 +28,20 @@ const mockRegistrations = [
   }
 ]
 
-// Mock the hooks
+// Mock the hooks at the top level
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
+  useAuth: vi.fn(() => ({
     user: mockUser,
     loading: false
-  })
+  })),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 vi.mock('@/hooks/useUserRegistrations', () => ({
-  useUserRegistrations: () => ({
+  useUserRegistrations: vi.fn(() => ({
     data: mockRegistrations,
     isLoading: false
-  })
+  }))
 }))
 
 vi.mock('react-router-dom', () => ({
@@ -49,6 +50,10 @@ vi.mock('react-router-dom', () => ({
 }))
 
 describe('Dashboard Page', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('should render dashboard for authenticated user', () => {
     render(<Dashboard />)
     
@@ -64,7 +69,7 @@ describe('Dashboard Page', () => {
   })
 
   it('should redirect unauthenticated users', () => {
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
+    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
       user: null,
       loading: false
     })
