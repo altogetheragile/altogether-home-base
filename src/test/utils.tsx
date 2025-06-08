@@ -30,6 +30,4 @@ const customRender = (
   options?: Omit<RenderOptions, 'wrapper'>,
 ) => rtlRender(ui, { wrapper: AllTheProviders, ...options })
 
-// Re-export everything from @testing-library/react
-export * from '@testing-library/react'
 export { customRender as render }
