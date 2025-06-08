@@ -17,7 +17,7 @@ vi.mock('@/contexts/AuthContext', () => ({
     user: mockUser,
     loading: false
   }),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
+  AuthProvider: ({ children }: { children: React.ReactNode }) => React.createElement('div', {}, children)
 }))
 
 beforeAll(() => server.listen())
