@@ -5,7 +5,9 @@
     "moduleResolution": "node",
     "types": ["vitest/globals", "@testing-library/jest-dom"],
     "allowImportingTsExtensions": false,
-    "noEmit": true
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/test/**/*",
