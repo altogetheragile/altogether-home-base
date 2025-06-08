@@ -1,3 +1,4 @@
+
 name: Tests
 
 on:
@@ -23,13 +24,16 @@ jobs:
       run: npm ci
 
     - name: Run unit tests (Vitest)
-      run: npx vitest run --typecheck --config vitest.config.ts --project tsconfig.test.json
+      run: npx vitest run --config vitest.config.ts
+
+    - name: Build application
+      run: npm run build
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
 
     - name: Run E2E tests (Playwright)
-      run: |
-        npm run build
-        npx playwright install --with-deps
-        npm run test:e2e
+      run: npx playwright test
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
