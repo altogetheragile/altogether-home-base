@@ -34,7 +34,28 @@ export const handlers = [
   }),
 
   // Mock events API
-  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', () => {
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
+    const url = new URL(request.url)
+    const eventIds = url.searchParams.get('id')
+    
+    console.log('Events API called with params:', url.searchParams.toString())
+    
+    // Handle the 'in' filter for multiple event IDs
+    if (eventIds?.includes('event-1') || url.searchParams.toString().includes('in.(')) {
+      console.log('Returning events data for event-1')
+      return HttpResponse.json([
+        {
+          id: 'event-1',
+          title: 'Test Event',
+          start_date: '2024-02-01',
+          end_date: '2024-02-01',
+          price_cents: 10000,
+          currency: 'usd'
+        }
+      ])
+    }
+    
+    // Default events response
     return HttpResponse.json([
       {
         id: 'event-1',
@@ -91,13 +112,21 @@ export const handlers = [
     })
   }),
 
-  // Mock registrations API - Return both registrations and events data for the hook
+  // Mock registrations API - This is the critical one for useUserRegistrations
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', ({ request }) => {
     const url = new URL(request.url)
     const userId = url.searchParams.get('user_id')
     const select = url.searchParams.get('select')
     
+    console.log('Registrations API called with:', {
+      userId,
+      select,
+      fullUrl: url.toString(),
+      allParams: Object.fromEntries(url.searchParams.entries())
+    })
+    
     if (userId === '12345678-1234-1234-1234-123456789012') {
+      console.log('Returning registration data for matching user ID')
       return HttpResponse.json([
         {
           id: 'reg-1',
@@ -109,28 +138,7 @@ export const handlers = [
       ])
     }
     
-    return HttpResponse.json([])
-  }),
-
-  // Mock events API for specific event IDs with proper filtering
-  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
-    const url = new URL(request.url)
-    const eventIds = url.searchParams.get('id')
-    
-    // Handle the 'in' filter for multiple event IDs
-    if (eventIds?.includes('event-1') || url.searchParams.toString().includes('in.(')) {
-      return HttpResponse.json([
-        {
-          id: 'event-1',
-          title: 'Test Event',
-          start_date: '2024-02-01',
-          end_date: '2024-02-01',
-          price_cents: 10000,
-          currency: 'usd'
-        }
-      ])
-    }
-    
+    console.log('No matching user ID, returning empty array')
     return HttpResponse.json([])
   }),
 

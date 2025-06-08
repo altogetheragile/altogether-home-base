@@ -52,9 +52,8 @@ describe('Auth Page', () => {
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
     fireEvent.click(signUpTrigger)
     
-    await waitFor(() => {
-      expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
-    })
+    // Use findByTestId instead of waitFor + getByTestId for better async handling
+    expect(await screen.findByTestId('signup-submit-button')).toBeInTheDocument()
   })
 
   it('should handle form submission', async () => {
