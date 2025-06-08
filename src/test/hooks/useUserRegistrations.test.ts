@@ -7,33 +7,31 @@ import React from 'react'
 
 const mockUser = {
   id: '12345678-1234-1234-1234-123456789012',
-  email: 'test@example.com'
+  email: 'test@example.com',
 }
 
-// 👇 Mock the AuthContext with a user
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
-    loading: false
+    loading: false,
   }),
   AuthProvider: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', {}, children)
+    React.createElement('div', {}, children),
 }))
 
-// MSW server setup
 beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-// Query wrapper
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
     },
   })
-  return ({ children }: { children: React.ReactNode }) =>
-    React.createElement(QueryClientProvider, { client: queryClient }, children)
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  )
 }
 
 describe('useUserRegistrations', () => {
@@ -42,16 +40,17 @@ describe('useUserRegistrations', () => {
       wrapper: createWrapper(),
     })
 
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true)
-    }, { timeout: 5000 })
+    await waitFor(
+      () => expect(result.current.isSuccess).toBe(true),
+      { timeout: 5000 }
+    )
 
     expect(result.current.data).toBeDefined()
     expect(result.current.data).toHaveLength(1)
     expect(result.current.data?.[0]).toMatchObject({
       id: 'reg-1',
       event_id: 'event-1',
-      payment_status: 'paid'
+      payment_status: 'paid',
     })
     expect(result.current.data?.[0].event?.title).toBe('Test Event')
   })
@@ -60,7 +59,6 @@ describe('useUserRegistrations', () => {
     const { result } = renderHook(() => useUserRegistrations(), {
       wrapper: createWrapper(),
     })
-
     expect(result.current.isLoading).toBe(true)
   })
 })
