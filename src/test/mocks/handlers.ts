@@ -19,6 +19,20 @@ export const handlers = [
     })
   }),
 
+  http.post('https://wqaplkypnetifpqrungv.supabase.co/auth/v1/signup', () => {
+    return HttpResponse.json({
+      user: {
+        id: 'new-user-id',
+        email: 'newuser@example.com',
+        email_confirmed_at: null
+      }
+    })
+  }),
+
+  http.post('https://wqaplkypnetifpqrungv.supabase.co/auth/v1/logout', () => {
+    return HttpResponse.json({})
+  }),
+
   // Mock events API
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', () => {
     return HttpResponse.json([
@@ -49,6 +63,34 @@ export const handlers = [
     ])
   }),
 
+  // Mock single event API
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events/:id', ({ params }) => {
+    return HttpResponse.json({
+      id: params.id,
+      title: 'Test Event Details',
+      description: 'Detailed test event',
+      start_date: '2024-02-01',
+      end_date: '2024-02-01',
+      price_cents: 10000,
+      currency: 'usd',
+      is_published: true,
+      instructor: [{
+        name: 'Test Instructor',
+        bio: 'Test bio'
+      }],
+      location: [{
+        name: 'Test Location',
+        address: '123 Test St'
+      }],
+      event_templates: [{
+        duration_days: 1,
+        event_types: [{ name: 'Workshop' }],
+        formats: [{ name: 'In-Person' }],
+        levels: [{ name: 'Beginner' }]
+      }]
+    })
+  }),
+
   // Mock registrations API
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', () => {
     return HttpResponse.json([
@@ -57,8 +99,68 @@ export const handlers = [
         event_id: 'event-1',
         registered_at: '2024-01-15T10:00:00Z',
         payment_status: 'paid',
-        stripe_session_id: 'cs_test_123'
+        stripe_session_id: 'cs_test_123',
+        events: {
+          id: 'event-1',
+          title: 'Test Event',
+          start_date: '2024-02-01',
+          end_date: '2024-02-01',
+          price_cents: 10000,
+          currency: 'usd'
+        }
       }
     ])
+  }),
+
+  // Mock event registration creation
+  http.post('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', () => {
+    return HttpResponse.json({
+      id: 'new-reg-id',
+      event_id: 'event-1',
+      registered_at: new Date().toISOString(),
+      payment_status: 'pending'
+    })
+  }),
+
+  // Mock user role API
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/user_roles', () => {
+    return HttpResponse.json([
+      {
+        user_id: 'mock-user-id',
+        role: 'admin'
+      }
+    ])
+  }),
+
+  // Mock instructors API
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/instructors', () => {
+    return HttpResponse.json([
+      {
+        id: 'instructor-1',
+        name: 'John Doe',
+        bio: 'Expert instructor',
+        email: 'john@example.com'
+      }
+    ])
+  }),
+
+  // Mock locations API
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/locations', () => {
+    return HttpResponse.json([
+      {
+        id: 'location-1',
+        name: 'Test Venue',
+        address: '123 Test St',
+        virtual_url: null
+      }
+    ])
+  }),
+
+  // Mock payment endpoints
+  http.post('https://wqaplkypnetifpqrungv.supabase.co/functions/v1/create-checkout', () => {
+    return HttpResponse.json({
+      sessionId: 'cs_test_checkout_session',
+      url: 'https://checkout.stripe.com/pay/cs_test_checkout_session'
+    })
   })
 ]

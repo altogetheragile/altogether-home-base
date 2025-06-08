@@ -9,11 +9,35 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ["src/**/*.test.{ts,tsx}", "src/test/**/*.{test,spec}.{ts,tsx}"],
+    include: [
+      "src/**/*.test.{ts,tsx}", 
+      "src/test/**/*.{test,spec}.{ts,tsx}",
+      "e2e/**/*.{test,spec}.{ts,tsx}"
+    ],
+    exclude: [
+      "node_modules/**",
+      "dist/**",
+      ".next/**",
+      "coverage/**"
+    ],
     typecheck: {
       tsconfig: './tsconfig.test.json',
       enabled: true
-    }
+    },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        'src/**/*.d.ts',
+        'src/main.tsx',
+        'src/vite-env.d.ts'
+      ]
+    },
+    testTimeout: 10000,
+    hookTimeout: 10000
   },
   resolve: {
     alias: {
