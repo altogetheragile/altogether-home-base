@@ -1,5 +1,7 @@
-// src/test/mocks/handlers.ts
 import { rest } from 'msw'
+
+console.log('rest:', typeof rest) // should log 'object'
+console.log('rest.post:', typeof rest.post) // should log 'function'
 
 const BASE = 'https://wqaplkypnetifpqrungv.supabase.co'
 
