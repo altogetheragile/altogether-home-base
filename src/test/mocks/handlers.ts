@@ -91,16 +91,34 @@ export const handlers = [
     })
   }),
 
-  // Mock registrations API
-  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', () => {
-    return HttpResponse.json([
-      {
-        id: 'reg-1',
-        event_id: 'event-1',
-        registered_at: '2024-01-15T10:00:00Z',
-        payment_status: 'paid',
-        stripe_session_id: 'cs_test_123',
-        events: {
+  // Mock registrations API - Fixed to return separate arrays for registrations and events
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', ({ request }) => {
+    const url = new URL(request.url)
+    const userId = url.searchParams.get('user_id')
+    
+    if (userId === '12345678-1234-1234-1234-123456789012') {
+      return HttpResponse.json([
+        {
+          id: 'reg-1',
+          event_id: 'event-1',
+          registered_at: '2024-01-15T10:00:00Z',
+          payment_status: 'paid',
+          stripe_session_id: 'cs_test_123'
+        }
+      ])
+    }
+    
+    return HttpResponse.json([])
+  }),
+
+  // Mock events API for specific event IDs
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
+    const url = new URL(request.url)
+    const eventIds = url.searchParams.get('id')
+    
+    if (eventIds?.includes('event-1')) {
+      return HttpResponse.json([
+        {
           id: 'event-1',
           title: 'Test Event',
           start_date: '2024-02-01',
@@ -108,8 +126,10 @@ export const handlers = [
           price_cents: 10000,
           currency: 'usd'
         }
-      }
-    ])
+      ])
+    }
+    
+    return HttpResponse.json([])
   }),
 
   // Mock event registration creation

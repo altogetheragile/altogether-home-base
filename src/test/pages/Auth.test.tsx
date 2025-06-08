@@ -40,7 +40,7 @@ describe('Auth Page', () => {
     
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument()
+    expect(screen.getByTestId('signin-submit-button')).toBeInTheDocument()
   })
 
   it('should toggle to sign up mode', async () => {
@@ -50,16 +50,16 @@ describe('Auth Page', () => {
     fireEvent.click(signUpTrigger)
     
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Sign Up' })).toBeInTheDocument()
+      expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
     })
   })
 
   it('should handle form submission', async () => {
     render(<Auth />)
     
-    const emailInput = screen.getByLabelText('Email')
-    const passwordInput = screen.getByLabelText('Password')
-    const submitButton = screen.getByRole('button', { name: 'Sign In' })
+    const emailInput = screen.getByTestId('email-input')
+    const passwordInput = screen.getByTestId('password-input')
+    const submitButton = screen.getByTestId('signin-submit-button')
     
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'password123' } })

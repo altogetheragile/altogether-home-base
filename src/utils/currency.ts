@@ -14,7 +14,8 @@ export const SUPPORTED_CURRENCIES: Record<string, CurrencyInfo> = {
 };
 
 export const formatPrice = (priceCents: number, currency: string = 'usd'): string => {
-  if (priceCents === 0) return 'Free';
+  // Handle invalid inputs - undefined, null, NaN, or zero
+  if (!priceCents || isNaN(priceCents) || priceCents === 0) return 'Free';
   
   const price = priceCents / 100;
   const currencyInfo = SUPPORTED_CURRENCIES[currency.toLowerCase()];

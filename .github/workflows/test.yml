@@ -35,11 +35,20 @@ jobs:
     - name: Run E2E tests (Playwright)
       run: npx playwright test
 
-    - name: Upload test results
+    - name: Upload Vitest test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results
+        name: vitest-results
+        path: |
+          coverage/
+        retention-days: 30
+
+    - name: Upload Playwright test results
+      uses: actions/upload-artifact@v4
+      if: always() && hashFiles('test-results/**') != ''
+      with:
+        name: playwright-results
         path: |
           test-results/
           playwright-report/

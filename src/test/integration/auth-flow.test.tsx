@@ -45,15 +45,15 @@ describe('Authentication Flow Integration', () => {
 
     render(<Auth />)
     
-    // Fill in sign in form
-    const emailInput = screen.getByLabelText('Email')
-    const passwordInput = screen.getByLabelText('Password')
+    // Fill in sign in form using test IDs
+    const emailInput = screen.getByTestId('email-input')
+    const passwordInput = screen.getByTestId('password-input')
     
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'password123' } })
     
     // Submit form
-    const signInButton = screen.getByRole('button', { name: 'Sign In' })
+    const signInButton = screen.getByTestId('signin-submit-button')
     fireEvent.click(signInButton)
     
     // Verify sign in was called
@@ -72,23 +72,25 @@ describe('Authentication Flow Integration', () => {
     fireEvent.click(signUpTrigger)
     
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Sign Up' })).toBeInTheDocument()
+      expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
     })
     
-    // Fill in sign up form
-    const emailInput = screen.getByLabelText('Email')
-    const passwordInput = screen.getByLabelText('Password')
+    // Fill in sign up form using test IDs
+    const emailInput = screen.getByTestId('email-signup-input')
+    const passwordInput = screen.getByTestId('password-signup-input')
+    const fullNameInput = screen.getByTestId('fullname-input')
     
+    fireEvent.change(fullNameInput, { target: { value: 'New User' } })
     fireEvent.change(emailInput, { target: { value: 'newuser@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'newpassword123' } })
     
     // Submit form
-    const signUpButton = screen.getByRole('button', { name: 'Sign Up' })
+    const signUpButton = screen.getByTestId('signup-submit-button')
     fireEvent.click(signUpButton)
     
     // Verify sign up was called
     await waitFor(() => {
-      expect(mockSignUp).toHaveBeenCalledWith('newuser@example.com', 'newpassword123')
+      expect(mockSignUp).toHaveBeenCalledWith('newuser@example.com', 'newpassword123', 'New User')
     })
   })
 })

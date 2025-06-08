@@ -93,7 +93,7 @@ const Auth = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSignIn} className="space-y-4">
+                  <form onSubmit={handleSignIn} className="space-y-4" data-testid="sign-in-form">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input
@@ -102,6 +102,7 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        data-testid="email-input"
                       />
                     </div>
                     <div className="space-y-2">
@@ -112,9 +113,15 @@ const Auth = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        data-testid="password-input"
                       />
                     </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={loading}
+                      data-testid="signin-submit-button"
+                    >
                       {loading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
@@ -131,7 +138,7 @@ const Auth = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSignUp} className="space-y-4">
+                  <form onSubmit={handleSignUp} className="space-y-4" data-testid="sign-up-form">
                     <div className="space-y-2">
                       <Label htmlFor="fullName">Full Name</Label>
                       <Input
@@ -140,6 +147,7 @@ const Auth = () => {
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
+                        data-testid="fullname-input"
                       />
                     </div>
                     <div className="space-y-2">
@@ -150,6 +158,7 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        data-testid="email-signup-input"
                       />
                     </div>
                     <div className="space-y-2">
@@ -161,9 +170,15 @@ const Auth = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         minLength={6}
+                        data-testid="password-signup-input"
                       />
                     </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={loading}
+                      data-testid="signup-submit-button"
+                    >
                       {loading ? "Creating account..." : "Sign Up"}
                     </Button>
                   </form>
