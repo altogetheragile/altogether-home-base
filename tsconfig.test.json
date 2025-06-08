@@ -7,7 +7,9 @@
     "allowImportingTsExtensions": false,
     "noEmit": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": false
   },
   "include": [
     "src/test/**/*",

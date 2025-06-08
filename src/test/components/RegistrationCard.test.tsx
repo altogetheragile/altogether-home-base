@@ -1,32 +1,9 @@
 
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '../utils'
 import RegistrationCard from '@/components/dashboard/RegistrationCard'
 import { UserRegistrationWithEvent } from '@/hooks/useUserRegistrations'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
 import React from 'react'
-
-const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  })
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  )
-}
 
 const mockRegistration: UserRegistrationWithEvent = {
   id: 'reg-1',
@@ -46,7 +23,7 @@ const mockRegistration: UserRegistrationWithEvent = {
 
 describe('RegistrationCard', () => {
   it('should render registration information correctly', () => {
-    render(<RegistrationCard registration={mockRegistration} />, { wrapper: AllTheProviders })
+    render(<RegistrationCard registration={mockRegistration} />)
     
     expect(screen.getByText('Test Event')).toBeInTheDocument()
     expect(screen.getByText('Paid')).toBeInTheDocument()
@@ -63,7 +40,7 @@ describe('RegistrationCard', () => {
       }
     }
     
-    render(<RegistrationCard registration={futureRegistration} />, { wrapper: AllTheProviders })
+    render(<RegistrationCard registration={futureRegistration} />)
     
     expect(screen.getByText('Upcoming')).toBeInTheDocument()
   })
@@ -74,7 +51,7 @@ describe('RegistrationCard', () => {
       event: null
     }
     
-    render(<RegistrationCard registration={registrationWithoutEvent} />, { wrapper: AllTheProviders })
+    render(<RegistrationCard registration={registrationWithoutEvent} />)
     
     expect(screen.getByText('Event Not Found')).toBeInTheDocument()
   })

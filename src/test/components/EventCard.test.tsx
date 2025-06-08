@@ -1,11 +1,8 @@
 
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '../utils'
 import EventCard from '@/components/events/EventCard'
 import { EventData } from '@/hooks/useEvents'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
 import React from 'react'
 
 // Mock the hooks
@@ -21,26 +18,6 @@ vi.mock('@/contexts/AuthContext', () => ({
     user: { id: 'test-user', email: 'test@example.com' }
   })
 }))
-
-const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  })
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  )
-}
 
 const mockEvent: EventData = {
   id: 'event-1',
@@ -70,7 +47,7 @@ const mockEvent: EventData = {
 
 describe('EventCard', () => {
   it('should render event information correctly', () => {
-    render(<EventCard event={mockEvent} />, { wrapper: AllTheProviders })
+    render(<EventCard event={mockEvent} />)
     
     expect(screen.getByText('Test Workshop')).toBeInTheDocument()
     expect(screen.getByText('A test workshop description')).toBeInTheDocument()
@@ -80,7 +57,7 @@ describe('EventCard', () => {
   })
 
   it('should show register button for authenticated users', () => {
-    render(<EventCard event={mockEvent} />, { wrapper: AllTheProviders })
+    render(<EventCard event={mockEvent} />)
     
     expect(screen.getByText('Register')).toBeInTheDocument()
     expect(screen.getByText('View Details')).toBeInTheDocument()
@@ -89,7 +66,7 @@ describe('EventCard', () => {
   it('should handle register button click', () => {
     const { registerForEvent } = require('@/hooks/useEventRegistration').useEventRegistration()
     
-    render(<EventCard event={mockEvent} />, { wrapper: AllTheProviders })
+    render(<EventCard event={mockEvent} />)
     
     const registerButton = screen.getByText('Register')
     fireEvent.click(registerButton)
