@@ -37,25 +37,27 @@ const createWrapper = () => {
 
 describe('useUserRegistrations', () => {
   it('should fetch user registrations successfully', async () => {
-    console.log('🧪 Test starting with mock user:', mockUser.id)
+    console.log('🧪 useUserRegistrations Test: Starting with mock user:', mockUser.id)
     
     const { result } = renderHook(() => useUserRegistrations(), {
       wrapper: createWrapper(),
     })
 
-    console.log('🔄 Initial loading state:', result.current.isLoading)
+    console.log('🔄 useUserRegistrations Test: Initial loading state:', result.current.isLoading)
 
     await waitFor(() => {
-      console.log('📊 Query state:', {
+      console.log('📊 useUserRegistrations Test: Query state:', {
         isLoading: result.current.isLoading,
         isSuccess: result.current.isSuccess,
+        isError: result.current.isError,
+        error: result.current.error,
         data: result.current.data,
-        error: result.current.error
+        dataLength: result.current.data?.length
       })
       expect(result.current.isSuccess).toBe(true)
     }, { timeout: 10000 })
 
-    console.log('✅ Final data received:', result.current.data)
+    console.log('✅ useUserRegistrations Test: Final data received:', result.current.data)
     expect(result.current.data).toBeDefined()
     expect(result.current.data).toHaveLength(1)
     expect(result.current.data?.[0]).toMatchObject({

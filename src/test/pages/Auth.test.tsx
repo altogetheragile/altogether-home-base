@@ -4,6 +4,7 @@ import { render } from '../utils'
 import { screen, fireEvent, waitFor } from '../rtl-helpers'
 import Auth from '@/pages/Auth'
 import React from 'react'
+import { act } from '@testing-library/react'
 
 const mockSignIn = vi.fn()
 const mockSignUp = vi.fn()
@@ -50,18 +51,35 @@ describe('Auth Page', () => {
     render(<Auth />)
     
     // Debug initial state
-    console.log('Initial render - looking for sign in button:')
+    console.log('🧪 Auth Test: Initial render - looking for sign in button')
     expect(screen.getByTestId('signin-submit-button')).toBeInTheDocument()
     
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
-    fireEvent.click(signUpTrigger)
     
-    // Use findBy* which automatically waits for the element to appear
-    console.log('After clicking sign up tab - waiting for sign up button:')
-    const signUpButton = await screen.findByTestId('signup-submit-button')
+    // Use act to ensure React finishes all updates
+    await act(async () => {
+      fireEvent.click(signUpTrigger)
+    })
+    
+    console.log('🧪 Auth Test: After clicking sign up tab - waiting for sign up button')
+    
+    // Multiple wait strategies for reliability
+    let signUpButton
+    try {
+      // Strategy 1: findBy with extended timeout
+      signUpButton = await screen.findByTestId('signup-submit-button', {}, { timeout: 5000 })
+    } catch (error) {
+      console.log('🧪 Auth Test: findBy failed, trying waitFor approach')
+      // Strategy 2: waitFor with aggressive timeout
+      await waitFor(() => {
+        signUpButton = screen.getByTestId('signup-submit-button')
+        expect(signUpButton).toBeInTheDocument()
+      }, { timeout: 5000, interval: 100 })
+    }
+    
     expect(signUpButton).toBeInTheDocument()
     
-    // Also verify the form fields are present in sign up mode
+    // Verify the form fields are present in sign up mode
     expect(screen.getByTestId('fullname-input')).toBeInTheDocument()
     expect(screen.getByTestId('email-signup-input')).toBeInTheDocument()
     expect(screen.getByTestId('password-signup-input')).toBeInTheDocument()
