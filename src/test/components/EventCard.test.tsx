@@ -1,15 +1,12 @@
 
 import { describe, it, expect, vi } from 'vitest'
-import * as RTL from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import EventCard from '@/components/events/EventCard'
 import { EventData } from '@/hooks/useEvents'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import React from 'react'
-
-// Use destructured imports from the full module
-const { render, screen, fireEvent } = RTL
 
 // Mock the hooks
 vi.mock('@/hooks/useEventRegistration', () => ({

@@ -1,13 +1,10 @@
 
 import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
-import * as RTL from '@testing-library/react'
+import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useUserRegistrations } from '@/hooks/useUserRegistrations'
 import { server } from '../mocks/server'
 import React from 'react'
-
-// Use destructured imports from the full module
-const { renderHook, waitFor } = RTL
 
 // Mock the auth context
 const mockUser = {

@@ -1,15 +1,12 @@
 
 import { describe, it, expect } from 'vitest'
-import * as RTL from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import RegistrationCard from '@/components/dashboard/RegistrationCard'
 import { UserRegistrationWithEvent } from '@/hooks/useUserRegistrations'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import React from 'react'
-
-// Use destructured imports from the full module
-const { render, screen } = RTL
 
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({

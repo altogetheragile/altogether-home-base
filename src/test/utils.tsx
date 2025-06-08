@@ -1,12 +1,9 @@
 
 import React from 'react'
-import * as RTL from '@testing-library/react'
+import { render as rtlRender, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
-
-// Use destructured imports from the full module
-const { render: rtlRender } = RTL
 
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
@@ -30,7 +27,7 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
 
 const customRender = (
   ui: React.ReactElement,
-  options?: Omit<RTL.RenderOptions, 'wrapper'>,
+  options?: Omit<RenderOptions, 'wrapper'>,
 ) => rtlRender(ui, { wrapper: AllTheProviders, ...options })
 
 // Re-export everything from @testing-library/react
