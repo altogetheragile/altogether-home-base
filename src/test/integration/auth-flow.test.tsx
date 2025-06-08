@@ -70,30 +70,21 @@ describe('Authentication Flow Integration', () => {
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
     fireEvent.click(signUpTrigger)
     
-    // Wait for Radix UI Tabs to complete the transition with multiple attempts
-    await waitFor(async () => {
-      // Use queryByTestId first to avoid throwing if not found
-      const signUpButton = screen.queryByTestId('signup-submit-button')
-      if (!signUpButton) {
-        // Add a small delay and try again
-        await new Promise(resolve => setTimeout(resolve, 50))
-        expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
-      } else {
-        expect(signUpButton).toBeInTheDocument()
-      }
-    }, { timeout: 5000, interval: 100 })
+    // Use findBy* to wait for the signup form to render
+    console.log('Waiting for signup form to render...')
+    const signUpButton = await screen.findByTestId('signup-submit-button')
+    expect(signUpButton).toBeInTheDocument()
     
-    // Fill in sign up form using test IDs
-    const emailInput = screen.getByTestId('email-signup-input')
-    const passwordInput = screen.getByTestId('password-signup-input')
-    const fullNameInput = screen.getByTestId('fullname-input')
+    // Fill in sign up form using test IDs - wait for each field to be available
+    const emailInput = await screen.findByTestId('email-signup-input')
+    const passwordInput = await screen.findByTestId('password-signup-input')
+    const fullNameInput = await screen.findByTestId('fullname-input')
     
     fireEvent.change(fullNameInput, { target: { value: 'New User' } })
     fireEvent.change(emailInput, { target: { value: 'newuser@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'newpassword123' } })
     
     // Submit form
-    const signUpButton = screen.getByTestId('signup-submit-button')
     fireEvent.click(signUpButton)
     
     // Verify sign up was called

@@ -33,7 +33,7 @@ export const handlers = [
     return HttpResponse.json({})
   }),
 
-  // Mock events API - Fixed to properly handle Supabase 'in' filter
+  // Mock events API - CRITICAL FIX: Properly handle Supabase 'in' filter format
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
     const url = new URL(request.url)
     const idParam = url.searchParams.get('id')
@@ -42,18 +42,23 @@ export const handlers = [
     console.log('ID param value:', idParam)
     
     // Handle Supabase 'in' filter format: id=in.(event-1,event-2)
-    if (idParam && idParam.startsWith('in.(') && idParam.includes('event-1')) {
-      console.log('Returning events data for in filter containing event-1')
-      return HttpResponse.json([
-        {
-          id: 'event-1',
-          title: 'Test Event',
-          start_date: '2024-02-01',
-          end_date: '2024-02-01',
-          price_cents: 10000,
-          currency: 'usd'
-        }
-      ])
+    if (idParam && idParam.startsWith('in.(') && idParam.endsWith(')')) {
+      const eventIds = idParam.slice(4, -1).split(','); // Extract IDs from in.(id1,id2)
+      console.log('Parsed event IDs from in filter:', eventIds)
+      
+      if (eventIds.includes('event-1')) {
+        console.log('Returning events data for in filter containing event-1')
+        return HttpResponse.json([
+          {
+            id: 'event-1',
+            title: 'Test Event',
+            start_date: '2024-02-01',
+            end_date: '2024-02-01',
+            price_cents: 10000,
+            currency: 'usd'
+          }
+        ])
+      }
     }
     
     // Handle direct event ID query
@@ -144,7 +149,7 @@ export const handlers = [
     
     // Return registration data for the exact mock user ID used in the test
     if (userId === '12345678-1234-1234-1234-123456789012') {
-      console.log('Returning registration data for matching user ID')
+      console.log('✅ Returning registration data for matching user ID')
       return HttpResponse.json([
         {
           id: 'reg-1',
@@ -156,7 +161,7 @@ export const handlers = [
       ])
     }
     
-    console.log('No matching user ID, returning empty array. Expected:', '12345678-1234-1234-1234-123456789012', 'Got:', userId)
+    console.log('❌ No matching user ID, returning empty array. Expected:', '12345678-1234-1234-1234-123456789012', 'Got:', userId)
     return HttpResponse.json([])
   }),
 

@@ -49,21 +49,22 @@ describe('Auth Page', () => {
   it('should toggle to sign up mode', async () => {
     render(<Auth />)
     
+    // Debug initial state
+    console.log('Initial render - looking for sign in button:')
+    expect(screen.getByTestId('signin-submit-button')).toBeInTheDocument()
+    
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
     fireEvent.click(signUpTrigger)
     
-    // Wait for Radix UI Tabs to complete the transition with multiple attempts
-    await waitFor(async () => {
-      // Use queryByTestId first to avoid throwing if not found
-      const signUpButton = screen.queryByTestId('signup-submit-button')
-      if (!signUpButton) {
-        // Add a small delay and try again
-        await new Promise(resolve => setTimeout(resolve, 50))
-        expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
-      } else {
-        expect(signUpButton).toBeInTheDocument()
-      }
-    }, { timeout: 5000, interval: 100 })
+    // Use findBy* which automatically waits for the element to appear
+    console.log('After clicking sign up tab - waiting for sign up button:')
+    const signUpButton = await screen.findByTestId('signup-submit-button')
+    expect(signUpButton).toBeInTheDocument()
+    
+    // Also verify the form fields are present in sign up mode
+    expect(screen.getByTestId('fullname-input')).toBeInTheDocument()
+    expect(screen.getByTestId('email-signup-input')).toBeInTheDocument()
+    expect(screen.getByTestId('password-signup-input')).toBeInTheDocument()
   })
 
   it('should handle form submission', async () => {

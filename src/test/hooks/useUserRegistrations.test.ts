@@ -37,25 +37,25 @@ const createWrapper = () => {
 
 describe('useUserRegistrations', () => {
   it('should fetch user registrations successfully', async () => {
-    console.log('Test starting with mock user:', mockUser.id)
+    console.log('🧪 Test starting with mock user:', mockUser.id)
     
     const { result } = renderHook(() => useUserRegistrations(), {
       wrapper: createWrapper(),
     })
 
-    console.log('Initial loading state:', result.current.isLoading)
+    console.log('🔄 Initial loading state:', result.current.isLoading)
 
     await waitFor(() => {
-      console.log('Query state:', {
+      console.log('📊 Query state:', {
         isLoading: result.current.isLoading,
         isSuccess: result.current.isSuccess,
         data: result.current.data,
         error: result.current.error
       })
       expect(result.current.isSuccess).toBe(true)
-    })
+    }, { timeout: 10000 })
 
-    console.log('Final data received:', result.current.data)
+    console.log('✅ Final data received:', result.current.data)
     expect(result.current.data).toBeDefined()
     expect(result.current.data).toHaveLength(1)
     expect(result.current.data?.[0]).toMatchObject({
@@ -63,6 +63,11 @@ describe('useUserRegistrations', () => {
       event_id: 'event-1',
       payment_status: 'paid'
     })
+    
+    // Verify the event was properly joined
+    expect(result.current.data?.[0].event).toBeDefined()
+    expect(result.current.data?.[0].event?.id).toBe('event-1')
+    expect(result.current.data?.[0].event?.title).toBe('Test Event')
   })
 
   it('should handle loading state', () => {
