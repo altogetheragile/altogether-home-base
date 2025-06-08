@@ -1,24 +1,41 @@
 // src/test/mocks/handlers.ts
 
-import { http, HttpResponse } from 'msw'
+import { rest } from 'msw'
 
 export const handlers = [
-  // Mock Supabase auth endpoints
-  http.post('https://wqaplkypnetifpqrungv.supabase.co/auth/v1/token', () => {
-    return HttpResponse.json({
-      access_token: 'mock-access-token',
-      token_type: 'bearer',
-      expires_in: 3600,
-      refresh_token: 'mock-refresh-token',
-      user: {
-        id: 'mock-user-id',
-        email: 'test@example.com',
-        user_metadata: {
-          full_name: 'Test User'
-        }
+  // ... other handlers ...
+
+  // Corrected registrations handler that matches both raw and encoded filters
+  rest.get(
+    'https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations',
+    (req, res, ctx) => {
+      const userIdFilter = req.url.searchParams.get('user_id')
+
+      if (
+        userIdFilter === '12345678-1234-1234-1234-123456789012' ||
+        userIdFilter === 'eq.12345678-1234-1234-1234-123456789012' ||
+        /in\(.+\)/.test(userIdFilter || '')
+      ) {
+        return res(
+          ctx.status(200),
+          ctx.json([
+            {
+              id: 'reg-1',
+              event_id: 'event-1',
+              registered_at: '2024-01-15T10:00:00Z',
+              payment_status: 'paid',
+              stripe_session_id: 'cs_test_123',
+            },
+          ])
+        )
       }
-    })
-  }),
+
+      return res(ctx.status(200), ctx.json([]))
+    }
+  ),
+
+  // ... the rest of your handlers …
+]
 
   http.post('https://wqaplkypnetifpqrungv.supabase.co/auth/v1/signup', () => {
     return HttpResponse.json({
