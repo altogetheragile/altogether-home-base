@@ -37,7 +37,7 @@ jobs:
 
     - name: Upload Vitest test results
       uses: actions/upload-artifact@v4
-      if: always()
+      if: always() && hashFiles('coverage/**') != ''
       with:
         name: vitest-results
         path: |

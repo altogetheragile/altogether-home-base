@@ -38,11 +38,12 @@ vi.mock('@/contexts/AuthContext', () => ({
 describe('Authentication Flow Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Return proper format that matches AuthContext expectations
+    mockSignIn.mockResolvedValue({ error: null })
+    mockSignUp.mockResolvedValue({ error: null })
   })
 
   it('should complete sign in flow with valid credentials', async () => {
-    mockSignIn.mockResolvedValue({ user: { id: 'user-1' } })
-
     render(<Auth />)
     
     // Fill in sign in form using test IDs
@@ -63,17 +64,15 @@ describe('Authentication Flow Integration', () => {
   })
 
   it('should complete sign up flow', async () => {
-    mockSignUp.mockResolvedValue({ user: { id: 'new-user' } })
-
     render(<Auth />)
     
     // Switch to sign up mode
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
     fireEvent.click(signUpTrigger)
     
-    await waitFor(() => {
-      expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
-    })
+    // Wait for the signup form to be rendered
+    const signUpButton = await screen.findByTestId('signup-submit-button')
+    expect(signUpButton).toBeInTheDocument()
     
     // Fill in sign up form using test IDs
     const emailInput = screen.getByTestId('email-signup-input')
@@ -85,7 +84,6 @@ describe('Authentication Flow Integration', () => {
     fireEvent.change(passwordInput, { target: { value: 'newpassword123' } })
     
     // Submit form
-    const signUpButton = screen.getByTestId('signup-submit-button')
     fireEvent.click(signUpButton)
     
     // Verify sign up was called

@@ -33,6 +33,9 @@ vi.mock('react-router-dom', async (importOriginal) => {
 describe('Auth Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Return proper format that matches AuthContext expectations
+    mockSignIn.mockResolvedValue({ error: null })
+    mockSignUp.mockResolvedValue({ error: null })
   })
 
   it('should render sign in form by default', () => {

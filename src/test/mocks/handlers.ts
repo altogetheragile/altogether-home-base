@@ -91,10 +91,11 @@ export const handlers = [
     })
   }),
 
-  // Mock registrations API - Fixed to return separate arrays for registrations and events
+  // Mock registrations API - Return both registrations and events data for the hook
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', ({ request }) => {
     const url = new URL(request.url)
     const userId = url.searchParams.get('user_id')
+    const select = url.searchParams.get('select')
     
     if (userId === '12345678-1234-1234-1234-123456789012') {
       return HttpResponse.json([
@@ -111,12 +112,13 @@ export const handlers = [
     return HttpResponse.json([])
   }),
 
-  // Mock events API for specific event IDs
+  // Mock events API for specific event IDs with proper filtering
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
     const url = new URL(request.url)
     const eventIds = url.searchParams.get('id')
     
-    if (eventIds?.includes('event-1')) {
+    // Handle the 'in' filter for multiple event IDs
+    if (eventIds?.includes('event-1') || url.searchParams.toString().includes('in.(')) {
       return HttpResponse.json([
         {
           id: 'event-1',

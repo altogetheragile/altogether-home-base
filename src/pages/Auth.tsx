@@ -31,20 +31,41 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      const result = await signIn(email, password);
+      
+      if (!result) {
+        console.error('signIn returned undefined');
+        toast({
+          title: "Error signing in",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
+      const { error } = result;
+
+      if (error) {
+        toast({
+          title: "Error signing in",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
+        navigate("/");
+      }
+    } catch (err) {
       toast({
         title: "Error signing in",
-        description: error.message,
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have been signed in successfully.",
-      });
-      navigate("/");
     }
 
     setLoading(false);
@@ -54,18 +75,39 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signUp(email, password, fullName);
+    try {
+      const result = await signUp(email, password, fullName);
+      
+      if (!result) {
+        console.error('signUp returned undefined');
+        toast({
+          title: "Error creating account",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
+      const { error } = result;
+
+      if (error) {
+        toast({
+          title: "Error creating account",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account.",
+        });
+      }
+    } catch (err) {
       toast({
         title: "Error creating account",
-        description: error.message,
+        description: "An unexpected error occurred",
         variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
       });
     }
 
