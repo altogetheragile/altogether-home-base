@@ -1,4 +1,3 @@
-
 name: Tests
 
 on:
@@ -23,10 +22,10 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Run unit tests
-      run: npm run test:run
+    - name: Run unit tests (Vitest)
+      run: npx vitest run --typecheck --config vitest.config.ts --project tsconfig.test.json
 
-    - name: Run E2E tests
+    - name: Run E2E tests (Playwright)
       run: |
         npm run build
         npx playwright install --with-deps
