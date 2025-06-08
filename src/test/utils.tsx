@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { render, RenderOptions } from '@testing-library/react'
+import { render, RenderOptions, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -30,5 +30,6 @@ const customRender = (
   options?: Omit<RenderOptions, 'wrapper'>,
 ) => render(ui, { wrapper: AllTheProviders, ...options })
 
+// Re-export everything from @testing-library/react
 export * from '@testing-library/react'
-export { customRender as render }
+export { customRender as render, screen, fireEvent }
