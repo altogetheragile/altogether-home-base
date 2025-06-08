@@ -1,7 +1,3 @@
-// =============================
-// 📄 src/test/hooks/useUserRegistrations.test.ts
-// =============================
-
 import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { renderHook, waitFor } from '../rtl-helpers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -14,36 +10,41 @@ const mockUser = {
   email: 'test@example.com'
 }
 
+// 👇 Mock the AuthContext with a user
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
     loading: false
   }),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => React.createElement('div', {}, children)
+  AuthProvider: ({ children }: { children: React.ReactNode }) =>
+    React.createElement('div', {}, children)
 }))
 
+// MSW server setup
 beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
+// Query wrapper
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: { retry: false }
-    }
+      queries: { retry: false },
+    },
   })
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  )
+  return ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children)
 }
 
 describe('useUserRegistrations', () => {
   it('should fetch user registrations successfully', async () => {
     const { result } = renderHook(() => useUserRegistrations(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper(),
     })
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 5000 })
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    }, { timeout: 5000 })
 
     expect(result.current.data).toBeDefined()
     expect(result.current.data).toHaveLength(1)
@@ -57,45 +58,9 @@ describe('useUserRegistrations', () => {
 
   it('should handle loading state', () => {
     const { result } = renderHook(() => useUserRegistrations(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper(),
     })
 
     expect(result.current.isLoading).toBe(true)
   })
 })
-
-
-// =============================
-// 🧪 Tab Component Mock (Paste this in test setup or above Auth.test.tsx)
-// =============================
-
-vi.mock('@/components/ui/tabs', () => ({
-  Tabs: ({ children, defaultValue, ...props }: any) => (
-    <div data-testid="tabs-root" data-default-value={defaultValue} {...props}>
-      {children}
-    </div>
-  ),
-  TabsList: ({ children, ...props }: any) => (
-    <div data-testid="tabs-list" {...props}>
-      {children}
-    </div>
-  ),
-  TabsTrigger: ({ children, value, ...props }: any) => (
-    <button
-      role="tab"
-      data-testid={`tab-trigger-${value}`}
-      onClick={() => {
-        const event = new CustomEvent('tabChange', { detail: { value } })
-        document.dispatchEvent(event)
-      }}
-      {...props}
-    >
-      {children}
-    </button>
-  ),
-  TabsContent: ({ children, value, ...props }: any) => (
-    <div data-testid={`tab-content-${value}`} {...props}>
-      {children}
-    </div>
-  )
-}))
