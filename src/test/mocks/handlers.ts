@@ -1,3 +1,4 @@
+// src/test/mocks/handlers.ts
 
 import { http, HttpResponse } from 'msw'
 
@@ -33,12 +34,11 @@ export const handlers = [
     return HttpResponse.json({})
   }),
 
-  // Simplified events API handler
+  // Events API
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
     const url = new URL(request.url)
     const idParam = url.searchParams.get('id')
-    
-    // Always return the test event for any query containing event-1
+
     if (idParam && (idParam.includes('event-1') || idParam.startsWith('in.(') || idParam.startsWith('eq.'))) {
       return HttpResponse.json([
         {
@@ -51,8 +51,7 @@ export const handlers = [
         }
       ])
     }
-    
-    // Default events response
+
     return HttpResponse.json([
       {
         id: 'event-1',
@@ -63,14 +62,8 @@ export const handlers = [
         price_cents: 10000,
         currency: 'usd',
         is_published: true,
-        instructor: [{
-          name: 'Test Instructor',
-          bio: 'Test bio'
-        }],
-        location: [{
-          name: 'Test Location',
-          address: '123 Test St'
-        }],
+        instructor: [{ name: 'Test Instructor', bio: 'Test bio' }],
+        location: [{ name: 'Test Location', address: '123 Test St' }],
         event_templates: [{
           duration_days: 1,
           event_types: [{ name: 'Workshop' }],
@@ -81,12 +74,11 @@ export const handlers = [
     ])
   }),
 
-  // Simplified registrations API handler
+  // Registrations API with joined event field
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', ({ request }) => {
     const url = new URL(request.url)
     const userId = url.searchParams.get('user_id')
-    
-    // Always return registration data for the test user
+
     if (userId === '12345678-1234-1234-1234-123456789012' || userId === 'eq.12345678-1234-1234-1234-123456789012') {
       return HttpResponse.json([
         {
@@ -94,16 +86,19 @@ export const handlers = [
           event_id: 'event-1',
           registered_at: '2024-01-15T10:00:00Z',
           payment_status: 'paid',
-          stripe_session_id: 'cs_test_123'
+          stripe_session_id: 'cs_test_123',
+          event: {
+            id: 'event-1',
+            title: 'Test Event'
+          }
         }
       ])
     }
-    
-    // Return empty array for other users
+
     return HttpResponse.json([])
   }),
 
-  // Mock single event API
+  // Single event fetch
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events/:id', ({ params }) => {
     return HttpResponse.json({
       id: params.id,
@@ -114,14 +109,8 @@ export const handlers = [
       price_cents: 10000,
       currency: 'usd',
       is_published: true,
-      instructor: [{
-        name: 'Test Instructor',
-        bio: 'Test bio'
-      }],
-      location: [{
-        name: 'Test Location',
-        address: '123 Test St'
-      }],
+      instructor: [{ name: 'Test Instructor', bio: 'Test bio' }],
+      location: [{ name: 'Test Location', address: '123 Test St' }],
       event_templates: [{
         duration_days: 1,
         event_types: [{ name: 'Workshop' }],
@@ -131,7 +120,7 @@ export const handlers = [
     })
   }),
 
-  // Mock event registration creation
+  // Registration creation
   http.post('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', () => {
     return HttpResponse.json({
       id: 'new-reg-id',
@@ -141,7 +130,7 @@ export const handlers = [
     })
   }),
 
-  // Mock user role API
+  // User roles
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/user_roles', () => {
     return HttpResponse.json([
       {
@@ -151,7 +140,7 @@ export const handlers = [
     ])
   }),
 
-  // Mock instructors API
+  // Instructors
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/instructors', () => {
     return HttpResponse.json([
       {
@@ -163,7 +152,7 @@ export const handlers = [
     ])
   }),
 
-  // Mock locations API
+  // Locations
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/locations', () => {
     return HttpResponse.json([
       {
@@ -175,7 +164,7 @@ export const handlers = [
     ])
   }),
 
-  // Mock payment endpoints
+  // Checkout
   http.post('https://wqaplkypnetifpqrungv.supabase.co/functions/v1/create-checkout', () => {
     return HttpResponse.json({
       sessionId: 'cs_test_checkout_session',
