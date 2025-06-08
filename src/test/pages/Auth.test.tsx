@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen, fireEvent, waitFor } from '../rtl-helpers'
@@ -22,7 +21,7 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 // Mock react-router-dom
 vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal()
+  const actual = (await importOriginal()) as any
   return {
     ...actual,
     useNavigate: () => mockNavigate,

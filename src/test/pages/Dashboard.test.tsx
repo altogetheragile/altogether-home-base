@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen } from '../rtl-helpers'
@@ -42,7 +41,7 @@ vi.mock('@/hooks/useUserRegistrations', () => ({
 }))
 
 vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal()
+  const actual = (await importOriginal()) as any
   return {
     ...actual,
     Navigate: ({ to }: { to: string }) => <div data-testid="navigate-to">{to}</div>
