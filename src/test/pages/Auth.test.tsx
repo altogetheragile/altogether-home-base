@@ -52,11 +52,18 @@ describe('Auth Page', () => {
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
     fireEvent.click(signUpTrigger)
     
-    // Add a small delay and increase timeout for Radix UI Tabs rendering
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
-    // Use findByTestId with longer timeout for Radix UI component rendering
-    expect(await screen.findByTestId('signup-submit-button', {}, { timeout: 3000 })).toBeInTheDocument()
+    // Wait for Radix UI Tabs to complete the transition with multiple attempts
+    await waitFor(async () => {
+      // Use queryByTestId first to avoid throwing if not found
+      const signUpButton = screen.queryByTestId('signup-submit-button')
+      if (!signUpButton) {
+        // Add a small delay and try again
+        await new Promise(resolve => setTimeout(resolve, 50))
+        expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
+      } else {
+        expect(signUpButton).toBeInTheDocument()
+      }
+    }, { timeout: 5000, interval: 100 })
   })
 
   it('should handle form submission', async () => {

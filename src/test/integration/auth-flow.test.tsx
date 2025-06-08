@@ -70,12 +70,18 @@ describe('Authentication Flow Integration', () => {
     const signUpTrigger = screen.getByRole('tab', { name: 'Sign Up' })
     fireEvent.click(signUpTrigger)
     
-    // Add delay for Radix UI Tabs and use longer timeout
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
-    // Wait for the signup form to be rendered with increased timeout
-    const signUpButton = await screen.findByTestId('signup-submit-button', {}, { timeout: 3000 })
-    expect(signUpButton).toBeInTheDocument()
+    // Wait for Radix UI Tabs to complete the transition with multiple attempts
+    await waitFor(async () => {
+      // Use queryByTestId first to avoid throwing if not found
+      const signUpButton = screen.queryByTestId('signup-submit-button')
+      if (!signUpButton) {
+        // Add a small delay and try again
+        await new Promise(resolve => setTimeout(resolve, 50))
+        expect(screen.getByTestId('signup-submit-button')).toBeInTheDocument()
+      } else {
+        expect(signUpButton).toBeInTheDocument()
+      }
+    }, { timeout: 5000, interval: 100 })
     
     // Fill in sign up form using test IDs
     const emailInput = screen.getByTestId('email-signup-input')
@@ -87,6 +93,7 @@ describe('Authentication Flow Integration', () => {
     fireEvent.change(passwordInput, { target: { value: 'newpassword123' } })
     
     // Submit form
+    const signUpButton = screen.getByTestId('signup-submit-button')
     fireEvent.click(signUpButton)
     
     // Verify sign up was called

@@ -129,7 +129,7 @@ export const handlers = [
     })
   }),
 
-  // Mock registrations API - This is the critical one for useUserRegistrations
+  // Mock registrations API - CRITICAL FIX: Ensure this returns data for the test user ID
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', ({ request }) => {
     const url = new URL(request.url)
     const userId = url.searchParams.get('user_id')
@@ -142,6 +142,7 @@ export const handlers = [
       allParams: Object.fromEntries(url.searchParams.entries())
     })
     
+    // Return registration data for the exact mock user ID used in the test
     if (userId === '12345678-1234-1234-1234-123456789012') {
       console.log('Returning registration data for matching user ID')
       return HttpResponse.json([
@@ -155,7 +156,7 @@ export const handlers = [
       ])
     }
     
-    console.log('No matching user ID, returning empty array')
+    console.log('No matching user ID, returning empty array. Expected:', '12345678-1234-1234-1234-123456789012', 'Got:', userId)
     return HttpResponse.json([])
   }),
 
