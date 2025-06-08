@@ -48,6 +48,7 @@ describe('useUserRegistrations', () => {
     expect(result.current.data).toHaveLength(1)
     expect(result.current.data?.[0]).toMatchObject({
       id: 'reg-1',
+      
       event_id: 'event-1',
       payment_status: 'paid'
     })
