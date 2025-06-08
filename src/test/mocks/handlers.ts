@@ -1,41 +1,20 @@
-// src/test/mocks/handlers.ts
-
-import { rest } from 'msw'
+import { http, HttpResponse } from 'msw'
 
 export const handlers = [
-  // ... other handlers ...
-
-  // Corrected registrations handler that matches both raw and encoded filters
-  rest.get(
-    'https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations',
-    (req, res, ctx) => {
-      const userIdFilter = req.url.searchParams.get('user_id')
-
-      if (
-        userIdFilter === '12345678-1234-1234-1234-123456789012' ||
-        userIdFilter === 'eq.12345678-1234-1234-1234-123456789012' ||
-        /in\(.+\)/.test(userIdFilter || '')
-      ) {
-        return res(
-          ctx.status(200),
-          ctx.json([
-            {
-              id: 'reg-1',
-              event_id: 'event-1',
-              registered_at: '2024-01-15T10:00:00Z',
-              payment_status: 'paid',
-              stripe_session_id: 'cs_test_123',
-            },
-          ])
-        )
+  // ✅ Supabase Auth Handlers
+  http.post('https://wqaplkypnetifpqrungv.supabase.co/auth/v1/token', () => {
+    return HttpResponse.json({
+      access_token: 'mock-access-token',
+      token_type: 'bearer',
+      expires_in: 3600,
+      refresh_token: 'mock-refresh-token',
+      user: {
+        id: 'mock-user-id',
+        email: 'test@example.com',
+        user_metadata: { full_name: 'Test User' }
       }
-
-      return res(ctx.status(200), ctx.json([]))
-    }
-  ),
-
-  // ... the rest of your handlers …
-]
+    })
+  }),
 
   http.post('https://wqaplkypnetifpqrungv.supabase.co/auth/v1/signup', () => {
     return HttpResponse.json({
@@ -51,7 +30,7 @@ export const handlers = [
     return HttpResponse.json({})
   }),
 
-  // Events API
+  // ✅ Events
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events', ({ request }) => {
     const url = new URL(request.url)
     const idParam = url.searchParams.get('id')
@@ -91,12 +70,17 @@ export const handlers = [
     ])
   }),
 
-  // Registrations API with joined event field
+  // ✅ Registrations (with join data)
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', ({ request }) => {
     const url = new URL(request.url)
-    const userId = url.searchParams.get('user_id')
+    const userIdFilter = url.searchParams.get('user_id')
 
-    if (userId === '12345678-1234-1234-1234-123456789012' || userId === 'eq.12345678-1234-1234-1234-123456789012') {
+    const isMatch =
+      userIdFilter === '12345678-1234-1234-1234-123456789012' ||
+      userIdFilter === 'eq.12345678-1234-1234-1234-123456789012' ||
+      /in\(.+\)/.test(userIdFilter || '')
+
+    if (isMatch) {
       return HttpResponse.json([
         {
           id: 'reg-1',
@@ -115,7 +99,7 @@ export const handlers = [
     return HttpResponse.json([])
   }),
 
-  // Single event fetch
+  // ✅ Single event fetch
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/events/:id', ({ params }) => {
     return HttpResponse.json({
       id: params.id,
@@ -137,7 +121,7 @@ export const handlers = [
     })
   }),
 
-  // Registration creation
+  // ✅ Create registration
   http.post('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/event_registrations', () => {
     return HttpResponse.json({
       id: 'new-reg-id',
@@ -147,7 +131,7 @@ export const handlers = [
     })
   }),
 
-  // User roles
+  // ✅ User roles
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/user_roles', () => {
     return HttpResponse.json([
       {
@@ -157,7 +141,7 @@ export const handlers = [
     ])
   }),
 
-  // Instructors
+  // ✅ Instructors
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/instructors', () => {
     return HttpResponse.json([
       {
@@ -169,7 +153,7 @@ export const handlers = [
     ])
   }),
 
-  // Locations
+  // ✅ Locations
   http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/locations', () => {
     return HttpResponse.json([
       {
@@ -181,7 +165,7 @@ export const handlers = [
     ])
   }),
 
-  // Checkout
+  // ✅ Stripe checkout session
   http.post('https://wqaplkypnetifpqrungv.supabase.co/functions/v1/create-checkout', () => {
     return HttpResponse.json({
       sessionId: 'cs_test_checkout_session',
