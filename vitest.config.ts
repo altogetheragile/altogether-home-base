@@ -11,14 +11,14 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: [
       "src/**/*.test.{ts,tsx}", 
-      "src/test/**/*.{test,spec}.{ts,tsx}",
-      "e2e/**/*.{test,spec}.{ts,tsx}"
+      "src/test/**/*.{test,spec}.{ts,tsx}"
     ],
     exclude: [
       "node_modules/**",
       "dist/**",
       ".next/**",
-      "coverage/**"
+      "coverage/**",
+      "e2e/**"
     ],
     typecheck: {
       tsconfig: './tsconfig.test.json',

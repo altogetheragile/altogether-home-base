@@ -1,5 +1,5 @@
 
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen, fireEvent, waitFor } from '../rtl-helpers'
 import Auth from '@/pages/Auth'
@@ -10,35 +10,38 @@ beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-// Mock react-router-dom
 const mockNavigate = vi.fn()
-vi.mock('react-router-dom', () => ({
-  ...vi.importActual('react-router-dom'),
-  useNavigate: () => mockNavigate,
-  useLocation: () => ({ state: null })
-}))
+const mockSignIn = vi.fn()
+const mockSignUp = vi.fn()
 
-// Mock the auth context at the top level
+// Mock react-router-dom
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({ state: null })
+  }
+})
+
+// Mock the auth context
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: vi.fn(() => ({
+  useAuth: () => ({
     user: null,
     loading: false,
-    signIn: vi.fn(),
-    signUp: vi.fn()
-  })),
+    signIn: mockSignIn,
+    signUp: mockSignUp
+  }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 describe('Authentication Flow Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('should complete sign in flow with valid credentials', async () => {
-    const mockSignIn = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
-    
-    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
-      user: null,
-      loading: false,
-      signIn: mockSignIn,
-      signUp: vi.fn()
-    })
+    mockSignIn.mockResolvedValue({ user: { id: 'user-1' } })
 
     render(<Auth />)
     
@@ -60,14 +63,7 @@ describe('Authentication Flow Integration', () => {
   })
 
   it('should complete sign up flow', async () => {
-    const mockSignUp = vi.fn().mockResolvedValue({ user: { id: 'new-user' } })
-    
-    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
-      user: null,
-      loading: false,
-      signIn: vi.fn(),
-      signUp: mockSignUp
-    })
+    mockSignUp.mockResolvedValue({ user: { id: 'new-user' } })
 
     render(<Auth />)
     

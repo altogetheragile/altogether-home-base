@@ -1,5 +1,5 @@
 
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen, fireEvent, waitFor } from '../rtl-helpers'
 import EventCard from '@/components/events/EventCard'
@@ -39,6 +39,7 @@ const mockEvent: EventData = {
 
 // Mock the registration hook
 const mockRegisterForEvent = vi.fn()
+
 vi.mock('@/hooks/useEventRegistration', () => ({
   useEventRegistration: () => ({
     registerForEvent: mockRegisterForEvent,
@@ -49,10 +50,15 @@ vi.mock('@/hooks/useEventRegistration', () => ({
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'test-user', email: 'test@example.com' }
-  })
+  }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 describe('Event Registration Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('should complete full registration flow', async () => {
     render(<EventCard event={mockEvent} />)
     

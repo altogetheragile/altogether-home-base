@@ -1,29 +1,40 @@
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../utils'
 import { screen, fireEvent, waitFor } from '../rtl-helpers'
 import Auth from '@/pages/Auth'
 import React from 'react'
 
-// Mock the auth context at the top level
+const mockSignIn = vi.fn()
+const mockSignUp = vi.fn()
+const mockNavigate = vi.fn()
+
+// Mock the auth context
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: vi.fn(() => ({
+  useAuth: () => ({
     user: null,
     loading: false,
-    signIn: vi.fn(),
-    signUp: vi.fn()
-  })),
+    signIn: mockSignIn,
+    signUp: mockSignUp
+  }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 // Mock react-router-dom
-vi.mock('react-router-dom', () => ({
-  ...vi.importActual('react-router-dom'),
-  useNavigate: () => vi.fn(),
-  useLocation: () => ({ state: null })
-}))
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({ state: null })
+  }
+})
 
 describe('Auth Page', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('should render sign in form by default', () => {
     render(<Auth />)
     
@@ -44,14 +55,6 @@ describe('Auth Page', () => {
   })
 
   it('should handle form submission', async () => {
-    const mockSignIn = vi.fn()
-    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
-      user: null,
-      loading: false,
-      signIn: mockSignIn,
-      signUp: vi.fn()
-    })
-
     render(<Auth />)
     
     const emailInput = screen.getByPlaceholder('Email')

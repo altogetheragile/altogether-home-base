@@ -1,3 +1,4 @@
+
 import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { renderHook, waitFor } from '../rtl-helpers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -15,7 +16,8 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
     loading: false
-  })
+  }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 beforeAll(() => server.listen())

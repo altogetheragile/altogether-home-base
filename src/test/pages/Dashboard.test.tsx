@@ -28,30 +28,38 @@ const mockRegistrations = [
   }
 ]
 
-// Mock the hooks at the top level
+const mockUseAuth = vi.fn()
+const mockUseUserRegistrations = vi.fn()
+
+// Mock the hooks
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: vi.fn(() => ({
-    user: mockUser,
-    loading: false
-  })),
+  useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 vi.mock('@/hooks/useUserRegistrations', () => ({
-  useUserRegistrations: vi.fn(() => ({
-    data: mockRegistrations,
-    isLoading: false
-  }))
+  useUserRegistrations: () => mockUseUserRegistrations()
 }))
 
-vi.mock('react-router-dom', () => ({
-  ...vi.importActual('react-router-dom'),
-  Navigate: ({ to }: { to: string }) => <div data-testid="navigate-to">{to}</div>
-}))
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    Navigate: ({ to }: { to: string }) => <div data-testid="navigate-to">{to}</div>
+  }
+})
 
 describe('Dashboard Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseAuth.mockReturnValue({
+      user: mockUser,
+      loading: false
+    })
+    mockUseUserRegistrations.mockReturnValue({
+      data: mockRegistrations,
+      isLoading: false
+    })
   })
 
   it('should render dashboard for authenticated user', () => {
@@ -69,7 +77,7 @@ describe('Dashboard Page', () => {
   })
 
   it('should redirect unauthenticated users', () => {
-    vi.mocked(vi.mocked(require('@/contexts/AuthContext')).useAuth).mockReturnValue({
+    mockUseAuth.mockReturnValue({
       user: null,
       loading: false
     })

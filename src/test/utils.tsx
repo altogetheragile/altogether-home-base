@@ -3,7 +3,11 @@ import React from 'react'
 import { render as rtlRender, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
+
+// Mock AuthProvider for tests
+const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>
+}
 
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
@@ -17,9 +21,9 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
+        <MockAuthProvider>
           {children}
-        </AuthProvider>
+        </MockAuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   )
