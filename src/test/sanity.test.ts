@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { render } from './utils'
-import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from './rtl-helpers'
 
 describe('Testing Library Import Sanity Check', () => {
   it('should successfully import screen, fireEvent, and waitFor', () => {

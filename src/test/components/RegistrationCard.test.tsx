@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { render } from '../utils'
-import { screen } from '@testing-library/react'
+import { screen } from '../rtl-helpers'
 import RegistrationCard from '@/components/dashboard/RegistrationCard'
 import { UserRegistrationWithEvent } from '@/hooks/useUserRegistrations'
 import React from 'react'
