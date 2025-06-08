@@ -6,7 +6,7 @@ import { useUserRegistrations } from '@/hooks/useUserRegistrations'
 import { server } from '../mocks/server'
 import React from 'react'
 
-// Mock the auth context with a valid UUID that matches our MSW handler
+// Mock the auth context with a valid UUID
 const mockUser = {
   id: '12345678-1234-1234-1234-123456789012',
   email: 'test@example.com'
@@ -37,27 +37,15 @@ const createWrapper = () => {
 
 describe('useUserRegistrations', () => {
   it('should fetch user registrations successfully', async () => {
-    console.log('🧪 useUserRegistrations Test: Starting with mock user:', mockUser.id)
-    
     const { result } = renderHook(() => useUserRegistrations(), {
       wrapper: createWrapper(),
     })
 
-    console.log('🔄 useUserRegistrations Test: Initial loading state:', result.current.isLoading)
-
+    // Wait for the query to complete
     await waitFor(() => {
-      console.log('📊 useUserRegistrations Test: Query state:', {
-        isLoading: result.current.isLoading,
-        isSuccess: result.current.isSuccess,
-        isError: result.current.isError,
-        error: result.current.error,
-        data: result.current.data,
-        dataLength: result.current.data?.length
-      })
       expect(result.current.isSuccess).toBe(true)
-    }, { timeout: 10000 })
+    }, { timeout: 5000 })
 
-    console.log('✅ useUserRegistrations Test: Final data received:', result.current.data)
     expect(result.current.data).toBeDefined()
     expect(result.current.data).toHaveLength(1)
     expect(result.current.data?.[0]).toMatchObject({
