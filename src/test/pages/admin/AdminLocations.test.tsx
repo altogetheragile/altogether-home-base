@@ -34,7 +34,7 @@ function mockCreateLocation(newLocation: { name: string; address: string; virtua
     http.get(/\/locations/, () => {
       // Use concat to append new location cleanly
       return HttpResponse.json(
-        mockLocations.concat([{ ...newLocation, id: 'loc-3' }])
+        mockLocations.concat([Object.assign({}, newLocation, { id: 'loc-3' })])
       )
     })
   )
@@ -54,7 +54,7 @@ function mockEditLocation(
       return HttpResponse.json(
         mockLocations
           .filter(l => l.id !== editId)
-          .concat([{ ...updated, id: editId }])
+          .concat([Object.assign({}, updated, { id: editId })])
       )
     })
   )
