@@ -27,6 +27,14 @@ interface WrapperProps {
   authValue?: any
 }
 
+// Mock AuthProvider/context for tests to avoid act warning and decouple Supabase logic
+import { AuthContext } from '@/contexts/AuthContext'
+
+// Synchronous static provider suitable for test environments
+const MockAuthProvider = ({ children, value }: { children: React.ReactNode; value?: any }) => (
+  <AuthContext.Provider value={value || mockAuthContextValue}>{children}</AuthContext.Provider>
+);
+
 const createWrapper = ({ queryClient, authValue }: Omit<WrapperProps, 'children'> = {}) => {
   const testQueryClient = queryClient || new QueryClient({
     defaultOptions: {
@@ -40,15 +48,13 @@ const createWrapper = ({ queryClient, authValue }: Omit<WrapperProps, 'children'
     }
   })
 
-  // AuthProvider should not receive a `value` prop unless it is explicitly designed for one.
-  // Instead, the mock context/provider should be used in vi.mock or the wrapper should wrap `children` directly.
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={testQueryClient}>
       <BrowserRouter>
-        <AuthProvider>
+        <MockAuthProvider value={authValue || mockAuthContextValue}>
           {children}
           <Toaster />
-        </AuthProvider>
+        </MockAuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   )
