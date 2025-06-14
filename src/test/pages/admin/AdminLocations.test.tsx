@@ -32,11 +32,10 @@ function mockCreateLocation(newLocation: { name: string; address: string; virtua
       return HttpResponse.json({ ...body, id: 'loc-3' })
     }),
     http.get(/\/locations/, () => {
-      // Explicitly cast as any[] to satisfy TS for test objects
-      return HttpResponse.json([
-        ...(mockLocations as any[]),
-        { ...newLocation, id: 'loc-3' }
-      ])
+      // Use concat to append new location cleanly
+      return HttpResponse.json(
+        mockLocations.concat([{ ...newLocation, id: 'loc-3' }])
+      )
     })
   )
 }
@@ -51,10 +50,12 @@ function mockEditLocation(
       return HttpResponse.json({ ...body, id: editId })
     }),
     http.get(/\/locations/, () => {
-      return HttpResponse.json([
-        ...((mockLocations.filter(l => l.id !== editId)) as any[]),
-        { ...updated, id: editId }
-      ])
+      // Use filter + concat to update mockLocations cleanly
+      return HttpResponse.json(
+        mockLocations
+          .filter(l => l.id !== editId)
+          .concat([{ ...updated, id: editId }])
+      )
     })
   )
 }
