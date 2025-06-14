@@ -14,10 +14,10 @@ type Location = {
 }
 
 // Mock data
-const mockLocations: Location[] = [
+const mockLocations = [
   { id: 'loc-1', name: 'Main Hall', address: '123 Main St', virtual_url: 'https://zoom.com/main' },
   { id: 'loc-2', name: 'West Room', address: '456 West Blvd', virtual_url: '' },
-]
+];
 
 // Helper to set up successful GET
 function mockGetLocations() {
@@ -32,8 +32,9 @@ function mockCreateLocation(newLocation: { name: string; address: string; virtua
       return HttpResponse.json({ ...body, id: 'loc-3' })
     }),
     http.get(/\/locations/, () => {
+      // Explicitly cast as any[] to satisfy TS for test objects
       return HttpResponse.json([
-        ...mockLocations,
+        ...(mockLocations as any[]),
         { ...newLocation, id: 'loc-3' }
       ])
     })
@@ -51,7 +52,7 @@ function mockEditLocation(
     }),
     http.get(/\/locations/, () => {
       return HttpResponse.json([
-        ...mockLocations.filter(l => l.id !== editId),
+        ...((mockLocations.filter(l => l.id !== editId)) as any[]),
         { ...updated, id: editId }
       ])
     })
