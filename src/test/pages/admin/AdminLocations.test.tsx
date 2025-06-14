@@ -29,7 +29,7 @@ function mockCreateLocation(newLocation: { name: string; address: string; virtua
   server.use(
     http.post(/\/locations/, async ({ request }) => {
       const body = await request.json()
-      return HttpResponse.json({ ...body, id: 'loc-3' })
+      return HttpResponse.json(Object.assign({}, body, { id: 'loc-3' }))
     }),
     http.get(/\/locations/, () => {
       // Use concat to append new location cleanly
@@ -47,7 +47,7 @@ function mockEditLocation(
   server.use(
     http.patch(/\/locations\/.*/, async ({ request }) => {
       const body = await request.json()
-      return HttpResponse.json({ ...body, id: editId })
+      return HttpResponse.json(Object.assign({}, body, { id: editId }))
     }),
     http.get(/\/locations/, () => {
       // Use filter + concat to update mockLocations cleanly
