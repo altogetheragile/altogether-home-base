@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '../utils'
+import { render } from '../test-utils'
 import { screen } from '../rtl-helpers'
 import Dashboard from '@/pages/Dashboard'
 import React from 'react'

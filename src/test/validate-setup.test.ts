@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest'
-import { render } from './utils'
+import { render } from './test-utils'
 import { screen, fireEvent, waitFor, renderHook } from './rtl-helpers'
 
 describe('Test Environment Validation', () => {
