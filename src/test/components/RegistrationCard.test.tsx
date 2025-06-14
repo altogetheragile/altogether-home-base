@@ -1,6 +1,7 @@
+
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '../test-utils'
-import { RegistrationCard } from '@/components/dashboard/RegistrationCard'
+import RegistrationCard from '@/components/dashboard/RegistrationCard'
 import { UserRegistrationWithEvent } from '@/hooks/useUserRegistrations'
 import React from 'react'
 
@@ -55,3 +56,4 @@ describe('RegistrationCard', () => {
     expect(screen.getByText('Event Not Found')).toBeInTheDocument()
   })
 })
+
