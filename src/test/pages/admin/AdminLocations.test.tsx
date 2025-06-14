@@ -25,7 +25,7 @@ function mockGetLocations() {
     http.get(/\/locations/, () => HttpResponse.json(mockLocations))
   )
 }
-function mockCreateLocation(newLocation: Omit<Location, 'id'>) {
+function mockCreateLocation(newLocation: { name: string; address: string; virtual_url: string }) {
   server.use(
     http.post(/\/locations/, async ({ request }) => {
       const body = await request.json()
@@ -40,7 +40,10 @@ function mockCreateLocation(newLocation: Omit<Location, 'id'>) {
   )
 }
 
-function mockEditLocation(editId: string, updated: Omit<Location, 'id'>) {
+function mockEditLocation(
+  editId: string,
+  updated: { name: string; address: string; virtual_url: string }
+) {
   server.use(
     http.patch(/\/locations\/.*/, async ({ request }) => {
       const body = await request.json()
