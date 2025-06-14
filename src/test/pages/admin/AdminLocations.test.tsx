@@ -1,4 +1,3 @@
-
 import { describe, it, beforeEach, afterAll, vi, expect } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../../test-utils'
 import { server } from '../../mocks/server'
@@ -36,7 +35,7 @@ function mockCreateLocation(newLocation: Omit<Location, 'id'>) {
       return HttpResponse.json([
         ...mockLocations,
         { ...newLocation, id: 'loc-3' }
-      ] as Location[])
+      ])
     })
   )
 }
@@ -51,7 +50,7 @@ function mockEditLocation(editId: string, updated: Omit<Location, 'id'>) {
       return HttpResponse.json([
         ...mockLocations.filter(l => l.id !== editId),
         { ...updated, id: editId }
-      ] as Location[])
+      ])
     })
   )
 }
