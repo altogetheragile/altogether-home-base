@@ -6,8 +6,16 @@ import { http, HttpResponse } from 'msw'
 import AdminLocations from '@/pages/admin/AdminLocations'
 import React from 'react'
 
+// Define Location type for strong typing
+type Location = {
+  id: string
+  name: string
+  address: string
+  virtual_url: string
+}
+
 // Mock data
-const mockLocations = [
+const mockLocations: Location[] = [
   { id: 'loc-1', name: 'Main Hall', address: '123 Main St', virtual_url: 'https://zoom.com/main' },
   { id: 'loc-2', name: 'West Room', address: '456 West Blvd', virtual_url: '' },
 ]
@@ -18,32 +26,37 @@ function mockGetLocations() {
     http.get(/\/locations/, () => HttpResponse.json(mockLocations))
   )
 }
-function mockCreateLocation(newLocation) {
+function mockCreateLocation(newLocation: Omit<Location, 'id'>) {
   server.use(
     http.post(/\/locations/, async ({ request }) => {
       const body = await request.json()
       return HttpResponse.json({ ...body, id: 'loc-3' })
     }),
-    http.get(/\/locations/, () => HttpResponse.json([...mockLocations, { ...newLocation, id: 'loc-3' }]))
+    http.get(/\/locations/, () => {
+      return HttpResponse.json([
+        ...mockLocations,
+        { ...newLocation, id: 'loc-3' }
+      ] as Location[])
+    })
   )
 }
 
-function mockEditLocation(editId, updated) {
+function mockEditLocation(editId: string, updated: Omit<Location, 'id'>) {
   server.use(
     http.patch(/\/locations\/.*/, async ({ request }) => {
       const body = await request.json()
       return HttpResponse.json({ ...body, id: editId })
     }),
-    http.get(/\/locations/, () =>
-      HttpResponse.json([
+    http.get(/\/locations/, () => {
+      return HttpResponse.json([
         ...mockLocations.filter(l => l.id !== editId),
         { ...updated, id: editId }
-      ])
-    )
+      ] as Location[])
+    })
   )
 }
 
-function mockDeleteLocation(deleteId) {
+function mockDeleteLocation(deleteId: string) {
   server.use(
     http.delete(/\/locations\/.*/, () => HttpResponse.json({ success: true })),
     http.get(/\/locations/, () =>
@@ -97,7 +110,9 @@ describe('AdminLocations (TDD First - Failing)', () => {
     mockGetLocations()
     render(<AdminLocations />)
     await waitFor(() => expect(screen.getByText('Main Hall')).toBeInTheDocument())
-    fireEvent.click(screen.getByRole('button', { name: /edit/i, exact: false }))
+    // Instead of using exact: false, grab all edit buttons and pick the first for edit
+    const editButtons = screen.getAllByRole('button', { name: /edit/i })
+    fireEvent.click(editButtons[0])
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'Main Hall Updated' } })
     mockEditLocation('loc-1', { name: 'Main Hall Updated', address: '123 Main St', virtual_url: 'https://zoom.com/main' })
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
