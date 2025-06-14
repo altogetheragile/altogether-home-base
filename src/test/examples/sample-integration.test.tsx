@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import { server } from '../mocks/server'
@@ -40,14 +39,13 @@ describe('Sample Integration Tests', () => {
       currency: 'usd',
       is_published: true,
       instructor: {
-        id: 'instructor-1', 
         name: 'Test Instructor',
         bio: 'Test bio'
       },
       location: {
-        id: 'location-1',
-        name: 'Test Location', 
-        address: '123 Test St'
+        name: 'Test Location',
+        address: '123 Test St',
+        virtual_url: null
       },
       event_template // <--- Fix: provide required event_template
     }
@@ -81,14 +79,13 @@ describe('Sample Integration Tests', () => {
       currency: 'usd',
       is_published: true,
       instructor: {
-        id: 'instructor-1', 
         name: 'Test Instructor',
         bio: 'Test bio'
       },
       location: {
-        id: 'location-1',
-        name: 'Test Location', 
-        address: '123 Test St'
+        name: 'Test Location',
+        address: '123 Test St',
+        virtual_url: null
       },
       event_template
     }
@@ -116,14 +113,13 @@ describe('Sample Integration Tests', () => {
       currency: 'usd',
       is_published: true,
       instructor: {
-        id: 'instructor-1', 
         name: 'Test Instructor',
         bio: 'Test bio'
       },
       location: {
-        id: 'location-1',
-        name: 'Test Location', 
-        address: '123 Test St'
+        name: 'Test Location',
+        address: '123 Test St',
+        virtual_url: null
       },
       event_template
     }
@@ -133,4 +129,3 @@ describe('Sample Integration Tests', () => {
     expect(screen.getByText('Free')).toBeInTheDocument()
   })
 })
-
