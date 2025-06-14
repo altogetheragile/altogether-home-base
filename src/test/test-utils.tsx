@@ -2,7 +2,14 @@
 // Clean, unified version of the test utilities
 
 import React from 'react'
-import { render as rtlRender, RenderOptions } from '@testing-library/react'
+import {
+  render as rtlRender,
+  RenderOptions,
+  screen,
+  fireEvent,
+  waitFor,
+  renderHook,
+} from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { vi, expect } from 'vitest'
@@ -74,21 +81,19 @@ const customRender = (
 }
 
 // Reliable loading and error state helpers
-import * as rtl from '@testing-library/react'
-
 export const waitForLoadingToFinish = async () => {
   // Wait for loading spinner to disappear
-  await rtl.waitFor(() => {
-    expect(rtl.screen.queryByTestId('loading-spinner')).toBeNull()
+  await waitFor(() => {
+    expect(screen.queryByTestId('loading-spinner')).toBeNull()
   })
 }
 
 export const expectLoadingState = () => {
-  expect(rtl.screen.getByTestId('loading-spinner')).toBeInTheDocument()
+  expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
 }
 
 export const expectErrorState = (message?: string) => {
-  const errorElement = rtl.screen.getByTestId('error-message')
+  const errorElement = screen.getByTestId('error-message')
   expect(errorElement).toBeInTheDocument()
   if (message) {
     expect(errorElement).toHaveTextContent(message)
@@ -111,6 +116,13 @@ export const createTestQueryClient = (options = {}) => {
   })
 }
 
-// Export everything for test files
+// Export everything you need from one place
+export {
+  screen,
+  fireEvent,
+  waitFor,
+  renderHook
+}
 export { customRender as render, createWrapper, mockAuthContextValue }
 export * from '@testing-library/react'
+

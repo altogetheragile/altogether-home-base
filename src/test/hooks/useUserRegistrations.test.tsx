@@ -1,6 +1,5 @@
-
 import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
-import { renderHook, waitFor } from '../rtl-helpers'
+import { renderHook, waitFor } from '../test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useUserRegistrations } from '@/hooks/useUserRegistrations'
 import { server } from '../mocks/server'

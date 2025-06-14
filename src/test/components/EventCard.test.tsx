@@ -1,7 +1,5 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '../test-utils'
-import { screen, fireEvent } from '../rtl-helpers'
+import { render, screen, fireEvent } from '../test-utils'
 import EventCard from '@/components/events/EventCard'
 import { EventData } from '@/hooks/useEvents'
 import React from 'react'

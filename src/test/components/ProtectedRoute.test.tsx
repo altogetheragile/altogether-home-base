@@ -1,7 +1,5 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '../test-utils'
-import { screen } from '../rtl-helpers'
+import { render, screen } from '../test-utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import React from 'react'
 
