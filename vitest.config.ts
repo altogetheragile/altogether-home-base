@@ -56,10 +56,11 @@ export default defineConfig({
       }
     },
     // Better error reporting
-    reporter: ['verbose', 'html'],
-    outputFile: {
-      html: './coverage/test-report.html'
-    }
+    reporter: ['verbose'],
+    // Removed outputFile.html (was causing UI reporter to load)
+    // outputFile: {
+    //   html: './coverage/test-report.html'
+    // }
   },
   resolve: {
     alias: {
