@@ -1,12 +1,13 @@
 
+// Clean, unified version of the test utilities
+
 import React from 'react'
 import { render as rtlRender, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { Toaster } from '@/components/ui/toaster'
-// Import vi/expect for test mocks and assertions:
 import { vi, expect } from 'vitest'
+import { AuthProvider, AuthContext } from '@/contexts/AuthContext'
+import { Toaster } from '@/components/ui/toaster'
 
 // Mock user data for auth context
 const mockAuthContextValue = {
@@ -20,20 +21,17 @@ const mockAuthContextValue = {
   signOut: vi.fn()
 }
 
-// Custom wrapper component
+// Synchronous static provider for tests
+const MockAuthProvider = ({ children, value }: { children: React.ReactNode; value?: any }) => (
+  <AuthContext.Provider value={value || mockAuthContextValue}>{children}</AuthContext.Provider>
+)
+
+// Wrapper for providing context
 interface WrapperProps {
   children: React.ReactNode
   queryClient?: QueryClient
   authValue?: any
 }
-
-// Mock AuthProvider/context for tests to avoid act warning and decouple Supabase logic
-import { AuthContext } from '@/contexts/AuthContext'
-
-// Synchronous static provider suitable for test environments
-const MockAuthProvider = ({ children, value }: { children: React.ReactNode; value?: any }) => (
-  <AuthContext.Provider value={value || mockAuthContextValue}>{children}</AuthContext.Provider>
-);
 
 const createWrapper = ({ queryClient, authValue }: Omit<WrapperProps, 'children'> = {}) => {
   const testQueryClient = queryClient || new QueryClient({
@@ -60,7 +58,7 @@ const createWrapper = ({ queryClient, authValue }: Omit<WrapperProps, 'children'
   )
 }
 
-// Custom render function
+// Unified custom render function
 const customRender = (
   ui: React.ReactElement,
   options?: Omit<RenderOptions, 'wrapper'> & {
@@ -69,40 +67,35 @@ const customRender = (
   }
 ) => {
   const { queryClient, authValue, ...renderOptions } = options || {}
-  
   return rtlRender(ui, {
     wrapper: createWrapper({ queryClient, authValue }),
     ...renderOptions
   })
 }
 
-// Test helpers
-export const waitForLoadingToFinish = () => {
-  // Use correct Testing Library screen.queryByTestId
-  // Usage of `screen.queryByTestId` presumes screen is imported in caller file.
-  // Alternative: return a function to be called within the test context.
-  return (typeof window !== 'undefined' && (window as any).screen && (window as any).screen.queryByTestId)
-    ? (window as any).screen.queryByTestId('loading-spinner') === null
-    : true
+// Reliable loading and error state helpers
+import * as rtl from '@testing-library/react'
+
+export const waitForLoadingToFinish = async () => {
+  // Wait for loading spinner to disappear
+  await rtl.waitFor(() => {
+    expect(rtl.screen.queryByTestId('loading-spinner')).toBeNull()
+  })
 }
 
 export const expectLoadingState = () => {
-  if (typeof window !== 'undefined' && (window as any).screen) {
-    expect((window as any).screen.getByTestId('loading-spinner')).toBeInTheDocument()
-  }
+  expect(rtl.screen.getByTestId('loading-spinner')).toBeInTheDocument()
 }
 
 export const expectErrorState = (message?: string) => {
-  if (typeof window !== 'undefined' && (window as any).screen) {
-    const errorElement = (window as any).screen.getByTestId('error-message')
-    expect(errorElement).toBeInTheDocument()
-    if (message) {
-      expect(errorElement).toHaveTextContent(message)
-    }
+  const errorElement = rtl.screen.getByTestId('error-message')
+  expect(errorElement).toBeInTheDocument()
+  if (message) {
+    expect(errorElement).toHaveTextContent(message)
   }
 }
 
-// Mock factory for creating test query clients
+// Factory for test query clients
 export const createTestQueryClient = (options = {}) => {
   return new QueryClient({
     defaultOptions: {
@@ -118,7 +111,6 @@ export const createTestQueryClient = (options = {}) => {
   })
 }
 
-// Export everything
+// Export everything for test files
 export { customRender as render, createWrapper, mockAuthContextValue }
 export * from '@testing-library/react'
-
