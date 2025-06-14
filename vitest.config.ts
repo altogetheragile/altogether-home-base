@@ -26,7 +26,7 @@ export default defineConfig({
     },
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'src/**/*.test.{ts,tsx}',
@@ -34,10 +34,32 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/main.tsx',
         'src/vite-env.d.ts'
-      ]
+      ],
+      thresholds: {
+        global: {
+          branches: 70,
+          functions: 70,
+          lines: 70,
+          statements: 70
+        }
+      }
     },
     testTimeout: 10000,
-    hookTimeout: 10000
+    hookTimeout: 10000,
+    // Optimize test execution
+    maxConcurrency: 5,
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+        useAtomics: true
+      }
+    },
+    // Better error reporting
+    reporter: ['verbose', 'html'],
+    outputFile: {
+      html: './coverage/test-report.html'
+    }
   },
   resolve: {
     alias: {

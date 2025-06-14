@@ -22,3 +22,28 @@ export const mockProfile = {
   role: 'user',
   created_at: new Date().toISOString()
 }
+
+// Enhanced user data for different scenarios
+export const mockAdminUser = {
+  ...mockUser,
+  id: 'admin-user-id',
+  email: 'admin@example.com',
+  user_metadata: {
+    full_name: 'Admin User'
+  }
+}
+
+export const mockAdminProfile = {
+  ...mockProfile,
+  id: mockAdminUser.id,
+  email: mockAdminUser.email,
+  full_name: 'Admin User',
+  role: 'admin'
+}
+
+// Factory functions
+export const createMockUser = (overrides: Partial<typeof mockUser> = {}) => ({
+  ...mockUser,
+  ...overrides,
+  id: overrides.id || `user-${Date.now()}`
+})

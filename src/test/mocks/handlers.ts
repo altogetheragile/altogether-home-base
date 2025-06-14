@@ -1,7 +1,7 @@
 
 import { http, HttpResponse } from 'msw'
-import { mockSession, mockUser } from '../fixtures/mockUserData'
-import { mockEvent, mockRegistration } from '../fixtures/mockEventData'
+import { mockSession, mockUser, mockAdminUser } from '../fixtures/mockUserData'
+import { mockEvent, mockRegistration, mockEvents } from '../fixtures/mockEventData'
 
 const BASE = 'https://wqaplkypnetifpqrungv.supabase.co'
 
@@ -11,11 +11,12 @@ export const handlers = [
     return HttpResponse.json(mockSession, { status: 200 })
   }),
 
-  http.post(`${BASE}/auth/v1/signup`, () => {
+  http.post(`${BASE}/auth/v1/signup`, async ({ request }) => {
+    const body = await request.json() as any
     return HttpResponse.json({
       user: {
         id: 'new-user-id',
-        email: 'newuser@example.com',
+        email: body.email || 'newuser@example.com',
         email_confirmed_at: null
       }
     }, { status: 200 })
@@ -25,16 +26,27 @@ export const handlers = [
     return HttpResponse.json({}, { status: 200 })
   }),
 
-  // --- Events list ---
+  // --- Events list with filtering and pagination ---
   http.get(`${BASE}/rest/v1/events`, ({ request }) => {
     const url = new URL(request.url)
     const idParam = url.searchParams.get('id')
+    const limit = url.searchParams.get('limit')
+    const offset = url.searchParams.get('offset')
 
+    // Handle single event lookup
     if (idParam && (idParam.includes('event-1') || idParam.startsWith('in.') || idParam.startsWith('eq.'))) {
       return HttpResponse.json([mockEvent], { status: 200 })
     }
 
-    return HttpResponse.json([mockEvent], { status: 200 })
+    // Handle pagination
+    let events = mockEvents
+    if (limit) {
+      const limitNum = parseInt(limit)
+      const offsetNum = parseInt(offset || '0')
+      events = events.slice(offsetNum, offsetNum + limitNum)
+    }
+
+    return HttpResponse.json(events, { status: 200 })
   }),
 
   // --- Event registrations with joined event ---
@@ -55,32 +67,48 @@ export const handlers = [
 
   // --- Single event details ---
   http.get(`${BASE}/rest/v1/events/:id`, ({ params }) => {
+    const eventId = params.id as string
+    
+    if (eventId === 'not-found') {
+      return HttpResponse.json(null, { status: 404 })
+    }
+
     return HttpResponse.json({
       ...mockEvent,
-      id: params.id,
-      title: 'Test Event Details',
+      id: eventId,
+      title: eventId === 'event-1' ? 'Test Event' : 'Test Event Details',
       description: 'Detailed test event'
     }, { status: 200 })
   }),
 
   // --- Event registration creation ---
-  http.post(`${BASE}/rest/v1/event_registrations`, () => {
+  http.post(`${BASE}/rest/v1/event_registrations`, async ({ request }) => {
+    const body = await request.json() as any
     return HttpResponse.json({
       id: 'new-reg-id',
-      event_id: 'event-1',
+      event_id: body.event_id || 'event-1',
+      user_id: body.user_id,
       registered_at: new Date().toISOString(),
       payment_status: 'pending'
-    }, { status: 200 })
+    }, { status: 201 })
   }),
 
   // --- User roles ---
-  http.get(`${BASE}/rest/v1/user_roles`, () => {
-    return HttpResponse.json([
-      {
-        user_id: 'mock-user-id',
+  http.get(`${BASE}/rest/v1/user_roles`, ({ request }) => {
+    const url = new URL(request.url)
+    const userIdFilter = url.searchParams.get('user_id') || ''
+    
+    if (userIdFilter.includes('admin-user-id')) {
+      return HttpResponse.json([{
+        user_id: 'admin-user-id',
         role: 'admin'
-      }
-    ], { status: 200 })
+      }], { status: 200 })
+    }
+
+    return HttpResponse.json([{
+      user_id: 'mock-user-id',
+      role: 'user'
+    }], { status: 200 })
   }),
 
   // --- Instructors ---
@@ -107,11 +135,50 @@ export const handlers = [
     ], { status: 200 })
   }),
 
-  // --- Checkout session ---
-  http.post(`${BASE}/functions/v1/create-checkout`, () => {
+  // --- Edge Functions ---
+  http.post(`${BASE}/functions/v1/create-checkout`, async ({ request }) => {
+    const body = await request.json() as any
+    
+    if (body.eventId === 'error-event') {
+      return HttpResponse.json(
+        { error: 'Event not found' }, 
+        { status: 404 }
+      )
+    }
+
     return HttpResponse.json({
       sessionId: 'cs_test_checkout_session',
       url: 'https://checkout.stripe.com/pay/cs_test_checkout_session'
     }, { status: 200 })
+  }),
+
+  http.post(`${BASE}/functions/v1/verify-payment`, async ({ request }) => {
+    const body = await request.json() as any
+    
+    if (body.sessionId === 'cs_failed_session') {
+      return HttpResponse.json(
+        { error: 'Payment verification failed' },
+        { status: 400 }
+      )
+    }
+
+    return HttpResponse.json({
+      payment_status: 'paid',
+      registration_id: 'reg-verified'
+    }, { status: 200 })
+  }),
+
+  // --- Error handlers ---
+  http.get(`${BASE}/rest/v1/events-error`, () => {
+    return HttpResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    )
+  }),
+
+  // --- Network delay simulation ---
+  http.get(`${BASE}/rest/v1/events-slow`, async () => {
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    return HttpResponse.json(mockEvents, { status: 200 })
   })
 ]
