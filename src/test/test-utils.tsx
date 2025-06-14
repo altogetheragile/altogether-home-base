@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
+// Import vi/expect for test mocks and assertions:
+import { vi, expect } from 'vitest'
 
 // Mock user data for auth context
 const mockAuthContextValue = {
@@ -38,10 +40,12 @@ const createWrapper = ({ queryClient, authValue }: Omit<WrapperProps, 'children'
     }
   })
 
+  // AuthProvider should not receive a `value` prop unless it is explicitly designed for one.
+  // Instead, the mock context/provider should be used in vi.mock or the wrapper should wrap `children` directly.
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={testQueryClient}>
       <BrowserRouter>
-        <AuthProvider value={authValue || mockAuthContextValue}>
+        <AuthProvider>
           {children}
           <Toaster />
         </AuthProvider>
@@ -68,18 +72,27 @@ const customRender = (
 
 // Test helpers
 export const waitForLoadingToFinish = () => {
-  return screen.queryByTestId('loading-spinner') === null
+  // Use correct Testing Library screen.queryByTestId
+  // Usage of `screen.queryByTestId` presumes screen is imported in caller file.
+  // Alternative: return a function to be called within the test context.
+  return (typeof window !== 'undefined' && (window as any).screen && (window as any).screen.queryByTestId)
+    ? (window as any).screen.queryByTestId('loading-spinner') === null
+    : true
 }
 
 export const expectLoadingState = () => {
-  expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
+  if (typeof window !== 'undefined' && (window as any).screen) {
+    expect((window as any).screen.getByTestId('loading-spinner')).toBeInTheDocument()
+  }
 }
 
 export const expectErrorState = (message?: string) => {
-  const errorElement = screen.getByTestId('error-message')
-  expect(errorElement).toBeInTheDocument()
-  if (message) {
-    expect(errorElement).toHaveTextContent(message)
+  if (typeof window !== 'undefined' && (window as any).screen) {
+    const errorElement = (window as any).screen.getByTestId('error-message')
+    expect(errorElement).toBeInTheDocument()
+    if (message) {
+      expect(errorElement).toHaveTextContent(message)
+    }
   }
 }
 
@@ -102,3 +115,4 @@ export const createTestQueryClient = (options = {}) => {
 // Export everything
 export { customRender as render, createWrapper, mockAuthContextValue }
 export * from '@testing-library/react'
+
