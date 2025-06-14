@@ -1,3 +1,4 @@
+
 import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { renderHook, waitFor } from '../rtl-helpers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -26,7 +27,10 @@ afterAll(() => server.close())
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: { retry: false },
+      queries: { 
+        retry: false,
+        gcTime: 0
+      },
     },
   })
   return ({ children }: { children: React.ReactNode }) => (
@@ -42,7 +46,7 @@ describe('useUserRegistrations', () => {
 
     await waitFor(
       () => expect(result.current.isSuccess).toBe(true),
-      { timeout: 5000 }
+      { timeout: 3000 }
     )
 
     expect(result.current.data).toBeDefined()
