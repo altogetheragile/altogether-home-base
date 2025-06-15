@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '../test-utils'
 import RegistrationCard from '@/components/dashboard/RegistrationCard'
@@ -56,4 +55,3 @@ describe('RegistrationCard', () => {
     expect(screen.getByText('Event Not Found')).toBeInTheDocument()
   })
 })
-
