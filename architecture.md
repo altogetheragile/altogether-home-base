@@ -1,3 +1,4 @@
+
 # AltogetherAgile App – Architecture Brief
 
 ## 🧾 Project Summary
@@ -9,7 +10,7 @@ AltogetherAgile is a professional learning platform offering Agile training cour
 * Manage contact and registration data
 * Administer and update event offerings from reusable templates
 
-The frontend will be built with **Lovable** (React + Tailwind) and the backend will be powered by **Supabase** for authentication, database, API access, and Edge Functions.
+The frontend is built with **Lovable** (React + Tailwind) and the backend uses **Supabase** for authentication, database, API access, and Edge Functions.
 
 ---
 
@@ -33,7 +34,70 @@ The frontend will be built with **Lovable** (React + Tailwind) and the backend w
 
 ---
 
-## 🔐 1. Security & Authentication
+## 🟢 Current Implementation Status
+
+### ✅ Completed & Tested
+
+- User dashboard and registration views
+- Basic authentication and route-protection (`ProtectedRoute`, `useUserRole`)
+- Admin navigation layout (`AdminLayout`)
+- Instructor and location CRUD (UI and most backend integration)
+- Event CRUD (UI and most backend integration) — **delete event not implemented**
+
+### 🔄 Implemented but Untested/Incomplete
+
+- Most admin CRUD flows lack comprehensive tests
+- Some error or empty states not well-handled
+- Registration listing and status badges in admin event table
+- Delete UI button for events (but handler not wired up)
+
+### ❌ Missing/Incomplete
+
+- Event templates: Only a placeholder UI; logic not built
+- Contact form and admin contact management
+- Event deletion (backend, wire up button)
+- Registration export for admin
+- Templates to Event conversion
+- Email notification flows
+- Social media or automation integration
+
+---
+
+## 🛠️ Technical Debt & Test Coverage
+
+- Most admin features lack automated tests; see test plan
+- Current test coverage is thin for admin event/instructor/location CRUD, templates, export, and integration flows
+- Some UI-only placeholder sections remain (e.g., event templates)
+- Codebase is growing: some key files (e.g., CreateEvent, EditInstructor, AdminLocations) are long and should be refactored for maintainability
+
+---
+
+## 📁 Code Layout (Lovable Frontend Actual Structure)
+
+```
+/src
+  /components              → UI elements (including /admin, /dashboard, /ui, etc)
+  /hooks                   → React query/data hooks (useUserRole, useInstructors, etc)
+  /pages
+    /admin                 → Admin event/instructor/location/template UIs & forms
+    Dashboard.tsx          → User dashboard
+    Events.tsx, EventDetail.tsx, Auth.tsx
+  /integrations
+    /supabase              → Supabase client and types
+  /test                    → Vitest/RTL test setup and feature tests
+```
+
+---
+
+## 📈 Planned Improvements
+
+* Implement missing backend and UI for event templates, contact management, event deletion, and registration export
+* Add comprehensive testing per feature area
+* Refactor long files into focused components/hooks
+
+---
+
+## 🛡️ Security & Authentication
 
 * **Supabase Auth** for email/password and Google OAuth
 * **Row-Level Security (RLS)** for all user-specific data (registrations, contacts, etc.)
@@ -43,90 +107,52 @@ The frontend will be built with **Lovable** (React + Tailwind) and the backend w
 
 ## 🧱 2. Scalable Data Model
 
-### Core Tables
-
-* `event_templates`: Reusable blueprints for events
-* `events`: Scheduled instances of an event
-* `event_types`: e.g., course, webinar
-* `event_categories`: e.g., agile, delivery
-* `locations`: e.g., London, Zoom
-* `instructors`: Reusable speaker/coach records
-* `formats`: online, in-person, hybrid
-* `levels`: beginner, intermediate, advanced
-* `event_registrations`: Links users to events
-* `users`: Supabase-authenticated accounts
-* `contacts`: CRM-style user contact records
+*see original spec for detailed tables — most tables present in Supabase schema; templates and contact features not fully implemented in UI*
 
 ---
 
 ## 💳 3. Stripe Integration
 
 * Supabase Edge Functions to:
-
   * Create payment intents
   * Handle Stripe webhooks
   * Record successful payments in `event_registrations`
 * Store Stripe customer IDs for returning users
-* Optional: Coupon codes or discount logic in Supabase or Stripe metadata
 
 ---
 
 ## 🔄 4. Admin UX & CMS-like Functionality
 
-* Admin routes protected by Supabase RLS and role-based logic
-* Admins can:
-
-  * Add/edit/delete events and templates
-  * Manage dropdowns (formats, categories, instructors, locations)
-  * Track and export event registration lists
-* Soft delete functionality for event archival
+* Admin routes are protected (see `ProtectedRoute` and role logic)
+* Admins have functional screens for events, instructors, locations
+* Templates, contacts, deletion/export features not yet implemented
 
 ---
 
 ## 📢 5. Social Media Integrations
 
-* Social metadata (title, image, description) stored per event
-* Optional social post automation via:
-
-  * LinkedIn API
-  * Zapier or Edge Function triggers
-* Social sharing buttons embedded in event pages
-
----
-
-## 📁 6. Code Layout (Lovable Frontend)
-
-```
-/app
-  /components        → UI elements
-  /features
-    /events          → Listing, detail, registration views
-    /admin           → Admin-only views
-    /auth            → Login & register
-    /contacts        → Contact form
-  /lib
-    supabase.ts      → Supabase client setup
-    stripe.ts        → Stripe integration helpers
-  /pages
-    index.tsx        → Homepage
-    events/[slug].tsx
-```
+* Not yet implemented; only placeholder in documentation
 
 ---
 
 ## 🛡️ 7. Best Practices
 
 * RLS enforced for all customer data access
-* Supabase schemas separated (`public`, `private`, `admin`) if complexity grows
-* Use UUIDs for all primary keys
-* Use `revalidate` and `useEffect` where needed to ensure client-data sync
-* Reuse dropdown metadata tables to reduce duplication
-* Audit logs or Supabase logs for admin actions (optional)
+* UUIDs for all primary keys
+* Client-side data revalidation using React Query
+* Dropdown metadata tables deduplicate common data (instructors, formats, etc.)
 
 ---
 
 ## 🗃️ Supporting Materials
 
-* ERD (exported from dbdiagram.io) – *\[to be added]*
-* Stripe checkout → webhook flow diagram – *\[to be added]*
-* Example API contracts – *\[optional enhancement]*
+* *To be added*: ERD (exported from dbdiagram.io)
+* *To be added*: Stripe checkout → webhook flow diagram
+* *To be added*: Example API contracts
+
+---
+
+## 📋 Implementation & Test-First Roadmap
+
+See internal documentation/test plan for upcoming staged improvements, tests, and codebase refactoring.
+
