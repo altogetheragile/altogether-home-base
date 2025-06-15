@@ -1,12 +1,13 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '../test-utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import React from 'react'
 
+// Mocks
 const mockUseAuth = vi.fn()
 const mockUseUserRole = vi.fn()
 
-// Mock the hooks
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
@@ -29,14 +30,14 @@ describe('ProtectedRoute', () => {
     vi.clearAllMocks()
   })
 
-  it('should show loading state while checking auth', () => {
+  it('should show loading state while checking both auth and user role', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: true
     })
     mockUseUserRole.mockReturnValue({
       data: null,
-      isLoading: false
+      isLoading: true
     })
 
     render(
@@ -44,11 +45,11 @@ describe('ProtectedRoute', () => {
         <div>Protected content</div>
       </ProtectedRoute>
     )
-    
+
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
   })
 
-  it('should redirect unauthenticated users to auth', () => {
+  it('redirects if not authenticated', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false
@@ -63,13 +64,12 @@ describe('ProtectedRoute', () => {
         <div>Protected content</div>
       </ProtectedRoute>
     )
-    
     expect(screen.getByTestId('navigate-to')).toHaveTextContent('/auth')
   })
 
-  it('should render content for authenticated admin users', () => {
+  it('renders for authenticated admin user', () => {
     mockUseAuth.mockReturnValue({
-      user: { id: 'user-1', email: 'admin@example.com' },
+      user: { id: 'admin1', email: 'admin@altogetheragile.com' },
       loading: false
     })
     mockUseUserRole.mockReturnValue({
@@ -82,13 +82,12 @@ describe('ProtectedRoute', () => {
         <div>Protected content</div>
       </ProtectedRoute>
     )
-    
     expect(screen.getByText('Protected content')).toBeInTheDocument()
   })
 
-  it('should redirect non-admin users to home', () => {
+  it('redirects non-admin users to home', () => {
     mockUseAuth.mockReturnValue({
-      user: { id: 'user-1', email: 'user@example.com' },
+      user: { id: 'user1', email: 'user@test.com' },
       loading: false
     })
     mockUseUserRole.mockReturnValue({
@@ -101,7 +100,43 @@ describe('ProtectedRoute', () => {
         <div>Protected content</div>
       </ProtectedRoute>
     )
-    
     expect(screen.getByTestId('navigate-to')).toHaveTextContent('/')
   })
+
+  it('renders for authenticated user if requiredRole not given', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user2', email: 'user2@test.com' },
+      loading: false
+    })
+    mockUseUserRole.mockReturnValue({
+      data: 'user',
+      isLoading: false
+    })
+
+    render(
+      <ProtectedRoute requiredRole="user">
+        <div>User Page</div>
+      </ProtectedRoute>
+    )
+    expect(screen.getByText('User Page')).toBeInTheDocument()
+  })
+
+  it('shows loading spinner if user exists but userRole is still loading', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'admin1', email: 'admin@test.com' },
+      loading: false
+    })
+    mockUseUserRole.mockReturnValue({
+      data: null,
+      isLoading: true
+    })
+
+    render(
+      <ProtectedRoute>
+        <div>Should not show</div>
+      </ProtectedRoute>
+    )
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
+  })
 })
+
