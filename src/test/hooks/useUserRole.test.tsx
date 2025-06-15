@@ -1,28 +1,33 @@
-import { describe, it, vi, expect } from 'vitest'
+
+import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '../test-utils'
 import { useUserRole } from '@/hooks/useUserRole'
 import React from 'react'
 
-// Remove direct Supabase client mocks. We will use MSW handlers.
-// Also don't do vi.doMock - use correct vi.mock at top of file, and test-utils wrapper for QueryClient
-
+// We reset mocks and modules before each test suite to not leak mocks between tests
+let mockedAuth: any = null;
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 'user-1', email: 'tester@example.com' }
-  }),
+  useAuth: () => mockedAuth,
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
 
 describe('useUserRole', () => {
   const queryClient = new QueryClient();
 
+  beforeEach(() => {
+    mockedAuth = { user: { id: 'user-1', email: 'tester@example.com' } };
+  });
+
+  afterEach(() => {
+    // Clean up any window.fetch mocks after each test
+    (window.fetch as any) = undefined;
+    queryClient.clear();
+    vi.clearAllMocks();
+  });
+
   it('returns null if no user', async () => {
-    // Mock context to no user for this test only.
-    vi.mock('@/contexts/AuthContext', () => ({
-      useAuth: () => ({ user: null }),
-      AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
-    }));
+    mockedAuth = { user: null };
     const { result } = renderHook(() => useUserRole(), {
       wrapper: ({ children }) =>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -31,7 +36,7 @@ describe('useUserRole', () => {
   });
 
   it('returns role from Supabase on success', async () => {
-    // By default our MSW handler for profiles will send { id: user-1, role: 'admin' }
+    // MSW handlers are used, see handlers.ts
     const { result } = renderHook(() => useUserRole(), {
       wrapper: ({ children }) =>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -40,7 +45,7 @@ describe('useUserRole', () => {
   });
 
   it('returns "user" if data.role not found', async () => {
-    // We'll trick MSW to return profile with null role for this test only
+    // Mock fetch to simulate missing role in the response
     window.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ([{ id: 'user-1' }])
@@ -51,13 +56,10 @@ describe('useUserRole', () => {
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     });
     await waitFor(() => expect(result.current.data).toBe('user'));
-
-    // reset fetch for other tests
     (window.fetch as any) = undefined;
   });
 
   it('returns null and logs error if there is error', async () => {
-    // For this test, we want the backend to error
     window.fetch = vi.fn().mockResolvedValueOnce({
       ok: false,
       json: async () => ({ error: { message: 'DB error' } })

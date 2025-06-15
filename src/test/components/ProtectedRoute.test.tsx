@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '../test-utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -10,11 +11,11 @@ const mockUseUserRole = vi.fn()
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
-}))
+}));
 
 vi.mock('@/hooks/useUserRole', () => ({
   useUserRole: () => mockUseUserRole()
-}))
+}));
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = (await importOriginal()) as any
