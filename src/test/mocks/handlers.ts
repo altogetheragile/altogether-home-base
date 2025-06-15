@@ -156,6 +156,18 @@ export const handlers = [
     )
   }),
 
+  // --- Support /rest/v1/profiles for user role fetches ---
+  http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/profiles', ({ request }) => {
+    const url = new URL(request.url);
+    const idFilter = url.searchParams.get('id') || '';
+    // Return admin if id is 'user-1' (for useUserRole success test)
+    if (idFilter.includes('user-1')) {
+      return HttpResponse.json([{ id: 'user-1', role: 'admin' }], { status: 200 });
+    }
+    // Default to user
+    return HttpResponse.json([{ id: 'mock-user-id', role: 'user' }], { status: 200 });
+  }),
+
   // --- Edge Functions ---
   http.post(`${BASE}/functions/v1/create-checkout`, async ({ request }) => {
     const body = await request.json() as any
