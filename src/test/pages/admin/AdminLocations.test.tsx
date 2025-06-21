@@ -1,10 +1,59 @@
 
+
 import { describe, it, beforeEach, afterAll, vi, expect } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../../test-utils'
 import { server } from '../../mocks/server'
 import { http, HttpResponse } from 'msw'
 import AdminLocations from '@/pages/admin/AdminLocations'
 import React from 'react'
+
+// Mock the LocationForm component to avoid useForm hook issues in tests
+vi.mock('@/components/admin/LocationForm', () => ({
+  default: ({ initialData, onSubmit, isLoading }: {
+    initialData?: { name: string; address: string; virtual_url: string };
+    onSubmit: (data: { name: string; address: string; virtual_url: string }) => void;
+    isLoading?: boolean;
+  }) => {
+    const [formData, setFormData] = React.useState(
+      initialData || { name: '', address: '', virtual_url: '' }
+    );
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      onSubmit(formData);
+    };
+
+    return (
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="name">Name</label>
+        <input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        />
+        {!formData.name && <div>Name is required</div>}
+        
+        <label htmlFor="address">Address</label>
+        <input
+          id="address"
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+        />
+        
+        <label htmlFor="virtual_url">Virtual URL</label>
+        <input
+          id="virtual_url"
+          value={formData.virtual_url}
+          onChange={(e) => setFormData({ ...formData, virtual_url: e.target.value })}
+        />
+        
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save'}
+        </button>
+      </form>
+    );
+  },
+}));
 
 // Define Location type for strong typing
 type Location = {
@@ -141,3 +190,4 @@ describe('AdminLocations (TDD First - Failing)', () => {
     await waitFor(() => expect(screen.getByTestId('error-message')).toBeInTheDocument())
   })
 })
+
