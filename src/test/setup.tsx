@@ -1,9 +1,9 @@
 
+import React from 'react'
 import '@testing-library/jest-dom'
 import { afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { server } from './mocks/server'
-import React from 'react'
 
 // Global AuthContext mock
 vi.mock('@/contexts/AuthContext', () => ({
@@ -23,7 +23,7 @@ vi.mock('@/contexts/AuthContext', () => ({
     signOut: vi.fn(),
     loading: false
   }),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children
 }))
 
 // Start server before all tests
