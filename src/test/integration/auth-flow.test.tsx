@@ -1,4 +1,5 @@
 
+
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import Auth from '@/pages/Auth'
@@ -55,14 +56,23 @@ vi.mock('react-router-dom', async (importOriginal) => {
   }
 })
 
-// Mock the auth context
+// Mock the auth context - ensure complete export structure
 vi.mock('@/contexts/AuthContext', () => ({
-  AuthContext: React.createContext(null),
+  AuthContext: React.createContext({
+    user: null,
+    loading: false,
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+    session: null
+  }),
   useAuth: () => ({
     user: null,
     loading: false,
     signIn: mockSignIn,
-    signUp: mockSignUp
+    signUp: mockSignUp,
+    signOut: vi.fn(),
+    session: null
   }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
@@ -122,3 +132,4 @@ describe('Authentication Flow Integration', () => {
     })
   })
 })
+

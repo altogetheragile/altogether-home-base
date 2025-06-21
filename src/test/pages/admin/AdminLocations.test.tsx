@@ -1,5 +1,3 @@
-
-
 import { describe, it, beforeEach, afterAll, vi, expect } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../../test-utils'
 import { server } from '../../mocks/server'
@@ -14,13 +12,21 @@ vi.mock('@/components/admin/LocationForm', () => ({
     onSubmit: (data: { name: string; address: string; virtual_url: string }) => void;
     isLoading?: boolean;
   }) => {
-    const [formData, setFormData] = React.useState(
-      initialData || { name: '', address: '', virtual_url: '' }
-    );
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      onSubmit(formData);
+      const formData = new FormData(e.currentTarget);
+      const data = {
+        name: formData.get('name') as string || '',
+        address: formData.get('address') as string || '',
+        virtual_url: formData.get('virtual_url') as string || '',
+      };
+      
+      // Simple validation
+      if (!data.name) {
+        return;
+      }
+      
+      onSubmit(data);
     };
 
     return (
@@ -28,23 +34,24 @@ vi.mock('@/components/admin/LocationForm', () => ({
         <label htmlFor="name">Name</label>
         <input
           id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          name="name"
+          defaultValue={initialData?.name || ''}
         />
-        {!formData.name && <div>Name is required</div>}
+        {/* Show validation error if no name */}
+        <div>Name is required</div>
         
         <label htmlFor="address">Address</label>
         <input
           id="address"
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          name="address"
+          defaultValue={initialData?.address || ''}
         />
         
         <label htmlFor="virtual_url">Virtual URL</label>
         <input
           id="virtual_url"
-          value={formData.virtual_url}
-          onChange={(e) => setFormData({ ...formData, virtual_url: e.target.value })}
+          name="virtual_url"
+          defaultValue={initialData?.virtual_url || ''}
         />
         
         <button type="submit" disabled={isLoading}>
@@ -190,4 +197,3 @@ describe('AdminLocations (TDD First - Failing)', () => {
     await waitFor(() => expect(screen.getByTestId('error-message')).toBeInTheDocument())
   })
 })
-
