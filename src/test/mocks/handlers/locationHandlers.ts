@@ -1,38 +1,12 @@
-
 import { http, HttpResponse } from 'msw'
 
-const BASE = 'https://wqaplkypnetifpqrungv.supabase.co'
-
+// Simplified location handlers - these are now mostly unused since we mock hooks globally
 export const locationHandlers = [
-  http.get(`${BASE}/rest/v1/locations`, () => {
+  // Keep minimal handlers for any direct API calls that might still occur
+  http.get('*/locations*', () => {
     return HttpResponse.json([
-      {
-        id: 'location-1',
-        name: 'Test Venue',
-        address: '123 Test St',
-        virtual_url: null
-      }
-    ], { status: 200 })
-  }),
-  http.post(`${BASE}/rest/v1/locations`, async ({ request }) => {
-    const body = await request.json() as any
-    return HttpResponse.json({
-      ...body,
-      id: body.id || 'location-' + Math.random().toString(36).substring(2, 8)
-    }, { status: 201 })
-  }),
-  http.patch(`${BASE}/rest/v1/locations/:id`, async ({ params, request }) => {
-    const id = params.id as string
-    const body = await request.json() as any
-    return HttpResponse.json({
-      ...body,
-      id
-    }, { status: 200 })
-  }),
-  http.delete(`${BASE}/rest/v1/locations/:id`, ({ params }) => {
-    return HttpResponse.json(
-      { success: true },
-      { status: 200 }
-    )
+      { id: 'loc-1', name: 'Main Hall', address: '123 Main St', virtual_url: 'https://zoom.com/main' },
+      { id: 'loc-2', name: 'West Room', address: '456 West Blvd', virtual_url: '' },
+    ])
   }),
 ]
