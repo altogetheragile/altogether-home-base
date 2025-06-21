@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../test-utils'
 import EventCard from '@/components/events/EventCard'
@@ -12,13 +13,6 @@ vi.mock('@/hooks/useEventRegistration', () => ({
     registerForEvent: mockRegisterForEvent,
     loading: false
   })
-}))
-
-vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 'test-user', email: 'test@example.com' }
-  }),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
 const mockEvent: EventData = {

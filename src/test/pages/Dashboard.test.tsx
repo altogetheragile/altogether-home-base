@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '../test-utils'
 import Dashboard from '@/pages/Dashboard'
+import { useAuth } from '@/contexts/AuthContext'
 import React from 'react'
 
 const mockUser = {
@@ -27,16 +28,9 @@ const mockRegistrations = [
   }
 ]
 
-const mockUseAuth = vi.fn()
 const mockUseUserRegistrations = vi.fn()
 
 // Mock the hooks
-vi.mock('@/contexts/AuthContext', () => ({
-  AuthContext: React.createContext(null),
-  useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
-}))
-
 vi.mock('@/hooks/useUserRegistrations', () => ({
   useUserRegistrations: () => mockUseUserRegistrations()
 }))
@@ -52,10 +46,6 @@ vi.mock('react-router-dom', async (importOriginal) => {
 describe('Dashboard Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseAuth.mockReturnValue({
-      user: mockUser,
-      loading: false
-    })
     mockUseUserRegistrations.mockReturnValue({
       data: mockRegistrations,
       isLoading: false
@@ -67,7 +57,7 @@ describe('Dashboard Page', () => {
     
     expect(screen.getByText('My Dashboard')).toBeInTheDocument()
     expect(screen.getByText((content) => 
-      content.includes('Welcome back') && content.includes('test@example.com')
+      content.includes('Welcome back') && content.includes('Test User')
     )).toBeInTheDocument()
   })
 
@@ -79,8 +69,13 @@ describe('Dashboard Page', () => {
   })
 
   it('should redirect unauthenticated users', () => {
-    mockUseAuth.mockReturnValue({
+    const mockAuth = vi.mocked(useAuth)
+    mockAuth.mockReturnValue({
       user: null,
+      session: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       loading: false
     })
 

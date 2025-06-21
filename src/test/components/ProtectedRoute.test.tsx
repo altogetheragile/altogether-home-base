@@ -2,21 +2,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '../test-utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import { useAuth } from '@/contexts/AuthContext'
+import { useUserRole } from '@/hooks/useUserRole'
 import React from 'react'
 
-// Mocks
-const mockUseAuth = vi.fn()
 const mockUseUserRole = vi.fn()
-
-vi.mock('@/contexts/AuthContext', () => ({
-  AuthContext: React.createContext(null),
-  useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
-}));
 
 vi.mock('@/hooks/useUserRole', () => ({
   useUserRole: () => mockUseUserRole()
-}));
+}))
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = (await importOriginal()) as any
@@ -32,10 +26,17 @@ describe('ProtectedRoute', () => {
   })
 
   it('should show loading state while checking both auth and user role', () => {
-    mockUseAuth.mockReturnValue({
+    // Mock loading states using vi.mocked
+    const mockAuth = vi.mocked(useAuth)
+    mockAuth.mockReturnValue({
       user: null,
+      session: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       loading: true
     })
+    
     mockUseUserRole.mockReturnValue({
       data: null,
       isLoading: true
@@ -51,10 +52,16 @@ describe('ProtectedRoute', () => {
   })
 
   it('redirects if not authenticated', () => {
-    mockUseAuth.mockReturnValue({
+    const mockAuth = vi.mocked(useAuth)
+    mockAuth.mockReturnValue({
       user: null,
+      session: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       loading: false
     })
+    
     mockUseUserRole.mockReturnValue({
       data: null,
       isLoading: false
@@ -69,10 +76,16 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders for authenticated admin user', () => {
-    mockUseAuth.mockReturnValue({
+    const mockAuth = vi.mocked(useAuth)
+    mockAuth.mockReturnValue({
       user: { id: 'admin1', email: 'admin@altogetheragile.com' },
+      session: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       loading: false
     })
+    
     mockUseUserRole.mockReturnValue({
       data: 'admin',
       isLoading: false
@@ -87,10 +100,16 @@ describe('ProtectedRoute', () => {
   })
 
   it('redirects non-admin users to home', () => {
-    mockUseAuth.mockReturnValue({
+    const mockAuth = vi.mocked(useAuth)
+    mockAuth.mockReturnValue({
       user: { id: 'user1', email: 'user@test.com' },
+      session: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       loading: false
     })
+    
     mockUseUserRole.mockReturnValue({
       data: 'user',
       isLoading: false
@@ -105,10 +124,16 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders for authenticated user if requiredRole not given', () => {
-    mockUseAuth.mockReturnValue({
+    const mockAuth = vi.mocked(useAuth)
+    mockAuth.mockReturnValue({
       user: { id: 'user2', email: 'user2@test.com' },
+      session: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       loading: false
     })
+    
     mockUseUserRole.mockReturnValue({
       data: 'user',
       isLoading: false
@@ -123,10 +148,16 @@ describe('ProtectedRoute', () => {
   })
 
   it('shows loading spinner if user exists but userRole is still loading', () => {
-    mockUseAuth.mockReturnValue({
+    const mockAuth = vi.mocked(useAuth)
+    mockAuth.mockReturnValue({
       user: { id: 'admin1', email: 'admin@test.com' },
+      session: null,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       loading: false
     })
+    
     mockUseUserRole.mockReturnValue({
       data: null,
       isLoading: true
