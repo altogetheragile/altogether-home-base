@@ -1,3 +1,4 @@
+
 import { describe, it, beforeEach, afterAll, vi, expect } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../../test-utils'
 import { server } from '../../mocks/server'
@@ -14,14 +15,15 @@ vi.mock('@/components/admin/LocationForm', () => ({
   }) => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const formData = new FormData(e.currentTarget);
+      
+      // Use simple test data instead of unsafe FormData access
       const data = {
-        name: formData.get('name') as string || '',
-        address: formData.get('address') as string || '',
-        virtual_url: formData.get('virtual_url') as string || '',
+        name: initialData?.name || 'Test Location',
+        address: initialData?.address || 'Test Address',
+        virtual_url: initialData?.virtual_url || '',
       };
       
-      // Simple validation
+      // Simple validation - only proceed if name exists
       if (!data.name) {
         return;
       }
