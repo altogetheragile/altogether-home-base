@@ -8,6 +8,7 @@ import React from 'react'
 // We reset mocks and modules before each test suite to not leak mocks between tests
 let mockedAuth: any = null;
 vi.mock('@/contexts/AuthContext', () => ({
+  AuthContext: React.createContext(null),
   useAuth: () => mockedAuth,
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));

@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import Auth from '@/pages/Auth'
@@ -56,6 +57,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 // Mock the auth context
 vi.mock('@/contexts/AuthContext', () => ({
+  AuthContext: React.createContext(null),
   useAuth: () => ({
     user: null,
     loading: false,

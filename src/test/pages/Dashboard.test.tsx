@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '../test-utils'
 import Dashboard from '@/pages/Dashboard'
@@ -31,6 +32,7 @@ const mockUseUserRegistrations = vi.fn()
 
 // Mock the hooks
 vi.mock('@/contexts/AuthContext', () => ({
+  AuthContext: React.createContext(null),
   useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))

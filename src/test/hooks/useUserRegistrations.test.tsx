@@ -1,3 +1,4 @@
+
 import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { renderHook, waitFor } from '../test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -11,6 +12,7 @@ const mockUser = {
 }
 
 vi.mock('@/contexts/AuthContext', () => ({
+  AuthContext: React.createContext(null),
   useAuth: () => ({
     user: mockUser,
     loading: false,

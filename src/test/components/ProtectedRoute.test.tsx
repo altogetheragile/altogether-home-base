@@ -9,6 +9,7 @@ const mockUseAuth = vi.fn()
 const mockUseUserRole = vi.fn()
 
 vi.mock('@/contexts/AuthContext', () => ({
+  AuthContext: React.createContext(null),
   useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
