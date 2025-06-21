@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import Auth from '@/pages/Auth'
@@ -43,27 +44,6 @@ vi.mock('react-router-dom', async (importOriginal) => {
     useLocation: () => ({ state: null })
   }
 })
-
-// Mock AuthContext - ensure all exports are included
-vi.mock('@/contexts/AuthContext', () => ({
-  AuthContext: React.createContext({
-    user: null,
-    loading: false,
-    signIn: vi.fn(),
-    signUp: vi.fn(),
-    signOut: vi.fn(),
-    session: null
-  }),
-  useAuth: () => ({
-    user: null,
-    loading: false,
-    signIn: mockSignIn,
-    signUp: mockSignUp,
-    signOut: vi.fn(),
-    session: null
-  }),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
-}))
 
 beforeAll(() => server.listen())
 afterEach(() => {

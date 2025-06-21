@@ -6,21 +6,6 @@ import { useUserRegistrations } from '@/hooks/useUserRegistrations'
 import { server } from '../mocks/server'
 import React from 'react'
 
-const mockUser = {
-  id: '12345678-1234-1234-1234-123456789012',
-  email: 'test@example.com',
-}
-
-vi.mock('@/contexts/AuthContext', () => ({
-  AuthContext: React.createContext(null),
-  useAuth: () => ({
-    user: mockUser,
-    loading: false,
-  }),
-  AuthProvider: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', {}, children),
-}))
-
 beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
