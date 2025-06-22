@@ -243,7 +243,7 @@ const TemplateForm: React.FC<{
             <SelectContent>
               <SelectItem value="">No default location</SelectItem>
               {locations.map((location) => (
-                <Select Item key={location.id} value={location.id}>
+                <SelectItem key={location.id} value={location.id}>
                   {location.name}
                 </SelectItem>
               ))}
