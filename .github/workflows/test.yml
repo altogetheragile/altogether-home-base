@@ -34,7 +34,7 @@ jobs:
     - name: Verify MSW v2 compliance
       run: |
         echo "🔍 Verifying MSW v2 compliance..."
-        node src/test/verify-msw-v2.js
+        node src/test/verify-msw-v2.mjs
         echo "📦 Checking MSW version..."
         npm ls msw
 

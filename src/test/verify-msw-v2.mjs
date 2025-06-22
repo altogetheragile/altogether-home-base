@@ -1,8 +1,9 @@
 
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
+import { join } from 'path';
+import { execSync } from 'child_process';
 
 console.log('🔍 Comprehensive MSW v2 compliance check...');
 
@@ -11,7 +12,7 @@ const checkedFiles = [];
 
 function checkFile(filePath) {
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
+    const content = readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
     checkedFiles.push(filePath);
     
@@ -80,11 +81,11 @@ function walkDir(dir, maxDepth = 3, currentDepth = 0) {
   if (currentDepth > maxDepth) return;
   
   try {
-    const files = fs.readdirSync(dir);
+    const files = readdirSync(dir);
     
     files.forEach(file => {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
+      const filePath = join(dir, file);
+      const stat = statSync(filePath);
       
       if (stat.isDirectory() && !file.startsWith('.') && file !== 'node_modules') {
         walkDir(filePath, maxDepth, currentDepth + 1);
