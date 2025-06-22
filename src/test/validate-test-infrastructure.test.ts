@@ -72,7 +72,6 @@ describe('Test Infrastructure Validation', () => {
 
   describe('Global Mocks', () => {
     it('has global auth context mock available', () => {
-      // This should work because of our global mock in setup.tsx
       const { useAuth } = require('@/contexts/AuthContext')
       
       expect(useAuth).toBeDefined()
