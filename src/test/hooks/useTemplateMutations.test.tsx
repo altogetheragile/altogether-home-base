@@ -23,7 +23,11 @@ const mockToast = vi.fn()
 describe('useTemplateMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseToast.mockReturnValue({ toast: mockToast })
+    mockUseToast.mockReturnValue({ 
+      toast: mockToast,
+      dismiss: vi.fn(),
+      toasts: []
+    })
   })
 
   describe('createTemplate', () => {

@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../test-utils'
+import { render, screen, fireEvent, waitFor, createMockUseQueryResult, createMockUseMutationResult } from '../test-utils'
 import AdminTemplates from '@/pages/admin/AdminTemplates'
 import CreateEvent from '@/pages/admin/CreateEvent'
 import { useTemplates } from '@/hooks/useTemplates'
@@ -52,29 +52,33 @@ describe('Template to Event Workflow Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    mockUseUserRole.mockReturnValue({
+    mockUseUserRole.mockReturnValue(createMockUseQueryResult({
       data: 'admin',
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isSuccess: true
+    }))
     
-    mockUseLocations.mockReturnValue({
+    mockUseLocations.mockReturnValue(createMockUseQueryResult({
       data: mockLocations,
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isSuccess: true
+    }))
     
-    mockUseInstructors.mockReturnValue({
+    mockUseInstructors.mockReturnValue(createMockUseQueryResult({
       data: mockInstructors,
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isSuccess: true
+    }))
     
-    mockUseTemplates.mockReturnValue({
+    mockUseTemplates.mockReturnValue(createMockUseQueryResult({
       data: [mockTemplate],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isSuccess: true
+    }))
   })
 
   it('creates event from template with pre-filled form data', () => {
@@ -92,10 +96,10 @@ describe('Template to Event Workflow Integration', () => {
         template_id: '1'
       },
       selectedTemplate: mockTemplate,
-      createEventMutation: {
+      createEventMutation: createMockUseMutationResult({
         mutate: vi.fn(),
         isPending: false
-      },
+      }),
       handleSubmit: vi.fn(),
       handleInputChange: vi.fn()
     })
@@ -126,10 +130,10 @@ describe('Template to Event Workflow Integration', () => {
         template_id: '1'
       },
       selectedTemplate: mockTemplate,
-      createEventMutation: {
+      createEventMutation: createMockUseMutationResult({
         mutate: vi.fn(),
         isPending: false
-      },
+      }),
       handleSubmit: vi.fn(),
       handleInputChange: vi.fn()
     })
@@ -154,10 +158,10 @@ describe('Template to Event Workflow Integration', () => {
         template_id: 'invalid-id'
       },
       selectedTemplate: null,
-      createEventMutation: {
+      createEventMutation: createMockUseMutationResult({
         mutate: vi.fn(),
         isPending: false
-      },
+      }),
       handleSubmit: vi.fn(),
       handleInputChange: vi.fn()
     })
