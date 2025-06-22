@@ -1,14 +1,24 @@
 
 // Export everything from one place for easy importing
-export * from './test-wrappers'
 export * from './mock-factories'
 export * from './test-helpers'
 
-// Re-export testing library utilities
+// Explicitly export the custom render and createWrapper from test-wrappers
+export { render, createWrapper, createTestQueryClient } from './test-wrappers'
+
+// Re-export testing library utilities (excluding render to avoid conflict)
 export {
   screen,
   fireEvent,
   waitFor,
-  renderHook
+  renderHook,
+  cleanup,
+  act,
+  within,
+  getByRole,
+  getByText,
+  getByTestId,
+  queryByRole,
+  queryByText,
+  queryByTestId
 } from '@testing-library/react'
-export * from '@testing-library/react'
