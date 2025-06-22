@@ -1,10 +1,28 @@
 
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
+import AccessDenied from '@/components/AccessDenied';
 
 const AdminLayout = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+
+  // Additional security layer - double check role at layout level
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (userRole !== 'admin') {
+    return <AccessDenied />;
+  }
 
   const navItems = [
     {
@@ -46,6 +64,18 @@ const AdminLayout = () => {
             <div className="flex items-center space-x-2 mb-6">
               <Settings className="h-6 w-6 text-primary" />
               <h2 className="text-xl font-semibold text-gray-900">Admin Panel</h2>
+            </div>
+
+            {/* User Role Info */}
+            <div className="mb-6 p-3 bg-primary/5 rounded-lg border border-primary/10">
+              <div className="flex items-center space-x-2 text-sm">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="font-medium text-primary">Admin Access</span>
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
+                <User className="h-3 w-3" />
+                <span>{user?.email}</span>
+              </div>
             </div>
             
             <nav className="space-y-2">

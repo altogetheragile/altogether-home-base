@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, LayoutDashboard, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -17,7 +17,7 @@ const Navigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
-  const { data: userRole } = useUserRole();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -26,6 +26,9 @@ const Navigation = () => {
   const handleSignOut = async () => {
     await signOut();
   };
+
+  // Don't show admin links while role is loading
+  const showAdminLinks = !roleLoading && userRole === 'admin';
 
   return (
     <nav className="bg-white shadow-sm border-b border-border sticky top-0 z-50">
@@ -84,17 +87,19 @@ const Navigation = () => {
                 </Link>
               )}
               
-              {/* Admin Link - Only show for admin users */}
-              {userRole === 'admin' && (
+              {/* Admin Link - Only show for admin users with visual indicator */}
+              {showAdminLinks && (
                 <Link
                   to="/admin/events"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     location.pathname.startsWith("/admin")
                       ? "text-primary bg-accent"
                       : "text-muted-foreground hover:text-primary hover:bg-accent"
                   }`}
                 >
-                  Admin
+                  <Settings className="h-4 w-4" />
+                  <span>Admin</span>
+                  <Shield className="h-3 w-3" />
                 </Link>
               )}
             </div>
@@ -108,6 +113,7 @@ const Navigation = () => {
                   <Button variant="ghost" size="sm" className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
                     <span>{user.email}</span>
+                    {userRole === 'admin' && <Shield className="h-3 w-3 text-primary" />}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -117,7 +123,7 @@ const Navigation = () => {
                       My Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  {userRole === 'admin' && (
+                  {showAdminLinks && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
@@ -209,17 +215,19 @@ const Navigation = () => {
               )}
               
               {/* Admin Link - Mobile */}
-              {userRole === 'admin' && (
+              {showAdminLinks && (
                 <Link
                   to="/admin/events"
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                     location.pathname.startsWith("/admin")
                       ? "text-primary bg-accent"
                       : "text-muted-foreground hover:text-primary hover:bg-accent"
                   }`}
                 >
-                  Admin
+                  <Settings className="h-4 w-4" />
+                  <span>Admin</span>
+                  <Shield className="h-3 w-3" />
                 </Link>
               )}
               
@@ -229,8 +237,9 @@ const Navigation = () => {
                   <div className="px-3 py-2">Loading...</div>
                 ) : user ? (
                   <>
-                    <div className="px-3 py-2 text-sm text-muted-foreground">
-                      Signed in as {user.email}
+                    <div className="px-3 py-2 text-sm text-muted-foreground flex items-center space-x-2">
+                      <span>Signed in as {user.email}</span>
+                      {userRole === 'admin' && <Shield className="h-3 w-3 text-primary" />}
                     </div>
                     <button
                       onClick={() => {

@@ -2,6 +2,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Navigate } from 'react-router-dom';
+import AccessDenied from '@/components/AccessDenied';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,11 +13,14 @@ const ProtectedRoute = ({ children, requiredRole = 'admin' }: ProtectedRouteProp
   const { user, loading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
 
-  // Show loading state while checking authentication and role
+  // Show enhanced loading state while checking authentication and role
   if (loading || roleLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div data-testid="loading-spinner" className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-4">
+          <div data-testid="loading-spinner" className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-gray-600">Checking permissions...</p>
+        </div>
       </div>
     );
   }
@@ -26,9 +30,14 @@ const ProtectedRoute = ({ children, requiredRole = 'admin' }: ProtectedRouteProp
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirect to home if user doesn't have required role
+  // Show AccessDenied component instead of redirecting home
   if (userRole !== requiredRole) {
-    return <Navigate to="/" replace />;
+    return (
+      <AccessDenied 
+        title="Admin Access Required"
+        message={`You need ${requiredRole} privileges to access this page. Your current role is: ${userRole || 'user'}.`}
+      />
+    );
   }
 
   return <>{children}</>;
