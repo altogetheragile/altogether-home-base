@@ -4,6 +4,7 @@ import { render, screen } from '../test-utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUserRole } from '@/hooks/useUserRole'
+import { User } from '@supabase/supabase-js'
 import React from 'react'
 
 const mockUseUserRole = vi.fn()
@@ -18,6 +19,24 @@ vi.mock('react-router-dom', async (importOriginal) => {
     ...actual,
     Navigate: ({ to }: { to: string }) => <div data-testid="navigate-to">{to}</div>
   }
+})
+
+// Helper to create a mock User with required Supabase properties
+const createMockUser = (overrides: Partial<User> = {}): User => ({
+  id: 'test-user-id',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'test@example.com',
+  email_confirmed_at: '2024-01-01T00:00:00Z',
+  phone: '',
+  confirmed_at: '2024-01-01T00:00:00Z',
+  last_sign_in_at: '2024-01-01T00:00:00Z',
+  app_metadata: {},
+  user_metadata: {},
+  identities: [],
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  ...overrides
 })
 
 describe('ProtectedRoute', () => {
@@ -78,7 +97,10 @@ describe('ProtectedRoute', () => {
   it('renders for authenticated admin user', () => {
     const mockAuth = vi.mocked(useAuth)
     mockAuth.mockReturnValue({
-      user: { id: 'admin1', email: 'admin@altogetheragile.com' },
+      user: createMockUser({ 
+        id: 'admin1', 
+        email: 'admin@altogetheragile.com' 
+      }),
       session: null,
       signIn: vi.fn(),
       signUp: vi.fn(),
@@ -102,7 +124,10 @@ describe('ProtectedRoute', () => {
   it('redirects non-admin users to home', () => {
     const mockAuth = vi.mocked(useAuth)
     mockAuth.mockReturnValue({
-      user: { id: 'user1', email: 'user@test.com' },
+      user: createMockUser({ 
+        id: 'user1', 
+        email: 'user@test.com' 
+      }),
       session: null,
       signIn: vi.fn(),
       signUp: vi.fn(),
@@ -126,7 +151,10 @@ describe('ProtectedRoute', () => {
   it('renders for authenticated user if requiredRole not given', () => {
     const mockAuth = vi.mocked(useAuth)
     mockAuth.mockReturnValue({
-      user: { id: 'user2', email: 'user2@test.com' },
+      user: createMockUser({ 
+        id: 'user2', 
+        email: 'user2@test.com' 
+      }),
       session: null,
       signIn: vi.fn(),
       signUp: vi.fn(),
@@ -150,7 +178,10 @@ describe('ProtectedRoute', () => {
   it('shows loading spinner if user exists but userRole is still loading', () => {
     const mockAuth = vi.mocked(useAuth)
     mockAuth.mockReturnValue({
-      user: { id: 'admin1', email: 'admin@test.com' },
+      user: createMockUser({ 
+        id: 'admin1', 
+        email: 'admin@test.com' 
+      }),
       session: null,
       signIn: vi.fn(),
       signUp: vi.fn(),
