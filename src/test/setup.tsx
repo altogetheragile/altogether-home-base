@@ -4,11 +4,30 @@ import '@testing-library/jest-dom'
 import { afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { server } from './mocks/server'
+import { User, Session } from '@supabase/supabase-js'
 
-// Global AuthContext mock
+// Helper to create a mock User with required Supabase properties
+const createMockUser = (overrides: Partial<User> = {}): User => ({
+  id: 'test-user-id',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'test@example.com',
+  email_confirmed_at: '2024-01-01T00:00:00Z',
+  phone: '',
+  confirmed_at: '2024-01-01T00:00:00Z',
+  last_sign_in_at: '2024-01-01T00:00:00Z',
+  app_metadata: {},
+  user_metadata: {},
+  identities: [],
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  ...overrides
+})
+
+// Global AuthContext mock with proper TypeScript types
 vi.mock('@/contexts/AuthContext', () => ({
   AuthContext: React.createContext({
-    user: { id: '1', name: 'Test User' },
+    user: createMockUser({ id: '1', email: 'test@example.com' }),
     session: null,
     signIn: vi.fn(),
     signUp: vi.fn(),
@@ -16,7 +35,7 @@ vi.mock('@/contexts/AuthContext', () => ({
     loading: false
   }),
   useAuth: () => ({
-    user: { id: '1', name: 'Test User' },
+    user: createMockUser({ id: '1', email: 'test@example.com' }),
     session: null,
     signIn: vi.fn(),
     signUp: vi.fn(),

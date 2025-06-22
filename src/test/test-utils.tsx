@@ -13,10 +13,9 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { vi, expect } from 'vitest'
-import { AuthProvider, AuthContext } from '@/contexts/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
 
-// Mock user data for auth context
+// Mock user data for auth context (using global mock from setup.tsx)
 const mockAuthContextValue = {
   user: {
     id: '12345678-1234-1234-1234-123456789012',
@@ -28,19 +27,13 @@ const mockAuthContextValue = {
   signOut: vi.fn()
 }
 
-// Synchronous static provider for tests
-const MockAuthProvider = ({ children, value }: { children: React.ReactNode; value?: any }) => (
-  <AuthContext.Provider value={value || mockAuthContextValue}>{children}</AuthContext.Provider>
-)
-
-// Wrapper for providing context
+// Wrapper for providing context (removed AuthProvider since we use global mock)
 interface WrapperProps {
   children: React.ReactNode
   queryClient?: QueryClient
-  authValue?: any
 }
 
-const createWrapper = ({ queryClient, authValue }: Omit<WrapperProps, 'children'> = {}) => {
+const createWrapper = ({ queryClient }: Omit<WrapperProps, 'children'> = {}) => {
   const testQueryClient = queryClient || new QueryClient({
     defaultOptions: {
       queries: {
@@ -56,10 +49,8 @@ const createWrapper = ({ queryClient, authValue }: Omit<WrapperProps, 'children'
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={testQueryClient}>
       <BrowserRouter>
-        <MockAuthProvider value={authValue || mockAuthContextValue}>
-          {children}
-          <Toaster />
-        </MockAuthProvider>
+        {children}
+        <Toaster />
       </BrowserRouter>
     </QueryClientProvider>
   )
@@ -70,12 +61,11 @@ const customRender = (
   ui: React.ReactElement,
   options?: Omit<RenderOptions, 'wrapper'> & {
     queryClient?: QueryClient
-    authValue?: any
   }
 ) => {
-  const { queryClient, authValue, ...renderOptions } = options || {}
+  const { queryClient, ...renderOptions } = options || {}
   return rtlRender(ui, {
-    wrapper: createWrapper({ queryClient, authValue }),
+    wrapper: createWrapper({ queryClient }),
     ...renderOptions
   })
 }
@@ -125,4 +115,3 @@ export {
 }
 export { customRender as render, createWrapper, mockAuthContextValue }
 export * from '@testing-library/react'
-
