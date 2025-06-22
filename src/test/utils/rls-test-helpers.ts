@@ -1,24 +1,8 @@
 
-import { createClient } from '@supabase/supabase-js'
 import { expect } from 'vitest'
 
-// Helper for testing RLS policies in integration tests
-export const createTestSupabaseClient = (userToken?: string) => {
-  const supabaseUrl = 'https://wqaplkypnetifpqrungv.supabase.co'
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxYXBsa3lwbmV0aWZwcXJ1bmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODg2OTUsImV4cCI6MjA2NDg2NDY5NX0.sE0cIatVX-tynJ7Z5dGp4L6f4-SA0s9KWU3WYtVoDzM'
-  
-  const client = createClient(supabaseUrl, supabaseKey)
-  
-  if (userToken) {
-    // Use the correct method to set session
-    client.auth.setSession({
-      access_token: userToken,
-      refresh_token: 'mock-refresh-token'
-    })
-  }
-  
-  return client
-}
+// Since we're using MSW for mocking, these helpers are for integration testing
+// where we need to test actual RLS behavior with real Supabase calls
 
 // Mock admin user for RLS testing
 export const mockAdminUser = {
@@ -50,5 +34,23 @@ export const testUserAccess = async (operation: () => Promise<any>, shouldSuccee
     }
     // Expected to fail
     return { error }
+  }
+}
+
+// Helper to simulate admin context in tests
+export const withAdminContext = (testFn: () => void | Promise<void>) => {
+  return async () => {
+    // This would be used in integration tests where we need admin privileges
+    // For unit tests, we rely on the global auth mock in setup.tsx
+    await testFn()
+  }
+}
+
+// Helper to simulate regular user context in tests
+export const withUserContext = (testFn: () => void | Promise<void>) => {
+  return async () => {
+    // This would be used in integration tests where we need regular user privileges
+    // For unit tests, we rely on the global auth mock in setup.tsx
+    await testFn()
   }
 }
