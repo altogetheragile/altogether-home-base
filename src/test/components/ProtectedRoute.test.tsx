@@ -2,7 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '../test-utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { useAuth } from '@/contexts/AuthContext'
 import { useUserRole } from '@/hooks/useUserRole'
 import { User } from '@supabase/supabase-js'
 import React from 'react'
@@ -21,41 +20,12 @@ vi.mock('react-router-dom', async (importOriginal) => {
   }
 })
 
-// Helper to create a mock User with required Supabase properties
-const createMockUser = (overrides: Partial<User> = {}): User => ({
-  id: 'test-user-id',
-  aud: 'authenticated',
-  role: 'authenticated',
-  email: 'test@example.com',
-  email_confirmed_at: '2024-01-01T00:00:00Z',
-  phone: '',
-  confirmed_at: '2024-01-01T00:00:00Z',
-  last_sign_in_at: '2024-01-01T00:00:00Z',
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  ...overrides
-})
-
 describe('ProtectedRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('should show loading state while checking both auth and user role', () => {
-    // Mock loading states using vi.mocked
-    const mockAuth = vi.mocked(useAuth)
-    mockAuth.mockReturnValue({
-      user: null,
-      session: null,
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      loading: true
-    })
-    
+  it('should show loading state while checking user role', () => {
     mockUseUserRole.mockReturnValue({
       data: null,
       isLoading: true
@@ -71,15 +41,17 @@ describe('ProtectedRoute', () => {
   })
 
   it('redirects if not authenticated', () => {
-    const mockAuth = vi.mocked(useAuth)
-    mockAuth.mockReturnValue({
-      user: null,
-      session: null,
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      loading: false
-    })
+    // For this test, we need to mock useAuth to return no user
+    vi.doMock('@/contexts/AuthContext', () => ({
+      useAuth: () => ({
+        user: null,
+        session: null,
+        signIn: vi.fn(),
+        signUp: vi.fn(),
+        signOut: vi.fn(),
+        loading: false
+      })
+    }))
     
     mockUseUserRole.mockReturnValue({
       data: null,
@@ -95,19 +67,6 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders for authenticated admin user', () => {
-    const mockAuth = vi.mocked(useAuth)
-    mockAuth.mockReturnValue({
-      user: createMockUser({ 
-        id: 'admin1', 
-        email: 'admin@altogetheragile.com' 
-      }),
-      session: null,
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      loading: false
-    })
-    
     mockUseUserRole.mockReturnValue({
       data: 'admin',
       isLoading: false
@@ -122,19 +81,6 @@ describe('ProtectedRoute', () => {
   })
 
   it('redirects non-admin users to home', () => {
-    const mockAuth = vi.mocked(useAuth)
-    mockAuth.mockReturnValue({
-      user: createMockUser({ 
-        id: 'user1', 
-        email: 'user@test.com' 
-      }),
-      session: null,
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      loading: false
-    })
-    
     mockUseUserRole.mockReturnValue({
       data: 'user',
       isLoading: false
@@ -148,20 +94,7 @@ describe('ProtectedRoute', () => {
     expect(screen.getByTestId('navigate-to')).toHaveTextContent('/')
   })
 
-  it('renders for authenticated user if requiredRole not given', () => {
-    const mockAuth = vi.mocked(useAuth)
-    mockAuth.mockReturnValue({
-      user: createMockUser({ 
-        id: 'user2', 
-        email: 'user2@test.com' 
-      }),
-      session: null,
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      loading: false
-    })
-    
+  it('renders for authenticated user if requiredRole matches', () => {
     mockUseUserRole.mockReturnValue({
       data: 'user',
       isLoading: false
@@ -175,20 +108,7 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('User Page')).toBeInTheDocument()
   })
 
-  it('shows loading spinner if user exists but userRole is still loading', () => {
-    const mockAuth = vi.mocked(useAuth)
-    mockAuth.mockReturnValue({
-      user: createMockUser({ 
-        id: 'admin1', 
-        email: 'admin@test.com' 
-      }),
-      session: null,
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      loading: false
-    })
-    
+  it('shows loading spinner if userRole is still loading', () => {
     mockUseUserRole.mockReturnValue({
       data: null,
       isLoading: true

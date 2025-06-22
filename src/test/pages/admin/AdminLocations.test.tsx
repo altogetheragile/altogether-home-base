@@ -2,6 +2,7 @@
 import { describe, it, afterAll, vi, expect } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../../test-utils'
 import { server } from '../../mocks/server'
+import { http, HttpResponse } from 'msw'
 import AdminLocations from '@/pages/admin/AdminLocations'
 import React from 'react'
 
@@ -115,40 +116,37 @@ describe('AdminLocations', () => {
     expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
   })
 
-  it('handles loading state', () => {
-    // Create a custom mock for this test only
-    const loadingHookMock = {
-      useLocations: () => ({
-        data: [],
-        isLoading: true,
-        error: null,
-        isSuccess: false
+  it('handles loading state', async () => {
+    // Use MSW to mock a slow response
+    server.use(
+      http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/locations*', async () => {
+        // Delay response to trigger loading state
+        await new Promise(resolve => setTimeout(resolve, 100))
+        return HttpResponse.json([])
       })
-    }
-    
-    vi.doMock('@/hooks/useLocations', () => loadingHookMock)
+    )
     
     render(<AdminLocations />)
     
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
   })
 
-  it('handles error state', () => {
-    // Create a custom mock for this test only
-    const errorHookMock = {
-      useLocations: () => ({
-        data: [],
-        isLoading: false,
-        error: { message: 'Failed to load locations' },
-        isSuccess: false
+  it('handles error state', async () => {
+    // Use MSW to mock an error response
+    server.use(
+      http.get('https://wqaplkypnetifpqrungv.supabase.co/rest/v1/locations*', () => {
+        return HttpResponse.json(
+          { message: 'Failed to load locations' },
+          { status: 500 }
+        )
       })
-    }
-    
-    vi.doMock('@/hooks/useLocations', () => errorHookMock)
+    )
     
     render(<AdminLocations />)
     
-    expect(screen.getByTestId('error-message')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByTestId('error-message')).toBeInTheDocument()
+    })
     expect(screen.getByText(/failed to load locations/i)).toBeInTheDocument()
   })
 })
