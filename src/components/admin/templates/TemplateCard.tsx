@@ -2,12 +2,24 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Copy } from 'lucide-react';
+import { Edit, Copy, Trash2 } from 'lucide-react';
+import { useTemplateMutations } from '@/hooks/useTemplateMutations';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface EventTemplate {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   duration_days: number;
   default_location_id?: string;
   default_instructor_id?: string;
@@ -29,6 +41,16 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   onEdit,
   onCreateEvent,
 }) => {
+  const { deleteTemplate } = useTemplateMutations();
+
+  const handleDelete = async () => {
+    try {
+      await deleteTemplate.mutateAsync(template.id);
+    } catch (error) {
+      // Error handling is done in the mutation
+    }
+  };
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -49,6 +71,27 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             >
               <Copy className="h-4 w-4" />
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Template</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{template.title}"? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardTitle>
       </CardHeader>

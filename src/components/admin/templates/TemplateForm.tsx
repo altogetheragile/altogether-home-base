@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTemplateMutations } from '@/hooks/useTemplateMutations';
 
 interface EventTemplate {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   duration_days: number;
   default_location_id?: string;
   default_instructor_id?: string;
@@ -29,6 +30,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
   instructors, 
   onClose 
 }) => {
+  const { createTemplate, updateTemplate } = useTemplateMutations();
   const [formData, setFormData] = useState({
     title: template?.title || '',
     description: template?.description || '',
@@ -37,12 +39,26 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
     default_instructor_id: template?.default_instructor_id || '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In real app, this would call mutation
-    console.log('Template data:', formData);
-    onClose();
+    
+    try {
+      if (template) {
+        await updateTemplate.mutateAsync({ 
+          id: template.id, 
+          data: formData 
+        });
+      } else {
+        await createTemplate.mutateAsync(formData);
+      }
+      onClose();
+    } catch (error) {
+      // Error handling is done in the mutations
+      console.error('Form submission error:', error);
+    }
   };
+
+  const isLoading = createTemplate.isPending || updateTemplate.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -54,6 +70,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -64,6 +81,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={3}
+            disabled={isLoading}
           />
         </div>
 
@@ -76,6 +94,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
             value={formData.duration_days}
             onChange={(e) => setFormData({ ...formData, duration_days: parseInt(e.target.value) })}
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -84,6 +103,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
           <Select 
             value={formData.default_location_id} 
             onValueChange={(value) => setFormData({ ...formData, default_location_id: value })}
+            disabled={isLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select location" />
@@ -104,6 +124,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
           <Select 
             value={formData.default_instructor_id} 
             onValueChange={(value) => setFormData({ ...formData, default_instructor_id: value })}
+            disabled={isLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select instructor" />
@@ -121,11 +142,11 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
       </div>
 
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit">
-          {template ? 'Update Template' : 'Create Template'}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : (template ? 'Update Template' : 'Create Template')}
         </Button>
       </div>
     </form>

@@ -1,16 +1,7 @@
 
 import React from 'react';
 import TemplateCard from './TemplateCard';
-
-interface EventTemplate {
-  id: string;
-  title: string;
-  description: string;
-  duration_days: number;
-  default_location_id?: string;
-  default_instructor_id?: string;
-  created_at: string;
-}
+import { EventTemplate } from '@/hooks/useTemplates';
 
 interface TemplatesListProps {
   templates: EventTemplate[];

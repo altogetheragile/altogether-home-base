@@ -25,7 +25,8 @@ export const useTemplateMutations = () => {
         .from('event_templates')
         .insert({
           ...data,
-          created_by: user.id
+          created_by: user.id,
+          updated_by: user.id
         })
         .select()
         .single();
@@ -55,7 +56,10 @@ export const useTemplateMutations = () => {
       
       const { data: template, error } = await supabase
         .from('event_templates')
-        .update(data)
+        .update({
+          ...data,
+          updated_by: user.id
+        })
         .eq('id', id)
         .select()
         .single();
