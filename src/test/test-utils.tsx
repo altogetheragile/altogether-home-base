@@ -10,7 +10,7 @@ import {
   waitFor,
   renderHook,
 } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, UseQueryResult } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { vi, expect } from 'vitest'
 import { Toaster } from '@/components/ui/toaster'
@@ -104,6 +104,54 @@ export const createTestQueryClient = (options = {}) => {
       }
     }
   })
+}
+
+// Mock UseQueryResult factory function
+export const createMockUseQueryResult = <T = any>(
+  overrides: Partial<UseQueryResult<T, Error>> = {}
+): UseQueryResult<T, Error> => {
+  const defaultResult: UseQueryResult<T, Error> = {
+    data: undefined as T,
+    error: null,
+    isError: false,
+    isLoading: false,
+    isLoadingError: false,
+    isPending: false,
+    isPlaceholderData: false,
+    isRefetchError: false,
+    isRefetching: false,
+    isStale: false,
+    isSuccess: false,
+    status: 'pending',
+    dataUpdatedAt: 0,
+    errorUpdatedAt: 0,
+    failureCount: 0,
+    failureReason: null,
+    fetchStatus: 'idle',
+    isFetched: false,
+    isFetchedAfterMount: false,
+    isFetching: false,
+    refetch: vi.fn(),
+    ...overrides
+  }
+
+  // Adjust status and boolean flags based on the state
+  if (overrides.isLoading || overrides.isPending) {
+    defaultResult.status = 'pending'
+    defaultResult.isPending = true
+    defaultResult.isLoading = overrides.isLoading ?? false
+  } else if (overrides.error) {
+    defaultResult.status = 'error'
+    defaultResult.isError = true
+    defaultResult.isSuccess = false
+  } else if (overrides.data !== undefined) {
+    defaultResult.status = 'success'
+    defaultResult.isSuccess = true
+    defaultResult.isError = false
+    defaultResult.isFetched = true
+  }
+
+  return defaultResult
 }
 
 // Export everything you need from one place

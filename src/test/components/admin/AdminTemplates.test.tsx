@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../test-utils'
+import { render, screen, fireEvent, waitFor, createMockUseQueryResult } from '../../test-utils'
 import AdminTemplates from '@/pages/admin/AdminTemplates'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useUserRole } from '@/hooks/useUserRole'
@@ -60,31 +60,43 @@ describe('AdminTemplates', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    mockUseUserRole.mockReturnValue({
-      data: 'admin',
-      isLoading: false,
-      error: null
-    })
+    mockUseUserRole.mockReturnValue(
+      createMockUseQueryResult({
+        data: 'admin',
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
     
-    mockUseLocations.mockReturnValue({
-      data: mockLocations,
-      isLoading: false,
-      error: null
-    })
+    mockUseLocations.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockLocations,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
     
-    mockUseInstructors.mockReturnValue({
-      data: mockInstructors,
-      isLoading: false,
-      error: null
-    })
+    mockUseInstructors.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockInstructors,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
   })
 
   it('renders template list without error', () => {
-    mockUseTemplates.mockReturnValue({
-      data: mockTemplates,
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockTemplates,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -94,11 +106,14 @@ describe('AdminTemplates', () => {
   })
 
   it('shows loading state while fetching templates', () => {
-    mockUseTemplates.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: undefined,
+        isLoading: true,
+        error: null,
+        isPending: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -107,11 +122,14 @@ describe('AdminTemplates', () => {
 
   it('shows error state when template loading fails', () => {
     const errorMessage = 'Failed to load templates'
-    mockUseTemplates.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: new Error(errorMessage)
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: undefined,
+        isLoading: false,
+        error: new Error(errorMessage),
+        isError: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -119,11 +137,14 @@ describe('AdminTemplates', () => {
   })
 
   it('filters templates based on search term', async () => {
-    mockUseTemplates.mockReturnValue({
-      data: mockTemplates,
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockTemplates,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -137,11 +158,14 @@ describe('AdminTemplates', () => {
   })
 
   it('opens create template dialog when Add Template button is clicked', async () => {
-    mockUseTemplates.mockReturnValue({
-      data: mockTemplates,
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockTemplates,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -154,11 +178,14 @@ describe('AdminTemplates', () => {
   })
 
   it('shows empty state when no templates exist', () => {
-    mockUseTemplates.mockReturnValue({
-      data: [],
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: [],
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -166,11 +193,14 @@ describe('AdminTemplates', () => {
   })
 
   it('handles bulk operations selection', async () => {
-    mockUseTemplates.mockReturnValue({
-      data: mockTemplates,
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockTemplates,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -184,11 +214,14 @@ describe('AdminTemplates', () => {
   })
 
   it('navigates to create event with template when template card action is clicked', async () => {
-    mockUseTemplates.mockReturnValue({
-      data: mockTemplates,
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockTemplates,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     const mockNavigate = vi.fn()
     vi.mocked(require('react-router-dom').useNavigate).mockReturnValue(mockNavigate)

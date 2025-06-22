@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '../test-utils'
+import { render, screen, createMockUseQueryResult } from '../test-utils'
 import AdminTemplates from '@/pages/admin/AdminTemplates'
 import TemplateCard from '@/components/admin/templates/TemplateCard'
 import { useTemplates } from '@/hooks/useTemplates'
@@ -48,31 +48,43 @@ describe('Template Accessibility', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    mockUseUserRole.mockReturnValue({
-      data: 'admin',
-      isLoading: false,
-      error: null
-    })
+    mockUseUserRole.mockReturnValue(
+      createMockUseQueryResult({
+        data: 'admin',
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
     
-    mockUseLocations.mockReturnValue({
-      data: mockLocations,
-      isLoading: false,
-      error: null
-    })
+    mockUseLocations.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockLocations,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
     
-    mockUseInstructors.mockReturnValue({
-      data: mockInstructors,
-      isLoading: false,
-      error: null
-    })
+    mockUseInstructors.mockReturnValue(
+      createMockUseQueryResult({
+        data: mockInstructors,
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
   })
 
   it('has proper ARIA labels and roles', () => {
-    mockUseTemplates.mockReturnValue({
-      data: [mockTemplate],
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: [mockTemplate],
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -107,11 +119,14 @@ describe('Template Accessibility', () => {
   })
 
   it('provides proper semantic structure', () => {
-    mockUseTemplates.mockReturnValue({
-      data: [mockTemplate],
-      isLoading: false,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: [mockTemplate],
+        isLoading: false,
+        error: null,
+        isSuccess: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -140,11 +155,14 @@ describe('Template Accessibility', () => {
   })
 
   it('provides proper loading states with accessibility', () => {
-    mockUseTemplates.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      error: null
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: undefined,
+        isLoading: true,
+        error: null,
+        isPending: true
+      })
+    )
 
     render(<AdminTemplates />)
     
@@ -157,11 +175,14 @@ describe('Template Accessibility', () => {
 
   it('provides proper error states with accessibility', () => {
     const errorMessage = 'Failed to load templates'
-    mockUseTemplates.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: new Error(errorMessage)
-    })
+    mockUseTemplates.mockReturnValue(
+      createMockUseQueryResult({
+        data: undefined,
+        isLoading: false,
+        error: new Error(errorMessage),
+        isError: true
+      })
+    )
 
     render(<AdminTemplates />)
     
