@@ -6,21 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTemplateMutations } from '@/hooks/useTemplateMutations';
-
-interface EventTemplate {
-  id: string;
-  title: string;
-  description?: string;
-  duration_days: number;
-  default_location_id?: string;
-  default_instructor_id?: string;
-  created_at: string;
-}
+import { EventTemplate, Location, Instructor, TemplateFormData } from '@/types/template';
 
 interface TemplateFormProps {
   template: EventTemplate | null;
-  locations: any[];
-  instructors: any[];
+  locations: Location[];
+  instructors: Instructor[];
   onClose: () => void;
 }
 
@@ -31,7 +22,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
   onClose 
 }) => {
   const { createTemplate, updateTemplate } = useTemplateMutations();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TemplateFormData>({
     title: template?.title || '',
     description: template?.description || '',
     duration_days: template?.duration_days || 1,
