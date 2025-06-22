@@ -1,153 +1,87 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useRef, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Eye, EyeOff, Trash2 } from 'lucide-react';
-import { exportToCSV, formatDataForExport } from '@/utils/exportUtils';
+import { Button } from '@/components/ui/button';
+import { Trash2, Download } from 'lucide-react';
+import { exportToCSV } from '@/utils/exportUtils';
 
 interface BulkOperationsProps {
   selectedItems: string[];
   allItems: any[];
   onSelectAll: (checked: boolean) => void;
-  onBulkDelete?: (ids: string[]) => void;
-  onBulkUpdate?: (ids: string[], data: any) => void;
-  type: 'events' | 'locations' | 'instructors';
-  showPublishControls?: boolean;
+  type: 'events' | 'instructors' | 'locations' | 'templates';
 }
 
 const BulkOperations: React.FC<BulkOperationsProps> = ({
   selectedItems,
   allItems,
   onSelectAll,
-  onBulkDelete,
-  onBulkUpdate,
-  type,
-  showPublishControls = false,
+  type
 }) => {
-  const [bulkAction, setBulkAction] = useState<string>('');
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      if (selectedItems.length === 0) {
+        checkboxRef.current.checked = false;
+        checkboxRef.current.indeterminate = false;
+      } else if (selectedItems.length === allItems.length) {
+        checkboxRef.current.checked = true;
+        checkboxRef.current.indeterminate = false;
+      } else {
+        checkboxRef.current.checked = false;
+        checkboxRef.current.indeterminate = true;
+      }
+    }
+  }, [selectedItems, allItems]);
 
   const handleExport = () => {
-    const itemsToExport = selectedItems.length > 0 
-      ? allItems.filter(item => selectedItems.includes(item.id))
-      : allItems;
-    
-    const formattedData = formatDataForExport(itemsToExport, type);
-    const filename = `${type}_${selectedItems.length > 0 ? 'selected' : 'all'}_${new Date().toISOString().split('T')[0]}`;
-    exportToCSV(formattedData, filename);
+    const selectedData = allItems.filter(item => selectedItems.includes(item.id));
+    exportToCSV(selectedData, `${type}-export`);
   };
 
-  const handleBulkAction = () => {
-    if (!onBulkUpdate || !bulkAction || selectedItems.length === 0) return;
-
-    switch (bulkAction) {
-      case 'publish':
-        onBulkUpdate(selectedItems, { is_published: true });
-        break;
-      case 'unpublish':
-        onBulkUpdate(selectedItems, { is_published: false });
-        break;
-    }
-    setBulkAction('');
+  const handleBulkDelete = () => {
+    // In real app, this would call mutation
+    console.log(`Delete ${selectedItems.length} ${type}`);
   };
 
-  const allSelected = selectedItems.length === allItems.length && allItems.length > 0;
-  const someSelected = selectedItems.length > 0 && selectedItems.length < allItems.length;
+  if (allItems.length === 0) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
-      {/* Select All Checkbox */}
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          checked={allSelected}
-          ref={(el) => {
-            if (el) el.indeterminate = someSelected;
-          }}
-          onCheckedChange={onSelectAll}
+    <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+      <div className="flex items-center space-x-4">
+        <input
+          ref={checkboxRef}
+          type="checkbox"
+          onChange={(e) => onSelectAll(e.target.checked)}
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
-        <span className="text-sm font-medium">
-          {selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all'}
+        <span className="text-sm text-gray-700">
+          {selectedItems.length > 0 
+            ? `${selectedItems.length} selected` 
+            : `Select all ${allItems.length} ${type}`}
         </span>
       </div>
 
-      {/* Bulk Actions */}
       {selectedItems.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Export Selected */}
-          <Button variant="outline" size="sm" onClick={handleExport}>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export Selected
+            Export
           </Button>
-
-          {/* Publish/Unpublish for Events */}
-          {showPublishControls && onBulkUpdate && (
-            <>
-              <Select value={bulkAction} onValueChange={setBulkAction}>
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue placeholder="Bulk Action" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="publish">
-                    <div className="flex items-center">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Publish
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="unpublish">
-                    <div className="flex items-center">
-                      <EyeOff className="h-4 w-4 mr-2" />
-                      Unpublish
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              {bulkAction && (
-                <Button size="sm" onClick={handleBulkAction}>
-                  Apply
-                </Button>
-              )}
-            </>
-          )}
-
-          {/* Bulk Delete */}
-          {onBulkDelete && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Selected
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete {selectedItems.length} items?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the selected {type}.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={() => onBulkDelete(selectedItems)}
-                    className="bg-destructive text-destructive-foreground"
-                  >
-                    Delete {selectedItems.length} items
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
-      )}
-
-      {/* Export All (when nothing selected) */}
-      {selectedItems.length === 0 && (
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="h-4 w-4 mr-2" />
-          Export All
-        </Button>
       )}
     </div>
   );

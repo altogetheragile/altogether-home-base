@@ -1,119 +1,181 @@
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useOptimisticCreate, useOptimisticUpdate, useOptimisticDelete } from './useOptimisticMutation';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-type EventData = {
+export interface EventData {
   title: string;
-  description: string;
+  description?: string;
   start_date: string;
-  end_date?: string;
+  end_date: string;
   location_id?: string;
   instructor_id?: string;
-  price_cents?: number;
-  currency?: string;
-  is_published?: boolean;
-};
+  max_participants?: number;
+  price?: number;
+  status?: 'draft' | 'published' | 'cancelled';
+}
 
-export const useCreateEvent = () => {
-  return useOptimisticCreate({
-    queryKey: ['events'],
+export const useEventMutations = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const createEvent = useMutation({
     mutationFn: async (data: EventData) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data: event, error } = await supabase
         .from('events')
-        .insert([{
+        .insert({
           ...data,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_by: (await supabase.auth.getUser()).data.user?.id,
-        }])
+          created_by: user.id,
+          updated_by: user.id
+        })
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating event:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return event;
     },
-    successMessage: "Event created successfully",
-    errorMessage: "Failed to create event",
-    createTempItem: (data: EventData) => ({
-      id: `temp-${Date.now()}`,
-      ...data,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: "Success",
+        description: "Event created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
-};
 
-export const useUpdateEvent = () => {
-  return useOptimisticUpdate({
-    queryKey: ['events'],
-    mutationFn: async ({ id, data }: { id: string; data: EventData }) => {
+  const updateEvent = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<EventData> }) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data: event, error } = await supabase
         .from('events')
         .update({
           ...data,
-          updated_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_by: user.id
         })
         .eq('id', id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Error updating event:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return event;
     },
-    successMessage: "Event updated successfully",
-    errorMessage: "Failed to update event",
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: "Success",
+        description: "Event updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
-};
 
-export const useDeleteEvent = () => {
-  return useOptimisticDelete({
-    queryKey: ['events'],
+  const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('events')
         .delete()
         .eq('id', id);
 
-      if (error) {
-        console.error('Error deleting event:', error);
-        throw error;
-      }
-
-      return { success: true };
+      if (error) throw error;
+      return id;
     },
-    successMessage: "Event deleted successfully",
-    errorMessage: "Failed to delete event",
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: "Success",
+        description: "Event deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
-};
 
-export const useBulkUpdateEvents = () => {
-  return useOptimisticUpdate({
-    queryKey: ['events'],
+  const bulkUpdateEvents = useMutation({
     mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<EventData> }) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data: events, error } = await supabase
         .from('events')
         .update({
           ...data,
-          updated_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_by: user.id
         })
         .in('id', ids)
         .select();
 
-      if (error) {
-        console.error('Error bulk updating events:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return events;
     },
-    successMessage: "Events updated successfully",
-    errorMessage: "Failed to update events",
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: "Success",
+        description: "Events updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
+
+  const bulkDeleteEvents = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .in('id', ids);
+
+      if (error) throw error;
+      return ids;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: "Success",
+        description: "Events deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  return {
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    bulkUpdateEvents,
+    bulkDeleteEvents,
+  };
 };
