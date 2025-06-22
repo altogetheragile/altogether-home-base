@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js'
+import { expect } from 'vitest'
 
 // Helper for testing RLS policies in integration tests
 export const createTestSupabaseClient = (userToken?: string) => {
@@ -9,7 +10,11 @@ export const createTestSupabaseClient = (userToken?: string) => {
   const client = createClient(supabaseUrl, supabaseKey)
   
   if (userToken) {
-    client.auth.setAuth(userToken)
+    // Use the correct method to set session
+    client.auth.setSession({
+      access_token: userToken,
+      refresh_token: 'mock-refresh-token'
+    })
   }
   
   return client
