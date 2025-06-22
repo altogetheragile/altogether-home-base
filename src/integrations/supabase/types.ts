@@ -94,6 +94,7 @@ export type Database = {
         Row: {
           category_id: string | null
           created_at: string | null
+          created_by: string | null
           default_instructor_id: string | null
           default_location_id: string | null
           description: string | null
@@ -103,10 +104,12 @@ export type Database = {
           id: string
           level_id: string | null
           title: string
+          updated_by: string | null
         }
         Insert: {
           category_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           default_instructor_id?: string | null
           default_location_id?: string | null
           description?: string | null
@@ -116,10 +119,12 @@ export type Database = {
           id?: string
           level_id?: string | null
           title: string
+          updated_by?: string | null
         }
         Update: {
           category_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           default_instructor_id?: string | null
           default_location_id?: string | null
           description?: string | null
@@ -129,6 +134,7 @@ export type Database = {
           id?: string
           level_id?: string | null
           title?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -193,6 +199,7 @@ export type Database = {
       events: {
         Row: {
           created_at: string | null
+          created_by: string | null
           currency: string | null
           description: string | null
           end_date: string | null
@@ -204,9 +211,11 @@ export type Database = {
           start_date: string
           template_id: string | null
           title: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           currency?: string | null
           description?: string | null
           end_date?: string | null
@@ -218,9 +227,11 @@ export type Database = {
           start_date: string
           template_id?: string | null
           title: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           currency?: string | null
           description?: string | null
           end_date?: string | null
@@ -232,6 +243,7 @@ export type Database = {
           start_date?: string
           template_id?: string | null
           title?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -275,21 +287,27 @@ export type Database = {
       instructors: {
         Row: {
           bio: string | null
+          created_by: string | null
           id: string
           name: string
           profile_image_url: string | null
+          updated_by: string | null
         }
         Insert: {
           bio?: string | null
+          created_by?: string | null
           id?: string
           name: string
           profile_image_url?: string | null
+          updated_by?: string | null
         }
         Update: {
           bio?: string | null
+          created_by?: string | null
           id?: string
           name?: string
           profile_image_url?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -311,20 +329,26 @@ export type Database = {
       locations: {
         Row: {
           address: string | null
+          created_by: string | null
           id: string
           name: string
+          updated_by: string | null
           virtual_url: string | null
         }
         Insert: {
           address?: string | null
+          created_by?: string | null
           id?: string
           name: string
+          updated_by?: string | null
           virtual_url?: string | null
         }
         Update: {
           address?: string | null
+          created_by?: string | null
           id?: string
           name?: string
+          updated_by?: string | null
           virtual_url?: string | null
         }
         Relationships: []

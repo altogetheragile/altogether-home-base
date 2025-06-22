@@ -14,7 +14,11 @@ export const useCreateLocation = () => {
     mutationFn: async (data: LocationData) => {
       const { data: location, error } = await supabase
         .from('locations')
-        .insert([data])
+        .insert([{
+          ...data,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_by: (await supabase.auth.getUser()).data.user?.id,
+        }])
         .select()
         .single();
 
@@ -42,7 +46,10 @@ export const useUpdateLocation = () => {
     mutationFn: async ({ id, data }: { id: string; data: LocationData }) => {
       const { data: location, error } = await supabase
         .from('locations')
-        .update(data)
+        .update({
+          ...data,
+          updated_by: (await supabase.auth.getUser()).data.user?.id,
+        })
         .eq('id', id)
         .select()
         .single();

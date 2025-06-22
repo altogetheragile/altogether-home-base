@@ -13,7 +13,11 @@ export const useCreateInstructor = () => {
     mutationFn: async (data: InstructorData) => {
       const { data: instructor, error } = await supabase
         .from('instructors')
-        .insert([data])
+        .insert([{
+          ...data,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_by: (await supabase.auth.getUser()).data.user?.id,
+        }])
         .select()
         .single();
 
@@ -41,7 +45,10 @@ export const useUpdateInstructor = () => {
     mutationFn: async ({ id, data }: { id: string; data: InstructorData }) => {
       const { data: instructor, error } = await supabase
         .from('instructors')
-        .update(data)
+        .update({
+          ...data,
+          updated_by: (await supabase.auth.getUser()).data.user?.id,
+        })
         .eq('id', id)
         .select()
         .single();
