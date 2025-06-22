@@ -20,11 +20,20 @@ jobs:
         node-version: '18'
         cache: 'npm'
 
+    - name: Clear any existing caches
+      run: |
+        rm -rf node_modules
+        rm -f package-lock.json
+        npm cache clean --force
+
     - name: Install dependencies
       run: npm ci
 
-    - name: Run unit tests (Vitest)
-      run: npx vitest run --config vitest.config.ts
+    - name: Verify MSW v2 compliance
+      run: node src/test/verify-msw-v2.js
+
+    - name: Run unit tests (Vitest) with no cache
+      run: npx vitest run --no-cache --config vitest.config.ts
 
     - name: Build application
       run: npm run build

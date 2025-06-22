@@ -9,7 +9,10 @@ Add these scripts to your package.json:
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:nuclear": "node src/test/clear-cache.js && npm install && vitest run --no-cache --config vitest.config.ts",
+    "test:clear": "node src/test/clear-cache.js",
+    "test:debug": "vitest run --reporter=verbose --no-cache"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
@@ -28,7 +31,30 @@ Add these scripts to your package.json:
 - `npm run test` - Run unit tests in watch mode
 - `npm run test:run` - Run all unit tests once
 - `npm run test:coverage` - Run tests with coverage report
+- `npm run test:nuclear` - Complete environment reset + fresh test run
+- `npm run test:clear` - Clear all caches without running tests
+- `npm run test:debug` - Run tests with verbose logging and no cache
 
-## Note on Dev Environment
+## Nuclear Option for Persistent Issues
 
-This project uses a runtime-only workaround for @testing-library/react imports due to TypeScript module resolution issues in hosted dev environments. The `rtl-helpers.ts` file provides the necessary testing utilities without relying on TypeScript's module resolution.
+If you're still getting `rest.post` or other cache-related errors:
+
+1. Run `npm run test:nuclear`
+2. This will completely reset your environment and run fresh tests
+3. Should resolve any phantom cache issues
+
+## CI/CD Integration
+
+For GitHub Actions, ensure your workflow includes:
+
+```yaml
+- name: Clear caches
+  run: npm run test:clear
+
+- name: Install dependencies
+  run: npm ci
+
+- name: Run tests (no cache)
+  run: npx vitest run --no-cache --config vitest.config.ts
+```
+
