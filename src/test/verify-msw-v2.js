@@ -4,75 +4,138 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔍 Verifying MSW v2 compliance...');
+console.log('🔍 Comprehensive MSW v2 compliance check...');
 
-const testDir = path.join(__dirname);
 const issues = [];
+const checkedFiles = [];
 
 function checkFile(filePath) {
   try {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
+    checkedFiles.push(filePath);
     
     lines.forEach((line, index) => {
-      // Check for old MSW v1 patterns
-      if (line.includes('rest.') && !line.includes('//')) {
-        issues.push({
-          file: filePath,
-          line: index + 1,
-          issue: 'Uses old MSW v1 rest API',
-          content: line.trim()
-        });
+      const lineNum = index + 1;
+      const trimmedLine = line.trim();
+      
+      // Skip comments and empty lines
+      if (trimmedLine.startsWith('//') || trimmedLine.startsWith('*') || !trimmedLine) {
+        return;
       }
       
+      // Check for old MSW v1 patterns (more comprehensive)
+      if (line.includes('rest.')) {
+        // Check if it's actually a method call, not just a string or comment
+        if (/rest\.(get|post|put|patch|delete|head|options)/.test(line)) {
+          issues.push({
+            file: filePath,
+            line: lineNum,
+            issue: '❌ Uses old MSW v1 rest API',
+            content: trimmedLine,
+            severity: 'error'
+          });
+        }
+      }
+      
+      // Check for old MSW v1 imports
       if (line.includes('import') && line.includes('rest') && line.includes('msw')) {
         issues.push({
           file: filePath,
-          line: index + 1,
-          issue: 'Imports old MSW v1 rest',
-          content: line.trim()
+          line: lineNum,
+          issue: '❌ Imports old MSW v1 rest',
+          content: trimmedLine,
+          severity: 'error'
         });
       }
       
-      // Check for proper MSW v2 imports
-      if (line.includes('import') && line.includes('msw') && !line.includes('http')) {
+      // Check for missing MSW v2 imports when using http
+      if (line.includes('http.') && !content.includes('import { http')) {
         issues.push({
           file: filePath,
-          line: index + 1,
-          issue: 'Missing http import for MSW v2',
-          content: line.trim()
+          line: lineNum,
+          issue: '⚠️  Uses http but missing MSW v2 import',
+          content: trimmedLine,
+          severity: 'warning'
+        });
+      }
+      
+      // Check for old response patterns
+      if (line.includes('res(') || line.includes('res.json')) {
+        issues.push({
+          file: filePath,
+          line: lineNum,
+          issue: '⚠️  Uses old MSW v1 response pattern',
+          content: trimmedLine,
+          severity: 'warning'
         });
       }
     });
   } catch (error) {
-    console.warn(`Could not check file ${filePath}:`, error.message);
+    console.warn(`⚠️  Could not check file ${filePath}:`, error.message);
   }
 }
 
-function walkDir(dir) {
-  const files = fs.readdirSync(dir);
+function walkDir(dir, maxDepth = 3, currentDepth = 0) {
+  if (currentDepth > maxDepth) return;
   
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
+  try {
+    const files = fs.readdirSync(dir);
     
-    if (stat.isDirectory()) {
-      walkDir(filePath);
-    } else if (file.endsWith('.ts') || file.endsWith('.tsx')) {
-      checkFile(filePath);
-    }
-  });
+    files.forEach(file => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+      
+      if (stat.isDirectory() && !file.startsWith('.') && file !== 'node_modules') {
+        walkDir(filePath, maxDepth, currentDepth + 1);
+      } else if (file.endsWith('.ts') || file.endsWith('.tsx')) {
+        checkFile(filePath);
+      }
+    });
+  } catch (error) {
+    console.warn(`⚠️  Could not read directory ${dir}:`, error.message);
+  }
 }
 
-walkDir(testDir);
+// Check test directory and src directory
+walkDir('./src/test');
+walkDir('./src', 2); // Limited depth for src to avoid too many files
 
-if (issues.length === 0) {
+console.log(`\n📊 Checked ${checkedFiles.length} files`);
+
+const errors = issues.filter(i => i.severity === 'error');
+const warnings = issues.filter(i => i.severity === 'warning');
+
+if (errors.length === 0 && warnings.length === 0) {
   console.log('✅ All files are MSW v2 compliant!');
+  console.log('🎉 No MSW v1 patterns found');
 } else {
-  console.log('❌ Found MSW v1 patterns:');
-  issues.forEach(issue => {
-    console.log(`  ${issue.file}:${issue.line} - ${issue.issue}`);
-    console.log(`    ${issue.content}`);
-  });
-  process.exit(1);
+  if (errors.length > 0) {
+    console.log(`\n❌ Found ${errors.length} MSW v1 error(s):`);
+    errors.forEach(issue => {
+      console.log(`   ${issue.file}:${issue.line}`);
+      console.log(`   ${issue.issue}`);
+      console.log(`   Code: ${issue.content}`);
+      console.log('');
+    });
+  }
+  
+  if (warnings.length > 0) {
+    console.log(`\n⚠️  Found ${warnings.length} potential issue(s):`);
+    warnings.forEach(issue => {
+      console.log(`   ${issue.file}:${issue.line}`);
+      console.log(`   ${issue.issue}`);
+      console.log(`   Code: ${issue.content}`);
+      console.log('');
+    });
+  }
+  
+  if (errors.length > 0) {
+    console.log('🔧 Fix required: Update MSW v1 patterns to MSW v2');
+    console.log('   Replace: rest.get/post/etc → http.get/post/etc');
+    console.log('   Replace: import { rest } → import { http, HttpResponse }');
+    process.exit(1);
+  }
 }
+
+console.log('\n🎯 MSW v2 verification complete!');
