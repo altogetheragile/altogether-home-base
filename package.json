@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
+    "@vitejs/plugin-react-swc": "^3.10.2",
     "clsx": "^2.1.0",
     "lovable-tagger": "^1.1.8",
     "lucide-react": "^0.299.0",
