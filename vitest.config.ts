@@ -57,10 +57,8 @@ export default defineConfig({
     },
     // Better error reporting
     reporter: ['verbose'],
-    // Removed outputFile.html (was causing UI reporter to load)
-    // outputFile: {
-    //   html: './coverage/test-report.html'
-    // }
+    // Enable MSW debugging
+    silent: false
   },
   resolve: {
     alias: {

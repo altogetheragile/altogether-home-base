@@ -18,3 +18,6 @@ export const handlers = [
   ...errorHandlers,
   ...templateHandlers
 ]
+
+// Debug logging
+console.log('MSW handlers loaded:', handlers.length)

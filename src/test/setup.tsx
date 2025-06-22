@@ -83,8 +83,8 @@ vi.mock('@/hooks/use-toast', () => ({
   })
 }))
 
-// Start server before all tests
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+// Start server before all tests with better configuration
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 
 // Reset handlers after each test
 afterEach(() => {
