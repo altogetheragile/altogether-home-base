@@ -1,11 +1,11 @@
-
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useInstructors } from '@/hooks/useInstructors';
 import { useLocations } from '@/hooks/useLocations';
+import { useTemplates } from '@/hooks/useTemplates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,8 +18,12 @@ const CreateEvent = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const templateId = searchParams.get('template');
+  
   const { data: instructors } = useInstructors();
   const { data: locations } = useLocations();
+  const { data: templates } = useTemplates();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -31,7 +35,52 @@ const CreateEvent = () => {
     price_cents: 0,
     currency: 'usd',
     is_published: false,
+    template_id: templateId || '',
   });
+
+  // Pre-populate form with template data when template is selected
+  useEffect(() => {
+    if (templateId && templates) {
+      const selectedTemplate = templates.find(t => t.id === templateId);
+      if (selectedTemplate) {
+        setFormData(prev => ({
+          ...prev,
+          title: selectedTemplate.title,
+          description: selectedTemplate.description || '',
+          instructor_id: selectedTemplate.default_instructor_id || '',
+          location_id: selectedTemplate.default_location_id || '',
+          template_id: selectedTemplate.id,
+        }));
+        
+        // Calculate end date based on duration_days
+        if (selectedTemplate.duration_days && prev.start_date) {
+          const startDate = new Date(prev.start_date);
+          const endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + selectedTemplate.duration_days - 1);
+          setFormData(current => ({
+            ...current,
+            end_date: endDate.toISOString().split('T')[0]
+          }));
+        }
+      }
+    }
+  }, [templateId, templates]);
+
+  // Update end date when start date changes and template has duration
+  useEffect(() => {
+    if (templateId && templates && formData.start_date) {
+      const selectedTemplate = templates.find(t => t.id === templateId);
+      if (selectedTemplate?.duration_days) {
+        const startDate = new Date(formData.start_date);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + selectedTemplate.duration_days - 1);
+        setFormData(prev => ({
+          ...prev,
+          end_date: endDate.toISOString().split('T')[0]
+        }));
+      }
+    }
+  }, [formData.start_date, templateId, templates]);
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: typeof formData) => {
@@ -48,7 +97,7 @@ const CreateEvent = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({
         title: "Event created successfully",
-        description: "The event has been added to your catalog.",
+        description: templateId ? "The event has been created from the template." : "The event has been added to your catalog.",
       });
       navigate('/admin/events');
     },
@@ -71,6 +120,8 @@ const CreateEvent = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const selectedTemplate = templateId && templates ? templates.find(t => t.id === templateId) : null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
@@ -79,10 +130,24 @@ const CreateEvent = () => {
           Back to Events
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Event</h1>
-          <p className="text-gray-600">Add a new event to your catalog</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {selectedTemplate ? `Create Event from "${selectedTemplate.title}"` : 'Create New Event'}
+          </h1>
+          <p className="text-gray-600">
+            {selectedTemplate ? 'Event details have been pre-filled from the template' : 'Add a new event to your catalog'}
+          </p>
         </div>
       </div>
+
+      {selectedTemplate && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="font-medium text-blue-900 mb-2">Using Template: {selectedTemplate.title}</h3>
+          <p className="text-sm text-blue-700">
+            Duration: {selectedTemplate.duration_days} day(s)
+            {selectedTemplate.description && ` • ${selectedTemplate.description}`}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         <div className="bg-white p-6 rounded-lg shadow space-y-4">
@@ -129,13 +194,18 @@ const CreateEvent = () => {
                 value={formData.end_date}
                 onChange={(e) => handleInputChange('end_date', e.target.value)}
               />
+              {selectedTemplate?.duration_days && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Auto-calculated based on template duration ({selectedTemplate.duration_days} days)
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Instructor</Label>
-              <Select onValueChange={(value) => handleInputChange('instructor_id', value)}>
+              <Select value={formData.instructor_id} onValueChange={(value) => handleInputChange('instructor_id', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select instructor" />
                 </SelectTrigger>
@@ -150,7 +220,7 @@ const CreateEvent = () => {
             </div>
             <div>
               <Label>Location</Label>
-              <Select onValueChange={(value) => handleInputChange('location_id', value)}>
+              <Select value={formData.location_id} onValueChange={(value) => handleInputChange('location_id', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>

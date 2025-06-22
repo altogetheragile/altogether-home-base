@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
@@ -12,6 +13,7 @@ import TemplatesList from '@/components/admin/templates/TemplatesList';
 import TemplateForm from '@/components/admin/templates/TemplateForm';
 
 const AdminTemplates = () => {
+  const navigate = useNavigate();
   const { data: locations = [] } = useLocations();
   const { data: instructors = [] } = useInstructors();
   const { data: templates = [], isLoading, error } = useTemplates();
@@ -27,8 +29,7 @@ const AdminTemplates = () => {
   );
 
   const handleCreateEvent = (template: EventTemplate) => {
-    // Navigate to create event with template data pre-filled
-    window.location.href = `/admin/events/new?template=${template.id}`;
+    navigate(`/admin/events/new?template=${template.id}`);
   };
 
   const handleEditTemplate = (template: EventTemplate) => {
