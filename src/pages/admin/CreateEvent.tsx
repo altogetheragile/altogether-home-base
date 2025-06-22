@@ -53,12 +53,12 @@ const CreateEvent = () => {
         }));
         
         // Calculate end date based on duration_days
-        if (selectedTemplate.duration_days && prev.start_date) {
-          const startDate = new Date(prev.start_date);
+        if (selectedTemplate.duration_days && formData.start_date) {
+          const startDate = new Date(formData.start_date);
           const endDate = new Date(startDate);
           endDate.setDate(startDate.getDate() + selectedTemplate.duration_days - 1);
-          setFormData(current => ({
-            ...current,
+          setFormData(prev => ({
+            ...prev,
             end_date: endDate.toISOString().split('T')[0]
           }));
         }
