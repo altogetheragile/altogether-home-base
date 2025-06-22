@@ -1,7 +1,6 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useOptimisticCreate, useOptimisticUpdate, useOptimisticDelete } from './useOptimisticMutation';
 
 type InstructorData = {
   name: string;
@@ -9,10 +8,8 @@ type InstructorData = {
 };
 
 export const useCreateInstructor = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
+  return useOptimisticCreate({
+    queryKey: ['instructors'],
     mutationFn: async (data: InstructorData) => {
       const { data: instructor, error } = await supabase
         .from('instructors')
@@ -27,58 +24,20 @@ export const useCreateInstructor = () => {
 
       return instructor;
     },
-    onMutate: async (newInstructor) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['instructors'] });
-
-      // Snapshot previous value
-      const previousInstructors = queryClient.getQueryData(['instructors']);
-
-      // Optimistically update with temporary data
-      const tempInstructor = {
-        id: `temp-${Date.now()}`,
-        ...newInstructor,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      queryClient.setQueryData(['instructors'], (old: any) => 
-        old ? [...old, tempInstructor] : [tempInstructor]
-      );
-
-      return { previousInstructors, tempInstructor };
-    },
-    onSuccess: (data, variables, context) => {
-      toast({
-        title: "Success",
-        description: "Instructor created successfully",
-      });
-    },
-    onError: (error, variables, context) => {
-      // Rollback on error
-      if (context?.previousInstructors) {
-        queryClient.setQueryData(['instructors'], context.previousInstructors);
-      }
-      
-      console.error('Error creating instructor:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create instructor",
-        variant: "destructive",
-      });
-    },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ['instructors'] });
-    },
+    successMessage: "Instructor created successfully",
+    errorMessage: "Failed to create instructor",
+    createTempItem: (data: InstructorData) => ({
+      id: `temp-${Date.now()}`,
+      ...data,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }),
   });
 };
 
 export const useUpdateInstructor = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
+  return useOptimisticUpdate({
+    queryKey: ['instructors'],
     mutationFn: async ({ id, data }: { id: string; data: InstructorData }) => {
       const { data: instructor, error } = await supabase
         .from('instructors')
@@ -94,50 +53,14 @@ export const useUpdateInstructor = () => {
 
       return instructor;
     },
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['instructors'] });
-      
-      const previousInstructors = queryClient.getQueryData(['instructors']);
-      
-      queryClient.setQueryData(['instructors'], (old: any) =>
-        old?.map((instructor: any) =>
-          instructor.id === id 
-            ? { ...instructor, ...data, updated_at: new Date().toISOString() }
-            : instructor
-        )
-      );
-
-      return { previousInstructors };
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Instructor updated successfully",
-      });
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousInstructors) {
-        queryClient.setQueryData(['instructors'], context.previousInstructors);
-      }
-      
-      console.error('Error updating instructor:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update instructor",
-        variant: "destructive",
-      });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['instructors'] });
-    },
+    successMessage: "Instructor updated successfully",
+    errorMessage: "Failed to update instructor",
   });
 };
 
 export const useDeleteInstructor = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
+  return useOptimisticDelete({
+    queryKey: ['instructors'],
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('instructors')
@@ -151,37 +74,7 @@ export const useDeleteInstructor = () => {
 
       return { success: true };
     },
-    onMutate: async (deletedId) => {
-      await queryClient.cancelQueries({ queryKey: ['instructors'] });
-      
-      const previousInstructors = queryClient.getQueryData(['instructors']);
-      
-      queryClient.setQueryData(['instructors'], (old: any) =>
-        old?.filter((instructor: any) => instructor.id !== deletedId)
-      );
-
-      return { previousInstructors };
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Instructor deleted successfully",
-      });
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousInstructors) {
-        queryClient.setQueryData(['instructors'], context.previousInstructors);
-      }
-      
-      console.error('Error deleting instructor:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete instructor",
-        variant: "destructive",
-      });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['instructors'] });
-    },
+    successMessage: "Instructor deleted successfully",
+    errorMessage: "Failed to delete instructor",
   });
 };
