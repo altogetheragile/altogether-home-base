@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { join } from 'path';
