@@ -1,6 +1,5 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../../test-utils'
+import { render, screen, fireEvent, waitFor, createMockUseMutationResult } from '../../../test-utils'
 import TemplateForm from '@/components/admin/templates/TemplateForm'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 
@@ -35,18 +34,9 @@ describe('TemplateForm', () => {
     vi.clearAllMocks()
     
     mockUseTemplateMutations.mockReturnValue({
-      createTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      updateTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      deleteTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      }
+      createTemplate: createMockUseMutationResult(),
+      updateTemplate: createMockUseMutationResult(),
+      deleteTemplate: createMockUseMutationResult()
     })
   })
 
@@ -104,18 +94,11 @@ describe('TemplateForm', () => {
   it('submits create form with valid data', async () => {
     const mockCreateTemplate = vi.fn().mockResolvedValue({})
     mockUseTemplateMutations.mockReturnValue({
-      createTemplate: {
-        mutateAsync: mockCreateTemplate,
-        isPending: false
-      },
-      updateTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      deleteTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      }
+      createTemplate: createMockUseMutationResult({
+        mutateAsync: mockCreateTemplate
+      }),
+      updateTemplate: createMockUseMutationResult(),
+      deleteTemplate: createMockUseMutationResult()
     })
 
     render(
@@ -152,18 +135,11 @@ describe('TemplateForm', () => {
   it('submits update form with modified data', async () => {
     const mockUpdateTemplate = vi.fn().mockResolvedValue({})
     mockUseTemplateMutations.mockReturnValue({
-      createTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      updateTemplate: {
-        mutateAsync: mockUpdateTemplate,
-        isPending: false
-      },
-      deleteTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      }
+      createTemplate: createMockUseMutationResult(),
+      updateTemplate: createMockUseMutationResult({
+        mutateAsync: mockUpdateTemplate
+      }),
+      deleteTemplate: createMockUseMutationResult()
     })
 
     render(
@@ -198,18 +174,11 @@ describe('TemplateForm', () => {
 
   it('shows loading state during submission', () => {
     mockUseTemplateMutations.mockReturnValue({
-      createTemplate: {
-        mutateAsync: vi.fn(),
+      createTemplate: createMockUseMutationResult({
         isPending: true
-      },
-      updateTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      deleteTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      }
+      }),
+      updateTemplate: createMockUseMutationResult(),
+      deleteTemplate: createMockUseMutationResult()
     })
 
     render(

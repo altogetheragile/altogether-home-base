@@ -154,6 +154,50 @@ export const createMockUseQueryResult = <T = any>(
   return defaultResult
 }
 
+// Mock UseMutationResult factory function
+export const createMockUseMutationResult = <TData = any, TError = Error, TVariables = void, TContext = unknown>(
+  overrides: Partial<import('@tanstack/react-query').UseMutationResult<TData, TError, TVariables, TContext>> = {}
+): import('@tanstack/react-query').UseMutationResult<TData, TError, TVariables, TContext> => {
+  const defaultResult: import('@tanstack/react-query').UseMutationResult<TData, TError, TVariables, TContext> = {
+    data: undefined as TData,
+    error: null,
+    variables: undefined as TVariables,
+    isError: false,
+    isIdle: true,
+    isPending: false,
+    isSuccess: false,
+    status: 'idle',
+    failureCount: 0,
+    failureReason: null,
+    isPaused: false,
+    context: undefined as TContext,
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    reset: vi.fn(),
+    submittedAt: 0,
+    ...overrides
+  }
+
+  // Adjust status and boolean flags based on the state
+  if (overrides.isPending) {
+    defaultResult.status = 'pending'
+    defaultResult.isPending = true
+    defaultResult.isIdle = false
+  } else if (overrides.error || overrides.isError) {
+    defaultResult.status = 'error'
+    defaultResult.isError = true
+    defaultResult.isIdle = false
+    defaultResult.isSuccess = false
+  } else if (overrides.data !== undefined || overrides.isSuccess) {
+    defaultResult.status = 'success'
+    defaultResult.isSuccess = true
+    defaultResult.isError = false
+    defaultResult.isIdle = false
+  }
+
+  return defaultResult
+}
+
 // Export everything you need from one place
 export {
   screen,

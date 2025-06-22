@@ -1,6 +1,5 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../../test-utils'
+import { render, screen, fireEvent, waitFor, createMockUseMutationResult } from '../../../test-utils'
 import TemplateCard from '@/components/admin/templates/TemplateCard'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 
@@ -36,18 +35,9 @@ describe('TemplateCard', () => {
     vi.clearAllMocks()
     
     mockUseTemplateMutations.mockReturnValue({
-      createTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      updateTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      deleteTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      }
+      createTemplate: createMockUseMutationResult(),
+      updateTemplate: createMockUseMutationResult(),
+      deleteTemplate: createMockUseMutationResult()
     })
   })
 
@@ -126,18 +116,11 @@ describe('TemplateCard', () => {
   it('deletes template when confirmed', async () => {
     const mockDeleteTemplate = vi.fn().mockResolvedValue({})
     mockUseTemplateMutations.mockReturnValue({
-      createTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      updateTemplate: {
-        mutateAsync: vi.fn(),
-        isPending: false
-      },
-      deleteTemplate: {
-        mutateAsync: mockDeleteTemplate,
-        isPending: false
-      }
+      createTemplate: createMockUseMutationResult(),
+      updateTemplate: createMockUseMutationResult(),
+      deleteTemplate: createMockUseMutationResult({
+        mutateAsync: mockDeleteTemplate
+      })
     })
 
     render(

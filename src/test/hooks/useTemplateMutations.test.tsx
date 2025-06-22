@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '../test-utils'
+import { renderHook, waitFor, createMockUseMutationResult } from '../test-utils'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
