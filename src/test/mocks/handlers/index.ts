@@ -6,6 +6,7 @@ import { profileHandlers } from './profileHandlers'
 import { instructorHandlers } from './instructorHandlers'
 import { edgeHandlers } from './edgeHandlers'
 import { errorHandlers } from './errorHandlers'
+import { templateHandlers } from './templateHandlers'
 
 export const handlers = [
   ...authHandlers,
@@ -14,5 +15,6 @@ export const handlers = [
   ...profileHandlers,
   ...instructorHandlers,
   ...edgeHandlers,
-  ...errorHandlers
+  ...errorHandlers,
+  ...templateHandlers
 ]
