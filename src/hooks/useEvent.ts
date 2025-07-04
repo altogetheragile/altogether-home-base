@@ -20,6 +20,10 @@ export const useEvent = (id: string) => {
           is_published,
           price_cents,
           currency,
+          event_type:event_types(name),
+          category:event_categories(name),
+          level:levels(name),
+          format:formats(name),
           instructor:instructors(name, bio),
           location:locations(name, address, virtual_url),
           event_templates(
@@ -52,6 +56,10 @@ export const useEvent = (id: string) => {
         is_published: data.is_published,
         price_cents: data.price_cents || 0,
         currency: data.currency || 'usd',
+        event_type: data.event_type?.[0] || null,
+        category: data.category?.[0] || null,
+        level: data.level?.[0] || null,
+        format: data.format?.[0] || null,
         instructor: data.instructor?.[0] || null,
         location: data.location?.[0] || null,
         event_template: data.event_templates?.[0] ? {

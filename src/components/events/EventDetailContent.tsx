@@ -13,14 +13,19 @@ const EventDetailContent = ({ event }: EventDetailContentProps) => {
       <CardHeader>
         <div className="flex flex-wrap gap-2 mb-4">
           <Badge variant="secondary">
-            {event.event_template?.event_types?.name || 'Event'}
+            {event.event_type?.name || event.event_template?.event_types?.name || 'Event'}
           </Badge>
           <Badge variant="outline">
-            {event.event_template?.formats?.name || 'TBD'}
+            {event.format?.name || event.event_template?.formats?.name || 'TBD'}
           </Badge>
-          {event.event_template?.levels?.name && (
+          {(event.level?.name || event.event_template?.levels?.name) && (
             <Badge variant="outline">
-              {event.event_template.levels.name}
+              {event.level?.name || event.event_template?.levels?.name}
+            </Badge>
+          )}
+          {event.category?.name && (
+            <Badge variant="outline">
+              {event.category.name}
             </Badge>
           )}
         </div>

@@ -23,10 +23,10 @@ const EventCard = ({ event }: EventCardProps) => {
       <CardHeader>
         <div className="flex justify-between items-start mb-2">
           <Badge variant="secondary">
-            {event.event_template?.event_types?.name || 'Event'}
+            {event.event_type?.name || event.event_template?.event_types?.name || 'Event'}
           </Badge>
           <Badge variant="outline">
-            {event.event_template?.formats?.name || 'TBD'}
+            {event.format?.name || event.event_template?.formats?.name || 'TBD'}
           </Badge>
         </div>
         <CardTitle className="text-xl">{event.title}</CardTitle>
@@ -45,7 +45,8 @@ const EventCard = ({ event }: EventCardProps) => {
               }
             </span>
           </div>
-          {event.event_template?.duration_days && (
+          
+          {(event.event_template?.duration_days || event.event_template?.duration_days === 1) && (
             <div className="flex items-center text-muted-foreground">
               <Clock className="h-4 w-4 mr-2" />
               <span>

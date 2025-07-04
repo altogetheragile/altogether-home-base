@@ -11,6 +11,19 @@ export interface EventData {
   is_published: boolean;
   price_cents: number;
   currency: string;
+  // Direct event fields (override template defaults)
+  event_type: {
+    name: string;
+  } | null;
+  category: {
+    name: string;
+  } | null;
+  level: {
+    name: string;
+  } | null;
+  format: {
+    name: string;
+  } | null;
   instructor: {
     name: string;
     bio: string | null;
@@ -49,6 +62,10 @@ export const useEvents = () => {
           is_published,
           price_cents,
           currency,
+          event_type:event_types(name),
+          category:event_categories(name),
+          level:levels(name),
+          format:formats(name),
           instructor:instructors(name, bio),
           location:locations(name, address, virtual_url),
           event_templates(
@@ -76,6 +93,10 @@ export const useEvents = () => {
         is_published: event.is_published,
         price_cents: event.price_cents || 0,
         currency: event.currency || 'usd',
+        event_type: event.event_type?.[0] || null,
+        category: event.category?.[0] || null,
+        level: event.level?.[0] || null,
+        format: event.format?.[0] || null,
         instructor: event.instructor?.[0] || null,
         location: event.location?.[0] || null,
         event_template: event.event_templates?.[0] ? {

@@ -39,7 +39,8 @@ const EventDetailSidebar = ({ event }: EventDetailSidebarProps) => {
             </div>
           </div>
           
-          {event.event_template?.duration_days && (
+          
+          {(event.event_template?.duration_days || event.event_template?.duration_days === 1) && (
             <div className="flex items-center text-muted-foreground">
               <Clock className="h-4 w-4 mr-3" />
               <span>

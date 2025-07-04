@@ -24,6 +24,10 @@ const mockEvent: EventData = {
   is_published: true,
   price_cents: 10000,
   currency: 'usd',
+  event_type: { name: 'Workshop' },
+  category: { name: 'Training' },
+  level: { name: 'Beginner' },
+  format: { name: 'In-Person' },
   instructor: {
     name: 'John Doe',
     bio: 'Expert instructor'

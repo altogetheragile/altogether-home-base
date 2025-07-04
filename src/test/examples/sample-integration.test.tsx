@@ -38,6 +38,10 @@ describe('Sample Integration Tests', () => {
       price_cents: 10000,
       currency: 'usd',
       is_published: true,
+      event_type: { name: 'Workshop' },
+      category: { name: 'Training' },
+      level: { name: 'Beginner' },
+      format: { name: 'In-Person' },
       instructor: {
         name: 'Test Instructor',
         bio: 'Test bio'
@@ -78,6 +82,10 @@ describe('Sample Integration Tests', () => {
       price_cents: 10000,
       currency: 'usd',
       is_published: true,
+      event_type: { name: 'Workshop' },
+      category: { name: 'Training' },
+      level: { name: 'Beginner' },
+      format: { name: 'In-Person' },
       instructor: {
         name: 'Test Instructor',
         bio: 'Test bio'
@@ -112,6 +120,10 @@ describe('Sample Integration Tests', () => {
       price_cents: 0,
       currency: 'usd',
       is_published: true,
+      event_type: { name: 'Workshop' },
+      category: { name: 'Training' },
+      level: { name: 'Beginner' },
+      format: { name: 'In-Person' },
       instructor: {
         name: 'Test Instructor',
         bio: 'Test bio'

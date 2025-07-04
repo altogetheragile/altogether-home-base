@@ -11,6 +11,10 @@ export const mockEvents: EventData[] = [
     is_published: true,
     price_cents: 15000,
     currency: 'usd',
+    event_type: { name: 'Workshop' },
+    category: { name: 'Leadership' },
+    level: { name: 'Intermediate' },
+    format: { name: 'In-Person' },
     instructor: {
       name: 'Jane Smith',
       bio: 'Certified leadership coach with 10+ years experience'
@@ -36,6 +40,10 @@ export const mockEvents: EventData[] = [
     is_published: true,
     price_cents: 8000,
     currency: 'usd',
+    event_type: { name: 'Team Building' },
+    category: { name: 'Collaboration' },
+    level: { name: 'Beginner' },
+    format: { name: 'Virtual' },
     instructor: {
       name: 'Mike Johnson',
       bio: 'Remote work specialist and team dynamics expert'

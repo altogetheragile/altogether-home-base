@@ -19,6 +19,10 @@ const mockEvent: EventData = {
   is_published: true,
   price_cents: 15000,
   currency: 'usd',
+  event_type: { name: 'Workshop' },
+  category: { name: 'Leadership' },
+  level: { name: 'Intermediate' },
+  format: { name: 'In-Person' },
   instructor: {
     name: 'Jane Smith',
     bio: 'Certified leadership coach'
