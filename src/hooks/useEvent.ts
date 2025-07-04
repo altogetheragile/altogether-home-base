@@ -28,10 +28,10 @@ export const useEvent = (id: string) => {
           locations!location_id(name, address, virtual_url),
           event_templates!template_id(
             duration_days,
-            event_types:event_type_id(name),
-            formats:format_id(name),
-            levels:level_id(name),
-            event_categories:category_id(name)
+            event_types!event_type_id(name),
+            formats!format_id(name),
+            levels!level_id(name),
+            event_categories!category_id(name)
           )
         `)
         .eq('id', id)
