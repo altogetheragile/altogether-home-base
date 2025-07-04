@@ -103,7 +103,7 @@ const EventFormFields = ({
                   <SelectValue placeholder="Select event type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No event type</SelectItem>
+                  <SelectItem value="none">No event type</SelectItem>
                   {eventTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id}>
                       {type.name}
@@ -122,7 +122,7 @@ const EventFormFields = ({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No category</SelectItem>
+                  <SelectItem value="none">No category</SelectItem>
                   {categories?.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -144,7 +144,7 @@ const EventFormFields = ({
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No level</SelectItem>
+                  <SelectItem value="none">No level</SelectItem>
                   {levels?.map((level) => (
                     <SelectItem key={level.id} value={level.id}>
                       {level.name}
@@ -163,7 +163,7 @@ const EventFormFields = ({
                   <SelectValue placeholder="Select format" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No format</SelectItem>
+                  <SelectItem value="none">No format</SelectItem>
                   {formats?.map((format) => (
                     <SelectItem key={format.id} value={format.id}>
                       {format.name}
@@ -266,7 +266,7 @@ const EventFormFields = ({
                   <SelectValue placeholder="Select instructor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No instructor</SelectItem>
+                  <SelectItem value="none">No instructor</SelectItem>
                   {instructors?.map((instructor) => (
                     <SelectItem key={instructor.id} value={instructor.id}>
                       {instructor.name}
@@ -282,7 +282,7 @@ const EventFormFields = ({
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No location</SelectItem>
+                  <SelectItem value="none">No location</SelectItem>
                   {locations?.map((location) => (
                     <SelectItem key={location.id} value={location.id}>
                       {location.name}

@@ -9,6 +9,10 @@ export interface EventTemplate {
   duration_days: number;
   default_location_id?: string;
   default_instructor_id?: string;
+  event_type_id?: string;
+  category_id?: string;
+  level_id?: string;
+  format_id?: string;
   created_at: string;
   created_by?: string;
   updated_by?: string;

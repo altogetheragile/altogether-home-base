@@ -6,6 +6,10 @@ export interface EventTemplate {
   duration_days: number;
   default_location_id?: string;
   default_instructor_id?: string;
+  event_type_id?: string;
+  category_id?: string;
+  level_id?: string;
+  format_id?: string;
   created_at: string;
 }
 
@@ -29,4 +33,8 @@ export interface TemplateFormData {
   duration_days: number;
   default_location_id: string;
   default_instructor_id: string;
+  event_type_id: string;
+  category_id: string;
+  level_id: string;
+  format_id: string;
 }

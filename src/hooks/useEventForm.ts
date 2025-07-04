@@ -41,10 +41,10 @@ export const useEventForm = () => {
     status: 'draft',
     expected_revenue_cents: 0,
     lead_source: '',
-    event_type_id: '',
-    category_id: '',
-    level_id: '',
-    format_id: '',
+    event_type_id: 'none',
+    category_id: 'none',
+    level_id: 'none',
+    format_id: 'none',
   });
 
   // Pre-populate form with template data when template is selected
@@ -56,8 +56,12 @@ export const useEventForm = () => {
           ...prev,
           title: selectedTemplate.title,
           description: selectedTemplate.description || '',
-          instructor_id: selectedTemplate.default_instructor_id || '',
-          location_id: selectedTemplate.default_location_id || '',
+          instructor_id: selectedTemplate.default_instructor_id || 'none',
+          location_id: selectedTemplate.default_location_id || 'none',
+          event_type_id: selectedTemplate.event_type_id || 'none',
+          category_id: selectedTemplate.category_id || 'none',
+          level_id: selectedTemplate.level_id || 'none',
+          format_id: selectedTemplate.format_id || 'none',
           template_id: selectedTemplate.id,
         }));
         
@@ -93,11 +97,15 @@ export const useEventForm = () => {
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: typeof formData) => {
-      // Convert tags from comma-separated string to array
+      // Convert tags from comma-separated string to array and handle null conversions
       const processedData = {
         ...eventData,
         tags: eventData.tags ? eventData.tags.split(',').map(tag => tag.trim()) : [],
         capacity: eventData.capacity ? parseInt(eventData.capacity) : null,
+        event_type_id: eventData.event_type_id === 'none' ? null : eventData.event_type_id,
+        category_id: eventData.category_id === 'none' ? null : eventData.category_id,
+        level_id: eventData.level_id === 'none' ? null : eventData.level_id,
+        format_id: eventData.format_id === 'none' ? null : eventData.format_id,
       };
       
       const { data, error } = await supabase

@@ -91,10 +91,10 @@ const EditEvent = () => {
         status: event.status || 'draft',
         expected_revenue_cents: event.expected_revenue_cents || 0,
         lead_source: event.lead_source || '',
-        event_type_id: event.event_type_id || '',
-        category_id: event.category_id || '',
-        level_id: event.level_id || '',
-        format_id: event.format_id || '',
+        event_type_id: event.event_type_id || 'none',
+        category_id: event.category_id || 'none',
+        level_id: event.level_id || 'none',
+        format_id: event.format_id || 'none',
       });
     }
   }, [event]);
@@ -103,11 +103,15 @@ const EditEvent = () => {
     mutationFn: async (eventData: typeof formData) => {
       if (!id) throw new Error('No event ID provided');
       
-      // Convert tags from comma-separated string to array
+      // Convert tags from comma-separated string to array and handle null conversions
       const processedData = {
         ...eventData,
         tags: eventData.tags ? eventData.tags.split(',').map(tag => tag.trim()) : [],
         capacity: eventData.capacity ? parseInt(eventData.capacity) : null,
+        event_type_id: eventData.event_type_id === 'none' ? null : eventData.event_type_id,
+        category_id: eventData.category_id === 'none' ? null : eventData.category_id,
+        level_id: eventData.level_id === 'none' ? null : eventData.level_id,
+        format_id: eventData.format_id === 'none' ? null : eventData.format_id,
       };
       
       const { data, error } = await supabase
