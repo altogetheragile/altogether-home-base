@@ -67,39 +67,44 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
   const activeFilterCount = Object.values(filters).filter(value => value !== "all").length;
 
   return (
-    <Card className="border-border mb-8">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            <CardTitle className="text-lg">Filter Events</CardTitle>
-            {activeFilterCount > 0 && (
-              <Badge variant="secondary">{activeFilterCount} active</Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                <X className="h-4 w-4 mr-1" />
-                Clear All
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? "Collapse" : "Expand"}
-            </Button>
-          </div>
+    <div className="mb-6">
+      <div 
+        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-muted cursor-pointer hover:bg-muted/40 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Filter Events</span>
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="text-xs h-5">{activeFilterCount}</Badge>
+          )}
         </div>
-      </CardHeader>
+        <div className="flex items-center gap-2">
+          {hasActiveFilters && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                clearAllFilters();
+              }}
+              className="h-7 px-2 text-xs"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Clear
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {isExpanded ? "Collapse" : "Expand"}
+          </span>
+        </div>
+      </div>
       
       {isExpanded && (
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-3 p-4 bg-background/50 rounded-lg border border-muted/50">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Event Type</label>
+              <label className="text-xs font-medium text-muted-foreground">Event Type</label>
               <Select value={filters.eventType} onValueChange={(value) => updateFilter('eventType', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All types" />
@@ -116,7 +121,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Category</label>
+              <label className="text-xs font-medium text-muted-foreground">Category</label>
               <Select value={filters.category} onValueChange={(value) => updateFilter('category', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All categories" />
@@ -133,7 +138,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Level</label>
+              <label className="text-xs font-medium text-muted-foreground">Level</label>
               <Select value={filters.level} onValueChange={(value) => updateFilter('level', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All levels" />
@@ -150,7 +155,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Format</label>
+              <label className="text-xs font-medium text-muted-foreground">Format</label>
               <Select value={filters.format} onValueChange={(value) => updateFilter('format', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All formats" />
@@ -167,7 +172,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Location</label>
+              <label className="text-xs font-medium text-muted-foreground">Location</label>
               <Select value={filters.location} onValueChange={(value) => updateFilter('location', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All locations" />
@@ -184,7 +189,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Instructor</label>
+              <label className="text-xs font-medium text-muted-foreground">Instructor</label>
               <Select value={filters.instructor} onValueChange={(value) => updateFilter('instructor', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All instructors" />
@@ -200,9 +205,9 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
               </Select>
             </div>
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };
 
