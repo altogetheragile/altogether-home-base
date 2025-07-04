@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import EventDetailSidebar from '@/components/events/EventDetailSidebar'
 import { EventData } from '@/hooks/useEvents'
+import { useAuth } from '@/contexts/AuthContext'
+import { useUserRegistrations } from '@/hooks/useUserRegistrations'
+import { useEventUnregistration } from '@/hooks/useEventUnregistration'
 
 // Mock the hooks
 const mockRegisterForEvent = vi.fn()
@@ -14,17 +17,29 @@ vi.mock('@/hooks/useEventRegistration', () => ({
   })
 }))
 
+// Mock with default empty registrations
 vi.mock('@/hooks/useUserRegistrations', () => ({
-  useUserRegistrations: () => ({
+  useUserRegistrations: vi.fn(() => ({
     data: []
-  })
+  }))
 }))
 
 vi.mock('@/hooks/useEventUnregistration', () => ({
-  useEventUnregistration: () => ({
+  useEventUnregistration: vi.fn(() => ({
     unregisterFromEvent: mockUnregisterFromEvent,
     loading: false
-  })
+  }))
+}))
+
+// Mock useAuth separately
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({
+    user: null,
+    loading: false,
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn()
+  }))
 }))
 
 const mockEvent: EventData = {
@@ -84,9 +99,13 @@ describe('EventDetailSidebar', () => {
 
   it('should show register button for authenticated users not registered', () => {
     // Mock authenticated user with no registrations
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
-      user: { id: 'user-1', email: 'test@example.com' },
-      loading: false
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'user-1', email: 'test@example.com' } as any,
+      session: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn()
     })
 
     render(<EventDetailSidebar event={mockEvent} />)
@@ -100,19 +119,25 @@ describe('EventDetailSidebar', () => {
 
   it('should show unregister button for registered users on upcoming events', () => {
     // Mock authenticated user with registration
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
-      user: { id: 'user-1', email: 'test@example.com' },
-      loading: false
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'user-1', email: 'test@example.com' } as any,
+      session: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn()
     })
     
-    vi.mocked(require('@/hooks/useUserRegistrations').useUserRegistrations).mockReturnValue({
+    vi.mocked(useUserRegistrations).mockReturnValue({
       data: [{
         id: 'reg-1',
         event_id: 'event-1',
         registered_at: '2024-01-15T10:00:00Z',
-        payment_status: 'paid'
+        payment_status: 'paid',
+        stripe_session_id: null,
+        event: null
       }]
-    })
+    } as any)
 
     render(<EventDetailSidebar event={mockEvent} />)
     
@@ -133,19 +158,25 @@ describe('EventDetailSidebar', () => {
     }
 
     // Mock authenticated user with registration
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
-      user: { id: 'user-1', email: 'test@example.com' },
-      loading: false
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'user-1', email: 'test@example.com' } as any,
+      session: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn()
     })
     
-    vi.mocked(require('@/hooks/useUserRegistrations').useUserRegistrations).mockReturnValue({
+    vi.mocked(useUserRegistrations).mockReturnValue({
       data: [{
         id: 'reg-1',
         event_id: 'event-1',
         registered_at: '2022-12-15T10:00:00Z',
-        payment_status: 'paid'
+        payment_status: 'paid',
+        stripe_session_id: null,
+        event: null
       }]
-    })
+    } as any)
 
     render(<EventDetailSidebar event={pastEvent} />)
     
@@ -155,25 +186,31 @@ describe('EventDetailSidebar', () => {
 
   it('should show loading state during unregistration', () => {
     // Mock loading state
-    vi.mocked(require('@/hooks/useEventUnregistration').useEventUnregistration).mockReturnValue({
+    vi.mocked(useEventUnregistration).mockReturnValue({
       unregisterFromEvent: mockUnregisterFromEvent,
       loading: true
     })
 
     // Mock authenticated user with registration
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
-      user: { id: 'user-1', email: 'test@example.com' },
-      loading: false
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'user-1', email: 'test@example.com' } as any,
+      session: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn()
     })
     
-    vi.mocked(require('@/hooks/useUserRegistrations').useUserRegistrations).mockReturnValue({
+    vi.mocked(useUserRegistrations).mockReturnValue({
       data: [{
         id: 'reg-1',
         event_id: 'event-1',
         registered_at: '2024-01-15T10:00:00Z',
-        payment_status: 'paid'
+        payment_status: 'paid',
+        stripe_session_id: null,
+        event: null
       }]
-    })
+    } as any)
 
     render(<EventDetailSidebar event={mockEvent} />)
     

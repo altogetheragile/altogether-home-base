@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from 'vitest'
 import { renderHook, waitFor } from '../test-utils'
 import { useEventUnregistration } from '@/hooks/useEventUnregistration'
+import { useAuth } from '@/contexts/AuthContext'
 import { server } from '../mocks/server'
 
 beforeAll(() => server.listen())
@@ -26,6 +27,18 @@ vi.mock('@tanstack/react-query', async () => {
     })
   }
 })
+
+// Mock useAuth
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({
+    user: { id: 'user-1', email: 'test@example.com' },
+    session: null,
+    loading: false,
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn()
+  }))
+}))
 
 describe('useEventUnregistration', () => {
   beforeEach(() => {
@@ -62,9 +75,13 @@ describe('useEventUnregistration', () => {
 
   it('should handle unregistration without authenticated user', async () => {
     // Mock no authenticated user
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: null,
-      loading: false
+      session: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn()
     })
 
     const { result } = renderHook(() => useEventUnregistration())
@@ -82,13 +99,21 @@ describe('useEventUnregistration', () => {
   it('should handle unregistration errors', async () => {
     // Mock Supabase error
     const mockError = new Error('Database error')
-    vi.mocked(require('@/integrations/supabase/client').supabase.from).mockReturnValue({
-      delete: () => ({
-        eq: () => ({
-          eq: () => Promise.resolve({ error: mockError })
+    
+    // Mock the Supabase client directly for this test
+    const mockSupabase = {
+      from: vi.fn().mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: mockError })
+          })
         })
       })
-    })
+    }
+    
+    vi.doMock('@/integrations/supabase/client', () => ({
+      supabase: mockSupabase
+    }))
 
     const { result } = renderHook(() => useEventUnregistration())
 
@@ -107,15 +132,22 @@ describe('useEventUnregistration', () => {
   })
 
   it('should reset loading state after error', async () => {
-    // Mock Supabase error
+    // Mock Supabase error  
     const mockError = new Error('Network error')
-    vi.mocked(require('@/integrations/supabase/client').supabase.from).mockReturnValue({
-      delete: () => ({
-        eq: () => ({
-          eq: () => Promise.resolve({ error: mockError })
+    
+    const mockSupabase = {
+      from: vi.fn().mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: mockError })
+          })
         })
       })
-    })
+    }
+    
+    vi.doMock('@/integrations/supabase/client', () => ({
+      supabase: mockSupabase
+    }))
 
     const { result } = renderHook(() => useEventUnregistration())
 

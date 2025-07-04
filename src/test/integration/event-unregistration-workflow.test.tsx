@@ -4,6 +4,8 @@ import EventDetailSidebar from '@/components/events/EventDetailSidebar'
 import RegistrationCard from '@/components/dashboard/RegistrationCard'
 import { EventData } from '@/hooks/useEvents'
 import { UserRegistrationWithEvent } from '@/hooks/useUserRegistrations'
+import { useAuth } from '@/contexts/AuthContext'
+import { useUserRegistrations } from '@/hooks/useUserRegistrations'
 import { server } from '../mocks/server'
 
 beforeAll(() => server.listen())
@@ -27,6 +29,15 @@ vi.mock('@tanstack/react-query', async () => {
     })
   }
 })
+
+// Mock hooks
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn()
+}))
+
+vi.mock('@/hooks/useUserRegistrations', () => ({
+  useUserRegistrations: vi.fn()
+}))
 
 const mockEvent: EventData = {
   id: 'event-1',
@@ -81,17 +92,21 @@ describe('Event Unregistration Workflow', () => {
     vi.clearAllMocks()
     
     // Mock authenticated user
-    vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({
-      user: { id: 'user-1', email: 'test@example.com' },
-      loading: false
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'user-1', email: 'test@example.com' } as any,
+      session: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn()
     })
   })
 
   it('should complete full unregistration workflow from event detail page', async () => {
     // Mock user is registered for this event
-    vi.mocked(require('@/hooks/useUserRegistrations').useUserRegistrations).mockReturnValue({
+    vi.mocked(useUserRegistrations).mockReturnValue({
       data: [mockRegistration]
-    })
+    } as any)
 
     render(<EventDetailSidebar event={mockEvent} />)
 
@@ -155,18 +170,25 @@ describe('Event Unregistration Workflow', () => {
   it('should handle unregistration errors gracefully', async () => {
     // Mock Supabase error
     const mockError = new Error('Permission denied')
-    vi.mocked(require('@/integrations/supabase/client').supabase.from).mockReturnValue({
-      delete: () => ({
-        eq: () => ({
-          eq: () => Promise.resolve({ error: mockError })
+    
+    const mockSupabase = {
+      from: vi.fn().mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: mockError })
+          })
         })
       })
-    })
+    }
+    
+    vi.doMock('@/integrations/supabase/client', () => ({
+      supabase: mockSupabase
+    }))
 
     // Mock user is registered
-    vi.mocked(require('@/hooks/useUserRegistrations').useUserRegistrations).mockReturnValue({
+    vi.mocked(useUserRegistrations).mockReturnValue({
       data: [mockRegistration]
-    })
+    } as any)
 
     render(<EventDetailSidebar event={mockEvent} />)
 
@@ -201,9 +223,9 @@ describe('Event Unregistration Workflow', () => {
     }
 
     // Test in EventDetailSidebar
-    vi.mocked(require('@/hooks/useUserRegistrations').useUserRegistrations).mockReturnValue({
+    vi.mocked(useUserRegistrations).mockReturnValue({
       data: [pastRegistration]
-    })
+    } as any)
 
     const { rerender } = render(<EventDetailSidebar event={pastEvent} />)
 
@@ -219,9 +241,9 @@ describe('Event Unregistration Workflow', () => {
 
   it('should maintain consistent registration state across components', () => {
     // Mock user is registered
-    vi.mocked(require('@/hooks/useUserRegistrations').useUserRegistrations).mockReturnValue({
+    vi.mocked(useUserRegistrations).mockReturnValue({
       data: [mockRegistration]
-    })
+    } as any)
 
     const { rerender } = render(<EventDetailSidebar event={mockEvent} />)
 
