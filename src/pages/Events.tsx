@@ -20,12 +20,12 @@ const Events = () => {
   const { toast } = useToast();
   const verificationAttempted = useRef(false);
   const [filters, setFilters] = useState<FilterState>({
-    eventType: "",
-    category: "",
-    level: "",
-    format: "",
-    location: "",
-    instructor: ""
+    eventType: "all",
+    category: "all",
+    level: "all",
+    format: "all",
+    location: "all",
+    instructor: "all"
   });
 
   useEffect(() => {
@@ -74,13 +74,13 @@ const Events = () => {
       const location = event.location?.name || '';
       const instructor = event.instructor?.name || '';
 
-      // Apply filters
-      if (filters.eventType && eventType !== filters.eventType) return false;
-      if (filters.category && category !== filters.category) return false;
-      if (filters.level && level !== filters.level) return false;
-      if (filters.format && format !== filters.format) return false;
-      if (filters.location && location !== filters.location) return false;
-      if (filters.instructor && instructor !== filters.instructor) return false;
+      // Apply filters (skip if filter is "all")
+      if (filters.eventType !== "all" && eventType !== filters.eventType) return false;
+      if (filters.category !== "all" && category !== filters.category) return false;
+      if (filters.level !== "all" && level !== filters.level) return false;
+      if (filters.format !== "all" && format !== filters.format) return false;
+      if (filters.location !== "all" && location !== filters.location) return false;
+      if (filters.instructor !== "all" && instructor !== filters.instructor) return false;
 
       return true;
     });

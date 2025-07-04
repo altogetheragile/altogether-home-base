@@ -26,12 +26,12 @@ export interface FilterState {
 
 const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
   const [filters, setFilters] = useState<FilterState>({
-    eventType: "",
-    category: "",
-    level: "",
-    format: "",
-    location: "",
-    instructor: ""
+    eventType: "all",
+    category: "all",
+    level: "all",
+    format: "all",
+    location: "all",
+    instructor: "all"
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -52,19 +52,19 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
 
   const clearAllFilters = () => {
     const clearedFilters: FilterState = {
-      eventType: "",
-      category: "",
-      level: "",
-      format: "",
-      location: "",
-      instructor: ""
+      eventType: "all",
+      category: "all",
+      level: "all",
+      format: "all",
+      location: "all",
+      instructor: "all"
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== "");
-  const activeFilterCount = Object.values(filters).filter(value => value !== "").length;
+  const hasActiveFilters = Object.values(filters).some(value => value !== "all");
+  const activeFilterCount = Object.values(filters).filter(value => value !== "all").length;
 
   return (
     <Card className="border-border mb-8">
@@ -105,7 +105,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   {eventTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.name}>
                       {type.name}
@@ -122,7 +122,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All categories</SelectItem>
+                  <SelectItem value="all">All categories</SelectItem>
                   {categories?.map((category) => (
                     <SelectItem key={category.id} value={category.name}>
                       {category.name}
@@ -139,7 +139,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
                   <SelectValue placeholder="All levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All levels</SelectItem>
+                  <SelectItem value="all">All levels</SelectItem>
                   {levels?.map((level) => (
                     <SelectItem key={level.id} value={level.name}>
                       {level.name}
@@ -156,7 +156,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
                   <SelectValue placeholder="All formats" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All formats</SelectItem>
+                  <SelectItem value="all">All formats</SelectItem>
                   {formats?.map((format) => (
                     <SelectItem key={format.id} value={format.name}>
                       {format.name}
@@ -173,7 +173,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
                   <SelectValue placeholder="All locations" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All locations</SelectItem>
+                  <SelectItem value="all">All locations</SelectItem>
                   {locations?.map((location) => (
                     <SelectItem key={location.id} value={location.name}>
                       {location.name}
@@ -190,7 +190,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
                   <SelectValue placeholder="All instructors" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All instructors</SelectItem>
+                  <SelectItem value="all">All instructors</SelectItem>
                   {instructors?.map((instructor) => (
                     <SelectItem key={instructor.id} value={instructor.name}>
                       {instructor.name}
