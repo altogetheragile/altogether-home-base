@@ -5,10 +5,12 @@ import { useEvents } from "@/hooks/useEvents";
 import { useEventRegistration } from "@/hooks/useEventRegistration";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import EventsHeader from "@/components/events/EventsHeader";
 import EventsList from "@/components/events/EventsList";
+import EventsFilter, { FilterState } from "@/components/events/EventsFilter";
+import { EventData } from "@/hooks/useEvents";
 
 const Events = () => {
   const { data: events, isLoading, error } = useEvents();
@@ -17,6 +19,14 @@ const Events = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const verificationAttempted = useRef(false);
+  const [filters, setFilters] = useState<FilterState>({
+    eventType: "",
+    category: "",
+    level: "",
+    format: "",
+    location: "",
+    instructor: ""
+  });
 
   useEffect(() => {
     const success = searchParams.get('success');
@@ -51,6 +61,31 @@ const Events = () => {
     }
   }, [searchParams, verifyPayment, toast]);
 
+  // Filter events based on selected filters
+  const filteredEvents = useMemo(() => {
+    if (!events) return events;
+    
+    return events.filter((event: EventData) => {
+      // Get the actual values, prioritizing direct event fields over template fields
+      const eventType = event.event_type?.name || event.event_template?.event_types?.name || '';
+      const category = event.category?.name || event.event_template?.categories?.name || '';
+      const level = event.level?.name || event.event_template?.levels?.name || '';
+      const format = event.format?.name || event.event_template?.formats?.name || '';
+      const location = event.location?.name || '';
+      const instructor = event.instructor?.name || '';
+
+      // Apply filters
+      if (filters.eventType && eventType !== filters.eventType) return false;
+      if (filters.category && category !== filters.category) return false;
+      if (filters.level && level !== filters.level) return false;
+      if (filters.format && format !== filters.format) return false;
+      if (filters.location && location !== filters.location) return false;
+      if (filters.instructor && instructor !== filters.instructor) return false;
+
+      return true;
+    });
+  }, [events, filters]);
+
   if (error) {
     console.error('Events page error:', error);
   }
@@ -64,7 +99,8 @@ const Events = () => {
 
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <EventsList events={events} isLoading={isLoading} />
+            <EventsFilter onFilterChange={setFilters} />
+            <EventsList events={filteredEvents} isLoading={isLoading} />
           </div>
         </section>
       </div>
