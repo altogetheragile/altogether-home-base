@@ -64,4 +64,17 @@ export const eventHandlers = [
       payment_status: 'pending'
     }, { status: 201 })
   }),
+  // Delete event registration (unregister)
+  http.delete(`${BASE}/rest/v1/event_registrations`, ({ request }) => {
+    const url = new URL(request.url)
+    const id = url.searchParams.get('id')
+    const userId = url.searchParams.get('user_id')
+    
+    // Mock successful deletion if ID and user_id are provided
+    if (id && userId) {
+      return HttpResponse.json(null, { status: 204 })
+    }
+    
+    return HttpResponse.json({ error: 'Invalid parameters' }, { status: 400 })
+  }),
 ]
