@@ -18,6 +18,10 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import AdminInstructors from "./pages/admin/AdminInstructors";
 import AdminLocations from "./pages/admin/AdminLocations";
 import AdminTemplates from "./pages/admin/AdminTemplates";
+import AdminEventTypes from "./pages/admin/AdminEventTypes";
+import AdminEventCategories from "./pages/admin/AdminEventCategories";
+import AdminLevels from "./pages/admin/AdminLevels";
+import AdminFormats from "./pages/admin/AdminFormats";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
@@ -56,6 +60,10 @@ const App = () => (
                 <Route path="instructors/:id/edit" element={<EditInstructor />} />
                 <Route path="locations" element={<AdminLocations />} />
                 <Route path="templates" element={<AdminTemplates />} />
+                <Route path="event-types" element={<AdminEventTypes />} />
+                <Route path="event-categories" element={<AdminEventCategories />} />
+                <Route path="levels" element={<AdminLevels />} />
+                <Route path="formats" element={<AdminFormats />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -1,6 +1,6 @@
 
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -48,6 +48,30 @@ const AdminLayout = () => {
       href: '/admin/templates',
       icon: BookOpen,
       description: 'Manage event templates'
+    },
+    {
+      label: 'Event Types',
+      href: '/admin/event-types',
+      icon: Tag,
+      description: 'Manage event types'
+    },
+    {
+      label: 'Categories',
+      href: '/admin/event-categories',
+      icon: FolderOpen,
+      description: 'Manage event categories'
+    },
+    {
+      label: 'Levels',
+      href: '/admin/levels',
+      icon: BarChart3,
+      description: 'Manage skill levels'
+    },
+    {
+      label: 'Formats',
+      href: '/admin/formats',
+      icon: Layout,
+      description: 'Manage event formats'
     },
   ];
 
