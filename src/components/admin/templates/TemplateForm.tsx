@@ -26,21 +26,28 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
     title: template?.title || '',
     description: template?.description || '',
     duration_days: template?.duration_days || 1,
-    default_location_id: template?.default_location_id || '',
-    default_instructor_id: template?.default_instructor_id || '',
+    default_location_id: template?.default_location_id || 'none',
+    default_instructor_id: template?.default_instructor_id || 'none',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Convert "none" values back to empty strings for submission
+    const submitData = {
+      ...formData,
+      default_location_id: formData.default_location_id === 'none' ? '' : formData.default_location_id,
+      default_instructor_id: formData.default_instructor_id === 'none' ? '' : formData.default_instructor_id,
+    };
+    
     try {
       if (template) {
         await updateTemplate.mutateAsync({ 
           id: template.id, 
-          data: formData 
+          data: submitData 
         });
       } else {
-        await createTemplate.mutateAsync(formData);
+        await createTemplate.mutateAsync(submitData);
       }
       onClose();
     } catch (error) {
@@ -100,7 +107,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
               <SelectValue placeholder="Select location" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No default location</SelectItem>
+              <SelectItem value="none">No default location</SelectItem>
               {locations.map((location) => (
                 <SelectItem key={location.id} value={location.id}>
                   {location.name}
@@ -121,7 +128,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
               <SelectValue placeholder="Select instructor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No default instructor</SelectItem>
+              <SelectItem value="none">No default instructor</SelectItem>
               {instructors.map((instructor) => (
                 <SelectItem key={instructor.id} value={instructor.id}>
                   {instructor.name}
