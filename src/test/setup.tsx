@@ -24,24 +24,19 @@ const createMockUser = (overrides: Partial<User> = {}): User => ({
   ...overrides
 })
 
-// Global AuthContext mock with proper TypeScript types
+// Global AuthContext mock - flexible for individual test overrides
+const mockAuthValue = {
+  user: createMockUser({ id: '1', email: 'test@example.com' }),
+  session: null,
+  signIn: vi.fn(),
+  signUp: vi.fn(),
+  signOut: vi.fn(),
+  loading: false
+}
+
 vi.mock('@/contexts/AuthContext', () => ({
-  AuthContext: React.createContext({
-    user: createMockUser({ id: '1', email: 'test@example.com' }),
-    session: null,
-    signIn: vi.fn(),
-    signUp: vi.fn(),
-    signOut: vi.fn(),
-    loading: false
-  }),
-  useAuth: () => ({
-    user: createMockUser({ id: '1', email: 'test@example.com' }),
-    session: null,
-    signIn: vi.fn(),
-    signUp: vi.fn(),
-    signOut: vi.fn(),
-    loading: false
-  }),
+  AuthContext: React.createContext(mockAuthValue),
+  useAuth: vi.fn(() => mockAuthValue),
   AuthProvider: ({ children }: { children: React.ReactNode }) => children
 }))
 

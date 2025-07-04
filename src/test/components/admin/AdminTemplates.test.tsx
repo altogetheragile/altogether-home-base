@@ -224,7 +224,13 @@ describe('AdminTemplates', () => {
     )
 
     const mockNavigate = vi.fn()
-    vi.mocked(require('react-router-dom').useNavigate).mockReturnValue(mockNavigate)
+    vi.doMock('react-router-dom', async () => {
+      const actual = await vi.importActual('react-router-dom')
+      return {
+        ...actual,
+        useNavigate: () => mockNavigate
+      }
+    })
 
     render(<AdminTemplates />)
     

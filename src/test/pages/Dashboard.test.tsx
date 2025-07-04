@@ -69,8 +69,8 @@ describe('Dashboard Page', () => {
   })
 
   it('should redirect unauthenticated users', () => {
-    const mockAuth = vi.mocked(useAuth)
-    mockAuth.mockReturnValue({
+    // Override the global mock for this test
+    vi.mocked(useAuth).mockReturnValue({
       user: null,
       session: null,
       signIn: vi.fn(),
