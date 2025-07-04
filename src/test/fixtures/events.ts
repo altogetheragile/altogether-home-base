@@ -28,7 +28,8 @@ export const mockEvents: EventData[] = [
       duration_days: 1,
       event_types: { name: 'Workshop' },
       formats: { name: 'In-Person' },
-      levels: { name: 'Intermediate' }
+      levels: { name: 'Intermediate' },
+      categories: { name: 'Leadership' }
     }
   },
   {
@@ -57,7 +58,8 @@ export const mockEvents: EventData[] = [
       duration_days: 2,
       event_types: { name: 'Team Building' },
       formats: { name: 'Virtual' },
-      levels: { name: 'Beginner' }
+      levels: { name: 'Beginner' },
+      categories: { name: 'Collaboration' }
     }
   }
 ]

@@ -32,12 +32,13 @@ const mockEvent: EventData = {
     address: '123 Business Ave',
     virtual_url: null
   },
-  event_template: {
-    duration_days: 1,
-    event_types: { name: 'Workshop' },
-    formats: { name: 'In-Person' },
-    levels: { name: 'Intermediate' }
-  }
+      event_template: {
+        duration_days: 1,
+        event_types: { name: 'Workshop' },
+        formats: { name: 'In-Person' },
+        levels: { name: 'Intermediate' },
+        categories: { name: 'Leadership' }
+      }
 }
 
 // Mock the registration hook

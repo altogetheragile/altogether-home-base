@@ -41,7 +41,8 @@ const mockEvent: EventData = {
     duration_days: 1,
     event_types: { name: 'Workshop' },
     formats: { name: 'In-Person' },
-    levels: { name: 'Beginner' }
+    levels: { name: 'Beginner' },
+    categories: { name: 'Training' }
   }
 }
 

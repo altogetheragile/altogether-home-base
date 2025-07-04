@@ -24,7 +24,8 @@ const event_template = {
   duration_days: 1,
   event_types: { name: 'Workshop' },
   formats: { name: 'In-Person' },
-  levels: { name: 'Beginner' }
+  levels: { name: 'Beginner' },
+  categories: { name: 'Training' }
 }
 
 describe('Sample Integration Tests', () => {

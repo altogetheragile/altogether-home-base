@@ -23,9 +23,9 @@ const EventDetailContent = ({ event }: EventDetailContentProps) => {
               {event.level?.name || event.event_template?.levels?.name}
             </Badge>
           )}
-          {event.category?.name && (
+          {(event.category?.name || event.event_template?.categories?.name) && (
             <Badge variant="outline">
-              {event.category.name}
+              {event.category?.name || event.event_template?.categories?.name}
             </Badge>
           )}
         </div>

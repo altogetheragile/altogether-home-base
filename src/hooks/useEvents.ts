@@ -43,6 +43,9 @@ export interface EventData {
     levels: {
       name: string;
     } | null;
+    categories: {
+      name: string;
+    } | null;
     duration_days: number | null;
   } | null;
 }
@@ -62,17 +65,18 @@ export const useEvents = () => {
           is_published,
           price_cents,
           currency,
-          event_type:event_types(name),
-          category:event_categories(name),
-          level:levels(name),
-          format:formats(name),
-          instructor:instructors(name, bio),
-          location:locations(name, address, virtual_url),
-          event_templates(
+          event_types!event_type_id(name),
+          event_categories!category_id(name),
+          levels!level_id(name),
+          formats!format_id(name),
+          instructors!instructor_id(name, bio),
+          locations!location_id(name, address, virtual_url),
+          event_templates!template_id(
             duration_days,
-            event_types(name),
-            formats(name),
-            levels(name)
+            event_types!event_type_id(name),
+            formats!format_id(name),
+            levels!level_id(name),
+            event_categories!category_id(name)
           )
         `)
         .eq('is_published', true)
@@ -93,17 +97,18 @@ export const useEvents = () => {
         is_published: event.is_published,
         price_cents: event.price_cents || 0,
         currency: event.currency || 'usd',
-        event_type: event.event_type?.[0] || null,
-        category: event.category?.[0] || null,
-        level: event.level?.[0] || null,
-        format: event.format?.[0] || null,
-        instructor: event.instructor?.[0] || null,
-        location: event.location?.[0] || null,
+        event_type: event.event_types?.[0] || null,
+        category: event.event_categories?.[0] || null,
+        level: event.levels?.[0] || null,
+        format: event.formats?.[0] || null,
+        instructor: event.instructors?.[0] || null,
+        location: event.locations?.[0] || null,
         event_template: event.event_templates?.[0] ? {
           duration_days: event.event_templates[0].duration_days,
           event_types: event.event_templates[0].event_types?.[0] || null,
           formats: event.event_templates[0].formats?.[0] || null,
           levels: event.event_templates[0].levels?.[0] || null,
+          categories: event.event_templates[0].event_categories?.[0] || null,
         } : null,
       }));
 
