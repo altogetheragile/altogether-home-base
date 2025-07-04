@@ -27,18 +27,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔧 Setting up auth state listener...');
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        console.log('🔐 Auth state changed:', event, {
+          userEmail: session?.user?.email,
+          hasAccessToken: !!session?.access_token,
+          tokenLength: session?.access_token?.length || 0,
+          uid: session?.user?.id
+        });
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Debug: Test database connection with new session
+        if (session?.access_token) {
+          console.log('✅ Session established, testing DB connection...');
+          setTimeout(() => {
+            supabase.from('profiles').select('role').eq('id', session.user.id).single()
+              .then(({ data, error }) => {
+                console.log('🔍 Profile check result:', { data, error, uid: session.user.id });
+              });
+          }, 100);
+        }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('🔍 Checking for existing session...');
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('📋 Existing session check:', {
+        hasSession: !!session,
+        userEmail: session?.user?.email,
+        hasAccessToken: !!session?.access_token,
+        error
+      });
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -64,52 +91,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    // Clean up existing auth state first
-    localStorage.removeItem('supabase.auth.token');
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-      }
-    });
+    console.log('🚀 Starting sign in process...');
     
-    try {
-      await supabase.auth.signOut({ scope: 'global' });
-    } catch (error) {
-      // Continue even if this fails
-    }
-    
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     
-    if (!error) {
-      // Force page reload to ensure clean session
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
+    console.log('🔐 Sign in result:', {
+      success: !error,
+      hasSession: !!data?.session,
+      hasAccessToken: !!data?.session?.access_token,
+      userEmail: data?.user?.email,
+      error: error?.message
+    });
+    
+    if (!error && data?.session) {
+      console.log('✅ Sign in successful, session established');
+      // Let the auth state listener handle the session update
+      // No need for aggressive cleanup or forced reload
     }
     
     return { error };
   };
 
   const signOut = async () => {
-    // Clean up auth state completely
-    localStorage.removeItem('supabase.auth.token');
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-      }
-    });
+    console.log('🚪 Starting sign out process...');
     
-    try {
-      await supabase.auth.signOut({ scope: 'global' });
-    } catch (error) {
-      console.warn('Sign out error:', error);
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.error('❌ Sign out error:', error);
+    } else {
+      console.log('✅ Sign out successful');
     }
-    
-    // Force page reload for clean state
-    window.location.href = '/auth';
   };
 
   const value = {

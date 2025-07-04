@@ -17,9 +17,20 @@ import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
 
 const AdminEvents = () => {
-  const { data: events, isLoading } = useQuery({
+  const { data: events, isLoading, error } = useQuery({
     queryKey: ['admin-events'],
     queryFn: async () => {
+      console.log('🔍 AdminEvents: Starting fetch...');
+      
+      // Check current session first
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('🔐 AdminEvents: Current session:', {
+        hasSession: !!sessionData.session,
+        hasAccessToken: !!sessionData.session?.access_token,
+        userEmail: sessionData.session?.user?.email,
+        uid: sessionData.session?.user?.id
+      });
+
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -33,7 +44,17 @@ const AdminEvents = () => {
         `)
         .order('start_date', { ascending: false });
 
-      if (error) throw error;
+      console.log('📊 AdminEvents: Query result:', {
+        dataCount: data?.length || 0,
+        error: error?.message,
+        hasData: !!data,
+        firstEvent: data?.[0]?.title
+      });
+
+      if (error) {
+        console.error('❌ AdminEvents: Database error:', error);
+        throw error;
+      }
       return data || [];
     },
   });
