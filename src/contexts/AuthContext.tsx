@@ -64,15 +64,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Clean up existing auth state first
+    localStorage.removeItem('supabase.auth.token');
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (error) {
+      // Continue even if this fails
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    if (!error) {
+      // Force page reload to ensure clean session
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+    }
+    
     return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Clean up auth state completely
+    localStorage.removeItem('supabase.auth.token');
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (error) {
+      console.warn('Sign out error:', error);
+    }
+    
+    // Force page reload for clean state
+    window.location.href = '/auth';
   };
 
   const value = {
