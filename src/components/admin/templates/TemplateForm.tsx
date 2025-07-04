@@ -33,11 +33,11 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Convert "none" values back to empty strings for submission
+    // Convert "none" values back to null for submission
     const submitData = {
       ...formData,
-      default_location_id: formData.default_location_id === 'none' ? '' : formData.default_location_id,
-      default_instructor_id: formData.default_instructor_id === 'none' ? '' : formData.default_instructor_id,
+      default_location_id: formData.default_location_id === 'none' ? null : formData.default_location_id,
+      default_instructor_id: formData.default_instructor_id === 'none' ? null : formData.default_instructor_id,
     };
     
     try {
