@@ -461,6 +461,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      rls_audit: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          rls_enabled: boolean
+          policy_name: string
+          policy_cmd: string
+          policy_roles: string[]
+          policy_using: string
+          policy_check: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
