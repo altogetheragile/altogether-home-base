@@ -457,14 +457,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      debug_auth_info: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      ensure_admin_profile: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
