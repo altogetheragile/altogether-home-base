@@ -47,6 +47,8 @@ export const useEvent = (id: string) => {
         throw new Error('Event not found');
       }
 
+      console.log('Raw event data from Supabase:', JSON.stringify(data, null, 2));
+
       // Map the data to transform arrays to single objects (same as useEvents)
       const mappedData: EventData = {
         id: data.id,
@@ -72,6 +74,7 @@ export const useEvent = (id: string) => {
         } : null,
       };
 
+      console.log('Mapped event data:', JSON.stringify(mappedData, null, 2));
       return mappedData;
     },
     enabled: !!id,
