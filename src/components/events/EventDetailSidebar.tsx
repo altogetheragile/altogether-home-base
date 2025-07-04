@@ -8,6 +8,8 @@ import { formatPrice } from "@/utils/currency";
 import { EventData } from "@/hooks/useEvents";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEventRegistration } from "@/hooks/useEventRegistration";
+import { useUserRegistrations } from "@/hooks/useUserRegistrations";
+import { useEventUnregistration } from "@/hooks/useEventUnregistration";
 
 interface EventDetailSidebarProps {
   event: EventData;
@@ -16,6 +18,19 @@ interface EventDetailSidebarProps {
 const EventDetailSidebar = ({ event }: EventDetailSidebarProps) => {
   const { user } = useAuth();
   const { registerForEvent, loading: registrationLoading } = useEventRegistration();
+  const { data: registrations } = useUserRegistrations();
+  const { unregisterFromEvent, loading: unregisterLoading } = useEventUnregistration();
+
+  // Check if user is already registered for this event
+  const existingRegistration = registrations?.find(reg => reg.event_id === event.id);
+  const isRegistered = !!existingRegistration;
+  const isUpcoming = new Date(event.start_date) > new Date();
+
+  const handleUnregister = () => {
+    if (existingRegistration) {
+      unregisterFromEvent(existingRegistration.id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -84,14 +99,33 @@ const EventDetailSidebar = ({ event }: EventDetailSidebarProps) => {
       <Card className="border-border">
         <CardContent className="pt-6">
           {user ? (
-            <Button 
-              className="w-full" 
-              size="lg"
-              onClick={() => registerForEvent(event.id)}
-              disabled={registrationLoading}
-            >
-              {registrationLoading ? "Processing..." : "Register Now"}
-            </Button>
+            isRegistered ? (
+              <div className="space-y-3">
+                <div className="text-center text-sm font-medium text-muted-foreground">
+                  ✓ Already Registered
+                </div>
+                {isUpcoming && (
+                  <Button 
+                    variant="destructive"
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleUnregister}
+                    disabled={unregisterLoading}
+                  >
+                    {unregisterLoading ? "Unregistering..." : "Unregister"}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={() => registerForEvent(event.id)}
+                disabled={registrationLoading}
+              >
+                {registrationLoading ? "Processing..." : "Register Now"}
+              </Button>
+            )
           ) : (
             <Link to="/auth" className="block">
               <Button className="w-full" size="lg">
