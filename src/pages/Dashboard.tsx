@@ -1,6 +1,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRegistrations } from "@/hooks/useUserRegistrations";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import RegistrationsList from "@/components/dashboard/RegistrationsList";
@@ -9,6 +10,7 @@ import { Navigate } from "react-router-dom";
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { data: registrations, isLoading } = useUserRegistrations();
+  const { data: profile } = useUserProfile();
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -33,7 +35,7 @@ const Dashboard = () => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">My Dashboard</h1>
             <p className="text-muted-foreground">
-              Welcome back, {user.email}! Here are your event registrations.
+              Welcome back, {profile?.full_name?.split(' ')[0] || user.email}! Here are your event registrations.
             </p>
           </div>
           
