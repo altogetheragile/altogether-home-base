@@ -9,7 +9,6 @@ import { UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
 import { formatPrice } from "@/utils/currency";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEventUnregistration } from "@/hooks/useEventUnregistration";
 
 interface RegistrationCardProps {
   registration: UserRegistrationWithEvent;
@@ -19,7 +18,6 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
   const { event, payment_status, registered_at } = registration;
   const { user } = useAuth();
   const { data: userRole } = useUserRole();
-  const { unregisterFromEvent, loading: unregisterLoading } = useEventUnregistration();
   
   // Don't render if event data is missing
   if (!event) {
@@ -42,10 +40,6 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
   
   // Check if user can edit this event (admin only)
   const canEditEvent = userRole === 'admin';
-
-  const handleUnregister = () => {
-    unregisterFromEvent(registration.id);
-  };
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
@@ -97,21 +91,12 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
               View Details
             </Button>
           </Link>
-          {canEditEvent ? (
+          {canEditEvent && (
             <Link to={`/admin/events/${event.id}/edit`} className="flex-1">
               <Button variant="default" className="w-full">
                 Edit Event
               </Button>
             </Link>
-          ) : isUpcoming && (
-            <Button 
-              variant="destructive" 
-              className="flex-1" 
-              onClick={handleUnregister}
-              disabled={unregisterLoading}
-            >
-              {unregisterLoading ? "Unregistering..." : "Unregister"}
-            </Button>
           )}
         </div>
       </CardContent>
