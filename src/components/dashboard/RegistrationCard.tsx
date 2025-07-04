@@ -7,6 +7,8 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
 import { formatPrice } from "@/utils/currency";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface RegistrationCardProps {
   registration: UserRegistrationWithEvent;
@@ -14,6 +16,8 @@ interface RegistrationCardProps {
 
 const RegistrationCard = ({ registration }: RegistrationCardProps) => {
   const { event, payment_status, registered_at } = registration;
+  const { user } = useAuth();
+  const { data: userRole } = useUserRole();
   
   // Don't render if event data is missing
   if (!event) {
@@ -33,6 +37,10 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
   }
 
   const isUpcoming = new Date(event.start_date) > new Date();
+  
+  // Check if user can edit this event (admin or instructor of the event)
+  const canEditEvent = userRole === 'admin' || 
+    (user?.id && event.instructor_id === user.id);
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
@@ -84,6 +92,13 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
               View Details
             </Button>
           </Link>
+          {canEditEvent && (
+            <Link to={`/admin/events/${event.id}/edit`} className="flex-1">
+              <Button variant="default" className="w-full">
+                Edit Event
+              </Button>
+            </Link>
+          )}
         </div>
       </CardContent>
     </Card>

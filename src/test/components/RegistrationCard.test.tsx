@@ -16,7 +16,8 @@ const mockRegistration: UserRegistrationWithEvent = {
     start_date: '2024-02-01',
     end_date: '2024-02-01',
     price_cents: 10000,
-    currency: 'usd'
+    currency: 'usd',
+    instructor_id: null
   }
 }
 

@@ -18,6 +18,7 @@ export interface EventDetails {
   end_date: string | null;
   price_cents: number;
   currency: string;
+  instructor_id: string | null;
 }
 
 export interface UserRegistrationWithEvent extends BasicRegistration {
@@ -57,7 +58,7 @@ export const useUserRegistrations = () => {
 
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('id, title, start_date, end_date, price_cents, currency')
+        .select('id, title, start_date, end_date, price_cents, currency, instructor_id')
         .in('id', eventIds);
 
       if (eventsError) {
