@@ -191,52 +191,106 @@ export type Database = {
       }
       events: {
         Row: {
+          banner_image_url: string | null
+          capacity: number | null
+          category_id: string | null
+          course_code: string | null
           created_at: string | null
           created_by: string | null
           currency: string | null
+          daily_schedule: string | null
           description: string | null
           end_date: string | null
+          event_type_id: string | null
+          expected_revenue_cents: number | null
+          format_id: string | null
           id: string
           instructor_id: string | null
+          internal_notes: string | null
           is_published: boolean | null
+          lead_source: string | null
+          level_id: string | null
           location_id: string | null
+          meeting_link: string | null
           price_cents: number | null
+          registration_deadline: string | null
+          seo_slug: string | null
           start_date: string
+          status: string | null
+          tags: string[] | null
           template_id: string | null
+          time_zone: string | null
           title: string
           updated_by: string | null
+          venue_details: string | null
         }
         Insert: {
+          banner_image_url?: string | null
+          capacity?: number | null
+          category_id?: string | null
+          course_code?: string | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
+          daily_schedule?: string | null
           description?: string | null
           end_date?: string | null
+          event_type_id?: string | null
+          expected_revenue_cents?: number | null
+          format_id?: string | null
           id?: string
           instructor_id?: string | null
+          internal_notes?: string | null
           is_published?: boolean | null
+          lead_source?: string | null
+          level_id?: string | null
           location_id?: string | null
+          meeting_link?: string | null
           price_cents?: number | null
+          registration_deadline?: string | null
+          seo_slug?: string | null
           start_date: string
+          status?: string | null
+          tags?: string[] | null
           template_id?: string | null
+          time_zone?: string | null
           title: string
           updated_by?: string | null
+          venue_details?: string | null
         }
         Update: {
+          banner_image_url?: string | null
+          capacity?: number | null
+          category_id?: string | null
+          course_code?: string | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
+          daily_schedule?: string | null
           description?: string | null
           end_date?: string | null
+          event_type_id?: string | null
+          expected_revenue_cents?: number | null
+          format_id?: string | null
           id?: string
           instructor_id?: string | null
+          internal_notes?: string | null
           is_published?: boolean | null
+          lead_source?: string | null
+          level_id?: string | null
           location_id?: string | null
+          meeting_link?: string | null
           price_cents?: number | null
+          registration_deadline?: string | null
+          seo_slug?: string | null
           start_date?: string
+          status?: string | null
+          tags?: string[] | null
           template_id?: string | null
+          time_zone?: string | null
           title?: string
           updated_by?: string | null
+          venue_details?: string | null
         }
         Relationships: [
           {
@@ -258,6 +312,34 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "event_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_events_category_id"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "event_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_events_event_type_id"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_events_format_id"
+            columns: ["format_id"]
+            isOneToOne: false
+            referencedRelation: "formats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_events_level_id"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
             referencedColumns: ["id"]
           },
         ]

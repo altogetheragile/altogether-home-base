@@ -26,6 +26,25 @@ export const useEventForm = () => {
     currency: 'usd',
     is_published: false,
     template_id: templateId || '',
+    // New enhanced fields
+    capacity: '',
+    registration_deadline: '',
+    time_zone: '',
+    meeting_link: '',
+    venue_details: '',
+    daily_schedule: '',
+    banner_image_url: '',
+    seo_slug: '',
+    tags: '',
+    internal_notes: '',
+    course_code: '',
+    status: 'draft',
+    expected_revenue_cents: 0,
+    lead_source: '',
+    event_type_id: '',
+    category_id: '',
+    level_id: '',
+    format_id: '',
   });
 
   // Pre-populate form with template data when template is selected
@@ -74,9 +93,16 @@ export const useEventForm = () => {
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: typeof formData) => {
+      // Convert tags from comma-separated string to array
+      const processedData = {
+        ...eventData,
+        tags: eventData.tags ? eventData.tags.split(',').map(tag => tag.trim()) : [],
+        capacity: eventData.capacity ? parseInt(eventData.capacity) : null,
+      };
+      
       const { data, error } = await supabase
         .from('events')
-        .insert([eventData])
+        .insert([processedData])
         .select()
         .single();
 
