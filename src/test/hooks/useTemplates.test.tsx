@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor, createWrapper } from '../test-utils'
+import { renderHook, waitFor, createWrapper, createTestQueryClient } from '../test-utils'
 import { useTemplates } from '@/hooks/useTemplates'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -39,7 +39,7 @@ describe('useTemplates', () => {
     } as any)
 
     const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
     await waitFor(() => {
@@ -61,7 +61,7 @@ describe('useTemplates', () => {
     } as any)
 
     const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
     await waitFor(() => {
@@ -78,7 +78,7 @@ describe('useTemplates', () => {
     } as any)
 
     const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
     expect(result.current.data).toBeUndefined()
@@ -96,7 +96,7 @@ describe('useTemplates', () => {
     } as any)
 
     const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
     // Query key should be ['templates']

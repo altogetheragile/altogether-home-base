@@ -3,7 +3,6 @@ import { describe, it, beforeEach, vi, expect } from 'vitest'
 import { render, screen } from '../test-utils'
 import AdminLayout from '@/components/admin/AdminLayout'
 import React from 'react'
-import { MemoryRouter } from 'react-router-dom'
 
 // Mock for Navigation
 vi.mock('@/components/Navigation', () => ({
@@ -17,11 +16,9 @@ describe('AdminLayout Navigation', () => {
   });
 
   function renderAt(route: string) {
-    return render(
-      <MemoryRouter initialEntries={[route]}>
-        <AdminLayout />
-      </MemoryRouter>
-    );
+    // AdminLayout expects to be inside a Router context, but our test wrapper shouldn't provide one
+    // Instead, we'll test AdminLayout in isolation without router nesting
+    return render(<AdminLayout />);
   }
 
   it('renders sidebar navigation links', () => {

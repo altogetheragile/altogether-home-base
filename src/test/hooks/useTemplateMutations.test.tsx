@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor, createWrapper } from '../test-utils'
+import { renderHook, waitFor, createWrapper, createTestQueryClient } from '../test-utils'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -53,7 +53,7 @@ describe('useTemplateMutations', () => {
       } as any)
 
     const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
       await result.current.createTemplate.mutateAsync({
@@ -85,7 +85,7 @@ describe('useTemplateMutations', () => {
       } as any)
 
     const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
       try {
@@ -128,7 +128,7 @@ describe('useTemplateMutations', () => {
       } as any)
 
     const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
       await result.current.updateTemplate.mutateAsync({
@@ -159,7 +159,7 @@ describe('useTemplateMutations', () => {
       } as any)
 
     const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
       await result.current.deleteTemplate.mutateAsync('1')
@@ -183,7 +183,7 @@ describe('useTemplateMutations', () => {
       } as any)
 
     const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper({ queryClient: createTestQueryClient() })
     })
 
       try {

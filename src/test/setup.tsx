@@ -94,6 +94,7 @@ afterAll(() => {
   try {
     server.close()
   } catch (error) {
-    // Ignore cleanup errors in test environment
+    // Ignore cleanup errors in test environment - MSW v2 + Vitest 3.x compatibility
+    console.warn('MSW server cleanup warning (safe to ignore):', error?.message)
   }
 })
