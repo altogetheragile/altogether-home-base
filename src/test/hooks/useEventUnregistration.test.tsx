@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from 'vitest'
-import { renderHook, waitFor } from '../test-utils'
+import { waitFor } from '@testing-library/react'
+import { renderHookWithQuery } from '@/test/utils/verified-patterns'
 import { useEventUnregistration } from '@/hooks/useEventUnregistration'
 import { useAuth } from '@/contexts/AuthContext'
 import { server } from '../mocks/server'
@@ -46,7 +47,7 @@ describe('useEventUnregistration', () => {
   })
 
   it('should unregister from event successfully', async () => {
-    const { result } = renderHook(() => useEventUnregistration())
+    const { result } = renderHookWithQuery(() => useEventUnregistration())
 
     expect(result.current.loading).toBe(false)
 
@@ -84,7 +85,7 @@ describe('useEventUnregistration', () => {
       signOut: vi.fn()
     })
 
-    const { result } = renderHook(() => useEventUnregistration())
+    const { result } = renderHookWithQuery(() => useEventUnregistration())
 
     result.current.unregisterFromEvent('reg-1')
 
@@ -115,7 +116,7 @@ describe('useEventUnregistration', () => {
       supabase: mockSupabase
     }))
 
-    const { result } = renderHook(() => useEventUnregistration())
+    const { result } = renderHookWithQuery(() => useEventUnregistration())
 
     result.current.unregisterFromEvent('reg-1')
 
@@ -149,7 +150,7 @@ describe('useEventUnregistration', () => {
       supabase: mockSupabase
     }))
 
-    const { result } = renderHook(() => useEventUnregistration())
+    const { result } = renderHookWithQuery(() => useEventUnregistration())
 
     result.current.unregisterFromEvent('reg-1')
 

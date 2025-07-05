@@ -1,10 +1,22 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, createMockUseMutationResult } from '../../../test-utils'
+import { renderSimpleComponent, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import TemplateForm from '@/components/admin/templates/TemplateForm'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 
 vi.mock('@/hooks/useTemplateMutations')
+vi.mock('@/hooks/useEventTypes', () => ({
+  useEventTypes: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useEventCategories', () => ({
+  useEventCategories: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useLevels', () => ({
+  useLevels: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useFormats', () => ({
+  useFormats: () => ({ data: [] })
+}))
 
 const mockUseTemplateMutations = vi.mocked(useTemplateMutations)
 
@@ -42,7 +54,7 @@ describe('TemplateForm - Snapshot Tests', () => {
   })
 
   it('matches snapshot for create form', () => {
-    const { container } = render(
+    const { container } = renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
@@ -55,7 +67,7 @@ describe('TemplateForm - Snapshot Tests', () => {
   })
 
   it('matches snapshot for edit form', () => {
-    const { container } = render(
+    const { container } = renderSimpleComponent(
       <TemplateForm
         template={mockTemplate}
         locations={mockLocations}
@@ -76,7 +88,7 @@ describe('TemplateForm - Snapshot Tests', () => {
       deleteTemplate: createMockUseMutationResult()
     })
 
-    const { container } = render(
+    const { container } = renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
@@ -89,7 +101,7 @@ describe('TemplateForm - Snapshot Tests', () => {
   })
 
   it('matches snapshot with empty locations and instructors', () => {
-    const { container } = render(
+    const { container } = renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={[]}

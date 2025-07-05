@@ -15,6 +15,7 @@
 - ✅ `useUserRegistrations.test.tsx` → Uses `renderHookWithQuery` pattern  
 - ✅ `useUserRole.test.tsx` → Uses `renderHookWithQuery` pattern
 - ✅ `useTemplateMutations.test.tsx` → Uses `renderHookWithQuery` pattern
+- ✅ `useEventUnregistration.test.tsx` → Converted to `renderHookWithQuery` pattern
 
 **Component Tests Converted (MAJOR PROGRESS):**  
 - ✅ `RegistrationCard.test.tsx` → Uses `renderSimpleComponent` pattern
@@ -25,6 +26,9 @@
 - ✅ `ProtectedRoute.test.tsx` → Converted to `renderWithRouter` pattern
 - ✅ `AdminLayout.test.tsx` → Converted to `renderWithRouter` pattern
 - ✅ `TemplateForm.test.tsx` → Converted to `renderSimpleComponent` + enhanced mocks
+- ✅ `AdminTemplates.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `TemplateForm.scaffold.test.tsx` → Converted to `renderSimpleComponent` pattern
+- ✅ `TemplateForm.snapshot.test.tsx` → Converted to `renderSimpleComponent` pattern
 
 **Key Improvements Applied:**
 - Replaced complex test-utils imports with verified patterns
@@ -55,6 +59,6 @@
 
 ## 📊 SUCCESS METRICS
 - Target: Convert 97 failing tests to use verified patterns
-- Progress: **12 test files converted** (Hook tests: 4, Component tests: 8)
+- Progress: **16 test files converted** (Hook tests: 5, Component tests: 11)
 - **Major milestone**: Complex form components now working with verified patterns
 - Next Target: Identify and convert remaining component and integration tests

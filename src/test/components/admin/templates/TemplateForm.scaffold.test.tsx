@@ -1,11 +1,23 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../../test-utils'
+import { screen, fireEvent } from '@testing-library/react'
+import { renderSimpleComponent, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import TemplateForm from '@/components/admin/templates/TemplateForm'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
-import { createMockUseMutationResult } from '../../../utils/mock-factories'
 
 vi.mock('@/hooks/useTemplateMutations')
+vi.mock('@/hooks/useEventTypes', () => ({
+  useEventTypes: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useEventCategories', () => ({
+  useEventCategories: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useLevels', () => ({
+  useLevels: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useFormats', () => ({
+  useFormats: () => ({ data: [] })
+}))
 
 const mockUseTemplateMutations = vi.mocked(useTemplateMutations)
 
@@ -33,7 +45,7 @@ describe('TemplateForm Scaffold', () => {
   })
 
   it('should render create form without crashing', () => {
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
@@ -47,7 +59,7 @@ describe('TemplateForm Scaffold', () => {
   })
 
   it('should handle form input changes', () => {
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}

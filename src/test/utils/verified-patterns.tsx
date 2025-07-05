@@ -99,6 +99,35 @@ export const createMockUseMutationResult = (overrides = {}): any => ({
   ...overrides
 })
 
+// ✅ VERIFIED PATTERN 6: Mock Query Result Factory
+// Use this for mocking useQuery hooks consistently
+export const createMockUseQueryResult = (overrides = {}): any => ({
+  data: undefined,
+  error: null,
+  isError: false,
+  isLoading: false,
+  isPending: false,
+  isSuccess: false,
+  isLoadingError: false,
+  isRefetchError: false,
+  status: 'pending' as const,
+  dataUpdatedAt: 0,
+  errorUpdatedAt: 0,
+  failureCount: 0,
+  failureReason: null,
+  errorUpdateCount: 0,
+  isFetched: false,
+  isFetchedAfterMount: false,
+  isFetching: false,
+  isInitialLoading: false,
+  isPlaceholderData: false,
+  isRefetching: false,
+  isStale: false,
+  refetch: vi.fn(),
+  remove: vi.fn(),
+  ...overrides
+})
+
 // ✅ VERIFIED TEST STRUCTURE
 export const testPatterns = {
   // Pattern 1: Simple component test
