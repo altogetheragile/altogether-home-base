@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '../../../test-utils'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
+import { screen, fireEvent } from '@testing-library/react'
 import TemplatesList from '@/components/admin/templates/TemplatesList'
 
 const mockTemplates = [
@@ -43,7 +44,7 @@ describe('TemplatesList', () => {
   })
 
   it('renders templates correctly', () => {
-    render(
+    renderSimpleComponent(
       <TemplatesList
         templates={mockTemplates}
         locations={mockLocations}
@@ -60,7 +61,7 @@ describe('TemplatesList', () => {
   })
 
   it('shows empty state when no templates', () => {
-    render(
+    renderSimpleComponent(
       <TemplatesList
         templates={[]}
         locations={mockLocations}
@@ -74,7 +75,7 @@ describe('TemplatesList', () => {
   })
 
   it('calls onEditTemplate when edit button is clicked', () => {
-    render(
+    renderSimpleComponent(
       <TemplatesList
         templates={mockTemplates}
         locations={mockLocations}
@@ -96,7 +97,7 @@ describe('TemplatesList', () => {
   })
 
   it('calls onCreateEvent when create event button is clicked', () => {
-    render(
+    renderSimpleComponent(
       <TemplatesList
         templates={mockTemplates}
         locations={mockLocations}
@@ -113,7 +114,7 @@ describe('TemplatesList', () => {
   })
 
   it('renders correct grid layout', () => {
-    const { container } = render(
+    const { container } = renderSimpleComponent(
       <TemplatesList
         templates={mockTemplates}
         locations={mockLocations}

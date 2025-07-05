@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, createMockUseMutationResult } from '../../../test-utils'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { createMockUseMutationResult } from '@/test/utils/mock-factories'
 import TemplateCard from '@/components/admin/templates/TemplateCard'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 
@@ -42,7 +44,7 @@ describe('TemplateCard', () => {
   })
 
   it('renders template information correctly', () => {
-    render(
+    renderSimpleComponent(
       <TemplateCard
         template={mockTemplate}
         locations={mockLocations}
@@ -60,7 +62,7 @@ describe('TemplateCard', () => {
   })
 
   it('calls onEdit when edit button is clicked', () => {
-    render(
+    renderSimpleComponent(
       <TemplateCard
         template={mockTemplate}
         locations={mockLocations}
@@ -77,7 +79,7 @@ describe('TemplateCard', () => {
   })
 
   it('calls onCreateEvent when create event button is clicked', () => {
-    render(
+    renderSimpleComponent(
       <TemplateCard
         template={mockTemplate}
         locations={mockLocations}
@@ -94,7 +96,7 @@ describe('TemplateCard', () => {
   })
 
   it('shows delete confirmation dialog', async () => {
-    render(
+    renderSimpleComponent(
       <TemplateCard
         template={mockTemplate}
         locations={mockLocations}
@@ -123,7 +125,7 @@ describe('TemplateCard', () => {
       })
     })
 
-    render(
+    renderSimpleComponent(
       <TemplateCard
         template={mockTemplate}
         locations={mockLocations}

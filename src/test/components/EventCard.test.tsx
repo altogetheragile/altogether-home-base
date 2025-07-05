@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '../test-utils'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
+import { screen, fireEvent } from '@testing-library/react'
 import EventCard from '@/components/events/EventCard'
 import { EventData } from '@/hooks/useEvents'
 import React from 'react'
@@ -52,7 +53,7 @@ describe('EventCard', () => {
   })
 
   it('should render event information correctly', () => {
-    render(<EventCard event={mockEvent} />)
+    renderSimpleComponent(<EventCard event={mockEvent} />)
     
     expect(screen.getByText('Test Workshop')).toBeInTheDocument()
     expect(screen.getByText('A test workshop description')).toBeInTheDocument()
@@ -62,14 +63,14 @@ describe('EventCard', () => {
   })
 
   it('should show register button for authenticated users', () => {
-    render(<EventCard event={mockEvent} />)
+    renderSimpleComponent(<EventCard event={mockEvent} />)
     
     expect(screen.getByText('Register')).toBeInTheDocument()
     expect(screen.getByText('View Details')).toBeInTheDocument()
   })
 
   it('should handle register button click', () => {
-    render(<EventCard event={mockEvent} />)
+    renderSimpleComponent(<EventCard event={mockEvent} />)
     
     const registerButton = screen.getByText('Register')
     fireEvent.click(registerButton)
