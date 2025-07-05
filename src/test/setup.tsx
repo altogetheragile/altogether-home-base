@@ -71,12 +71,12 @@ vi.mock('@/hooks/useLocationMutations', () => ({
   })
 }))
 
-// Mock toast hook to return empty array by default
+// Mock toast hook to return proper structure
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toast: vi.fn(),
     dismiss: vi.fn(),
-    toasts: [] // Initialize as empty array to prevent undefined errors
+    toasts: [] // Proper array initialization
   })
 }))
 

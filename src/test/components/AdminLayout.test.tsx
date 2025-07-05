@@ -1,6 +1,6 @@
 
 import { describe, it, beforeEach, vi, expect } from 'vitest'
-import { render, screen } from '../test-utils'
+import { renderWithRouter, screen } from '../test-utils'
 import AdminLayout from '@/components/admin/AdminLayout'
 import React from 'react'
 
@@ -16,9 +16,10 @@ describe('AdminLayout Navigation', () => {
   });
 
   function renderAt(route: string) {
-    // AdminLayout expects to be inside a Router context, but our test wrapper shouldn't provide one
-    // Instead, we'll test AdminLayout in isolation without router nesting
-    return render(<AdminLayout />);
+    // AdminLayout needs router context - provide it properly
+    return renderWithRouter(<AdminLayout />, {
+      router: { initialEntries: [route] }
+    });
   }
 
   it('renders sidebar navigation links', () => {
