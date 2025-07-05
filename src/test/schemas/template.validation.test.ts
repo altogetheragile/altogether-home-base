@@ -20,6 +20,7 @@ describe('Template Form Validation Schema', () => {
     const invalidData = {
       description: 'A description',
       duration_days: 2
+      // Explicitly excluding title
     }
 
     const result = templateFormSchema.safeParse(invalidData)
