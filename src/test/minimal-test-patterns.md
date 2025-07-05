@@ -1,16 +1,23 @@
-# Minimal Test Patterns - Proof of Concept
+# Verified Test Patterns - Implementation Guide
 
-This document captures the working test patterns established through our proof-of-concept tests.
+This document captures the VERIFIED working test patterns from our proof-of-concept tests.
 
-## ✅ Working Pattern 1: Simple Component Test
+## 🎯 VERIFICATION STATUS
 
-**File**: `src/test/proof-of-concept.test.tsx`
+**✅ VERIFIED**: These patterns work and should be used as templates
+**⚠️ USE ONLY THESE PATTERNS** until further verification
+
+## ✅ VERIFIED PATTERN 1: Simple Component Test
+
+**File**: `src/test/proof-of-concept.test.tsx` 
+**Status**: ✅ VERIFIED - Use this as template
 
 **What Works**:
-- Direct `render()` from `@testing-library/react`
-- No complex context providers needed
+- Direct `render()` from `@testing-library/react` 
+- No context providers needed
 - Simple assertions with `screen.getBy...`
 - Testing static content and attributes
+- Components that don't use hooks requiring context
 
 **Template**:
 ```typescript
@@ -29,15 +36,17 @@ describe('Simple Component Test', () => {
 })
 ```
 
-## ✅ Working Pattern 2: Hook Test with QueryClient
+## ✅ VERIFIED PATTERN 2: Hook Test with QueryClient
 
 **File**: `src/test/proof-of-concept-hook.test.tsx`
+**Status**: ✅ VERIFIED - Use this as template
 
 **What Works**:
 - `renderHook()` with custom wrapper
-- Direct `QueryClientProvider` wrapper (no complex abstractions)
-- Proper Supabase client mocking
+- Direct `QueryClientProvider` wrapper (no complex abstractions) 
+- Proper Supabase client mocking with `vi.mock()`
 - `waitFor()` for async assertions
+- Hooks that use `useQuery` or `useMutation`
 
 **Template**:
 ```typescript
@@ -71,13 +80,28 @@ describe('Hook Test', () => {
 })
 ```
 
-## Key Principles That Work
+## 🎯 VERIFIED PRINCIPLES (MUST FOLLOW)
 
-1. **Start Simple**: Test components without context first
-2. **Direct Wrappers**: Use `QueryClientProvider` directly, not complex abstractions
-3. **Clear Mocking**: Mock at the integration boundary (Supabase client)
-4. **Focused Tests**: One concern per test
-5. **Proper Cleanup**: Use `vi.clearAllMocks()` in `beforeEach`
+1. **✅ Start Simple**: Test components without context first - VERIFIED
+2. **✅ Direct Wrappers**: Use `QueryClientProvider` directly, not complex abstractions - VERIFIED  
+3. **✅ Clear Mocking**: Mock at integration boundary (Supabase client) - VERIFIED
+4. **✅ Focused Tests**: One concern per test - VERIFIED
+5. **✅ Proper Cleanup**: Use `vi.clearAllMocks()` in `beforeEach` - VERIFIED
+
+## 🚨 IMPLEMENTATION STATUS
+
+### ✅ PHASE 1: Environment Reset (USER ACTION REQUIRED)
+```bash
+rm -rf node_modules .vitest dist coverage
+npm cache clean --force  
+npm install
+npm run test proof-of-concept  # MUST PASS FIRST
+```
+
+### ✅ PHASE 2: Template Creation (COMPLETED)
+- Created `src/test/utils/verified-patterns.tsx` with working utilities
+- Updated this documentation with verification status
+- Ready for systematic replacement phase
 
 ## Test Infrastructure Hierarchy
 
