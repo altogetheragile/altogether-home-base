@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import React from 'react'
 
 // Simple test component for infrastructure validation
@@ -15,11 +15,11 @@ const TestComponent = () => {
 
 describe('Test Infrastructure Check', () => {
   it('should render basic component without errors', () => {
-    render(<TestComponent />)
+    const result = render(<TestComponent />)
     
-    expect(screen.getByTestId('test-component')).toBeInTheDocument()
-    expect(screen.getByText('Test Infrastructure Working')).toBeInTheDocument()
-    expect(screen.getByRole('button')).toBeInTheDocument()
+    expect(result.getByTestId('test-component')).toBeDefined()
+    expect(result.getByText('Test Infrastructure Working')).toBeDefined()
+    expect(result.getByRole('button')).toBeDefined()
   })
 
   it('should have vitest globals available', () => {
