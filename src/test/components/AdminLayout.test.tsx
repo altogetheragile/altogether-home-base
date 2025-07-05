@@ -1,6 +1,7 @@
 
 import { describe, it, beforeEach, vi, expect } from 'vitest'
-import { renderWithRouter, screen } from '../test-utils'
+import { renderWithRouter } from '@/test/utils/verified-patterns'
+import { screen } from '@testing-library/react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import React from 'react'
 
@@ -17,9 +18,7 @@ describe('AdminLayout Navigation', () => {
 
   function renderAt(route: string) {
     // AdminLayout needs router context - provide it properly
-    return renderWithRouter(<AdminLayout />, {
-      router: { initialEntries: [route] }
-    });
+    return renderWithRouter(<AdminLayout />, { initialEntries: [route] });
   }
 
   it('renders sidebar navigation links', () => {

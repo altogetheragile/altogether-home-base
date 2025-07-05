@@ -35,7 +35,38 @@ export const renderHookWithQuery = <T,>(hook: () => T) => {
   })
 }
 
-// ✅ VERIFIED PATTERN 3: Mock Supabase Client
+// ✅ VERIFIED PATTERN 3: Router Wrapper for Components with Navigation
+// Use this for components that need router context (Link, useLocation, etc.)
+import { MemoryRouter } from 'react-router-dom'
+
+export const RouterWrapper = ({ 
+  children, 
+  initialEntries = ['/'] 
+}: { 
+  children: React.ReactNode
+  initialEntries?: string[]
+}) => (
+  <MemoryRouter initialEntries={initialEntries}>
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  </MemoryRouter>
+)
+
+export const renderWithRouter = (
+  ui: React.ReactElement, 
+  { initialEntries = ['/'] } = {}
+) => {
+  return rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <RouterWrapper initialEntries={initialEntries}>
+        {children}
+      </RouterWrapper>
+    )
+  })
+}
+
+// ✅ VERIFIED PATTERN 4: Mock Supabase Client
 // Use this pattern for mocking Supabase in hook tests
 export const createMockSupabaseResponse = (data: any, error: any = null) => ({
   select: vi.fn().mockReturnThis(),

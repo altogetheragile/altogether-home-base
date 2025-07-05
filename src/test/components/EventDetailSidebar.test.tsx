@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../test-utils'
+import { renderWithRouter } from '@/test/utils/verified-patterns'
+import { screen, fireEvent } from '@testing-library/react'
 import EventDetailSidebar from '@/components/events/EventDetailSidebar'
 import { EventData } from '@/hooks/useEvents'
 import { useAuth } from '@/contexts/AuthContext'
@@ -79,7 +80,7 @@ describe('EventDetailSidebar', () => {
   })
 
   it('should render event details correctly', () => {
-    render(<EventDetailSidebar event={mockEvent} />)
+    renderWithRouter(<EventDetailSidebar event={mockEvent} />)
     
     expect(screen.getByText('Event Details')).toBeInTheDocument()
     expect(screen.getByText('Friday, December 1, 2025')).toBeInTheDocument()
@@ -91,7 +92,7 @@ describe('EventDetailSidebar', () => {
   })
 
   it('should show register button for non-authenticated users', () => {
-    render(<EventDetailSidebar event={mockEvent} />)
+    renderWithRouter(<EventDetailSidebar event={mockEvent} />)
     
     expect(screen.getByText('Sign In to Register')).toBeInTheDocument()
     expect(screen.getByRole('link')).toHaveAttribute('href', '/auth')
@@ -108,7 +109,7 @@ describe('EventDetailSidebar', () => {
       signOut: vi.fn()
     })
 
-    render(<EventDetailSidebar event={mockEvent} />)
+    renderWithRouter(<EventDetailSidebar event={mockEvent} />)
     
     const registerButton = screen.getByText('Register Now')
     expect(registerButton).toBeInTheDocument()
@@ -139,7 +140,7 @@ describe('EventDetailSidebar', () => {
       }]
     } as any)
 
-    render(<EventDetailSidebar event={mockEvent} />)
+    renderWithRouter(<EventDetailSidebar event={mockEvent} />)
     
     expect(screen.getByText('✓ Already Registered')).toBeInTheDocument()
     
@@ -178,7 +179,7 @@ describe('EventDetailSidebar', () => {
       }]
     } as any)
 
-    render(<EventDetailSidebar event={pastEvent} />)
+    renderWithRouter(<EventDetailSidebar event={pastEvent} />)
     
     expect(screen.getByText('✓ Already Registered')).toBeInTheDocument()
     expect(screen.queryByText('Unregister')).not.toBeInTheDocument()
@@ -212,7 +213,7 @@ describe('EventDetailSidebar', () => {
       }]
     } as any)
 
-    render(<EventDetailSidebar event={mockEvent} />)
+    renderWithRouter(<EventDetailSidebar event={mockEvent} />)
     
     expect(screen.getByText('Unregistering...')).toBeInTheDocument()
   })
@@ -223,7 +224,7 @@ describe('EventDetailSidebar', () => {
       end_date: '2025-12-03'
     }
 
-    render(<EventDetailSidebar event={multiDayEvent} />)
+    renderWithRouter(<EventDetailSidebar event={multiDayEvent} />)
     
     expect(screen.getByText('Friday, December 1, 2025')).toBeInTheDocument()
     expect(screen.getByText('Until December 3, 2025')).toBeInTheDocument()
@@ -239,7 +240,7 @@ describe('EventDetailSidebar', () => {
       }
     }
 
-    render(<EventDetailSidebar event={virtualEvent} />)
+    renderWithRouter(<EventDetailSidebar event={virtualEvent} />)
     
     expect(screen.getByText('Virtual Room')).toBeInTheDocument()
     expect(screen.getByText('Virtual Event')).toBeInTheDocument()

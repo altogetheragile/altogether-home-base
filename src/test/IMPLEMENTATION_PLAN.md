@@ -16,31 +16,33 @@
 - ✅ `useUserRole.test.tsx` → Uses `renderHookWithQuery` pattern
 - ✅ `useTemplateMutations.test.tsx` → Uses `renderHookWithQuery` pattern
 
-**Component Tests Converted (COMPLETED):**  
+**Component Tests Converted (MAJOR PROGRESS):**  
 - ✅ `RegistrationCard.test.tsx` → Uses `renderSimpleComponent` pattern
 - ✅ `EventCard.test.tsx` → Converted to `renderSimpleComponent` pattern
 - ✅ `TemplateCard.test.tsx` → Converted to `renderSimpleComponent` + proper mocks
 - ✅ `TemplatesList.test.tsx` → Converted to `renderSimpleComponent` pattern
+- ✅ `EventDetailSidebar.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `ProtectedRoute.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `AdminLayout.test.tsx` → Converted to `renderWithRouter` pattern
 
 **Key Improvements Applied:**
 - Replaced complex test-utils imports with verified patterns
 - Standardized mock creation using `createMockUseMutationResult` factory
 - Simplified component rendering with `renderSimpleComponent`
+- Created `renderWithRouter` pattern for navigation-dependent components
 - Consistent use of verified testing patterns across codebase
 
 ### 🔄 PHASE 3: Remaining Test Conversion (NEXT)
 
 **Component Tests Needing Conversion:**
-- 🔄 `EventDetailSidebar.test.tsx` → Convert to verified patterns
-- 🔄 `ProtectedRoute.test.tsx` → May need router wrapper patterns
-- 🔄 `AdminLayout.test.tsx` → Complex component with routing
 - 🔄 `TemplateForm.test.tsx` → Form component with complex interactions
+- 🔄 Other component tests → Apply appropriate patterns based on requirements
 
 **Integration Tests:**
 - 🔄 Various integration test files → May need combined patterns
 
 **Target**: Convert remaining failing tests to use verified patterns
-**Strategy**: Continue with `renderSimpleComponent` for simple tests, develop router wrapper patterns for navigation-dependent components
+**Strategy**: Use `renderSimpleComponent` for simple tests, `renderWithRouter` for navigation components, develop form testing patterns next
 
 ## 🚨 KEY FIXES APPLIED
 - **MSW Cleanup**: Safe disposal to prevent "Object.defineProperty" errors
@@ -51,6 +53,6 @@
 
 ## 📊 SUCCESS METRICS
 - Target: Convert 97 failing tests to use verified patterns
-- Progress: **8 test files converted** (Hook tests: 4, Component tests: 4)
+- Progress: **11 test files converted** (Hook tests: 4, Component tests: 7)
 - **Major milestone**: Foundation tests working, systematic replacement successful
 - Next Target: Router-dependent components and remaining component tests

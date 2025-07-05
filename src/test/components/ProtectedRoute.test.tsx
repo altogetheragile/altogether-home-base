@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '../test-utils'
+import { renderWithRouter } from '@/test/utils/verified-patterns'
+import { screen } from '@testing-library/react'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useUserRole } from '@/hooks/useUserRole'
 import { User } from '@supabase/supabase-js'
@@ -31,7 +32,7 @@ describe('ProtectedRoute', () => {
       isLoading: true
     })
 
-    render(
+    renderWithRouter(
       <ProtectedRoute>
         <div>Protected content</div>
       </ProtectedRoute>
@@ -58,7 +59,7 @@ describe('ProtectedRoute', () => {
       isLoading: false
     })
 
-    render(
+    renderWithRouter(
       <ProtectedRoute>
         <div>Protected content</div>
       </ProtectedRoute>
@@ -72,7 +73,7 @@ describe('ProtectedRoute', () => {
       isLoading: false
     })
 
-    render(
+    renderWithRouter(
       <ProtectedRoute requiredRole="admin">
         <div>Protected content</div>
       </ProtectedRoute>
@@ -86,7 +87,7 @@ describe('ProtectedRoute', () => {
       isLoading: false
     })
 
-    render(
+    renderWithRouter(
       <ProtectedRoute requiredRole="admin">
         <div>Protected content</div>
       </ProtectedRoute>
@@ -100,7 +101,7 @@ describe('ProtectedRoute', () => {
       isLoading: false
     })
 
-    render(
+    renderWithRouter(
       <ProtectedRoute requiredRole="user">
         <div>User Page</div>
       </ProtectedRoute>
@@ -114,7 +115,7 @@ describe('ProtectedRoute', () => {
       isLoading: true
     })
 
-    render(
+    renderWithRouter(
       <ProtectedRoute>
         <div>Should not show</div>
       </ProtectedRoute>
