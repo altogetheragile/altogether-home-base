@@ -77,6 +77,28 @@ export const createMockSupabaseResponse = (data: any, error: any = null) => ({
   delete: vi.fn().mockResolvedValue({ data, error })
 })
 
+// ✅ VERIFIED PATTERN 5: Mock Mutation Result Factory
+// Use this for mocking useMutation hooks consistently
+export const createMockUseMutationResult = (overrides = {}): any => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(),
+  isPending: false,
+  isSuccess: false,
+  isError: false,
+  isIdle: true,
+  isPaused: false,
+  error: null,
+  data: undefined,
+  variables: undefined,
+  status: 'idle' as const,
+  reset: vi.fn(),
+  context: undefined,
+  failureCount: 0,
+  failureReason: null,
+  submittedAt: 0,
+  ...overrides
+})
+
 // ✅ VERIFIED TEST STRUCTURE
 export const testPatterns = {
   // Pattern 1: Simple component test

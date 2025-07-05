@@ -1,9 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, createMockUseMutationResult } from '../../../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderSimpleComponent, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import TemplateForm from '@/components/admin/templates/TemplateForm'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 
 vi.mock('@/hooks/useTemplateMutations')
+vi.mock('@/hooks/useEventTypes', () => ({
+  useEventTypes: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useEventCategories', () => ({
+  useEventCategories: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useLevels', () => ({
+  useLevels: () => ({ data: [] })
+}))
+vi.mock('@/hooks/useFormats', () => ({
+  useFormats: () => ({ data: [] })
+}))
 
 const mockUseTemplateMutations = vi.mocked(useTemplateMutations)
 
@@ -41,7 +54,7 @@ describe('TemplateForm', () => {
   })
 
   it('renders create form correctly', () => {
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
@@ -57,7 +70,7 @@ describe('TemplateForm', () => {
   })
 
   it('renders edit form with pre-filled data', () => {
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={mockTemplate}
         locations={mockLocations}
@@ -73,7 +86,7 @@ describe('TemplateForm', () => {
   })
 
   it('validates required fields', async () => {
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
@@ -101,7 +114,7 @@ describe('TemplateForm', () => {
       deleteTemplate: createMockUseMutationResult()
     })
 
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
@@ -142,7 +155,7 @@ describe('TemplateForm', () => {
       deleteTemplate: createMockUseMutationResult()
     })
 
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={mockTemplate}
         locations={mockLocations}
@@ -181,7 +194,7 @@ describe('TemplateForm', () => {
       deleteTemplate: createMockUseMutationResult()
     })
 
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
@@ -195,7 +208,7 @@ describe('TemplateForm', () => {
   })
 
   it('calls onClose when cancel button is clicked', () => {
-    render(
+    renderSimpleComponent(
       <TemplateForm
         template={null}
         locations={mockLocations}
