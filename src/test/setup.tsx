@@ -26,7 +26,7 @@ const createMockUser = (overrides: Partial<User> = {}): User => ({
 
 // Global AuthContext mock - flexible for individual test overrides
 const mockAuthValue = {
-  user: createMockUser({ id: '1', email: 'test@example.com' }),
+  user: createMockUser({ id: '12345678-1234-1234-1234-123456789012', email: 'test@example.com' }),
   session: null,
   signIn: vi.fn(),
   signUp: vi.fn(),
@@ -89,12 +89,9 @@ afterEach(() => {
   cleanup()
 })
 
-// Close server after all tests  
+// Close server after all tests with safe cleanup
 afterAll(() => {
-  try {
+  if (server?.close) {
     server.close()
-  } catch (error) {
-    // Ignore cleanup errors in test environment - MSW v2 + Vitest 3.x compatibility
-    console.warn('MSW server cleanup warning (safe to ignore):', error?.message)
   }
 })

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '../test-utils'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
+import { screen } from '@testing-library/react'
 import RegistrationCard from '@/components/dashboard/RegistrationCard'
 import { UserRegistrationWithEvent } from '@/hooks/useUserRegistrations'
 import React from 'react'
@@ -23,7 +24,7 @@ const mockRegistration: UserRegistrationWithEvent = {
 
 describe('RegistrationCard', () => {
   it('should render registration information correctly', () => {
-    render(<RegistrationCard registration={mockRegistration} />)
+    renderSimpleComponent(<RegistrationCard registration={mockRegistration} />)
     
     expect(screen.getByText('Test Event')).toBeInTheDocument()
     expect(screen.getByText('Paid')).toBeInTheDocument()
@@ -40,7 +41,7 @@ describe('RegistrationCard', () => {
       }
     }
     
-    render(<RegistrationCard registration={futureRegistration} />)
+    renderSimpleComponent(<RegistrationCard registration={futureRegistration} />)
     
     expect(screen.getByText((content) => content.includes('Upcoming'))).toBeInTheDocument()
   })
@@ -51,7 +52,7 @@ describe('RegistrationCard', () => {
       event: null
     }
     
-    render(<RegistrationCard registration={registrationWithoutEvent} />)
+    renderSimpleComponent(<RegistrationCard registration={registrationWithoutEvent} />)
     
     expect(screen.getByText('Event Not Found')).toBeInTheDocument()
   })

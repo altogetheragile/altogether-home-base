@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    // setupFiles: ['./src/test/setup.tsx'], // Temporarily disabled to test file discovery
+    setupFiles: ['./src/test/setup.tsx'],
     include: [
       "src/**/*.test.{ts,tsx}", 
       "src/test/**/*.{test,spec}.{ts,tsx}"
