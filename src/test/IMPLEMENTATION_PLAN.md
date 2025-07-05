@@ -12,7 +12,11 @@
 
 **Current Progress:**
 - ✅ Updated `RegistrationCard.test.tsx` to use verified patterns
-- 🔄 Next: Replace hook tests to use `renderHookWithQuery` pattern
+- ✅ Converted hook tests to use `renderHookWithQuery` pattern:
+  - ✅ `useTemplates.test.tsx`
+  - ✅ `useUserRegistrations.test.tsx` 
+  - ✅ `useUserRole.test.tsx`
+  - ✅ `useTemplateMutations.test.tsx`
 - 🔄 Next: Replace component tests to use `renderSimpleComponent` pattern
 
 **Replacement Strategy:**

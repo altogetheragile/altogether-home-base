@@ -1,34 +1,16 @@
 
-import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
-import { renderHook, waitFor } from '../test-utils'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { waitFor } from '@testing-library/react'
+import { renderHookWithQuery } from '@/test/utils/verified-patterns'
 import { useUserRegistrations } from '@/hooks/useUserRegistrations'
-import { server } from '../mocks/server'
-import React from 'react'
-
-beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
-
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { 
-        retry: false,
-        gcTime: 0
-      },
-    },
-  })
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  )
-}
 
 describe('useUserRegistrations', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('should fetch user registrations successfully', async () => {
-    const { result } = renderHook(() => useUserRegistrations(), {
-      wrapper: createWrapper(),
-    })
+    const { result } = renderHookWithQuery(() => useUserRegistrations())
 
     await waitFor(
       () => expect(result.current.isSuccess).toBe(true),
@@ -46,9 +28,7 @@ describe('useUserRegistrations', () => {
   })
 
   it('should handle loading state', () => {
-    const { result } = renderHook(() => useUserRegistrations(), {
-      wrapper: createWrapper(),
-    })
+    const { result } = renderHookWithQuery(() => useUserRegistrations())
     expect(result.current.isLoading).toBe(true)
   })
 })

@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor, createWrapper, createTestQueryClient } from '../test-utils'
+import { waitFor } from '@testing-library/react'
+import { renderHookWithQuery } from '@/test/utils/verified-patterns'
 import { useTemplates } from '@/hooks/useTemplates'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -38,9 +39,7 @@ describe('useTemplates', () => {
       })
     } as any)
 
-    const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplates())
 
     await waitFor(() => {
       expect(result.current.data).toEqual(mockTemplates)
@@ -60,9 +59,7 @@ describe('useTemplates', () => {
       })
     } as any)
 
-    const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplates())
 
     await waitFor(() => {
       expect(result.current.data).toBeUndefined()
@@ -77,9 +74,7 @@ describe('useTemplates', () => {
       order: vi.fn().mockReturnValue(new Promise(() => {})) // Never resolves
     } as any)
 
-    const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplates())
 
     expect(result.current.data).toBeUndefined()
     expect(result.current.isLoading).toBe(true)
@@ -95,9 +90,7 @@ describe('useTemplates', () => {
       })
     } as any)
 
-    const { result } = renderHook(() => useTemplates(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplates())
 
     // Query key should be ['templates']
     expect(result.current).toBeDefined()

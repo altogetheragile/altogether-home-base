@@ -1,18 +1,21 @@
 
 import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '../test-utils'
+import { waitFor } from '@testing-library/react' 
+import { renderHookWithQuery, createTestQueryClient } from '@/test/utils/verified-patterns'
 import { useUserRole } from '@/hooks/useUserRole'
 import { useAuth } from '@/contexts/AuthContext'
-import React from 'react'
 
 describe('useUserRole', () => {
-  const queryClient = new QueryClient()
+  let queryClient: any
+
+  beforeEach(() => {
+    queryClient = createTestQueryClient()
+  })
 
   afterEach(() => {
     // Clean up any window.fetch mocks after each test
     (window.fetch as any) = undefined
-    queryClient.clear()
+    queryClient?.clear()
     vi.clearAllMocks()
   })
 
@@ -27,19 +30,13 @@ describe('useUserRole', () => {
       loading: false
     })
     
-    const { result } = renderHook(() => useUserRole(), {
-      wrapper: ({ children }) =>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    })
+    const { result } = renderHookWithQuery(() => useUserRole())
     expect(result.current.data).toBeNull()
   })
 
   it('returns role from Supabase on success', async () => {
     // MSW handlers are used, see handlers.ts
-    const { result } = renderHook(() => useUserRole(), {
-      wrapper: ({ children }) =>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    })
+    const { result } = renderHookWithQuery(() => useUserRole())
     await waitFor(() => expect(['admin', 'user']).toContain(result.current.data))
   })
 
@@ -50,10 +47,7 @@ describe('useUserRole', () => {
       json: async () => ([{ id: 'user-1' }])
     } as any)
 
-    const { result } = renderHook(() => useUserRole(), {
-      wrapper: ({ children }) =>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    })
+    const { result } = renderHookWithQuery(() => useUserRole())
     await waitFor(() => expect(result.current.data).toBe('user'))
     ;(window.fetch as any) = undefined
   })
@@ -64,10 +58,7 @@ describe('useUserRole', () => {
       json: async () => ({ error: { message: 'DB error' } })
     } as any)
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const { result } = renderHook(() => useUserRole(), {
-      wrapper: ({ children }) =>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    })
+    const { result } = renderHookWithQuery(() => useUserRole())
     await waitFor(() => expect(result.current.data).toBeNull())
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()

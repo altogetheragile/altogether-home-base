@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor, createWrapper, createTestQueryClient } from '../test-utils'
+import { waitFor } from '@testing-library/react'
+import { renderHookWithQuery } from '@/test/utils/verified-patterns'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -52,9 +53,7 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-    const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplateMutations())
 
       await result.current.createTemplate.mutateAsync({
         title: 'New Template',
@@ -84,9 +83,7 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-    const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplateMutations())
 
       try {
         await result.current.createTemplate.mutateAsync({
@@ -127,9 +124,7 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-    const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplateMutations())
 
       await result.current.updateTemplate.mutateAsync({
         id: '1',
@@ -158,9 +153,7 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-    const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplateMutations())
 
       await result.current.deleteTemplate.mutateAsync('1')
 
@@ -182,9 +175,7 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-    const { result } = renderHook(() => useTemplateMutations(), {
-      wrapper: createWrapper({ queryClient: createTestQueryClient() })
-    })
+    const { result } = renderHookWithQuery(() => useTemplateMutations())
 
       try {
         await result.current.deleteTemplate.mutateAsync('1')
