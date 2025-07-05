@@ -27,7 +27,7 @@ describe('Template Form Validation Schema', () => {
     expect(result.success).toBe(false)
     if (!result.success) {
       expect(result.error.issues[0].path).toEqual(['title'])
-      expect(result.error.issues[0].message).toBe('Required')
+      expect(result.error.issues[0].message).toBe('Template title is required')
     }
   })
 
