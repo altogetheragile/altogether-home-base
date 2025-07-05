@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '../test-utils'
+import { renderHook, waitFor, createWrapper } from '../test-utils'
 import { useTemplates } from '@/hooks/useTemplates'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -38,7 +38,9 @@ describe('useTemplates', () => {
       })
     } as any)
 
-    const { result } = renderHook(() => useTemplates())
+    const { result } = renderHook(() => useTemplates(), {
+      wrapper: createWrapper()
+    })
 
     await waitFor(() => {
       expect(result.current.data).toEqual(mockTemplates)
@@ -58,7 +60,9 @@ describe('useTemplates', () => {
       })
     } as any)
 
-    const { result } = renderHook(() => useTemplates())
+    const { result } = renderHook(() => useTemplates(), {
+      wrapper: createWrapper()
+    })
 
     await waitFor(() => {
       expect(result.current.data).toBeUndefined()
@@ -73,7 +77,9 @@ describe('useTemplates', () => {
       order: vi.fn().mockReturnValue(new Promise(() => {})) // Never resolves
     } as any)
 
-    const { result } = renderHook(() => useTemplates())
+    const { result } = renderHook(() => useTemplates(), {
+      wrapper: createWrapper()
+    })
 
     expect(result.current.data).toBeUndefined()
     expect(result.current.isLoading).toBe(true)
@@ -89,7 +95,9 @@ describe('useTemplates', () => {
       })
     } as any)
 
-    const { result } = renderHook(() => useTemplates())
+    const { result } = renderHook(() => useTemplates(), {
+      wrapper: createWrapper()
+    })
 
     // Query key should be ['templates']
     expect(result.current).toBeDefined()

@@ -71,10 +71,12 @@ vi.mock('@/hooks/useLocationMutations', () => ({
   })
 }))
 
-// Mock toast hook
+// Mock toast hook to return empty array by default
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
-    toast: vi.fn()
+    toast: vi.fn(),
+    dismiss: vi.fn(),
+    toasts: [] // Initialize as empty array to prevent undefined errors
   })
 }))
 
@@ -87,5 +89,11 @@ afterEach(() => {
   cleanup()
 })
 
-// Close server after all tests
-afterAll(() => server.close())
+// Close server after all tests  
+afterAll(() => {
+  try {
+    server.close()
+  } catch (error) {
+    // Ignore cleanup errors in test environment
+  }
+})

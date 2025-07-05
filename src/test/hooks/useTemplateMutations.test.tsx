@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor, createMockUseMutationResult } from '../test-utils'
+import { renderHook, waitFor, createWrapper } from '../test-utils'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -52,7 +52,9 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-      const { result } = renderHook(() => useTemplateMutations())
+    const { result } = renderHook(() => useTemplateMutations(), {
+      wrapper: createWrapper()
+    })
 
       await result.current.createTemplate.mutateAsync({
         title: 'New Template',
@@ -82,7 +84,9 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-      const { result } = renderHook(() => useTemplateMutations())
+    const { result } = renderHook(() => useTemplateMutations(), {
+      wrapper: createWrapper()
+    })
 
       try {
         await result.current.createTemplate.mutateAsync({
@@ -123,7 +127,9 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-      const { result } = renderHook(() => useTemplateMutations())
+    const { result } = renderHook(() => useTemplateMutations(), {
+      wrapper: createWrapper()
+    })
 
       await result.current.updateTemplate.mutateAsync({
         id: '1',
@@ -152,7 +158,9 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-      const { result } = renderHook(() => useTemplateMutations())
+    const { result } = renderHook(() => useTemplateMutations(), {
+      wrapper: createWrapper()
+    })
 
       await result.current.deleteTemplate.mutateAsync('1')
 
@@ -174,7 +182,9 @@ describe('useTemplateMutations', () => {
         })
       } as any)
 
-      const { result } = renderHook(() => useTemplateMutations())
+    const { result } = renderHook(() => useTemplateMutations(), {
+      wrapper: createWrapper()
+    })
 
       try {
         await result.current.deleteTemplate.mutateAsync('1')
