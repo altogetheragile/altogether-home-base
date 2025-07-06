@@ -194,6 +194,76 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
         </div>
       </div>
 
+      <div>
+        <h4 className="text-sm font-medium mb-3">Call to Action Button</h4>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="cta-variant">Button Style</Label>
+            <Select
+              value={styles.ctaVariant || 'default'}
+              onValueChange={(value) => onStyleChange('ctaVariant', value === 'default' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select button style" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="primary">Primary</SelectItem>
+                <SelectItem value="secondary">Secondary</SelectItem>
+                <SelectItem value="outline">Outline</SelectItem>
+                <SelectItem value="ghost">Ghost</SelectItem>
+                <SelectItem value="destructive">Destructive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="cta-size">Button Size</Label>
+            <Select
+              value={styles.ctaSize || 'default'}
+              onValueChange={(value) => onStyleChange('ctaSize', value === 'default' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select button size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="sm">Small</SelectItem>
+                <SelectItem value="lg">Large</SelectItem>
+                <SelectItem value="xl">Extra Large</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <ColorPicker
+            label="Button Background Color"
+            value={styles.ctaBackgroundColor || 'default'}
+            onChange={(color) => onStyleChange('ctaBackgroundColor', color)}
+          />
+          <ColorPicker
+            label="Button Text Color"
+            value={styles.ctaTextColor || 'default'}
+            onChange={(color) => onStyleChange('ctaTextColor', color)}
+          />
+          <div>
+            <Label htmlFor="cta-font-weight">Button Text Weight</Label>
+            <Select
+              value={styles.ctaFontWeight || 'default'}
+              onValueChange={(value) => onStyleChange('ctaFontWeight', value === 'default' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select font weight" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="font-normal">Normal</SelectItem>
+                <SelectItem value="font-medium">Medium</SelectItem>
+                <SelectItem value="font-semibold">Semi Bold</SelectItem>
+                <SelectItem value="font-bold">Bold</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       <div className="pt-4 border-t">
         <Button 
           variant="outline" 

@@ -77,11 +77,26 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               {block.content.subtitle || 'Hero subtitle'}
             </p>
             {block.content.ctaText && (
-              <Button variant="secondary" size="lg" asChild>
-                <a href={block.content.ctaLink || '#'}>
-                  {block.content.ctaText}
-                </a>
-              </Button>
+              <div>
+                <Button 
+                  variant={styles.ctaVariant || 'secondary'} 
+                  size={styles.ctaSize || 'lg'} 
+                  asChild
+                  className={`${styles.ctaFontWeight || ''}`}
+                  style={{
+                    ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
+                      backgroundColor: styles.ctaBackgroundColor
+                    }),
+                    ...(styles.ctaTextColor && styles.ctaTextColor !== 'default' && {
+                      color: styles.ctaTextColor
+                    })
+                  }}
+                >
+                  <a href={block.content.ctaLink || '#'}>
+                    {block.content.ctaText}
+                  </a>
+                </Button>
+              </div>
             )}
           </div>
         );
