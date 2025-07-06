@@ -43,6 +43,10 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
       // For content that's not specifically title/subtitle, use the legacy fontSize or subtitle size as fallback
       return styles.fontSize || styles.subtitleFontSize || '';
     };
+
+    const getTitleSpacing = (styles: any) => {
+      return styles.titleSpacing || 'mb-8';
+    };
     
     const styleClasses = [
       styles.backgroundColor || '',
@@ -137,7 +141,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
              <div className="relative z-10 max-w-4xl mx-auto">
-              <h1 className={`${getTitleFontSize(styles)} font-bold mb-8`}>
+              <h1 className={`${getTitleFontSize(styles)} font-bold ${getTitleSpacing(styles)}`}>
                 {block.content.title || 'Hero Title'}
               </h1>
               <p className={`${getSubtitleFontSize(styles)} mb-8 opacity-90`}>
@@ -182,7 +186,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className={`relative z-10 ${block.content.backgroundImage ? '' : ''}`}>
               {block.content.title && (
-                <h2 className={`${getTitleFontSize(styles)} font-bold mb-8 text-center`}>
+                <h2 className={`${getTitleFontSize(styles)} font-bold ${getTitleSpacing(styles)} text-center`}>
                   {block.content.title}
                 </h2>
               )}
@@ -208,7 +212,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className="relative z-10">
               {block.content.title && (
-                <h3 className={`${getTitleFontSize(styles)} font-semibold mb-6`}>
+                <h3 className={`${getTitleFontSize(styles)} font-semibold ${getTitleSpacing(styles)}`}>
                   {block.content.title}
                 </h3>
               )}

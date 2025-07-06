@@ -148,6 +148,26 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label htmlFor="title-spacing">Title-Subtitle Spacing</Label>
+            <Select
+              value={styles.titleSpacing || 'default'}
+              onValueChange={(value) => onStyleChange('titleSpacing', value === 'default' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select spacing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="mb-2">Very Small (8px)</SelectItem>
+                <SelectItem value="mb-4">Small (16px)</SelectItem>
+                <SelectItem value="mb-6">Medium (24px)</SelectItem>
+                <SelectItem value="mb-8">Large (32px)</SelectItem>
+                <SelectItem value="mb-12">Extra Large (48px)</SelectItem>
+                <SelectItem value="mb-16">Huge (64px)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
