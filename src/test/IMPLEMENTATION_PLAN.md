@@ -29,6 +29,15 @@
 - ✅ `AdminTemplates.test.tsx` → Converted to `renderWithRouter` pattern
 - ✅ `TemplateForm.scaffold.test.tsx` → Converted to `renderSimpleComponent` pattern
 - ✅ `TemplateForm.snapshot.test.tsx` → Converted to `renderSimpleComponent` pattern
+- ✅ `ProtectedRoute.comprehensive.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `ProtectedRoute.scaffold.test.tsx` → Converted to `renderWithRouter` pattern
+
+**Page Tests Converted:**
+- ✅ `Auth.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `Dashboard.test.tsx` → Converted to `renderWithRouter` pattern
+
+**Accessibility Tests Converted:**
+- ✅ `template-accessibility.test.tsx` → Converted to `renderSimpleComponent` pattern
 
 **Key Improvements Applied:**
 - Replaced complex test-utils imports with verified patterns
@@ -59,6 +68,7 @@
 
 ## 📊 SUCCESS METRICS
 - Target: Convert 97 failing tests to use verified patterns
-- Progress: **16 test files converted** (Hook tests: 5, Component tests: 11)
-- **Major milestone**: Complex form components now working with verified patterns
-- Next Target: Identify and convert remaining component and integration tests
+- Progress: **21 test files converted** (Hook tests: 5, Component tests: 13, Page tests: 2, Accessibility tests: 1)
+- **Major milestone**: ProtectedRoute variants, Page tests, and Accessibility tests now using verified patterns
+- **New Pattern**: Added `renderWithFullContext` for integration tests requiring multiple contexts
+- Next Target: Convert remaining integration tests and specialized test files

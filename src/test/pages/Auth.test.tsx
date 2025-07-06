@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithRouter } from '@/test/utils/verified-patterns'
 import Auth from '@/pages/Auth'
 import { server } from '../mocks/server'
 import React from 'react'
@@ -59,7 +60,7 @@ describe('Auth Page Integration', () => {
   })
 
   it('should sign in with valid credentials', async () => {
-    render(<Auth />)
+    renderWithRouter(<Auth />)
 
     const emailInput = screen.getByTestId('email-input')
     const passwordInput = screen.getByTestId('password-input')
@@ -74,7 +75,7 @@ describe('Auth Page Integration', () => {
   })
 
   it('should sign up a new user', async () => {
-    render(<Auth />)
+    renderWithRouter(<Auth />)
 
     // Switch to sign up tab
     const signUpTrigger = screen.getByTestId('tab-trigger-signup')

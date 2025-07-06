@@ -1,10 +1,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '../test-utils'
+import { screen } from '@testing-library/react'
+import { renderWithRouter, createMockUseQueryResult } from '@/test/utils/verified-patterns'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUserRole } from '@/hooks/useUserRole'
-import { createMockUseQueryResult } from '../utils/mock-factories'
 
 vi.mock('@/contexts/AuthContext')
 vi.mock('@/hooks/useUserRole')
@@ -33,7 +33,7 @@ describe('ProtectedRoute Scaffold', () => {
       isLoading: true
     }))
 
-    render(
+    renderWithRouter(
       <ProtectedRoute requiredRole="admin">
         <TestComponent />
       </ProtectedRoute>
@@ -75,7 +75,7 @@ describe('ProtectedRoute Scaffold', () => {
       isSuccess: true
     }))
 
-    render(
+    renderWithRouter(
       <ProtectedRoute requiredRole="admin">
         <TestComponent />
       </ProtectedRoute>

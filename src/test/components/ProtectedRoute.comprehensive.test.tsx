@@ -1,10 +1,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '../test-utils'
+import { screen } from '@testing-library/react'
+import { renderWithRouter, createMockUseQueryResult } from '@/test/utils/verified-patterns'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUserRole } from '@/hooks/useUserRole'
-import { createMockUseQueryResult } from '../utils/mock-factories'
 
 vi.mock('@/contexts/AuthContext')
 vi.mock('@/hooks/useUserRole')
@@ -34,7 +34,7 @@ describe('ProtectedRoute - RBAC Flows', () => {
         isLoading: true
       }))
 
-      render(
+      renderWithRouter(
         <ProtectedRoute requiredRole="admin">
           <TestComponent />
         </ProtectedRoute>
@@ -59,7 +59,7 @@ describe('ProtectedRoute - RBAC Flows', () => {
         isLoading: false
       }))
 
-      render(
+      renderWithRouter(
         <ProtectedRoute requiredRole="admin">
           <TestComponent />
         </ProtectedRoute>
@@ -103,7 +103,7 @@ describe('ProtectedRoute - RBAC Flows', () => {
         isSuccess: true
       }))
 
-      render(
+      renderWithRouter(
         <ProtectedRoute requiredRole="admin">
           <TestComponent />
         </ProtectedRoute>
@@ -128,7 +128,7 @@ describe('ProtectedRoute - RBAC Flows', () => {
         isSuccess: true
       }))
 
-      render(
+      renderWithRouter(
         <ProtectedRoute requiredRole="admin">
           <TestComponent />
         </ProtectedRoute>
@@ -156,7 +156,7 @@ describe('ProtectedRoute - RBAC Flows', () => {
         isSuccess: true
       }))
 
-      render(
+      renderWithRouter(
         <ProtectedRoute requiredRole="admin">
           <TestComponent />
         </ProtectedRoute>
@@ -180,7 +180,7 @@ describe('ProtectedRoute - RBAC Flows', () => {
         isLoading: true
       }))
 
-      render(
+      renderWithRouter(
         <ProtectedRoute requiredRole="admin">
           <TestComponent />
         </ProtectedRoute>
@@ -222,7 +222,7 @@ describe('ProtectedRoute - RBAC Flows', () => {
         isSuccess: true
       }))
 
-      render(
+      renderWithRouter(
         <ProtectedRoute>
           <TestComponent />
         </ProtectedRoute>

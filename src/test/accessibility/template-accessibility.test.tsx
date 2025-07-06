@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, createMockUseQueryResult } from '../test-utils'
+import { screen } from '@testing-library/react'
+import { renderSimpleComponent, createMockUseQueryResult } from '@/test/utils/verified-patterns'
 import AdminTemplates from '@/pages/admin/AdminTemplates'
 import TemplateCard from '@/components/admin/templates/TemplateCard'
 import { useTemplates } from '@/hooks/useTemplates'
@@ -86,7 +87,7 @@ describe('Template Accessibility', () => {
       })
     )
 
-    render(<AdminTemplates />)
+    renderSimpleComponent(<AdminTemplates />)
     
     // Check for search input accessibility
     const searchInput = screen.getByRole('searchbox')
@@ -101,7 +102,7 @@ describe('Template Accessibility', () => {
   })
 
   it('supports keyboard navigation', () => {
-    render(
+    renderSimpleComponent(
       <TemplateCard
         template={mockTemplate}
         locations={mockLocations}
@@ -128,7 +129,7 @@ describe('Template Accessibility', () => {
       })
     )
 
-    render(<AdminTemplates />)
+    renderSimpleComponent(<AdminTemplates />)
     
     // Check for proper heading hierarchy
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
@@ -139,7 +140,7 @@ describe('Template Accessibility', () => {
   })
 
   it('has proper color contrast and visual indicators', () => {
-    render(
+    renderSimpleComponent(
       <TemplateCard
         template={mockTemplate}
         locations={mockLocations}
@@ -164,7 +165,7 @@ describe('Template Accessibility', () => {
       })
     )
 
-    render(<AdminTemplates />)
+    renderSimpleComponent(<AdminTemplates />)
     
     const loadingText = screen.getByText('Loading templates...')
     expect(loadingText).toBeInTheDocument()
@@ -184,7 +185,7 @@ describe('Template Accessibility', () => {
       })
     )
 
-    render(<AdminTemplates />)
+    renderSimpleComponent(<AdminTemplates />)
     
     const errorText = screen.getByText(`Error loading templates: ${errorMessage}`)
     expect(errorText).toBeInTheDocument()

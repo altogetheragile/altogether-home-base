@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '../test-utils'
+import { screen } from '@testing-library/react'
+import { renderWithRouter } from '@/test/utils/verified-patterns'
 import Dashboard from '@/pages/Dashboard'
 import { useAuth } from '@/contexts/AuthContext'
 import React from 'react'
@@ -53,7 +54,7 @@ describe('Dashboard Page', () => {
   })
 
   it('should render dashboard for authenticated user', () => {
-    render(<Dashboard />)
+    renderWithRouter(<Dashboard />)
     
     expect(screen.getByText('My Dashboard')).toBeInTheDocument()
     expect(screen.getByText((content) => 
@@ -62,7 +63,7 @@ describe('Dashboard Page', () => {
   })
 
   it('should display user registrations', () => {
-    render(<Dashboard />)
+    renderWithRouter(<Dashboard />)
     
     expect(screen.getByText('Test Event')).toBeInTheDocument()
     expect(screen.getByText('Paid')).toBeInTheDocument()
@@ -79,7 +80,7 @@ describe('Dashboard Page', () => {
       loading: false
     })
 
-    render(<Dashboard />)
+    renderWithRouter(<Dashboard />)
     
     expect(screen.getByTestId('navigate-to')).toHaveTextContent('/auth')
   })
