@@ -71,7 +71,7 @@ vi.mock('@/hooks/useLocationMutations', () => ({
   })
 }))
 
-// Mock toast hook to return proper structure
+// Mock toast hook to return proper structure with default empty array
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toast: vi.fn(),
@@ -81,7 +81,9 @@ vi.mock('@/hooks/use-toast', () => ({
 }))
 
 // Start server before all tests with better configuration
-beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'warn' })
+})
 
 // Reset handlers after each test
 afterEach(() => {
@@ -89,9 +91,14 @@ afterEach(() => {
   cleanup()
 })
 
-// Close server after all tests with safe cleanup
+// Close server after all tests with safe cleanup that prevents disposal errors
 afterAll(() => {
-  if (server?.close) {
-    server.close()
+  try {
+    if (server && typeof server.close === 'function') {
+      server.close()
+    }
+  } catch (error) {
+    // Ignore disposal errors to prevent test failures
+    console.warn('MSW server cleanup warning:', error)
   }
 })

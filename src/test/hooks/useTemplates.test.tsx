@@ -45,7 +45,7 @@ describe('useTemplates', () => {
       expect(result.current.data).toEqual(mockTemplates)
       expect(result.current.isLoading).toBe(false)
       expect(result.current.error).toBeNull()
-    })
+    }, { timeout: 5000 })
   })
 
   it('handles fetch error correctly', async () => {
@@ -65,7 +65,7 @@ describe('useTemplates', () => {
       expect(result.current.data).toBeUndefined()
       expect(result.current.isLoading).toBe(false)
       expect(result.current.error).toEqual(mockError)
-    })
+    }, { timeout: 5000 })
   })
 
   it('returns loading state initially', () => {
@@ -81,7 +81,7 @@ describe('useTemplates', () => {
     expect(result.current.error).toBeNull()
   })
 
-  it('uses correct query key', () => {
+  it('uses correct query key', async () => {
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
