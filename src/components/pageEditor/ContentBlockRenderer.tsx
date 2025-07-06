@@ -27,28 +27,26 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
     // Helper function to get font size
     const getTitleFontSize = (styles: any) => {
       if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
-        // For custom pixel sizes, make them responsive
+        // For custom pixel sizes, use smaller mobile sizes
         const pixelSize = parseInt(styles.customTitleFontSize);
         if (pixelSize && pixelSize > 30) {
-          const mobileSize = Math.max(24, Math.round(pixelSize * 0.6));
-          return `text-[${mobileSize}px] md:text-[${pixelSize}px]`;
+          return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl';
         }
-        return `text-[${styles.customTitleFontSize}]`;
+        return styles.customTitleFontSize;
       }
-      return styles.titleFontSize || 'text-4xl md:text-6xl';
+      return styles.titleFontSize || 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl';
     };
 
     const getSubtitleFontSize = (styles: any) => {
       if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
-        // For custom pixel sizes, make them responsive
+        // For custom pixel sizes, use smaller mobile sizes
         const pixelSize = parseInt(styles.customSubtitleFontSize);
         if (pixelSize && pixelSize > 20) {
-          const mobileSize = Math.max(16, Math.round(pixelSize * 0.7));
-          return `text-[${mobileSize}px] md:text-[${pixelSize}px]`;
+          return 'text-base sm:text-lg md:text-xl lg:text-2xl';
         }
-        return `text-[${styles.customSubtitleFontSize}]`;
+        return styles.customSubtitleFontSize;
       }
-      return styles.subtitleFontSize || 'text-xl md:text-2xl';
+      return styles.subtitleFontSize || 'text-base sm:text-lg md:text-xl lg:text-2xl';
     };
 
     const getContentFontSize = (styles: any) => {
@@ -57,7 +55,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
     };
 
     const getTitleSpacing = (styles: any) => {
-      return styles.titleSpacing || 'mb-8';
+      return styles.titleSpacing || 'mb-4 sm:mb-6 md:mb-8';
     };
 
     const renderButtons = (content: any, styles: any) => {
@@ -205,18 +203,18 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
         
         return (
           <div 
-            className={`relative ${heroBackgroundClasses} text-white px-8 text-center rounded-lg ${getHeightClass(block.content.height, 'hero')} flex items-center justify-center ${styleClasses}`}
+            className={`relative ${heroBackgroundClasses} text-white px-4 sm:px-6 md:px-8 text-center rounded-lg ${getHeightClass(block.content.height, 'hero')} flex items-center justify-center ${styleClasses}`}
             style={{...inlineStyles, ...heroBackgroundStyles}}
           >
             {/* Dark overlay for background images to ensure text readability */}
             {block.content.backgroundImage && (
               <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
-             <div className="relative z-10 max-w-4xl mx-auto">
-              <h1 className={`${getTitleFontSize(styles)} font-bold ${getTitleSpacing(styles)}`}>
+             <div className="relative z-10 max-w-4xl mx-auto px-4">
+              <h1 className={`${getTitleFontSize(styles)} font-bold ${getTitleSpacing(styles)} leading-tight`}>
                 {block.content.title || 'Hero Title'}
               </h1>
-              <p className={`${getSubtitleFontSize(styles)} mb-8 opacity-90`}>
+              <p className={`${getSubtitleFontSize(styles)} mb-6 sm:mb-8 opacity-90 leading-relaxed`}>
                 {block.content.subtitle || 'Hero subtitle'}
               </p>
                {renderButtons(block.content, styles)}
