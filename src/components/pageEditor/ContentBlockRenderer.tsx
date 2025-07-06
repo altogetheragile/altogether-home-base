@@ -59,47 +59,76 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
     switch (block.type) {
       case 'hero':
-        // Determine background classes based on backgroundType
+        // Determine height classes
+        const getHeightClass = (height: string) => {
+          switch (height) {
+            case 'small': return 'py-12 min-h-[240px]';
+            case 'medium': return 'py-16 min-h-[400px]';
+            case 'large': return 'py-20 min-h-[480px]';
+            case 'xl': return 'py-24 min-h-[560px]';
+            case '2xl': return 'py-28 min-h-[640px]';
+            case 'screen': return 'py-32 min-h-screen';
+            default: return 'py-20 min-h-[320px]';
+          }
+        };
+
+        // Determine background styles
         let heroBackgroundClasses = '';
-        if (backgroundType === 'default' || backgroundType === 'gradient') {
+        let heroBackgroundStyles: React.CSSProperties = {};
+        
+        if (block.content.backgroundImage) {
+          heroBackgroundStyles = {
+            backgroundImage: `url(${block.content.backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          };
+          heroBackgroundClasses = 'relative';
+        } else if (backgroundType === 'default' || backgroundType === 'gradient') {
           heroBackgroundClasses = 'bg-gradient-to-r from-primary to-primary-glow';
         }
         
         return (
           <div 
-            className={`relative ${heroBackgroundClasses} text-white py-20 px-8 text-center rounded-lg ${styleClasses}`}
-            style={inlineStyles}
+            className={`relative ${heroBackgroundClasses} text-white px-8 text-center rounded-lg ${getHeightClass(block.content.height)} flex items-center justify-center ${styleClasses}`}
+            style={{...inlineStyles, ...heroBackgroundStyles}}
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              {block.content.title || 'Hero Title'}
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90">
-              {block.content.subtitle || 'Hero subtitle'}
-            </p>
-            {block.content.ctaText && (
-              <div>
-                <Button 
-                  variant={styles.ctaVariant || 'secondary'} 
-                  size={styles.ctaSize || 'lg'} 
-                  asChild
-                  className={`${styles.ctaFontWeight || ''}`}
-                  style={{
-                    ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
-                      backgroundColor: styles.ctaBackgroundColor
-                    }),
-                    ...(styles.ctaTextColor && styles.ctaTextColor !== 'default' && {
-                      color: styles.ctaTextColor
-                    })
-                  }}
-                >
-                  <a href={block.content.ctaLink || '#'}>
-                    {block.content.ctaText}
-                  </a>
-                </Button>
-              </div>
+            {/* Dark overlay for background images to ensure text readability */}
+            {block.content.backgroundImage && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
-          </div>
-        );
+            <div className="relative z-10 max-w-4xl mx-auto">
+              <h1 className="text-4xl md:text-6xl font-bold mb-4">
+                {block.content.title || 'Hero Title'}
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 opacity-90">
+                {block.content.subtitle || 'Hero subtitle'}
+              </p>
+               {block.content.ctaText && (
+                 <div>
+                   <Button 
+                     variant={styles.ctaVariant || 'secondary'} 
+                     size={styles.ctaSize || 'lg'} 
+                     asChild
+                     className={`${styles.ctaFontWeight || ''}`}
+                     style={{
+                       ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
+                         backgroundColor: styles.ctaBackgroundColor
+                       }),
+                       ...(styles.ctaTextColor && styles.ctaTextColor !== 'default' && {
+                         color: styles.ctaTextColor
+                       })
+                     }}
+                   >
+                     <a href={block.content.ctaLink || '#'}>
+                       {block.content.ctaText}
+                     </a>
+                   </Button>
+                 </div>
+               )}
+             </div>
+           </div>
+         );
 
       case 'section':
         return (
