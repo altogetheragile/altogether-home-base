@@ -195,6 +195,16 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
             placeholder="/events"
           />
         </div>
+        <div className="flex items-center space-x-2">
+          <input
+            id="hero-parallax"
+            type="checkbox"
+            checked={content?.parallax || false}
+            onChange={(e) => onContentChange('parallax', e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          <Label htmlFor="hero-parallax">Enable parallax effect (requires background image)</Label>
+        </div>
       </div>
     );
   };

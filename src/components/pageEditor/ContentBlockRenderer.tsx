@@ -77,12 +77,24 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
         let heroBackgroundStyles: React.CSSProperties = {};
         
         if (block.content.backgroundImage) {
-          heroBackgroundStyles = {
-            backgroundImage: `url(${block.content.backgroundImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          };
+          if (block.content.parallax) {
+            // Parallax effect with fixed background attachment
+            heroBackgroundStyles = {
+              backgroundImage: `url(${block.content.backgroundImage})`,
+              backgroundAttachment: 'fixed',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            };
+          } else {
+            // Regular background image
+            heroBackgroundStyles = {
+              backgroundImage: `url(${block.content.backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            };
+          }
           heroBackgroundClasses = 'relative';
         } else if (backgroundType === 'default' || backgroundType === 'gradient') {
           heroBackgroundClasses = 'bg-gradient-to-r from-primary to-primary-glow';
