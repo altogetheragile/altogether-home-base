@@ -88,7 +88,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
                 variant={button.variant === 'default' ? (styles.buttonsVariant || 'default') : button.variant} 
                 size={button.size === 'default' ? (styles.buttonsSize || 'lg') : button.size} 
                 asChild
-                className={styles.buttonsFontWeight || ''}
+                className={`${styles.buttonsFontWeight || ''} min-w-[140px]`}
                 style={{
                   ...(styles.buttonsBackgroundColor && styles.buttonsBackgroundColor !== 'default' && {
                     backgroundColor: styles.buttonsBackgroundColor
