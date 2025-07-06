@@ -25,6 +25,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
     const styleClasses = [
       styles.backgroundColor || '',
       styles.textColor || '',
+      styles.borderColor || '',
       styles.padding || '',
       styles.textAlign || '',
       styles.fontSize || '',

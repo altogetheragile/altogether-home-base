@@ -31,10 +31,22 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
               <SelectContent>
                 <SelectItem value="default">Default</SelectItem>
                 <SelectItem value="bg-background">Background</SelectItem>
+                <SelectItem value="bg-card">Card</SelectItem>
+                <SelectItem value="bg-popover">Popover</SelectItem>
                 <SelectItem value="bg-muted">Muted</SelectItem>
-                <SelectItem value="bg-primary/5">Primary Light</SelectItem>
+                <SelectItem value="bg-muted/50">Muted Light</SelectItem>
+                <SelectItem value="bg-primary">Primary</SelectItem>
+                <SelectItem value="bg-primary/10">Primary Light</SelectItem>
+                <SelectItem value="bg-primary/5">Primary Subtle</SelectItem>
                 <SelectItem value="bg-secondary">Secondary</SelectItem>
+                <SelectItem value="bg-secondary/50">Secondary Light</SelectItem>
                 <SelectItem value="bg-accent">Accent</SelectItem>
+                <SelectItem value="bg-accent/50">Accent Light</SelectItem>
+                <SelectItem value="bg-destructive">Destructive</SelectItem>
+                <SelectItem value="bg-destructive/10">Destructive Light</SelectItem>
+                <SelectItem value="bg-gradient-to-r from-primary to-primary/80">Primary Gradient</SelectItem>
+                <SelectItem value="bg-gradient-to-r from-secondary to-accent">Secondary Gradient</SelectItem>
+                <SelectItem value="bg-gradient-to-br from-primary/10 to-accent/10">Subtle Gradient</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -51,8 +63,41 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
                 <SelectItem value="default">Default</SelectItem>
                 <SelectItem value="text-foreground">Foreground</SelectItem>
                 <SelectItem value="text-muted-foreground">Muted</SelectItem>
+                <SelectItem value="text-card-foreground">Card</SelectItem>
+                <SelectItem value="text-popover-foreground">Popover</SelectItem>
                 <SelectItem value="text-primary">Primary</SelectItem>
+                <SelectItem value="text-primary-foreground">Primary Foreground</SelectItem>
                 <SelectItem value="text-secondary-foreground">Secondary</SelectItem>
+                <SelectItem value="text-accent-foreground">Accent</SelectItem>
+                <SelectItem value="text-destructive">Destructive</SelectItem>
+                <SelectItem value="text-destructive-foreground">Destructive Foreground</SelectItem>
+                <SelectItem value="text-primary/80">Primary Muted</SelectItem>
+                <SelectItem value="text-secondary-foreground/80">Secondary Muted</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="border-color">Border & Accent</Label>
+            <Select
+              value={styles.borderColor || 'default'}
+              onValueChange={(value) => onStyleChange('borderColor', value === 'default' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select border style" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">No Border</SelectItem>
+                <SelectItem value="border border-border">Default Border</SelectItem>
+                <SelectItem value="border border-primary">Primary Border</SelectItem>
+                <SelectItem value="border border-secondary">Secondary Border</SelectItem>
+                <SelectItem value="border border-accent">Accent Border</SelectItem>
+                <SelectItem value="border border-muted">Muted Border</SelectItem>
+                <SelectItem value="border-2 border-primary">Primary Bold</SelectItem>
+                <SelectItem value="border-l-4 border-primary">Left Accent</SelectItem>
+                <SelectItem value="border-t-4 border-primary">Top Accent</SelectItem>
+                <SelectItem value="shadow-sm">Light Shadow</SelectItem>
+                <SelectItem value="shadow-md">Medium Shadow</SelectItem>
+                <SelectItem value="shadow-lg">Large Shadow</SelectItem>
               </SelectContent>
             </Select>
           </div>
