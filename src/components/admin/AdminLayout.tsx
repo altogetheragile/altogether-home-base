@@ -73,6 +73,12 @@ const AdminLayout = () => {
       icon: Layout,
       description: 'Manage event formats'
     },
+    {
+      label: 'Pages',
+      href: '/admin/pages',
+      icon: BookOpen,
+      description: 'Manage website pages'
+    },
   ];
 
   const isActive = (path: string) => location.pathname.startsWith(path);

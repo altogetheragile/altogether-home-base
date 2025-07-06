@@ -22,10 +22,13 @@ import AdminEventTypes from "./pages/admin/AdminEventTypes";
 import AdminEventCategories from "./pages/admin/AdminEventCategories";
 import AdminLevels from "./pages/admin/AdminLevels";
 import AdminFormats from "./pages/admin/AdminFormats";
+import AdminPages from "./pages/admin/AdminPages";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
 import EditInstructor from "./pages/admin/EditInstructor";
+import { PageEditor } from "./components/pageEditor/PageEditor";
+import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,7 +67,12 @@ const App = () => (
                 <Route path="event-categories" element={<AdminEventCategories />} />
                 <Route path="levels" element={<AdminLevels />} />
                 <Route path="formats" element={<AdminFormats />} />
+                <Route path="pages" element={<AdminPages />} />
+                <Route path="pages/:id/edit" element={<PageEditor />} />
               </Route>
+              
+              {/* Dynamic Pages Route - must be above catch-all */}
+              <Route path="/:slug" element={<DynamicPageRenderer slug={window.location.pathname.slice(1)} />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
