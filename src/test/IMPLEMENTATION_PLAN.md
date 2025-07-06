@@ -1,6 +1,6 @@
 # Test Infrastructure Implementation Plan
 
-## 🎯 CURRENT STATUS: PHASE 2 COMPLETED - SYSTEMATIC REPLACEMENT IN PROGRESS
+## 🎯 CURRENT STATUS: PHASE 3 IN PROGRESS - INTEGRATION TESTS CONVERTED
 
 ### ✅ PHASE 1: Environment Reset and Verification (COMPLETED)
 - ✅ Added missing dependencies: `react-day-picker`, `@radix-ui/react-switch`
@@ -40,6 +40,10 @@
 - ✅ `admin-templates-workflow.test.tsx` → Converted to `renderWithRouter` pattern
 - ✅ `template-crud-workflow.test.tsx` → Converted to `renderWithRouter` pattern  
 - ✅ `template-workflow.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `auth-flow.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `event-registration.test.tsx` → Converted to `renderSimpleComponent` pattern
+- ✅ `event-unregistration-workflow.test.tsx` → Converted to `renderSimpleComponent` pattern
+- ✅ `AdminLocations.test.tsx` → Converted to `renderWithRouter` pattern
 
 **Key Improvements Applied:**
 - Replaced complex test-utils imports with verified patterns
@@ -70,7 +74,7 @@
 
 ## 📊 SUCCESS METRICS
 - Target: Convert 97 failing tests to use verified patterns
-- Progress: **24 test files converted** (Hook tests: 5, Component tests: 13, Page tests: 2, Accessibility tests: 1, Integration tests: 3)
-- **Major milestone**: Template workflow integration tests converted to `renderWithRouter` pattern
+- Progress: **28 test files converted** (Hook tests: 5, Component tests: 13, Page tests: 3, Accessibility tests: 1, Integration tests: 7)
+- **Major milestone**: Major integration test conversion completed - auth flow, event registration/unregistration workflows
 - **New Pattern**: Added `renderWithFullContext` for complex integration tests requiring multiple contexts
-- Next Target: Convert remaining integration tests and specialized test files
+- Next Target: Convert remaining specialized test files and utilities

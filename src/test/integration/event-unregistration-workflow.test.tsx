@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
 import EventDetailSidebar from '@/components/events/EventDetailSidebar'
 import RegistrationCard from '@/components/dashboard/RegistrationCard'
 import { EventData } from '@/hooks/useEvents'
@@ -108,7 +109,7 @@ describe('Event Unregistration Workflow', () => {
       data: [mockRegistration]
     } as any)
 
-    render(<EventDetailSidebar event={mockEvent} />)
+    renderSimpleComponent(<EventDetailSidebar event={mockEvent} />)
 
     // Should show registration status
     expect(screen.getByText('✓ Already Registered')).toBeInTheDocument()
@@ -140,7 +141,7 @@ describe('Event Unregistration Workflow', () => {
   })
 
   it('should complete unregistration workflow from dashboard', async () => {
-    render(<RegistrationCard registration={mockRegistration} />)
+    renderSimpleComponent(<RegistrationCard registration={mockRegistration} />)
 
     // Should show registration details
     expect(screen.getByText('Test Workshop')).toBeInTheDocument()
@@ -190,7 +191,7 @@ describe('Event Unregistration Workflow', () => {
       data: [mockRegistration]
     } as any)
 
-    render(<EventDetailSidebar event={mockEvent} />)
+    renderSimpleComponent(<EventDetailSidebar event={mockEvent} />)
 
     const unregisterButton = screen.getByText('Unregister')
     fireEvent.click(unregisterButton)
@@ -227,7 +228,7 @@ describe('Event Unregistration Workflow', () => {
       data: [pastRegistration]
     } as any)
 
-    const { rerender } = render(<EventDetailSidebar event={pastEvent} />)
+    const { rerender } = renderSimpleComponent(<EventDetailSidebar event={pastEvent} />)
 
     expect(screen.getByText('✓ Already Registered')).toBeInTheDocument()
     expect(screen.queryByText('Unregister')).not.toBeInTheDocument()
@@ -245,7 +246,7 @@ describe('Event Unregistration Workflow', () => {
       data: [mockRegistration]
     } as any)
 
-    const { rerender } = render(<EventDetailSidebar event={mockEvent} />)
+    const { rerender } = renderSimpleComponent(<EventDetailSidebar event={mockEvent} />)
 
     // Should show registered state in sidebar
     expect(screen.getByText('✓ Already Registered')).toBeInTheDocument()

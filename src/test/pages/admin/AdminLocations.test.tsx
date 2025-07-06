@@ -1,6 +1,7 @@
 
 import { describe, it, afterAll, vi, expect } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithRouter } from '@/test/utils/verified-patterns'
 import { server } from '../../mocks/server'
 import { http, HttpResponse } from 'msw'
 import AdminLocations from '@/pages/admin/AdminLocations'
@@ -10,7 +11,7 @@ describe('AdminLocations', () => {
   afterAll(() => server.resetHandlers())
 
   it('renders a list of locations', async () => {
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     // Wait for locations to be displayed
     await waitFor(() => {
@@ -23,7 +24,7 @@ describe('AdminLocations', () => {
   })
 
   it('can open create location dialog', async () => {
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     const addButton = screen.getByText(/add location/i)
     fireEvent.click(addButton)
@@ -37,7 +38,7 @@ describe('AdminLocations', () => {
   })
 
   it('can submit create location form', async () => {
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     // Open create dialog
     fireEvent.click(screen.getByText(/add location/i))
@@ -64,7 +65,7 @@ describe('AdminLocations', () => {
   })
 
   it('shows validation error for empty form', async () => {
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     fireEvent.click(screen.getByText(/add location/i))
     
@@ -83,7 +84,7 @@ describe('AdminLocations', () => {
   })
 
   it('can open edit dialog', async () => {
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     await waitFor(() => {
       expect(screen.getByText('Main Hall')).toBeInTheDocument()
@@ -100,7 +101,7 @@ describe('AdminLocations', () => {
   })
 
   it('can trigger delete confirmation', async () => {
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     await waitFor(() => {
       expect(screen.getByText('West Room')).toBeInTheDocument()
@@ -126,7 +127,7 @@ describe('AdminLocations', () => {
       })
     )
     
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
   })
@@ -142,7 +143,7 @@ describe('AdminLocations', () => {
       })
     )
     
-    render(<AdminLocations />)
+    renderWithRouter(<AdminLocations />)
     
     await waitFor(() => {
       expect(screen.getByTestId('error-message')).toBeInTheDocument()

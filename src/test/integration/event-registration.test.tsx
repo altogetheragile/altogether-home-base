@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
 import EventCard from '@/components/events/EventCard'
 import { server } from '../mocks/server'
 import { EventData } from '@/hooks/useEvents'
@@ -57,7 +58,7 @@ describe('Event Registration Integration', () => {
   })
 
   it('should complete full registration flow', async () => {
-    render(<EventCard event={mockEvent} />)
+    renderSimpleComponent(<EventCard event={mockEvent} />)
     
     // Verify event details are displayed
     expect(screen.getByText('Leadership Workshop')).toBeInTheDocument()
@@ -77,7 +78,7 @@ describe('Event Registration Integration', () => {
   it('should handle registration errors gracefully', async () => {
     mockRegisterForEvent.mockRejectedValueOnce(new Error('Registration failed'))
     
-    render(<EventCard event={mockEvent} />)
+    renderSimpleComponent(<EventCard event={mockEvent} />)
     
     const registerButton = screen.getByText('Register')
     fireEvent.click(registerButton)

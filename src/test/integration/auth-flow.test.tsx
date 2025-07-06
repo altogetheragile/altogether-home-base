@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithRouter } from '@/test/utils/verified-patterns'
 import Auth from '@/pages/Auth'
 import { server } from '../mocks/server'
 import React from 'react'
@@ -63,7 +64,7 @@ describe('Authentication Flow Integration', () => {
   })
 
   it('should complete sign in flow with valid credentials', async () => {
-    render(<Auth />)
+    renderWithRouter(<Auth />)
     
     // Fill in sign in form using test IDs
     const emailInput = screen.getByTestId('email-input')
@@ -83,7 +84,7 @@ describe('Authentication Flow Integration', () => {
   })
 
   it('should complete sign up flow', async () => {
-    render(<Auth />)
+    renderWithRouter(<Auth />)
     
     // Switch to sign up mode
     const signUpTrigger = screen.getByTestId('tab-trigger-signup')
