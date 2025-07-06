@@ -1,9 +1,8 @@
-import React, { Component, ReactNode } from 'react'
+import React from 'react'
 
 interface Props {
-  children: ReactNode
-  fallback?: ReactNode
-  onError?: (error: Error, errorInfo: any) => void
+  children: React.ReactNode
+  fallback?: React.ComponentType<{ error: Error }>
 }
 
 interface State {
@@ -11,7 +10,18 @@ interface State {
   error?: Error
 }
 
-export class TestErrorBoundary extends Component<Props, State> {
+const DefaultErrorFallback = ({ error }: { error: Error }) => (
+  <div role="alert" data-testid="error-boundary">
+    <h2>Test Error Boundary</h2>
+    <details>
+      <summary>Error details</summary>
+      <pre>{error.message}</pre>
+      <pre>{error.stack}</pre>
+    </details>
+  </div>
+)
+
+export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = { hasError: false }
@@ -21,36 +31,16 @@ export class TestErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo)
-    }
-    console.error('Test Error Boundary caught an error:', error, errorInfo)
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo)
   }
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback || (
-        <div data-testid="error-boundary">
-          <h2>Test Error Occurred</h2>
-          <details>
-            <summary>Error Details</summary>
-            <pre>{this.state.error?.stack}</pre>
-          </details>
-        </div>
-      )
+      const Fallback = this.props.fallback || DefaultErrorFallback
+      return <Fallback error={this.state.error!} />
     }
 
     return this.props.children
   }
 }
-
-// Wrapper for tests that may have component errors
-export const withErrorBoundary = (
-  component: ReactNode, 
-  options: { onError?: (error: Error, errorInfo: any) => void } = {}
-) => (
-  <TestErrorBoundary onError={options.onError}>
-    {component}
-  </TestErrorBoundary>
-)

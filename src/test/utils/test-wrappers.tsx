@@ -8,8 +8,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { ErrorBoundary } from './error-boundary-wrapper'
 
-// Wrapper for providing context (removed AuthProvider since we use global mock)
+// Enhanced wrapper interface for all contexts
 interface WrapperProps {
   children: React.ReactNode
   queryClient?: QueryClient
@@ -17,14 +18,16 @@ interface WrapperProps {
     initialEntries?: string[]
     initialIndex?: number
   }
+  skipRouter?: boolean  // New option to skip router when component has its own
 }
 
-const createWrapper = ({ queryClient, router }: Omit<WrapperProps, 'children'> = {}) => {
+const createWrapper = ({ queryClient, router, skipRouter }: Omit<WrapperProps, 'children'> = {}) => {
   const testQueryClient = queryClient || new QueryClient({
     defaultOptions: {
       queries: {
         retry: false,
-        gcTime: 0
+        gcTime: 0,
+        staleTime: 0
       },
       mutations: {
         retry: false
@@ -33,41 +36,60 @@ const createWrapper = ({ queryClient, router }: Omit<WrapperProps, 'children'> =
   })
 
   return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={testQueryClient}>
-      <TooltipProvider>
-        {children}
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
-  )
-}
-
-// Router-aware wrapper for components that need router context
-const createRouterWrapper = ({ queryClient, router }: Omit<WrapperProps, 'children'> = {}) => {
-  const testQueryClient = queryClient || new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0
-      },
-      mutations: {
-        retry: false
-      }
-    }
-  })
-
-  return ({ children }: { children: React.ReactNode }) => (
-    <MemoryRouter 
-      initialEntries={router?.initialEntries || ['/']}
-      initialIndex={router?.initialIndex || 0}
-    >
+    <ErrorBoundary>
       <QueryClientProvider client={testQueryClient}>
         <TooltipProvider>
           {children}
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
-    </MemoryRouter>
+    </ErrorBoundary>
+  )
+}
+
+// Router-aware wrapper for components that need router context
+const createRouterWrapper = ({ queryClient, router, skipRouter }: Omit<WrapperProps, 'children'> = {}) => {
+  const testQueryClient = queryClient || new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+        staleTime: 0
+      },
+      mutations: {
+        retry: false
+      }
+    }
+  })
+
+  // Skip router if component provides its own (e.g., AdminLayout)
+  if (skipRouter) {
+    return ({ children }: { children: React.ReactNode }) => (
+      <ErrorBoundary>
+        <QueryClientProvider client={testQueryClient}>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    )
+  }
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <ErrorBoundary>
+      <MemoryRouter 
+        initialEntries={router?.initialEntries || ['/']}
+        initialIndex={router?.initialIndex || 0}
+      >
+        <QueryClientProvider client={testQueryClient}>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </MemoryRouter>
+    </ErrorBoundary>
   )
 }
 
@@ -114,6 +136,7 @@ export const createTestQueryClient = (options = {}) => {
       queries: {
         retry: false,
         gcTime: 0,
+        staleTime: 0,
         ...options
       },
       mutations: {

@@ -99,9 +99,7 @@ afterAll(() => {
       server.close()
     }
   } catch (error) {
-    // Ignore disposal errors to prevent test failures
-    if (error && typeof error === 'object' && 'message' in error) {
-      console.warn('MSW server cleanup warning:', error.message)
-    }
+    // Ignore disposal errors to prevent test failures - MSW v2 cleanup bug
+    console.warn('MSW server cleanup warning (ignored):', error instanceof Error ? error.message : String(error))
   }
 })

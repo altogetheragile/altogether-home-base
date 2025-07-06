@@ -1,7 +1,7 @@
 
 import { describe, it, beforeEach, vi, expect } from 'vitest'
-import { renderWithRouter } from '@/test/utils/verified-patterns'
-import { screen } from '@testing-library/react'
+import { createWrapper } from '@/test/utils/test-wrappers'
+import { render as rtlRender, screen } from '@testing-library/react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import React from 'react'
 
@@ -26,8 +26,10 @@ describe('AdminLayout Navigation', () => {
   })
 
   function renderAt(route: string) {
-    // Use renderWithRouter to provide proper context
-    return renderWithRouter(<AdminLayout />, { initialEntries: [route] })
+    // Use createWrapper with skipRouter to avoid nested router conflicts
+    return rtlRender(<AdminLayout />, {
+      wrapper: createWrapper({ skipRouter: true })
+    })
   }
 
   it('renders sidebar navigation links', () => {
