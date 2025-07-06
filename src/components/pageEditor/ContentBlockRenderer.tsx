@@ -61,10 +61,10 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
           {/* Legacy CTA button for hero sections */}
           {hasLegacyCTA && (
             <Button 
-              variant={styles.ctaVariant || 'secondary'} 
+              variant={styles.buttonsVariant || 'default'} 
               size={styles.buttonsSize || 'lg'} 
               asChild
-              className={`${styles.ctaFontWeight || ''}`}
+              className={`${styles.ctaFontWeight || ''} min-w-[140px]`}
               style={{
                 ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
                   backgroundColor: styles.ctaBackgroundColor
