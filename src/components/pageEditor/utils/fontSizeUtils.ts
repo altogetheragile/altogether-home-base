@@ -5,7 +5,7 @@ export const getTitleFontSize = (styles: any) => {
     // For custom pixel sizes, use smaller mobile sizes
     const pixelSize = parseInt(styles.customTitleFontSize);
     if (pixelSize && pixelSize > 30) {
-      return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl';
+      return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
     }
     return styles.customTitleFontSize;
   }
@@ -14,16 +14,16 @@ export const getTitleFontSize = (styles: any) => {
   const fontSize = styles.titleFontSize;
   if (fontSize && !fontSize.includes('sm:')) {
     switch (fontSize) {
-      case 'text-6xl': return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl';
-      case 'text-5xl': return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl';
-      case 'text-4xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl';
-      case 'text-3xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
-      case 'text-2xl': return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+      case 'text-6xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl';
+      case 'text-5xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
+      case 'text-4xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
+      case 'text-3xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
+      case 'text-2xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
       default: return fontSize;
     }
   }
   
-  return fontSize || 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl';
+  return fontSize || 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl';
 };
 
 export const getSubtitleFontSize = (styles: any) => {
@@ -31,7 +31,7 @@ export const getSubtitleFontSize = (styles: any) => {
     // For custom pixel sizes, use smaller mobile sizes
     const pixelSize = parseInt(styles.customSubtitleFontSize);
     if (pixelSize && pixelSize > 20) {
-      return 'text-base sm:text-lg md:text-xl lg:text-2xl';
+      return 'text-sm sm:text-base md:text-lg lg:text-xl';
     }
     return styles.customSubtitleFontSize;
   }
@@ -48,7 +48,7 @@ export const getSubtitleFontSize = (styles: any) => {
     }
   }
   
-  return fontSize || 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+  return fontSize || 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl';
 };
 
 export const getContentFontSize = (styles: any) => {
