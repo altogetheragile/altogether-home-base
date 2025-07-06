@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, createMockUseMutationResult } from '../../../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderSimpleComponent, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import TemplateForm from '@/components/admin/templates/TemplateForm'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 
@@ -45,7 +46,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
 
   describe('Rendering Tests', () => {
     it('renders create form with all required fields', () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -64,7 +65,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
     })
 
     it('renders edit form with pre-filled data', () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={mockTemplate}
           locations={mockLocations}
@@ -80,7 +81,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
     })
 
     it('renders locations dropdown with all options', () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -99,7 +100,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
     })
 
     it('renders instructors dropdown with all options', () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -120,7 +121,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
 
   describe('Form Validation Tests', () => {
     it('requires title field', async () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -139,7 +140,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
     })
 
     it('requires duration field to be at least 1', async () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -172,7 +173,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -217,7 +218,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={mockTemplate}
           locations={mockLocations}
@@ -257,7 +258,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -289,7 +290,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -312,7 +313,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={mockTemplate}
           locations={mockLocations}
@@ -335,7 +336,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -363,7 +364,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -389,7 +390,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
 
   describe('Cancel Button Tests', () => {
     it('calls onClose when cancel button is clicked', () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -407,7 +408,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
 
   describe('Edge Cases Tests', () => {
     it('handles empty locations array', () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={[]}
@@ -423,7 +424,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
     })
 
     it('handles empty instructors array', () => {
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -444,7 +445,7 @@ describe('TemplateForm - Comprehensive Tests', () => {
         description: undefined
       }
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={templateWithNullDescription}
           locations={mockLocations}

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent, waitFor, renderHook } from './test-utils'
+import { screen, fireEvent, waitFor, renderHook } from '@testing-library/react'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
 
 describe('Test Environment Validation', () => {
   it('should have all testing utilities available', () => {
@@ -8,7 +9,7 @@ describe('Test Environment Validation', () => {
     expect(typeof fireEvent).toBe('function')
     expect(typeof waitFor).toBe('function')
     expect(typeof renderHook).toBe('function')
-    expect(typeof render).toBe('function')
+    expect(typeof renderSimpleComponent).toBe('function')
   })
 
   it('should have MSW server configured', () => {

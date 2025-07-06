@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, createMockUseMutationResult } from '../../../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderSimpleComponent, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import TemplateForm from '@/components/admin/templates/TemplateForm'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
 import { useToast } from '@/hooks/use-toast'
@@ -48,7 +49,7 @@ describe('Template Mutations - Error Handling & Success Scenarios', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -83,7 +84,7 @@ describe('Template Mutations - Error Handling & Success Scenarios', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -121,7 +122,7 @@ describe('Template Mutations - Error Handling & Success Scenarios', () => {
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -157,7 +158,7 @@ describe('Template Mutations - Error Handling & Success Scenarios', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -188,7 +189,7 @@ describe('Template Mutations - Error Handling & Success Scenarios', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -214,7 +215,7 @@ describe('Template Mutations - Error Handling & Success Scenarios', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}
@@ -241,7 +242,7 @@ describe('Template Mutations - Error Handling & Success Scenarios', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(
+      renderSimpleComponent(
         <TemplateForm
           template={null}
           locations={mockLocations}

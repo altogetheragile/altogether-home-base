@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderSimpleComponent } from '@/test/utils/verified-patterns'
 import { server } from '../mocks/server'
 import EventCard from '@/components/events/EventCard'
 import { EventData } from '@/hooks/useEvents'
@@ -55,7 +56,7 @@ describe('Sample Integration Tests', () => {
       event_template // <--- Fix: provide required event_template
     }
 
-    render(<EventCard event={event} />)
+    renderSimpleComponent(<EventCard event={event} />)
     
     // Verify event details are displayed
     expect(screen.getByText('Test Event')).toBeInTheDocument()
@@ -99,7 +100,7 @@ describe('Sample Integration Tests', () => {
       event_template
     }
 
-    render(<EventCard event={event} />)
+    renderSimpleComponent(<EventCard event={event} />)
     
     const registerButton = screen.getByText('Register')
     fireEvent.click(registerButton)
@@ -137,7 +138,7 @@ describe('Sample Integration Tests', () => {
       event_template
     }
 
-    render(<EventCard event={freeEvent} />)
+    renderSimpleComponent(<EventCard event={freeEvent} />)
     
     expect(screen.getByText('Free')).toBeInTheDocument()
   })
