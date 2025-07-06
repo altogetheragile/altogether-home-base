@@ -166,16 +166,20 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="text-lg">Small</SelectItem>
-                  <SelectItem value="text-xl">Medium</SelectItem>
-                  <SelectItem value="text-2xl">Large</SelectItem>
-                  <SelectItem value="text-3xl">Extra Large</SelectItem>
-                  <SelectItem value="text-4xl">2X Large</SelectItem>
-                  <SelectItem value="text-5xl">3X Large</SelectItem>
-                  <SelectItem value="text-6xl">4X Large</SelectItem>
-                  <SelectItem value="text-7xl">5X Large</SelectItem>
-                  <SelectItem value="text-8xl">6X Large</SelectItem>
-                  <SelectItem value="text-9xl">Huge</SelectItem>
+                  <SelectItem value="text-[14px]">14</SelectItem>
+                  <SelectItem value="text-[16px]">16</SelectItem>
+                  <SelectItem value="text-[18px]">18</SelectItem>
+                  <SelectItem value="text-[21px]">21</SelectItem>
+                  <SelectItem value="text-[24px]">24</SelectItem>
+                  <SelectItem value="text-[28px]">28</SelectItem>
+                  <SelectItem value="text-[32px]">32</SelectItem>
+                  <SelectItem value="text-[36px]">36</SelectItem>
+                  <SelectItem value="text-[42px]">42</SelectItem>
+                  <SelectItem value="text-[48px]">48</SelectItem>
+                  <SelectItem value="text-[56px]">56</SelectItem>
+                  <SelectItem value="text-[64px]">64</SelectItem>
+                  <SelectItem value="text-[72px]">72</SelectItem>
+                  <SelectItem value="text-[80px]">80</SelectItem>
                   <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
@@ -200,15 +204,17 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="text-sm">Extra Small</SelectItem>
-                  <SelectItem value="text-base">Small</SelectItem>
-                  <SelectItem value="text-lg">Medium</SelectItem>
-                  <SelectItem value="text-xl">Large</SelectItem>
-                  <SelectItem value="text-2xl">Extra Large</SelectItem>
-                  <SelectItem value="text-3xl">2X Large</SelectItem>
-                  <SelectItem value="text-4xl">3X Large</SelectItem>
-                  <SelectItem value="text-5xl">4X Large</SelectItem>
-                  <SelectItem value="text-6xl">5X Large</SelectItem>
+                  <SelectItem value="text-[12px]">12</SelectItem>
+                  <SelectItem value="text-[14px]">14</SelectItem>
+                  <SelectItem value="text-[16px]">16</SelectItem>
+                  <SelectItem value="text-[18px]">18</SelectItem>
+                  <SelectItem value="text-[21px]">21</SelectItem>
+                  <SelectItem value="text-[24px]">24</SelectItem>
+                  <SelectItem value="text-[28px]">28</SelectItem>
+                  <SelectItem value="text-[32px]">32</SelectItem>
+                  <SelectItem value="text-[36px]">36</SelectItem>
+                  <SelectItem value="text-[42px]">42</SelectItem>
+                  <SelectItem value="text-[48px]">48</SelectItem>
                   <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
