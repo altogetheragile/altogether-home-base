@@ -1,6 +1,7 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPicker } from './ColorPicker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -154,14 +155,15 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
         <h4 className="text-sm font-medium mb-3">Typography</h4>
         <div className="space-y-3">
           <div>
-            <Label htmlFor="font-size">Font Size</Label>
-            <Select
-              value={styles.fontSize || 'default'}
-              onValueChange={(value) => onStyleChange('fontSize', value === 'default' ? '' : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select font size" />
-              </SelectTrigger>
+            <Label htmlFor="title-font-size">Title Font Size</Label>
+            <div className="space-y-2">
+              <Select
+                value={styles.titleFontSize || 'default'}
+                onValueChange={(value) => onStyleChange('titleFontSize', value === 'default' ? '' : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select title font size" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Default</SelectItem>
                   <SelectItem value="text-lg">Small</SelectItem>
@@ -174,8 +176,50 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
                   <SelectItem value="text-7xl">5X Large</SelectItem>
                   <SelectItem value="text-8xl">6X Large</SelectItem>
                   <SelectItem value="text-9xl">Huge</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
-            </Select>
+              </Select>
+              {styles.titleFontSize === 'custom' && (
+                <Input
+                  placeholder="e.g., text-5xl or text-[48px]"
+                  value={styles.customTitleFontSize || ''}
+                  onChange={(e) => onStyleChange('customTitleFontSize', e.target.value)}
+                />
+              )}
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="subtitle-font-size">Subtitle Font Size</Label>
+            <div className="space-y-2">
+              <Select
+                value={styles.subtitleFontSize || 'default'}
+                onValueChange={(value) => onStyleChange('subtitleFontSize', value === 'default' ? '' : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select subtitle font size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="text-sm">Extra Small</SelectItem>
+                  <SelectItem value="text-base">Small</SelectItem>
+                  <SelectItem value="text-lg">Medium</SelectItem>
+                  <SelectItem value="text-xl">Large</SelectItem>
+                  <SelectItem value="text-2xl">Extra Large</SelectItem>
+                  <SelectItem value="text-3xl">2X Large</SelectItem>
+                  <SelectItem value="text-4xl">3X Large</SelectItem>
+                  <SelectItem value="text-5xl">4X Large</SelectItem>
+                  <SelectItem value="text-6xl">5X Large</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+              {styles.subtitleFontSize === 'custom' && (
+                <Input
+                  placeholder="e.g., text-2xl or text-[24px]"
+                  value={styles.customSubtitleFontSize || ''}
+                  onChange={(e) => onStyleChange('customSubtitleFontSize', e.target.value)}
+                />
+              )}
+            </div>
           </div>
           <div>
             <Label htmlFor="font-weight">Font Weight</Label>

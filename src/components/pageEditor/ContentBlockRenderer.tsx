@@ -23,6 +23,27 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
   const renderContent = () => {
     const styles = block.content?.styles || {};
     console.log('Styles for block:', block.id, styles); // Debug log
+    
+    // Helper function to get font size
+    const getTitleFontSize = (styles: any) => {
+      if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
+        return styles.customTitleFontSize;
+      }
+      return styles.titleFontSize || 'text-4xl md:text-6xl';
+    };
+
+    const getSubtitleFontSize = (styles: any) => {
+      if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
+        return styles.customSubtitleFontSize;
+      }
+      return styles.subtitleFontSize || 'text-xl md:text-2xl';
+    };
+
+    const getContentFontSize = (styles: any) => {
+      // For content that's not specifically title/subtitle, use the legacy fontSize or subtitle size as fallback
+      return styles.fontSize || styles.subtitleFontSize || '';
+    };
+    
     const styleClasses = [
       styles.backgroundColor || '',
       styles.textColor || '',
@@ -116,10 +137,10 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
              <div className="relative z-10 max-w-4xl mx-auto">
-              <h1 className={`${styles.fontSize || 'text-4xl md:text-6xl'} font-bold mb-4`}>
+              <h1 className={`${getTitleFontSize(styles)} font-bold mb-4`}>
                 {block.content.title || 'Hero Title'}
               </h1>
-              <p className={`${styles.fontSize || 'text-xl md:text-2xl'} mb-8 opacity-90`}>
+              <p className={`${getSubtitleFontSize(styles)} mb-8 opacity-90`}>
                 {block.content.subtitle || 'Hero subtitle'}
               </p>
                {block.content.ctaText && (
@@ -161,13 +182,13 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className={`relative z-10 ${block.content.backgroundImage ? '' : ''}`}>
               {block.content.title && (
-                <h2 className={`${styles.fontSize || 'text-3xl'} font-bold mb-6 text-center`}>
+                <h2 className={`${getTitleFontSize(styles)} font-bold mb-6 text-center`}>
                   {block.content.title}
                 </h2>
               )}
               {block.content.content && (
-                <div className={`prose ${styles.fontSize ? '' : 'prose-lg'} mx-auto max-w-4xl`}>
-                  <p className={styles.fontSize || ''}>{block.content.content}</p>
+                <div className={`prose ${getContentFontSize(styles) ? '' : 'prose-lg'} mx-auto max-w-4xl`}>
+                  <p className={getContentFontSize(styles) || ''}>{block.content.content}</p>
                 </div>
               )}
             </div>
@@ -187,13 +208,13 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className="relative z-10">
               {block.content.title && (
-                <h3 className={`${styles.fontSize || 'text-2xl'} font-semibold mb-4`}>
+                <h3 className={`${getTitleFontSize(styles)} font-semibold mb-4`}>
                   {block.content.title}
                 </h3>
               )}
               {block.content.content && (
                 <div className="prose max-w-none">
-                  <p className={styles.fontSize || ''}>{block.content.content}</p>
+                  <p className={getContentFontSize(styles) || ''}>{block.content.content}</p>
                 </div>
               )}
             </div>
