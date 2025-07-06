@@ -115,10 +115,10 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
             <div className="relative z-10 max-w-4xl mx-auto">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              <h1 className={`${styles.fontSize || 'text-4xl md:text-6xl'} font-bold mb-4`}>
                 {block.content.title || 'Hero Title'}
               </h1>
-              <p className="text-xl md:text-2xl mb-8 opacity-90">
+              <p className={`${styles.fontSize || 'text-xl md:text-2xl'} mb-8 opacity-90`}>
                 {block.content.subtitle || 'Hero subtitle'}
               </p>
                {block.content.ctaText && (
@@ -160,13 +160,13 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className={`relative z-10 ${block.content.backgroundImage ? '' : ''}`}>
               {block.content.title && (
-                <h2 className="text-3xl font-bold mb-6 text-center">
+                <h2 className={`${styles.fontSize || 'text-3xl'} font-bold mb-6 text-center`}>
                   {block.content.title}
                 </h2>
               )}
               {block.content.content && (
-                <div className="prose prose-lg mx-auto max-w-4xl">
-                  <p>{block.content.content}</p>
+                <div className={`prose ${styles.fontSize ? '' : 'prose-lg'} mx-auto max-w-4xl`}>
+                  <p className={styles.fontSize || ''}>{block.content.content}</p>
                 </div>
               )}
             </div>
@@ -186,13 +186,13 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className="relative z-10">
               {block.content.title && (
-                <h3 className="text-2xl font-semibold mb-4">
+                <h3 className={`${styles.fontSize || 'text-2xl'} font-semibold mb-4`}>
                   {block.content.title}
                 </h3>
               )}
               {block.content.content && (
                 <div className="prose max-w-none">
-                  <p>{block.content.content}</p>
+                  <p className={styles.fontSize || ''}>{block.content.content}</p>
                 </div>
               )}
             </div>
