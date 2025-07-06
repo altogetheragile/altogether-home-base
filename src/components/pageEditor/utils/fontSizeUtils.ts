@@ -1,13 +1,23 @@
 // Helper functions for managing font sizes in content blocks
 
 export const getTitleFontSize = (styles: any) => {
-  if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
-    // For custom pixel sizes, use much smaller mobile sizes
+  // Handle direct pixel values or custom font sizes
+  if (styles.customTitleFontSize) {
     const pixelSize = parseInt(styles.customTitleFontSize);
-    if (pixelSize && pixelSize > 30) {
-      return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+    if (pixelSize) {
+      // Always use very small sizes for mobile, regardless of custom size
+      if (pixelSize >= 40) {
+        return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+      } else if (pixelSize >= 30) {
+        return 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl';
+      } else {
+        return 'text-xs sm:text-sm md:text-base lg:text-lg';
+      }
     }
-    return styles.customTitleFontSize;
+  }
+  
+  if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
+    return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
   }
   
   // Convert non-responsive Tailwind classes to responsive ones with very small mobile sizes
@@ -27,13 +37,23 @@ export const getTitleFontSize = (styles: any) => {
 };
 
 export const getSubtitleFontSize = (styles: any) => {
-  if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
-    // For custom pixel sizes, use much smaller mobile sizes
+  // Handle direct pixel values or custom font sizes
+  if (styles.customSubtitleFontSize) {
     const pixelSize = parseInt(styles.customSubtitleFontSize);
-    if (pixelSize && pixelSize > 20) {
-      return 'text-xs sm:text-sm md:text-base lg:text-lg';
+    if (pixelSize) {
+      // Always use very small sizes for mobile, regardless of custom size
+      if (pixelSize >= 30) {
+        return 'text-xs sm:text-sm md:text-base lg:text-lg';
+      } else if (pixelSize >= 20) {
+        return 'text-xs sm:text-sm md:text-base';
+      } else {
+        return 'text-xs sm:text-sm';
+      }
     }
-    return styles.customSubtitleFontSize;
+  }
+  
+  if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
+    return 'text-xs sm:text-sm md:text-base lg:text-lg';
   }
   
   // Convert non-responsive Tailwind classes to responsive ones with very small mobile sizes
