@@ -5,35 +5,35 @@ export const getTitleFontSize = (styles: any) => {
   if (styles.customTitleFontSize) {
     const pixelSize = parseInt(styles.customTitleFontSize);
     if (pixelSize) {
-      // Use more reasonable mobile sizes - not too small, not too big
+      // Use larger, more readable mobile sizes
       if (pixelSize >= 40) {
-        return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
+        return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl';
       } else if (pixelSize >= 30) {
-        return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+        return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl';
       } else {
-        return 'text-sm sm:text-base md:text-lg lg:text-xl';
+        return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
       }
     }
   }
   
   if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
-    return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
+    return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl';
   }
   
-  // Convert non-responsive Tailwind classes to responsive ones with reasonable mobile sizes
+  // Convert non-responsive Tailwind classes to responsive ones with readable mobile sizes
   const fontSize = styles.titleFontSize;
   if (fontSize && !fontSize.includes('sm:')) {
     switch (fontSize) {
-      case 'text-6xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl';
-      case 'text-5xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
-      case 'text-4xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
-      case 'text-3xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
-      case 'text-2xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
+      case 'text-6xl': return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl';
+      case 'text-5xl': return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl';
+      case 'text-4xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl';
+      case 'text-3xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
+      case 'text-2xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
       default: return fontSize;
     }
   }
   
-  return fontSize || 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl';
+  return fontSize || 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl';
 };
 
 export const getSubtitleFontSize = (styles: any) => {
@@ -41,34 +41,34 @@ export const getSubtitleFontSize = (styles: any) => {
   if (styles.customSubtitleFontSize) {
     const pixelSize = parseInt(styles.customSubtitleFontSize);
     if (pixelSize) {
-      // Use more reasonable mobile sizes - not too small, not too big
+      // Use larger, more readable mobile sizes
       if (pixelSize >= 30) {
-        return 'text-sm sm:text-base md:text-lg lg:text-xl';
+        return 'text-base sm:text-lg md:text-xl lg:text-2xl';
       } else if (pixelSize >= 20) {
-        return 'text-sm sm:text-base md:text-lg';
+        return 'text-base sm:text-lg md:text-xl';
       } else {
-        return 'text-xs sm:text-sm md:text-base';
+        return 'text-sm sm:text-base md:text-lg';
       }
     }
   }
   
   if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
-    return 'text-sm sm:text-base md:text-lg lg:text-xl';
+    return 'text-base sm:text-lg md:text-xl lg:text-2xl';
   }
   
-  // Convert non-responsive Tailwind classes to responsive ones with reasonable mobile sizes
+  // Convert non-responsive Tailwind classes to responsive ones with readable mobile sizes
   const fontSize = styles.subtitleFontSize;
   if (fontSize && !fontSize.includes('sm:')) {
     switch (fontSize) {
-      case 'text-3xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
-      case 'text-2xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
-      case 'text-xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
-      case 'text-lg': return 'text-sm sm:text-base md:text-lg';
+      case 'text-3xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl';
+      case 'text-2xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
+      case 'text-xl': return 'text-base sm:text-lg md:text-xl';
+      case 'text-lg': return 'text-base sm:text-lg';
       default: return fontSize;
     }
   }
   
-  return fontSize || 'text-sm sm:text-base md:text-lg lg:text-xl';
+  return fontSize || 'text-base sm:text-lg md:text-xl lg:text-2xl';
 };
 
 export const getContentFontSize = (styles: any) => {
