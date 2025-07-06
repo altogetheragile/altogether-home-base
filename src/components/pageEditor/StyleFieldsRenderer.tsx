@@ -162,18 +162,19 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
               <SelectTrigger>
                 <SelectValue placeholder="Select font size" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="text-sm">Small</SelectItem>
-                <SelectItem value="text-base">Base</SelectItem>
-                <SelectItem value="text-lg">Large</SelectItem>
-                <SelectItem value="text-xl">Extra Large</SelectItem>
-                <SelectItem value="text-2xl">2X Large</SelectItem>
-                <SelectItem value="text-3xl">3X Large</SelectItem>
-                <SelectItem value="text-4xl">4X Large</SelectItem>
-                <SelectItem value="text-5xl">5X Large</SelectItem>
-                <SelectItem value="text-6xl">6X Large</SelectItem>
-              </SelectContent>
+                <SelectContent>
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="text-lg">Small</SelectItem>
+                  <SelectItem value="text-xl">Medium</SelectItem>
+                  <SelectItem value="text-2xl">Large</SelectItem>
+                  <SelectItem value="text-3xl">Extra Large</SelectItem>
+                  <SelectItem value="text-4xl">2X Large</SelectItem>
+                  <SelectItem value="text-5xl">3X Large</SelectItem>
+                  <SelectItem value="text-6xl">4X Large</SelectItem>
+                  <SelectItem value="text-7xl">5X Large</SelectItem>
+                  <SelectItem value="text-8xl">6X Large</SelectItem>
+                  <SelectItem value="text-9xl">Huge</SelectItem>
+                </SelectContent>
             </Select>
           </div>
           <div>
