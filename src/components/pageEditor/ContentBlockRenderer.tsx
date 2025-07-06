@@ -57,44 +57,49 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
       }
     }
 
-    switch (block.type) {
-      case 'hero':
-        // Determine height classes
-        const getHeightClass = (height: string) => {
-          switch (height) {
-            case 'small': return 'py-12 min-h-[240px]';
-            case 'medium': return 'py-16 min-h-[400px]';
-            case 'large': return 'py-20 min-h-[480px]';
-            case 'xl': return 'py-24 min-h-[560px]';
-            case '2xl': return 'py-28 min-h-[640px]';
-            case 'screen': return 'py-32 min-h-screen';
-            default: return 'py-20 min-h-[320px]';
-          }
-        };
+    // Shared height function for all block types
+    const getHeightClass = (height: string, blockType: string) => {
+      switch (height) {
+        case 'small': return blockType === 'hero' ? 'py-12 min-h-[240px]' : 'py-6';
+        case 'medium': return blockType === 'hero' ? 'py-16 min-h-[400px]' : 'py-12';
+        case 'large': return blockType === 'hero' ? 'py-20 min-h-[480px]' : 'py-16';
+        case 'xl': return blockType === 'hero' ? 'py-24 min-h-[560px]' : 'py-20';
+        case '2xl': return blockType === 'hero' ? 'py-28 min-h-[640px]' : 'py-24';
+        case 'screen': return blockType === 'hero' ? 'py-32 min-h-screen' : 'py-32';
+        default: return blockType === 'hero' ? 'py-20 min-h-[320px]' : 'py-8';
+      }
+    };
 
+    // Shared background image handler
+    const getBackgroundStyles = (content: any) => {
+      if (!content?.backgroundImage) return {};
+      
+      if (content.parallax) {
+        return {
+          backgroundImage: `url(${content.backgroundImage})`,
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        };
+      } else {
+        return {
+          backgroundImage: `url(${content.backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        };
+      }
+    };
+
+    switch (block.type) {
+      case 'hero':        
         // Determine background styles
         let heroBackgroundClasses = '';
         let heroBackgroundStyles: React.CSSProperties = {};
         
         if (block.content.backgroundImage) {
-          if (block.content.parallax) {
-            // Parallax effect with fixed background attachment
-            heroBackgroundStyles = {
-              backgroundImage: `url(${block.content.backgroundImage})`,
-              backgroundAttachment: 'fixed',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            };
-          } else {
-            // Regular background image
-            heroBackgroundStyles = {
-              backgroundImage: `url(${block.content.backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            };
-          }
+          heroBackgroundStyles = getBackgroundStyles(block.content);
           heroBackgroundClasses = 'relative';
         } else if (backgroundType === 'default' || backgroundType === 'gradient') {
           heroBackgroundClasses = 'bg-gradient-to-r from-primary to-primary-glow';
@@ -102,7 +107,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
         
         return (
           <div 
-            className={`relative ${heroBackgroundClasses} text-white px-8 text-center rounded-lg ${getHeightClass(block.content.height)} flex items-center justify-center ${styleClasses}`}
+            className={`relative ${heroBackgroundClasses} text-white px-8 text-center rounded-lg ${getHeightClass(block.content.height, 'hero')} flex items-center justify-center ${styleClasses}`}
             style={{...inlineStyles, ...heroBackgroundStyles}}
           >
             {/* Dark overlay for background images to ensure text readability */}
@@ -143,78 +148,118 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
          );
 
       case 'section':
+        const sectionBackgroundStyles = getBackgroundStyles(block.content);
         return (
-          <div className={`py-12 ${styleClasses}`} style={inlineStyles}>
-            {block.content.title && (
-              <h2 className="text-3xl font-bold mb-6 text-center">
-                {block.content.title}
-              </h2>
+          <div 
+            className={`relative ${getHeightClass(block.content.height, 'section')} ${styleClasses} ${block.content.backgroundImage ? 'text-white' : ''}`} 
+            style={{...inlineStyles, ...sectionBackgroundStyles}}
+          >
+            {/* Dark overlay for background images to ensure text readability */}
+            {block.content.backgroundImage && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
-            {block.content.content && (
-              <div className="prose prose-lg mx-auto max-w-4xl">
-                <p>{block.content.content}</p>
-              </div>
-            )}
+            <div className={`relative z-10 ${block.content.backgroundImage ? '' : ''}`}>
+              {block.content.title && (
+                <h2 className="text-3xl font-bold mb-6 text-center">
+                  {block.content.title}
+                </h2>
+              )}
+              {block.content.content && (
+                <div className="prose prose-lg mx-auto max-w-4xl">
+                  <p>{block.content.content}</p>
+                </div>
+              )}
+            </div>
           </div>
         );
 
       case 'text':
+        const textBackgroundStyles = getBackgroundStyles(block.content);
         return (
-          <div className={`py-8 ${styleClasses}`} style={inlineStyles}>
-            {block.content.title && (
-              <h3 className="text-2xl font-semibold mb-4">
-                {block.content.title}
-              </h3>
+          <div 
+            className={`relative ${getHeightClass(block.content.height, 'text')} ${styleClasses} ${block.content.backgroundImage ? 'text-white' : ''}`} 
+            style={{...inlineStyles, ...textBackgroundStyles}}
+          >
+            {/* Dark overlay for background images to ensure text readability */}
+            {block.content.backgroundImage && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
-            {block.content.content && (
-              <div className="prose max-w-none">
-                <p>{block.content.content}</p>
-              </div>
-            )}
+            <div className="relative z-10">
+              {block.content.title && (
+                <h3 className="text-2xl font-semibold mb-4">
+                  {block.content.title}
+                </h3>
+              )}
+              {block.content.content && (
+                <div className="prose max-w-none">
+                  <p>{block.content.content}</p>
+                </div>
+              )}
+            </div>
           </div>
         );
 
       case 'image':
+        const imageBackgroundStyles = getBackgroundStyles(block.content);
         return (
-          <div className={`py-8 ${styleClasses}`} style={inlineStyles}>
-            {block.content.src ? (
-              <div className="text-center">
-                <img
-                  src={block.content.src}
-                  alt={block.content.alt || ''}
-                  className="max-w-full h-auto mx-auto rounded-lg shadow-md"
-                />
-                {block.content.caption && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {block.content.caption}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No image selected</p>
-              </div>
+          <div 
+            className={`relative ${getHeightClass(block.content.height, 'image')} ${styleClasses}`} 
+            style={{...inlineStyles, ...imageBackgroundStyles}}
+          >
+            {/* Dark overlay for background images */}
+            {block.content.backgroundImage && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
+            <div className="relative z-10">
+              {block.content.src ? (
+                <div className="text-center">
+                  <img
+                    src={block.content.src}
+                    alt={block.content.alt || ''}
+                    className="max-w-full h-auto mx-auto rounded-lg shadow-md"
+                  />
+                  {block.content.caption && (
+                    <p className={`text-sm mt-2 ${block.content.backgroundImage ? 'text-white' : 'text-muted-foreground'}`}>
+                      {block.content.caption}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                  <p className="text-muted-foreground">No image selected</p>
+                </div>
+              )}
+            </div>
           </div>
         );
 
       case 'video':
+        const videoBackgroundStyles = getBackgroundStyles(block.content);
         return (
-          <div className={`py-8 ${styleClasses}`} style={inlineStyles}>
-            {block.content.url ? (
-              <div className="aspect-video">
-                <iframe
-                  src={block.content.url}
-                  className="w-full h-full rounded-lg"
-                  allowFullScreen
-                  title={block.content.title || 'Video'}
-                />
-              </div>
-            ) : (
-              <div className="aspect-video border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground">No video URL provided</p>
-              </div>
+          <div 
+            className={`relative ${getHeightClass(block.content.height, 'video')} ${styleClasses}`} 
+            style={{...inlineStyles, ...videoBackgroundStyles}}
+          >
+            {/* Dark overlay for background images */}
+            {block.content.backgroundImage && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
+            <div className="relative z-10">
+              {block.content.url ? (
+                <div className="aspect-video">
+                  <iframe
+                    src={block.content.url}
+                    className="w-full h-full rounded-lg"
+                    allowFullScreen
+                    title={block.content.title || 'Video'}
+                  />
+                </div>
+              ) : (
+                <div className="aspect-video border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                  <p className="text-muted-foreground">No video URL provided</p>
+                </div>
+              )}
+            </div>
           </div>
         );
 
