@@ -137,7 +137,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
              <div className="relative z-10 max-w-4xl mx-auto">
-              <h1 className={`${getTitleFontSize(styles)} font-bold mb-4`}>
+              <h1 className={`${getTitleFontSize(styles)} font-bold mb-8`}>
                 {block.content.title || 'Hero Title'}
               </h1>
               <p className={`${getSubtitleFontSize(styles)} mb-8 opacity-90`}>
@@ -182,7 +182,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className={`relative z-10 ${block.content.backgroundImage ? '' : ''}`}>
               {block.content.title && (
-                <h2 className={`${getTitleFontSize(styles)} font-bold mb-6 text-center`}>
+                <h2 className={`${getTitleFontSize(styles)} font-bold mb-8 text-center`}>
                   {block.content.title}
                 </h2>
               )}
@@ -208,7 +208,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             )}
             <div className="relative z-10">
               {block.content.title && (
-                <h3 className={`${getTitleFontSize(styles)} font-semibold mb-4`}>
+                <h3 className={`${getTitleFontSize(styles)} font-semibold mb-6`}>
                   {block.content.title}
                 </h3>
               )}
