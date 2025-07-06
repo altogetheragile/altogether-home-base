@@ -35,35 +35,6 @@ const AdminLayout = () => {
           description: 'Manage events, templates, instructors & content'
         },
       ]
-    },
-    {
-      title: 'Event Configuration',
-      items: [
-        {
-          label: 'Event Types',
-          href: '/admin/event-types',
-          icon: Tag,
-          description: 'Manage event types'
-        },
-        {
-          label: 'Categories',
-          href: '/admin/event-categories',
-          icon: FolderOpen,
-          description: 'Manage event categories'
-        },
-        {
-          label: 'Levels',
-          href: '/admin/levels',
-          icon: BarChart3,
-          description: 'Manage skill levels'
-        },
-        {
-          label: 'Formats',
-          href: '/admin/formats',
-          icon: Settings,
-          description: 'Manage event formats'
-        },
-      ]
     }
   ];
 

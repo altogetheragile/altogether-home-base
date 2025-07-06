@@ -20,6 +20,10 @@ import AdminTemplates from './AdminTemplates';
 import AdminInstructors from './AdminInstructors';
 import AdminLocations from './AdminLocations';
 import AdminPages from './AdminPages';
+import AdminEventTypes from './AdminEventTypes';
+import AdminEventCategories from './AdminEventCategories';
+import AdminLevels from './AdminLevels';
+import AdminFormats from './AdminFormats';
 
 const AdminEvents = () => {
   const { data: events, isLoading, error } = useQuery({
@@ -207,10 +211,14 @@ const AdminEvents = () => {
 
         <TabsContent value="event-management" className="space-y-6">
           <Tabs defaultValue="templates" className="w-full">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="templates">Templates</TabsTrigger>
               <TabsTrigger value="instructors">Instructors</TabsTrigger>
               <TabsTrigger value="locations">Locations</TabsTrigger>
+              <TabsTrigger value="event-types">Event Types</TabsTrigger>
+              <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="levels">Levels</TabsTrigger>
+              <TabsTrigger value="formats">Formats</TabsTrigger>
             </TabsList>
             
             <TabsContent value="templates">
@@ -223,6 +231,22 @@ const AdminEvents = () => {
             
             <TabsContent value="locations">
               <AdminLocations />
+            </TabsContent>
+
+            <TabsContent value="event-types">
+              <AdminEventTypes />
+            </TabsContent>
+
+            <TabsContent value="categories">
+              <AdminEventCategories />
+            </TabsContent>
+
+            <TabsContent value="levels">
+              <AdminLevels />
+            </TabsContent>
+
+            <TabsContent value="formats">
+              <AdminFormats />
             </TabsContent>
           </Tabs>
         </TabsContent>
