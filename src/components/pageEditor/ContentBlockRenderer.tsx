@@ -27,14 +27,26 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
     // Helper function to get font size
     const getTitleFontSize = (styles: any) => {
       if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
-        return styles.customTitleFontSize;
+        // For custom pixel sizes, make them responsive
+        const pixelSize = parseInt(styles.customTitleFontSize);
+        if (pixelSize && pixelSize > 30) {
+          const mobileSize = Math.max(24, Math.round(pixelSize * 0.6));
+          return `text-[${mobileSize}px] md:text-[${pixelSize}px]`;
+        }
+        return `text-[${styles.customTitleFontSize}]`;
       }
       return styles.titleFontSize || 'text-4xl md:text-6xl';
     };
 
     const getSubtitleFontSize = (styles: any) => {
       if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
-        return styles.customSubtitleFontSize;
+        // For custom pixel sizes, make them responsive
+        const pixelSize = parseInt(styles.customSubtitleFontSize);
+        if (pixelSize && pixelSize > 20) {
+          const mobileSize = Math.max(16, Math.round(pixelSize * 0.7));
+          return `text-[${mobileSize}px] md:text-[${pixelSize}px]`;
+        }
+        return `text-[${styles.customSubtitleFontSize}]`;
       }
       return styles.subtitleFontSize || 'text-xl md:text-2xl';
     };
@@ -64,7 +76,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               variant={styles.buttonsVariant || 'default'} 
               size={styles.buttonsSize || 'lg'} 
               asChild
-              className={`${styles.ctaFontWeight || ''} min-w-[140px]`}
+              className={`${styles.ctaFontWeight || ''} w-[200px]`}
               style={{
                 ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
                   backgroundColor: styles.ctaBackgroundColor
@@ -88,7 +100,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
                 variant={button.variant === 'default' ? (styles.buttonsVariant || 'default') : button.variant} 
                 size={styles.buttonsSize || 'lg'} 
                 asChild
-                className={`${styles.buttonsFontWeight || ''} min-w-[140px]`}
+                className={`${styles.buttonsFontWeight || ''} w-[200px]`}
                 style={{
                   ...(styles.buttonsBackgroundColor && styles.buttonsBackgroundColor !== 'default' && {
                     backgroundColor: styles.buttonsBackgroundColor
