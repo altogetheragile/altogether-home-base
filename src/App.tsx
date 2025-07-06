@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/components/admin/AdminLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import Index from "./pages/Index";
+
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Blog from "./pages/Blog";
@@ -42,7 +42,6 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<Index />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/blog" element={<Blog />} />
@@ -71,7 +70,8 @@ const App = () => (
                 <Route path="pages/:id/edit" element={<PageEditor />} />
               </Route>
               
-              {/* Dynamic Pages Route - must be above catch-all */}
+              {/* Dynamic Pages Route - handles root and other slugs */}
+              <Route path="/" element={<DynamicPageRenderer slug="home" />} />
               <Route path="/:slug" element={<DynamicPageRenderer slug={window.location.pathname.slice(1)} />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
