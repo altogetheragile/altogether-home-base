@@ -169,6 +169,10 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
                 <SelectItem value="text-lg">Large</SelectItem>
                 <SelectItem value="text-xl">Extra Large</SelectItem>
                 <SelectItem value="text-2xl">2X Large</SelectItem>
+                <SelectItem value="text-3xl">3X Large</SelectItem>
+                <SelectItem value="text-4xl">4X Large</SelectItem>
+                <SelectItem value="text-5xl">5X Large</SelectItem>
+                <SelectItem value="text-6xl">6X Large</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -230,6 +234,7 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
                 <SelectItem value="sm">Small</SelectItem>
                 <SelectItem value="lg">Large</SelectItem>
                 <SelectItem value="xl">Extra Large</SelectItem>
+                <SelectItem value="2xl">2X Large</SelectItem>
               </SelectContent>
             </Select>
           </div>
