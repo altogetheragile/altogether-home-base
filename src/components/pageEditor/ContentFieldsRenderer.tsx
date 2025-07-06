@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Plus, Trash2 } from 'lucide-react';
 
 interface ContentFieldsRendererProps {
   blockType: ContentBlock['type'];
@@ -175,6 +175,101 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
     </div>
   );
 
+  const renderButtonsControl = () => {
+    const buttons = content?.buttons || [];
+    
+    const addButton = () => {
+      const newButtons = [...buttons, { text: '', link: '', variant: 'default' }];
+      onContentChange('buttons', newButtons);
+    };
+
+    const removeButton = (index: number) => {
+      const newButtons = buttons.filter((_: any, i: number) => i !== index);
+      onContentChange('buttons', newButtons);
+    };
+
+    const updateButton = (index: number, field: string, value: string) => {
+      const newButtons = [...buttons];
+      newButtons[index] = { ...newButtons[index], [field]: value };
+      onContentChange('buttons', newButtons);
+    };
+
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <Label>Buttons</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addButton}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Button
+          </Button>
+        </div>
+        {buttons.length > 0 && (
+          <div className="space-y-3">
+            {buttons.map((button: any, index: number) => (
+              <div key={index} className="p-3 border rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Button {index + 1}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeButton(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor={`button-${index}-text`}>Button Text</Label>
+                    <Input
+                      id={`button-${index}-text`}
+                      value={button.text || ''}
+                      onChange={(e) => updateButton(index, 'text', e.target.value)}
+                      placeholder="Button text"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`button-${index}-link`}>Link</Label>
+                    <Input
+                      id={`button-${index}-link`}
+                      value={button.link || ''}
+                      onChange={(e) => updateButton(index, 'link', e.target.value)}
+                      placeholder="/example"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor={`button-${index}-variant`}>Style</Label>
+                  <Select
+                    value={button.variant || 'default'}
+                    onValueChange={(value) => updateButton(index, 'variant', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select button style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="primary">Primary</SelectItem>
+                      <SelectItem value="secondary">Secondary</SelectItem>
+                      <SelectItem value="outline">Outline</SelectItem>
+                      <SelectItem value="ghost">Ghost</SelectItem>
+                      <SelectItem value="destructive">Destructive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   switch (blockType) {
     case 'hero':
       return (
@@ -217,6 +312,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
               placeholder="/events"
             />
           </div>
+          {renderButtonsControl()}
           {renderParallaxControl()}
         </div>
       );
@@ -245,6 +341,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
           </div>
           {renderHeightControl()}
           {renderBackgroundImageControl()}
+          {renderButtonsControl()}
           {renderParallaxControl()}
         </div>
       );
@@ -273,6 +370,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
           </div>
           {renderHeightControl()}
           {renderBackgroundImageControl()}
+          {renderButtonsControl()}
           {renderParallaxControl()}
         </div>
       );
@@ -309,6 +407,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
           </div>
           {renderHeightControl()}
           {renderBackgroundImageControl()}
+          {renderButtonsControl()}
           {renderParallaxControl()}
         </div>
       );
@@ -336,6 +435,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
           </div>
           {renderHeightControl()}
           {renderBackgroundImageControl()}
+          {renderButtonsControl()}
           {renderParallaxControl()}
         </div>
       );

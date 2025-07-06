@@ -47,6 +47,55 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
     const getTitleSpacing = (styles: any) => {
       return styles.titleSpacing || 'mb-8';
     };
+
+    const renderButtons = (content: any, styles: any) => {
+      const buttons = content?.buttons || [];
+      const hasLegacyCTA = content?.ctaText && content?.ctaLink;
+      
+      if (buttons.length === 0 && !hasLegacyCTA) return null;
+      
+      return (
+        <div className="flex flex-wrap gap-4 justify-center">
+          {/* Legacy CTA button for hero sections */}
+          {hasLegacyCTA && (
+            <Button 
+              variant={styles.ctaVariant || 'secondary'} 
+              size={styles.ctaSize || 'lg'} 
+              asChild
+              className={`${styles.ctaFontWeight || ''}`}
+              style={{
+                ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
+                  backgroundColor: styles.ctaBackgroundColor
+                }),
+                ...(styles.ctaTextColor && styles.ctaTextColor !== 'default' && {
+                  color: styles.ctaTextColor
+                })
+              }}
+            >
+              <a href={content.ctaLink}>
+                {content.ctaText}
+              </a>
+            </Button>
+          )}
+          
+          {/* New multi-button system */}
+          {buttons.map((button: any, index: number) => (
+            button.text && button.link ? (
+              <Button 
+                key={index}
+                variant={button.variant || 'default'} 
+                size="lg" 
+                asChild
+              >
+                <a href={button.link}>
+                  {button.text}
+                </a>
+              </Button>
+            ) : null
+          ))}
+        </div>
+      );
+    };
     
     const styleClasses = [
       styles.backgroundColor || '',
@@ -147,28 +196,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               <p className={`${getSubtitleFontSize(styles)} mb-8 opacity-90`}>
                 {block.content.subtitle || 'Hero subtitle'}
               </p>
-               {block.content.ctaText && (
-                 <div>
-                     <Button 
-                       variant={styles.ctaVariant || 'secondary'} 
-                       size={styles.ctaSize || 'lg'} 
-                       asChild
-                       className={`${styles.ctaFontWeight || ''}`}
-                     style={{
-                       ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
-                         backgroundColor: styles.ctaBackgroundColor
-                       }),
-                       ...(styles.ctaTextColor && styles.ctaTextColor !== 'default' && {
-                         color: styles.ctaTextColor
-                       })
-                     }}
-                   >
-                     <a href={block.content.ctaLink || '#'}>
-                       {block.content.ctaText}
-                     </a>
-                   </Button>
-                 </div>
-               )}
+               {renderButtons(block.content, styles)}
              </div>
            </div>
          );
@@ -191,10 +219,11 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
                 </h2>
               )}
               {block.content.content && (
-                <div className={`prose ${getContentFontSize(styles) ? '' : 'prose-lg'} mx-auto max-w-4xl`}>
+                <div className={`prose ${getContentFontSize(styles) ? '' : 'prose-lg'} mx-auto max-w-4xl mb-8`}>
                   <p className={getContentFontSize(styles) || ''}>{block.content.content}</p>
                 </div>
               )}
+              {renderButtons(block.content, styles)}
             </div>
           </div>
         );
@@ -217,10 +246,11 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
                 </h3>
               )}
               {block.content.content && (
-                <div className="prose max-w-none">
+                <div className="prose max-w-none mb-8">
                   <p className={getContentFontSize(styles) || ''}>{block.content.content}</p>
                 </div>
               )}
+              {renderButtons(block.content, styles)}
             </div>
           </div>
         );
