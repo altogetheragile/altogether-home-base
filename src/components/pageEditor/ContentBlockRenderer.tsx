@@ -32,10 +32,29 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
       styles.fontWeight || '',
     ].filter(Boolean).join(' ');
 
+    // Generate inline styles for custom colors
+    const inlineStyles: React.CSSProperties = {};
+    if (styles.customBackgroundColor && styles.customBackgroundColor !== 'default') {
+      inlineStyles.backgroundColor = styles.customBackgroundColor;
+    }
+    if (styles.customTextColor && styles.customTextColor !== 'default') {
+      inlineStyles.color = styles.customTextColor;
+    }
+    if (styles.customBorderColor && styles.customBorderColor !== 'default') {
+      inlineStyles.borderColor = styles.customBorderColor;
+      if (!styleClasses.includes('border')) {
+        inlineStyles.borderWidth = '1px';
+        inlineStyles.borderStyle = 'solid';
+      }
+    }
+
     switch (block.type) {
       case 'hero':
         return (
-          <div className={`relative bg-gradient-to-r from-primary to-primary-glow text-white py-20 px-8 text-center rounded-lg ${styleClasses}`}>
+          <div 
+            className={`relative bg-gradient-to-r from-primary to-primary-glow text-white py-20 px-8 text-center rounded-lg ${styleClasses}`}
+            style={inlineStyles}
+          >
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
               {block.content.title || 'Hero Title'}
             </h1>
@@ -54,7 +73,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'section':
         return (
-          <div className={`py-12 ${styleClasses}`}>
+          <div className={`py-12 ${styleClasses}`} style={inlineStyles}>
             {block.content.title && (
               <h2 className="text-3xl font-bold mb-6 text-center">
                 {block.content.title}
@@ -70,7 +89,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'text':
         return (
-          <div className={`py-8 ${styleClasses}`}>
+          <div className={`py-8 ${styleClasses}`} style={inlineStyles}>
             {block.content.title && (
               <h3 className="text-2xl font-semibold mb-4">
                 {block.content.title}
@@ -86,7 +105,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'image':
         return (
-          <div className={`py-8 ${styleClasses}`}>
+          <div className={`py-8 ${styleClasses}`} style={inlineStyles}>
             {block.content.src ? (
               <div className="text-center">
                 <img
@@ -110,7 +129,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'video':
         return (
-          <div className={`py-8 ${styleClasses}`}>
+          <div className={`py-8 ${styleClasses}`} style={inlineStyles}>
             {block.content.url ? (
               <div className="aspect-video">
                 <iframe
