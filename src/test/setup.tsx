@@ -77,7 +77,8 @@ vi.mock('@/hooks/use-toast', () => ({
     toast: vi.fn(),
     dismiss: vi.fn(),
     toasts: [] // Proper array initialization
-  })
+  }),
+  toast: vi.fn()
 }))
 
 // Start server before all tests with better configuration
@@ -99,6 +100,8 @@ afterAll(() => {
     }
   } catch (error) {
     // Ignore disposal errors to prevent test failures
-    console.warn('MSW server cleanup warning:', error)
+    if (error && typeof error === 'object' && 'message' in error) {
+      console.warn('MSW server cleanup warning:', error.message)
+    }
   }
 })

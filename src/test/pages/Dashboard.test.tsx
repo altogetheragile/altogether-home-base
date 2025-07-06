@@ -2,14 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithRouter } from '@/test/utils/verified-patterns'
+import { createMockAuthContext, createNoAuthContext } from '@/test/utils/auth-test-helpers'
 import Dashboard from '@/pages/Dashboard'
 import { useAuth } from '@/contexts/AuthContext'
 import React from 'react'
-
-const mockUser = {
-  id: 'test-user-id',
-  email: 'test@example.com'
-}
 
 const mockRegistrations = [
   {
@@ -31,9 +27,15 @@ const mockRegistrations = [
 
 const mockUseUserRegistrations = vi.fn()
 
-// Mock the hooks
+// Mock the hooks with proper isolation
 vi.mock('@/hooks/useUserRegistrations', () => ({
   useUserRegistrations: () => mockUseUserRegistrations()
+}))
+
+// Mock useAuth with proper override mechanism
+const mockUseAuth = vi.fn()
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => mockUseAuth()
 }))
 
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -47,6 +49,14 @@ vi.mock('react-router-dom', async (importOriginal) => {
 describe('Dashboard Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    
+    // Default auth state - authenticated user
+    mockUseAuth.mockReturnValue(createMockAuthContext({ 
+      id: 'test-user-id', 
+      email: 'test@example.com' 
+    }))
+    
+    // Default registrations state
     mockUseUserRegistrations.mockReturnValue({
       data: mockRegistrations,
       isLoading: false
@@ -70,15 +80,8 @@ describe('Dashboard Page', () => {
   })
 
   it('should redirect unauthenticated users', () => {
-    // Override the global mock for this test
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-      session: null,
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      loading: false
-    })
+    // Override auth state for this test
+    mockUseAuth.mockReturnValue(createNoAuthContext())
 
     renderWithRouter(<Dashboard />)
     

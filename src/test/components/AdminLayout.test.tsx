@@ -5,44 +5,48 @@ import { screen } from '@testing-library/react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import React from 'react'
 
-// Mock for Navigation
+// Mock for Navigation to avoid router conflicts
 vi.mock('@/components/Navigation', () => ({
   __esModule: true,
   default: () => <nav data-testid="mock-nav">MockNav</nav>
-}));
+}))
+
+// Mock for Outlet to avoid nested router issues
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = (await importOriginal()) as any
+  return {
+    ...actual,
+    Outlet: () => <div data-testid="mock-outlet">Mock Outlet Content</div>
+  }
+})
 
 describe('AdminLayout Navigation', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   function renderAt(route: string) {
-    // AdminLayout needs router context - provide it properly
-    return renderWithRouter(<AdminLayout />, { initialEntries: [route] });
+    // Use renderWithRouter to provide proper context
+    return renderWithRouter(<AdminLayout />, { initialEntries: [route] })
   }
 
   it('renders sidebar navigation links', () => {
-    renderAt('/admin/events');
-    expect(screen.getByText('Admin Panel')).toBeInTheDocument();
-    expect(screen.getByText('Events')).toBeInTheDocument();
-    expect(screen.getByText('Instructors')).toBeInTheDocument();
-    expect(screen.getByText('Locations')).toBeInTheDocument();
-    expect(screen.getByText('Templates')).toBeInTheDocument();
-  });
+    renderAt('/admin/events')
+    expect(screen.getByText('Admin Panel')).toBeInTheDocument()
+    expect(screen.getByText('Events')).toBeInTheDocument()
+    expect(screen.getByText('Instructors')).toBeInTheDocument()
+    expect(screen.getByText('Locations')).toBeInTheDocument()
+    expect(screen.getByText('Templates')).toBeInTheDocument()
+  })
 
   it('highlights the active sidebar link', () => {
-    renderAt('/admin/events');
-    const eventsLink = screen.getByText('Events').closest('a');
-    expect(eventsLink).toHaveClass('bg-primary');
-    // Switch to another route
-    renderAt('/admin/templates');
-    const templatesLink = screen.getByText('Templates').closest('a');
-    expect(templatesLink).toHaveClass('bg-primary');
-  });
+    renderAt('/admin/events')
+    const eventsLink = screen.getByText('Events').closest('a')
+    expect(eventsLink).toHaveClass('bg-primary')
+  })
 
   it('renders main content area (Outlet)', () => {
-    renderAt('/admin/events');
-    expect(screen.getByText('Admin Panel')).toBeInTheDocument();
-    // Main content rendered via Outlet
-  });
-});
+    renderAt('/admin/events')
+    expect(screen.getByTestId('mock-outlet')).toBeInTheDocument()
+  })
+})

@@ -2,6 +2,8 @@
 export * from './mock-factories'
 export * from './test-helpers'
 export * from './rls-test-helpers'
+export * from './auth-test-helpers'
+export * from './supabase-test-helpers'
 
 // Explicitly export the custom render and createWrapper from test-wrappers
 export { 

@@ -33,8 +33,13 @@ export const QueryWrapper = ({ children }: { children: React.ReactNode }) => (
 )
 
 export const renderHookWithQuery = <T,>(hook: () => T) => {
+  const testQueryClient = createTestQueryClient()
   return rtlRenderHook(hook, {
-    wrapper: QueryWrapper
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={testQueryClient}>
+        {children}
+      </QueryClientProvider>
+    )
   })
 }
 
@@ -48,13 +53,16 @@ export const RouterWrapper = ({
 }: { 
   children: React.ReactNode
   initialEntries?: string[]
-}) => (
-  <MemoryRouter initialEntries={initialEntries}>
-    <QueryClientProvider client={createTestQueryClient()}>
-      {children}
-    </QueryClientProvider>
-  </MemoryRouter>
-)
+}) => {
+  const testQueryClient = createTestQueryClient()
+  return (
+    <MemoryRouter initialEntries={initialEntries}>
+      <QueryClientProvider client={testQueryClient}>
+        {children}
+      </QueryClientProvider>
+    </MemoryRouter>
+  )
+}
 
 export const renderWithRouter = (
   ui: React.ReactElement, 
@@ -168,10 +176,11 @@ export const renderWithFullContext = (
     authValue = mockAuthContextValue 
   } = {}
 ) => {
+  const testQueryClient = createTestQueryClient()
   return rtlRender(ui, {
     wrapper: ({ children }) => (
       <AuthContext.Provider value={authValue}>
-        <QueryClientProvider client={createTestQueryClient()}>
+        <QueryClientProvider client={testQueryClient}>
           <MemoryRouter initialEntries={initialEntries}>
             {children}
           </MemoryRouter>
