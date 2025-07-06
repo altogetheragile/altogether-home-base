@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, createMockUseQueryResult, createMockUseMutationResult } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithRouter, createMockUseQueryResult, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import AdminTemplates from '@/pages/admin/AdminTemplates'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
@@ -78,7 +79,7 @@ describe('AdminTemplates Integration', () => {
   })
 
   it('renders the admin templates page correctly', () => {
-    render(<AdminTemplates />)
+    renderWithRouter(<AdminTemplates />)
     
     expect(screen.getByText('Event Templates')).toBeInTheDocument()
     expect(screen.getByText('Manage reusable event templates')).toBeInTheDocument()
@@ -86,14 +87,14 @@ describe('AdminTemplates Integration', () => {
   })
 
   it('displays templates in the list', () => {
-    render(<AdminTemplates />)
+    renderWithRouter(<AdminTemplates />)
     
     expect(screen.getByText('Agile Fundamentals')).toBeInTheDocument()
     expect(screen.getByText('Introduction to Agile methodologies')).toBeInTheDocument()
   })
 
   it('opens create template dialog when Add Template button is clicked', async () => {
-    render(<AdminTemplates />)
+    renderWithRouter(<AdminTemplates />)
     
     const addButton = screen.getByRole('button', { name: 'Add Template' })
     fireEvent.click(addButton)
@@ -105,7 +106,7 @@ describe('AdminTemplates Integration', () => {
   })
 
   it('filters templates based on search term', async () => {
-    render(<AdminTemplates />)
+    renderWithRouter(<AdminTemplates />)
     
     const searchInput = screen.getByPlaceholderText(/search/i)
     fireEvent.change(searchInput, { target: { value: 'Scrum' } })
@@ -123,7 +124,7 @@ describe('AdminTemplates Integration', () => {
       isSuccess: false
     }))
     
-    render(<AdminTemplates />)
+    renderWithRouter(<AdminTemplates />)
     
     expect(screen.getByText('Loading templates...')).toBeInTheDocument()
   })
@@ -137,13 +138,13 @@ describe('AdminTemplates Integration', () => {
       isSuccess: false
     }))
     
-    render(<AdminTemplates />)
+    renderWithRouter(<AdminTemplates />)
     
     expect(screen.getByText('Error loading templates: Failed to load templates')).toBeInTheDocument()
   })
 
   it('handles bulk operations correctly', () => {
-    render(<AdminTemplates />)
+    renderWithRouter(<AdminTemplates />)
     
     // Should show bulk operations component
     expect(screen.getByText(/0 selected/)).toBeInTheDocument()

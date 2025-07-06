@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, createMockUseQueryResult, createMockUseMutationResult } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithRouter, createMockUseQueryResult, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import AdminTemplates from '@/pages/admin/AdminTemplates'
 import CreateEvent from '@/pages/admin/CreateEvent'
 import { useTemplates } from '@/hooks/useTemplates'
@@ -122,7 +123,7 @@ describe('Template to Event Workflow Integration', () => {
       handleInputChange: vi.fn()
     })
 
-    render(<CreateEvent />)
+    renderWithRouter(<CreateEvent />)
     
     // Should show template info
     expect(screen.getByText('Create Event from "Agile Fundamentals"')).toBeInTheDocument()
@@ -174,7 +175,7 @@ describe('Template to Event Workflow Integration', () => {
       handleInputChange: vi.fn()
     })
 
-    render(<CreateEvent />)
+    renderWithRouter(<CreateEvent />)
     
     expect(screen.getByText('Auto-calculated based on template duration (2 days)')).toBeInTheDocument()
   })
@@ -220,7 +221,7 @@ describe('Template to Event Workflow Integration', () => {
       handleInputChange: vi.fn()
     })
 
-    render(<CreateEvent />)
+    renderWithRouter(<CreateEvent />)
     
     // Should show regular create event form without template
     expect(screen.getByText('Create New Event')).toBeInTheDocument()

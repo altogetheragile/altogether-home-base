@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, createMockUseQueryResult, createMockUseMutationResult } from '../test-utils'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithRouter, createMockUseQueryResult, createMockUseMutationResult } from '@/test/utils/verified-patterns'
 import AdminTemplates from '@/pages/admin/AdminTemplates'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useTemplateMutations } from '@/hooks/useTemplateMutations'
@@ -69,7 +70,7 @@ describe('Template CRUD Workflow Integration', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(<AdminTemplates />)
+      renderWithRouter(<AdminTemplates />)
       
       // Open create dialog
       fireEvent.click(screen.getByRole('button', { name: 'Add Template' }))
@@ -122,7 +123,7 @@ describe('Template CRUD Workflow Integration', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(<AdminTemplates />)
+      renderWithRouter(<AdminTemplates />)
       
       // Find and click edit button for first template
       const templateCards = screen.getAllByTestId('template-card')
@@ -171,7 +172,7 @@ describe('Template CRUD Workflow Integration', () => {
         })
       })
 
-      render(<AdminTemplates />)
+      renderWithRouter(<AdminTemplates />)
       
       // Find and click delete button
       const templateCards = screen.getAllByTestId('template-card')
@@ -209,7 +210,7 @@ describe('Template CRUD Workflow Integration', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(<AdminTemplates />)
+      renderWithRouter(<AdminTemplates />)
       
       // Should show both templates initially
       expect(screen.getByText('Agile Fundamentals')).toBeInTheDocument()
@@ -250,7 +251,7 @@ describe('Template CRUD Workflow Integration', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(<AdminTemplates />)
+      renderWithRouter(<AdminTemplates />)
       
       expect(screen.getByText('Error loading templates: Failed to fetch templates')).toBeInTheDocument()
     })
@@ -268,7 +269,7 @@ describe('Template CRUD Workflow Integration', () => {
         deleteTemplate: createMockUseMutationResult()
       })
 
-      render(<AdminTemplates />)
+      renderWithRouter(<AdminTemplates />)
       
       expect(screen.getByText('Loading templates...')).toBeInTheDocument()
     })

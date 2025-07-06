@@ -36,8 +36,10 @@
 - ✅ `Auth.test.tsx` → Converted to `renderWithRouter` pattern
 - ✅ `Dashboard.test.tsx` → Converted to `renderWithRouter` pattern
 
-**Accessibility Tests Converted:**
-- ✅ `template-accessibility.test.tsx` → Converted to `renderSimpleComponent` pattern
+**Integration Tests Converted:**
+- ✅ `admin-templates-workflow.test.tsx` → Converted to `renderWithRouter` pattern
+- ✅ `template-crud-workflow.test.tsx` → Converted to `renderWithRouter` pattern  
+- ✅ `template-workflow.test.tsx` → Converted to `renderWithRouter` pattern
 
 **Key Improvements Applied:**
 - Replaced complex test-utils imports with verified patterns
@@ -68,7 +70,7 @@
 
 ## 📊 SUCCESS METRICS
 - Target: Convert 97 failing tests to use verified patterns
-- Progress: **21 test files converted** (Hook tests: 5, Component tests: 13, Page tests: 2, Accessibility tests: 1)
-- **Major milestone**: ProtectedRoute variants, Page tests, and Accessibility tests now using verified patterns
-- **New Pattern**: Added `renderWithFullContext` for integration tests requiring multiple contexts
+- Progress: **24 test files converted** (Hook tests: 5, Component tests: 13, Page tests: 2, Accessibility tests: 1, Integration tests: 3)
+- **Major milestone**: Template workflow integration tests converted to `renderWithRouter` pattern
+- **New Pattern**: Added `renderWithFullContext` for complex integration tests requiring multiple contexts
 - Next Target: Convert remaining integration tests and specialized test files
