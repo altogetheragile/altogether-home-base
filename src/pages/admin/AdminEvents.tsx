@@ -119,13 +119,6 @@ const AdminEvents = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Events Management</h1>
-          <p className="text-gray-600">Manage events, resources, and content</p>
-        </div>
-      </div>
-
       <Tabs defaultValue="events" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="events">Events</TabsTrigger>
