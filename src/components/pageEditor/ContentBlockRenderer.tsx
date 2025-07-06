@@ -22,6 +22,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 }) => {
   const renderContent = () => {
     const styles = block.content?.styles || {};
+    console.log('Styles for block:', block.id, styles); // Debug log
     const styleClasses = [
       styles.backgroundColor || '',
       styles.textColor || '',
@@ -115,17 +116,17 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
             )}
              <div className="relative z-10 max-w-4xl mx-auto">
-              <h1 className={`${styles.fontSize ? styles.fontSize : 'text-4xl md:text-6xl'} font-bold mb-4`}>
+              <h1 className={`${styles.fontSize && styles.fontSize !== '' ? styles.fontSize : 'text-4xl md:text-6xl'} font-bold mb-4`}>
                 {block.content.title || 'Hero Title'}
               </h1>
-              <p className={`${styles.fontSize ? styles.fontSize : 'text-xl md:text-2xl'} mb-8 opacity-90`}>
+              <p className={`${styles.fontSize && styles.fontSize !== '' ? styles.fontSize : 'text-xl md:text-2xl'} mb-8 opacity-90`}>
                 {block.content.subtitle || 'Hero subtitle'}
               </p>
                {block.content.ctaText && (
                  <div>
                     <Button 
                       variant={styles.ctaVariant || 'secondary'} 
-                      size={styles.ctaSize === 'default' ? 'lg' : (styles.ctaSize || 'lg')} 
+                      size={styles.ctaSize && styles.ctaSize !== '' ? styles.ctaSize : 'lg'} 
                       asChild
                       className={`${styles.ctaFontWeight || ''}`}
                      style={{
