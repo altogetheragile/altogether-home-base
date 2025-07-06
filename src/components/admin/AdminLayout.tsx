@@ -24,61 +24,76 @@ const AdminLayout = () => {
     return <AccessDenied />;
   }
 
-  const navItems = [
+  const navGroups = [
     {
-      label: 'Events',
-      href: '/admin/events',
-      icon: Calendar,
-      description: 'Manage all events'
+      title: 'Content Management',
+      items: [
+        {
+          label: 'Events',
+          href: '/admin/events',
+          icon: Calendar,
+          description: 'Manage all events'
+        },
+        {
+          label: 'Templates',
+          href: '/admin/templates',
+          icon: BookOpen,
+          description: 'Manage event templates'
+        },
+        {
+          label: 'Pages',
+          href: '/admin/pages',
+          icon: Layout,
+          description: 'Manage website pages'
+        },
+      ]
     },
     {
-      label: 'Instructors',
-      href: '/admin/instructors',
-      icon: Users,
-      description: 'Manage instructors'
+      title: 'Event Configuration',
+      items: [
+        {
+          label: 'Event Types',
+          href: '/admin/event-types',
+          icon: Tag,
+          description: 'Manage event types'
+        },
+        {
+          label: 'Categories',
+          href: '/admin/event-categories',
+          icon: FolderOpen,
+          description: 'Manage event categories'
+        },
+        {
+          label: 'Levels',
+          href: '/admin/levels',
+          icon: BarChart3,
+          description: 'Manage skill levels'
+        },
+        {
+          label: 'Formats',
+          href: '/admin/formats',
+          icon: Settings,
+          description: 'Manage event formats'
+        },
+      ]
     },
     {
-      label: 'Locations',
-      href: '/admin/locations',
-      icon: MapPin,
-      description: 'Manage locations'
-    },
-    {
-      label: 'Templates',
-      href: '/admin/templates',
-      icon: BookOpen,
-      description: 'Manage event templates'
-    },
-    {
-      label: 'Event Types',
-      href: '/admin/event-types',
-      icon: Tag,
-      description: 'Manage event types'
-    },
-    {
-      label: 'Categories',
-      href: '/admin/event-categories',
-      icon: FolderOpen,
-      description: 'Manage event categories'
-    },
-    {
-      label: 'Levels',
-      href: '/admin/levels',
-      icon: BarChart3,
-      description: 'Manage skill levels'
-    },
-    {
-      label: 'Formats',
-      href: '/admin/formats',
-      icon: Layout,
-      description: 'Manage event formats'
-    },
-    {
-      label: 'Pages',
-      href: '/admin/pages',
-      icon: BookOpen,
-      description: 'Manage website pages'
-    },
+      title: 'Resources',
+      items: [
+        {
+          label: 'Instructors',
+          href: '/admin/instructors',
+          icon: Users,
+          description: 'Manage instructors'
+        },
+        {
+          label: 'Locations',
+          href: '/admin/locations',
+          icon: MapPin,
+          description: 'Manage locations'
+        },
+      ]
+    }
   ];
 
   const isActive = (path: string) => location.pathname.startsWith(path);
@@ -108,29 +123,38 @@ const AdminLayout = () => {
               </div>
             </div>
             
-            <nav className="space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive(item.href)
-                        ? 'bg-primary text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <div>
-                      <div>{item.label}</div>
-                      <div className={`text-xs ${isActive(item.href) ? 'text-gray-200' : 'text-gray-500'}`}>
-                        {item.description}
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
+            <nav className="space-y-6">
+              {navGroups.map((group) => (
+                <div key={group.title}>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    {group.title}
+                  </h3>
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.href}
+                          to={item.href}
+                          className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            isActive(item.href)
+                              ? 'bg-primary text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <div>
+                            <div>{item.label}</div>
+                            <div className={`text-xs ${isActive(item.href) ? 'text-gray-200' : 'text-gray-500'}`}>
+                              {item.description}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
           </div>
         </div>
