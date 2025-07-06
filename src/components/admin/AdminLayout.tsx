@@ -29,33 +29,10 @@ const AdminLayout = () => {
       title: 'Events',
       items: [
         {
-          label: 'All Events',
+          label: 'Events Management',
           href: '/admin/events',
           icon: Calendar,
-          description: 'View and manage events'
-        },
-      ]
-    },
-    {
-      title: 'Events Management',
-      items: [
-        {
-          label: 'Templates',
-          href: '/admin/templates',
-          icon: BookOpen,
-          description: 'Manage event templates'
-        },
-        {
-          label: 'Instructors',
-          href: '/admin/instructors',
-          icon: Users,
-          description: 'Manage instructors'
-        },
-        {
-          label: 'Locations',
-          href: '/admin/locations',
-          icon: MapPin,
-          description: 'Manage locations'
+          description: 'Manage events, templates, instructors & content'
         },
       ]
     },
@@ -85,17 +62,6 @@ const AdminLayout = () => {
           href: '/admin/formats',
           icon: Settings,
           description: 'Manage event formats'
-        },
-      ]
-    },
-    {
-      title: 'Content Management',
-      items: [
-        {
-          label: 'Pages',
-          href: '/admin/pages',
-          icon: Layout,
-          description: 'Manage website pages'
         },
       ]
     }

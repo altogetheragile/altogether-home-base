@@ -13,8 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
+import AdminTemplates from './AdminTemplates';
+import AdminInstructors from './AdminInstructors';
+import AdminLocations from './AdminLocations';
+import AdminPages from './AdminPages';
 
 const AdminEvents = () => {
   const { data: events, isLoading, error } = useQuery({
@@ -112,77 +117,120 @@ const AdminEvents = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Events</h1>
-          <p className="text-gray-600">Manage all events and their details</p>
+          <h1 className="text-3xl font-bold text-gray-900">Events Management</h1>
+          <p className="text-gray-600">Manage events, resources, and content</p>
         </div>
-        <Link to="/admin/events/new">
-          <Button className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>Create Event</span>
-          </Button>
-        </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Instructor</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Registrations</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {events?.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium">{event.title}</TableCell>
-                <TableCell>{formatDate(event.start_date)}</TableCell>
-                <TableCell>{event.instructor?.name || 'TBA'}</TableCell>
-                <TableCell>{event.location?.name || 'TBA'}</TableCell>
-                <TableCell>
-                  {formatPrice(event.price_cents || 0, event.currency || 'usd')}
-                </TableCell>
-                <TableCell>
-                  {getRegistrationBadge(event.event_registrations)}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={event.is_published ? 'default' : 'secondary'}>
-                    {event.is_published ? (
-                      <><Eye className="h-3 w-3 mr-1" />Published</>
-                    ) : (
-                      <><EyeOff className="h-3 w-3 mr-1" />Draft</>
-                    )}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Link to={`/admin/events/${event.id}/edit`}>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!events?.length && (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  No events found. <Link to="/admin/events/new" className="text-primary hover:underline">Create your first event</Link>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <Tabs defaultValue="events" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="events">Events</TabsTrigger>
+          <TabsTrigger value="event-management">Event Management</TabsTrigger>
+          <TabsTrigger value="content-management">Content Management</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="events" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900">All Events</h2>
+              <p className="text-gray-600">View and manage all events</p>
+            </div>
+            <Link to="/admin/events/new">
+              <Button className="flex items-center space-x-2">
+                <Plus className="h-4 w-4" />
+                <span>Create Event</span>
+              </Button>
+            </Link>
+          </div>
+
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Instructor</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Registrations</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {events?.map((event) => (
+                  <TableRow key={event.id}>
+                    <TableCell className="font-medium">{event.title}</TableCell>
+                    <TableCell>{formatDate(event.start_date)}</TableCell>
+                    <TableCell>{event.instructor?.name || 'TBA'}</TableCell>
+                    <TableCell>{event.location?.name || 'TBA'}</TableCell>
+                    <TableCell>
+                      {formatPrice(event.price_cents || 0, event.currency || 'usd')}
+                    </TableCell>
+                    <TableCell>
+                      {getRegistrationBadge(event.event_registrations)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={event.is_published ? 'default' : 'secondary'}>
+                        {event.is_published ? (
+                          <><Eye className="h-3 w-3 mr-1" />Published</>
+                        ) : (
+                          <><EyeOff className="h-3 w-3 mr-1" />Draft</>
+                        )}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Link to={`/admin/events/${event.id}/edit`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!events?.length && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      No events found. <Link to="/admin/events/new" className="text-primary hover:underline">Create your first event</Link>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="event-management" className="space-y-6">
+          <Tabs defaultValue="templates" className="w-full">
+            <TabsList>
+              <TabsTrigger value="templates">Templates</TabsTrigger>
+              <TabsTrigger value="instructors">Instructors</TabsTrigger>
+              <TabsTrigger value="locations">Locations</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="templates">
+              <AdminTemplates />
+            </TabsContent>
+            
+            <TabsContent value="instructors">
+              <AdminInstructors />
+            </TabsContent>
+            
+            <TabsContent value="locations">
+              <AdminLocations />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="content-management">
+          <AdminPages />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
