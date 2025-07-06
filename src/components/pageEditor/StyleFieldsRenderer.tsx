@@ -27,11 +27,31 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
           </TabsList>
           
           <TabsContent value="custom" className="space-y-4">
-            <ColorPicker
-              label="Background Color"
-              value={styles.customBackgroundColor || 'default'}
-              onChange={(color) => onStyleChange('customBackgroundColor', color)}
-            />
+            <div>
+              <Label htmlFor="background-type">Background Type</Label>
+              <Select
+                value={styles.backgroundType || 'default'}
+                onValueChange={(value) => onStyleChange('backgroundType', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select background type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="solid">Solid Color</SelectItem>
+                  <SelectItem value="gradient">Gradient</SelectItem>
+                  <SelectItem value="none">No Background</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(styles.backgroundType === 'solid' || styles.backgroundType === 'gradient') && (
+              <ColorPicker
+                label="Background Color"
+                value={styles.customBackgroundColor || 'default'}
+                onChange={(color) => onStyleChange('customBackgroundColor', color)}
+              />
+            )}
             
             <ColorPicker
               label="Text Color"

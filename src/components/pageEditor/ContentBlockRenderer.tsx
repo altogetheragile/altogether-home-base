@@ -34,9 +34,18 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
     // Generate inline styles for custom colors
     const inlineStyles: React.CSSProperties = {};
-    if (styles.customBackgroundColor && styles.customBackgroundColor !== 'default') {
+    
+    // Handle background based on backgroundType
+    const backgroundType = styles.backgroundType || 'default';
+    
+    if (backgroundType === 'solid' && styles.customBackgroundColor && styles.customBackgroundColor !== 'default') {
+      inlineStyles.backgroundColor = styles.customBackgroundColor;
+    } else if (backgroundType === 'none') {
+      inlineStyles.backgroundColor = 'transparent';
+    } else if (styles.customBackgroundColor && styles.customBackgroundColor !== 'default' && backgroundType !== 'default') {
       inlineStyles.backgroundColor = styles.customBackgroundColor;
     }
+    
     if (styles.customTextColor && styles.customTextColor !== 'default') {
       inlineStyles.color = styles.customTextColor;
     }
@@ -50,9 +59,15 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
     switch (block.type) {
       case 'hero':
+        // Determine background classes based on backgroundType
+        let heroBackgroundClasses = '';
+        if (backgroundType === 'default' || backgroundType === 'gradient') {
+          heroBackgroundClasses = 'bg-gradient-to-r from-primary to-primary-glow';
+        }
+        
         return (
           <div 
-            className={`relative bg-gradient-to-r from-primary to-primary-glow text-white py-20 px-8 text-center rounded-lg ${styleClasses}`}
+            className={`relative ${heroBackgroundClasses} text-white py-20 px-8 text-center rounded-lg ${styleClasses}`}
             style={inlineStyles}
           >
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
