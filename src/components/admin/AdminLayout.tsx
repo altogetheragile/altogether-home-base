@@ -44,65 +44,33 @@ const AdminLayout = () => {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm min-h-screen">
-          <div className="p-6">
-            <div className="flex items-center space-x-2 mb-6">
-              <Settings className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold text-gray-900">Admin Panel</h2>
-            </div>
-
-            {/* User Role Info */}
-            <div className="mb-6 p-3 bg-primary/5 rounded-lg border border-primary/10">
-              <div className="flex items-center space-x-2 text-sm">
-                <Shield className="h-4 w-4 text-primary" />
-                <span className="font-medium text-primary">Admin Access</span>
+      <div className="max-w-7xl mx-auto">
+        {/* Admin Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Settings className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
               </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
-                <User className="h-3 w-3" />
-                <span>{user?.email}</span>
-              </div>
-            </div>
-            
-            <nav className="space-y-6">
-              {navGroups.map((group) => (
-                <div key={group.title}>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                    {group.title}
-                  </h3>
-                  <div className="space-y-1">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.href}
-                          to={item.href}
-                          className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            isActive(item.href)
-                              ? 'bg-primary text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          <Icon className="h-5 w-5" />
-                          <div>
-                            <div>{item.label}</div>
-                            <div className={`text-xs ${isActive(item.href) ? 'text-gray-200' : 'text-gray-500'}`}>
-                              {item.description}
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
+              
+              {/* User Role Info */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">Admin</span>
                 </div>
-              ))}
-            </nav>
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <User className="h-4 w-4" />
+                  <span>{user?.email}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-8">
+        <div className="p-6">
           <Outlet />
         </div>
       </div>
