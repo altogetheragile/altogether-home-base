@@ -54,8 +54,10 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
       
       if (buttons.length === 0 && !hasLegacyCTA) return null;
       
+      const buttonSpacing = styles.buttonsSpacing || 'gap-4';
+      
       return (
-        <div className="flex flex-wrap gap-4 justify-center">
+        <div className={`flex flex-wrap ${buttonSpacing} justify-center`}>
           {/* Legacy CTA button for hero sections */}
           {hasLegacyCTA && (
             <Button 
@@ -83,9 +85,18 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
             button.text && button.link ? (
               <Button 
                 key={index}
-                variant={button.variant || 'default'} 
-                size="lg" 
+                variant={button.variant === 'default' ? (styles.buttonsVariant || 'default') : button.variant} 
+                size={button.size === 'default' ? (styles.buttonsSize || 'lg') : button.size} 
                 asChild
+                className={styles.buttonsFontWeight || ''}
+                style={{
+                  ...(styles.buttonsBackgroundColor && styles.buttonsBackgroundColor !== 'default' && button.variant === 'default' && {
+                    backgroundColor: styles.buttonsBackgroundColor
+                  }),
+                  ...(styles.buttonsTextColor && styles.buttonsTextColor !== 'default' && button.variant === 'default' && {
+                    color: styles.buttonsTextColor
+                  })
+                }}
               >
                 <a href={button.link}>
                   {button.text}

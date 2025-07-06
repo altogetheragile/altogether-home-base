@@ -243,24 +243,44 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
                     />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor={`button-${index}-variant`}>Style</Label>
-                  <Select
-                    value={button.variant || 'default'}
-                    onValueChange={(value) => updateButton(index, 'variant', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select button style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Default</SelectItem>
-                      <SelectItem value="primary">Primary</SelectItem>
-                      <SelectItem value="secondary">Secondary</SelectItem>
-                      <SelectItem value="outline">Outline</SelectItem>
-                      <SelectItem value="ghost">Ghost</SelectItem>
-                      <SelectItem value="destructive">Destructive</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor={`button-${index}-variant`}>Style</Label>
+                    <Select
+                      value={button.variant || 'default'}
+                      onValueChange={(value) => updateButton(index, 'variant', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select button style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Use Global Default</SelectItem>
+                        <SelectItem value="primary">Primary</SelectItem>
+                        <SelectItem value="secondary">Secondary</SelectItem>
+                        <SelectItem value="outline">Outline</SelectItem>
+                        <SelectItem value="ghost">Ghost</SelectItem>
+                        <SelectItem value="destructive">Destructive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor={`button-${index}-size`}>Size</Label>
+                    <Select
+                      value={button.size || 'default'}
+                      onValueChange={(value) => updateButton(index, 'size', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select button size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Use Global Default</SelectItem>
+                        <SelectItem value="sm">Small</SelectItem>
+                        <SelectItem value="lg">Large</SelectItem>
+                        <SelectItem value="xl">Extra Large</SelectItem>
+                        <SelectItem value="2xl">2X Large</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             ))}
