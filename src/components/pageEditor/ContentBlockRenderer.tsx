@@ -62,7 +62,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
           {hasLegacyCTA && (
             <Button 
               variant={styles.ctaVariant || 'secondary'} 
-              size={styles.ctaSize || 'lg'} 
+              size={styles.buttonsSize || 'lg'} 
               asChild
               className={`${styles.ctaFontWeight || ''}`}
               style={{
@@ -86,7 +86,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
               <Button 
                 key={index}
                 variant={button.variant === 'default' ? (styles.buttonsVariant || 'default') : button.variant} 
-                size={button.size === 'default' ? (styles.buttonsSize || 'lg') : button.size} 
+                size={styles.buttonsSize || 'lg'} 
                 asChild
                 className={`${styles.buttonsFontWeight || ''} min-w-[140px]`}
                 style={{
