@@ -21,10 +21,20 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
   onMoveDown,
 }) => {
   const renderContent = () => {
+    const styles = block.content?.styles || {};
+    const styleClasses = [
+      styles.backgroundColor || '',
+      styles.textColor || '',
+      styles.padding || '',
+      styles.textAlign || '',
+      styles.fontSize || '',
+      styles.fontWeight || '',
+    ].filter(Boolean).join(' ');
+
     switch (block.type) {
       case 'hero':
         return (
-          <div className="relative bg-gradient-to-r from-primary to-primary-glow text-white py-20 px-8 text-center rounded-lg">
+          <div className={`relative bg-gradient-to-r from-primary to-primary-glow text-white py-20 px-8 text-center rounded-lg ${styleClasses}`}>
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
               {block.content.title || 'Hero Title'}
             </h1>
@@ -43,7 +53,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'section':
         return (
-          <div className="py-12">
+          <div className={`py-12 ${styleClasses}`}>
             {block.content.title && (
               <h2 className="text-3xl font-bold mb-6 text-center">
                 {block.content.title}
@@ -59,7 +69,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'text':
         return (
-          <div className="py-8">
+          <div className={`py-8 ${styleClasses}`}>
             {block.content.title && (
               <h3 className="text-2xl font-semibold mb-4">
                 {block.content.title}
@@ -75,7 +85,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'image':
         return (
-          <div className="py-8">
+          <div className={`py-8 ${styleClasses}`}>
             {block.content.src ? (
               <div className="text-center">
                 <img
@@ -99,7 +109,7 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
 
       case 'video':
         return (
-          <div className="py-8">
+          <div className={`py-8 ${styleClasses}`}>
             {block.content.url ? (
               <div className="aspect-video">
                 <iframe

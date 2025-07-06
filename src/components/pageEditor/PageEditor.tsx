@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Save, Eye, Settings } from 'lucide-react';
+import { Plus, Save, Eye, Settings, Monitor, Tablet, Smartphone } from 'lucide-react';
 
 export const PageEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +27,7 @@ export const PageEditor: React.FC = () => {
   const [isPreview, setIsPreview] = useState(false);
   const [editingBlock, setEditingBlock] = useState<ContentBlock | null>(null);
   const [isBlockEditorOpen, setIsBlockEditorOpen] = useState(false);
+  const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [pageForm, setPageForm] = useState({
     title: '',
     description: '',
@@ -139,6 +140,33 @@ export const PageEditor: React.FC = () => {
         </div>
         
         <div className="flex gap-2">
+          {/* Device View Toggle */}
+          {isPreview && (
+            <div className="flex border rounded-md">
+              <Button
+                variant={deviceView === 'desktop' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDeviceView('desktop')}
+              >
+                <Monitor className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={deviceView === 'tablet' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDeviceView('tablet')}
+              >
+                <Tablet className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={deviceView === 'mobile' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDeviceView('mobile')}
+              >
+                <Smartphone className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          
           <Button
             variant="outline"
             onClick={() => setIsPreview(!isPreview)}
