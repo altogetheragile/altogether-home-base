@@ -139,3 +139,14 @@ export const mockInstructors = [
   { id: 'inst1', name: 'John Doe', bio: 'Agile coach with 10 years experience' },
   { id: 'inst2', name: 'Jane Smith', bio: 'Certified Scrum Master' }
 ]
+
+// ✅ VERIFIED PATTERN: Mock Supabase Client
+// Use this pattern for mocking Supabase in hook tests
+export const createMockSupabaseResponse = (data: any, error: any = null) => ({
+  select: vi.fn().mockReturnThis(),
+  order: vi.fn().mockResolvedValue({ data, error }),
+  eq: vi.fn().mockReturnThis(),
+  insert: vi.fn().mockResolvedValue({ data, error }),
+  update: vi.fn().mockResolvedValue({ data, error }),
+  delete: vi.fn().mockResolvedValue({ data, error })
+})

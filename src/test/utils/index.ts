@@ -24,6 +24,3 @@ export {
   waitFor,
   within
 } from '@testing-library/react'
-
-// Mock factory helper
-export { createMockUseMutationResult, createMockUseQueryResult } from './mock-factories'

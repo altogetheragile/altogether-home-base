@@ -1,24 +1,21 @@
 import { vi } from 'vitest'
 
-// Enhanced mock Supabase response factory
-export const createMockSupabaseResponse = (data: any, error: any = null) => ({
-  select: vi.fn().mockReturnThis(),
-  order: vi.fn().mockResolvedValue({ data, error }),
-  eq: vi.fn().mockReturnThis(),
-  single: vi.fn().mockResolvedValue({ data, error }),
-  insert: vi.fn().mockResolvedValue({ data, error }),
-  update: vi.fn().mockResolvedValue({ data, error }),
-  delete: vi.fn().mockResolvedValue({ data, error }),
-  from: vi.fn().mockReturnThis(),
-  limit: vi.fn().mockReturnThis(),
-  range: vi.fn().mockReturnThis(),
-  filter: vi.fn().mockReturnThis()
-})
-
 // Mock for chained Supabase calls
 export const createMockSupabaseClient = (responses: Record<string, any> = {}) => ({
   from: vi.fn((table: string) => {
-    const response = responses[table] || createMockSupabaseResponse([])
+    const response = responses[table] || { 
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      update: vi.fn().mockResolvedValue({ data: null, error: null }),
+      delete: vi.fn().mockResolvedValue({ data: null, error: null }),
+      from: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      range: vi.fn().mockReturnThis(),
+      filter: vi.fn().mockReturnThis()
+    }
     return response
   }),
   auth: {

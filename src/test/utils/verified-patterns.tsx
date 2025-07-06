@@ -1,196 +1,38 @@
-import React from 'react'
-import { render as rtlRender, renderHook as rtlRenderHook } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { vi } from 'vitest'
+// ✅ VERIFIED TEST PATTERNS - Clean Re-export Hub
+// This file serves as the main entry point for all verified test patterns
 
-// ✅ VERIFIED PATTERN 1: Simple Component Test (No Context)
-// Use this for components that don't need QueryClient, Router, or Auth context
-export const renderSimpleComponent = (ui: React.ReactElement) => {
-  return rtlRender(ui)
-}
+// Basic rendering utilities
+export { renderSimpleComponent } from './simple-render-utils'
 
-// ✅ VERIFIED PATTERN 2: Hook Test with QueryClient Context
-// Use this for hooks that need QueryClient (useQuery, useMutation hooks)
-export const createTestQueryClient = () => {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-        staleTime: 0
-      },
-      mutations: {
-        retry: false
-      }
-    }
-  })
-}
+// Query client utilities
+export { 
+  createTestQueryClient, 
+  QueryWrapper, 
+  renderHookWithQuery 
+} from './query-test-utils'
 
-export const QueryWrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={createTestQueryClient()}>
-    {children}
-  </QueryClientProvider>
-)
+// Router utilities
+export { 
+  RouterWrapper, 
+  renderWithRouter 
+} from './router-test-utils'
 
-export const renderHookWithQuery = <T,>(hook: () => T) => {
-  const testQueryClient = createTestQueryClient()
-  return rtlRenderHook(hook, {
-    wrapper: ({ children }) => (
-      <QueryClientProvider client={testQueryClient}>
-        {children}
-      </QueryClientProvider>
-    )
-  })
-}
+// Mock factories
+export { 
+  createMockSupabaseResponse,
+  createMockUseMutationResult,
+  createMockUseQueryResult,
+  mockAuthContextValue,
+  mockTemplate,
+  mockTemplates,
+  mockLocations,
+  mockInstructors
+} from './mock-factories'
 
-// ✅ VERIFIED PATTERN 3: Router Wrapper for Components with Navigation
-// Use this for components that need router context (Link, useLocation, etc.)
-import { MemoryRouter } from 'react-router-dom'
+// Combined context utilities
+export { renderWithFullContext } from './context-test-utils'
 
-export const RouterWrapper = ({ 
-  children, 
-  initialEntries = ['/'] 
-}: { 
-  children: React.ReactNode
-  initialEntries?: string[]
-}) => {
-  const testQueryClient = createTestQueryClient()
-  return (
-    <MemoryRouter initialEntries={initialEntries}>
-      <QueryClientProvider client={testQueryClient}>
-        {children}
-      </QueryClientProvider>
-    </MemoryRouter>
-  )
-}
-
-export const renderWithRouter = (
-  ui: React.ReactElement, 
-  { initialEntries = ['/'] } = {}
-) => {
-  return rtlRender(ui, {
-    wrapper: ({ children }) => (
-      <RouterWrapper initialEntries={initialEntries}>
-        {children}
-      </RouterWrapper>
-    )
-  })
-}
-
-// ✅ VERIFIED PATTERN 4: Mock Supabase Client
-// Use this pattern for mocking Supabase in hook tests
-export const createMockSupabaseResponse = (data: any, error: any = null) => ({
-  select: vi.fn().mockReturnThis(),
-  order: vi.fn().mockResolvedValue({ data, error }),
-  eq: vi.fn().mockReturnThis(),
-  insert: vi.fn().mockResolvedValue({ data, error }),
-  update: vi.fn().mockResolvedValue({ data, error }),
-  delete: vi.fn().mockResolvedValue({ data, error })
-})
-
-// ✅ VERIFIED PATTERN 5: Mock Mutation Result Factory
-// Use this for mocking useMutation hooks consistently
-export const createMockUseMutationResult = (overrides = {}): any => ({
-  mutate: vi.fn(),
-  mutateAsync: vi.fn(),
-  isPending: false,
-  isSuccess: false,
-  isError: false,
-  isIdle: true,
-  isPaused: false,
-  error: null,
-  data: undefined,
-  variables: undefined,
-  status: 'idle' as const,
-  reset: vi.fn(),
-  context: undefined,
-  failureCount: 0,
-  failureReason: null,
-  submittedAt: 0,
-  ...overrides
-})
-
-// ✅ VERIFIED PATTERN 6: Mock Query Result Factory
-// Use this for mocking useQuery hooks consistently
-export const createMockUseQueryResult = (overrides = {}): any => ({
-  data: undefined,
-  error: null,
-  isError: false,
-  isLoading: false,
-  isPending: false,
-  isSuccess: false,
-  isLoadingError: false,
-  isRefetchError: false,
-  status: 'pending' as const,
-  dataUpdatedAt: 0,
-  errorUpdatedAt: 0,
-  failureCount: 0,
-  failureReason: null,
-  errorUpdateCount: 0,
-  isFetched: false,
-  isFetchedAfterMount: false,
-  isFetching: false,
-  isInitialLoading: false,
-  isPlaceholderData: false,
-  isRefetching: false,
-  isStale: false,
-  refetch: vi.fn(),
-  remove: vi.fn(),
-  ...overrides
-})
-
-// ✅ VERIFIED PATTERN 7: Combined Context Pattern (For Integration Tests)
-// Use this for components needing multiple contexts (router + query + auth)
-import { AuthContext } from '@/contexts/AuthContext'
-import type { User } from '@supabase/supabase-js'
-
-const mockUser: User = {
-  id: 'test-user',
-  email: 'test@example.com',
-  aud: 'authenticated',
-  role: 'authenticated',
-  email_confirmed_at: '2024-01-01T00:00:00Z',
-  phone: '',
-  confirmed_at: '2024-01-01T00:00:00Z',
-  last_sign_in_at: '2024-01-01T00:00:00Z',
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z'
-}
-
-const mockAuthContextValue = {
-  user: mockUser,
-  session: null,
-  loading: false,
-  signIn: vi.fn(),
-  signUp: vi.fn(),
-  signOut: vi.fn()
-}
-
-export const renderWithFullContext = (
-  ui: React.ReactElement,
-  { 
-    initialEntries = ['/'],
-    authValue = mockAuthContextValue 
-  } = {}
-) => {
-  const testQueryClient = createTestQueryClient()
-  return rtlRender(ui, {
-    wrapper: ({ children }) => (
-      <AuthContext.Provider value={authValue}>
-        <QueryClientProvider client={testQueryClient}>
-          <MemoryRouter initialEntries={initialEntries}>
-            {children}
-          </MemoryRouter>
-        </QueryClientProvider>
-      </AuthContext.Provider>
-    )
-  })
-}
-
-// ✅ VERIFIED TEST STRUCTURE
+// ✅ TEST PATTERN EXAMPLES
 export const testPatterns = {
   // Pattern 1: Simple component test
   simpleComponent: `
