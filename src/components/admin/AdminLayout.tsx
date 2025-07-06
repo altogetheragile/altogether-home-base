@@ -26,14 +26,19 @@ const AdminLayout = () => {
 
   const navGroups = [
     {
-      title: 'Content Management',
+      title: 'Events',
       items: [
         {
-          label: 'Events',
+          label: 'All Events',
           href: '/admin/events',
           icon: Calendar,
-          description: 'Manage all events'
+          description: 'View and manage events'
         },
+      ]
+    },
+    {
+      title: 'Events Management',
+      items: [
         {
           label: 'Templates',
           href: '/admin/templates',
@@ -41,10 +46,16 @@ const AdminLayout = () => {
           description: 'Manage event templates'
         },
         {
-          label: 'Pages',
-          href: '/admin/pages',
-          icon: Layout,
-          description: 'Manage website pages'
+          label: 'Instructors',
+          href: '/admin/instructors',
+          icon: Users,
+          description: 'Manage instructors'
+        },
+        {
+          label: 'Locations',
+          href: '/admin/locations',
+          icon: MapPin,
+          description: 'Manage locations'
         },
       ]
     },
@@ -78,19 +89,13 @@ const AdminLayout = () => {
       ]
     },
     {
-      title: 'Resources',
+      title: 'Content Management',
       items: [
         {
-          label: 'Instructors',
-          href: '/admin/instructors',
-          icon: Users,
-          description: 'Manage instructors'
-        },
-        {
-          label: 'Locations',
-          href: '/admin/locations',
-          icon: MapPin,
-          description: 'Manage locations'
+          label: 'Pages',
+          href: '/admin/pages',
+          icon: Layout,
+          description: 'Manage website pages'
         },
       ]
     }
