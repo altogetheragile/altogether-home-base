@@ -5,19 +5,18 @@ export const getTitleFontSize = (styles: any) => {
   if (styles.customTitleFontSize) {
     const pixelSize = parseInt(styles.customTitleFontSize);
     if (pixelSize) {
-      // Large mobile, reasonable desktop
-      if (pixelSize >= 40) {
-        return 'text-4xl sm:text-3xl md:text-4xl lg:text-5xl';
-      } else if (pixelSize >= 30) {
-        return 'text-3xl sm:text-2xl md:text-3xl lg:text-4xl';
-      } else {
-        return 'text-2xl sm:text-xl md:text-2xl lg:text-3xl';
-      }
+      // Use actual custom pixel values with responsive scaling
+      const mobileSize = Math.max(32, pixelSize * 0.7); // At least 32px on mobile, 70% of desktop
+      const tabletSize = Math.max(36, pixelSize * 0.8); // 80% of desktop
+      return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
     }
   }
   
   if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
-    return 'text-4xl sm:text-3xl md:text-4xl lg:text-5xl';
+    const pixelSize = parseInt(styles.customTitleFontSize) || 48;
+    const mobileSize = Math.max(32, pixelSize * 0.7);
+    const tabletSize = Math.max(36, pixelSize * 0.8);
+    return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
   }
   
   // Convert non-responsive Tailwind classes to responsive ones with large mobile, reasonable desktop
@@ -41,19 +40,18 @@ export const getSubtitleFontSize = (styles: any) => {
   if (styles.customSubtitleFontSize) {
     const pixelSize = parseInt(styles.customSubtitleFontSize);
     if (pixelSize) {
-      // Large mobile, reasonable desktop
-      if (pixelSize >= 30) {
-        return 'text-2xl sm:text-xl md:text-2xl lg:text-3xl';
-      } else if (pixelSize >= 20) {
-        return 'text-xl sm:text-lg md:text-xl lg:text-2xl';
-      } else {
-        return 'text-lg sm:text-base md:text-lg lg:text-xl';
-      }
+      // Use actual custom pixel values with responsive scaling
+      const mobileSize = Math.max(20, pixelSize * 0.75); // At least 20px on mobile, 75% of desktop
+      const tabletSize = Math.max(24, pixelSize * 0.85); // 85% of desktop
+      return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
     }
   }
   
   if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
-    return 'text-2xl sm:text-xl md:text-2xl lg:text-3xl';
+    const pixelSize = parseInt(styles.customSubtitleFontSize) || 24;
+    const mobileSize = Math.max(20, pixelSize * 0.75);
+    const tabletSize = Math.max(24, pixelSize * 0.85);
+    return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
   }
   
   // Convert non-responsive Tailwind classes to responsive ones with large mobile, reasonable desktop
