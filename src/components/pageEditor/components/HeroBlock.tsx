@@ -34,14 +34,16 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({ block }) => {
       {block.content.backgroundImage && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
-      <div className="relative z-10 max-w-4xl mx-auto px-4">
-        <h1 className={`${getTitleFontSize(styles)} font-bold ${getTitleSpacing(styles)} leading-tight`}>
+      <div className="relative z-10 max-w-4xl mx-auto px-4 py-8 sm:py-12 md:py-16">
+        <h1 className={`${getTitleFontSize(styles)} font-bold ${getTitleSpacing(styles)} leading-tight text-center`}>
           {block.content.title || 'Hero Title'}
         </h1>
-        <p className={`${getSubtitleFontSize(styles)} mb-6 sm:mb-8 opacity-90 leading-relaxed`}>
+        <p className={`${getSubtitleFontSize(styles)} mb-6 sm:mb-8 opacity-90 leading-relaxed text-center max-w-3xl mx-auto`}>
           {block.content.subtitle || 'Hero subtitle'}
         </p>
-        <ButtonRenderer content={block.content} styles={styles} />
+        <div className="text-center">
+          <ButtonRenderer content={block.content} styles={styles} />
+        </div>
       </div>
     </div>
   );

@@ -1,79 +1,102 @@
-// Helper functions for managing font sizes in content blocks
+// Helper functions for managing responsive font sizes in content blocks
 
 export const getTitleFontSize = (styles: any) => {
-  // Handle direct pixel values or custom font sizes
+  // Handle custom pixel values with proper mobile-first responsive scaling
   if (styles.customTitleFontSize) {
     const pixelSize = parseInt(styles.customTitleFontSize);
-    if (pixelSize) {
-      // Use actual custom pixel values with responsive scaling
-      const mobileSize = Math.max(32, pixelSize * 0.7); // At least 32px on mobile, 70% of desktop
-      const tabletSize = Math.max(36, pixelSize * 0.8); // 80% of desktop
-      return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
+    if (pixelSize && pixelSize > 0) {
+      // Mobile-first approach: mobile (60%), tablet (80%), desktop (100%)
+      const mobileSize = Math.max(28, Math.round(pixelSize * 0.6));
+      const tabletSize = Math.max(32, Math.round(pixelSize * 0.8));
+      return `text-[${mobileSize}px] sm:text-[${Math.round(mobileSize * 1.1)}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
     }
   }
   
+  // Handle 'custom' type with customTitleFontSize
   if (styles.titleFontSize === 'custom' && styles.customTitleFontSize) {
     const pixelSize = parseInt(styles.customTitleFontSize) || 48;
-    const mobileSize = Math.max(32, pixelSize * 0.7);
-    const tabletSize = Math.max(36, pixelSize * 0.8);
-    return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
+    const mobileSize = Math.max(28, Math.round(pixelSize * 0.6));
+    const tabletSize = Math.max(32, Math.round(pixelSize * 0.8));
+    return `text-[${mobileSize}px] sm:text-[${Math.round(mobileSize * 1.1)}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
   }
   
-  // Convert non-responsive Tailwind classes to responsive ones with large mobile, reasonable desktop
+  // Handle predefined Tailwind classes with mobile-first responsive scaling
   const fontSize = styles.titleFontSize;
   if (fontSize && !fontSize.includes('sm:')) {
     switch (fontSize) {
-      case 'text-6xl': return 'text-5xl sm:text-4xl md:text-5xl lg:text-6xl';
-      case 'text-5xl': return 'text-4xl sm:text-3xl md:text-4xl lg:text-5xl';
-      case 'text-4xl': return 'text-3xl sm:text-2xl md:text-3xl lg:text-4xl';
-      case 'text-3xl': return 'text-2xl sm:text-xl md:text-2xl lg:text-3xl';
-      case 'text-2xl': return 'text-xl sm:text-lg md:text-xl lg:text-2xl';
+      case 'text-6xl': return 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl';
+      case 'text-5xl': return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl';
+      case 'text-4xl': return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl';
+      case 'text-3xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl';
+      case 'text-2xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
       default: return fontSize;
     }
   }
   
-  return fontSize || 'text-4xl sm:text-3xl md:text-4xl lg:text-5xl';
+  return fontSize || 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl';
 };
 
 export const getSubtitleFontSize = (styles: any) => {
-  // Handle direct pixel values or custom font sizes
+  // Handle custom pixel values with proper mobile-first responsive scaling
   if (styles.customSubtitleFontSize) {
     const pixelSize = parseInt(styles.customSubtitleFontSize);
-    if (pixelSize) {
-      // Use actual custom pixel values with responsive scaling
-      const mobileSize = Math.max(20, pixelSize * 0.75); // At least 20px on mobile, 75% of desktop
-      const tabletSize = Math.max(24, pixelSize * 0.85); // 85% of desktop
-      return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
+    if (pixelSize && pixelSize > 0) {
+      // Mobile-first approach: mobile (65%), tablet (85%), desktop (100%)
+      const mobileSize = Math.max(18, Math.round(pixelSize * 0.65));
+      const tabletSize = Math.max(20, Math.round(pixelSize * 0.85));
+      return `text-[${mobileSize}px] sm:text-[${Math.round(mobileSize * 1.1)}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
     }
   }
   
+  // Handle 'custom' type with customSubtitleFontSize
   if (styles.subtitleFontSize === 'custom' && styles.customSubtitleFontSize) {
     const pixelSize = parseInt(styles.customSubtitleFontSize) || 24;
-    const mobileSize = Math.max(20, pixelSize * 0.75);
-    const tabletSize = Math.max(24, pixelSize * 0.85);
-    return `text-[${mobileSize}px] sm:text-[${mobileSize}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
+    const mobileSize = Math.max(18, Math.round(pixelSize * 0.65));
+    const tabletSize = Math.max(20, Math.round(pixelSize * 0.85));
+    return `text-[${mobileSize}px] sm:text-[${Math.round(mobileSize * 1.1)}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
   }
   
-  // Convert non-responsive Tailwind classes to responsive ones with large mobile, reasonable desktop
+  // Handle predefined Tailwind classes with mobile-first responsive scaling
   const fontSize = styles.subtitleFontSize;
   if (fontSize && !fontSize.includes('sm:')) {
     switch (fontSize) {
-      case 'text-3xl': return 'text-2xl sm:text-xl md:text-2xl lg:text-3xl';
-      case 'text-2xl': return 'text-xl sm:text-lg md:text-xl lg:text-2xl';
-      case 'text-xl': return 'text-lg sm:text-base md:text-lg lg:text-xl';
-      case 'text-lg': return 'text-base sm:text-sm md:text-base lg:text-lg';
+      case 'text-3xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl';
+      case 'text-2xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
+      case 'text-xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
+      case 'text-lg': return 'text-sm sm:text-sm md:text-base lg:text-lg';
       default: return fontSize;
     }
   }
   
-  return fontSize || 'text-2xl sm:text-xl md:text-2xl lg:text-3xl';
+  return fontSize || 'text-base sm:text-lg md:text-xl lg:text-2xl';
 };
 
 export const getContentFontSize = (styles: any) => {
-  // For content that's not specifically title/subtitle, use the legacy fontSize or subtitle size as fallback
-  return styles.fontSize || styles.subtitleFontSize || '';
+  // Handle custom content font sizes with mobile-first responsive scaling
+  if (styles.customContentFontSize) {
+    const pixelSize = parseInt(styles.customContentFontSize);
+    if (pixelSize && pixelSize > 0) {
+      const mobileSize = Math.max(14, Math.round(pixelSize * 0.8));
+      const tabletSize = Math.max(16, Math.round(pixelSize * 0.9));
+      return `text-[${mobileSize}px] sm:text-[${Math.round(mobileSize * 1.1)}px] md:text-[${tabletSize}px] lg:text-[${pixelSize}px]`;
+    }
+  }
+  
+  // Use fontSize or subtitleFontSize with responsive scaling
+  const fontSize = styles.fontSize || styles.subtitleFontSize;
+  if (fontSize && !fontSize.includes('sm:')) {
+    switch (fontSize) {
+      case 'text-2xl': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
+      case 'text-xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
+      case 'text-lg': return 'text-sm sm:text-sm md:text-base lg:text-lg';
+      case 'text-base': return 'text-sm sm:text-sm md:text-base lg:text-base';
+      default: return fontSize;
+    }
+  }
+  
+  return fontSize || 'text-sm sm:text-base md:text-lg';
 };
 
 export const getTitleSpacing = (styles: any) => {
-  return styles.titleSpacing || 'mb-4 sm:mb-6 md:mb-8';
+  return styles.titleSpacing || 'mb-3 sm:mb-4 md:mb-6 lg:mb-8';
 };
