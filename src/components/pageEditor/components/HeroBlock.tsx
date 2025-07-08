@@ -27,14 +27,14 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({ block }) => {
   
   return (
     <div 
-      className={`relative ${heroBackgroundClasses} text-white px-4 sm:px-6 md:px-8 text-center rounded-lg ${getHeightClass(block.content.height, 'hero')} flex items-center justify-center ${styleClasses}`}
+      className={`relative ${heroBackgroundClasses} text-white px-4 sm:px-6 md:px-8 text-center rounded-lg ${getHeightClass(block.content.height, 'hero')} flex items-center justify-center ${styleClasses} w-full max-w-full overflow-hidden`}
       style={{...inlineStyles, ...heroBackgroundStyles}}
     >
       {/* Dark overlay for background images to ensure text readability */}
       {block.content.backgroundImage && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-8 sm:py-12 md:py-16 space-y-4 sm:space-y-6">
+      <div className="relative z-10 max-w-4xl mx-auto px-2 sm:px-4 py-6 sm:py-8 md:py-16 space-y-3 sm:space-y-4 md:space-y-6 w-full">
         <h1 className={`${getTitleFontSize(styles)} font-bold leading-tight text-center`}>
           {block.content.title || 'Hero Title'}
         </h1>
