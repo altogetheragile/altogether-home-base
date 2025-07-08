@@ -3,10 +3,10 @@
 const updateDynamicFontSize = (variable: string, size: string | number) => {
   const pixelSize = typeof size === 'string' ? parseInt(size.replace('px', '')) : size;
   if (pixelSize && pixelSize > 0) {
-    // Create responsive scaling: mobile (70%), tablet (85%), desktop (100%)
-    const mobileSize = Math.max(16, Math.round(pixelSize * 0.7));
-    const tabletSize = Math.max(20, Math.round(pixelSize * 0.85));
-    const clampValue = `clamp(${mobileSize}px, ${Math.round(pixelSize / 16)}rem + 2vw, ${pixelSize}px)`;
+    // More aggressive mobile scaling: mobile (35%), tablet (65%), desktop (100%)
+    const mobileSize = Math.max(14, Math.round(pixelSize * 0.35));
+    const tabletSize = Math.max(18, Math.round(pixelSize * 0.65));
+    const clampValue = `clamp(${mobileSize}px, ${Math.round(pixelSize / 24)}rem + 1vw, ${pixelSize}px)`;
     document.documentElement.style.setProperty(variable, clampValue);
     console.log(`Updated ${variable} to ${clampValue}`);
   }
