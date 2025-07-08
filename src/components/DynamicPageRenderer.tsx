@@ -46,7 +46,9 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
           .filter(block => block.is_visible)
           .sort((a, b) => a.position - b.position)
           .map((block) => (
-            <ContentBlockRenderer key={block.id} block={block} />
+            <div key={block.id} className="content-block-spacing">
+              <ContentBlockRenderer block={block} />
+            </div>
           ))}
       </div>
       <Footer />

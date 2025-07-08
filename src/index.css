@@ -101,4 +101,20 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Dynamic font size variables for responsive content blocks */
+  :root {
+    --dynamic-title-size: clamp(1.5rem, 4vw, 3rem);
+    --dynamic-subtitle-size: clamp(1rem, 2.5vw, 1.5rem);
+    --dynamic-content-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  }
+
+  /* Content block spacing utility */
+  .content-block-spacing {
+    margin-bottom: clamp(1rem, 3vw, 2rem);
+  }
+
+  .content-block-spacing:last-child {
+    margin-bottom: 0;
+  }
 }

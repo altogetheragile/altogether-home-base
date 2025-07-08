@@ -23,18 +23,20 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block }) => {
       {block.content.backgroundImage && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
-      <div className="relative z-10 py-6 sm:py-8 md:py-12">
+      <div className="relative z-10 py-6 sm:py-8 md:py-12 space-y-4 sm:space-y-6">
         {block.content.title && (
-          <h3 className={`${getTitleFontSize(styles)} font-semibold ${getTitleSpacing(styles)}`}>
+          <h3 className={`${getTitleFontSize(styles)} font-semibold`}>
             {block.content.title}
           </h3>
         )}
         {block.content.content && (
-          <div className="prose max-w-none mb-6 sm:mb-8">
+          <div className="max-w-none">
             <p className={`${getContentFontSize(styles)} leading-relaxed`}>{block.content.content}</p>
           </div>
         )}
-        <ButtonRenderer content={block.content} styles={styles} />
+        <div>
+          <ButtonRenderer content={block.content} styles={styles} />
+        </div>
       </div>
     </div>
   );

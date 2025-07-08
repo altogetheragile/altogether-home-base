@@ -23,14 +23,14 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({ block }) => {
       {block.content.backgroundImage && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
-      <div className={`relative z-10 py-8 sm:py-12 md:py-16 ${block.content.backgroundImage ? '' : ''}`}>
+      <div className="relative z-10 py-8 sm:py-12 md:py-16 space-y-6 sm:space-y-8">
         {block.content.title && (
-          <h2 className={`${getTitleFontSize(styles)} font-bold ${getTitleSpacing(styles)} text-center`}>
+          <h2 className={`${getTitleFontSize(styles)} font-bold text-center`}>
             {block.content.title}
           </h2>
         )}
         {block.content.content && (
-          <div className={`prose ${getContentFontSize(styles) ? '' : 'prose-lg'} mx-auto max-w-4xl mb-6 sm:mb-8`}>
+          <div className="mx-auto max-w-4xl">
             <p className={`${getContentFontSize(styles)} leading-relaxed text-center`}>{block.content.content}</p>
           </div>
         )}
