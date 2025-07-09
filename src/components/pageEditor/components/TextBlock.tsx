@@ -16,7 +16,7 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block }) => {
 
   return (
     <div 
-      className={`relative ${getHeightClass(block.content.height, 'text')} ${styleClasses} ${block.content.backgroundImage ? 'text-white' : ''} w-full max-w-full overflow-hidden`} 
+      className={`relative px-4 sm:px-6 md:px-8 ${getHeightClass(block.content.height, 'text')} ${styleClasses} ${block.content.backgroundImage ? 'text-white' : ''} w-full max-w-full overflow-hidden`}
       style={{...inlineStyles, ...textBackgroundStyles}}
     >
       {/* Dark overlay for background images to ensure text readability */}
