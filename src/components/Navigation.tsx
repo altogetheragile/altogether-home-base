@@ -63,6 +63,16 @@ const Navigation = () => {
                 Events
               </Link>
               <Link
+                to="/knowledge"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/knowledge")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Knowledge Base
+              </Link>
+              <Link
                 to="/blog"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive("/blog")
@@ -186,6 +196,17 @@ const Navigation = () => {
                 }`}
               >
                 Events
+              </Link>
+              <Link
+                to="/knowledge"
+                onClick={() => setIsMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isActive("/knowledge")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Knowledge Base
               </Link>
               <Link
                 to="/blog"

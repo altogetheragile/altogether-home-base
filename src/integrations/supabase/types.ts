@@ -432,6 +432,387 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      knowledge_examples: {
+        Row: {
+          company_size: string | null
+          context: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          industry: string | null
+          outcome: string | null
+          position: number | null
+          technique_id: string | null
+          title: string
+        }
+        Insert: {
+          company_size?: string | null
+          context?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          industry?: string | null
+          outcome?: string | null
+          position?: number | null
+          technique_id?: string | null
+          title: string
+        }
+        Update: {
+          company_size?: string | null
+          context?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          industry?: string | null
+          outcome?: string | null
+          position?: number | null
+          technique_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_examples_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_learning_paths: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty_level: string | null
+          estimated_duration: string | null
+          id: string
+          is_published: boolean | null
+          name: string
+          slug: string
+          target_audience: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_duration?: string | null
+          id?: string
+          is_published?: boolean | null
+          name: string
+          slug: string
+          target_audience?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_duration?: string | null
+          id?: string
+          is_published?: boolean | null
+          name?: string
+          slug?: string
+          target_audience?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      knowledge_media: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          position: number | null
+          technique_id: string | null
+          thumbnail_url: string | null
+          title: string | null
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          position?: number | null
+          technique_id?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          position?: number | null
+          technique_id?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_media_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_path_techniques: {
+        Row: {
+          id: string
+          notes: string | null
+          path_id: string | null
+          position: number
+          technique_id: string | null
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          path_id?: string | null
+          position: number
+          technique_id?: string | null
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          path_id?: string | null
+          position?: number
+          technique_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_path_techniques_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_learning_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_path_techniques_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      knowledge_technique_relations: {
+        Row: {
+          created_at: string
+          id: string
+          related_technique_id: string | null
+          relation_type: string | null
+          strength: number | null
+          technique_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          related_technique_id?: string | null
+          relation_type?: string | null
+          strength?: number | null
+          technique_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          related_technique_id?: string | null
+          relation_type?: string | null
+          strength?: number | null
+          technique_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_technique_relations_related_technique_id_fkey"
+            columns: ["related_technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_technique_relations_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_technique_tags: {
+        Row: {
+          tag_id: string
+          technique_id: string
+        }
+        Insert: {
+          tag_id: string
+          technique_id: string
+        }
+        Update: {
+          tag_id?: string
+          technique_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_technique_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_technique_tags_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_techniques: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_complete: boolean | null
+          is_featured: boolean | null
+          is_published: boolean | null
+          name: string
+          originator: string | null
+          popularity_score: number | null
+          purpose: string | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          slug: string
+          updated_at: string
+          updated_by: string | null
+          view_count: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_complete?: boolean | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          name: string
+          originator?: string | null
+          popularity_score?: number | null
+          purpose?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_complete?: boolean | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          name?: string
+          originator?: string | null
+          popularity_score?: number | null
+          purpose?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_techniques_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       levels: {
         Row: {
           id: string

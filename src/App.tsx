@@ -12,6 +12,8 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Blog from "./pages/Blog";
+import KnowledgeBase from "./pages/KnowledgeBase";
+import KnowledgeTechniqueDetail from "./pages/KnowledgeTechniqueDetail";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
@@ -45,6 +47,8 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/knowledge" element={<KnowledgeBase />} />
+              <Route path="/knowledge/:slug" element={<KnowledgeTechniqueDetail />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
               
