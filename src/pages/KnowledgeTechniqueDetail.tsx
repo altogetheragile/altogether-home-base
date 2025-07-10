@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import Navigation from "@/components/Navigation";
 
 const KnowledgeTechniqueDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -89,6 +90,8 @@ const KnowledgeTechniqueDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
+      
       {/* Breadcrumb */}
       <div className="border-b bg-muted/30">
         <div className="container mx-auto px-4 py-4">

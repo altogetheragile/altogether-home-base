@@ -24,6 +24,7 @@ import AdminEventTypes from './AdminEventTypes';
 import AdminEventCategories from './AdminEventCategories';
 import AdminLevels from './AdminLevels';
 import AdminFormats from './AdminFormats';
+import AdminKnowledgeBase from './AdminKnowledgeBase';
 
 const AdminEvents = () => {
   const { data: events, isLoading, error } = useQuery({
@@ -120,10 +121,11 @@ const AdminEvents = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="events" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="event-management">Event Management</TabsTrigger>
           <TabsTrigger value="content-management">Content Management</TabsTrigger>
+          <TabsTrigger value="knowledge-management">Knowledge Base</TabsTrigger>
         </TabsList>
 
         <TabsContent value="events" className="space-y-6">
@@ -246,6 +248,10 @@ const AdminEvents = () => {
 
         <TabsContent value="content-management">
           <AdminPages />
+        </TabsContent>
+
+        <TabsContent value="knowledge-management">
+          <AdminKnowledgeBase />
         </TabsContent>
       </Tabs>
     </div>

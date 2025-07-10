@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
+import Navigation from "@/components/Navigation";
 
 const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,6 +38,8 @@ const KnowledgeBase = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
+      
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b">
         <div className="container mx-auto px-4 py-16">
