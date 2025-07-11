@@ -46,24 +46,36 @@ const AdminEventCategories = () => {
   const updateMutation = useUpdateEventCategory();
   const deleteMutation = useDeleteEventCategory();
 
-  const handleCreate = (data: { name: string }) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-      },
+  const handleCreate = async (data: { name: string }) => {
+    return new Promise<void>((resolve, reject) => {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          setIsCreateDialogOpen(false);
+          resolve();
+        },
+        onError: (error) => {
+          reject(error);
+        },
+      });
     });
   };
 
-  const handleEdit = (data: { name: string }) => {
+  const handleEdit = async (data: { name: string }) => {
     if (editingCategory) {
-      updateMutation.mutate(
-        { id: editingCategory.id, data },
-        {
-          onSuccess: () => {
-            setEditingCategory(null);
-          },
-        }
-      );
+      return new Promise<void>((resolve, reject) => {
+        updateMutation.mutate(
+          { id: editingCategory.id, data },
+          {
+            onSuccess: () => {
+              setEditingCategory(null);
+              resolve();
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          }
+        );
+      });
     }
   };
 
@@ -106,8 +118,12 @@ const AdminEventCategories = () => {
               <DialogTitle>Add New Event Category</DialogTitle>
             </DialogHeader>
             <SimpleForm
+              title="Category"
               onSubmit={handleCreate}
-              isLoading={createMutation.isPending}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              fields={[
+                { key: 'name', label: 'Name', type: 'text', required: true }
+              ]}
             />
           </DialogContent>
         </Dialog>
@@ -152,9 +168,13 @@ const AdminEventCategories = () => {
                             <DialogTitle>Edit Event Category</DialogTitle>
                           </DialogHeader>
                           <SimpleForm
-                            initialData={{ name: category.name }}
+                            title="Category"
                             onSubmit={handleEdit}
-                            isLoading={updateMutation.isPending}
+                            editingItem={category}
+                            onCancel={() => setEditingCategory(null)}
+                            fields={[
+                              { key: 'name', label: 'Name', type: 'text', required: true }
+                            ]}
                           />
                         </DialogContent>
                       </Dialog>

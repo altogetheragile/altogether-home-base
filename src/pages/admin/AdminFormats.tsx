@@ -46,24 +46,36 @@ const AdminFormats = () => {
   const updateMutation = useUpdateFormat();
   const deleteMutation = useDeleteFormat();
 
-  const handleCreate = (data: { name: string }) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-      },
+  const handleCreate = async (data: { name: string }) => {
+    return new Promise<void>((resolve, reject) => {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          setIsCreateDialogOpen(false);
+          resolve();
+        },
+        onError: (error) => {
+          reject(error);
+        },
+      });
     });
   };
 
-  const handleEdit = (data: { name: string }) => {
+  const handleEdit = async (data: { name: string }) => {
     if (editingFormat) {
-      updateMutation.mutate(
-        { id: editingFormat.id, data },
-        {
-          onSuccess: () => {
-            setEditingFormat(null);
-          },
-        }
-      );
+      return new Promise<void>((resolve, reject) => {
+        updateMutation.mutate(
+          { id: editingFormat.id, data },
+          {
+            onSuccess: () => {
+              setEditingFormat(null);
+              resolve();
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          }
+        );
+      });
     }
   };
 
@@ -106,8 +118,12 @@ const AdminFormats = () => {
               <DialogTitle>Add New Format</DialogTitle>
             </DialogHeader>
             <SimpleForm
+              title="Format"
               onSubmit={handleCreate}
-              isLoading={createMutation.isPending}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              fields={[
+                { key: 'name', label: 'Name', type: 'text', required: true }
+              ]}
             />
           </DialogContent>
         </Dialog>
@@ -152,9 +168,13 @@ const AdminFormats = () => {
                             <DialogTitle>Edit Format</DialogTitle>
                           </DialogHeader>
                           <SimpleForm
-                            initialData={{ name: format.name }}
+                            title="Format"
                             onSubmit={handleEdit}
-                            isLoading={updateMutation.isPending}
+                            editingItem={format}
+                            onCancel={() => setEditingFormat(null)}
+                            fields={[
+                              { key: 'name', label: 'Name', type: 'text', required: true }
+                            ]}
                           />
                         </DialogContent>
                       </Dialog>

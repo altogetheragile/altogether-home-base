@@ -46,24 +46,36 @@ const AdminEventTypes = () => {
   const updateMutation = useUpdateEventType();
   const deleteMutation = useDeleteEventType();
 
-  const handleCreate = (data: { name: string }) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-      },
+  const handleCreate = async (data: { name: string }) => {
+    return new Promise<void>((resolve, reject) => {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          setIsCreateDialogOpen(false);
+          resolve();
+        },
+        onError: (error) => {
+          reject(error);
+        },
+      });
     });
   };
 
-  const handleEdit = (data: { name: string }) => {
+  const handleEdit = async (data: { name: string }) => {
     if (editingEventType) {
-      updateMutation.mutate(
-        { id: editingEventType.id, data },
-        {
-          onSuccess: () => {
-            setEditingEventType(null);
-          },
-        }
-      );
+      return new Promise<void>((resolve, reject) => {
+        updateMutation.mutate(
+          { id: editingEventType.id, data },
+          {
+            onSuccess: () => {
+              setEditingEventType(null);
+              resolve();
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          }
+        );
+      });
     }
   };
 
@@ -106,8 +118,12 @@ const AdminEventTypes = () => {
               <DialogTitle>Add New Event Type</DialogTitle>
             </DialogHeader>
             <SimpleForm
+              title="Event Type"
               onSubmit={handleCreate}
-              isLoading={createMutation.isPending}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              fields={[
+                { key: 'name', label: 'Name', type: 'text', required: true }
+              ]}
             />
           </DialogContent>
         </Dialog>
@@ -152,9 +168,13 @@ const AdminEventTypes = () => {
                             <DialogTitle>Edit Event Type</DialogTitle>
                           </DialogHeader>
                           <SimpleForm
-                            initialData={{ name: eventType.name }}
+                            title="Event Type"
                             onSubmit={handleEdit}
-                            isLoading={updateMutation.isPending}
+                            editingItem={eventType}
+                            onCancel={() => setEditingEventType(null)}
+                            fields={[
+                              { key: 'name', label: 'Name', type: 'text', required: true }
+                            ]}
                           />
                         </DialogContent>
                       </Dialog>

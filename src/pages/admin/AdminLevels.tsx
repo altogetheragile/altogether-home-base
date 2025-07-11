@@ -46,24 +46,36 @@ const AdminLevels = () => {
   const updateMutation = useUpdateLevel();
   const deleteMutation = useDeleteLevel();
 
-  const handleCreate = (data: { name: string }) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-      },
+  const handleCreate = async (data: { name: string }) => {
+    return new Promise<void>((resolve, reject) => {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          setIsCreateDialogOpen(false);
+          resolve();
+        },
+        onError: (error) => {
+          reject(error);
+        },
+      });
     });
   };
 
-  const handleEdit = (data: { name: string }) => {
+  const handleEdit = async (data: { name: string }) => {
     if (editingLevel) {
-      updateMutation.mutate(
-        { id: editingLevel.id, data },
-        {
-          onSuccess: () => {
-            setEditingLevel(null);
-          },
-        }
-      );
+      return new Promise<void>((resolve, reject) => {
+        updateMutation.mutate(
+          { id: editingLevel.id, data },
+          {
+            onSuccess: () => {
+              setEditingLevel(null);
+              resolve();
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          }
+        );
+      });
     }
   };
 
@@ -106,8 +118,12 @@ const AdminLevels = () => {
               <DialogTitle>Add New Level</DialogTitle>
             </DialogHeader>
             <SimpleForm
+              title="Level"
               onSubmit={handleCreate}
-              isLoading={createMutation.isPending}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              fields={[
+                { key: 'name', label: 'Name', type: 'text', required: true }
+              ]}
             />
           </DialogContent>
         </Dialog>
@@ -152,9 +168,13 @@ const AdminLevels = () => {
                             <DialogTitle>Edit Level</DialogTitle>
                           </DialogHeader>
                           <SimpleForm
-                            initialData={{ name: level.name }}
+                            title="Level"
                             onSubmit={handleEdit}
-                            isLoading={updateMutation.isPending}
+                            editingItem={level}
+                            onCancel={() => setEditingLevel(null)}
+                            fields={[
+                              { key: 'name', label: 'Name', type: 'text', required: true }
+                            ]}
                           />
                         </DialogContent>
                       </Dialog>
