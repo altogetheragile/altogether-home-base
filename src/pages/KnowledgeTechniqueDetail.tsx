@@ -157,6 +157,17 @@ const KnowledgeTechniqueDetail = () => {
               </div>
             </div>
 
+            {/* Image */}
+            {technique.image_url && (
+              <div className="mb-8">
+                <img 
+                  src={technique.image_url} 
+                  alt={technique.name}
+                  className="w-full max-w-2xl mx-auto rounded-lg shadow-lg object-cover"
+                />
+              </div>
+            )}
+
             {/* Description */}
             {technique.description && (
               <div className="mb-8">
