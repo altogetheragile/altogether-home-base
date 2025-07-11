@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,9 +15,10 @@ interface SimpleFormProps {
   fields: Array<{
     key: string;
     label: string;
-    type: 'text' | 'textarea';
+    type: 'text' | 'textarea' | 'select';
     required?: boolean;
     placeholder?: string;
+    options?: Array<{ value: string; label: string }>;
   }>;
 }
 
@@ -96,6 +98,19 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFo
                 required={field.required}
                 rows={3}
               />
+            ) : field.type === 'select' ? (
+              <Select value={formData[field.key]} onValueChange={(value) => handleChange(field.key, value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={field.placeholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  {field.options?.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
               <Input
                 id={field.key}

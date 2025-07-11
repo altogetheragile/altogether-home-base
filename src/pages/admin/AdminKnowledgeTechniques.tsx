@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff, BookOpen } from 'lucide-react';
+import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ const AdminKnowledgeTechniques = () => {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingTechnique, setEditingTechnique] = useState<any>(null);
+  const { data: categories } = useKnowledgeCategories();
 
   const { data: techniques, isLoading, refetch } = useQuery({
     queryKey: ['admin-knowledge-techniques'],
@@ -38,37 +40,55 @@ const AdminKnowledgeTechniques = () => {
   });
 
   const handleSubmit = async (formData: any) => {
-    const { name, slug, description, purpose, originator } = formData;
-    
-    if (editingTechnique) {
-      const { error } = await supabase
-        .from('knowledge_techniques')
-        .update({
-          name,
-          slug,
-          description,
-          purpose,
-          originator,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', editingTechnique.id);
+    try {
+      const { name, slug, description, purpose, originator, category_id } = formData;
+      
+      if (editingTechnique) {
+        const { error } = await supabase
+          .from('knowledge_techniques')
+          .update({
+            name,
+            slug,
+            description,
+            purpose,
+            originator,
+            category_id: category_id || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingTechnique.id);
 
-      if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from('knowledge_techniques')
-        .insert({
-          name,
-          slug,
-          description,
-          purpose,
-          originator,
-        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('knowledge_techniques')
+          .insert({
+            name,
+            slug,
+            description,
+            purpose,
+            originator,
+            category_id: category_id || null,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: `Technique ${editingTechnique ? 'updated' : 'created'} successfully.`,
+      });
+      
+      setShowForm(false);
+      setEditingTechnique(null);
+      refetch();
+    } catch (error) {
+      console.error('Save error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to ${editingTechnique ? 'update' : 'create'} technique.`,
+        variant: "destructive",
+      });
     }
-
-    refetch();
   };
 
   const handleEdit = (technique: any) => {
@@ -129,6 +149,13 @@ const AdminKnowledgeTechniques = () => {
   const formFields = [
     { key: 'name', label: 'Name', type: 'text' as const, required: true },
     { key: 'slug', label: 'Slug', type: 'text' as const, required: true, placeholder: 'unique-slug-for-url' },
+    { 
+      key: 'category_id', 
+      label: 'Category', 
+      type: 'select' as const, 
+      options: categories?.map(cat => ({ value: cat.id, label: cat.name })) || [],
+      placeholder: 'Select a category'
+    },
     { key: 'description', label: 'Description', type: 'textarea' as const },
     { key: 'purpose', label: 'Purpose', type: 'textarea' as const },
     { key: 'originator', label: 'Originator', type: 'text' as const },
