@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { Plus, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,7 +16,7 @@ interface SimpleFormProps {
   fields: Array<{
     key: string;
     label: string;
-    type: 'text' | 'textarea' | 'select';
+    type: 'text' | 'textarea' | 'select' | 'image';
     required?: boolean;
     placeholder?: string;
     options?: Array<{ value: string; label: string }>;
@@ -111,6 +112,11 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFo
                   ))}
                 </SelectContent>
               </Select>
+            ) : field.type === 'image' ? (
+              <ImageUpload
+                value={formData[field.key]}
+                onChange={(url) => handleChange(field.key, url)}
+              />
             ) : (
               <Input
                 id={field.key}

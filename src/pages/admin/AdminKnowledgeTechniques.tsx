@@ -41,7 +41,7 @@ const AdminKnowledgeTechniques = () => {
 
   const handleSubmit = async (formData: any) => {
     try {
-      const { name, slug, description, purpose, originator, category_id } = formData;
+      const { name, slug, description, purpose, originator, category_id, image_url } = formData;
       
       if (editingTechnique) {
         const { error } = await supabase
@@ -53,6 +53,7 @@ const AdminKnowledgeTechniques = () => {
             purpose,
             originator,
             category_id: category_id || null,
+            image_url: image_url || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingTechnique.id);
@@ -68,6 +69,7 @@ const AdminKnowledgeTechniques = () => {
             purpose,
             originator,
             category_id: category_id || null,
+            image_url: image_url || null,
           });
 
         if (error) throw error;
@@ -156,6 +158,7 @@ const AdminKnowledgeTechniques = () => {
       options: categories?.map(cat => ({ value: cat.id, label: cat.name })) || [],
       placeholder: 'Select a category'
     },
+    { key: 'image_url', label: 'Image', type: 'image' as const },
     { key: 'description', label: 'Description', type: 'textarea' as const },
     { key: 'purpose', label: 'Purpose', type: 'textarea' as const },
     { key: 'originator', label: 'Originator', type: 'text' as const },
