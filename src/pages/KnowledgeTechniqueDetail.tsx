@@ -182,7 +182,7 @@ const KnowledgeTechniqueDetail = () => {
                     <img 
                       src={currentMedia.url} 
                       alt={currentMedia.title || technique.name}
-                      className="w-full rounded-lg shadow-lg object-contain"
+                      className="w-full h-96 rounded-lg shadow-lg object-cover"
                     />
                   ) : currentMedia?.type === 'video' ? (
                     <div className="relative w-full rounded-lg overflow-hidden shadow-lg">
