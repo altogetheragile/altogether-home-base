@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff, BookOpen } from 'lucide-react';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
+import { type MediaItem } from '@/components/ui/media-upload';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,8 @@ const AdminKnowledgeTechniques = () => {
         .from('knowledge_techniques')
         .select(`
           *,
-          category:knowledge_categories(name, color)
+          category:knowledge_categories(name, color),
+          knowledge_media(id, type, title, description, url, thumbnail_url, position)
         `)
         .order('created_at', { ascending: false });
 
@@ -41,7 +43,9 @@ const AdminKnowledgeTechniques = () => {
 
   const handleSubmit = async (formData: any) => {
     try {
-      const { name, slug, description, purpose, originator, category_id, image_url } = formData;
+      const { name, slug, description, purpose, originator, category_id, media } = formData;
+      
+      let techniqueId: string;
       
       if (editingTechnique) {
         const { error } = await supabase
@@ -53,14 +57,14 @@ const AdminKnowledgeTechniques = () => {
             purpose,
             originator,
             category_id: category_id || null,
-            image_url: image_url || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingTechnique.id);
 
         if (error) throw error;
+        techniqueId = editingTechnique.id;
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('knowledge_techniques')
           .insert({
             name,
@@ -69,10 +73,38 @@ const AdminKnowledgeTechniques = () => {
             purpose,
             originator,
             category_id: category_id || null,
-            image_url: image_url || null,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+        techniqueId = data.id;
+      }
+
+      // Handle media uploads
+      if (media && Array.isArray(media) && media.length > 0) {
+        // First, delete existing media for this technique
+        await supabase
+          .from('knowledge_media')
+          .delete()
+          .eq('technique_id', techniqueId);
+
+        // Then insert new media items
+        const mediaToInsert = media.map((item: MediaItem, index: number) => ({
+          technique_id: techniqueId,
+          type: item.type,
+          title: item.title,
+          description: item.description,
+          url: item.url,
+          thumbnail_url: item.thumbnail_url,
+          position: index
+        }));
+
+        const { error: mediaError } = await supabase
+          .from('knowledge_media')
+          .insert(mediaToInsert);
+
+        if (mediaError) throw mediaError;
       }
 
       toast({
@@ -148,6 +180,17 @@ const AdminKnowledgeTechniques = () => {
     }
   };
 
+  // Prepare existing media for editing
+  const existingMedia: MediaItem[] = editingTechnique?.knowledge_media?.map((media: any, index: number) => ({
+    id: media.id,
+    type: media.type,
+    title: media.title,
+    description: media.description,
+    url: media.url,
+    thumbnail_url: media.thumbnail_url,
+    position: index
+  })) || [];
+
   const formFields = [
     { key: 'name', label: 'Name', type: 'text' as const, required: true },
     { key: 'slug', label: 'Slug', type: 'text' as const, required: true, placeholder: 'unique-slug-for-url' },
@@ -158,10 +201,10 @@ const AdminKnowledgeTechniques = () => {
       options: categories?.map(cat => ({ value: cat.id, label: cat.name })) || [],
       placeholder: 'Select a category'
     },
-    { key: 'image_url', label: 'Image', type: 'image' as const },
     { key: 'description', label: 'Description', type: 'textarea' as const },
     { key: 'purpose', label: 'Purpose', type: 'textarea' as const },
     { key: 'originator', label: 'Originator', type: 'text' as const },
+    { key: 'media', label: 'Media Gallery (Images & Videos)', type: 'media' as const },
   ];
 
   if (isLoading) {

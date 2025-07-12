@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { MediaUpload, type MediaItem } from '@/components/ui/media-upload';
 import { Plus, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,7 +17,7 @@ interface SimpleFormProps {
   fields: Array<{
     key: string;
     label: string;
-    type: 'text' | 'textarea' | 'select' | 'image';
+    type: 'text' | 'textarea' | 'select' | 'image' | 'media';
     required?: boolean;
     placeholder?: string;
     options?: Array<{ value: string; label: string }>;
@@ -28,7 +29,20 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFo
   const [formData, setFormData] = useState(() => {
     const initial: any = {};
     fields.forEach(field => {
-      initial[field.key] = editingItem?.[field.key] || '';
+      if (field.type === 'media') {
+        // Handle media fields with existing data
+        initial[field.key] = editingItem?.knowledge_media?.map((media: any, index: number) => ({
+          id: media.id,
+          type: media.type,
+          title: media.title,
+          description: media.description,
+          url: media.url,
+          thumbnail_url: media.thumbnail_url,
+          position: index
+        })) || [];
+      } else {
+        initial[field.key] = editingItem?.[field.key] || '';
+      }
     });
     return initial;
   });
@@ -116,6 +130,11 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFo
               <ImageUpload
                 value={formData[field.key]}
                 onChange={(url) => handleChange(field.key, url)}
+              />
+            ) : field.type === 'media' ? (
+              <MediaUpload
+                value={formData[field.key] || []}
+                onChange={(media) => setFormData(prev => ({ ...prev, [field.key]: media }))}
               />
             ) : (
               <Input
