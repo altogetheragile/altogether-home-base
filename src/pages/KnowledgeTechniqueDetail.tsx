@@ -122,9 +122,9 @@ const KnowledgeTechniqueDetail = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="max-w-4xl mx-auto">
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <div>
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-start justify-between mb-4">
@@ -182,7 +182,7 @@ const KnowledgeTechniqueDetail = () => {
                     <img 
                       src={currentMedia.url} 
                       alt={currentMedia.title || technique.name}
-                      className="w-full rounded-lg shadow-lg object-cover max-h-[600px]"
+                      className="w-full rounded-lg shadow-lg object-contain"
                     />
                   ) : currentMedia?.type === 'video' ? (
                     <div className="relative w-full rounded-lg overflow-hidden shadow-lg">
@@ -338,64 +338,6 @@ const KnowledgeTechniqueDetail = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-4">
-              {/* Quick Actions */}
-              <Card>
-                <CardContent className="p-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => navigator.clipboard.writeText(window.location.href)}
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Key Info - Condensed */}
-              <Card>
-                <CardContent className="p-4 space-y-3">
-                  {technique.knowledge_categories && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Category</span>
-                      <Badge 
-                        variant="secondary" 
-                        style={{ 
-                          backgroundColor: `${technique.knowledge_categories.color}20`, 
-                          color: technique.knowledge_categories.color 
-                        }}
-                      >
-                        {technique.knowledge_categories.name}
-                      </Badge>
-                    </div>
-                  )}
-                  
-                  {technique.originator && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">By</span>
-                      <span className="text-sm font-medium">{technique.originator}</span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Status</span>
-                    <Badge variant={technique.is_complete ? "default" : "secondary"} className="text-xs">
-                      {technique.is_complete ? "Complete" : "In Progress"}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Views</span>
-                    <span className="text-sm font-medium">{technique.view_count}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </div>
         </div>
       </div>
