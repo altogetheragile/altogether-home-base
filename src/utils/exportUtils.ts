@@ -32,7 +32,7 @@ export const exportToCSV = (data: any[], filename: string) => {
   document.body.removeChild(link);
 };
 
-export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 'instructors') => {
+export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 'instructors' | 'techniques' | 'analytics') => {
   switch (type) {
     case 'events':
       return data.map(event => ({
@@ -60,6 +60,29 @@ export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 
         Bio: instructor.bio || '',
         'Profile Image': instructor.profile_image_url || '',
         'Created At': new Date(instructor.created_at).toLocaleDateString(),
+      }));
+    
+    case 'techniques':
+      return data.map(technique => ({
+        Name: technique.name,
+        Slug: technique.slug,
+        Summary: technique.summary || '',
+        'Difficulty Level': technique.difficulty_level || '',
+        'Reading Time': technique.estimated_reading_time || 0,
+        Published: technique.is_published ? 'Yes' : 'No',
+        'View Count': technique.view_count || 0,
+        Category: technique.category || '',
+        'Created At': new Date(technique.created_at).toLocaleDateString(),
+      }));
+    
+    case 'analytics':
+      return data.map(item => ({
+        Query: item.query,
+        'Results Count': item.results_count,
+        'User ID': item.user_id || '',
+        'Session ID': item.session_id || '',
+        'IP Address': item.ip_address || '',
+        'Created At': new Date(item.created_at).toLocaleDateString(),
       }));
     
     default:

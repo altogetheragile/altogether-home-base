@@ -1,53 +1,120 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface RelatedTechnique {
+interface TechniqueRelation {
   id: string;
-  name: string;
-  slug: string;
-  summary: string | null;
-  difficulty_level: string | null;
+  source_technique_id: string;
+  related_technique_id: string;
   relation_type: string;
   strength: number;
+  created_at: string;
+}
+
+interface CreateRelationData {
+  source_technique_id: string;
+  related_technique_id: string;
+  relation_type: string;
+  strength?: number;
 }
 
 export const useTechniqueRelations = (techniqueId: string) => {
   return useQuery({
     queryKey: ['technique-relations', techniqueId],
-    queryFn: async (): Promise<RelatedTechnique[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('technique_relations')
         .select(`
-          relation_type,
-          strength,
-          related_technique:knowledge_techniques!technique_relations_related_technique_id_fkey(
+          *,
+          knowledge_techniques!technique_relations_related_technique_id_fkey(
             id,
             name,
             slug,
-            summary,
-            difficulty_level
+            summary
           )
         `)
         .eq('source_technique_id', techniqueId)
         .order('strength', { ascending: false });
 
       if (error) throw error;
-
-      return (data || [])
-        .filter(relation => relation.related_technique)
-        .map(relation => {
-          const technique = relation.related_technique as any;
-          return {
-            id: technique.id,
-            name: technique.name,
-            slug: technique.slug,
-            summary: technique.summary,
-            difficulty_level: technique.difficulty_level,
-            relation_type: relation.relation_type,
-            strength: relation.strength,
-          };
-        });
+      return data;
     },
-    enabled: !!techniqueId,
   });
+};
+
+export const useCreateTechniqueRelation = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (relationData: CreateRelationData) => {
+      const { data, error } = await supabase
+        .from('technique_relations')
+        .insert({
+          source_technique_id: relationData.source_technique_id,
+          related_technique_id: relationData.related_technique_id,
+          relation_type: relationData.relation_type,
+          strength: relationData.strength || 1,
+        });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Relation created",
+        description: "The technique relation has been created successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['technique-relations'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create technique relation. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Relation creation error:', error);
+    },
+  });
+};
+
+export const useDeleteTechniqueRelation = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (relationId: string) => {
+      const { error } = await supabase
+        .from('technique_relations')
+        .delete()
+        .eq('id', relationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Relation deleted",
+        description: "The technique relation has been deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['technique-relations'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete technique relation. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Relation deletion error:', error);
+    },
+  });
+};
+
+export const useRelationTypes = () => {
+  return [
+    { value: 'prerequisite', label: 'Prerequisite' },
+    { value: 'related', label: 'Related' },
+    { value: 'advanced', label: 'Advanced Topic' },
+    { value: 'alternative', label: 'Alternative Approach' },
+    { value: 'complement', label: 'Complementary' },
+  ];
 };

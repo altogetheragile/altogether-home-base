@@ -1,125 +1,110 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Clock, Star } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useTechniqueRelations } from '@/hooks/useTechniqueRelations';
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { ArrowRight, BookOpen } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { DifficultyBadge } from "./DifficultyBadge";
 
 interface RelatedTechniquesProps {
   techniqueId: string;
+  categoryId?: string;
 }
 
-const getRelationTypeLabel = (type: string) => {
-  switch (type) {
-    case 'prerequisite':
-      return 'Prerequisite';
-    case 'follow_up':
-      return 'Follow-up';
-    case 'see_also':
-      return 'See also';
-    default:
-      return 'Related';
-  }
-};
+export const RelatedTechniques = ({ techniqueId, categoryId }: RelatedTechniquesProps) => {
+  const { data: relatedTechniques = [] } = useQuery({
+    queryKey: ['related-techniques', techniqueId],
+    queryFn: async () => {
+      // First, try to get explicitly related techniques
+      const { data: explicitRelations } = await supabase
+        .from('technique_relations')
+        .select(`
+          related_technique_id,
+          relation_type,
+          strength,
+          knowledge_techniques!technique_relations_related_technique_id_fkey(
+            id,
+            name,
+            slug,
+            summary,
+            difficulty_level,
+            estimated_reading_time
+          )
+        `)
+        .eq('source_technique_id', techniqueId)
+        .order('strength', { ascending: false })
+        .limit(3);
 
-const getDifficultyColor = (difficulty: string | null) => {
-  switch (difficulty) {
-    case 'Beginner':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'Intermediate':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'Advanced':
-      return 'bg-red-100 text-red-800 border-red-200';
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-  }
-};
+      let techniques: any[] = explicitRelations?.map(rel => rel.knowledge_techniques).filter(Boolean) || [];
 
-export const RelatedTechniques = ({ techniqueId }: RelatedTechniquesProps) => {
-  const { data: relatedTechniques, isLoading } = useTechniqueRelations(techniqueId);
+      // If we don't have enough explicit relations, find techniques in the same category
+      if (techniques.length < 3 && categoryId) {
+        const { data: categoryTechniques } = await supabase
+          .from('knowledge_techniques')
+          .select('id, name, slug, summary, difficulty_level, estimated_reading_time')
+          .eq('category_id', categoryId)
+          .eq('is_published', true)
+          .neq('id', techniqueId)
+          .order('popularity_score', { ascending: false })
+          .limit(6 - techniques.length);
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Related Techniques</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+        if (categoryTechniques) {
+          techniques = [...techniques, ...categoryTechniques];
+        }
+      }
 
-  if (!relatedTechniques || relatedTechniques.length === 0) {
-    return null;
-  }
+      return techniques.slice(0, 3);
+    },
+  });
 
-  // Group techniques by relation type
-  const groupedTechniques = relatedTechniques.reduce((acc, technique) => {
-    const type = technique.relation_type;
-    if (!acc[type]) {
-      acc[type] = [];
-    }
-    acc[type].push(technique);
-    return acc;
-  }, {} as Record<string, typeof relatedTechniques>);
+  if (relatedTechniques.length === 0) return null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Star className="h-5 w-5" />
+          <BookOpen className="h-5 w-5" />
           Related Techniques
         </CardTitle>
-        <CardDescription>
-          Discover more techniques to enhance your delivery approach
-        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {Object.entries(groupedTechniques).map(([relationType, techniques]) => (
-          <div key={relationType} className="space-y-3">
-            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-              {getRelationTypeLabel(relationType)}
-            </h4>
-            <div className="space-y-3">
-              {techniques.map((technique) => (
-                <Link
-                  key={technique.id}
-                  to={`/knowledge-base/${technique.slug}`}
-                  className="block group"
-                >
-                  <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h5 className="font-medium truncate group-hover:text-primary transition-colors">
-                          {technique.name}
-                        </h5>
-                        {technique.difficulty_level && (
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs ${getDifficultyColor(technique.difficulty_level)}`}
-                          >
-                            {technique.difficulty_level}
-                          </Badge>
-                        )}
-                      </div>
-                      {technique.summary && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {technique.summary}
-                        </p>
-                      )}
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                  </div>
+      <CardContent className="space-y-4">
+        {relatedTechniques.map((technique) => (
+          <div
+            key={technique.id}
+            className="group border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                  {technique.name}
+                </h4>
+                {technique.summary && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                    {technique.summary}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {technique.difficulty_level && (
+                    <DifficultyBadge level={technique.difficulty_level} />
+                  )}
+                  {technique.estimated_reading_time && (
+                    <Badge variant="outline" className="text-xs">
+                      {technique.estimated_reading_time} min read
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Link to={`/knowledge/${technique.slug}`}>
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
-              ))}
+              </Button>
             </div>
           </div>
         ))}

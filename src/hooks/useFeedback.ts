@@ -1,87 +1,84 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface FeedbackData {
   technique_id: string;
-  rating: -1 | 0 | 1;
+  rating?: number;
   comment?: string;
 }
 
-interface FeedbackStats {
-  positive: number;
-  negative: number;
-  neutral: number;
-  total: number;
-  average: number;
-}
-
-export const useFeedback = (techniqueId: string) => {
-  const queryClient = useQueryClient();
+export const useSubmitFeedback = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Get feedback stats for a technique
-  const { data: feedbackStats, isLoading } = useQuery({
-    queryKey: ['feedback-stats', techniqueId],
-    queryFn: async (): Promise<FeedbackStats> => {
-      const { data, error } = await supabase
-        .from('kb_feedback')
-        .select('rating')
-        .eq('technique_id', techniqueId);
-
-      if (error) throw error;
-
-      const positive = data.filter(f => f.rating === 1).length;
-      const negative = data.filter(f => f.rating === -1).length;
-      const neutral = data.filter(f => f.rating === 0).length;
-      const total = data.length;
-      const average = total > 0 ? data.reduce((sum, f) => sum + f.rating, 0) / total : 0;
-
-      return { positive, negative, neutral, total, average };
-    },
-    enabled: !!techniqueId,
-  });
-
-  // Submit feedback
-  const submitFeedback = useMutation({
-    mutationFn: async (feedbackData: FeedbackData) => {
-      // Get user's IP (simplified - in production you'd handle this server-side)
-      const response = await fetch('https://api.ipify.org?format=json');
-      const { ip } = await response.json();
-
+  return useMutation({
+    mutationFn: async (feedback: FeedbackData) => {
       const { data, error } = await supabase
         .from('kb_feedback')
         .insert({
-          ...feedbackData,
-          ip_address: ip,
-        })
-        .select()
-        .single();
+          technique_id: feedback.technique_id,
+          rating: feedback.rating,
+          comment: feedback.comment,
+        });
 
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feedback-stats', techniqueId] });
       toast({
-        title: "Thank you for your feedback!",
-        description: "Your input helps us improve our content.",
+        title: "Feedback submitted",
+        description: "Thank you for your feedback!",
       });
+      queryClient.invalidateQueries({ queryKey: ['technique-feedback'] });
     },
     onError: (error) => {
       toast({
-        title: "Error submitting feedback",
-        description: "Please try again later.",
+        title: "Error",
+        description: "Failed to submit feedback. Please try again.",
         variant: "destructive",
       });
       console.error('Feedback submission error:', error);
     },
   });
+};
 
-  return {
-    feedbackStats,
-    isLoading,
-    submitFeedback: submitFeedback.mutate,
-    isSubmitting: submitFeedback.isPending,
-  };
+export const useTechniqueFeedback = (techniqueId: string) => {
+  return useQuery({
+    queryKey: ['technique-feedback', techniqueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('kb_feedback')
+        .select('*')
+        .eq('technique_id', techniqueId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useFeedbackStats = (techniqueId: string) => {
+  return useQuery({
+    queryKey: ['feedback-stats', techniqueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('kb_feedback')
+        .select('rating')
+        .eq('technique_id', techniqueId)
+        .not('rating', 'is', null);
+
+      if (error) throw error;
+
+      if (!data.length) {
+        return { averageRating: 0, totalRatings: 0 };
+      }
+
+      const totalRatings = data.length;
+      const averageRating = data.reduce((sum, item) => sum + (item.rating || 0), 0) / totalRatings;
+
+      return { averageRating: Math.round(averageRating * 10) / 10, totalRatings };
+    },
+  });
 };
