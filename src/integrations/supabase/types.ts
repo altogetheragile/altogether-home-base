@@ -432,6 +432,44 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          rating: number | null
+          technique_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          rating?: number | null
+          technique_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          rating?: number | null
+          technique_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_feedback_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_categories: {
         Row: {
           color: string | null
@@ -742,14 +780,18 @@ export type Database = {
       knowledge_techniques: {
         Row: {
           category_id: string | null
+          content_type: string | null
           created_at: string
           created_by: string | null
           description: string | null
+          difficulty_level: string | null
+          estimated_reading_time: number | null
           id: string
           image_url: string | null
           is_complete: boolean | null
           is_featured: boolean | null
           is_published: boolean | null
+          last_reviewed_at: string | null
           name: string
           originator: string | null
           popularity_score: number | null
@@ -758,20 +800,25 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           slug: string
+          summary: string | null
           updated_at: string
           updated_by: string | null
           view_count: number | null
         }
         Insert: {
           category_id?: string | null
+          content_type?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          difficulty_level?: string | null
+          estimated_reading_time?: number | null
           id?: string
           image_url?: string | null
           is_complete?: boolean | null
           is_featured?: boolean | null
           is_published?: boolean | null
+          last_reviewed_at?: string | null
           name: string
           originator?: string | null
           popularity_score?: number | null
@@ -780,20 +827,25 @@ export type Database = {
           seo_keywords?: string[] | null
           seo_title?: string | null
           slug: string
+          summary?: string | null
           updated_at?: string
           updated_by?: string | null
           view_count?: number | null
         }
         Update: {
           category_id?: string | null
+          content_type?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          difficulty_level?: string | null
+          estimated_reading_time?: number | null
           id?: string
           image_url?: string | null
           is_complete?: boolean | null
           is_featured?: boolean | null
           is_published?: boolean | null
+          last_reviewed_at?: string | null
           name?: string
           originator?: string | null
           popularity_score?: number | null
@@ -802,6 +854,7 @@ export type Database = {
           seo_keywords?: string[] | null
           seo_title?: string | null
           slug?: string
+          summary?: string | null
           updated_at?: string
           updated_by?: string | null
           view_count?: number | null
@@ -917,6 +970,48 @@ export type Database = {
           role?: string
         }
         Relationships: []
+      }
+      technique_relations: {
+        Row: {
+          created_at: string
+          id: string
+          related_technique_id: string | null
+          relation_type: string | null
+          source_technique_id: string | null
+          strength: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          related_technique_id?: string | null
+          relation_type?: string | null
+          source_technique_id?: string | null
+          strength?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          related_technique_id?: string | null
+          relation_type?: string | null
+          source_technique_id?: string | null
+          strength?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technique_relations_related_technique_id_fkey"
+            columns: ["related_technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technique_relations_source_technique_id_fkey"
+            columns: ["source_technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

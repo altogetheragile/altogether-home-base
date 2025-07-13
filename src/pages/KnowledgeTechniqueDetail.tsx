@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, User, Tag, ExternalLink, Play, FileText, Image, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Calendar, User, Tag, ExternalLink, Play, FileText, Image, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useKnowledgeTechniqueBySlug } from "@/hooks/useKnowledgeTechniques";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import Navigation from "@/components/Navigation";
+import { FeedbackWidget } from "@/components/knowledge/FeedbackWidget";
+import { RelatedTechniques } from "@/components/knowledge/RelatedTechniques";
+import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
 import { useState } from "react";
 
 const KnowledgeTechniqueDetail = () => {
@@ -145,9 +148,27 @@ const KnowledgeTechniqueDetail = () => {
                 )}
               </div>
               
-              {technique.purpose && (
-                <p className="text-xl text-muted-foreground mb-4">{technique.purpose}</p>
+              {(technique.summary || technique.purpose) && (
+                <p className="text-xl text-muted-foreground mb-4">
+                  {technique.summary || technique.purpose}
+                </p>
               )}
+
+              {/* Meta information badges */}
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <DifficultyBadge difficulty={technique.difficulty_level} />
+                {technique.estimated_reading_time && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {technique.estimated_reading_time} min read
+                  </Badge>
+                )}
+                {technique.content_type && technique.content_type !== 'technique' && (
+                  <Badge variant="secondary">
+                    {technique.content_type}
+                  </Badge>
+                )}
+              </div>
 
               {technique.knowledge_tags && technique.knowledge_tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -338,6 +359,16 @@ const KnowledgeTechniqueDetail = () => {
                 </div>
               </div>
             )}
+
+            {/* Related Techniques */}
+            <div className="mb-8">
+              <RelatedTechniques techniqueId={technique.id} />
+            </div>
+
+            {/* Feedback Widget */}
+            <div className="mb-8">
+              <FeedbackWidget techniqueId={technique.id} />
+            </div>
           </div>
         </div>
       </div>
