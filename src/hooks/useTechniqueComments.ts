@@ -71,7 +71,7 @@ export const useTechniqueComments = (techniqueId: string) => {
 
       return commentsWithReplies;
     },
-    enabled: !!techniqueId && techniqueId !== 'undefined',
+    enabled: !!techniqueId && techniqueId !== 'undefined' && techniqueId !== 'null',
   });
 
   const addCommentMutation = useMutation({
