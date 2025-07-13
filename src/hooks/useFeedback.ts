@@ -85,6 +85,7 @@ export const useTechniqueFeedback = (techniqueId: string) => {
       if (error) throw error;
       return data;
     },
+    enabled: !!techniqueId && techniqueId !== 'undefined',
   });
 };
 
@@ -109,5 +110,6 @@ export const useFeedbackStats = (techniqueId: string) => {
 
       return { averageRating: Math.round(averageRating * 10) / 10, totalRatings };
     },
+    enabled: !!techniqueId && techniqueId !== 'undefined',
   });
 };
