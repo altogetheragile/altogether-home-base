@@ -14,6 +14,15 @@ export const useSubmitFeedback = () => {
 
   return useMutation({
     mutationFn: async (feedback: FeedbackData) => {
+      // Debug: Check current session before making the request
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('🔐 Feedback Debug - Current session:', {
+        hasSession: !!sessionData?.session,
+        hasAccessToken: !!sessionData?.session?.access_token,
+        userEmail: sessionData?.session?.user?.email,
+        uid: sessionData?.session?.user?.id
+      });
+
       const { data, error } = await supabase
         .from('kb_feedback')
         .insert({
@@ -22,7 +31,10 @@ export const useSubmitFeedback = () => {
           comment: feedback.comment,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Feedback submission error details:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

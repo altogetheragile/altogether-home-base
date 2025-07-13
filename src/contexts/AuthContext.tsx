@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('🔐 Auth state changed:', event, {
           userEmail: session?.user?.email,
           hasAccessToken: !!session?.access_token,
@@ -46,17 +46,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Debug: Test database connection with new session
         if (session?.access_token) {
           console.log('✅ Session established, testing DB connection...');
-          setTimeout(() => {
-            supabase.from('profiles').select('role').eq('id', session.user.id).single()
-              .then(({ data, error }) => {
-                console.log('🔍 Profile check result:', { data, error, uid: session.user.id });
-              });
+          // Use setTimeout to ensure the session is fully set
+          setTimeout(async () => {
+            try {
+              const { data, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+              console.log('🔍 Profile check result:', { data, error, uid: session.user.id });
+            } catch (err) {
+              console.error('Profile check failed:', err);
+            }
           }, 100);
         }
       }
     );
 
-    // Check for existing session
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Separate effect to check for existing session after auth listener is set up
+  useEffect(() => {
     console.log('🔍 Checking for existing session...');
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log('📋 Existing session check:', {
@@ -66,13 +73,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         error
       });
       
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      // Only set if we don't already have a session
+      if (!session && !user) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
     });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [user]); // Depend on user to avoid overwriting authenticated state
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
