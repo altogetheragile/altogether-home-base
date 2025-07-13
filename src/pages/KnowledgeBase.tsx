@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Filter, BookOpen, Users, Lightbulb } from "lucide-react";
+import { Search, Filter, BookOpen, Users, Lightbulb, TrendingUp } from "lucide-react";
 import { useKnowledgeTechniques } from "@/hooks/useKnowledgeTechniques";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useKnowledgeTags } from "@/hooks/useKnowledgeTags";
@@ -11,11 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import { AdvancedSearch } from "@/components/knowledge/AdvancedSearch";
+import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
 
 const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [selectedTag, setSelectedTag] = useState<string | undefined>();
+  const [sortBy, setSortBy] = useState("popularity");
   
   const { data: categories, isLoading: categoriesLoading } = useKnowledgeCategories();
   const { data: popularTags, isLoading: tagsLoading } = useKnowledgeTags(20);
@@ -23,6 +26,7 @@ const KnowledgeBase = () => {
     search: searchQuery,
     categoryId: selectedCategory,
     tag: selectedTag,
+    sortBy: sortBy,
   });
   const { data: featuredTechniques } = useKnowledgeTechniques({ featured: true, limit: 3 });
 
@@ -34,6 +38,7 @@ const KnowledgeBase = () => {
     setSearchQuery("");
     setSelectedCategory(undefined);
     setSelectedTag(undefined);
+    setSortBy("popularity");
   };
 
   return (
@@ -51,17 +56,19 @@ const KnowledgeBase = () => {
               Discover, learn, and apply proven techniques for building better products
             </p>
             
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search techniques, methods, or concepts..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10 h-12 text-lg"
-                />
-              </div>
+            {/* Advanced Search */}
+            <div className="max-w-4xl mx-auto mb-8">
+              <AdvancedSearch
+                searchQuery={searchQuery}
+                onSearchChange={handleSearch}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                selectedTag={selectedTag}
+                onTagChange={setSelectedTag}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                resultsCount={techniques?.length || 0}
+              />
             </div>
 
             {/* Quick Stats */}
@@ -245,29 +252,37 @@ const KnowledgeBase = () => {
                   {techniques.map((technique) => (
                     <Card key={technique.id} className="hover:shadow-lg transition-shadow">
                       <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg leading-tight">
-                            <Link 
-                              to={`/knowledge/${technique.slug}`} 
-                              className="hover:text-primary transition-colors"
-                            >
-                              {technique.name}
-                            </Link>
-                          </CardTitle>
-                          {technique.knowledge_categories && (
-                            <Badge 
-                              variant="secondary" 
-                              style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
-                            >
-                              {technique.knowledge_categories.name}
-                            </Badge>
-                          )}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg leading-tight">
+                              <Link 
+                                to={`/knowledge/${technique.slug}`} 
+                                className="hover:text-primary transition-colors"
+                              >
+                                {technique.name}
+                              </Link>
+                            </CardTitle>
+                            {technique.purpose && (
+                              <CardDescription className="text-sm mt-1">
+                                {technique.purpose}
+                              </CardDescription>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1 items-end">
+                            {technique.knowledge_categories && (
+                              <Badge 
+                                variant="secondary" 
+                                style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
+                                className="text-xs"
+                              >
+                                {technique.knowledge_categories.name}
+                              </Badge>
+                            )}
+                            {technique.difficulty_level && (
+                              <DifficultyBadge difficulty={technique.difficulty_level} className="text-xs" />
+                            )}
+                          </div>
                         </div>
-                        {technique.purpose && (
-                          <CardDescription className="text-sm">
-                            {technique.purpose}
-                          </CardDescription>
-                        )}
                       </CardHeader>
                       <CardContent>
                         {technique.description && (
@@ -288,6 +303,12 @@ const KnowledgeBase = () => {
                               <span className="flex items-center gap-1">
                                 <Users className="h-3 w-3" />
                                 {technique.view_count}
+                              </span>
+                            )}
+                            {technique.popularity_score > 0 && (
+                              <span className="flex items-center gap-1">
+                                <TrendingUp className="h-3 w-3" />
+                                {technique.popularity_score}
                               </span>
                             )}
                           </div>

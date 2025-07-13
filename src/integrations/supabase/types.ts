@@ -971,6 +971,42 @@ export type Database = {
         }
         Relationships: []
       }
+      search_analytics: {
+        Row: {
+          clicked_technique_id: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          query: string
+          results_count: number
+          search_filters: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_technique_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          query: string
+          results_count?: number
+          search_filters?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_technique_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          query?: string
+          results_count?: number
+          search_filters?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       technique_relations: {
         Row: {
           created_at: string

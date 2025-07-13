@@ -53,6 +53,7 @@ export const useKnowledgeTechniques = (params?: {
   tag?: string;
   featured?: boolean;
   limit?: number;
+  sortBy?: string;
 }) => {
   return useQuery({
     queryKey: ['knowledge-techniques', params],
@@ -68,11 +69,20 @@ export const useKnowledgeTechniques = (params?: {
           knowledge_media (id, type, title, url, thumbnail_url),
           knowledge_examples (id, title, description, context)
         `)
-        .eq('is_published', true)
-        .order('popularity_score', { ascending: false });
+        .eq('is_published', true);
 
-      if (params?.search) {
-        query = query.or(`name.ilike.%${params.search}%,description.ilike.%${params.search}%`);
+      // Enhanced search with full-text search
+      if (params?.search && params.search.length >= 2) {
+        // Use PostgreSQL full-text search for better results
+        const searchQuery = params.search.replace(/[^\w\s]/g, '').trim();
+        if (searchQuery) {
+          query = query.or(`
+            name.ilike.%${params.search}%,
+            description.ilike.%${params.search}%,
+            summary.ilike.%${params.search}%,
+            purpose.ilike.%${params.search}%
+          `);
+        }
       }
 
       if (params?.categoryId) {
@@ -81,6 +91,24 @@ export const useKnowledgeTechniques = (params?: {
 
       if (params?.featured) {
         query = query.eq('is_featured', true);
+      }
+
+      // Apply sorting
+      switch (params?.sortBy) {
+        case 'recent':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'alphabetical':
+          query = query.order('name', { ascending: true });
+          break;
+        case 'difficulty':
+          query = query.order('difficulty_level', { ascending: true, nullsFirst: true });
+          break;
+        case 'popularity':
+        default:
+          query = query.order('popularity_score', { ascending: false })
+                      .order('view_count', { ascending: false });
+          break;
       }
 
       if (params?.limit) {
@@ -92,10 +120,19 @@ export const useKnowledgeTechniques = (params?: {
       if (error) throw error;
 
       // Transform the data to flatten the tags structure
-      return data.map(technique => ({
+      const transformedData = data.map(technique => ({
         ...technique,
         knowledge_tags: technique.knowledge_technique_tags?.map(tt => tt.knowledge_tags).filter(Boolean) || []
       }));
+
+      // Additional client-side filtering for tags if needed
+      if (params?.tag) {
+        return transformedData.filter(technique => 
+          technique.knowledge_tags?.some(tag => tag.slug === params.tag)
+        );
+      }
+
+      return transformedData;
     },
   });
 };
