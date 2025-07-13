@@ -24,16 +24,28 @@ export const FeedbackWidget = ({ techniqueId }: FeedbackWidgetProps) => {
   const handleSubmit = () => {
     if (rating === 0 && !comment.trim()) return;
 
+    console.log('🔐 Auth Debug - Attempting to submit feedback:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      rating,
+      hasComment: !!comment.trim()
+    });
+
     submitFeedback.mutate({
       technique_id: techniqueId,
       rating: rating || undefined,
       comment: comment.trim() || undefined,
     }, {
       onSuccess: () => {
+        console.log('✅ Feedback submitted successfully');
         setRating(0);
         setComment("");
         setShowForm(false);
       },
+      onError: (error) => {
+        console.error('❌ Feedback submission failed:', error);
+      }
     });
   };
 

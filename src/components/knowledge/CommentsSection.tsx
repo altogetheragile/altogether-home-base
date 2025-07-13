@@ -27,6 +27,13 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   const handleSubmitComment = () => {
     if (!newComment.trim()) return;
     
+    console.log('🔐 Auth Debug - Attempting to add comment:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      commentContent: newComment.slice(0, 50) + '...'
+    });
+    
     addComment({ content: newComment });
     setNewComment('');
     toast.success('Comment added successfully');

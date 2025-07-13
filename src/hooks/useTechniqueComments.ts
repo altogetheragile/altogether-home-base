@@ -82,7 +82,17 @@ export const useTechniqueComments = (techniqueId: string) => {
       content: string; 
       parentCommentId?: string 
     }) => {
-      if (!user?.id) throw new Error('No user');
+      console.log('🔐 Auth Debug - Adding comment mutation:', {
+        hasUser: !!user?.id,
+        userId: user?.id,
+        techniqueId,
+        contentLength: content.length
+      });
+
+      if (!user?.id) {
+        console.error('❌ No user ID found when trying to add comment');
+        throw new Error('No user');
+      }
 
       const { data, error } = await supabase
         .from('technique_comments')
@@ -95,7 +105,12 @@ export const useTechniqueComments = (techniqueId: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Comment insertion error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Comment added successfully:', data);
       return data;
     },
     onSuccess: () => {
