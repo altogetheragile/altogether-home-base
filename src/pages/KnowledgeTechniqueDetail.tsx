@@ -10,6 +10,9 @@ import Navigation from "@/components/Navigation";
 import { FeedbackWidget } from "@/components/knowledge/FeedbackWidget";
 import { RelatedTechniques } from "@/components/knowledge/RelatedTechniques";
 import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
+import { ReadingProgress } from "@/components/knowledge/ReadingProgress";
+import { BookmarkButton } from "@/components/knowledge/BookmarkButton";
+import { CommentsSection } from "@/components/knowledge/CommentsSection";
 import { useState } from "react";
 
 const KnowledgeTechniqueDetail = () => {
@@ -115,12 +118,19 @@ const KnowledgeTechniqueDetail = () => {
       {/* Breadcrumb */}
       <div className="border-b bg-muted/30">
         <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/knowledge">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Knowledge Base
-            </Link>
-          </Button>
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/knowledge">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Knowledge Base
+              </Link>
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <BookmarkButton techniqueId={technique.id} showLabel />
+              <ReadingProgress techniqueId={technique.id} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -359,6 +369,11 @@ const KnowledgeTechniqueDetail = () => {
                 </div>
               </div>
             )}
+
+            {/* Comments Section */}
+            <div className="mb-8">
+              <CommentsSection techniqueId={technique.id} />
+            </div>
 
             {/* Related Techniques */}
             <div className="mb-8">

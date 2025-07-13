@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      comment_votes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          user_id: string
+          vote_type: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+          vote_type: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_votes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "technique_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           created_at: string | null
@@ -869,6 +901,90 @@ export type Database = {
           },
         ]
       }
+      learning_path_steps: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          is_optional: boolean | null
+          path_id: string
+          step_order: number
+          technique_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_optional?: boolean | null
+          path_id: string
+          step_order: number
+          technique_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_optional?: boolean | null
+          path_id?: string
+          step_order?: number
+          technique_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_path_steps_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_path_steps_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_paths: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty_level: string | null
+          estimated_duration_minutes: number | null
+          id: string
+          is_published: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_published?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_published?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       levels: {
         Row: {
           id: string
@@ -1007,6 +1123,60 @@ export type Database = {
         }
         Relationships: []
       }
+      technique_comments: {
+        Row: {
+          content: string
+          created_at: string
+          downvotes: number | null
+          id: string
+          is_approved: boolean | null
+          parent_comment_id: string | null
+          technique_id: string
+          updated_at: string
+          upvotes: number | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          downvotes?: number | null
+          id?: string
+          is_approved?: boolean | null
+          parent_comment_id?: string | null
+          technique_id: string
+          updated_at?: string
+          upvotes?: number | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          downvotes?: number | null
+          id?: string
+          is_approved?: boolean | null
+          parent_comment_id?: string | null
+          technique_id?: string
+          updated_at?: string
+          upvotes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technique_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "technique_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technique_comments_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technique_relations: {
         Row: {
           created_at: string
@@ -1043,6 +1213,228 @@ export type Database = {
           {
             foreignKeyName: "technique_relations_source_technique_id_fkey"
             columns: ["source_technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          technique_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          technique_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          technique_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bookmarks_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_contributed_examples: {
+        Row: {
+          company_size: string | null
+          context: string | null
+          created_at: string
+          description: string
+          id: string
+          industry: string | null
+          outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          submitted_by: string
+          technique_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_size?: string | null
+          context?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          industry?: string | null
+          outcome?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_by: string
+          technique_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_size?: string | null
+          context?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          industry?: string | null
+          outcome?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_by?: string
+          technique_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_contributed_examples_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_techniques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_learning_path_progress: {
+        Row: {
+          completed_at: string | null
+          completion_percentage: number | null
+          created_at: string
+          current_step_id: string | null
+          id: string
+          path_id: string
+          started_at: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          current_step_id?: string | null
+          id?: string
+          path_id: string
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          current_step_id?: string | null
+          id?: string
+          path_id?: string
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_learning_path_progress_current_step_id_fkey"
+            columns: ["current_step_id"]
+            isOneToOne: false
+            referencedRelation: "learning_path_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_learning_path_progress_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          display_preferences: Json | null
+          id: string
+          notification_settings: Json | null
+          preferred_categories: string[] | null
+          preferred_difficulty_levels: string[] | null
+          preferred_tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_preferences?: Json | null
+          id?: string
+          notification_settings?: Json | null
+          preferred_categories?: string[] | null
+          preferred_difficulty_levels?: string[] | null
+          preferred_tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_preferences?: Json | null
+          id?: string
+          notification_settings?: Json | null
+          preferred_categories?: string[] | null
+          preferred_difficulty_levels?: string[] | null
+          preferred_tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_reading_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          started_at: string | null
+          status: string
+          technique_id: string
+          time_spent_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: string
+          technique_id: string
+          time_spent_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: string
+          technique_id?: string
+          time_spent_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reading_progress_technique_id_fkey"
+            columns: ["technique_id"]
             isOneToOne: false
             referencedRelation: "knowledge_techniques"
             referencedColumns: ["id"]
