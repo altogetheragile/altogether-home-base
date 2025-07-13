@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ThumbsUp, ThumbsDown, MessageCircle, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTechniqueComments } from '@/hooks/useTechniqueComments';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -172,7 +173,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         </h3>
       </div>
 
-      {user && (
+      {user ? (
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
@@ -191,6 +192,20 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   Post Comment
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center space-y-3">
+              <MessageCircle className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Please sign in to join the discussion
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/auth">Sign In</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

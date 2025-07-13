@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Star, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSubmitFeedback, useFeedbackStats } from "@/hooks/useFeedback";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 interface FeedbackWidgetProps {
   techniqueId: string;
@@ -15,6 +17,7 @@ export const FeedbackWidget = ({ techniqueId }: FeedbackWidgetProps) => {
   const [comment, setComment] = useState("");
   const [showForm, setShowForm] = useState(false);
 
+  const { user } = useAuth();
   const submitFeedback = useSubmitFeedback();
   const { data: stats } = useFeedbackStats(techniqueId);
 
@@ -48,7 +51,17 @@ export const FeedbackWidget = ({ techniqueId }: FeedbackWidgetProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!showForm ? (
+        {!user ? (
+          <div className="text-center space-y-3 py-4">
+            <LogIn className="h-8 w-8 mx-auto text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Please sign in to leave feedback
+            </p>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/auth">Sign In</Link>
+            </Button>
+          </div>
+        ) : !showForm ? (
           <Button onClick={() => setShowForm(true)} variant="outline" className="w-full">
             Leave Feedback
           </Button>
