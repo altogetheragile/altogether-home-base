@@ -23,13 +23,23 @@ export const useSubmitFeedback = () => {
         uid: sessionData?.session?.user?.id
       });
 
+      const insertData: any = {
+        technique_id: feedback.technique_id,
+      };
+
+      // Only include rating if it's actually set (greater than 0)
+      if (feedback.rating && feedback.rating > 0) {
+        insertData.rating = feedback.rating;
+      }
+
+      // Only include comment if it's provided
+      if (feedback.comment && feedback.comment.trim()) {
+        insertData.comment = feedback.comment.trim();
+      }
+
       const { data, error } = await supabase
         .from('kb_feedback')
-        .insert({
-          technique_id: feedback.technique_id,
-          rating: feedback.rating,
-          comment: feedback.comment,
-        });
+        .insert(insertData);
 
       if (error) {
         console.error('❌ Feedback submission error details:', {

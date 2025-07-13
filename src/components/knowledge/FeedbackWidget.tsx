@@ -22,6 +22,7 @@ export const FeedbackWidget = ({ techniqueId }: FeedbackWidgetProps) => {
   const { data: stats } = useFeedbackStats(techniqueId);
 
   const handleSubmit = () => {
+    // Require either a rating (> 0) OR a comment
     if (rating === 0 && !comment.trim()) return;
 
     console.log('🔐 Auth Debug - Attempting to submit feedback:', {
@@ -119,7 +120,7 @@ export const FeedbackWidget = ({ techniqueId }: FeedbackWidgetProps) => {
             <div className="flex gap-2">
               <Button
                 onClick={handleSubmit}
-                disabled={rating === 0 && !comment.trim() || submitFeedback.isPending}
+                disabled={(rating === 0 && !comment.trim()) || submitFeedback.isPending}
                 className="flex-1"
               >
                 {submitFeedback.isPending ? "Submitting..." : "Submit Feedback"}
