@@ -32,9 +32,16 @@ export const useSubmitFeedback = () => {
         });
 
       if (error) {
-        console.error('❌ Feedback submission error details:', error);
+        console.error('❌ Feedback submission error details:', {
+          error,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
+      console.log('✅ Feedback submitted successfully:', data);
       return data;
     },
     onSuccess: () => {
