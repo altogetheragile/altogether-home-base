@@ -72,12 +72,20 @@ export const useTechniqueComments = (techniqueId: string) => {
       return commentsWithReplies;
     },
     enabled: (() => {
-      const isValid = !!techniqueId && techniqueId !== 'undefined' && techniqueId !== 'null' && techniqueId.length > 0;
+      const isValid = !!techniqueId && 
+                     typeof techniqueId === 'string' && 
+                     techniqueId !== 'undefined' && 
+                     techniqueId !== 'null' && 
+                     techniqueId.length > 0 &&
+                     !techniqueId.includes('undefined');
       if (!isValid) {
-        console.log('🚫 Blocking technique_comments API call - invalid techniqueId:', techniqueId);
+        console.log('🚫 Blocking technique_comments API call - invalid techniqueId:', techniqueId, typeof techniqueId);
       }
       return isValid;
     })(),
+    // Prevent stale data from causing 400 errors
+    staleTime: 0,
+    retry: false,
   });
 
   const addCommentMutation = useMutation({
