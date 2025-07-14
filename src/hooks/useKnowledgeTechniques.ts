@@ -80,12 +80,7 @@ export const useKnowledgeTechniques = (params?: {
         const searchTerm = params.search.trim();
         console.log('🔍 Search term after trim:', searchTerm);
         if (searchTerm) {
-          const searchFilter = `
-            name.ilike.%${searchTerm}%,
-            description.ilike.%${searchTerm}%,
-            summary.ilike.%${searchTerm}%,
-            purpose.ilike.%${searchTerm}%
-          `;
+          const searchFilter = `name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,summary.ilike.%${searchTerm}%,purpose.ilike.%${searchTerm}%`;
           console.log('🔍 Applying search filter:', searchFilter);
           query = query.or(searchFilter);
         }
