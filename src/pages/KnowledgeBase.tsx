@@ -24,8 +24,8 @@ const KnowledgeBase = () => {
   const { data: popularTags, isLoading: tagsLoading } = useKnowledgeTags(20);
   const { data: techniques, isLoading: techniquesLoading } = useKnowledgeTechniques({
     search: searchQuery,
-    categoryId: selectedCategory,
-    tag: selectedTag,
+    categoryId: selectedCategory === "all" ? undefined : selectedCategory,
+    tag: selectedTag === "all" ? undefined : selectedTag,
     sortBy: sortBy,
   });
   const { data: featuredTechniques } = useKnowledgeTechniques({ featured: true, limit: 3 });
@@ -36,8 +36,8 @@ const KnowledgeBase = () => {
 
   const clearFilters = () => {
     setSearchQuery("");
-    setSelectedCategory(undefined);
-    setSelectedTag(undefined);
+    setSelectedCategory("all");
+    setSelectedTag("all");
     setSortBy("popularity");
   };
 
@@ -100,7 +100,7 @@ const KnowledgeBase = () => {
                   <Filter className="h-4 w-4" />
                   Filters
                 </h3>
-                {(selectedCategory || selectedTag || searchQuery) && (
+                {(selectedCategory && selectedCategory !== "all" || selectedTag && selectedTag !== "all" || searchQuery) && (
                   <Button variant="ghost" size="sm" onClick={clearFilters}>
                     Clear all
                   </Button>
@@ -169,7 +169,7 @@ const KnowledgeBase = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Featured Techniques */}
-            {!searchQuery && !selectedCategory && !selectedTag && featuredTechniques && featuredTechniques.length > 0 && (
+            {!searchQuery && (!selectedCategory || selectedCategory === "all") && (!selectedTag || selectedTag === "all") && featuredTechniques && featuredTechniques.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                   <Lightbulb className="h-6 w-6 text-primary" />
@@ -229,7 +229,7 @@ const KnowledgeBase = () => {
             <div>
               <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <BookOpen className="h-6 w-6 text-primary" />
-                {searchQuery || selectedCategory || selectedTag ? 'Search Results' : 'All Techniques'}
+                {searchQuery || (selectedCategory && selectedCategory !== "all") || (selectedTag && selectedTag !== "all") ? 'Search Results' : 'All Techniques'}
               </h2>
               
               {techniquesLoading ? (
@@ -322,12 +322,12 @@ const KnowledgeBase = () => {
                   <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-muted-foreground mb-2">No techniques found</h3>
                   <p className="text-sm text-muted-foreground">
-                    {searchQuery || selectedCategory || selectedTag 
+                    {searchQuery || (selectedCategory && selectedCategory !== "all") || (selectedTag && selectedTag !== "all")
                       ? "Try adjusting your search criteria"
                       : "No techniques have been published yet"
                     }
                   </p>
-                  {(searchQuery || selectedCategory || selectedTag) && (
+                  {(searchQuery || (selectedCategory && selectedCategory !== "all") || (selectedTag && selectedTag !== "all")) && (
                     <Button variant="outline" onClick={clearFilters} className="mt-4">
                       Clear filters
                     </Button>

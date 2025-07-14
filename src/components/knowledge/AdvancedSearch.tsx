@@ -39,8 +39,8 @@ export const AdvancedSearch = ({
 
   const handleClearFilters = () => {
     onSearchChange("");
-    onCategoryChange(undefined);
-    onTagChange(undefined);
+    onCategoryChange("all");
+    onTagChange("all");
     onSortChange("popularity");
   };
 
@@ -95,7 +95,7 @@ export const AdvancedSearch = ({
                     <SelectValue placeholder="Any category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any category</SelectItem>
+                    <SelectItem value="all">Any category</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
@@ -112,7 +112,7 @@ export const AdvancedSearch = ({
                     <SelectValue placeholder="Any tag" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any tag</SelectItem>
+                    <SelectItem value="all">Any tag</SelectItem>
                     {tags.slice(0, 20).map((tag) => (
                       <SelectItem key={tag.id} value={tag.slug}>
                         {tag.name}
