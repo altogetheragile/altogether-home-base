@@ -73,14 +73,13 @@ export const useKnowledgeTechniques = (params?: {
 
       // Enhanced search with full-text search
       if (params?.search && params.search.length >= 2) {
-        // Use PostgreSQL full-text search for better results
-        const searchQuery = params.search.replace(/[^\w\s]/g, '').trim();
-        if (searchQuery) {
+        const searchTerm = params.search.trim();
+        if (searchTerm) {
           query = query.or(`
-            name.ilike.%${params.search}%,
-            description.ilike.%${params.search}%,
-            summary.ilike.%${params.search}%,
-            purpose.ilike.%${params.search}%
+            name.ilike.%${searchTerm}%,
+            description.ilike.%${searchTerm}%,
+            summary.ilike.%${searchTerm}%,
+            purpose.ilike.%${searchTerm}%
           `);
         }
       }
