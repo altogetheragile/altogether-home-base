@@ -58,6 +58,8 @@ export const useKnowledgeTechniques = (params?: {
   return useQuery({
     queryKey: ['knowledge-techniques', params],
     queryFn: async () => {
+      console.log('🔍 Knowledge techniques search params:', params);
+      
       let query = supabase
         .from('knowledge_techniques')
         .select(`
@@ -70,17 +72,22 @@ export const useKnowledgeTechniques = (params?: {
           knowledge_examples (id, title, description, context)
         `)
         .eq('is_published', true);
+      
+      console.log('🔍 Base query created');
 
       // Enhanced search with full-text search
       if (params?.search && params.search.length >= 2) {
         const searchTerm = params.search.trim();
+        console.log('🔍 Search term after trim:', searchTerm);
         if (searchTerm) {
-          query = query.or(`
+          const searchFilter = `
             name.ilike.%${searchTerm}%,
             description.ilike.%${searchTerm}%,
             summary.ilike.%${searchTerm}%,
             purpose.ilike.%${searchTerm}%
-          `);
+          `;
+          console.log('🔍 Applying search filter:', searchFilter);
+          query = query.or(searchFilter);
         }
       }
 
@@ -114,15 +121,24 @@ export const useKnowledgeTechniques = (params?: {
         query = query.limit(params.limit);
       }
 
+      console.log('🔍 Executing query...');
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Query error:', error);
+        throw error;
+      }
+
+      console.log('✅ Query successful, results count:', data?.length || 0);
+      console.log('📋 Raw data sample:', data?.slice(0, 2));
 
       // Transform the data to flatten the tags structure
       const transformedData = data.map(technique => ({
         ...technique,
         knowledge_tags: technique.knowledge_technique_tags?.map(tt => tt.knowledge_tags).filter(Boolean) || []
       }));
+
+      console.log('🔄 Transformed data sample:', transformedData?.slice(0, 2));
 
       // Additional client-side filtering for tags if needed
       if (params?.tag) {
