@@ -16,10 +16,14 @@ import { ReadingProgress } from "@/components/knowledge/ReadingProgress";
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton";
 import { CommentsSection } from "@/components/knowledge/CommentsSection";
 import { useState } from "react";
+import { useViewTracking } from "@/hooks/useViewTracking";
 
 const KnowledgeTechniqueDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: technique, isLoading, error } = useKnowledgeTechniqueBySlug(slug!);
+  
+  // Track view when technique is loaded
+  useViewTracking(technique?.id || '');
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [imageSize, setImageSize] = useState([600]); // Default image height in pixels
 

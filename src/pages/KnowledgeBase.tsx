@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter, BookOpen, Users, Lightbulb, TrendingUp } from "lucide-react";
 import { useKnowledgeTechniques } from "@/hooks/useKnowledgeTechniques";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useKnowledgeTags } from "@/hooks/useKnowledgeTags";
+import { useLogSearch } from "@/hooks/useSearchAnalytics";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ const KnowledgeBase = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [selectedTag, setSelectedTag] = useState<string | undefined>();
   const [sortBy, setSortBy] = useState("popularity");
+  const [lastSearchQuery, setLastSearchQuery] = useState<string>("");
   
   const { data: categories, isLoading: categoriesLoading } = useKnowledgeCategories();
   const { data: popularTags, isLoading: tagsLoading } = useKnowledgeTags(20);
@@ -29,6 +31,23 @@ const KnowledgeBase = () => {
     sortBy: sortBy,
   });
   const { data: featuredTechniques } = useKnowledgeTechniques({ featured: true, limit: 3 });
+  const logSearch = useLogSearch();
+
+  // Log search analytics when search results are received
+  useEffect(() => {
+    if (searchQuery && searchQuery !== lastSearchQuery && techniques) {
+      logSearch.mutate({
+        query: searchQuery,
+        results_count: techniques.length,
+        search_filters: {
+          category: selectedCategory,
+          tag: selectedTag,
+          sortBy: sortBy
+        }
+      });
+      setLastSearchQuery(searchQuery);
+    }
+  }, [searchQuery, techniques, selectedCategory, selectedTag, sortBy, lastSearchQuery, logSearch]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);

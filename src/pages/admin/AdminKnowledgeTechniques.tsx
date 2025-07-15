@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff, BookOpen, Tag } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { useKnowledgeTags } from '@/hooks/useKnowledgeTags';
 import { type MediaItem } from '@/components/ui/media-upload';
@@ -18,11 +19,15 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import SimpleForm from '@/components/admin/SimpleForm';
+import { BulkContentOperations } from '@/components/admin/BulkContentOperations';
+import { ContentAnalyticsDashboard } from '@/components/admin/ContentAnalyticsDashboard';
 
 const AdminKnowledgeTechniques = () => {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingTechnique, setEditingTechnique] = useState<any>(null);
+  const [selectedTechniques, setSelectedTechniques] = useState<string[]>([]);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const { data: categories } = useKnowledgeCategories();
   const { data: tags } = useKnowledgeTags();
 
@@ -266,6 +271,8 @@ const AdminKnowledgeTechniques = () => {
         />
       )}
 
+      {showAnalytics && <ContentAnalyticsDashboard />}
+
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
@@ -274,21 +281,47 @@ const AdminKnowledgeTechniques = () => {
           </h3>
           <p className="text-gray-600">Manage product delivery techniques and methods</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Add Technique</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowAnalytics(!showAnalytics)}
+          >
+            {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+          </Button>
+          <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
+            <Plus className="h-4 w-4" />
+            <span>Add Technique</span>
+          </Button>
+        </div>
       </div>
+
+      <BulkContentOperations
+        techniques={techniques || []}
+        selectedTechniques={selectedTechniques}
+        onSelectionChange={setSelectedTechniques}
+      />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedTechniques.length === techniques?.length && techniques.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedTechniques(techniques?.map(t => t.id) || []);
+                    } else {
+                      setSelectedTechniques([]);
+                    }
+                  }}
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Tags</TableHead>
-              <TableHead>Originator</TableHead>
+              <TableHead>Views</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -296,6 +329,18 @@ const AdminKnowledgeTechniques = () => {
           <TableBody>
             {techniques?.map((technique) => (
               <TableRow key={technique.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedTechniques.includes(technique.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedTechniques([...selectedTechniques, technique.id]);
+                      } else {
+                        setSelectedTechniques(selectedTechniques.filter(id => id !== technique.id));
+                      }
+                    }}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{technique.name}</TableCell>
                 <TableCell className="font-mono text-sm">{technique.slug}</TableCell>
                 <TableCell>
@@ -321,7 +366,12 @@ const AdminKnowledgeTechniques = () => {
                     )}
                   </div>
                 </TableCell>
-                <TableCell>{technique.originator || '-'}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Eye className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-sm">{technique.view_count || 0}</span>
+                  </div>
+                </TableCell>
                 <TableCell>
                   <Badge variant={technique.is_published ? 'default' : 'secondary'}>
                     {technique.is_published ? (
@@ -361,7 +411,7 @@ const AdminKnowledgeTechniques = () => {
             ))}
             {!techniques?.length && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   No techniques found. Create your first technique to get started.
                 </TableCell>
               </TableRow>

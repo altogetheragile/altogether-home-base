@@ -3,8 +3,7 @@ import AdminKnowledgeTechniques from './AdminKnowledgeTechniques';
 import AdminKnowledgeCategories from './AdminKnowledgeCategories';
 import AdminKnowledgeTags from './AdminKnowledgeTags';
 import { ContentAnalyticsDashboard } from '@/components/admin/ContentAnalyticsDashboard';
-import { BulkContentOperations } from '@/components/admin/BulkContentOperations';
-import { BarChart, Settings, FileStack, TrendingUp, Zap } from 'lucide-react';
+import { BarChart, Settings, FileStack, TrendingUp } from 'lucide-react';
 
 const AdminKnowledgeBase = () => {
   return (
@@ -15,7 +14,7 @@ const AdminKnowledgeBase = () => {
       </div>
 
       <Tabs defaultValue="techniques" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="techniques" className="flex items-center gap-2">
             <FileStack className="h-4 w-4" />
             Techniques
@@ -23,10 +22,6 @@ const AdminKnowledgeBase = () => {
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart className="h-4 w-4" />
             Analytics
-          </TabsTrigger>
-          <TabsTrigger value="bulk-ops" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Bulk Operations
           </TabsTrigger>
           <TabsTrigger value="categories" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
@@ -44,10 +39,6 @@ const AdminKnowledgeBase = () => {
 
         <TabsContent value="analytics" className="space-y-6">
           <ContentAnalyticsDashboard />
-        </TabsContent>
-
-        <TabsContent value="bulk-ops" className="space-y-6">
-          <BulkContentOperations />
         </TabsContent>
 
         <TabsContent value="categories" className="space-y-6">

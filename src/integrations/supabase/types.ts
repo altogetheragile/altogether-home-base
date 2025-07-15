@@ -1446,6 +1446,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_view_count: {
+        Args: { technique_id: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
