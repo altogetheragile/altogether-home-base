@@ -310,6 +310,14 @@ export const BulkContentOperations = () => {
             image_url: technique.image_url
           };
 
+          // Debug log to see what data we're trying to insert
+          console.log('Inserting technique data:', {
+            name: techniqueData.name,
+            difficulty_level: techniqueData.difficulty_level,
+            content_type: techniqueData.content_type,
+            raw_difficulty: JSON.stringify(technique.difficulty_level)
+          });
+
           const { data: insertedTechnique, error: techniqueError } = await supabase
             .from('knowledge_techniques')
             .insert(techniqueData)
