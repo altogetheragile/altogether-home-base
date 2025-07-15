@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, EyeOff, BookOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, BookOpen, Tag } from 'lucide-react';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
+import { useKnowledgeTags } from '@/hooks/useKnowledgeTags';
 import { type MediaItem } from '@/components/ui/media-upload';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const AdminKnowledgeTechniques = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingTechnique, setEditingTechnique] = useState<any>(null);
   const { data: categories } = useKnowledgeCategories();
+  const { data: tags } = useKnowledgeTags();
 
   const { data: techniques, isLoading, refetch } = useQuery({
     queryKey: ['admin-knowledge-techniques'],
@@ -32,7 +34,8 @@ const AdminKnowledgeTechniques = () => {
         .select(`
           *,
           category:knowledge_categories(name, color),
-          knowledge_media(id, type, title, description, url, thumbnail_url, position)
+          knowledge_media(id, type, title, description, url, thumbnail_url, position),
+          knowledge_tags:knowledge_technique_tags(knowledge_tags(id, name, slug))
         `)
         .order('created_at', { ascending: false });
 
@@ -43,7 +46,7 @@ const AdminKnowledgeTechniques = () => {
 
   const handleSubmit = async (formData: any) => {
     try {
-      const { name, slug, description, purpose, originator, category_id, media } = formData;
+      const { name, slug, description, purpose, originator, category_id, media, tags: selectedTags } = formData;
       
       let techniqueId: string;
       
@@ -105,6 +108,29 @@ const AdminKnowledgeTechniques = () => {
           .insert(mediaToInsert);
 
         if (mediaError) throw mediaError;
+      }
+
+      // Handle tags
+      if (selectedTags && Array.isArray(selectedTags)) {
+        // First, delete existing tag associations
+        await supabase
+          .from('knowledge_technique_tags')
+          .delete()
+          .eq('technique_id', techniqueId);
+
+        // Then insert new tag associations
+        if (selectedTags.length > 0) {
+          const tagAssociations = selectedTags.map((tagId: string) => ({
+            technique_id: techniqueId,
+            tag_id: tagId
+          }));
+
+          const { error: tagsError } = await supabase
+            .from('knowledge_technique_tags')
+            .insert(tagAssociations);
+
+          if (tagsError) throw tagsError;
+        }
       }
 
       toast({
@@ -191,6 +217,9 @@ const AdminKnowledgeTechniques = () => {
     position: index
   })) || [];
 
+  // Prepare existing tags for editing
+  const existingTags = editingTechnique?.knowledge_tags?.map((tagInfo: any) => tagInfo.knowledge_tags.id) || [];
+
   const formFields = [
     { key: 'name', label: 'Name', type: 'text' as const, required: true },
     { key: 'slug', label: 'Slug', type: 'text' as const, required: true, placeholder: 'unique-slug-for-url' },
@@ -200,6 +229,13 @@ const AdminKnowledgeTechniques = () => {
       type: 'select' as const, 
       options: categories?.map(cat => ({ value: cat.id, label: cat.name })) || [],
       placeholder: 'Select a category'
+    },
+    {
+      key: 'tags',
+      label: 'Tags',
+      type: 'select' as const,
+      options: tags?.map(tag => ({ value: tag.id, label: tag.name })) || [],
+      placeholder: 'Select tags (use Ctrl/Cmd+click for multiple)'
     },
     { key: 'description', label: 'Description', type: 'textarea' as const },
     { key: 'purpose', label: 'Purpose', type: 'textarea' as const },
@@ -251,6 +287,7 @@ const AdminKnowledgeTechniques = () => {
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Tags</TableHead>
               <TableHead>Originator</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
@@ -269,6 +306,20 @@ const AdminKnowledgeTechniques = () => {
                   ) : (
                     <span className="text-gray-400">No category</span>
                   )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {technique.knowledge_tags && technique.knowledge_tags.length > 0 ? (
+                      technique.knowledge_tags.map((tagInfo: any) => (
+                        <Badge key={tagInfo.knowledge_tags.id} variant="outline" className="text-xs">
+                          <Tag className="h-3 w-3 mr-1" />
+                          {tagInfo.knowledge_tags.name}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-gray-400 text-sm">No tags</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>{technique.originator || '-'}</TableCell>
                 <TableCell>
@@ -310,7 +361,7 @@ const AdminKnowledgeTechniques = () => {
             ))}
             {!techniques?.length && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   No techniques found. Create your first technique to get started.
                 </TableCell>
               </TableRow>

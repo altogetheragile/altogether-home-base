@@ -1,11 +1,13 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, User, Tag, ExternalLink, Play, FileText, Image, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, User, Tag, ExternalLink, Play, FileText, Image, ChevronLeft, ChevronRight, Clock, Eye, Download, Maximize2 } from "lucide-react";
 import { useKnowledgeTechniqueBySlug } from "@/hooks/useKnowledgeTechniques";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 import Navigation from "@/components/Navigation";
 import { FeedbackWidget } from "@/components/knowledge/FeedbackWidget";
 import { RelatedTechniques } from "@/components/knowledge/RelatedTechniques";
@@ -19,6 +21,7 @@ const KnowledgeTechniqueDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: technique, isLoading, error } = useKnowledgeTechniqueBySlug(slug!);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [imageSize, setImageSize] = useState([600]); // Default image height in pixels
 
   // Filter media to get images and videos
   const mediaItems = technique?.knowledge_media?.filter(media => 
@@ -208,98 +211,175 @@ const KnowledgeTechniqueDetail = () => {
             {/* Media Gallery */}
             {mediaItems.length > 0 && (
               <div className="mb-8">
-                <div className="relative w-full">
-                  {currentMedia?.type === 'image' ? (
-                    <img 
-                      src={currentMedia.url} 
-                      alt={currentMedia.title || technique.name}
-                      className="w-full h-96 rounded-lg shadow-lg object-cover"
-                    />
-                  ) : currentMedia?.type === 'video' ? (
-                    <div className="relative w-full rounded-lg overflow-hidden shadow-lg">
-                      {currentMedia.url.includes('youtube.com') || currentMedia.url.includes('youtu.be') ? (
-                        <iframe
-                          src={currentMedia.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                          className="w-full aspect-video"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      ) : (
-                        <video 
-                          controls 
-                          className="w-full max-h-[600px]"
-                          poster={currentMedia.thumbnail_url}
-                        >
-                          <source src={currentMedia.url} />
-                          Your browser does not support the video tag.
-                        </video>
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Media Gallery</h3>
+                    <div className="flex items-center gap-3">
+                      {currentMedia?.type === 'image' && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>Size:</span>
+                          <Slider
+                            value={imageSize}
+                            onValueChange={setImageSize}
+                            max={800}
+                            min={300}
+                            step={50}
+                            className="w-20"
+                          />
+                          <span className="w-12 text-xs">{imageSize[0]}px</span>
+                        </div>
+                      )}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Maximize2 className="h-4 w-4 mr-1" />
+                            Fullscreen
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-screen-lg w-full h-[90vh] p-2">
+                          <div className="w-full h-full flex items-center justify-center">
+                            {currentMedia?.type === 'image' ? (
+                              <img 
+                                src={currentMedia.url} 
+                                alt={currentMedia.title || technique.name}
+                                className="max-w-full max-h-full object-contain rounded-lg"
+                              />
+                            ) : currentMedia?.type === 'video' ? (
+                              <div className="w-full h-full rounded-lg overflow-hidden">
+                                {currentMedia.url.includes('youtube.com') || currentMedia.url.includes('youtu.be') ? (
+                                  <iframe
+                                    src={currentMedia.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                    className="w-full h-full"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                ) : (
+                                  <video 
+                                    controls 
+                                    className="w-full h-full"
+                                    poster={currentMedia.thumbnail_url}
+                                  >
+                                    <source src={currentMedia.url} />
+                                    Your browser does not support the video tag.
+                                  </video>
+                                )}
+                              </div>
+                            ) : null}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      {currentMedia && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={currentMedia.url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Open
+                          </a>
+                        </Button>
                       )}
                     </div>
-                  ) : null}
-                  
-                  {/* Navigation arrows */}
-                  {mediaItems.length > 1 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-                        onClick={prevMedia}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-                        onClick={nextMedia}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-                
-                {/* Media info and thumbnails */}
-                {currentMedia?.title && (
-                  <p className="text-center text-sm text-muted-foreground mt-2">{currentMedia.title}</p>
-                )}
-                
-                {/* Thumbnail navigation */}
-                {mediaItems.length > 1 && (
-                  <div className="flex justify-center gap-2 mt-4 overflow-x-auto pb-2">
-                    {mediaItems.map((media, index) => (
-                      <button
-                        key={media.id}
-                        onClick={() => setCurrentMediaIndex(index)}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                          index === currentMediaIndex 
-                            ? 'border-primary shadow-md' 
-                            : 'border-border opacity-60 hover:opacity-100'
-                        }`}
-                      >
-                        {media.type === 'image' ? (
-                          <img 
-                            src={media.thumbnail_url || media.url} 
-                            alt={media.title || `Media ${index + 1}`}
-                            className="w-full h-full object-cover"
+                  </div>
+
+                  <div className="relative w-full">
+                    {currentMedia?.type === 'image' ? (
+                      <div className="flex justify-center">
+                        <img 
+                          src={currentMedia.url} 
+                          alt={currentMedia.title || technique.name}
+                          style={{ height: `${imageSize[0]}px` }}
+                          className="w-auto max-w-full rounded-lg shadow-lg object-contain border"
+                        />
+                      </div>
+                    ) : currentMedia?.type === 'video' ? (
+                      <div className="relative w-full rounded-lg overflow-hidden shadow-lg">
+                        {currentMedia.url.includes('youtube.com') || currentMedia.url.includes('youtu.be') ? (
+                          <iframe
+                            src={currentMedia.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                            className="w-full aspect-video"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
                           />
                         ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <Play className="h-6 w-6 text-muted-foreground" />
-                          </div>
+                          <video 
+                            controls 
+                            className="w-full max-h-[600px]"
+                            poster={currentMedia.thumbnail_url}
+                          >
+                            <source src={currentMedia.url} />
+                            Your browser does not support the video tag.
+                          </video>
                         )}
-                      </button>
-                    ))}
+                      </div>
+                    ) : null}
+                    
+                    {/* Navigation arrows */}
+                    {mediaItems.length > 1 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm shadow-lg"
+                          onClick={prevMedia}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm shadow-lg"
+                          onClick={nextMedia}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
-                )}
-                
-                {/* Media counter */}
-                {mediaItems.length > 1 && (
-                  <p className="text-center text-xs text-muted-foreground mt-2">
-                    {currentMediaIndex + 1} of {mediaItems.length}
-                  </p>
-                )}
+                  
+                  {/* Media info */}
+                  {(currentMedia?.title || currentMedia?.description) && (
+                    <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                      {currentMedia.title && (
+                        <h4 className="font-medium text-foreground">{currentMedia.title}</h4>
+                      )}
+                      {currentMedia.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{currentMedia.description}</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Thumbnail navigation */}
+                  {mediaItems.length > 1 && (
+                    <div className="mt-4">
+                      <div className="flex justify-center gap-2 overflow-x-auto pb-2">
+                        {mediaItems.map((media, index) => (
+                          <button
+                            key={media.id}
+                            onClick={() => setCurrentMediaIndex(index)}
+                            className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all hover:scale-105 ${
+                              index === currentMediaIndex 
+                                ? 'border-primary shadow-md ring-2 ring-primary/20' 
+                                : 'border-border opacity-60 hover:opacity-100'
+                            }`}
+                          >
+                            {media.type === 'image' ? (
+                              <img 
+                                src={media.thumbnail_url || media.url} 
+                                alt={media.title || `Media ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-muted flex items-center justify-center">
+                                <Play className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-center text-xs text-muted-foreground mt-2">
+                        {currentMediaIndex + 1} of {mediaItems.length}
+                      </p>
+                    </div>
+                  )}
+                </Card>
               </div>
             )}
 
