@@ -31,6 +31,18 @@ export const BulkContentOperations = () => {
   const [isOperationRunning, setIsOperationRunning] = useState(false);
   const [operationResults, setOperationResults] = useState<any[]>([]);
   const [importPreview, setImportPreview] = useState<any>(null);
+  const [importMode, setImportMode] = useState<'create' | 'update' | 'upsert'>('upsert');
+  const [preserveFields, setPreserveFields] = useState({
+    viewCount: true,
+    popularityScore: true,
+    createdData: true,
+    userContent: true
+  });
+  const [relatedDataMode, setRelatedDataMode] = useState({
+    tags: 'merge' as 'replace' | 'merge',
+    examples: 'merge' as 'replace' | 'merge',
+    media: 'merge' as 'replace' | 'merge'
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -250,6 +262,7 @@ export const BulkContentOperations = () => {
       console.log('=== IMPORT DEBUG START ===');
       console.log('Raw importData:', importData);
       console.log('Techniques count:', importData.techniques?.length);
+      console.log('Import mode:', importMode);
       
       setIsOperationRunning(true);
       setOperationProgress(0);
@@ -267,6 +280,36 @@ export const BulkContentOperations = () => {
             throw new Error('Missing required fields: name and slug');
           }
 
+          // Check if technique exists
+          const { data: existingTechnique } = await supabase
+            .from('knowledge_techniques')
+            .select('id, view_count, popularity_score, created_at, created_by')
+            .eq('slug', technique.slug)
+            .maybeSingle();
+
+          // Skip based on import mode
+          if (importMode === 'create' && existingTechnique) {
+            results.push({
+              name: technique.name,
+              success: false,
+              action: 'skipped',
+              reason: 'Technique already exists'
+            });
+            setOperationProgress(((i + 1) / total) * 100);
+            continue;
+          }
+
+          if (importMode === 'update' && !existingTechnique) {
+            results.push({
+              name: technique.name,
+              success: false,
+              action: 'skipped',
+              reason: 'Technique does not exist'
+            });
+            setOperationProgress(((i + 1) / total) * 100);
+            continue;
+          }
+
           // Get or create category
           let categoryId = null;
           if (technique.knowledge_categories?.slug) {
@@ -274,7 +317,7 @@ export const BulkContentOperations = () => {
               .from('knowledge_categories')
               .select('id')
               .eq('slug', technique.knowledge_categories.slug)
-              .single();
+              .maybeSingle();
 
             if (existingCategory) {
               categoryId = existingCategory.id;
@@ -294,7 +337,7 @@ export const BulkContentOperations = () => {
             }
           }
 
-          // Insert technique
+          // Prepare technique data
           const techniqueData = {
             name: technique.name,
             slug: technique.slug,
@@ -314,24 +357,47 @@ export const BulkContentOperations = () => {
             image_url: technique.image_url
           };
 
-          // Debug log to see what data we're trying to insert
-          console.log('Inserting technique data:', {
-            name: techniqueData.name,
-            difficulty_level: techniqueData.difficulty_level,
-            content_type: techniqueData.content_type,
-            raw_difficulty: JSON.stringify(technique.difficulty_level)
-          });
+          // Note: Preserve fields are handled by not including them in techniqueData 
+          // when updating (view_count, popularity_score, created_at, created_by are not in the update data)
 
-          const { data: insertedTechnique, error: techniqueError } = await supabase
-            .from('knowledge_techniques')
-            .insert(techniqueData)
-            .select('id')
-            .single();
+          let insertedTechnique;
+          let action = 'created';
 
-          if (techniqueError) throw techniqueError;
+          if (existingTechnique) {
+            // Update existing technique
+            const { data: updatedTechnique, error: updateError } = await supabase
+              .from('knowledge_techniques')
+              .update(techniqueData)
+              .eq('id', existingTechnique.id)
+              .select('id')
+              .single();
+
+            if (updateError) throw updateError;
+            insertedTechnique = updatedTechnique;
+            action = 'updated';
+          } else {
+            // Create new technique
+            const { data: newTechnique, error: insertError } = await supabase
+              .from('knowledge_techniques')
+              .insert(techniqueData)
+              .select('id')
+              .single();
+
+            if (insertError) throw insertError;
+            insertedTechnique = newTechnique;
+            action = 'created';
+          }
 
           // Handle tags
           if (technique.knowledge_technique_tags?.length > 0) {
+            // If replacing tags and updating, delete existing ones first
+            if (existingTechnique && relatedDataMode.tags === 'replace') {
+              await supabase
+                .from('knowledge_technique_tags')
+                .delete()
+                .eq('technique_id', insertedTechnique.id);
+            }
+
             for (const tagRelation of technique.knowledge_technique_tags) {
               const tagSlug = tagRelation.knowledge_tags?.slug;
               if (tagSlug) {
@@ -340,7 +406,7 @@ export const BulkContentOperations = () => {
                   .from('knowledge_tags')
                   .select('id')
                   .eq('slug', tagSlug)
-                  .single();
+                  .maybeSingle();
 
                 let tagId;
                 if (existingTag) {
@@ -359,10 +425,10 @@ export const BulkContentOperations = () => {
                   tagId = newTag.id;
                 }
 
-                // Create tag relation
+                // Create tag relation (with upsert to avoid duplicates in merge mode)
                 await supabase
                   .from('knowledge_technique_tags')
-                  .insert({
+                  .upsert({
                     technique_id: insertedTechnique.id,
                     tag_id: tagId
                   });
@@ -372,6 +438,14 @@ export const BulkContentOperations = () => {
 
           // Handle examples
           if (technique.knowledge_examples?.length > 0) {
+            // If replacing examples and updating, delete existing ones first
+            if (existingTechnique && relatedDataMode.examples === 'replace') {
+              await supabase
+                .from('knowledge_examples')
+                .delete()
+                .eq('technique_id', insertedTechnique.id);
+            }
+
             for (const example of technique.knowledge_examples) {
               await supabase
                 .from('knowledge_examples')
@@ -390,6 +464,14 @@ export const BulkContentOperations = () => {
 
           // Handle media
           if (technique.knowledge_media?.length > 0) {
+            // If replacing media and updating, delete existing ones first
+            if (existingTechnique && relatedDataMode.media === 'replace') {
+              await supabase
+                .from('knowledge_media')
+                .delete()
+                .eq('technique_id', insertedTechnique.id);
+            }
+
             for (const media of technique.knowledge_media) {
               await supabase
                 .from('knowledge_media')
@@ -410,7 +492,7 @@ export const BulkContentOperations = () => {
           results.push({
             name: technique.name,
             success: true,
-            action: 'imported'
+            action: action
           });
         } catch (error) {
           results.push({
@@ -434,10 +516,18 @@ export const BulkContentOperations = () => {
 
       const successCount = results.filter(r => r.success).length;
       const failCount = results.length - successCount;
+      const createdCount = results.filter(r => r.success && r.action === 'created').length;
+      const updatedCount = results.filter(r => r.success && r.action === 'updated').length;
+      const skippedCount = results.filter(r => r.action === 'skipped').length;
+
+      let description = `${successCount} successful, ${failCount} failed`;
+      if (createdCount > 0 || updatedCount > 0) {
+        description = `${createdCount} created, ${updatedCount} updated, ${skippedCount} skipped, ${failCount} failed`;
+      }
 
       toast({
         title: "Import Complete",
-        description: `${successCount} imported, ${failCount} failed`,
+        description,
       });
     },
     onError: (error) => {
@@ -657,6 +747,132 @@ export const BulkContentOperations = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Import Mode Selection */}
+              <div className="space-y-3">
+                <Label>Import Mode</Label>
+                <div className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="mode-create"
+                      name="import-mode"
+                      value="create"
+                      checked={importMode === 'create'}
+                      onChange={(e) => setImportMode(e.target.value as any)}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="mode-create" className="text-sm font-normal">
+                      Create new only
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="mode-update"
+                      name="import-mode"
+                      value="update"
+                      checked={importMode === 'update'}
+                      onChange={(e) => setImportMode(e.target.value as any)}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="mode-update" className="text-sm font-normal">
+                      Update existing only
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="mode-upsert"
+                      name="import-mode"
+                      value="upsert"
+                      checked={importMode === 'upsert'}
+                      onChange={(e) => setImportMode(e.target.value as any)}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="mode-upsert" className="text-sm font-normal">
+                      Create and update (upsert)
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Preservation Options */}
+              <div className="space-y-3">
+                <Label>Preserve When Updating</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="preserve-view-count"
+                      checked={preserveFields.viewCount}
+                      onCheckedChange={(checked) => 
+                        setPreserveFields(prev => ({ ...prev, viewCount: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="preserve-view-count" className="text-sm font-normal">
+                      View count & popularity
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="preserve-created"
+                      checked={preserveFields.createdData}
+                      onCheckedChange={(checked) => 
+                        setPreserveFields(prev => ({ ...prev, createdData: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="preserve-created" className="text-sm font-normal">
+                      Created date & author
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Related Data Mode */}
+              <div className="space-y-3">
+                <Label>Related Data Handling</Label>
+                <div className="space-y-2">
+                  {(['tags', 'examples', 'media'] as const).map((type) => (
+                    <div key={type} className="flex items-center justify-between">
+                      <span className="text-sm capitalize">{type}:</span>
+                      <div className="flex gap-2">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id={`${type}-merge`}
+                            name={`${type}-mode`}
+                            value="merge"
+                            checked={relatedDataMode[type] === 'merge'}
+                            onChange={() => 
+                              setRelatedDataMode(prev => ({ ...prev, [type]: 'merge' }))
+                            }
+                            className="h-3 w-3"
+                          />
+                          <Label htmlFor={`${type}-merge`} className="text-xs font-normal">
+                            Merge
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id={`${type}-replace`}
+                            name={`${type}-mode`}
+                            value="replace"
+                            checked={relatedDataMode[type] === 'replace'}
+                            onChange={() => 
+                              setRelatedDataMode(prev => ({ ...prev, [type]: 'replace' }))
+                            }
+                            className="h-3 w-3"
+                          />
+                          <Label htmlFor={`${type}-replace`} className="text-xs font-normal">
+                            Replace
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="import-file">Select JSON File</Label>
                 <Input
