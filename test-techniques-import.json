@@ -1,0 +1,206 @@
+{
+  "exported_at": "2024-01-15T10:30:00.000Z",
+  "count": 3,
+  "techniques": [
+    {
+      "name": "Daily Standup Meeting",
+      "slug": "daily-standup-meeting",
+      "description": "A short daily team meeting to synchronize activities and create a plan for the next 24 hours. Team members share what they accomplished yesterday, what they plan to work on today, and any impediments they're facing.",
+      "summary": "Short daily team synchronization meeting for planning and impediment identification",
+      "purpose": "Improve team communication, identify blockers early, and maintain project momentum",
+      "originator": "Scrum Framework",
+      "difficulty_level": "beginner",
+      "estimated_reading_time": 5,
+      "is_published": true,
+      "is_featured": false,
+      "content_type": "technique",
+      "seo_title": "Daily Standup Meeting Guide - Agile Team Synchronization",
+      "seo_description": "Learn how to run effective daily standup meetings for better team communication and project momentum in agile environments.",
+      "seo_keywords": ["standup", "daily meeting", "agile", "scrum", "team sync"],
+      "image_url": "https://example.com/standup-meeting.jpg",
+      "knowledge_categories": {
+        "name": "Meeting Facilitation",
+        "slug": "meeting-facilitation",
+        "color": "#10B981"
+      },
+      "knowledge_technique_tags": [
+        {
+          "knowledge_tags": {
+            "name": "Agile",
+            "slug": "agile"
+          }
+        },
+        {
+          "knowledge_tags": {
+            "name": "Communication",
+            "slug": "communication"
+          }
+        },
+        {
+          "knowledge_tags": {
+            "name": "Daily Ritual",
+            "slug": "daily-ritual"
+          }
+        }
+      ],
+      "knowledge_examples": [
+        {
+          "title": "Software Development Team Standup",
+          "description": "A development team of 6 engineers holds a 15-minute standup every morning at 9 AM. Each member shares their previous day's achievements, today's planned work, and any blockers they need help with.",
+          "context": "Remote software development team working on a web application",
+          "outcome": "Reduced blocked time by 40% and improved cross-team collaboration",
+          "industry": "Technology",
+          "company_size": "startup",
+          "position": 0
+        },
+        {
+          "title": "Marketing Campaign Standup",
+          "description": "Marketing team adapted the standup format for their campaign planning, focusing on campaign progress, content creation status, and resource needs.",
+          "context": "Marketing team preparing for product launch",
+          "outcome": "Improved campaign coordination and faster decision-making",
+          "industry": "E-commerce",
+          "company_size": "medium",
+          "position": 1
+        }
+      ],
+      "knowledge_media": [
+        {
+          "type": "video",
+          "url": "https://example.com/standup-guide.mp4",
+          "title": "How to Run Effective Standups",
+          "description": "A 10-minute video guide showing best practices for daily standup meetings",
+          "position": 0,
+          "mime_type": "video/mp4",
+          "file_size": 15728640,
+          "thumbnail_url": "https://example.com/standup-thumb.jpg"
+        },
+        {
+          "type": "document",
+          "url": "https://example.com/standup-template.pdf",
+          "title": "Standup Meeting Template",
+          "description": "Downloadable template for structuring your daily standup meetings",
+          "position": 1,
+          "mime_type": "application/pdf",
+          "file_size": 524288
+        }
+      ]
+    },
+    {
+      "name": "Retrospective Meeting",
+      "slug": "retrospective-meeting",
+      "description": "A regular meeting where team members reflect on their process, identify what's working well, what isn't, and make agreements for improvements going forward.",
+      "summary": "Team reflection meeting for continuous process improvement",
+      "purpose": "Enable continuous improvement through regular team reflection and adaptation",
+      "originator": "Agile Methodologies",
+      "difficulty_level": "intermediate",
+      "estimated_reading_time": 8,
+      "is_published": true,
+      "is_featured": true,
+      "content_type": "technique",
+      "seo_title": "Agile Retrospective Meeting Guide - Continuous Improvement",
+      "seo_description": "Master the art of retrospective meetings to drive continuous improvement and team growth in agile environments.",
+      "seo_keywords": ["retrospective", "agile", "continuous improvement", "team reflection"],
+      "knowledge_categories": {
+        "name": "Process Improvement",
+        "slug": "process-improvement",
+        "color": "#8B5CF6"
+      },
+      "knowledge_technique_tags": [
+        {
+          "knowledge_tags": {
+            "name": "Agile",
+            "slug": "agile"
+          }
+        },
+        {
+          "knowledge_tags": {
+            "name": "Reflection",
+            "slug": "reflection"
+          }
+        },
+        {
+          "knowledge_tags": {
+            "name": "Team Development",
+            "slug": "team-development"
+          }
+        }
+      ],
+      "knowledge_examples": [
+        {
+          "title": "Sprint Retrospective Implementation",
+          "description": "Development team implements bi-weekly retrospectives using the Start-Stop-Continue format to identify process improvements.",
+          "context": "Scrum team experiencing delivery challenges",
+          "outcome": "25% improvement in sprint completion rates over 3 months",
+          "industry": "Software",
+          "company_size": "enterprise",
+          "position": 0
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "User Story Mapping",
+      "slug": "user-story-mapping",
+      "description": "A collaborative technique for organizing user stories into a useful model that helps understand the functionality of the system, identify holes and omissions in your backlog, and effectively plan releases.",
+      "summary": "Visual technique for organizing user stories and planning releases",
+      "purpose": "Create shared understanding of user journey and prioritize features effectively",
+      "originator": "Jeff Patton",
+      "difficulty_level": "advanced",
+      "estimated_reading_time": 12,
+      "is_published": false,
+      "is_featured": false,
+      "content_type": "technique",
+      "seo_title": "User Story Mapping - Collaborative Product Planning",
+      "seo_description": "Learn user story mapping techniques for better product planning and backlog prioritization.",
+      "seo_keywords": ["user story mapping", "product planning", "backlog", "user journey"],
+      "knowledge_categories": {
+        "name": "Product Management",
+        "slug": "product-management",
+        "color": "#F59E0B"
+      },
+      "knowledge_technique_tags": [
+        {
+          "knowledge_tags": {
+            "name": "Product Planning",
+            "slug": "product-planning"
+          }
+        },
+        {
+          "knowledge_tags": {
+            "name": "User Research",
+            "slug": "user-research"
+          }
+        },
+        {
+          "knowledge_tags": {
+            "name": "Collaboration",
+            "slug": "collaboration"
+          }
+        }
+      ],
+      "knowledge_examples": [
+        {
+          "title": "E-commerce Platform Story Mapping",
+          "description": "Product team used story mapping to plan a new checkout flow, involving UX designers, developers, and business stakeholders in a 2-day workshop.",
+          "context": "Redesigning checkout process for mobile app",
+          "outcome": "Reduced development time by 30% and improved user conversion by 15%",
+          "industry": "E-commerce",
+          "company_size": "large",
+          "position": 0
+        }
+      ],
+      "knowledge_media": [
+        {
+          "type": "image",
+          "url": "https://example.com/story-mapping-example.png",
+          "title": "Story Mapping Example",
+          "description": "Visual example of a completed user story map",
+          "position": 0,
+          "mime_type": "image/png",
+          "file_size": 1048576,
+          "thumbnail_url": "https://example.com/story-mapping-thumb.png"
+        }
+      ]
+    }
+  ]
+}
