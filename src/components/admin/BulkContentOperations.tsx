@@ -247,6 +247,10 @@ export const BulkContentOperations = () => {
   // Bulk import mutation
   const importMutation = useMutation({
     mutationFn: async (importData: any) => {
+      console.log('=== IMPORT DEBUG START ===');
+      console.log('Raw importData:', importData);
+      console.log('Techniques count:', importData.techniques?.length);
+      
       setIsOperationRunning(true);
       setOperationProgress(0);
 

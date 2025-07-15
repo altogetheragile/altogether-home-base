@@ -1,0 +1,20 @@
+{
+  "exported_at": "2025-01-15T10:00:00Z",
+  "count": 1,
+  "techniques": [
+    {
+      "name": "Test Technique",
+      "slug": "test-technique",
+      "difficulty_level": "Beginner",
+      "content_type": "technique",
+      "knowledge_categories": {
+        "name": "Test Category",
+        "slug": "test-category",
+        "color": "#3B82F6"
+      },
+      "knowledge_technique_tags": [],
+      "knowledge_examples": [],
+      "knowledge_media": []
+    }
+  ]
+}
