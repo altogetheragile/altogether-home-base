@@ -34,7 +34,7 @@ const AdminKnowledgeTechniques = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
-  const [sortBy, setSortBy] = useState('created_at');
+  const [sortBy, setSortBy] = useState('name');
   
   const { data: categories } = useKnowledgeCategories();
   const { data: tags } = useKnowledgeTags();
@@ -379,7 +379,7 @@ const AdminKnowledgeTechniques = () => {
           setSearchTerm('');
           setSelectedCategory('all');
           setSelectedTag('all');
-          setSortBy('created_at');
+          setSortBy('name');
         }}
       />
 
