@@ -119,25 +119,204 @@ export const BulkContentOperations = ({
 
   const importMutation = useMutation({
     mutationFn: async (techniques: any[]) => {
-      const { data, error } = await supabase
-        .from('knowledge_techniques')
-        .insert(techniques);
+      console.log('Importing techniques:', techniques);
       
-      if (error) throw error;
-      return data;
+      const results = {
+        total: techniques.length,
+        successful: [] as string[],
+        failed: [] as { name: string; error: string }[],
+        categories: { created: [] as string[], found: [] as string[] },
+        tags: { created: [] as string[], found: [] as string[] }
+      };
+
+      for (const technique of techniques) {
+        try {
+          // Handle category
+          let categoryId = technique.category_id;
+          if (technique.category && !categoryId) {
+            // Try to find existing category by name or slug
+            const { data: existingCategory } = await supabase
+              .from('knowledge_categories')
+              .select('id')
+              .or(`name.eq.${technique.category},slug.eq.${technique.category?.toLowerCase().replace(/\s+/g, '-')}`)
+              .maybeSingle();
+
+            if (existingCategory) {
+              categoryId = existingCategory.id;
+              results.categories.found.push(technique.category);
+            } else {
+              // Create new category
+              const { data: newCategory, error: categoryError } = await supabase
+                .from('knowledge_categories')
+                .insert({
+                  name: technique.category,
+                  slug: technique.category.toLowerCase().replace(/\s+/g, '-'),
+                  description: `Auto-created category for ${technique.category}`
+                })
+                .select('id')
+                .single();
+
+              if (categoryError) throw categoryError;
+              categoryId = newCategory.id;
+              results.categories.created.push(technique.category);
+            }
+          }
+
+          // Insert technique
+          const { data: insertedTechnique, error: techniqueError } = await supabase
+            .from('knowledge_techniques')
+            .insert({
+              name: technique.name,
+              slug: technique.slug,
+              description: technique.description,
+              purpose: technique.purpose,
+              summary: technique.summary,
+              originator: technique.originator,
+              difficulty_level: technique.difficulty_level,
+              estimated_reading_time: technique.estimated_reading_time,
+              category_id: categoryId,
+              is_published: technique.is_published || false,
+              is_featured: technique.is_featured || false,
+              is_complete: technique.is_complete || false,
+              content_type: technique.content_type || 'technique',
+              image_url: technique.image_url,
+              seo_title: technique.seo_title,
+              seo_description: technique.seo_description,
+              seo_keywords: technique.seo_keywords,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            })
+            .select('id')
+            .single();
+
+          if (techniqueError) throw techniqueError;
+
+          // Handle tags
+          if (technique.tags && Array.isArray(technique.tags)) {
+            for (const tagName of technique.tags) {
+              // Find or create tag
+              let { data: existingTag } = await supabase
+                .from('knowledge_tags')
+                .select('id')
+                .eq('name', tagName)
+                .maybeSingle();
+
+              if (!existingTag) {
+                const { data: newTag, error: tagError } = await supabase
+                  .from('knowledge_tags')
+                  .insert({
+                    name: tagName,
+                    slug: tagName.toLowerCase().replace(/\s+/g, '-')
+                  })
+                  .select('id')
+                  .single();
+
+                if (tagError) throw tagError;
+                existingTag = newTag;
+                results.tags.created.push(tagName);
+              } else {
+                results.tags.found.push(tagName);
+              }
+
+              // Link tag to technique
+              const { error: linkError } = await supabase
+                .from('knowledge_technique_tags')
+                .insert({
+                  technique_id: insertedTechnique.id,
+                  tag_id: existingTag.id
+                });
+
+              if (linkError) throw linkError;
+            }
+          }
+
+          // Handle examples
+          if (technique.examples && Array.isArray(technique.examples)) {
+            for (const example of technique.examples) {
+              const { error: exampleError } = await supabase
+                .from('knowledge_examples')
+                .insert({
+                  technique_id: insertedTechnique.id,
+                  title: example.title,
+                  description: example.description,
+                  context: example.context,
+                  outcome: example.outcome,
+                  industry: example.industry,
+                  company_size: example.company_size,
+                  position: example.position || 0,
+                  created_by: (await supabase.auth.getUser()).data.user?.id
+                });
+
+              if (exampleError) throw exampleError;
+            }
+          }
+
+          // Handle media
+          if (technique.media && Array.isArray(technique.media)) {
+            for (const media of technique.media) {
+              const { error: mediaError } = await supabase
+                .from('knowledge_media')
+                .insert({
+                  technique_id: insertedTechnique.id,
+                  type: media.type,
+                  url: media.url,
+                  title: media.title,
+                  description: media.description,
+                  mime_type: media.mime_type,
+                  file_size: media.file_size,
+                  thumbnail_url: media.thumbnail_url,
+                  position: media.position || 0
+                });
+
+              if (mediaError) throw mediaError;
+            }
+          }
+
+          results.successful.push(technique.name);
+
+        } catch (error: any) {
+          console.error(`Error importing technique ${technique.name}:`, error);
+          results.failed.push({
+            name: technique.name,
+            error: error.message || 'Unknown error'
+          });
+        }
+      }
+
+      return results;
     },
-    onSuccess: (_, techniques) => {
+    onSuccess: (results) => {
+      // Show detailed outcome report
+      const successCount = results.successful.length;
+      const failCount = results.failed.length;
+      const categoriesCreated = results.categories.created.length;
+      const tagsCreated = results.tags.created.length;
+
+      let description = `Successfully imported ${successCount} techniques`;
+      if (failCount > 0) description += `, ${failCount} failed`;
+      if (categoriesCreated > 0) description += `, created ${categoriesCreated} categories`;
+      if (tagsCreated > 0) description += `, created ${tagsCreated} tags`;
+
       toast({
-        title: "Success",
-        description: `${techniques.length} techniques imported successfully`
+        title: "Import completed",
+        description: description,
       });
+
+      // Log detailed results for debugging
+      console.log('Import results:', results);
+      
+      if (results.failed.length > 0) {
+        console.warn('Failed imports:', results.failed);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-techniques'] });
+      queryClient.invalidateQueries({ queryKey: ['knowledge-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['knowledge-tags'] });
     },
     onError: (error) => {
-      console.error('Import failed:', error);
+      console.error('Import error:', error);
       toast({
-        title: "Error",
-        description: "Import failed. Please check the file format and try again.",
+        title: "Import failed",
+        description: "There was an error during the import process.",
         variant: "destructive"
       });
     }
