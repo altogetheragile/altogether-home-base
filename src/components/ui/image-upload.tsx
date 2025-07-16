@@ -59,11 +59,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       const fileExt = file.name.split('.').pop();
       const fileName = `${path}${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
+      console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucket}/${fileName}`);
+
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, file);
 
       if (uploadError) {
+        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -71,16 +74,49 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         .from(bucket)
         .getPublicUrl(fileName);
 
+      if (!publicUrl) {
+        console.error('Failed to get public URL for file:', fileName);
+        throw new Error('Failed to get public URL for uploaded file');
+      }
+
+      console.log(`Upload successful: ${publicUrl}`);
       onChange(publicUrl);
       toast({
-        title: "Success",
-        description: "Image uploaded successfully",
+        title: "Upload Successful",
+        description: `Image "${file.name}" uploaded successfully`,
       });
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error occurred';
+      const errorCode = error?.error || error?.code || 'UNKNOWN';
+      
+      console.error('Upload error details:', {
+        message: errorMessage,
+        code: errorCode,
+        fileName: file.name,
+        fileSize: file.size,
+        bucket,
+        error
+      });
+
+      let userFriendlyMessage = "Failed to upload image.";
+      
+      if (errorMessage.includes('The resource already exists')) {
+        userFriendlyMessage = "A file with this name already exists. Please rename your file and try again.";
+      } else if (errorMessage.includes('exceeded')) {
+        userFriendlyMessage = "File size exceeds the allowed limit.";
+      } else if (errorMessage.includes('Invalid')) {
+        userFriendlyMessage = "Invalid file format or corrupted file.";
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        userFriendlyMessage = "Network error. Please check your connection and try again.";
+      } else if (errorMessage.includes('permission') || errorMessage.includes('unauthorized')) {
+        userFriendlyMessage = "Permission denied. Please contact support.";
+      } else if (errorCode === 'STORAGE_OBJECT_NOT_FOUND') {
+        userFriendlyMessage = "Storage bucket not found. Please contact support.";
+      }
+
       toast({
-        title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        title: "Upload Failed",
+        description: `${userFriendlyMessage} Error: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {

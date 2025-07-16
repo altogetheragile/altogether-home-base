@@ -53,11 +53,14 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
       const fileName = `${blockType}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      console.log(`Starting background image upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) for ${blockType} block`);
+
       const { error: uploadError } = await supabase.storage
         .from('hero-backgrounds')
         .upload(filePath, file);
 
       if (uploadError) {
+        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -65,16 +68,50 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
         .from('hero-backgrounds')
         .getPublicUrl(filePath);
 
+      if (!publicUrl) {
+        console.error('Failed to get public URL for background image:', filePath);
+        throw new Error('Failed to get public URL for uploaded background image');
+      }
+
+      console.log(`Background image upload successful: ${publicUrl}`);
       onContentChange('backgroundImage', publicUrl);
       toast({
-        title: "Success",
-        description: "Background image uploaded successfully",
+        title: "Upload Successful",
+        description: `Background image "${file.name}" uploaded successfully`,
       });
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error occurred';
+      const errorCode = error?.error || error?.code || 'UNKNOWN';
+      
+      console.error('Background image upload error details:', {
+        message: errorMessage,
+        code: errorCode,
+        fileName: file.name,
+        fileSize: file.size,
+        blockType,
+        bucket: 'hero-backgrounds',
+        error
+      });
+
+      let userFriendlyMessage = "Failed to upload background image.";
+      
+      if (errorMessage.includes('The resource already exists')) {
+        userFriendlyMessage = "A file with this name already exists. Please rename your file and try again.";
+      } else if (errorMessage.includes('exceeded') || errorMessage.includes('limit')) {
+        userFriendlyMessage = "File size exceeds the allowed limit (5MB max).";
+      } else if (errorMessage.includes('Invalid') || errorMessage.includes('format')) {
+        userFriendlyMessage = "Invalid file format or corrupted image file.";
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        userFriendlyMessage = "Network error. Please check your connection and try again.";
+      } else if (errorMessage.includes('permission') || errorMessage.includes('unauthorized')) {
+        userFriendlyMessage = "Permission denied. Please contact support.";
+      } else if (errorCode === 'STORAGE_OBJECT_NOT_FOUND') {
+        userFriendlyMessage = "Storage bucket not found. Please contact support.";
+      }
+
       toast({
-        title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        title: "Upload Failed",
+        description: `${userFriendlyMessage} Error: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {

@@ -38,19 +38,36 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     try {
       setUploadingItems(prev => new Set([...prev, index]));
 
+      // Validate file size (10MB limit for media files)
+      const maxSizeMB = 10;
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        throw new Error(`File size exceeds ${maxSizeMB}MB limit`);
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = fileName;
+      const mediaType = value[index]?.type || 'unknown';
+
+      console.log(`Starting ${mediaType} upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucketName}/${filePath}`);
 
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Supabase storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(filePath);
+
+      if (!publicUrl) {
+        console.error('Failed to get public URL for file:', filePath);
+        throw new Error('Failed to get public URL for uploaded file');
+      }
 
       const updatedMedia = [...value];
       updatedMedia[index] = {
@@ -58,16 +75,50 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         url: publicUrl
       };
 
+      console.log(`${mediaType} upload successful: ${publicUrl}`);
       onChange(updatedMedia);
       toast({
-        title: "Success",
-        description: "File uploaded successfully"
+        title: "Upload Successful",
+        description: `${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} "${file.name}" uploaded successfully`
       });
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error occurred';
+      const errorCode = error?.error || error?.code || 'UNKNOWN';
+      const mediaType = value[index]?.type || 'file';
+      
+      console.error('Media upload error details:', {
+        message: errorMessage,
+        code: errorCode,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        mediaType,
+        bucketName,
+        index,
+        error
+      });
+
+      let userFriendlyMessage = `Failed to upload ${mediaType}.`;
+      
+      if (errorMessage.includes('The resource already exists')) {
+        userFriendlyMessage = "A file with this name already exists. Please rename your file and try again.";
+      } else if (errorMessage.includes('exceeded') || errorMessage.includes('limit')) {
+        userFriendlyMessage = "File size exceeds the allowed limit (10MB max).";
+      } else if (errorMessage.includes('Invalid') || errorMessage.includes('format')) {
+        userFriendlyMessage = "Invalid file format or corrupted file.";
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        userFriendlyMessage = "Network error. Please check your connection and try again.";
+      } else if (errorMessage.includes('permission') || errorMessage.includes('unauthorized')) {
+        userFriendlyMessage = "Permission denied. Please contact support.";
+      } else if (errorCode === 'STORAGE_OBJECT_NOT_FOUND') {
+        userFriendlyMessage = "Storage bucket not found. Please contact support.";
+      } else if (errorMessage.includes('timeout')) {
+        userFriendlyMessage = "Upload timeout. File may be too large or connection too slow.";
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to upload file",
+        title: "Upload Failed",
+        description: `${userFriendlyMessage} Error: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
