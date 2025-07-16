@@ -387,17 +387,46 @@ const KnowledgeTechniqueDetail = () => {
               </div>
             )}
 
-            {/* Description */}
-            {technique.description && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Overview</h2>
-                <div className="prose prose-gray max-w-none">
-                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                    {technique.description}
+            {/* Detailed Content Sections */}
+            <div className="space-y-8">
+              {/* Summary Section */}
+              {technique.summary && (
+                <Card className="p-6">
+                  <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+                    <span className="text-green-600">✅</span> Summary
+                  </h2>
+                  <p className="text-foreground leading-relaxed">
+                    {technique.summary}
                   </p>
-                </div>
-              </div>
-            )}
+                </Card>
+              )}
+
+              {/* Description Section */}
+              {technique.description && (
+                <Card className="p-6">
+                  <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+                    <span className="text-blue-600">📖</span> Description
+                  </h2>
+                  <div className="prose prose-gray max-w-none">
+                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                      {technique.description}
+                    </p>
+                  </div>
+                </Card>
+              )}
+
+              {/* Purpose Section */}
+              {technique.purpose && (
+                <Card className="p-6">
+                  <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+                    <span className="text-purple-600">🎯</span> Purpose
+                  </h2>
+                  <p className="text-foreground leading-relaxed">
+                    {technique.purpose}
+                  </p>
+                </Card>
+              )}
+            </div>
 
             {/* Media Attachments */}
             {technique.knowledge_media && technique.knowledge_media.length > 0 && (
