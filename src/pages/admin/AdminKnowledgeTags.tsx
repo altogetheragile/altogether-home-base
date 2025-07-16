@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -14,11 +15,13 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import SimpleForm from '@/components/admin/SimpleForm';
+import { BulkTagOperations } from '@/components/admin/BulkTagOperations';
 
 const AdminKnowledgeTags = () => {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingTag, setEditingTag] = useState<any>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { data: tags, isLoading, refetch } = useQuery({
     queryKey: ['admin-knowledge-tags'],
@@ -133,10 +136,28 @@ const AdminKnowledgeTags = () => {
         </Button>
       </div>
 
+      <BulkTagOperations
+        tags={tags || []}
+        selectedTags={selectedTags}
+        onSelectionChange={setSelectedTags}
+      />
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedTags.length === tags?.length && tags.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedTags(tags?.map(t => t.id) || []);
+                    } else {
+                      setSelectedTags([]);
+                    }
+                  }}
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Usage Count</TableHead>
@@ -146,6 +167,18 @@ const AdminKnowledgeTags = () => {
           <TableBody>
             {tags?.map((tag) => (
               <TableRow key={tag.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedTags.includes(tag.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedTags([...selectedTags, tag.id]);
+                      } else {
+                        setSelectedTags(selectedTags.filter(id => id !== tag.id));
+                      }
+                    }}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{tag.name}</TableCell>
                 <TableCell className="font-mono text-sm">{tag.slug}</TableCell>
                 <TableCell>
@@ -174,7 +207,7 @@ const AdminKnowledgeTags = () => {
             ))}
             {!tags?.length && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                   No tags found. Create your first tag to get started.
                 </TableCell>
               </TableRow>

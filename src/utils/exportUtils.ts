@@ -32,7 +32,7 @@ export const exportToCSV = (data: any[], filename: string) => {
   document.body.removeChild(link);
 };
 
-export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 'instructors' | 'techniques' | 'analytics') => {
+export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 'instructors' | 'techniques' | 'categories' | 'tags' | 'analytics') => {
   switch (type) {
     case 'events':
       return data.map(event => ({
@@ -73,6 +73,24 @@ export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 
         'View Count': technique.view_count || 0,
         Category: technique.category || '',
         'Created At': new Date(technique.created_at).toLocaleDateString(),
+      }));
+    
+    case 'categories':
+      return data.map(category => ({
+        Name: category.name,
+        Slug: category.slug,
+        Description: category.description || '',
+        Color: category.color || '#3B82F6',
+        'Created At': new Date(category.created_at).toLocaleDateString(),
+        'Updated At': new Date(category.updated_at).toLocaleDateString(),
+      }));
+    
+    case 'tags':
+      return data.map(tag => ({
+        Name: tag.name,
+        Slug: tag.slug,
+        'Usage Count': tag.usage_count || 0,
+        'Created At': new Date(tag.created_at).toLocaleDateString(),
       }));
     
     case 'analytics':

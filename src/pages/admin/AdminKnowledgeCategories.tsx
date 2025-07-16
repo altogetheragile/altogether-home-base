@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -14,11 +15,13 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import SimpleForm from '@/components/admin/SimpleForm';
+import { BulkCategoryOperations } from '@/components/admin/BulkCategoryOperations';
 
 const AdminKnowledgeCategories = () => {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const { data: categories, isLoading, refetch } = useQuery({
     queryKey: ['admin-knowledge-categories'],
@@ -140,10 +143,28 @@ const AdminKnowledgeCategories = () => {
         </Button>
       </div>
 
+      <BulkCategoryOperations
+        categories={categories || []}
+        selectedCategories={selectedCategories}
+        onSelectionChange={setSelectedCategories}
+      />
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedCategories.length === categories?.length && categories.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedCategories(categories?.map(c => c.id) || []);
+                    } else {
+                      setSelectedCategories([]);
+                    }
+                  }}
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Color</TableHead>
@@ -154,6 +175,18 @@ const AdminKnowledgeCategories = () => {
           <TableBody>
             {categories?.map((category) => (
               <TableRow key={category.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedCategories.includes(category.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedCategories([...selectedCategories, category.id]);
+                      } else {
+                        setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                      }
+                    }}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{category.name}</TableCell>
                 <TableCell className="font-mono text-sm">{category.slug}</TableCell>
                 <TableCell>
@@ -191,7 +224,7 @@ const AdminKnowledgeCategories = () => {
             ))}
             {!categories?.length && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                   No categories found. Create your first category to get started.
                 </TableCell>
               </TableRow>
