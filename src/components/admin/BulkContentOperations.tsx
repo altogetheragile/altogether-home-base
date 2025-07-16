@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckSquare, Tag, Eye, EyeOff, Star, Trash2 } from 'lucide-react';
+import { CheckSquare, Tag, Eye, EyeOff, Star, Trash2, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useKnowledgeTags } from '@/hooks/useKnowledgeTags';
+import { exportToCSV, formatDataForExport } from '@/utils/exportUtils';
 
 interface BulkContentOperationsProps {
   techniques: any[];
@@ -25,6 +26,7 @@ export const BulkContentOperations = ({
   const queryClient = useQueryClient();
   const { data: tags } = useKnowledgeTags();
   const [selectedTag, setSelectedTag] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bulkOperation = useMutation({
     mutationFn: async ({ operation, value }: { operation: string; value?: any }) => {
@@ -115,6 +117,94 @@ export const BulkContentOperations = ({
     }
   });
 
+  const importMutation = useMutation({
+    mutationFn: async (techniques: any[]) => {
+      const { data, error } = await supabase
+        .from('knowledge_techniques')
+        .insert(techniques);
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, techniques) => {
+      toast({
+        title: "Success",
+        description: `${techniques.length} techniques imported successfully`
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-knowledge-techniques'] });
+    },
+    onError: (error) => {
+      console.error('Import failed:', error);
+      toast({
+        title: "Error",
+        description: "Import failed. Please check the file format and try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleExport = () => {
+    const exportData = selectedTechniques.length > 0 
+      ? techniques.filter(t => selectedTechniques.includes(t.id))
+      : techniques;
+    
+    const formattedData = formatDataForExport(exportData, 'techniques');
+    exportToCSV(formattedData, `knowledge-techniques-${new Date().toISOString().split('T')[0]}`);
+    
+    toast({
+      title: "Success",
+      description: `Exported ${exportData.length} techniques`
+    });
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const techniques = JSON.parse(text);
+      
+      // Validate structure
+      if (!Array.isArray(techniques)) {
+        throw new Error('File must contain an array of techniques');
+      }
+
+      // Basic validation for required fields
+      const requiredFields = ['name', 'slug'];
+      const validTechniques = techniques.filter(technique => 
+        requiredFields.every(field => technique[field])
+      );
+
+      if (validTechniques.length === 0) {
+        throw new Error('No valid techniques found in file');
+      }
+
+      if (validTechniques.length !== techniques.length) {
+        toast({
+          title: "Warning",
+          description: `${techniques.length - validTechniques.length} techniques skipped due to missing required fields`,
+          variant: "destructive"
+        });
+      }
+
+      importMutation.mutate(validTechniques);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Invalid JSON file format",
+        variant: "destructive"
+      });
+    }
+
+    // Reset file input
+    event.target.value = '';
+  };
+
   const handleSelectAll = () => {
     if (selectedTechniques.length === techniques.length) {
       onSelectionChange([]);
@@ -140,14 +230,46 @@ export const BulkContentOperations = ({
             <CheckSquare className="h-5 w-5" />
             Bulk Operations
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={selectedTechniques.length === techniques.length}
-              onCheckedChange={handleSelectAll}
-            />
-            <span className="text-sm text-muted-foreground">
-              Select All ({selectedTechniques.length}/{techniques.length})
-            </span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExport}
+                disabled={techniques.length === 0}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export CSV
+              </Button>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleImportClick}
+                disabled={importMutation.isPending}
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                Import JSON
+              </Button>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={selectedTechniques.length === techniques.length}
+                onCheckedChange={handleSelectAll}
+              />
+              <span className="text-sm text-muted-foreground">
+                Select All ({selectedTechniques.length}/{techniques.length})
+              </span>
+            </div>
           </div>
         </div>
       </CardHeader>
