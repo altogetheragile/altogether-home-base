@@ -148,7 +148,7 @@ export const BulkContentOperations = ({
             .maybeSingle();
 
           if (existingTechnique) {
-            console.log(`Updating existing technique "${technique.name}" with slug "${technique.slug}"`);
+            console.log(`🔄 Updating existing technique "${technique.name}" with slug "${technique.slug}"`);
             
             // Update existing technique with new data
             const updateData: any = {};
