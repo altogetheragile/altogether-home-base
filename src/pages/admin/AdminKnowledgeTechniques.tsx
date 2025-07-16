@@ -46,7 +46,7 @@ const AdminKnowledgeTechniques = () => {
         .from('knowledge_techniques')
         .select(`
           *,
-          category:knowledge_categories(name, color),
+          category:knowledge_categories(id, name, color),
           knowledge_media(id, type, title, description, url, thumbnail_url, position),
           knowledge_tags:knowledge_technique_tags(knowledge_tags(id, name, slug))
         `)
@@ -61,15 +61,6 @@ const AdminKnowledgeTechniques = () => {
   const techniques = useMemo(() => {
     if (!allTechniques) return [];
 
-    console.log('🔍 Filter Debug:', {
-      searchTerm,
-      selectedCategory,
-      selectedTag,
-      totalTechniques: allTechniques.length,
-      categoriesAvailable: categories?.length || 0,
-      sampleTechnique: allTechniques[0]
-    });
-
     let filtered = allTechniques.filter((technique) => {
       const matchesSearch = !searchTerm || 
         technique.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,15 +72,6 @@ const AdminKnowledgeTechniques = () => {
 
       const matchesTag = selectedTag === 'all' || !selectedTag || 
         technique.knowledge_tags?.some((tagInfo: any) => tagInfo.knowledge_tags.id === selectedTag);
-
-      if (selectedCategory && selectedCategory !== 'all') {
-        console.log('🔍 Category match debug:', {
-          techniqueName: technique.name,
-          techniqueCategory: technique.category,
-          selectedCategory,
-          matchesCategory
-        });
-      }
 
       return matchesSearch && matchesCategory && matchesTag;
     });
