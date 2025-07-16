@@ -238,9 +238,10 @@ const AdminKnowledgeTechniques = () => {
     {
       key: 'tags',
       label: 'Tags',
-      type: 'select' as const,
+      type: 'multiselect' as const,
       options: tags?.map(tag => ({ value: tag.id, label: tag.name })) || [],
-      placeholder: 'Select tags (use Ctrl/Cmd+click for multiple)'
+      placeholder: 'Select tags',
+      existingValues: existingTags
     },
     { key: 'description', label: 'Description', type: 'textarea' as const },
     { key: 'purpose', label: 'Purpose', type: 'textarea' as const },

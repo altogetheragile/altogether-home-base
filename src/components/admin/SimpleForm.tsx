@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { MediaUpload, type MediaItem } from '@/components/ui/media-upload';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,10 +19,11 @@ interface SimpleFormProps {
   fields: Array<{
     key: string;
     label: string;
-    type: 'text' | 'textarea' | 'select' | 'image' | 'media';
+    type: 'text' | 'textarea' | 'select' | 'multiselect' | 'image' | 'media';
     required?: boolean;
     placeholder?: string;
     options?: Array<{ value: string; label: string }>;
+    existingValues?: string[];
   }>;
 }
 
@@ -40,6 +43,9 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFo
           thumbnail_url: media.thumbnail_url,
           position: index
         })) || [];
+      } else if (field.type === 'multiselect') {
+        // Handle multiselect fields with existing values
+        initial[field.key] = field.existingValues || [];
       } else {
         initial[field.key] = editingItem?.[field.key] || '';
       }
@@ -81,8 +87,25 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFo
     }
   };
 
-  const handleChange = (key: string, value: string) => {
+  const handleChange = (key: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleMultiSelectToggle = (fieldKey: string, optionValue: string) => {
+    setFormData(prev => {
+      const currentValues = prev[fieldKey] || [];
+      const newValues = currentValues.includes(optionValue)
+        ? currentValues.filter((v: string) => v !== optionValue)
+        : [...currentValues, optionValue];
+      return { ...prev, [fieldKey]: newValues };
+    });
+  };
+
+  const removeMultiSelectItem = (fieldKey: string, optionValue: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldKey]: (prev[fieldKey] || []).filter((v: string) => v !== optionValue)
+    }));
   };
 
   return (
@@ -126,6 +149,44 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFo
                   ))}
                 </SelectContent>
               </Select>
+            ) : field.type === 'multiselect' ? (
+              <div className="space-y-3">
+                {/* Selected items display */}
+                {formData[field.key] && formData[field.key].length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData[field.key].map((selectedValue: string) => {
+                      const option = field.options?.find(opt => opt.value === selectedValue);
+                      return option ? (
+                        <Badge key={selectedValue} variant="secondary" className="flex items-center gap-1">
+                          {option.label}
+                          <X 
+                            className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                            onClick={() => removeMultiSelectItem(field.key, selectedValue)}
+                          />
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                
+                {/* Available options */}
+                <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
+                  <div className="space-y-2">
+                    {field.options?.map(option => (
+                      <div key={option.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${field.key}-${option.value}`}
+                          checked={formData[field.key]?.includes(option.value) || false}
+                          onCheckedChange={() => handleMultiSelectToggle(field.key, option.value)}
+                        />
+                        <Label htmlFor={`${field.key}-${option.value}`} className="text-sm cursor-pointer">
+                          {option.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ) : field.type === 'image' ? (
               <ImageUpload
                 value={formData[field.key]}
