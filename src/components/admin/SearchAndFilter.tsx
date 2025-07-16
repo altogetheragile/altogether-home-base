@@ -34,7 +34,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   onClearFilters,
 }) => {
   const hasActiveFilters = searchTerm || 
-    filters.some(f => f.value !== 'all') || 
+    filters.some(f => f.value && f.value !== 'all') || 
     dateFilters?.startDate || 
     dateFilters?.endDate;
 

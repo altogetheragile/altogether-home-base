@@ -32,8 +32,8 @@ const AdminKnowledgeTechniques = () => {
   
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedTag, setSelectedTag] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
   const [sortBy, setSortBy] = useState('created_at');
   
   const { data: categories } = useKnowledgeCategories();
@@ -68,9 +68,9 @@ const AdminKnowledgeTechniques = () => {
         technique.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         technique.purpose?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesCategory = !selectedCategory || technique.category?.id === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || !selectedCategory || technique.category?.id === selectedCategory;
 
-      const matchesTag = !selectedTag || 
+      const matchesTag = selectedTag === 'all' || !selectedTag || 
         technique.knowledge_tags?.some((tagInfo: any) => tagInfo.knowledge_tags.id === selectedTag);
 
       return matchesSearch && matchesCategory && matchesTag;
@@ -352,19 +352,13 @@ const AdminKnowledgeTechniques = () => {
           {
             label: 'Category',
             value: selectedCategory,
-            options: [
-              { label: 'All Categories', value: '' },
-              ...(categories?.map(cat => ({ label: cat.name, value: cat.id })) || [])
-            ],
+            options: categories?.map(cat => ({ label: cat.name, value: cat.id })) || [],
             onChange: setSelectedCategory
           },
           {
             label: 'Tag',
             value: selectedTag,
-            options: [
-              { label: 'All Tags', value: '' },
-              ...(tags?.map(tag => ({ label: tag.name, value: tag.id })) || [])
-            ],
+            options: tags?.map(tag => ({ label: tag.name, value: tag.id })) || [],
             onChange: setSelectedTag
           },
           {
@@ -383,8 +377,8 @@ const AdminKnowledgeTechniques = () => {
         ]}
         onClearFilters={() => {
           setSearchTerm('');
-          setSelectedCategory('');
-          setSelectedTag('');
+          setSelectedCategory('all');
+          setSelectedTag('all');
           setSortBy('created_at');
         }}
       />
