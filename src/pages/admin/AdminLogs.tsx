@@ -55,7 +55,6 @@ interface AuthLog {
 const AdminLogs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
-  const [applicationLogs, setApplicationLogs] = useState<LogEntry[]>([]);
 
   // Fetch database logs from Supabase analytics
   const { data: databaseLogs, isLoading: dbLoading, refetch: refetchDbLogs } = useQuery({
@@ -89,58 +88,31 @@ const AdminLogs = () => {
     refetchInterval: 30000,
   });
 
-  // Simulate application logs (in a real app, these would come from your logging service)
-  useEffect(() => {
-    const generateApplicationLogs = () => {
-      const logs: LogEntry[] = [
-        {
-          id: '1',
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          level: 'info',
-          message: 'User logged in successfully',
-          source: 'AUTH',
-          userId: 'user-123',
-          userEmail: 'admin@example.com'
-        },
-        {
-          id: '2',
-          timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-          level: 'warning',
-          message: 'Upload file size exceeds recommended limit',
-          source: 'UPLOAD',
-          data: { fileSize: '15MB', limit: '10MB' }
-        },
-        {
-          id: '3',
-          timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-          level: 'error',
-          message: 'Failed to process payment',
-          source: 'PAYMENT',
-          data: { errorCode: 'CARD_DECLINED', amount: 99.99 }
-        },
-        {
-          id: '4',
-          timestamp: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
-          level: 'info',
-          message: 'Event registration completed',
-          source: 'EVENTS',
-          userId: 'user-456',
-          userEmail: 'user@example.com'
-        },
-        {
-          id: '5',
-          timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-          level: 'debug',
-          message: 'Cache invalidated for knowledge base',
-          source: 'CACHE',
-          data: { cacheKey: 'kb_techniques_*' }
-        }
-      ];
-      setApplicationLogs(logs);
-    };
+  // Fetch application logs from admin_logs table
+  const { data: applicationLogs, isLoading: appLoading, refetch: refetchAppLogs } = useQuery({
+    queryKey: ['admin-application-logs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-    generateApplicationLogs();
-  }, []);
+      if (error) throw error;
+      
+      return data?.map(log => ({
+        id: log.id,
+        timestamp: log.created_at,
+        level: 'info',
+        message: log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        source: 'APPLICATION',
+        data: log.details
+      })) || [];
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Application logs are now fetched from admin_logs table via useQuery above
 
   const getLevelIcon = (level: string) => {
     switch (level.toLowerCase()) {
@@ -172,15 +144,17 @@ const AdminLogs = () => {
     }
   };
 
-  const filteredApplicationLogs = applicationLogs.filter(log => {
+  const filteredApplicationLogs = (applicationLogs || []).filter(log => {
     const matchesSearch = log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          log.source.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = selectedLevel === 'all' || log.level === selectedLevel;
     return matchesSearch && matchesLevel;
   });
 
-  const clearLogs = () => {
-    setApplicationLogs([]);
+  const clearLogs = async () => {
+    // Clear application logs from database (admin only)
+    await supabase.from('admin_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    refetchAppLogs();
   };
 
   const exportLogs = () => {
@@ -201,6 +175,7 @@ const AdminLogs = () => {
   const refreshAll = () => {
     refetchDbLogs();
     refetchAuthLogs();
+    refetchAppLogs();
   };
 
   return (
@@ -315,10 +290,10 @@ const AdminLogs = () => {
                             <p className="text-sm font-medium text-foreground mb-2">
                               {log.message}
                             </p>
-                            {log.userEmail && (
+                            {log.data?.userEmail && (
                               <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                                 <User className="h-3 w-3" />
-                                <span>{log.userEmail}</span>
+                                <span>{log.data.userEmail}</span>
                               </div>
                             )}
                             {log.data && (
