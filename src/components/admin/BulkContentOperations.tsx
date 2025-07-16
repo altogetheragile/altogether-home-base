@@ -148,20 +148,136 @@ export const BulkContentOperations = ({
             .maybeSingle();
 
           if (existingTechnique) {
-            console.log(`Skipping technique "${technique.name}" - already exists with slug "${technique.slug}"`);
+            console.log(`Updating existing technique "${technique.name}" with slug "${technique.slug}"`);
             
-            // Log the skip event
+            // Update existing technique with new data
+            const updateData: any = {};
+            
+            // Add fields that should be updated if they exist in the import
+            if (technique.name && technique.name !== existingTechnique.name) updateData.name = technique.name;
+            if (technique.description) updateData.description = technique.description;
+            if (technique.purpose) updateData.purpose = technique.purpose;
+            if (technique.originator) updateData.originator = technique.originator;
+            if (technique.difficulty_level) updateData.difficulty_level = technique.difficulty_level;
+            if (technique.estimated_reading_time) updateData.estimated_reading_time = technique.estimated_reading_time;
+            if (technique.summary) updateData.summary = technique.summary;
+            if (technique.seo_title) updateData.seo_title = technique.seo_title;
+            if (technique.seo_description) updateData.seo_description = technique.seo_description;
+            if (technique.seo_keywords) updateData.seo_keywords = technique.seo_keywords;
+            if (technique.is_published !== undefined) updateData.is_published = technique.is_published;
+            if (technique.is_featured !== undefined) updateData.is_featured = technique.is_featured;
+            if (technique.image_url) updateData.image_url = technique.image_url;
+            
+            // Only update if there are changes
+            if (Object.keys(updateData).length > 0) {
+              const { error: updateError } = await supabase
+                .from('knowledge_techniques')
+                .update(updateData)
+                .eq('id', existingTechnique.id);
+              
+              if (updateError) throw updateError;
+            }
+            
+            // Handle category update
+            if (technique.category) {
+              let categoryId = technique.category_id;
+              if (!categoryId) {
+                const { data: existingCategory } = await supabase
+                  .from('knowledge_categories')
+                  .select('id')
+                  .or(`name.eq.${technique.category},slug.eq.${technique.category?.toLowerCase().replace(/\s+/g, '-')}`)
+                  .maybeSingle();
+
+                if (existingCategory) {
+                  categoryId = existingCategory.id;
+                } else {
+                  const { data: newCategory, error: categoryError } = await supabase
+                    .from('knowledge_categories')
+                    .insert({
+                      name: technique.category,
+                      slug: technique.category.toLowerCase().replace(/\s+/g, '-'),
+                      description: `Auto-created category for ${technique.category}`
+                    })
+                    .select('id')
+                    .single();
+
+                  if (categoryError) throw categoryError;
+                  categoryId = newCategory.id;
+                  results.categories.created.push(technique.category);
+                }
+              }
+              
+              // Update category if different
+              if (categoryId) {
+                await supabase
+                  .from('knowledge_techniques')
+                  .update({ category_id: categoryId })
+                  .eq('id', existingTechnique.id);
+              }
+            }
+            
+            // Handle tags update
+            if (technique.tags && technique.tags.length > 0) {
+              // Remove existing technique-tag relationships
+              await supabase
+                .from('knowledge_technique_tags')
+                .delete()
+                .eq('technique_id', existingTechnique.id);
+              
+              // Process and add new tags
+              for (const tagName of technique.tags) {
+                if (!tagName) continue;
+                
+                let tagId: string;
+                const tagSlug = tagName.toLowerCase().replace(/\s+/g, '-');
+                
+                const { data: existingTag } = await supabase
+                  .from('knowledge_tags')
+                  .select('id')
+                  .or(`name.eq.${tagName},slug.eq.${tagSlug}`)
+                  .maybeSingle();
+
+                if (existingTag) {
+                  tagId = existingTag.id;
+                  results.tags.found.push(tagName);
+                } else {
+                  const { data: newTag, error: tagError } = await supabase
+                    .from('knowledge_tags')
+                    .insert({
+                      name: tagName,
+                      slug: tagSlug
+                    })
+                    .select('id')
+                    .single();
+
+                  if (tagError) throw tagError;
+                  tagId = newTag.id;
+                  results.tags.created.push(tagName);
+                }
+
+                // Create technique-tag relationship
+                await supabase
+                  .from('knowledge_technique_tags')
+                  .insert({
+                    technique_id: existingTechnique.id,
+                    tag_id: tagId
+                  });
+              }
+            }
+            
+            // Log the update event
             await supabase.from('admin_logs').insert({
-              action: 'Import Technique Skipped',
+              action: 'Import Technique Updated',
               details: {
                 name: technique.name,
-                reason: 'Technique with this slug already exists',
                 existing_name: existingTechnique.name,
+                updated_fields: Object.keys(updateData),
                 timestamp: new Date().toISOString()
               }
             });
             
-            continue; // Skip this technique and continue with the next one
+            results.successful.push(technique.name);
+            continue; // Continue with the next technique
           }
 
           // Handle category
