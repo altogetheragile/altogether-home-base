@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff, BookOpen, Tag } from 'lucide-react';
@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import SimpleForm from '@/components/admin/SimpleForm';
 import { BulkContentOperations } from '@/components/admin/BulkContentOperations';
 import { ContentAnalyticsDashboard } from '@/components/admin/ContentAnalyticsDashboard';
+import SearchAndFilter from '@/components/admin/SearchAndFilter';
 
 const AdminKnowledgeTechniques = () => {
   const { toast } = useToast();
@@ -28,10 +29,17 @@ const AdminKnowledgeTechniques = () => {
   const [editingTechnique, setEditingTechnique] = useState<any>(null);
   const [selectedTechniques, setSelectedTechniques] = useState<string[]>([]);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedTag, setSelectedTag] = useState<string>('');
+  const [sortBy, setSortBy] = useState('created_at');
+  
   const { data: categories } = useKnowledgeCategories();
   const { data: tags } = useKnowledgeTags();
 
-  const { data: techniques, isLoading, refetch } = useQuery({
+  const { data: allTechniques, isLoading, refetch } = useQuery({
     queryKey: ['admin-knowledge-techniques'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -48,6 +56,47 @@ const AdminKnowledgeTechniques = () => {
       return data || [];
     },
   });
+
+  // Filter and sort techniques
+  const techniques = useMemo(() => {
+    if (!allTechniques) return [];
+
+    let filtered = allTechniques.filter((technique) => {
+      const matchesSearch = !searchTerm || 
+        technique.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        technique.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        technique.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        technique.purpose?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesCategory = !selectedCategory || technique.category?.id === selectedCategory;
+
+      const matchesTag = !selectedTag || 
+        technique.knowledge_tags?.some((tagInfo: any) => tagInfo.knowledge_tags.id === selectedTag);
+
+      return matchesSearch && matchesCategory && matchesTag;
+    });
+
+    // Sort techniques
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'name_desc':
+          return b.name.localeCompare(a.name);
+        case 'views':
+          return (b.view_count || 0) - (a.view_count || 0);
+        case 'views_asc':
+          return (a.view_count || 0) - (b.view_count || 0);
+        case 'updated_at':
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        case 'created_at':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+    return filtered;
+  }, [allTechniques, searchTerm, selectedCategory, selectedTag, sortBy]);
 
   const handleSubmit = async (formData: any) => {
     try {
@@ -296,6 +345,50 @@ const AdminKnowledgeTechniques = () => {
         </div>
       </div>
 
+      <SearchAndFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filters={[
+          {
+            label: 'Category',
+            value: selectedCategory,
+            options: [
+              { label: 'All Categories', value: '' },
+              ...(categories?.map(cat => ({ label: cat.name, value: cat.id })) || [])
+            ],
+            onChange: setSelectedCategory
+          },
+          {
+            label: 'Tag',
+            value: selectedTag,
+            options: [
+              { label: 'All Tags', value: '' },
+              ...(tags?.map(tag => ({ label: tag.name, value: tag.id })) || [])
+            ],
+            onChange: setSelectedTag
+          },
+          {
+            label: 'Sort by',
+            value: sortBy,
+            options: [
+              { label: 'Newest First', value: 'created_at' },
+              { label: 'Recently Updated', value: 'updated_at' },
+              { label: 'Name A-Z', value: 'name' },
+              { label: 'Name Z-A', value: 'name_desc' },
+              { label: 'Most Views', value: 'views' },
+              { label: 'Least Views', value: 'views_asc' }
+            ],
+            onChange: setSortBy
+          }
+        ]}
+        onClearFilters={() => {
+          setSearchTerm('');
+          setSelectedCategory('');
+          setSelectedTag('');
+          setSortBy('created_at');
+        }}
+      />
+
       <BulkContentOperations
         techniques={techniques || []}
         selectedTechniques={selectedTechniques}
@@ -413,7 +506,10 @@ const AdminKnowledgeTechniques = () => {
             {!techniques?.length && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  No techniques found. Create your first technique to get started.
+                  {allTechniques?.length === 0 
+                    ? "No techniques found. Create your first technique to get started."
+                    : "No techniques match your current filters."
+                  }
                 </TableCell>
               </TableRow>
             )}
