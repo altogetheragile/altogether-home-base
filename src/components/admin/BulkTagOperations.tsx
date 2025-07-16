@@ -143,9 +143,17 @@ export const BulkTagOperations = ({
 
       importMutation.mutate(validTags);
     } catch (error) {
+      let errorMessage = "Invalid JSON file format";
+      
+      if (error instanceof SyntaxError) {
+        errorMessage = "Invalid JSON syntax. Please check your file format.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Error",
-        description: "Invalid JSON file format",
+        title: "Import Failed",
+        description: errorMessage,
         variant: "destructive"
       });
     }
