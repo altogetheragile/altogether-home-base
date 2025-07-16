@@ -140,6 +140,30 @@ export const BulkContentOperations = ({
 
       for (const technique of techniques) {
         try {
+          // Check if technique already exists by slug
+          const { data: existingTechnique } = await supabase
+            .from('knowledge_techniques')
+            .select('id, name')
+            .eq('slug', technique.slug)
+            .maybeSingle();
+
+          if (existingTechnique) {
+            console.log(`Skipping technique "${technique.name}" - already exists with slug "${technique.slug}"`);
+            
+            // Log the skip event
+            await supabase.from('admin_logs').insert({
+              action: 'Import Technique Skipped',
+              details: {
+                name: technique.name,
+                reason: 'Technique with this slug already exists',
+                existing_name: existingTechnique.name,
+                timestamp: new Date().toISOString()
+              }
+            });
+            
+            continue; // Skip this technique and continue with the next one
+          }
+
           // Handle category
           let categoryId = technique.category_id;
           if (technique.category && !categoryId) {
