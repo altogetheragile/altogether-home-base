@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_logs: {
+        Row: {
+          created_at: string | null
+          event_message: string | null
+          id: string
+          metadata: Json | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_message?: string | null
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string | null
+          event_message?: string | null
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+        }
+        Relationships: []
+      }
       comment_votes: {
         Row: {
           comment_id: string
@@ -1084,6 +1108,36 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      postgres_logs: {
+        Row: {
+          created_at: string | null
+          error_severity: string | null
+          event_message: string | null
+          id: string
+          identifier: string | null
+          metadata: Json | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_severity?: string | null
+          event_message?: string | null
+          id?: string
+          identifier?: string | null
+          metadata?: Json | null
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string | null
+          error_severity?: string | null
+          event_message?: string | null
+          id?: string
+          identifier?: string | null
+          metadata?: Json | null
+          timestamp?: string
         }
         Relationships: []
       }
