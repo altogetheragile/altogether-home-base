@@ -119,7 +119,16 @@ export const BulkContentOperations = ({
 
   const importMutation = useMutation({
     mutationFn: async (techniques: any[]) => {
-      console.log('Importing techniques:', techniques);
+      console.log('🚀 Import started: Importing', techniques.length, 'techniques');
+      
+      // Log import start
+      await supabase.from('admin_logs').insert({
+        action: 'import_start',
+        details: { 
+          count: techniques.length,
+          timestamp: new Date().toISOString()
+        }
+      });
       
       const results = {
         total: techniques.length,
@@ -274,10 +283,20 @@ export const BulkContentOperations = ({
           results.successful.push(technique.name);
 
         } catch (error: any) {
-          console.error(`Error importing technique ${technique.name}:`, error);
+          console.error(`❌ Error importing technique ${technique.name}:`, error);
           results.failed.push({
             name: technique.name,
             error: error.message || 'Unknown error'
+          });
+          
+          // Log individual failure
+          await supabase.from('admin_logs').insert({
+            action: 'import_technique_failed',
+            details: { 
+              name: technique.name,
+              error: error.message || 'Unknown error',
+              timestamp: new Date().toISOString()
+            }
           });
         }
       }
@@ -302,10 +321,24 @@ export const BulkContentOperations = ({
       });
 
       // Log detailed results for debugging
-      console.log('Import results:', results);
+      console.log('✅ Import completed:', results);
+      
+      // Log import completion to admin logs
+      supabase.from('admin_logs').insert({
+        action: 'import_completed',
+        details: { 
+          total: results.total,
+          successful: results.successful.length,
+          failed: results.failed.length,
+          categories_created: results.categories.created.length,
+          tags_created: results.tags.created.length,
+          failed_items: results.failed,
+          timestamp: new Date().toISOString()
+        }
+      });
       
       if (results.failed.length > 0) {
-        console.warn('Failed imports:', results.failed);
+        console.warn('⚠️ Failed imports:', results.failed);
       }
 
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-techniques'] });
@@ -313,7 +346,17 @@ export const BulkContentOperations = ({
       queryClient.invalidateQueries({ queryKey: ['knowledge-tags'] });
     },
     onError: (error) => {
-      console.error('Import error:', error);
+      console.error('💥 Import error:', error);
+      
+      // Log import error to admin logs
+      supabase.from('admin_logs').insert({
+        action: 'import_error',
+        details: { 
+          error: error.message || 'Unknown error',
+          timestamp: new Date().toISOString()
+        }
+      });
+      
       toast({
         title: "Import failed",
         description: "There was an error during the import process.",
