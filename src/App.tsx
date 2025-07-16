@@ -25,6 +25,7 @@ import AdminEventCategories from "./pages/admin/AdminEventCategories";
 import AdminLevels from "./pages/admin/AdminLevels";
 import AdminFormats from "./pages/admin/AdminFormats";
 import AdminPages from "./pages/admin/AdminPages";
+import AdminLogs from "./pages/admin/AdminLogs";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
@@ -78,6 +79,7 @@ const App = () => (
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
                 <Route path="knowledge" element={<AdminKnowledgeBase />} />
+                <Route path="logs" element={<AdminLogs />} />
               </Route>
               
               {/* Dynamic Pages Route - handles root and other slugs */}
