@@ -60,32 +60,50 @@ const AdminLogs = () => {
   const { data: databaseLogs, isLoading: dbLoading, refetch: refetchDbLogs } = useQuery({
     queryKey: ['admin-database-logs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('postgres_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(100);
-      
-      if (error) throw error;
-      return data as DatabaseLog[];
+      try {
+        const { data, error } = await supabase
+          .from('postgres_logs')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(100);
+        
+        if (error) {
+          console.warn('Database logs query error:', error);
+          return [];
+        }
+        return data as DatabaseLog[];
+      } catch (error) {
+        console.warn('Failed to fetch database logs:', error);
+        return [];
+      }
     },
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: false, // Don't retry on errors
   });
 
   // Fetch auth logs from Supabase analytics
   const { data: authLogs, isLoading: authLoading, refetch: refetchAuthLogs } = useQuery({
     queryKey: ['admin-auth-logs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('auth_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(100);
-      
-      if (error) throw error;
-      return data as AuthLog[];
+      try {
+        const { data, error } = await supabase
+          .from('auth_logs')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(100);
+        
+        if (error) {
+          console.warn('Auth logs query error:', error);
+          return [];
+        }
+        return data as AuthLog[];
+      } catch (error) {
+        console.warn('Failed to fetch auth logs:', error);
+        return [];
+      }
     },
     refetchInterval: 30000,
+    retry: false, // Don't retry on errors
   });
 
   // Fetch application logs from admin_logs table
