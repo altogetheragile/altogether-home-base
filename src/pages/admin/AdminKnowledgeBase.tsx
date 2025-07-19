@@ -15,21 +15,25 @@ const AdminKnowledgeBase = () => {
 
       <Tabs defaultValue="techniques" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="techniques" className="flex items-center gap-2">
-            <FileStack className="h-4 w-4" />
-            Techniques
+          <TabsTrigger value="techniques" className="flex items-center gap-1 px-2 text-xs sm:text-sm sm:gap-2 sm:px-3">
+            <FileStack className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Techniques</span>
+            <span className="sm:hidden">Tech</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart className="h-4 w-4" />
-            Analytics
+          <TabsTrigger value="analytics" className="flex items-center gap-1 px-2 text-xs sm:text-sm sm:gap-2 sm:px-3">
+            <BarChart className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Analytics</span>
+            <span className="sm:hidden">Data</span>
           </TabsTrigger>
-          <TabsTrigger value="categories" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Categories
+          <TabsTrigger value="categories" className="flex items-center gap-1 px-2 text-xs sm:text-sm sm:gap-2 sm:px-3">
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Categories</span>
+            <span className="sm:hidden">Cat</span>
           </TabsTrigger>
-          <TabsTrigger value="tags" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Tags
+          <TabsTrigger value="tags" className="flex items-center gap-1 px-2 text-xs sm:text-sm sm:gap-2 sm:px-3">
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Tags</span>
+            <span className="sm:hidden">Tags</span>
           </TabsTrigger>
         </TabsList>
 
