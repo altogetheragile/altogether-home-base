@@ -15,25 +15,21 @@ const AdminKnowledgeBase = () => {
 
       <Tabs defaultValue="techniques" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="techniques" className="flex flex-col items-center justify-center gap-1 px-0.5 py-1.5 md:flex-row md:gap-2 md:px-3 md:py-2">
-            <FileStack className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+          <TabsTrigger value="techniques" className="flex items-center justify-center gap-2 px-2 py-2">
+            <FileStack className="h-4 w-4 flex-shrink-0" />
             <span className="hidden md:inline text-sm">Techniques</span>
-            <span className="md:hidden text-[10px] leading-tight">Tech</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex flex-col items-center justify-center gap-1 px-0.5 py-1.5 md:flex-row md:gap-2 md:px-3 md:py-2">
-            <BarChart className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+          <TabsTrigger value="analytics" className="flex items-center justify-center gap-2 px-2 py-2">
+            <BarChart className="h-4 w-4 flex-shrink-0" />
             <span className="hidden md:inline text-sm">Analytics</span>
-            <span className="md:hidden text-[10px] leading-tight">Data</span>
           </TabsTrigger>
-          <TabsTrigger value="categories" className="flex flex-col items-center justify-center gap-1 px-0.5 py-1.5 md:flex-row md:gap-2 md:px-3 md:py-2">
-            <TrendingUp className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+          <TabsTrigger value="categories" className="flex items-center justify-center gap-2 px-2 py-2">
+            <TrendingUp className="h-4 w-4 flex-shrink-0" />
             <span className="hidden md:inline text-sm">Categories</span>
-            <span className="md:hidden text-[10px] leading-tight">Cat</span>
           </TabsTrigger>
-          <TabsTrigger value="tags" className="flex flex-col items-center justify-center gap-1 px-0.5 py-1.5 md:flex-row md:gap-2 md:px-3 md:py-2">
-            <Settings className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+          <TabsTrigger value="tags" className="flex items-center justify-center gap-2 px-2 py-2">
+            <Settings className="h-4 w-4 flex-shrink-0" />
             <span className="hidden md:inline text-sm">Tags</span>
-            <span className="md:hidden text-[10px] leading-tight">Tags</span>
           </TabsTrigger>
         </TabsList>
 
