@@ -29,22 +29,81 @@ const AdminLayout = () => {
       title: 'Events',
       items: [
         {
-          label: 'Events Management',
+          label: 'Events',
           href: '/admin/events',
           icon: Calendar,
-          description: 'Manage events, templates, instructors & content'
+          description: 'Manage events and registrations'
         },
+        {
+          label: 'Instructors',
+          href: '/admin/instructors',
+          icon: Users,
+          description: 'Manage instructors'
+        },
+        {
+          label: 'Locations',
+          href: '/admin/locations',
+          icon: MapPin,
+          description: 'Manage event locations'
+        },
+        {
+          label: 'Templates',
+          href: '/admin/templates',
+          icon: Layout,
+          description: 'Manage event templates'
+        }
+      ]
+    },
+    {
+      title: 'Content',
+      items: [
+        {
+          label: 'Pages',
+          href: '/admin/pages',
+          icon: Layout,
+          description: 'Manage website pages'
+        },
+        {
+          label: 'Knowledge Base',
+          href: '/admin/knowledge',
+          icon: BookOpen,
+          description: 'Manage knowledge base content'
+        }
       ]
     },
     {
       title: 'System',
       items: [
         {
+          label: 'Categories',
+          href: '/admin/event-categories',
+          icon: FolderOpen,
+          description: 'Manage event categories'
+        },
+        {
+          label: 'Event Types',
+          href: '/admin/event-types',
+          icon: Tag,
+          description: 'Manage event types'
+        },
+        {
+          label: 'Levels',
+          href: '/admin/levels',
+          icon: BarChart3,
+          description: 'Manage skill levels'
+        },
+        {
+          label: 'Formats',
+          href: '/admin/formats',
+          icon: Layout,
+          description: 'Manage event formats'
+        },
+        {
           label: 'System Logs',
           href: '/admin/logs',
           icon: Terminal,
           description: 'View application logs and system activity'
-        },
+        }
       ]
     }
   ];
