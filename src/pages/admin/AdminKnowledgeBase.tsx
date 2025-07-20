@@ -14,22 +14,22 @@ const AdminKnowledgeBase = () => {
       </div>
 
       <Tabs defaultValue="techniques" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="techniques" className="flex items-center justify-center">
-            <BookOpen className="h-4 w-4" />
-            <span className="hidden md:inline ml-2">Techniques</span>
+        <TabsList className="grid w-full grid-cols-4 gap-1">
+          <TabsTrigger value="techniques" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
+            <BookOpen className="h-4 w-4 mb-1" />
+            <span className="leading-none">Tech</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center justify-center">
-            <BarChart className="h-4 w-4" />
-            <span className="hidden md:inline ml-2">Analytics</span>
+          <TabsTrigger value="analytics" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
+            <BarChart className="h-4 w-4 mb-1" />
+            <span className="leading-none">Data</span>
           </TabsTrigger>
-          <TabsTrigger value="categories" className="flex items-center justify-center">
-            <Folder className="h-4 w-4" />
-            <span className="hidden md:inline ml-2">Categories</span>
+          <TabsTrigger value="categories" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
+            <Folder className="h-4 w-4 mb-1" />
+            <span className="leading-none">Cats</span>
           </TabsTrigger>
-          <TabsTrigger value="tags" className="flex items-center justify-center">
-            <Tag className="h-4 w-4" />
-            <span className="hidden md:inline ml-2">Tags</span>
+          <TabsTrigger value="tags" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
+            <Tag className="h-4 w-4 mb-1" />
+            <span className="leading-none">Tags</span>
           </TabsTrigger>
         </TabsList>
 
