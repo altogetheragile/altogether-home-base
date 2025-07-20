@@ -14,22 +14,22 @@ const AdminKnowledgeBase = () => {
       </div>
 
       <Tabs defaultValue="techniques" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto p-0">
-          <TabsTrigger value="techniques" className="flex items-center justify-center p-2 text-xs min-w-0">
-            <BookOpen className="h-4 w-4 flex-shrink-0" />
-            <span className="hidden sm:inline ml-1 truncate">Techniques</span>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="techniques" className="flex items-center justify-center">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden md:inline ml-2">Techniques</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center justify-center p-2 text-xs min-w-0">
-            <BarChart className="h-4 w-4 flex-shrink-0" />
-            <span className="hidden sm:inline ml-1 truncate">Analytics</span>
+          <TabsTrigger value="analytics" className="flex items-center justify-center">
+            <BarChart className="h-4 w-4" />
+            <span className="hidden md:inline ml-2">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="categories" className="flex items-center justify-center p-2 text-xs min-w-0">
-            <Folder className="h-4 w-4 flex-shrink-0" />
-            <span className="hidden sm:inline ml-1 truncate">Categories</span>
+          <TabsTrigger value="categories" className="flex items-center justify-center">
+            <Folder className="h-4 w-4" />
+            <span className="hidden md:inline ml-2">Categories</span>
           </TabsTrigger>
-          <TabsTrigger value="tags" className="flex items-center justify-center p-2 text-xs min-w-0">
-            <Tag className="h-4 w-4 flex-shrink-0" />
-            <span className="hidden sm:inline ml-1 truncate">Tags</span>
+          <TabsTrigger value="tags" className="flex items-center justify-center">
+            <Tag className="h-4 w-4" />
+            <span className="hidden md:inline ml-2">Tags</span>
           </TabsTrigger>
         </TabsList>
 
