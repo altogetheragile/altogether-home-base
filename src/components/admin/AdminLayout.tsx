@@ -142,20 +142,20 @@ const AdminLayout = () => {
         {/* Admin Navigation */}
         <div className="bg-white border-b">
           <div className="px-6 py-4">
-            <nav className="flex space-x-8">
+            <nav className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:space-x-4 gap-2">
               {navGroups.map((group) => (
                 group.items.map((item) => (
                   <Link
                     key={item.href}
                     to={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex items-center justify-center lg:justify-start space-x-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                       isActive(item.href)
                         ? 'bg-primary/10 text-primary'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                   >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline lg:inline">{item.label}</span>
                   </Link>
                 ))
               ))}
