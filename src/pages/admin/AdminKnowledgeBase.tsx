@@ -14,22 +14,22 @@ const AdminKnowledgeBase = () => {
       </div>
 
       <Tabs defaultValue="techniques" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 gap-1">
-          <TabsTrigger value="techniques" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
-            <BookOpen className="h-4 w-4 mb-1" />
-            <span className="leading-none">Tech</span>
+        <TabsList className="grid w-full grid-cols-4 gap-1 h-auto p-1">
+          <TabsTrigger value="techniques" className="flex flex-col items-center justify-center p-1 h-auto min-h-[50px] text-xs whitespace-normal">
+            <BookOpen className="h-3 w-3 mb-1" />
+            <span className="leading-tight text-center">Tech</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
-            <BarChart className="h-4 w-4 mb-1" />
-            <span className="leading-none">Data</span>
+          <TabsTrigger value="analytics" className="flex flex-col items-center justify-center p-1 h-auto min-h-[50px] text-xs whitespace-normal">
+            <BarChart className="h-3 w-3 mb-1" />
+            <span className="leading-tight text-center">Data</span>
           </TabsTrigger>
-          <TabsTrigger value="categories" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
-            <Folder className="h-4 w-4 mb-1" />
-            <span className="leading-none">Cats</span>
+          <TabsTrigger value="categories" className="flex flex-col items-center justify-center p-1 h-auto min-h-[50px] text-xs whitespace-normal">
+            <Folder className="h-3 w-3 mb-1" />
+            <span className="leading-tight text-center">Cats</span>
           </TabsTrigger>
-          <TabsTrigger value="tags" className="flex flex-col items-center justify-center p-2 h-auto min-h-[44px] text-xs">
-            <Tag className="h-4 w-4 mb-1" />
-            <span className="leading-none">Tags</span>
+          <TabsTrigger value="tags" className="flex flex-col items-center justify-center p-1 h-auto min-h-[50px] text-xs whitespace-normal">
+            <Tag className="h-3 w-3 mb-1" />
+            <span className="leading-tight text-center">Tags</span>
           </TabsTrigger>
         </TabsList>
 
