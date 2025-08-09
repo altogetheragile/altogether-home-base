@@ -201,44 +201,6 @@ const AdminLayout = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="pages" className="mt-0">
-                <div className="text-center py-8">
-                  <Layout className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Pages management is available.</p>
-                  <Link 
-                    to="/admin/pages"
-                    className="inline-flex items-center mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-                  >
-                    Go to Pages
-                  </Link>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="knowledge" className="mt-0">
-                <div className="text-center py-8">
-                  <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Knowledge Base management is available.</p>
-                  <Link 
-                    to="/admin/knowledge"
-                    className="inline-flex items-center mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-                  >
-                    Go to Knowledge Base
-                  </Link>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="logs" className="mt-0">
-                <div className="text-center py-8">
-                  <Terminal className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">System Logs are available for monitoring.</p>
-                  <Link 
-                    to="/admin/logs"
-                    className="inline-flex items-center mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-                  >
-                    View System Logs
-                  </Link>
-                </div>
-              </TabsContent>
             </Tabs>
           </div>
         </div>
