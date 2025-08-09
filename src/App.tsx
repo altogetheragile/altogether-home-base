@@ -40,7 +40,7 @@ import EditInstructor from "./pages/admin/EditInstructor";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
 import NotFound from "./pages/NotFound";
-import UserDashboard from "./pages/UserDashboard";
+
 import LearningPaths from "./pages/LearningPaths";
 
 const queryClient = new QueryClient();
@@ -61,7 +61,6 @@ const App = () => (
               <Route path="/knowledge/:slug" element={<KnowledgeTechniqueDetail />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/learning-paths" element={<LearningPaths />} />
               
               {/* Protected Admin Routes */}
