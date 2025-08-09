@@ -11,10 +11,6 @@ const AdminKnowledgeBase = () => {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900">Knowledge Base</h2>
-      </div>
-
       <Tabs defaultValue="techniques" className="w-full">
         <TooltipProvider>
           <TabsList className="flex w-full h-auto min-h-[48px] p-1 gap-1">
