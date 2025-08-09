@@ -122,14 +122,7 @@ const AdminKnowledgeTags = () => {
         />
       )}
 
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-            <Tag className="h-5 w-5" />
-            <span>Knowledge Tags</span>
-          </h3>
-          <p className="text-gray-600">Manage tags for categorizing and filtering techniques</p>
-        </div>
+      <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
           <Plus className="h-4 w-4" />
           <span>Add Tag</span>

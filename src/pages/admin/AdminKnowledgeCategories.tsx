@@ -129,14 +129,7 @@ const AdminKnowledgeCategories = () => {
         />
       )}
 
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-            <FolderOpen className="h-5 w-5" />
-            <span>Knowledge Categories</span>
-          </h3>
-          <p className="text-gray-600">Organize techniques into purpose groups</p>
-        </div>
+      <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
           <Plus className="h-4 w-4" />
           <span>Add Category</span>
