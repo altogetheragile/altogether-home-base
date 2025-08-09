@@ -199,33 +199,19 @@ const AdminLogs = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">System Logs</h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor application activity, database operations, and system events
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button onClick={refreshAll} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={exportLogs} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
+      <div className="flex items-center justify-end space-x-2">
+        <Button onClick={refreshAll} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+        <Button onClick={exportLogs} variant="outline" size="sm">
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
       </div>
 
       {/* Log Controls */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Filter className="h-5 w-5" />
-            <span>Log Filters</span>
-          </CardTitle>
-        </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4">
             <div className="flex-1">
@@ -298,12 +284,6 @@ const AdminLogs = () => {
         {/* Application Logs */}
         <TabsContent value="application">
           <Card>
-            <CardHeader>
-              <CardTitle>Application Logs</CardTitle>
-              <CardDescription>
-                Application events, errors, and system activities
-              </CardDescription>
-            </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {filteredApplicationLogs.length === 0 ? (
@@ -359,12 +339,6 @@ const AdminLogs = () => {
         {/* Database Logs */}
         <TabsContent value="database">
           <Card>
-            <CardHeader>
-              <CardTitle>Database Logs</CardTitle>
-              <CardDescription>
-                PostgreSQL database operations and errors
-              </CardDescription>
-            </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {dbLoading ? (
@@ -409,12 +383,6 @@ const AdminLogs = () => {
         {/* Auth Logs */}
         <TabsContent value="auth">
           <Card>
-            <CardHeader>
-              <CardTitle>Authentication Logs</CardTitle>
-              <CardDescription>
-                User authentication and authorization events
-              </CardDescription>
-            </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {authLoading ? (
