@@ -26,7 +26,13 @@ import AdminLevels from "./pages/admin/AdminLevels";
 import AdminFormats from "./pages/admin/AdminFormats";
 import AdminPages from "./pages/admin/AdminPages";
 import AdminLogs from "./pages/admin/AdminLogs";
-import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
+import AdminKnowledgeTechniquesRoute from "./pages/admin/AdminKnowledgeTechniquesRoute";
+import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsRoute";
+import AdminKnowledgeCategoriesRoute from "./pages/admin/AdminKnowledgeCategoriesRoute";
+import AdminKnowledgeTagsRoute from "./pages/admin/AdminKnowledgeTagsRoute";
+import AdminLogsApplicationRoute from "./pages/admin/AdminLogsApplicationRoute";
+import AdminLogsDatabaseRoute from "./pages/admin/AdminLogsDatabaseRoute";
+import AdminLogsAuthRoute from "./pages/admin/AdminLogsAuthRoute";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
@@ -78,8 +84,14 @@ const App = () => (
                 <Route path="formats" element={<AdminFormats />} />
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
-                <Route path="knowledge" element={<AdminKnowledgeBase />} />
+                <Route path="knowledge/techniques" element={<AdminKnowledgeTechniquesRoute />} />
+                <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
+                <Route path="knowledge/categories" element={<AdminKnowledgeCategoriesRoute />} />
+                <Route path="knowledge/tags" element={<AdminKnowledgeTagsRoute />} />
                 <Route path="logs" element={<AdminLogs />} />
+                <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
+                <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
+                <Route path="logs/auth" element={<AdminLogsAuthRoute />} />
               </Route>
               
               {/* Dynamic Pages Route - handles root and other slugs */}

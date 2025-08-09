@@ -78,6 +78,54 @@ const AdminLayout = () => {
     }
   ];
 
+  const knowledgeItems = [
+    {
+      label: 'Techniques',
+      href: '/admin/knowledge/techniques',
+      icon: BookOpen,
+      description: 'Manage knowledge techniques'
+    },
+    {
+      label: 'Analytics',
+      href: '/admin/knowledge/analytics',
+      icon: BarChart3,
+      description: 'View content analytics'
+    },
+    {
+      label: 'Categories',
+      href: '/admin/knowledge/categories',
+      icon: FolderOpen,
+      description: 'Organize knowledge categories'
+    },
+    {
+      label: 'Tags',
+      href: '/admin/knowledge/tags',
+      icon: Tag,
+      description: 'Manage content tags'
+    }
+  ];
+
+  const logsItems = [
+    {
+      label: 'Application',
+      href: '/admin/logs/application',
+      icon: Terminal,
+      description: 'View application logs'
+    },
+    {
+      label: 'Database',
+      href: '/admin/logs/database',
+      icon: Settings,
+      description: 'View database logs'
+    },
+    {
+      label: 'Authentication',
+      href: '/admin/logs/auth',
+      icon: Shield,
+      description: 'View auth logs'
+    }
+  ];
+
   const tabs = [
     {
       id: 'events',
@@ -99,14 +147,16 @@ const AdminLayout = () => {
       label: 'Knowledge Base',
       icon: BookOpen,
       paths: ['/admin/knowledge'],
-      href: '/admin/knowledge'
+      href: '/admin/knowledge/techniques',
+      items: knowledgeItems
     },
     {
       id: 'logs',
       label: 'System Logs',
       icon: Terminal,
       paths: ['/admin/logs'],
-      href: '/admin/logs'
+      href: '/admin/logs/application',
+      items: logsItems
     }
   ];
 
@@ -195,6 +245,62 @@ const AdminLayout = () => {
                 <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
                   <TooltipProvider>
                     {eventsItems.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <Tooltip key={item.label}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to={item.href}
+                              className="group flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
+                            >
+                              <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
+                                <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{item.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </TooltipProvider>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="knowledge" className="mt-0">
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                  <TooltipProvider>
+                    {knowledgeItems.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <Tooltip key={item.label}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to={item.href}
+                              className="group flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
+                            >
+                              <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
+                                <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{item.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </TooltipProvider>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="logs" className="mt-0">
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                  <TooltipProvider>
+                    {logsItems.map((item) => {
                       const IconComponent = item.icon;
                       return (
                         <Tooltip key={item.label}>
