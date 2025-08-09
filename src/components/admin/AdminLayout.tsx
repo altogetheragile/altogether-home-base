@@ -83,6 +83,7 @@ const AdminLayout = () => {
       label: 'Events',
       icon: Calendar,
       paths: ['/admin/events', '/admin/instructors', '/admin/locations', '/admin/templates', '/admin/event-categories', '/admin/event-types', '/admin/levels', '/admin/formats'],
+      href: '/admin/events',
       items: eventsItems
     },
     {
