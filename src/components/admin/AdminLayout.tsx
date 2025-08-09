@@ -38,43 +38,43 @@ const AdminLayout = () => {
       label: 'Instructors',
       href: '/admin/instructors',
       icon: Users,
-      description: 'Manage instructors'
+      description: 'Manage instructor profiles'
     },
     {
       label: 'Locations',
       href: '/admin/locations',
       icon: MapPin,
-      description: 'Manage event locations'
+      description: 'Configure event venues'
     },
     {
       label: 'Templates',
       href: '/admin/templates',
       icon: Layout,
-      description: 'Manage event templates'
+      description: 'Create reusable event templates'
     },
     {
       label: 'Categories',
       href: '/admin/event-categories',
       icon: FolderOpen,
-      description: 'Manage event categories'
+      description: 'Organize event categories'
     },
     {
-      label: 'Event Types',
+      label: 'Types',
       href: '/admin/event-types',
       icon: Tag,
-      description: 'Manage event types'
+      description: 'Define event types'
     },
     {
       label: 'Levels',
       href: '/admin/levels',
       icon: BarChart3,
-      description: 'Manage skill levels'
+      description: 'Set skill difficulty levels'
     },
     {
       label: 'Formats',
       href: '/admin/formats',
-      icon: Layout,
-      description: 'Manage event formats'
+      icon: Settings,
+      description: 'Configure event formats'
     }
   ];
 
@@ -192,7 +192,7 @@ const AdminLayout = () => {
 
               {/* Tab Content */}
               <TabsContent value="events" className="mt-0">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                   <TooltipProvider>
                     {eventsItems.map((item) => {
                       const IconComponent = item.icon;
@@ -201,18 +201,16 @@ const AdminLayout = () => {
                           <TooltipTrigger asChild>
                             <Link
                               to={item.href}
-                              className="group relative bg-white rounded-lg border border-gray-200 p-3 hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                              className="group flex items-center justify-center p-2 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
                             >
-                              <div className="flex flex-col items-center text-center space-y-2">
-                                <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary/10 transition-colors">
-                                  <IconComponent className="h-4 w-4 text-gray-600 group-hover:text-primary" />
-                                </div>
-                                <h3 className="font-medium text-gray-900 text-xs">{item.label}</h3>
+                              <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
+                                <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
                               </div>
                             </Link>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{item.description}</p>
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{item.description}</p>
                           </TooltipContent>
                         </Tooltip>
                       );
