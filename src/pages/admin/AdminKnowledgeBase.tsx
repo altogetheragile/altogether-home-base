@@ -5,6 +5,7 @@ import AdminKnowledgeTags from './AdminKnowledgeTags';
 import { ContentAnalyticsDashboard } from '@/components/admin/ContentAnalyticsDashboard';
 import { BarChart, Tag, BookOpen, Folder } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const AdminKnowledgeBase = () => {
   const knowledgeItems = [
@@ -38,28 +39,53 @@ const AdminKnowledgeBase = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-gray-900">Knowledge Base</h2>
-        <p className="text-sm text-gray-600">Manage content and analytics</p>
       </div>
 
       <Tabs defaultValue="techniques" className="w-full">
-        <TabsList className="flex w-full h-auto min-h-[48px] p-1 gap-1">
-          <TabsTrigger value="techniques" className="flex-1 flex flex-col items-center justify-center p-2 h-auto text-[10px] leading-tight whitespace-normal min-h-[44px]">
-            <BookOpen className="h-3 w-3 mb-1 shrink-0" />
-            <span className="text-center">Tech</span>
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex-1 flex flex-col items-center justify-center p-2 h-auto text-[10px] leading-tight whitespace-normal min-h-[44px]">
-            <BarChart className="h-3 w-3 mb-1 shrink-0" />
-            <span className="text-center">Data</span>
-          </TabsTrigger>
-          <TabsTrigger value="categories" className="flex-1 flex flex-col items-center justify-center p-2 h-auto text-[10px] leading-tight whitespace-normal min-h-[44px]">
-            <Folder className="h-3 w-3 mb-1 shrink-0" />
-            <span className="text-center">Cats</span>
-          </TabsTrigger>
-          <TabsTrigger value="tags" className="flex-1 flex flex-col items-center justify-center p-2 h-auto text-[10px] leading-tight whitespace-normal min-h-[44px]">
-            <Tag className="h-3 w-3 mb-1 shrink-0" />
-            <span className="text-center">Tags</span>
-          </TabsTrigger>
-        </TabsList>
+        <TooltipProvider>
+          <TabsList className="flex w-full h-auto min-h-[48px] p-1 gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="techniques" className="flex-1 flex items-center justify-center p-2 h-auto min-h-[44px]">
+                  <BookOpen className="h-4 w-4" />
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Techniques</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="analytics" className="flex-1 flex items-center justify-center p-2 h-auto min-h-[44px]">
+                  <BarChart className="h-4 w-4" />
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Analytics</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="categories" className="flex-1 flex items-center justify-center p-2 h-auto min-h-[44px]">
+                  <Folder className="h-4 w-4" />
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Categories</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="tags" className="flex-1 flex items-center justify-center p-2 h-auto min-h-[44px]">
+                  <Tag className="h-4 w-4" />
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Tags</p>
+              </TooltipContent>
+            </Tooltip>
+          </TabsList>
+        </TooltipProvider>
 
         <TabsContent value="overview" className="mt-0">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

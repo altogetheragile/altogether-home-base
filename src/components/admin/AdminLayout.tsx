@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import AccessDenied from '@/components/AccessDenied';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -139,10 +140,19 @@ const AdminLayout = () => {
               
               {/* User Role Info */}
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
-                  <Shield className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-primary">Admin</span>
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">Admin</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Administrator role with full access</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <User className="h-4 w-4" />
                   <span>{user?.email}</span>
@@ -183,26 +193,31 @@ const AdminLayout = () => {
               {/* Tab Content */}
               <TabsContent value="events" className="mt-0">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {eventsItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <Link
-                        key={item.label}
-                        to={item.href}
-                        className="group relative bg-white rounded-lg border border-gray-200 p-3 hover:border-primary/50 hover:shadow-md transition-all duration-200"
-                      >
-                        <div className="flex flex-col items-center text-center space-y-2">
-                          <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary/10 transition-colors">
-                            <IconComponent className="h-4 w-4 text-gray-600 group-hover:text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900 text-xs">{item.label}</h3>
-                            <p className="text-xs text-gray-500 mt-1 leading-tight">{item.description}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                  <TooltipProvider>
+                    {eventsItems.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <Tooltip key={item.label}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to={item.href}
+                              className="group relative bg-white rounded-lg border border-gray-200 p-3 hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                            >
+                              <div className="flex flex-col items-center text-center space-y-2">
+                                <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary/10 transition-colors">
+                                  <IconComponent className="h-4 w-4 text-gray-600 group-hover:text-primary" />
+                                </div>
+                                <h3 className="font-medium text-gray-900 text-xs">{item.label}</h3>
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{item.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </TooltipProvider>
                 </div>
               </TabsContent>
 
