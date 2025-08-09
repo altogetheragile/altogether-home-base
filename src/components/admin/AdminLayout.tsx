@@ -182,22 +182,27 @@ const AdminLayout = () => {
 
               {/* Tab Content */}
               <TabsContent value="events" className="mt-0">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-2">
-                  {eventsItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className={`flex flex-col items-center space-y-2 p-3 rounded-lg text-center transition-colors border-2 ${
-                        isActive(item.href)
-                          ? 'bg-primary/10 text-primary border-primary/20'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-transparent'
-                      }`}
-                      title={item.description}
-                    >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
-                      <span className="text-xs font-medium">{item.label}</span>
-                    </Link>
-                  ))}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {eventsItems.map((item) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        className="group relative bg-white rounded-lg border border-gray-200 p-3 hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="flex flex-col items-center text-center space-y-2">
+                          <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary/10 transition-colors">
+                            <IconComponent className="h-4 w-4 text-gray-600 group-hover:text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900 text-xs">{item.label}</h3>
+                            <p className="text-xs text-gray-500 mt-1 leading-tight">{item.description}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </TabsContent>
 
