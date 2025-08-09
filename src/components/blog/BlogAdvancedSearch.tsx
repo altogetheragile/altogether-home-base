@@ -43,77 +43,74 @@ export const BlogAdvancedSearch: React.FC<BlogAdvancedSearchProps> = ({
   const hasActiveFilters = searchQuery || (selectedCategory && selectedCategory !== 'all') || (selectedTag && selectedTag !== 'all');
 
   return (
-    <div className="bg-card/50 border rounded-lg p-6">
-      {/* Search Input */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          type="text"
-          placeholder="Search blog posts..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 pr-4 py-2 w-full"
-        />
-      </div>
+    <div className="border-b pb-4 mb-6">
+      {/* Inline Search and Filters */}
+      <div className="flex flex-col md:flex-row gap-3 items-center justify-between mb-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search blog posts..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        {/* Compact Filters */}
+        <div className="flex gap-2 items-center">
+          <Select value={selectedCategory} onValueChange={onCategoryChange}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              {categories?.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: category.color }}
+                    />
+                    {category.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      {/* Filters Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        {/* Category Filter */}
-        <Select value={selectedCategory} onValueChange={onCategoryChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="All categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
-            {categories?.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: category.color }}
-                  />
-                  {category.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={selectedTag} onValueChange={onTagChange}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All tags</SelectItem>
+              {popularTags?.map((tag) => (
+                <SelectItem key={tag.id} value={tag.slug}>
+                  {tag.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        {/* Tag Filter */}
-        <Select value={selectedTag} onValueChange={onTagChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="All tags" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All tags</SelectItem>
-            {popularTags?.map((tag) => (
-              <SelectItem key={tag.id} value={tag.slug}>
-                {tag.name} ({tag.usage_count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={sortBy} onValueChange={onSortChange}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="popularity">Popular</SelectItem>
+              <SelectItem value="title">A-Z</SelectItem>
+            </SelectContent>
+          </Select>
 
-        {/* Sort Filter */}
-        <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Newest first</SelectItem>
-            <SelectItem value="oldest">Oldest first</SelectItem>
-            <SelectItem value="popularity">Most viewed</SelectItem>
-            <SelectItem value="title">Title A-Z</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <Button variant="outline" onClick={clearFilters} className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Clear filters
-          </Button>
-        )}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Results Count */}

@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { AdvancedSearch } from "@/components/knowledge/AdvancedSearch";
 import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
 
 const KnowledgeBase = () => {
@@ -66,43 +65,92 @@ const KnowledgeBase = () => {
       
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-              Product Delivery Techniques
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Discover, learn, and apply proven techniques for building better products
-            </p>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-4">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                Product Delivery Techniques
+              </h1>
+              <p className="text-base text-muted-foreground mb-4">
+                Discover, learn, and apply proven techniques for building better products
+              </p>
+            </div>
             
-            {/* Advanced Search */}
-            <div className="max-w-4xl mx-auto mb-8">
-              <AdvancedSearch
-                searchQuery={searchQuery}
-                onSearchChange={handleSearch}
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-                selectedTag={selectedTag}
-                onTagChange={setSelectedTag}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-                resultsCount={techniques?.length || 0}
-              />
+            {/* Inline Search Bar */}
+            <div className="flex flex-col md:flex-row gap-3 items-center justify-between mb-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search techniques..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {/* Compact Filters */}
+              <div className="flex gap-2 items-center">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {categories?.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={selectedTag} onValueChange={setSelectedTag}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Tag" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All tags</SelectItem>
+                    {popularTags?.slice(0, 20).map((tag) => (
+                      <SelectItem key={tag.id} value={tag.slug}>
+                        {tag.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popularity">Popular</SelectItem>
+                    <SelectItem value="recent">Recent</SelectItem>
+                    <SelectItem value="alphabetical">A-Z</SelectItem>
+                    <SelectItem value="difficulty">Difficulty</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {(searchQuery || (selectedCategory && selectedCategory !== "all") || (selectedTag && selectedTag !== "all")) && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
+            {/* Compact Stats */}
+            <div className="flex justify-center gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{techniques?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Techniques</div>
+                <div className="text-lg font-bold text-primary">{techniques?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Techniques</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{categories?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Categories</div>
+                <div className="text-lg font-bold text-primary">{categories?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Categories</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{popularTags?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Tags</div>
+                <div className="text-lg font-bold text-primary">{popularTags?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Tags</div>
               </div>
             </div>
           </div>

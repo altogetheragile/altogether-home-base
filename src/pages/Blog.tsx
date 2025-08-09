@@ -46,18 +46,18 @@ const Blog = () => {
       
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
               Agile Insights & Resources
             </h1>
-            <p className="text-xl text-muted-foreground mb-8">
+            <p className="text-base text-muted-foreground mb-4">
               Expert insights, practical tips, and thought leadership on agile methodologies, 
               team dynamics, and organizational transformation.
             </p>
             
-            {/* Advanced Search */}
-            <div className="max-w-4xl mx-auto mb-8">
+            {/* Inline Advanced Search */}
+            <div className="max-w-6xl mx-auto mb-4">
               <BlogAdvancedSearch
                 searchQuery={searchQuery}
                 onSearchChange={handleSearch}
@@ -71,19 +71,19 @@ const Blog = () => {
               />
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
+            {/* Compact Stats */}
+            <div className="flex justify-center gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{posts?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Blog Posts</div>
+                <div className="text-lg font-bold text-primary">{posts?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Blog Posts</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{categories?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Categories</div>
+                <div className="text-lg font-bold text-primary">{categories?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Categories</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{popularTags?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Tags</div>
+                <div className="text-lg font-bold text-primary">{popularTags?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Tags</div>
               </div>
             </div>
           </div>
