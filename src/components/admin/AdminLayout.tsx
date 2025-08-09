@@ -136,40 +136,56 @@ const AdminLayout = () => {
         {/* Admin Navigation */}
         <div className="bg-white border-b">
           <div className="px-6 py-4">
-            <nav className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:space-x-4 gap-2">
-              {/* Grouped Items */}
+            <nav className="space-y-6">
+              {/* Events Group */}
               {navGroups.map((group) => (
-                group.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={`flex items-center justify-center lg:justify-start space-x-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                      isActive(item.href)
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4 flex-shrink-0" />
-                    <span className="hidden sm:inline lg:inline">{item.label}</span>
-                  </Link>
-                ))
+                <div key={group.title} className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                    {group.title}
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        className={`flex flex-col items-center space-y-2 p-3 rounded-lg text-center transition-colors ${
+                          isActive(item.href)
+                            ? 'bg-primary/10 text-primary border-2 border-primary/20'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
+                        }`}
+                        title={item.description}
+                      >
+                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                        <span className="text-xs font-medium">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
               
               {/* Standalone Items */}
-              {standaloneItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`flex items-center justify-center lg:justify-start space-x-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                    isActive(item.href)
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="hidden sm:inline lg:inline">{item.label}</span>
-                </Link>
-              ))}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  General
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {standaloneItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      className={`flex flex-col items-center space-y-2 p-3 rounded-lg text-center transition-colors ${
+                        isActive(item.href)
+                          ? 'bg-primary/10 text-primary border-2 border-primary/20'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
+                      }`}
+                      title={item.description}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-xs font-medium">{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </nav>
           </div>
         </div>
