@@ -7,14 +7,14 @@ import { BarChart, Tag, BookOpen, Folder } from 'lucide-react';
 
 const AdminKnowledgeBase = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900">Knowledge Base Management</h2>
-        <p className="text-gray-600">Comprehensive content management with analytics and bulk operations</p>
+        <h2 className="text-lg font-semibold text-gray-900">Knowledge Base</h2>
+        <p className="text-sm text-gray-600">Manage content and analytics</p>
       </div>
 
       <Tabs defaultValue="techniques" className="w-full">
-        <TabsList className="flex w-full h-auto min-h-[60px] p-1 gap-1">
+        <TabsList className="flex w-full h-auto min-h-[48px] p-1 gap-1">
           <TabsTrigger value="techniques" className="flex-1 flex flex-col items-center justify-center p-2 h-auto text-[10px] leading-tight whitespace-normal min-h-[56px]">
             <BookOpen className="h-3 w-3 mb-1 shrink-0" />
             <span className="text-center">Tech</span>
@@ -33,19 +33,19 @@ const AdminKnowledgeBase = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="techniques" className="space-y-6">
+        <TabsContent value="techniques" className="space-y-4">
           <AdminKnowledgeTechniques />
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
+        <TabsContent value="analytics" className="space-y-4">
           <ContentAnalyticsDashboard />
         </TabsContent>
 
-        <TabsContent value="categories" className="space-y-6">
+        <TabsContent value="categories" className="space-y-4">
           <AdminKnowledgeCategories />
         </TabsContent>
 
-        <TabsContent value="tags" className="space-y-6">
+        <TabsContent value="tags" className="space-y-4">
           <AdminKnowledgeTags />
         </TabsContent>
       </Tabs>

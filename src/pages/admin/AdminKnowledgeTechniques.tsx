@@ -307,7 +307,7 @@ const AdminKnowledgeTechniques = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {showForm && (
         <SimpleForm
           title="Technique"
@@ -321,28 +321,18 @@ const AdminKnowledgeTechniques = () => {
         />
       )}
 
-      {showAnalytics && <ContentAnalyticsDashboard />}
-
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-            <BookOpen className="h-5 w-5" />
-            <span>Knowledge Techniques</span>
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+            <BookOpen className="h-4 w-4" />
+            <span>Techniques</span>
           </h3>
-          <p className="text-gray-600">Manage product delivery techniques and methods</p>
+          <p className="text-sm text-gray-600">Manage delivery techniques</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAnalytics(!showAnalytics)}
-          >
-            {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
-          </Button>
-          <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>Add Technique</span>
-          </Button>
-        </div>
+        <Button onClick={() => setShowForm(true)} className="flex items-center space-x-1">
+          <Plus className="h-4 w-4" />
+          <span>Add</span>
+        </Button>
       </div>
 
       <SearchAndFilter
