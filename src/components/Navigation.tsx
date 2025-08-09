@@ -86,9 +86,9 @@ const Navigation = () => {
               {/* Dashboard Link - Only show for authenticated users */}
               {user && (
                 <Link
-                  to="/dashboard"
+                  to="/user-dashboard"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/dashboard")
+                    isActive("/user-dashboard")
                       ? "text-primary bg-accent"
                       : "text-muted-foreground hover:text-primary hover:bg-accent"
                   }`}
@@ -128,7 +128,7 @@ const Navigation = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard">
+                    <Link to="/user-dashboard">
                       <LayoutDashboard className="h-4 w-4 mr-2" />
                       My Dashboard
                     </Link>
@@ -223,10 +223,10 @@ const Navigation = () => {
               {/* Dashboard Link - Mobile */}
               {user && (
                 <Link
-                  to="/dashboard"
+                  to="/user-dashboard"
                   onClick={() => setIsMenuOpen(false)}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isActive("/dashboard")
+                    isActive("/user-dashboard")
                       ? "text-primary bg-accent"
                       : "text-muted-foreground hover:text-primary hover:bg-accent"
                   }`}
