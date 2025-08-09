@@ -51,29 +51,7 @@ const AdminLayout = () => {
           href: '/admin/templates',
           icon: Layout,
           description: 'Manage event templates'
-        }
-      ]
-    },
-    {
-      title: 'Content',
-      items: [
-        {
-          label: 'Pages',
-          href: '/admin/pages',
-          icon: Layout,
-          description: 'Manage website pages'
         },
-        {
-          label: 'Knowledge Base',
-          href: '/admin/knowledge',
-          icon: BookOpen,
-          description: 'Manage knowledge base content'
-        }
-      ]
-    },
-    {
-      title: 'System',
-      items: [
         {
           label: 'Categories',
           href: '/admin/event-categories',
@@ -97,14 +75,29 @@ const AdminLayout = () => {
           href: '/admin/formats',
           icon: Layout,
           description: 'Manage event formats'
-        },
-        {
-          label: 'System Logs',
-          href: '/admin/logs',
-          icon: Terminal,
-          description: 'View application logs and system activity'
         }
       ]
+    }
+  ];
+
+  const standaloneItems = [
+    {
+      label: 'Pages',
+      href: '/admin/pages',
+      icon: Layout,
+      description: 'Manage website pages'
+    },
+    {
+      label: 'Knowledge Base',
+      href: '/admin/knowledge',
+      icon: BookOpen,
+      description: 'Manage knowledge base content'
+    },
+    {
+      label: 'System Logs',
+      href: '/admin/logs',
+      icon: Terminal,
+      description: 'View application logs and system activity'
     }
   ];
 
@@ -143,6 +136,7 @@ const AdminLayout = () => {
         <div className="bg-white border-b">
           <div className="px-6 py-4">
             <nav className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:space-x-4 gap-2">
+              {/* Grouped Items */}
               {navGroups.map((group) => (
                 group.items.map((item) => (
                   <Link
@@ -158,6 +152,22 @@ const AdminLayout = () => {
                     <span className="hidden sm:inline lg:inline">{item.label}</span>
                   </Link>
                 ))
+              ))}
+              
+              {/* Standalone Items */}
+              {standaloneItems.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`flex items-center justify-center lg:justify-start space-x-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <item.icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden sm:inline lg:inline">{item.label}</span>
+                </Link>
               ))}
             </nav>
           </div>
