@@ -21,6 +21,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface LogEntry {
   id: string;
@@ -259,20 +260,40 @@ const AdminLogs = () => {
 
       {/* Log Tabs */}
       <Tabs defaultValue="application" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="application" className="flex items-center space-x-2">
-            <Terminal className="h-4 w-4" />
-            <span>Application Logs</span>
-          </TabsTrigger>
-          <TabsTrigger value="database" className="flex items-center space-x-2">
-            <Database className="h-4 w-4" />
-            <span>Database Logs</span>
-          </TabsTrigger>
-          <TabsTrigger value="auth" className="flex items-center space-x-2">
-            <User className="h-4 w-4" />
-            <span>Auth Logs</span>
-          </TabsTrigger>
-        </TabsList>
+        <TooltipProvider>
+          <TabsList className="flex w-full h-auto min-h-[48px] p-1 gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="application" className="flex-1 flex items-center justify-center p-2 h-auto min-h-[44px]">
+                  <Terminal className="h-4 w-4" />
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Application Logs</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="database" className="flex-1 flex items-center justify-center p-2 h-auto min-h-[44px]">
+                  <Database className="h-4 w-4" />
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Database Logs</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="auth" className="flex-1 flex items-center justify-center p-2 h-auto min-h-[44px]">
+                  <User className="h-4 w-4" />
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Auth Logs</p>
+              </TooltipContent>
+            </Tooltip>
+          </TabsList>
+        </TooltipProvider>
 
         {/* Application Logs */}
         <TabsContent value="application">

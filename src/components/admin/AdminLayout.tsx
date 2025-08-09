@@ -192,7 +192,7 @@ const AdminLayout = () => {
 
               {/* Tab Content */}
               <TabsContent value="events" className="mt-0">
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
                   <TooltipProvider>
                     {eventsItems.map((item) => {
                       const IconComponent = item.icon;
@@ -201,7 +201,7 @@ const AdminLayout = () => {
                           <TooltipTrigger asChild>
                             <Link
                               to={item.href}
-                              className="group flex items-center justify-center p-2 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
+                              className="group flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
                             >
                               <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
                                 <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
