@@ -8,32 +8,6 @@ import { Link } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const AdminKnowledgeBase = () => {
-  const knowledgeItems = [
-    {
-      label: 'Techniques',
-      href: '#techniques',
-      icon: BookOpen,
-      description: 'Manage delivery techniques'
-    },
-    {
-      label: 'Analytics',
-      href: '#analytics', 
-      icon: BarChart,
-      description: 'View content analytics'
-    },
-    {
-      label: 'Categories',
-      href: '#categories',
-      icon: Folder,
-      description: 'Organize content categories'
-    },
-    {
-      label: 'Tags',
-      href: '#tags',
-      icon: Tag,
-      description: 'Manage content tags'
-    }
-  ];
 
   return (
     <div className="space-y-4">
@@ -87,34 +61,6 @@ const AdminKnowledgeBase = () => {
           </TabsList>
         </TooltipProvider>
 
-        <TabsContent value="overview" className="mt-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {knowledgeItems.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <div
-                  key={item.label}
-                  className="group relative bg-white rounded-lg border border-gray-200 p-4 hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-                  onClick={() => {
-                    const tabs = document.querySelector('[role="tablist"]');
-                    const trigger = tabs?.querySelector(`[value="${item.href.slice(1)}"]`) as HTMLElement;
-                    trigger?.click();
-                  }}
-                >
-                  <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary/10 transition-colors">
-                      <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900 text-sm">{item.label}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{item.description}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </TabsContent>
 
         <TabsContent value="techniques" className="space-y-4">
           <AdminKnowledgeTechniques />
