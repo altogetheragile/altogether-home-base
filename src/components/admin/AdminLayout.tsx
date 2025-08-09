@@ -1,6 +1,6 @@
 
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -102,6 +102,12 @@ const AdminLayout = () => {
       href: '/admin/knowledge/tags',
       icon: Tag,
       description: 'Manage content tags'
+    },
+    {
+      label: 'Learning Paths',
+      href: '/admin/knowledge/learning-paths',
+      icon: Route,
+      description: 'Create structured learning journeys'
     }
   ];
 
