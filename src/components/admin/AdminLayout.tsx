@@ -101,6 +101,7 @@ const AdminLayout = () => {
     }
   ];
 
+  // Navigation helper function
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
