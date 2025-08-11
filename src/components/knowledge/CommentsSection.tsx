@@ -52,12 +52,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     voteComment({ commentId, voteType });
   };
 
-  const getInitials = (name?: string, email?: string) => {
+  const getInitials = (name?: string) => {
     if (name) {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    }
-    if (email) {
-      return email.slice(0, 2).toUpperCase();
     }
     return 'U';
   };
@@ -69,12 +66,12 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-sm">
-                {getInitials(comment.user_profile?.full_name, comment.user_profile?.email)}
+                {getInitials(comment.user_profile?.full_name)}
               </AvatarFallback>
             </Avatar>
             <div>
               <p className="font-medium text-sm">
-                {comment.user_profile?.full_name || comment.user_profile?.email || 'Anonymous'}
+                {comment.user_profile?.full_name || 'Member'}
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}

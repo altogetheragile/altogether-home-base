@@ -94,21 +94,15 @@ export const useFeedbackStats = (techniqueId: string) => {
     queryKey: ['feedback-stats', techniqueId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('kb_feedback')
-        .select('rating')
-        .eq('technique_id', techniqueId)
-        .not('rating', 'is', null);
+        .rpc('get_feedback_stats', { p_technique_id: techniqueId });
 
       if (error) throw error;
 
-      if (!data.length) {
-        return { averageRating: 0, totalRatings: 0 };
-      }
+      const row = Array.isArray(data) ? data[0] : data;
+      const average = Number(row?.average_rating ?? 0);
+      const total = Number(row?.total_ratings ?? 0);
 
-      const totalRatings = data.length;
-      const averageRating = data.reduce((sum, item) => sum + (item.rating || 0), 0) / totalRatings;
-
-      return { averageRating: Math.round(averageRating * 10) / 10, totalRatings };
+      return { averageRating: Math.round(average * 10) / 10, totalRatings: total };
     },
     enabled: !!techniqueId && techniqueId !== 'undefined' && techniqueId !== 'null' && techniqueId.length > 0,
   });
