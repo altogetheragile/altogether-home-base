@@ -16,6 +16,9 @@ import KnowledgeBase from "./pages/KnowledgeBase";
 import KnowledgeTechniqueDetail from "./pages/KnowledgeTechniqueDetail";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import ResetPassword from "./pages/ResetPassword";
+import AccountSecurity from "./pages/AccountSecurity";
+
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminInstructors from "./pages/admin/AdminInstructors";
 import AdminLocations from "./pages/admin/AdminLocations";
@@ -61,7 +64,9 @@ const App = () => (
               <Route path="/knowledge" element={<KnowledgeBase />} />
               <Route path="/knowledge/:slug" element={<KnowledgeTechniqueDetail />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/account/security" element={<AccountSecurity />} />
               <Route path="/learning-paths" element={<LearningPaths />} />
               
               {/* Protected Admin Routes */}

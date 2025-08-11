@@ -12,6 +12,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useEffect } from "react";
 import { getFriendlyAuthError } from "@/utils/authErrors";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -74,6 +75,32 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Enter your email",
+        description: "Please enter your email above, then click Forgot password.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const redirectTo = `${window.location.origin}/auth/reset`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) {
+        const friendly = getFriendlyAuthError(error, 'sign-in');
+        toast({ title: friendly.title, description: friendly.description, variant: friendly.variant });
+      } else {
+        toast({
+          title: "Reset link sent",
+          description: "Check your email for a password reset link.",
+        });
+      }
+    } catch (err) {
+      const friendly = getFriendlyAuthError(err, 'sign-in');
+      toast({ title: friendly.title, description: friendly.description, variant: friendly.variant });
+    }
+  };
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -171,6 +198,15 @@ const Auth = () => {
                     >
                       {loading ? "Signing in..." : "Sign In"}
                     </Button>
+                    <div className="mt-2 text-right">
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-sm text-muted-foreground hover:text-primary"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
                   </form>
                 </CardContent>
               </Card>
