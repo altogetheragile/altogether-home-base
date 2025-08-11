@@ -1,4 +1,3 @@
-
 project_id = "wqaplkypnetifpqrungv"
 
 [api]
@@ -65,7 +64,13 @@ secure_password_change = true
 verify_jwt = true
 
 [functions.verify-payment]
-verify_jwt = false
+verify_jwt = true
+
+[functions.export-data]
+verify_jwt = true
+
+[functions.send-notification]
+verify_jwt = true
 
 [edge-runtime]
 enabled = true

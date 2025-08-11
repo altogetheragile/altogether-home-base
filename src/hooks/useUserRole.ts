@@ -11,18 +11,33 @@ export const useUserRole = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data, error } = await supabase
+      // Prefer roles from user_roles with priority: admin > moderator > user
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+      }
+
+      const roles = (rolesData || []).map(r => r.role);
+      if (roles.includes('admin')) return 'admin';
+      if (roles.includes('moderator')) return 'moderator';
+
+      // Fallback to profiles.role for backward compatibility
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching user role:', error);
-        return null;
+      if (profileError) {
+        console.error('Error fetching profile role:', profileError);
+        return 'user';
       }
 
-      return data?.role || 'user';
+      return profile?.role || 'user';
     },
     enabled: !!user?.id,
   });

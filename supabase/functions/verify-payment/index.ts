@@ -36,12 +36,29 @@ serve(async (req) => {
       maxNetworkRetries: 3,
     });
 
-    // Use service role key to update registration
-    const supabaseService = createClient(
+    // Create admin and user clients
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+    const authHeader = req.headers.get("Authorization") || "";
+    const supabaseUser = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false },
+      }
+    );
+
+    const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Add a small delay to avoid rate limiting when multiple calls are made
     await sleep(100);
@@ -74,14 +91,22 @@ serve(async (req) => {
     logStep("Session retrieved", { paymentStatus: session.payment_status });
 
     if (session.payment_status === "paid") {
-      // Check if registration already exists and is paid
-      const { data: existingReg } = await supabaseService
+      // Check registration ownership and status
+      const { data: reg, error: regErr } = await supabaseAdmin
         .from("event_registrations")
-        .select("payment_status")
+        .select("id, user_id, payment_status")
         .eq("stripe_session_id", sessionId)
         .single();
 
-      if (existingReg?.payment_status === "paid") {
+      if (regErr || !reg) {
+        logStep("Registration not found for session", { sessionId });
+        return new Response(JSON.stringify({ error: "Registration not found" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
+        });
+      }
+
+      if (reg.payment_status === "paid") {
         logStep("Registration already marked as paid");
         return new Response(JSON.stringify({ 
           payment_status: session.payment_status,
@@ -92,8 +117,16 @@ serve(async (req) => {
         });
       }
 
-      // Update registration status
-      const { error } = await supabaseService
+      if (reg.user_id !== userData.user.id) {
+        logStep("User mismatch for registration", { userId: userData.user.id, regUserId: reg.user_id });
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        });
+      }
+
+      // Update registration status as admin after checks
+      const { error } = await supabaseAdmin
         .from("event_registrations")
         .update({ payment_status: "paid" })
         .eq("stripe_session_id", sessionId);
