@@ -156,6 +156,7 @@ const Auth = () => {
   };
 
   const handleForgotPassword = async () => {
+    if (!email) {
       toast({
         title: "Enter your email",
         description: "Please enter your email above, then click Forgot password.",
