@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState } from '@/utils/authCleanup';
 
 interface AuthContextType {
   user: User | null;
@@ -84,6 +85,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
+
+    // Ensure clean state before attempting sign-up
+    try {
+      cleanupAuthState();
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
+    } catch {}
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -100,6 +107,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     console.log('🚀 Starting sign in process...');
+
+    // Clean up any existing auth state to avoid limbo sessions
+    try {
+      cleanupAuthState();
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
+    } catch {}
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -116,8 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (!error && data?.session) {
       console.log('✅ Sign in successful, session established');
-      // Let the auth state listener handle the session update
-      // No need for aggressive cleanup or forced reload
+      // Auth state listener will handle state updates
     }
     
     return { error };
@@ -125,13 +137,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     console.log('🚪 Starting sign out process...');
-    
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
+
+    try {
+      // Proactively clear local state/storage
+      cleanupAuthState();
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+
+      // Attempt global sign-out to invalidate all refresh tokens
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.warn('Sign out warning:', err);
+      }
+    } catch (error) {
       console.error('❌ Sign out error:', error);
-    } else {
-      console.log('✅ Sign out successful');
+    } finally {
+      // Force hard redirect to ensure a clean app state
+      window.location.href = '/auth';
     }
   };
 

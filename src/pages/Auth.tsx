@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useEffect } from "react";
+import { getFriendlyAuthError } from "@/utils/authErrors";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -48,10 +49,11 @@ const Auth = () => {
       const { error } = result;
 
       if (error) {
+        const friendly = getFriendlyAuthError(error, 'sign-in');
         toast({
-          title: "Error signing in",
-          description: error.message,
-          variant: "destructive",
+          title: friendly.title,
+          description: friendly.description,
+          variant: friendly.variant,
         });
       } else {
         toast({
@@ -61,10 +63,11 @@ const Auth = () => {
         navigate("/");
       }
     } catch (err) {
+      const friendly = getFriendlyAuthError(err, 'sign-in');
       toast({
-        title: "Error signing in",
-        description: "An unexpected error occurred",
-        variant: "destructive",
+        title: friendly.title,
+        description: friendly.description,
+        variant: friendly.variant,
       });
     }
 
@@ -92,10 +95,11 @@ const Auth = () => {
       const { error } = result;
 
       if (error) {
+        const friendly = getFriendlyAuthError(error, 'sign-up');
         toast({
-          title: "Error creating account",
-          description: error.message,
-          variant: "destructive",
+          title: friendly.title,
+          description: friendly.description,
+          variant: friendly.variant,
         });
       } else {
         toast({
@@ -104,10 +108,11 @@ const Auth = () => {
         });
       }
     } catch (err) {
+      const friendly = getFriendlyAuthError(err, 'sign-up');
       toast({
-        title: "Error creating account",
-        description: "An unexpected error occurred",
-        variant: "destructive",
+        title: friendly.title,
+        description: friendly.description,
+        variant: friendly.variant,
       });
     }
 
