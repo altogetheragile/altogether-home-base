@@ -85,26 +85,14 @@ export const usePopularSearches = () => {
   return useQuery({
     queryKey: ['popular-searches'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('search_analytics')
-        .select('query, results_count')
-        .gt('results_count', 0)
-        .order('created_at', { ascending: false })
-        .limit(100);
+      const { data, error } = await supabase.rpc('get_popular_searches', { p_limit: 5, p_days: 30 });
 
       if (error) throw error;
 
-      // Count query frequency
-      const queryCount = data.reduce((acc, item) => {
-        acc[item.query] = (acc[item.query] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Return top 5 most frequent searches
-      return Object.entries(queryCount)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 5)
-        .map(([query, count]) => ({ query, count }));
+      return (data || []).map((row: any) => ({
+        query: row.query,
+        count: Number(row.search_count) || 0,
+      }));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
