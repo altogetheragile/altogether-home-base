@@ -55,6 +55,10 @@ const AccountSecurity = () => {
         setFactorId(pendingTotp.id);
         setUri(pendingTotp.totp?.uri || null);
         setEnrolling(true);
+        // Ensure a fresh challenge exists for verification
+        const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: pendingTotp.id });
+        if (chErr) throw chErr;
+        setChallengeId(chData?.id || null);
         toast({ title: "Continue setup", description: "Enter the 6‑digit code from your authenticator app." });
         return;
       }
@@ -64,6 +68,10 @@ const AccountSecurity = () => {
       setFactorId(data.id);
       setUri(data.totp?.uri || null);
       setEnrolling(true);
+      // Create a challenge for this new factor (required by API before verify)
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: data.id });
+      if (chErr) throw chErr;
+      setChallengeId(chData?.id || null);
       toast({ title: "MFA enrollment started", description: "Scan the QR with your authenticator app." });
     } catch (err: any) {
       toast({ title: "Couldn't start MFA", description: err.message || "Unexpected error", variant: "destructive" });
@@ -82,7 +90,12 @@ const AccountSecurity = () => {
         toast({ title: "Invalid code", description: "Enter the 6‑digit code from your app.", variant: "destructive" });
         return;
       }
-      const { error } = await (supabase as any).auth.mfa.verify({ factorId, code: oneTimeCode });
+      // Always create a fresh challenge before verifying
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+      if (chErr) throw chErr;
+      const cid = chData?.id || null;
+      setChallengeId(cid);
+      const { error } = await (supabase as any).auth.mfa.verify({ factorId, challengeId: cid, code: oneTimeCode });
       if (error) throw error;
       toast({ title: "Two‑factor enabled", description: "MFA is now active on your account." });
       setEnrolling(false);
@@ -109,6 +122,33 @@ const AccountSecurity = () => {
       toast({ title: "Couldn't disable", description: err.message || "Unexpected error", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cancelEnroll = async () => {
+    // Unenroll pending factor to avoid "factor already exists" issues
+    if (!factorId) {
+      setEnrolling(false);
+      setUri(null);
+      setCode("");
+      setChallengeId(null);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await (supabase as any).auth.mfa.unenroll({ factorId });
+      if (error) throw error;
+      toast({ title: "Setup reset", description: "Pending MFA setup removed." });
+      await refreshFactors();
+    } catch (err: any) {
+      toast({ title: "Couldn't reset", description: err.message || "Unexpected error", variant: "destructive" });
+    } finally {
+      setLoading(false);
+      setEnrolling(false);
+      setUri(null);
+      setFactorId(null);
+      setCode("");
+      setChallengeId(null);
     }
   };
 
@@ -173,9 +213,10 @@ const AccountSecurity = () => {
                       <Label htmlFor="mfa-code">6‑digit code</Label>
                       <Input id="mfa-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" inputMode="numeric" maxLength={6} />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button type="submit" disabled={loading || code.length < 6}>Verify & Enable</Button>
-                      <Button type="button" variant="outline" onClick={() => { setEnrolling(false); setUri(null); setFactorId(null); setChallengeId(null); setCode(""); }}>Cancel</Button>
+                      <Button type="button" variant="outline" onClick={() => { setEnrolling(false); setUri(null); setFactorId(null); setChallengeId(null); setCode(""); }}>Close</Button>
+                      <Button type="button" variant="destructive" onClick={cancelEnroll} disabled={loading}>Reset setup (remove pending)</Button>
                     </div>
                   </form>
                 </div>
