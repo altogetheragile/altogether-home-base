@@ -39,7 +39,7 @@ const AccountSecurity = () => {
   const startEnroll = async () => {
     setLoading(true);
     try {
-      const { data, error } = await (supabase as any).auth.mfa.enroll({ factorType: "totp" });
+      const { data, error } = await (supabase as any).auth.mfa.enroll({ factorType: "totp", friendlyName: `Authenticator ${Date.now()}` });
       if (error) throw error;
       setFactorId(data.id);
       setUri(data.totp?.uri || null);
@@ -66,13 +66,10 @@ const AccountSecurity = () => {
         toast({ title: "Invalid code", description: "Enter the 6‑digit code from your app.", variant: "destructive" });
         return;
       }
-      let cid = challengeId;
-      if (!cid) {
-        const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
-        if (chErr) throw chErr;
-        cid = chData?.id || null;
-        setChallengeId(cid);
-      }
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+      if (chErr) throw chErr;
+      const cid = chData?.id || null;
+      setChallengeId(cid);
       const { error } = await (supabase as any).auth.mfa.verify({ factorId, challengeId: cid, code: oneTimeCode });
       if (error) throw error;
       toast({ title: "Two‑factor enabled", description: "MFA is now active on your account." });
