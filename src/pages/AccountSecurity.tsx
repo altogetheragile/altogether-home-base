@@ -19,6 +19,7 @@ const AccountSecurity = () => {
   const [factorId, setFactorId] = useState<string | null>(null);
   const [uri, setUri] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  const [challengeId, setChallengeId] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Account Security | AltogetherAgile";
@@ -43,6 +44,10 @@ const AccountSecurity = () => {
       setFactorId(data.id);
       setUri(data.totp?.uri || null);
       setEnrolling(true);
+      // Create a challenge for this new factor (required by some authenticators)
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: data.id });
+      if (chErr) throw chErr;
+      setChallengeId(chData?.id || null);
       toast({ title: "MFA enrollment started", description: "Scan the QR with your authenticator app." });
     } catch (err: any) {
       toast({ title: "Couldn't start MFA", description: err.message || "Unexpected error", variant: "destructive" });
@@ -56,13 +61,26 @@ const AccountSecurity = () => {
     if (!factorId) return;
     setLoading(true);
     try {
-      const { error } = await (supabase as any).auth.mfa.verify({ factorId, code });
+      const oneTimeCode = code.replace(/\D/g, '').slice(0, 6);
+      if (oneTimeCode.length < 6) {
+        toast({ title: "Invalid code", description: "Enter the 6‑digit code from your app.", variant: "destructive" });
+        return;
+      }
+      let cid = challengeId;
+      if (!cid) {
+        const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+        if (chErr) throw chErr;
+        cid = chData?.id || null;
+        setChallengeId(cid);
+      }
+      const { error } = await (supabase as any).auth.mfa.verify({ factorId, challengeId: cid, code: oneTimeCode });
       if (error) throw error;
       toast({ title: "Two‑factor enabled", description: "MFA is now active on your account." });
       setEnrolling(false);
       setCode("");
       setUri(null);
       setFactorId(null);
+      setChallengeId(null);
       await refreshFactors();
     } catch (err: any) {
       toast({ title: "Invalid code", description: err.message || "Please try again.", variant: "destructive" });
@@ -144,11 +162,11 @@ const AccountSecurity = () => {
                   <form onSubmit={verifyEnroll} className="space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="mfa-code">6‑digit code</Label>
-                      <Input id="mfa-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" inputMode="numeric" maxLength={6} />
+                      <Input id="mfa-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" inputMode="numeric" maxLength={6} />
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit" disabled={loading || code.length < 6}>Verify & Enable</Button>
-                      <Button type="button" variant="outline" onClick={() => { setEnrolling(false); setUri(null); setFactorId(null); setCode(""); }}>Cancel</Button>
+                      <Button type="button" variant="outline" onClick={() => { setEnrolling(false); setUri(null); setFactorId(null); setChallengeId(null); setCode(""); }}>Cancel</Button>
                     </div>
                   </form>
                 </div>
