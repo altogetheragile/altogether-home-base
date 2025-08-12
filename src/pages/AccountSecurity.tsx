@@ -39,15 +39,31 @@ const AccountSecurity = () => {
   const startEnroll = async () => {
     setLoading(true);
     try {
+      // Check existing factors first to avoid "factor already exists" errors
+      const { data: factorsData, error: listErr } = await (supabase as any).auth.mfa.listFactors();
+      if (listErr) throw listErr;
+      const allFactors = factorsData?.all ?? [];
+      const verifiedTotp = allFactors.find((f: any) => (f.type === "totp" || f.factor_type === "totp") && (f.status === "verified" || f.factor_status === "verified"));
+      const pendingTotp = allFactors.find((f: any) => (f.type === "totp" || f.factor_type === "totp") && (f.status === "unverified" || f.factor_status === "unverified"));
+
+      if (verifiedTotp) {
+        toast({ title: "Already enabled", description: "A TOTP factor is already verified for this account." });
+        return;
+      }
+
+      if (pendingTotp) {
+        setFactorId(pendingTotp.id);
+        setUri(pendingTotp.totp?.uri || null);
+        setEnrolling(true);
+        toast({ title: "Continue setup", description: "Enter the 6‑digit code from your authenticator app." });
+        return;
+      }
+
       const { data, error } = await (supabase as any).auth.mfa.enroll({ factorType: "totp", friendlyName: `Authenticator ${Date.now()}` });
       if (error) throw error;
       setFactorId(data.id);
       setUri(data.totp?.uri || null);
       setEnrolling(true);
-      // Create a challenge for this new factor (required by some authenticators)
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: data.id });
-      if (chErr) throw chErr;
-      setChallengeId(chData?.id || null);
       toast({ title: "MFA enrollment started", description: "Scan the QR with your authenticator app." });
     } catch (err: any) {
       toast({ title: "Couldn't start MFA", description: err.message || "Unexpected error", variant: "destructive" });
@@ -66,11 +82,7 @@ const AccountSecurity = () => {
         toast({ title: "Invalid code", description: "Enter the 6‑digit code from your app.", variant: "destructive" });
         return;
       }
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
-      if (chErr) throw chErr;
-      const cid = chData?.id || null;
-      setChallengeId(cid);
-      const { error } = await (supabase as any).auth.mfa.verify({ factorId, challengeId: cid, code: oneTimeCode });
+      const { error } = await (supabase as any).auth.mfa.verify({ factorId, code: oneTimeCode });
       if (error) throw error;
       toast({ title: "Two‑factor enabled", description: "MFA is now active on your account." });
       setEnrolling(false);
