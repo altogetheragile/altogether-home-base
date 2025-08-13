@@ -169,18 +169,35 @@ useEffect(() => {
         } catch {}
       }
       setMfaFactors(factors);
+
       const verifiedTotp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp" && ((f.status ?? f.factor_status) === "verified"));
-      const anyTotp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp");
-      const totp = verifiedTotp ?? anyTotp ?? factors[0];
-      if (!totp) {
-        throw new Error("No MFA factors found for this account.");
+      if (!verifiedTotp) {
+        const hasTotp = factors.some((f: any) => (f.factor_type ?? f.type) === "totp");
+        setMfaRequired(false);
+        toast({
+          title: hasTotp ? "Authenticator not verified" : "No authenticator found",
+          description: hasTotp ? "Finish authenticator setup before using MFA." : "Add an authenticator app in your profile to enable MFA.",
+          variant: "destructive",
+        });
+        try {
+          const { data: sess } = await supabase.auth.getSession();
+          if (sess?.session) {
+            navigate("/");
+          }
+        } catch {}
+        return;
       }
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: totp.id });
+
+      console.log('🔐 Using MFA factor:', { factorId: verifiedTotp.id });
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: verifiedTotp.id });
       if (chErr) throw chErr;
-      setMfaFactorId(totp.id);
-      setMfaChallengeId(chData?.id ?? chData?.challengeId ?? null);
+      const challengeId = chData?.id ?? chData?.challengeId ?? null;
+      setMfaFactorId(verifiedTotp.id);
+      setMfaChallengeId(challengeId);
+      console.log('🪪 MFA challenge created:', { challengeId });
       toast({ title: "MFA required", description: "Enter the 6‑digit code from your authenticator app." });
     } catch (err: any) {
+      // Don't sign the user out on challenge errors
       setMfaRequired(false);
       toast({ title: "MFA challenge failed", description: err?.message || "Please try again.", variant: "destructive" });
     }
@@ -210,7 +227,13 @@ useEffect(() => {
       toast({ title: "MFA verified (AAL2)", description: "You're fully signed in." });
       navigate("/");
     } catch (err: any) {
-      toast({ title: "Invalid code", description: err?.message || "Please try again.", variant: "destructive" });
+      const msg = (err?.message || '').toLowerCase();
+      const is422 = err?.status === 422 || err?.statusCode === 422;
+      const isExpired = /expired|challenge|not found/i.test(msg);
+      if (is422 || isExpired) {
+        try { await refreshMfaChallenge(); } catch {}
+      }
+      toast({ title: is422 || isExpired ? "Code expired or invalid" : "Invalid code", description: is422 || isExpired ? "We requested a fresh code. Enter the latest 6‑digit code." : (err?.message || "Please try again."), variant: is422 || isExpired ? undefined : "destructive" });
     } finally {
       setLoading(false);
     }

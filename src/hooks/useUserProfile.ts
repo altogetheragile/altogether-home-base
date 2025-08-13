@@ -14,7 +14,7 @@ export const useUserProfile = () => {
         .from('profiles')
         .select('full_name, email')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
