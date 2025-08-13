@@ -62,7 +62,7 @@ const Auth = () => {
         return;
       }
 
-      const { error } = result;
+      const { data, error } = result;
 
       if (error) {
         const isMfaError = (error as any)?.name === 'AuthMFAError' || /mfa|factor/i.test((error as any)?.message || '');
@@ -72,18 +72,23 @@ const Auth = () => {
           return;
         }
         const friendly = getFriendlyAuthError(error, 'sign-in');
-        toast({
-          title: friendly.title,
-          description: friendly.description,
-          variant: friendly.variant,
-        });
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have been signed in successfully.",
-        });
-        navigate("/");
+        toast({ title: friendly.title, description: friendly.description, variant: friendly.variant });
+        setLoading(false);
+        return;
       }
+
+      // No error: check if MFA is required but not signaled via error
+      const maybeFactors = (data as any)?.mfa?.factors;
+      const hasSession = !!(data as any)?.session;
+      const hasUser = !!(data as any)?.user;
+      if (!hasSession && (Array.isArray(maybeFactors) ? maybeFactors.length > 0 : hasUser)) {
+        await handleStartMfa(maybeFactors);
+        setLoading(false);
+        return;
+      }
+
+      toast({ title: "Welcome back!", description: "You have been signed in successfully." });
+      navigate("/");
     } catch (err) {
       const friendly = getFriendlyAuthError(err, 'sign-in');
       toast({

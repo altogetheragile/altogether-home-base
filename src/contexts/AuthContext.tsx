@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
 }
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔐 Auth state changed:', event, {
           userEmail: session?.user?.email,
           hasAccessToken: !!session?.access_token,
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Auth state listener will handle state updates
     }
     
-    return { error };
+    return { data, error };
   };
 
   const signOut = async () => {
