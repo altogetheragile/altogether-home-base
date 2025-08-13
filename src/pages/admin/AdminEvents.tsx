@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
@@ -27,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import EventRegistrationsDialog from '@/components/admin/events/EventRegistrationsDialog';
 
 import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
@@ -76,6 +76,7 @@ const AdminEvents = () => {
 
   const { deleteEvent } = useEventMutations();
   const [eventToDelete, setEventToDelete] = useState<any | null>(null);
+  const [registrationsEvent, setRegistrationsEvent] = useState<any | null>(null);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy');
@@ -183,6 +184,15 @@ const AdminEvents = () => {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </Link>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRegistrationsEvent(event)}
+                    >
+                      Manage Registrations
+                    </Button>
+
                     {event?.event_registrations?.length > 0 ? (
                       <TooltipProvider>
                         <Tooltip>
@@ -250,6 +260,13 @@ const AdminEvents = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EventRegistrationsDialog
+        open={!!registrationsEvent}
+        onOpenChange={(open) => !open && setRegistrationsEvent(null)}
+        eventId={registrationsEvent?.id}
+        eventTitle={registrationsEvent?.title}
+      />
     </div>
   );
 };
