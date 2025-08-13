@@ -32,11 +32,44 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user && !mfaRequired) {
-      navigate("/");
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    if (!user || mfaRequired) return;
+
+    // If another part of the app requested MFA prompt, honor it
+    const flag = sessionStorage.getItem('mfa:prompt');
+    if (flag) {
+      sessionStorage.removeItem('mfa:prompt');
+      await handleStartMfa();
+      return;
     }
-  }, [user, mfaRequired, navigate]);
+
+    try {
+      const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+      const currentLevel = aalData?.currentLevel;
+      if (currentLevel === 'aal2') {
+        if (!cancelled) navigate("/");
+        return;
+      }
+
+      const { data: lf } = await (supabase as any).auth.mfa.listFactors();
+      const all = lf?.all ?? [];
+      const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
+      if (verifiedTotp) {
+        await handleStartMfa(all);
+        return;
+      }
+
+      // No verified TOTP → safe to redirect
+      if (!cancelled) navigate("/");
+    } catch (err) {
+      console.warn('AAL-aware redirect check failed:', err);
+      if (!cancelled) navigate("/");
+    }
+  })();
+  return () => { cancelled = true; };
+}, [user, mfaRequired, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,13 +186,6 @@ const Auth = () => {
     }
   };
 
-  useEffect(() => {
-    const flag = sessionStorage.getItem('mfa:prompt');
-    if (flag) {
-      sessionStorage.removeItem('mfa:prompt');
-      handleStartMfa();
-    }
-  }, []);
 
   // Verify the TOTP code to complete sign in
   const handleVerifyMfa = async (e: React.FormEvent) => {
