@@ -8,10 +8,12 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const AccountSecurity = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [factors, setFactors] = useState<any[]>([]);
@@ -243,7 +245,10 @@ const AccountSecurity = () => {
       setStepUpFactorId(verifiedTotp.id);
       setStepUpChallengeId(chData?.id || null);
       setStepUpCode('');
+      // Route to Auth page to enter code
+      sessionStorage.setItem('mfa:prompt', '1');
       toast({ title: 'MFA required', description: 'Enter the 6‑digit code to verify your session.' });
+      navigate('/auth');
     } catch (err: any) {
       toast({ title: "Couldn't start test", description: err.message || 'Unexpected error', variant: 'destructive' });
     } finally {

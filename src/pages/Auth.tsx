@@ -33,10 +33,10 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (user && !mfaRequired) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, mfaRequired, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +125,9 @@ const Auth = () => {
   // Start MFA challenge after an MFA-required sign-in response
   const handleStartMfa = async (factorsHint?: any[]) => {
     try {
+      // Prevent redirect race by marking MFA step immediately
+      setMfaRequired(true);
+
       let factors = Array.isArray(factorsHint) ? factorsHint : [];
       if (!Array.isArray(factors) || factors.length === 0) {
         try {
@@ -143,12 +146,20 @@ const Auth = () => {
       if (chErr) throw chErr;
       setMfaFactorId(totp.id);
       setMfaChallengeId(chData?.id ?? chData?.challengeId ?? null);
-      setMfaRequired(true);
       toast({ title: "MFA required", description: "Enter the 6‑digit code from your authenticator app." });
     } catch (err: any) {
+      setMfaRequired(false);
       toast({ title: "MFA challenge failed", description: err?.message || "Please try again.", variant: "destructive" });
     }
   };
+
+  useEffect(() => {
+    const flag = sessionStorage.getItem('mfa:prompt');
+    if (flag) {
+      sessionStorage.removeItem('mfa:prompt');
+      handleStartMfa();
+    }
+  }, []);
 
   // Verify the TOTP code to complete sign in
   const handleVerifyMfa = async (e: React.FormEvent) => {
