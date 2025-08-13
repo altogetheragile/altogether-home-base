@@ -227,6 +227,19 @@ useEffect(() => {
     } catch {}
   };
 
+  const refreshMfaChallenge = async () => {
+    if (!mfaFactorId) return;
+    try {
+      const { data, error } = await (supabase as any).auth.mfa.challenge({ factorId: mfaFactorId });
+      if (error) throw error;
+      setMfaChallengeId(data?.id ?? data?.challengeId ?? null);
+      setMfaCode("");
+      toast({ title: "New code requested", description: "Enter the latest 6‑digit code." });
+    } catch (err: any) {
+      toast({ title: "Couldn't refresh code", description: err?.message || "Try again.", variant: "destructive" });
+    }
+  };
+
   const handleForgotPassword = async () => {
     if (!email) {
       toast({
@@ -370,16 +383,20 @@ useEffect(() => {
                           <Input
                             id="mfa-code"
                             value={mfaCode}
-                            onChange={(e) => setMfaCode(e.target.value)}
+                            onChange={(e) => {
+                              const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+                              setMfaCode(v);
+                            }}
                             placeholder="123456"
                             inputMode="numeric"
                             maxLength={6}
                           />
                         </div>
-                        <div className="flex gap-2">
-                          <Button type="submit" disabled={loading || mfaCode.length < 6}>Verify</Button>
-                          <Button type="button" variant="outline" onClick={cancelMfa}>Cancel</Button>
-                        </div>
+                          <div className="flex gap-2">
+                            <Button type="submit" disabled={loading || mfaCode.length < 6}>Verify</Button>
+                            <Button type="button" variant="secondary" onClick={refreshMfaChallenge} disabled={loading || !mfaFactorId}>Refresh code</Button>
+                            <Button type="button" variant="outline" onClick={cancelMfa}>Cancel</Button>
+                          </div>
                       </>
                     )}
                   </form>
