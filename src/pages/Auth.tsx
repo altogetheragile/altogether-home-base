@@ -77,14 +77,35 @@ const Auth = () => {
         return;
       }
 
-      // No error: check if MFA is required but not signaled via error
-      const maybeFactors = (data as any)?.mfa?.factors;
-      const hasSession = !!(data as any)?.session;
-      const hasUser = !!(data as any)?.user;
-      if (!hasSession && (Array.isArray(maybeFactors) ? maybeFactors.length > 0 : hasUser)) {
-        await handleStartMfa(maybeFactors);
-        setLoading(false);
-        return;
+      // No error: check if MFA is required but not signaled via error, and proactively step up to AAL2 when TOTP exists
+      try {
+        const maybeFactors = (data as any)?.mfa?.factors;
+        const hasSession = !!(data as any)?.session;
+        const hasUser = !!(data as any)?.user;
+
+        // If Supabase hinted factors but no session was returned, start MFA immediately
+        if (!hasSession && (Array.isArray(maybeFactors) ? maybeFactors.length > 0 : hasUser)) {
+          await handleStartMfa(maybeFactors);
+          setLoading(false);
+          return;
+        }
+
+        // If we do have a session, check AAL and step up if needed
+        const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+        console.log('🔎 AAL after sign-in:', aalData);
+        if (aalData?.currentLevel !== 'aal2') {
+          const { data: lf } = await (supabase as any).auth.mfa.listFactors();
+          const all = lf?.all ?? [];
+          const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
+          if (verifiedTotp) {
+            console.log('⚠️ Session not at AAL2, verified TOTP exists → starting challenge');
+            await handleStartMfa(all);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (aalErr) {
+        console.warn('AAL check/step-up skipped due to error:', aalErr);
       }
 
       toast({ title: "Welcome back!", description: "You have been signed in successfully." });
@@ -112,7 +133,9 @@ const Auth = () => {
         } catch {}
       }
       setMfaFactors(factors);
-      const totp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp") ?? factors[0];
+      const verifiedTotp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp" && ((f.status ?? f.factor_status) === "verified"));
+      const anyTotp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp");
+      const totp = verifiedTotp ?? anyTotp ?? factors[0];
       if (!totp) {
         throw new Error("No MFA factors found for this account.");
       }

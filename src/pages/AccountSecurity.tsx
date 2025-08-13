@@ -20,6 +20,10 @@ const AccountSecurity = () => {
   const [uri, setUri] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [challengeId, setChallengeId] = useState<string | null>(null);
+  // Session step-up (AAL2) test state
+  const [stepUpFactorId, setStepUpFactorId] = useState<string | null>(null);
+  const [stepUpChallengeId, setStepUpChallengeId] = useState<string | null>(null);
+  const [stepUpCode, setStepUpCode] = useState("");
 
   useEffect(() => {
     document.title = "Account Security | AltogetherAgile";
@@ -217,6 +221,68 @@ const AccountSecurity = () => {
     }
   };
 
+  // Proactively test/step-up current session to AAL2
+  const testMfaNow = async () => {
+    setLoading(true);
+    try {
+      const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+      console.log('🔎 Current AAL:', aalData);
+      if (aalData?.currentLevel === 'aal2') {
+        toast({ title: 'Already verified', description: 'Your session is already at AAL2.' });
+        return;
+      }
+      const { data: lf } = await (supabase as any).auth.mfa.listFactors();
+      const all = lf?.all ?? [];
+      const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
+      if (!verifiedTotp) {
+        toast({ title: 'No verified TOTP', description: 'Enable MFA first, then try again.', variant: 'destructive' });
+        return;
+      }
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: verifiedTotp.id });
+      if (chErr) throw chErr;
+      setStepUpFactorId(verifiedTotp.id);
+      setStepUpChallengeId(chData?.id || null);
+      setStepUpCode('');
+      toast({ title: 'MFA required', description: 'Enter the 6‑digit code to verify your session.' });
+    } catch (err: any) {
+      toast({ title: "Couldn't start test", description: err.message || 'Unexpected error', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyStepUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stepUpFactorId) return;
+    setLoading(true);
+    try {
+      const code = stepUpCode.replace(/\D/g, '').slice(0, 6);
+      if (code.length < 6) {
+        toast({ title: 'Invalid code', description: 'Enter the 6‑digit code.', variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
+      const payload: any = { factorId: stepUpFactorId, code };
+      if (stepUpChallengeId) payload.challengeId = stepUpChallengeId;
+      const { error } = await (supabase as any).auth.mfa.verify(payload);
+      if (error) throw error;
+      toast({ title: 'Session verified', description: 'Your session is now at AAL2.' });
+      setStepUpFactorId(null);
+      setStepUpChallengeId(null);
+      setStepUpCode('');
+    } catch (err: any) {
+      toast({ title: 'Invalid code', description: err.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelStepUp = () => {
+    setStepUpFactorId(null);
+    setStepUpChallengeId(null);
+    setStepUpCode('');
+  };
+
   const qrSrc = useMemo(() => (uri ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uri)}` : null), [uri]);
 
   return (
@@ -241,6 +307,7 @@ const AccountSecurity = () => {
                       <li key={f.id} className="flex items-center justify-between border rounded-md p-3">
                         <div>
                           <div className="font-medium">{f.friendly_name || f.type?.toUpperCase?.() || 'TOTP'}</div>
+                          <div className="text-xs text-muted-foreground">Status: {f.status || f.factor_status || 'unknown'}</div>
                           <div className="text-xs text-muted-foreground">ID: {f.id}</div>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => disableFactor(f.id)} disabled={loading}>
@@ -250,11 +317,29 @@ const AccountSecurity = () => {
                     ))}
                   </ul>
                 )}
-                <div>
+                <div className="flex flex-wrap gap-2">
                   <Button variant="destructive" size="sm" onClick={forceResetMfa} disabled={loading}>
                     Force reset MFA (remove all TOTP)
                   </Button>
+                  <Button variant="secondary" size="sm" onClick={testMfaNow} disabled={loading}>
+                    Test MFA now
+                  </Button>
                 </div>
+                {stepUpFactorId && (
+                  <div className="mt-3 border rounded-md p-3">
+                    <h4 className="font-medium mb-2">Verify current session</h4>
+                    <form onSubmit={verifyStepUp} className="space-y-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="stepup-code">6‑digit code</Label>
+                        <Input id="stepup-code" value={stepUpCode} onChange={(e) => setStepUpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" inputMode="numeric" maxLength={6} />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit" size="sm" disabled={loading || stepUpCode.length < 6}>Verify</Button>
+                        <Button type="button" size="sm" variant="outline" onClick={cancelStepUp}>Cancel</Button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
 
               {/* Enroll new */}
