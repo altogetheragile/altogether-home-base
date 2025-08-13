@@ -31,6 +31,11 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trash2 } from 'lucide-react';
 import { useEventRegistrations, useDeleteRegistration } from '@/hooks/useEventRegistrations';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { ExternalLink, Copy } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { getStripeDashboardSearchUrl } from '@/utils/stripe';
+
 
 interface EventRegistrationsDialogProps {
   open: boolean;
@@ -131,7 +136,50 @@ const EventRegistrationsDialog = ({
                               {r.payment_status || 'unknown'}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-xs">{sessionShort}</TableCell>
+<TableCell>
+  {r.stripe_session_id ? (
+    <div className="flex items-center gap-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="font-mono text-xs cursor-help">{sessionShort}</span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="font-mono text-xs">{r.stripe_session_id}</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        aria-label="Copy session ID"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(r.stripe_session_id as string);
+            toast({ title: 'Copied session ID', description: 'Stripe session ID copied to clipboard.' });
+          } catch (e) {
+            toast({ title: 'Copy failed', description: 'Could not copy to clipboard.', variant: 'destructive' as any });
+          }
+        }}
+      >
+        <Copy className="h-4 w-4" />
+      </Button>
+      <a
+        href={getStripeDashboardSearchUrl(r.stripe_session_id)}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open in Stripe Dashboard"
+      >
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+      </a>
+    </div>
+  ) : (
+    <span className="text-muted-foreground">—</span>
+  )}
+</TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="destructive"
