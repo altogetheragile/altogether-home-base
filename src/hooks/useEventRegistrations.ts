@@ -12,12 +12,24 @@ export interface AdminRegistration {
   stripe_session_id: string | null;
 }
 
+export interface AdminRegistrationUser {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+}
+
+export interface AdminRegistrationWithUser extends AdminRegistration {
+  user: AdminRegistrationUser | null;
+}
+
 export const useEventRegistrations = (eventId?: string) => {
-  return useQuery<AdminRegistration[]>({
+  return useQuery<AdminRegistrationWithUser[]>({
     queryKey: ['event-registrations', eventId],
     enabled: !!eventId,
     queryFn: async () => {
       if (!eventId) return [];
+
+      // Fetch registrations for the event
       const { data, error } = await supabase
         .from('event_registrations')
         .select('id, event_id, user_id, registered_at, payment_status, stripe_session_id')
@@ -28,7 +40,46 @@ export const useEventRegistrations = (eventId?: string) => {
         console.error('Error fetching registrations:', error);
         throw error;
       }
-      return data || [];
+
+      const registrations = data || [];
+      if (registrations.length === 0) return [];
+
+      // Collect unique user IDs
+      const userIds = Array.from(
+        new Set(
+          registrations
+            .map((r) => r.user_id)
+            .filter((id): id is string => typeof id === 'string' && id.length > 0)
+        )
+      );
+
+      // If there are no user IDs, just return registrations with null user
+      if (userIds.length === 0) {
+        return registrations.map((r) => ({ ...r, user: null }));
+      }
+
+      // Fetch profiles for these user IDs (admins can view all profiles via RLS policy)
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      const profileMap = new Map<string, AdminRegistrationUser>(
+        (profiles || []).map((p) => [p.id as string, { id: p.id as string, full_name: p.full_name ?? null, email: p.email ?? null }])
+      );
+
+      // Merge registrations with profiles
+      const enriched: AdminRegistrationWithUser[] = registrations.map((r) => ({
+        ...r,
+        user: r.user_id ? profileMap.get(r.user_id) ?? null : null,
+      }));
+
+      return enriched;
     },
   });
 };

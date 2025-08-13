@@ -93,7 +93,17 @@ const EventRegistrationsDialog = ({
                       const dateStr = r.registered_at
                         ? format(new Date(r.registered_at), 'MMM dd, yyyy HH:mm')
                         : '—';
-                      const userShort = r.user_id ? `${r.user_id.slice(0, 8)}…` : 'Unknown';
+
+                      const displayName =
+                        (r as any).user?.full_name?.trim() ||
+                        (r as any).user?.email ||
+                        (r.user_id ? `${r.user_id.slice(0, 8)}…` : 'Unknown');
+
+                      const emailSub =
+                        (r as any).user?.full_name && (r as any).user?.email
+                          ? (r as any).user?.email
+                          : null;
+
                       const sessionShort = r.stripe_session_id
                         ? `${r.stripe_session_id.slice(0, 10)}…`
                         : '—';
@@ -108,7 +118,14 @@ const EventRegistrationsDialog = ({
                       return (
                         <TableRow key={r.id}>
                           <TableCell>{dateStr}</TableCell>
-                          <TableCell className="font-mono text-sm">{userShort}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{displayName}</span>
+                              {emailSub && (
+                                <span className="text-xs text-muted-foreground">{emailSub}</span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant={paymentVariant as any}>
                               {r.payment_status || 'unknown'}
