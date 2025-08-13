@@ -200,7 +200,14 @@ useEffect(() => {
       setMfaRequired(false);
       setMfaCode("");
       setMfaChallengeId(null);
-      toast({ title: "Signed in", description: "MFA verified successfully." });
+      // Log final AAL level after successful MFA verification
+      try {
+        const { data: finalAal } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+        console.log('🔎 Final AAL after MFA verify:', finalAal);
+      } catch (aalErr) {
+        console.warn('Failed to fetch final AAL after verify:', aalErr);
+      }
+      toast({ title: "MFA verified (AAL2)", description: "You're fully signed in." });
       navigate("/");
     } catch (err: any) {
       toast({ title: "Invalid code", description: err?.message || "Please try again.", variant: "destructive" });
