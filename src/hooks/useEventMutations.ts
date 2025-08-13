@@ -91,6 +91,16 @@ export const useEventMutations = () => {
 
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
+      // Double-safety: prevent deletion if registrations exist
+      const { count, error: countError } = await supabase
+        .from('event_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', id);
+      if (countError) throw countError;
+      if ((count || 0) > 0) {
+        throw new Error('Cannot delete event with existing registrations');
+      }
+
       const { error } = await supabase
         .from('events')
         .delete()

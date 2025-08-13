@@ -18,6 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -182,24 +183,32 @@ const AdminEvents = () => {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => {
-                        if (event?.event_registrations?.length > 0) {
-                          toast({
-                            title: 'Cannot delete event with registrations',
-                            description: 'Please cancel or remove registrations first.',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
-                        setEventToDelete(event);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {event?.event_registrations?.length > 0 ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              <Button variant="destructive" size="sm" disabled aria-disabled="true">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Cannot delete event with registrations</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setEventToDelete(event);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
