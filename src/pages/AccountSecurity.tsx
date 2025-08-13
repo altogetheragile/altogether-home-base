@@ -88,15 +88,22 @@ const AccountSecurity = () => {
       const oneTimeCode = code.replace(/\D/g, '').slice(0, 6);
       if (oneTimeCode.length < 6) {
         toast({ title: "Invalid code", description: "Enter the 6‑digit code from your app.", variant: "destructive" });
+        setLoading(false);
         return;
       }
-      // Always create a fresh challenge before verifying
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
-      if (chErr) throw chErr;
-      const cid = chData?.id || null;
-      setChallengeId(cid);
+
+      let cid = challengeId;
+      if (!cid) {
+        const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+        if (chErr) throw chErr;
+        cid = chData?.id || null;
+        setChallengeId(cid);
+      }
+
+      console.log("🔐 Verifying MFA", { factorId, cid });
       const { error } = await (supabase as any).auth.mfa.verify({ factorId, challengeId: cid, code: oneTimeCode });
       if (error) throw error;
+
       toast({ title: "Two‑factor enabled", description: "MFA is now active on your account." });
       setEnrolling(false);
       setCode("");
@@ -105,7 +112,24 @@ const AccountSecurity = () => {
       setChallengeId(null);
       await refreshFactors();
     } catch (err: any) {
-      toast({ title: "Invalid code", description: err.message || "Please try again.", variant: "destructive" });
+      const msg = String(err?.message || "");
+      const status = err?.status;
+      console.warn("⚠️ MFA verify failed", { status, msg });
+
+      if (status === 422 || /challenge/i.test(msg) || /expired/i.test(msg) || /not found/i.test(msg)) {
+        try {
+          const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+          if (!chErr) {
+            const newCid = chData?.id || null;
+            setChallengeId(newCid);
+            toast({ title: "Code expired", description: "We refreshed the challenge. Enter a new 6‑digit code from your app." });
+            setLoading(false);
+            return;
+          }
+        } catch {}
+      }
+
+      toast({ title: "Invalid code", description: msg || "Please try again.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -152,6 +176,47 @@ const AccountSecurity = () => {
     }
   };
 
+  const refreshChallenge = async () => {
+    if (!factorId) return;
+    setLoading(true);
+    try {
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+      if (chErr) throw chErr;
+      setChallengeId(chData?.id || null);
+      toast({ title: "Challenge refreshed", description: "Enter a new 6‑digit code from your app." });
+    } catch (err: any) {
+      toast({ title: "Couldn't refresh", description: err.message || "Unexpected error", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const forceResetMfa = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await (supabase as any).auth.mfa.listFactors();
+      if (error) throw error;
+      const all = data?.all ?? [];
+      const totps = all.filter((f: any) => (f.type === 'totp' || f.factor_type === 'totp'));
+      let removed = 0;
+      for (const f of totps) {
+        const { error: uerr } = await (supabase as any).auth.mfa.unenroll({ factorId: f.id });
+        if (!uerr) removed++;
+      }
+      toast({ title: "MFA reset", description: `Removed ${removed} TOTP factor(s).` });
+      setEnrolling(false);
+      setUri(null);
+      setFactorId(null);
+      setCode("");
+      setChallengeId(null);
+      await refreshFactors();
+    } catch (err: any) {
+      toast({ title: "Couldn't reset MFA", description: err.message || "Unexpected error", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const qrSrc = useMemo(() => (uri ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uri)}` : null), [uri]);
 
   return (
@@ -185,6 +250,11 @@ const AccountSecurity = () => {
                     ))}
                   </ul>
                 )}
+                <div>
+                  <Button variant="destructive" size="sm" onClick={forceResetMfa} disabled={loading}>
+                    Force reset MFA (remove all TOTP)
+                  </Button>
+                </div>
               </div>
 
               {/* Enroll new */}
@@ -215,6 +285,7 @@ const AccountSecurity = () => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button type="submit" disabled={loading || code.length < 6}>Verify & Enable</Button>
+                      <Button type="button" variant="secondary" onClick={refreshChallenge} disabled={loading}>Refresh challenge</Button>
                       <Button type="button" variant="outline" onClick={() => { setEnrolling(false); setUri(null); setFactorId(null); setChallengeId(null); setCode(""); }}>Close</Button>
                       <Button type="button" variant="destructive" onClick={cancelEnroll} disabled={loading}>Reset setup (remove pending)</Button>
                     </div>
