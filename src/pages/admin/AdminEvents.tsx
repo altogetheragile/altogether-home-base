@@ -5,6 +5,19 @@ import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { useEventMutations } from '@/hooks/useEventMutations';
+import { toast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -60,10 +73,12 @@ const AdminEvents = () => {
     },
   });
 
+  const { deleteEvent } = useEventMutations();
+  const [eventToDelete, setEventToDelete] = useState<any | null>(null);
+
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy');
   };
-
   const getRegistrationBadge = (registrations: any[]) => {
     if (!registrations) return null;
     
@@ -167,7 +182,22 @@ const AdminEvents = () => {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => {
+                        if (event?.event_registrations?.length > 0) {
+                          toast({
+                            title: 'Cannot delete event with registrations',
+                            description: 'Please cancel or remove registrations first.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+                        setEventToDelete(event);
+                      }}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -184,6 +214,33 @@ const AdminEvents = () => {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!eventToDelete} onOpenChange={(open) => !open && setEventToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{eventToDelete?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!eventToDelete?.id) return;
+                try {
+                  await deleteEvent.mutateAsync(eventToDelete.id);
+                } finally {
+                  setEventToDelete(null);
+                }
+              }}
+              disabled={deleteEvent.isPending}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

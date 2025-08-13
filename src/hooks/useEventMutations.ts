@@ -40,6 +40,7 @@ export const useEventMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({
         title: "Success",
         description: "Event created successfully",
@@ -73,6 +74,7 @@ export const useEventMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({
         title: "Success",
         description: "Event updated successfully",
@@ -99,15 +101,21 @@ export const useEventMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({
         title: "Success",
         description: "Event deleted successfully",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      const code = error?.code;
+      const msg = String(error?.message || '').toLowerCase();
+      const isFk = code === '23503' || /foreign key|violates|constraint/.test(msg);
       toast({
         title: "Error",
-        description: error.message,
+        description: isFk
+          ? "Cannot delete event with existing registrations or references. Remove them first."
+          : (error?.message || "An error occurred"),
         variant: "destructive",
       });
     },
@@ -131,6 +139,7 @@ export const useEventMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({
         title: "Success",
         description: "Events updated successfully",
@@ -157,15 +166,21 @@ export const useEventMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({
         title: "Success",
         description: "Events deleted successfully",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      const code = error?.code;
+      const msg = String(error?.message || '').toLowerCase();
+      const isFk = code === '23503' || /foreign key|violates|constraint/.test(msg);
       toast({
         title: "Error",
-        description: error.message,
+        description: isFk
+          ? "Cannot delete some events because they have registrations or references. Remove them first."
+          : (error?.message || "An error occurred"),
         variant: "destructive",
       });
     },
