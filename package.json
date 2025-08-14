@@ -92,7 +92,7 @@
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/ui": "^1.6.0",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.34.1",
     "msw": "^2.10.3",
