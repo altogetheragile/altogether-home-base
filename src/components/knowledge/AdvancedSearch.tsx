@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SmartSearchInput } from "@/components/search/SmartSearchInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,16 +75,15 @@ export const AdvancedSearch = ({
         <CollapsibleContent>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Search Query</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search techniques, topics, etc..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <label className="text-sm font-medium">Smart Search</label>
+              <SmartSearchInput
+                searchQuery={searchQuery}
+                onSearchChange={onSearchChange}
+                onSearch={() => {}}
+                resultsCount={resultsCount}
+                placeholder="Search techniques with AI suggestions..."
+                showAISuggestions={true}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Eye, Star, Trophy, Search } from "lucide-react";
 import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SmartSearchInput } from "@/components/search/SmartSearchInput";
+import { RecommendationsSection } from "@/components/recommendations/RecommendationsSection";
 import { useSearchAnalytics } from "@/hooks/useSearchAnalytics";
 import { Link } from "react-router-dom";
 
@@ -84,23 +85,24 @@ const KnowledgeBase = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Search and Filter Bar */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <h2 className="text-xl font-semibold">
+        {/* Smart Search Bar */}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="text-center">
+            <SmartSearchInput
+              searchQuery={searchQuery}
+              onSearchChange={handleSearch}
+              onSearch={() => {}}
+              resultsCount={filteredTechniques?.length || 0}
+              placeholder="Search techniques with AI suggestions..."
+              showAISuggestions={true}
+            />
+          </div>
+          <h2 className="text-xl font-semibold text-center">
             {searchQuery || selectedCategory !== "all" || selectedTag !== "all" 
               ? "Search Results" 
               : "All Techniques"
             }
           </h2>
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search techniques..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
         </div>
 
         <KnowledgeFilter
@@ -113,6 +115,16 @@ const KnowledgeBase = () => {
           sortBy={sortBy}
           onSortChange={setSortBy}
         />
+
+        {/* Recommendations Section - Only show when no search is active */}
+        {!searchQuery && selectedCategory === "all" && selectedTag === "all" && (
+          <RecommendationsSection
+            title="Recommended Techniques for You"
+            contentType="technique"
+            limit={6}
+            className="mb-8"
+          />
+        )}
 
         {/* Featured Techniques - Only show when no filters are active */}
         {!searchQuery && selectedCategory === "all" && selectedTag === "all" && (
