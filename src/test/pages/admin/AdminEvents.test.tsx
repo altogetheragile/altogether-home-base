@@ -6,12 +6,15 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import React from 'react';
 import AdminEvents from '@/pages/admin/AdminEvents';
 
+const mockUseEvents = vi.fn();
+const mockUseEventMutations = vi.fn();
+
 vi.mock('@/hooks/useEvents', () => ({
-  useEvents: vi.fn(),
+  useEvents: mockUseEvents,
 }));
 
 vi.mock('@/hooks/useEventMutations', () => ({
-  useEventMutations: vi.fn(),
+  useEventMutations: mockUseEventMutations,
 }));
 
 vi.mock('@/components/admin/events/EventRegistrationsDialog', () => ({
@@ -36,9 +39,6 @@ const createWrapper = () => {
 };
 
 describe('AdminEvents', () => {
-  const mockUseEvents = vi.mocked(require('@/hooks/useEvents').useEvents);
-  const mockUseEventMutations = vi.mocked(require('@/hooks/useEventMutations').useEventMutations);
-
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseEventMutations.mockReturnValue({

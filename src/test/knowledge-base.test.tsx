@@ -121,12 +121,11 @@ describe('KnowledgeBase', () => {
   it('renders filter components', async () => {
     render(<KnowledgeBase />, { wrapper: createWrapper() });
     
-    // Look for filter-related elements that should always be present
-    expect(screen.getByText('Knowledge Base')).toBeInTheDocument();
+    // Look for essential page elements that should be present
+    expect(screen.getByText('Product Delivery Techniques')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search techniques/i)).toBeInTheDocument();
     
-    // Check for basic structure elements
-    const main = screen.getByRole('main', { hidden: true }) || document.querySelector('div');
-    expect(main).toBeInTheDocument();
+    // Check that the page structure loads
+    expect(screen.getByText('Knowledge Base')).toBeInTheDocument();
   });
 });

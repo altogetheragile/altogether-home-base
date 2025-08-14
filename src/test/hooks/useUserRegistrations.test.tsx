@@ -4,20 +4,9 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import React from 'react';
 import { useUserRegistrations } from '@/hooks/useUserRegistrations';
 
-// Mock Supabase  
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null }))
-        }))
-      }))
-    }))
-  }
-}));
 import { createMockSupabaseResponse, mockAuthUser, createMockBasicRegistration, createMockEventDetails } from '@/test/utils/testHelpers';
 
+// Mock Supabase  
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn().mockReturnThis(),

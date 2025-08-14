@@ -25,17 +25,13 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          ilike: vi.fn(() => ({
-            or: vi.fn(() => ({
-              order: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({
-                  data: mockTechniquesData,
-                  error: null
-                }))
-              }))
-            }))
-          }))
+        eq: vi.fn().mockReturnThis(),
+        ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn(() => Promise.resolve({
+          data: mockTechniquesData,
+          error: null
         }))
       }))
     }))
