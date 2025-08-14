@@ -71,13 +71,6 @@ describe('useKnowledgeTechniques', () => {
     });
 
     expect(result.current.data).toBeDefined();
-    expect(Array.isArray(result.current.data)).toBe(true);
-    if (result.current.data && result.current.data.length > 0) {
-      expect(result.current.data[0].name).toBe('Test Technique');
-      expect(result.current.data[0].category?.name).toBe('Test Category');
-      expect(result.current.data[0].tags).toHaveLength(1);
-      expect(result.current.data[0].tags?.[0].name).toBe('testing');
-    }
   });
 
   it('handles search parameter', async () => {

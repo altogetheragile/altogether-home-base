@@ -3,6 +3,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import React from 'react';
 import { useEventRegistrations, useDeleteRegistration } from '@/hooks/useEventRegistrations';
+
+// Mock Supabase
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          delete: vi.fn(() => Promise.resolve({ data: null, error: null }))
+        }))
+      }))
+    }))
+  }
+}));
 import { createMockSupabaseResponse, createMockRegistration, createMockUser, createMockRegistrationWithUser } from '@/test/utils/testHelpers';
 
 vi.mock('@/integrations/supabase/client', () => ({

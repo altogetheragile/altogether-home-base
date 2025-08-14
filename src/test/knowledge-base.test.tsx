@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import KnowledgeBase from '@/pages/KnowledgeBase';
+
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -51,6 +52,15 @@ vi.mock('@/hooks/useKnowledgeTags', () => ({
     ],
     isLoading: false
   }))
+}));
+
+// Mock AuthContext
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: null,
+    isLoading: false,
+    userRole: null
+  })
 }));
 
 const createWrapper = () => {
