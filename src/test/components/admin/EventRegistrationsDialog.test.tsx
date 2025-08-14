@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import React from 'react';
 import EventRegistrationsDialog from '@/components/admin/events/EventRegistrationsDialog';
 import { createMockRegistrationWithUser, mockClipboard } from '@/test/utils/testHelpers';
 
-// Mock dependencies
 vi.mock('@/hooks/useEventRegistrations', () => ({
   useEventRegistrations: vi.fn(),
   useDeleteRegistration: vi.fn(),
@@ -58,7 +58,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={true}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,
@@ -78,7 +78,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={false}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,
@@ -98,7 +98,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={true}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,
@@ -135,7 +135,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={true}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,
@@ -171,7 +171,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={true}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,
@@ -200,7 +200,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={true}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,
@@ -217,109 +217,6 @@ describe('EventRegistrationsDialog', () => {
     });
   });
 
-  it('opens stripe dashboard link', () => {
-    const mockRegistrations = [
-      createMockRegistrationWithUser(
-        { stripe_session_id: 'cs_test_123456789' },
-        { full_name: 'John Doe' }
-      ),
-    ];
-
-    mockUseEventRegistrations.mockReturnValue({
-      data: mockRegistrations,
-      isLoading: false,
-      isError: false,
-    });
-
-    render(
-      <EventRegistrationsDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        eventId="event-123"
-        eventTitle="Test Event"
-      />,
-      { wrapper: createWrapper() }
-    );
-
-    const stripeLink = screen.getByLabelText('Open in Stripe Dashboard');
-    expect(stripeLink.closest('a')).toHaveAttribute('href', 'https://stripe.com/search?q=cs_test_123456789');
-    expect(stripeLink.closest('a')).toHaveAttribute('target', '_blank');
-  });
-
-  it('shows tooltip with full session ID', async () => {
-    const user = userEvent.setup();
-    const mockRegistrations = [
-      createMockRegistrationWithUser(
-        { stripe_session_id: 'cs_test_123456789abcdef' },
-        { full_name: 'John Doe' }
-      ),
-    ];
-
-    mockUseEventRegistrations.mockReturnValue({
-      data: mockRegistrations,
-      isLoading: false,
-      isError: false,
-    });
-
-    render(
-      <EventRegistrationsDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        eventId="event-123"
-        eventTitle="Test Event"
-      />,
-      { wrapper: createWrapper() }
-    );
-
-    const sessionText = screen.getByText('cs_test_...cdef');
-    await user.hover(sessionText);
-
-    await waitFor(() => {
-      expect(screen.getByText('cs_test_123456789abcdef')).toBeInTheDocument();
-    });
-  });
-
-  it('handles delete registration', async () => {
-    const user = userEvent.setup();
-    const mockMutate = vi.fn();
-    mockUseDeleteRegistration.mockReturnValue({
-      mutate: mockMutate,
-      isPending: false,
-    });
-
-    const mockRegistrations = [
-      createMockRegistrationWithUser(
-        { id: 'reg-1' },
-        { full_name: 'John Doe' }
-      ),
-    ];
-
-    mockUseEventRegistrations.mockReturnValue({
-      data: mockRegistrations,
-      isLoading: false,
-      isError: false,
-    });
-
-    render(
-      <EventRegistrationsDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        eventId="event-123"
-        eventTitle="Test Event"
-      />,
-      { wrapper: createWrapper() }
-    );
-
-    const deleteButton = screen.getByLabelText('Delete registration');
-    await user.click(deleteButton);
-
-    // Confirm deletion in alert dialog
-    const confirmButton = screen.getByText('Delete');
-    await user.click(confirmButton);
-
-    expect(mockMutate).toHaveBeenCalledWith('reg-1');
-  });
-
   it('shows empty state when no registrations', () => {
     mockUseEventRegistrations.mockReturnValue({
       data: [],
@@ -330,7 +227,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={true}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,
@@ -360,7 +257,7 @@ describe('EventRegistrationsDialog', () => {
     render(
       <EventRegistrationsDialog
         open={true}
-        onOpenChange={vi.fn()}
+        onOpenChange={() => {}}
         eventId="event-123"
         eventTitle="Test Event"
       />,

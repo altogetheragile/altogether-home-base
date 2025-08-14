@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import React from 'react';
 import { useEventRegistrations, useDeleteRegistration } from '@/hooks/useEventRegistrations';
-import { createMockSupabaseResponse, createMockRegistration, createMockUser, mockAuthUser } from '@/test/utils/testHelpers';
+import { createMockSupabaseResponse, createMockRegistration, createMockUser, createMockRegistrationWithUser } from '@/test/utils/testHelpers';
 
-// Mock dependencies
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn().mockReturnThis(),
