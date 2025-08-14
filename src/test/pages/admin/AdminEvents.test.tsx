@@ -36,8 +36,8 @@ const createWrapper = () => {
 };
 
 describe('AdminEvents', () => {
-  const mockUseEvents = require('@/hooks/useEvents').useEvents;
-  const mockUseEventMutations = require('@/hooks/useEventMutations').useEventMutations;
+  const mockUseEvents = vi.mocked(require('@/hooks/useEvents').useEvents);
+  const mockUseEventMutations = vi.mocked(require('@/hooks/useEventMutations').useEventMutations);
 
   beforeEach(() => {
     vi.clearAllMocks();
