@@ -4,8 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import KnowledgeBase from '@/pages/KnowledgeBase';
-import { supabase } from '@/integrations/supabase/client';
-
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {

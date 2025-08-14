@@ -35,11 +35,12 @@ const createWrapper = () => {
 };
 
 describe('useEventRegistrations', () => {
-  const mockSupabase = require('@/integrations/supabase/client').supabase;
-
+  const mockSupabase = vi.mocked(require('@/integrations/supabase/client').supabase);
+  
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
 
   it('returns empty array when no event ID provided', async () => {
     const { result } = renderHook(() => useEventRegistrations(), {
@@ -171,7 +172,7 @@ describe('useEventRegistrations', () => {
 });
 
 describe('useDeleteRegistration', () => {
-  const mockSupabase = require('@/integrations/supabase/client').supabase;
+  const mockSupabase = vi.mocked(require('@/integrations/supabase/client').supabase);
   const mockToast = vi.fn();
 
   beforeEach(() => {

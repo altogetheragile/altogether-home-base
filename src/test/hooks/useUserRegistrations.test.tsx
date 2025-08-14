@@ -35,11 +35,12 @@ const createWrapper = () => {
 };
 
 describe('useUserRegistrations', () => {
-  const mockSupabase = require('@/integrations/supabase/client').supabase;
-
+  const mockSupabase = vi.mocked(require('@/integrations/supabase/client').supabase);
+  
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
 
   it('returns empty array when user is not authenticated', async () => {
     vi.mocked(require('@/contexts/AuthContext').useAuth).mockReturnValue({

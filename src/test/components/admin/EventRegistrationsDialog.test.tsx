@@ -6,9 +6,13 @@ import React from 'react';
 import EventRegistrationsDialog from '@/components/admin/events/EventRegistrationsDialog';
 import { createMockRegistrationWithUser, mockClipboard } from '@/test/utils/testHelpers';
 
+// Mock the hooks module
+const mockUseEventRegistrations = vi.fn();
+const mockUseDeleteRegistration = vi.fn();
+
 vi.mock('@/hooks/useEventRegistrations', () => ({
-  useEventRegistrations: vi.fn(),
-  useDeleteRegistration: vi.fn(),
+  useEventRegistrations: mockUseEventRegistrations,
+  useDeleteRegistration: mockUseDeleteRegistration,
 }));
 
 vi.mock('@/hooks/use-toast', () => ({
@@ -34,13 +38,12 @@ const createWrapper = () => {
 };
 
 describe('EventRegistrationsDialog', () => {
-  const mockUseEventRegistrations = require('@/hooks/useEventRegistrations').useEventRegistrations;
-  const mockUseDeleteRegistration = require('@/hooks/useEventRegistrations').useDeleteRegistration;
   const mockToast = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockClipboard();
+    
     require('@/hooks/use-toast').useToast.mockReturnValue({ toast: mockToast });
     mockUseDeleteRegistration.mockReturnValue({
       mutate: vi.fn(),

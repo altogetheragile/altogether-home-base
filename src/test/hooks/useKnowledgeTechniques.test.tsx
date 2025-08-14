@@ -12,24 +12,26 @@ vi.mock('@/integrations/supabase/client', () => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           ilike: vi.fn(() => ({
-            order: vi.fn(() => ({
-              limit: vi.fn(() => Promise.resolve({
-                data: [
-                  {
-                    id: '1',
-                    name: 'Test Technique',
-                    slug: 'test-technique',
-                    summary: 'Test summary',
-                    difficulty_level: 'Beginner',
-                    estimated_reading_time: 5,
-                    is_featured: true,
-                    knowledge_categories: { name: 'Test Category', color: '#3B82F6' },
-                    knowledge_technique_tags: [
-                      { knowledge_tags: { name: 'testing', slug: 'testing' } }
-                    ]
-                  }
-                ],
-                error: null
+            or: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn(() => Promise.resolve({
+                  data: [
+                    {
+                      id: '1',
+                      name: 'Test Technique',
+                      slug: 'test-technique',
+                      summary: 'Test summary',
+                      difficulty_level: 'Beginner',
+                      estimated_reading_time: 5,
+                      is_featured: true,
+                      knowledge_categories: { name: 'Test Category', color: '#3B82F6' },
+                      knowledge_technique_tags: [
+                        { knowledge_tags: { name: 'testing', slug: 'testing' } }
+                      ]
+                    }
+                  ],
+                  error: null
+                }))
               }))
             }))
           }))
