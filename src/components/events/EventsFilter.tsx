@@ -10,6 +10,7 @@ import { useLevels } from "@/hooks/useLevels";
 import { useFormats } from "@/hooks/useFormats";
 import { useLocations } from "@/hooks/useLocations";
 import { useInstructors } from "@/hooks/useInstructors";
+import TemplateFilterSelect from "./TemplateFilterSelect";
 
 interface EventsFilterProps {
   onFilterChange: (filters: FilterState) => void;
@@ -22,6 +23,8 @@ export interface FilterState {
   format: string;
   location: string;
   instructor: string;
+  template: string;
+  difficulty: string;
 }
 
 const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
@@ -31,7 +34,9 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
     level: "all",
     format: "all",
     location: "all",
-    instructor: "all"
+    instructor: "all",
+    template: "all",
+    difficulty: "all"
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -57,7 +62,9 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
       level: "all",
       format: "all",
       location: "all",
-      instructor: "all"
+      instructor: "all",
+      template: "all",
+      difficulty: "all"
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
@@ -102,7 +109,7 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
       
       {isExpanded && (
         <div className="mt-3 p-4 bg-background/50 rounded-lg border border-muted/50">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Event Type</label>
               <Select value={filters.eventType} onValueChange={(value) => updateFilter('eventType', value)}>
@@ -201,6 +208,30 @@ const EventsFilter = ({ onFilterChange }: EventsFilterProps) => {
                       {instructor.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Template</label>
+              <TemplateFilterSelect
+                value={filters.template}
+                onValueChange={(value) => updateFilter('template', value)}
+                placeholder="All templates"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Difficulty</label>
+              <Select value={filters.difficulty} onValueChange={(value) => updateFilter('difficulty', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All difficulties" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All difficulties</SelectItem>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
                 </SelectContent>
               </Select>
             </div>

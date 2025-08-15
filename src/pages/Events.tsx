@@ -25,7 +25,9 @@ const Events = () => {
     level: "all",
     format: "all",
     location: "all",
-    instructor: "all"
+    instructor: "all",
+    template: "all",
+    difficulty: "all"
   });
 
   useEffect(() => {
@@ -73,6 +75,8 @@ const Events = () => {
       const format = event.format?.name || event.event_template?.formats?.name || '';
       const location = event.location?.name || '';
       const instructor = event.instructor?.name || '';
+      const templateId = event.event_template?.id || '';
+      const difficulty = event.event_template?.difficulty_rating || '';
 
       // Apply filters (skip if filter is "all")
       if (filters.eventType !== "all" && eventType !== filters.eventType) return false;
@@ -81,6 +85,8 @@ const Events = () => {
       if (filters.format !== "all" && format !== filters.format) return false;
       if (filters.location !== "all" && location !== filters.location) return false;
       if (filters.instructor !== "all" && instructor !== filters.instructor) return false;
+      if (filters.template !== "all" && templateId !== filters.template) return false;
+      if (filters.difficulty !== "all" && difficulty !== filters.difficulty) return false;
 
       return true;
     });

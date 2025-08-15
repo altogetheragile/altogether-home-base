@@ -375,47 +375,80 @@ export type Database = {
       }
       event_templates: {
         Row: {
+          banner_template: string | null
+          brand_color: string | null
           category_id: string | null
           created_at: string | null
           created_by: string | null
           default_instructor_id: string | null
           default_location_id: string | null
           description: string | null
+          difficulty_rating: string | null
           duration_days: number | null
           event_type_id: string | null
           format_id: string | null
+          hero_image_url: string | null
+          icon_name: string | null
           id: string
+          key_benefits: string[] | null
+          learning_outcomes: string[] | null
           level_id: string | null
+          popularity_score: number | null
+          prerequisites: string[] | null
+          target_audience: string | null
+          template_tags: string[] | null
           title: string
           updated_by: string | null
         }
         Insert: {
+          banner_template?: string | null
+          brand_color?: string | null
           category_id?: string | null
           created_at?: string | null
           created_by?: string | null
           default_instructor_id?: string | null
           default_location_id?: string | null
           description?: string | null
+          difficulty_rating?: string | null
           duration_days?: number | null
           event_type_id?: string | null
           format_id?: string | null
+          hero_image_url?: string | null
+          icon_name?: string | null
           id?: string
+          key_benefits?: string[] | null
+          learning_outcomes?: string[] | null
           level_id?: string | null
+          popularity_score?: number | null
+          prerequisites?: string[] | null
+          target_audience?: string | null
+          template_tags?: string[] | null
           title: string
           updated_by?: string | null
         }
         Update: {
+          banner_template?: string | null
+          brand_color?: string | null
           category_id?: string | null
           created_at?: string | null
           created_by?: string | null
           default_instructor_id?: string | null
           default_location_id?: string | null
           description?: string | null
+          difficulty_rating?: string | null
           duration_days?: number | null
           event_type_id?: string | null
           format_id?: string | null
+          hero_image_url?: string | null
+          icon_name?: string | null
           id?: string
+          key_benefits?: string[] | null
+          learning_outcomes?: string[] | null
           level_id?: string | null
+          popularity_score?: number | null
+          prerequisites?: string[] | null
+          target_audience?: string | null
+          template_tags?: string[] | null
           title?: string
           updated_by?: string | null
         }

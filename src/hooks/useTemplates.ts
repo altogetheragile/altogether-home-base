@@ -16,6 +16,18 @@ export interface EventTemplate {
   created_at: string;
   created_by?: string;
   updated_by?: string;
+  // Enhanced metadata for template branding
+  brand_color?: string;
+  icon_name?: string;
+  hero_image_url?: string;
+  banner_template?: string;
+  learning_outcomes?: string[];
+  prerequisites?: string[];
+  target_audience?: string;
+  key_benefits?: string[];
+  template_tags?: string[];
+  difficulty_rating?: 'beginner' | 'intermediate' | 'advanced';
+  popularity_score?: number;
 }
 
 export const useTemplates = () => {

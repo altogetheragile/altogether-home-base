@@ -34,6 +34,9 @@ export interface EventData {
     virtual_url: string | null;
   } | null;
   event_template: {
+    id: string;
+    title: string;
+    created_at: string;
     event_types: {
       name: string;
     } | null;
@@ -47,6 +50,17 @@ export interface EventData {
       name: string;
     } | null;
     duration_days: number | null;
+    brand_color?: string;
+    icon_name?: string;
+    hero_image_url?: string;
+    banner_template?: string;
+    learning_outcomes?: string[];
+    prerequisites?: string[];
+    target_audience?: string;
+    key_benefits?: string[];
+    template_tags?: string[];
+    difficulty_rating?: 'beginner' | 'intermediate' | 'advanced';
+    popularity_score?: number;
   } | null;
 }
 
@@ -72,7 +86,21 @@ export const useEvents = () => {
           instructors!instructor_id(name, bio),
           locations!location_id(name, address, virtual_url),
           event_templates!template_id(
+            id,
+            title,
+            created_at,
             duration_days,
+            brand_color,
+            icon_name,
+            hero_image_url,
+            banner_template,
+            learning_outcomes,
+            prerequisites,
+            target_audience,
+            key_benefits,
+            template_tags,
+            difficulty_rating,
+            popularity_score,
             event_types!event_type_id(name),
             formats!format_id(name),
             levels!level_id(name),
@@ -104,7 +132,21 @@ export const useEvents = () => {
         instructor: (event.instructors as any) || null,
         location: (event.locations as any) || null,
         event_template: event.event_templates ? {
+          id: (event.event_templates as any).id,
+          title: (event.event_templates as any).title,
+          created_at: (event.event_templates as any).created_at,
           duration_days: (event.event_templates as any).duration_days,
+          brand_color: (event.event_templates as any).brand_color,
+          icon_name: (event.event_templates as any).icon_name,
+          hero_image_url: (event.event_templates as any).hero_image_url,
+          banner_template: (event.event_templates as any).banner_template,
+          learning_outcomes: (event.event_templates as any).learning_outcomes,
+          prerequisites: (event.event_templates as any).prerequisites,
+          target_audience: (event.event_templates as any).target_audience,
+          key_benefits: (event.event_templates as any).key_benefits,
+          template_tags: (event.event_templates as any).template_tags,
+          difficulty_rating: (event.event_templates as any).difficulty_rating,
+          popularity_score: (event.event_templates as any).popularity_score,
           event_types: (event.event_templates as any).event_types || null,
           formats: (event.event_templates as any).formats || null,
           levels: (event.event_templates as any).levels || null,
