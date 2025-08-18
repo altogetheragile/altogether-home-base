@@ -166,7 +166,7 @@ const KnowledgeBase = () => {
                                <DifficultyBadge difficulty={technique.difficulty} />
                              </div>
                              <CardTitle className="text-xl font-bold leading-tight mb-1 text-foreground">
-                               {technique.title}
+                               {technique.name}
                              </CardTitle>
                            </div>
                          </div>
@@ -237,7 +237,7 @@ const KnowledgeBase = () => {
                            <DifficultyBadge difficulty={technique.difficulty} />
                          </div>
                          <CardTitle className="text-xl font-bold leading-tight mb-1 text-foreground">
-                           {technique.title}
+                           {technique.name}
                          </CardTitle>
                        </div>
                      </div>
