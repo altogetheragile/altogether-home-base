@@ -149,28 +149,28 @@ const KnowledgeBase = () => {
               ) : (
                 featuredTechniques?.slice(0, 3).map((technique) => (
                   <Link key={technique.id} to={`/knowledge/${technique.slug}`}>
-                    <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-base font-medium leading-tight mb-1">
-                              {technique.title}
-                            </CardTitle>
-                            <div className="flex items-center gap-2 mb-2">
-                              {technique.knowledge_categories && (
-                                <Badge 
-                                  variant="secondary" 
-                                  className="text-xs"
-                                  style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
-                                >
-                                  {technique.knowledge_categories.name}
-                                </Badge>
-                              )}
-                              <DifficultyBadge difficulty={technique.difficulty} />
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
+                     <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+                       <CardHeader className="pb-3">
+                         <div className="flex items-start justify-between">
+                           <div className="flex-1">
+                             <div className="flex items-center gap-2 mb-2">
+                               {technique.knowledge_categories && (
+                                 <Badge 
+                                   variant="secondary" 
+                                   className="text-xs"
+                                   style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
+                                 >
+                                   {technique.knowledge_categories.name}
+                                 </Badge>
+                               )}
+                               <DifficultyBadge difficulty={technique.difficulty} />
+                             </div>
+                             <CardTitle className="text-lg font-semibold leading-tight mb-1">
+                               {technique.title}
+                             </CardTitle>
+                           </div>
+                         </div>
+                       </CardHeader>
                       <CardContent className="pt-0">
                         <CardDescription className="text-sm line-clamp-3 mb-3">
                           {technique.description}
@@ -220,28 +220,28 @@ const KnowledgeBase = () => {
           ) : filteredTechniques && filteredTechniques.length > 0 ? (
             filteredTechniques.map((technique) => (
               <Link key={technique.id} to={`/knowledge/${technique.slug}`}>
-                <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-base font-medium leading-tight mb-1">
-                          {technique.title}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mb-2">
-                          {technique.knowledge_categories && (
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs"
-                              style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
-                            >
-                              {technique.knowledge_categories.name}
-                            </Badge>
-                          )}
-                          <DifficultyBadge difficulty={technique.difficulty} />
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
+                 <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+                   <CardHeader className="pb-3">
+                     <div className="flex items-start justify-between">
+                       <div className="flex-1">
+                         <div className="flex items-center gap-2 mb-2">
+                           {technique.knowledge_categories && (
+                             <Badge 
+                               variant="secondary" 
+                               className="text-xs"
+                               style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
+                             >
+                               {technique.knowledge_categories.name}
+                             </Badge>
+                           )}
+                           <DifficultyBadge difficulty={technique.difficulty} />
+                         </div>
+                         <CardTitle className="text-lg font-semibold leading-tight mb-1">
+                           {technique.title}
+                         </CardTitle>
+                       </div>
+                     </div>
+                   </CardHeader>
                   <CardContent className="pt-0">
                     <CardDescription className="text-sm line-clamp-3 mb-3">
                       {technique.description}
