@@ -18,10 +18,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import SimpleForm from '@/components/admin/SimpleForm';
 import { BulkContentOperations } from '@/components/admin/BulkContentOperations';
 import { ContentAnalyticsDashboard } from '@/components/admin/ContentAnalyticsDashboard';
 import SearchAndFilter from '@/components/admin/SearchAndFilter';
+import TechniqueFormDialog from '@/components/admin/TechniqueFormDialog';
 
 const AdminKnowledgeTechniques = () => {
   const { toast } = useToast();
@@ -206,8 +206,12 @@ const AdminKnowledgeTechniques = () => {
   };
 
   const handleEdit = (technique: any) => {
+    console.log('🔧 Edit button clicked for technique:', technique.id, technique.name);
+    console.log('🔍 Setting editingTechnique to:', technique);
     setEditingTechnique(technique);
+    console.log('🔍 Setting showForm to true');
     setShowForm(true);
+    console.log('✅ Edit handler completed');
   };
 
   const handleDelete = async (id: string) => {
@@ -260,43 +264,8 @@ const AdminKnowledgeTechniques = () => {
     }
   };
 
-  // Prepare existing media for editing
-  const existingMedia: MediaItem[] = editingTechnique?.knowledge_media?.map((media: any, index: number) => ({
-    id: media.id,
-    type: media.type,
-    title: media.title,
-    description: media.description,
-    url: media.url,
-    thumbnail_url: media.thumbnail_url,
-    position: index
-  })) || [];
-
-  // Prepare existing tags for editing
-  const existingTags = editingTechnique?.knowledge_tags?.map((tagInfo: any) => tagInfo.knowledge_tags.id) || [];
-
-  const formFields = [
-    { key: 'name', label: 'Name', type: 'text' as const, required: true },
-    { key: 'slug', label: 'Slug', type: 'text' as const, required: true, placeholder: 'unique-slug-for-url' },
-    { 
-      key: 'category_id', 
-      label: 'Category', 
-      type: 'select' as const, 
-      options: categories?.map(cat => ({ value: cat.id, label: cat.name })) || [],
-      placeholder: 'Select a category'
-    },
-    {
-      key: 'tags',
-      label: 'Tags',
-      type: 'multiselect' as const,
-      options: tags?.map(tag => ({ value: tag.id, label: tag.name })) || [],
-      placeholder: 'Select tags',
-      existingValues: existingTags
-    },
-    { key: 'description', label: 'Description', type: 'textarea' as const },
-    { key: 'purpose', label: 'Purpose', type: 'textarea' as const },
-    { key: 'originator', label: 'Originator', type: 'text' as const },
-    { key: 'media', label: 'Media Gallery (Images & Videos)', type: 'media' as const },
-  ];
+  // Add state debugging
+  console.log('🔍 Current state:', { showForm, editingTechnique: editingTechnique?.id });
 
   if (isLoading) {
     return (
@@ -308,18 +277,16 @@ const AdminKnowledgeTechniques = () => {
 
   return (
     <div className="space-y-4">
-      {showForm && (
-        <SimpleForm
-          title="Technique"
-          onSubmit={handleSubmit}
-          editingItem={editingTechnique}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingTechnique(null);
-          }}
-          fields={formFields}
-        />
-      )}
+      <TechniqueFormDialog
+        isOpen={showForm}
+        onClose={() => {
+          console.log('🔧 Closing form dialog');
+          setShowForm(false);
+          setEditingTechnique(null);
+        }}
+        onSubmit={handleSubmit}
+        editingTechnique={editingTechnique}
+      />
 
       <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)} className="flex items-center space-x-1">
@@ -464,7 +431,12 @@ const AdminKnowledgeTechniques = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(technique)}
+                     onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🖱️ Edit button clicked for:', technique.name);
+                        handleEdit(technique);
+                      }}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
