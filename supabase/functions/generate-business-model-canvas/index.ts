@@ -116,10 +116,14 @@ Create content that demonstrates deep industry knowledge and strategic thinking 
       // Remove markdown code blocks if present
       let cleanedContent = generatedContent.trim();
       
+      // Define markdown patterns to avoid backtick parsing issues
+      const jsonCodeBlock = '```json';
+      const codeBlock = '```';
+      
       // Check if content is wrapped in markdown code blocks
-      if (cleanedContent.startsWith('```json') && cleanedContent.endsWith('```')) {
+      if (cleanedContent.startsWith(jsonCodeBlock) && cleanedContent.endsWith(codeBlock)) {
         cleanedContent = cleanedContent.slice(7, -3).trim(); // Remove ```json and ```
-      } else if (cleanedContent.startsWith('```') && cleanedContent.endsWith('```')) {
+      } else if (cleanedContent.startsWith(codeBlock) && cleanedContent.endsWith(codeBlock)) {
         cleanedContent = cleanedContent.slice(3, -3).trim(); // Remove ``` and ```
       }
       
