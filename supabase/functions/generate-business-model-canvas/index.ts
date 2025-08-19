@@ -42,31 +42,43 @@ serve(async (req) => {
     const input: BMCInput = await req.json();
     console.log('Generating BMC for:', input.companyName);
 
-    const prompt = `You are a business strategy consultant expert in creating Business Model Canvases. Generate a comprehensive Business Model Canvas for the following company:
+    const prompt = `You are a world-class business strategy consultant and venture capital advisor with expertise in creating comprehensive Business Model Canvases for Fortune 500 companies and successful startups. 
 
-Company: ${input.companyName}
-Industry: ${input.industry}
-Target Customers: ${input.targetCustomers}
-Product/Service: ${input.productService}
-Business Stage: ${input.businessStage}
-${input.additionalContext ? `Additional Context: ${input.additionalContext}` : ''}
+Analyze this business and create a strategic, industry-specific Business Model Canvas:
 
-Create a detailed Business Model Canvas with specific, actionable content for each of the 9 building blocks. Provide 2-4 bullet points per section. Be specific to this industry and business context.
+**COMPANY PROFILE:**
+• Company: ${input.companyName}
+• Industry: ${input.industry} 
+• Target Market: ${input.targetCustomers}
+• Offering: ${input.productService}
+• Stage: ${input.businessStage}
+${input.additionalContext ? `• Context: ${input.additionalContext}` : ''}
 
-Respond in valid JSON format with this exact structure:
+**STRATEGIC FRAMEWORK:**
+Apply industry best practices, competitive analysis, and proven business model patterns. Consider market dynamics, technological trends, regulatory environment, and scalability factors specific to the ${input.industry} industry.
+
+**QUALITY REQUIREMENTS:**
+- Provide 3-5 strategic, specific, and actionable items per section
+- Include real-world examples and industry terminology
+- Focus on competitive advantages and differentiation
+- Consider both short-term execution and long-term strategic value
+- Align all sections for coherent business strategy
+
+**OUTPUT FORMAT:**
+Respond with detailed, professional content in this JSON structure:
 {
-  "keyPartners": "• Partner 1\n• Partner 2\n• Partner 3",
-  "keyActivities": "• Activity 1\n• Activity 2\n• Activity 3",
-  "keyResources": "• Resource 1\n• Resource 2\n• Resource 3",
-  "valuePropositions": "• Value Prop 1\n• Value Prop 2\n• Value Prop 3",
-  "customerRelationships": "• Relationship 1\n• Relationship 2\n• Relationship 3",
-  "channels": "• Channel 1\n• Channel 2\n• Channel 3",
-  "customerSegments": "• Segment 1\n• Segment 2\n• Segment 3",
-  "costStructure": "• Cost 1\n• Cost 2\n• Cost 3",
-  "revenueStreams": "• Revenue 1\n• Revenue 2\n• Revenue 3"
+  "keyPartners": "Strategic partnerships with specific types of organizations, suppliers, and stakeholders that will drive competitive advantage",
+  "keyActivities": "Critical activities and capabilities that must be executed excellently to deliver the value proposition", 
+  "keyResources": "Essential assets, capabilities, and resources required for sustainable competitive advantage",
+  "valuePropositions": "Compelling value propositions that solve real customer problems better than alternatives",
+  "customerRelationships": "Relationship strategies and engagement models that build loyalty and lifetime value",
+  "channels": "Distribution and communication channels optimized for target customer acquisition and retention",
+  "customerSegments": "Specific, addressable market segments with distinct needs and characteristics",
+  "costStructure": "Major cost drivers and expense categories critical for unit economics and scalability",
+  "revenueStreams": "Diversified revenue models and pricing strategies aligned with value delivery"
 }
 
-Make sure each section is relevant, specific, and actionable for ${input.companyName} in the ${input.industry} industry.`;
+Create content that demonstrates deep industry knowledge and strategic thinking for ${input.companyName}.
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -75,16 +87,15 @@ Make sure each section is relevant, specific, and actionable for ${input.company
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-5-2025-08-07',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a business strategy expert specializing in Business Model Canvas creation. Always respond with valid JSON format.' 
+            content: 'You are a world-class business strategy consultant with expertise from McKinsey, BCG, and successful venture capital firms. You create Business Model Canvases that have helped companies raise millions in funding and scale successfully. Always respond with valid JSON format containing strategic, actionable insights.' 
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
-        max_tokens: 1500,
+        max_completion_tokens: 2500,
       }),
     });
 

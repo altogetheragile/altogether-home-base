@@ -15,9 +15,17 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --primary-glow: 230 50% 20%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 31 100% 70%;
+    
+    /* BMC Theme Colors */
+    --bmc-orange: 24 95% 53%;
+    --bmc-orange-light: 31 100% 70%;
+    --bmc-orange-dark: 20 90% 45%;
+    --bmc-accent: 45 100% 85%;
+    --bmc-text: 20 14% 20%;
+    --bmc-muted: 30 20% 95%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -64,8 +72,16 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Dark mode BMC colors */
+    --bmc-orange: 24 95% 53%;
+    --bmc-orange-light: 31 100% 70%;
+    --bmc-orange-dark: 20 90% 35%;
+    --bmc-accent: 45 50% 25%;
+    --bmc-text: 30 10% 85%;
+    --bmc-muted: 30 10% 15%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;

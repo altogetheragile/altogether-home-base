@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { Loader2, Sparkles, RotateCcw, Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import BusinessModelCanvas from './BusinessModelCanvas';
+import BMCExportDialog from './BMCExportDialog';
 
 interface BMCData {
   keyPartners: string;
@@ -41,7 +42,8 @@ const BMCGeneratorDialog: React.FC = () => {
   const industries = [
     'Technology', 'Healthcare', 'Finance', 'Retail', 'Education', 
     'Manufacturing', 'Consulting', 'Entertainment', 'Food & Beverage',
-    'Real Estate', 'Transportation', 'Energy', 'Agriculture', 'Other'
+    'Real Estate', 'Transportation', 'Energy', 'Agriculture', 'SaaS',
+    'E-commerce', 'Fintech', 'AI/Machine Learning', 'Biotech', 'Other'
   ];
 
   const businessStages = [
@@ -59,7 +61,7 @@ const BMCGeneratorDialog: React.FC = () => {
     if (!formData.companyName || !formData.industry || !formData.targetCustomers || !formData.productService) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields to generate a comprehensive BMC",
         variant: "destructive"
       });
       return;
@@ -78,8 +80,8 @@ const BMCGeneratorDialog: React.FC = () => {
         setGeneratedBMC(data.data);
         setCompanyName(data.companyName);
         toast({
-          title: "BMC Generated!",
-          description: "Your Business Model Canvas has been created successfully"
+          title: "🎉 BMC Generated Successfully!",
+          description: "Your strategic Business Model Canvas is ready for review and export"
         });
       } else {
         throw new Error(data.error);
@@ -88,7 +90,7 @@ const BMCGeneratorDialog: React.FC = () => {
       console.error('Error generating BMC:', error);
       toast({
         title: "Generation Failed",
-        description: "Failed to generate Business Model Canvas. Please try again.",
+        description: "Failed to generate Business Model Canvas. Please check your inputs and try again.",
         variant: "destructive"
       });
     } finally {
@@ -111,43 +113,57 @@ const BMCGeneratorDialog: React.FC = () => {
 
   const handleClose = () => {
     setIsOpen(false);
-    // Don't reset form immediately, let user see results
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-primary hover:bg-primary/90 text-white">
+        <Button className="bg-gradient-to-r from-bmc-orange to-bmc-orange-dark hover:from-bmc-orange-dark hover:to-bmc-orange text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
           <Sparkles className="w-4 h-4 mr-2" />
           Generate with AI
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-background to-bmc-accent/5">
         <DialogHeader>
-          <DialogTitle>AI Business Model Canvas Generator</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-bmc-orange-dark flex items-center">
+            <Sparkles className="w-6 h-6 mr-2" />
+            AI Business Model Canvas Generator
+          </DialogTitle>
         </DialogHeader>
         
         {!generatedBMC ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <div className="bg-bmc-accent/20 p-4 rounded-lg border border-bmc-orange/20">
+              <p className="text-sm text-bmc-text">
+                <strong>✨ Enhanced AI Generation:</strong> Our GPT-5 powered system creates strategic, 
+                industry-specific Business Model Canvases with actionable insights and competitive analysis.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name *</Label>
+                <Label htmlFor="companyName" className="text-bmc-text font-semibold">
+                  Company Name *
+                </Label>
                 <Input
                   id="companyName"
                   value={formData.companyName}
                   onChange={(e) => handleInputChange('companyName', e.target.value)}
                   placeholder="e.g., TechStart Inc."
+                  className="border-bmc-orange/30 focus:border-bmc-orange focus:ring-bmc-orange/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="industry">Industry *</Label>
+                <Label htmlFor="industry" className="text-bmc-text font-semibold">
+                  Industry *
+                </Label>
                 <Select
                   value={formData.industry}
                   onValueChange={(value) => handleInputChange('industry', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-bmc-orange/30 focus:border-bmc-orange focus:ring-bmc-orange/20">
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
                   <SelectContent>
@@ -161,22 +177,27 @@ const BMCGeneratorDialog: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="targetCustomers">Target Customers *</Label>
+                <Label htmlFor="targetCustomers" className="text-bmc-text font-semibold">
+                  Target Customers *
+                </Label>
                 <Input
                   id="targetCustomers"
                   value={formData.targetCustomers}
                   onChange={(e) => handleInputChange('targetCustomers', e.target.value)}
-                  placeholder="e.g., Small business owners, millennials"
+                  placeholder="e.g., Small business owners, millennials, enterprises"
+                  className="border-bmc-orange/30 focus:border-bmc-orange focus:ring-bmc-orange/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="businessStage">Business Stage</Label>
+                <Label htmlFor="businessStage" className="text-bmc-text font-semibold">
+                  Business Stage
+                </Label>
                 <Select
                   value={formData.businessStage}
                   onValueChange={(value) => handleInputChange('businessStage', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-bmc-orange/30 focus:border-bmc-orange focus:ring-bmc-orange/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -191,42 +212,48 @@ const BMCGeneratorDialog: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="productService">Product/Service Description *</Label>
+              <Label htmlFor="productService" className="text-bmc-text font-semibold">
+                Product/Service Description *
+              </Label>
               <Textarea
                 id="productService"
                 value={formData.productService}
                 onChange={(e) => handleInputChange('productService', e.target.value)}
-                placeholder="Describe what your company offers..."
-                className="min-h-20"
+                placeholder="Describe what your company offers, its key features, and competitive advantages..."
+                className="min-h-24 border-bmc-orange/30 focus:border-bmc-orange focus:ring-bmc-orange/20"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="additionalContext">Additional Context (Optional)</Label>
+              <Label htmlFor="additionalContext" className="text-bmc-text font-semibold">
+                Additional Context (Optional)
+              </Label>
               <Textarea
                 id="additionalContext"
                 value={formData.additionalContext}
                 onChange={(e) => handleInputChange('additionalContext', e.target.value)}
-                placeholder="Any additional information that might help generate a better BMC..."
-                className="min-h-16"
+                placeholder="Market size, competitive landscape, unique challenges, funding stage, partnerships..."
+                className="min-h-20 border-bmc-orange/30 focus:border-bmc-orange focus:ring-bmc-orange/20"
               />
             </div>
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-3 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setIsOpen(false)}
+                className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
               >
                 Cancel
               </Button>
               <Button
                 onClick={generateBMC}
                 disabled={isGenerating}
+                className="bg-gradient-to-r from-bmc-orange to-bmc-orange-dark hover:from-bmc-orange-dark hover:to-bmc-orange text-white px-8"
               >
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
+                    Generating Strategic BMC...
                   </>
                 ) : (
                   <>
@@ -238,7 +265,7 @@ const BMCGeneratorDialog: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <BusinessModelCanvas
               data={generatedBMC}
               companyName={companyName}
@@ -246,19 +273,28 @@ const BMCGeneratorDialog: React.FC = () => {
               onDataChange={setGeneratedBMC}
             />
             
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={resetForm}
-              >
-                Generate New BMC
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleClose}
-              >
-                Close
-              </Button>
+            <div className="flex justify-between items-center pt-4 border-t border-bmc-orange/20">
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={resetForm}
+                  className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Generate New BMC
+                </Button>
+              </div>
+              
+              <div className="flex space-x-2">
+                <BMCExportDialog companyName={companyName} />
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         )}
