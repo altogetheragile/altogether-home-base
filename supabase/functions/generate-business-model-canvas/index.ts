@@ -99,12 +99,24 @@ Make sure each section is relevant, specific, and actionable for ${input.company
 
     console.log('Generated BMC content:', generatedContent);
 
-    // Parse the JSON response
+    // Clean and parse the JSON response
     let bmcData: BMCOutput;
     try {
-      bmcData = JSON.parse(generatedContent);
+      // Remove markdown code blocks if present
+      let cleanedContent = generatedContent.trim();
+      
+      // Check if content is wrapped in markdown code blocks
+      if (cleanedContent.startsWith('```json') && cleanedContent.endsWith('```')) {
+        cleanedContent = cleanedContent.slice(7, -3).trim(); // Remove ```json and ```
+      } else if (cleanedContent.startsWith('```') && cleanedContent.endsWith('```')) {
+        cleanedContent = cleanedContent.slice(3, -3).trim(); // Remove ``` and ```
+      }
+      
+      console.log('Cleaned content for parsing:', cleanedContent);
+      bmcData = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('Failed to parse JSON response:', parseError);
+      console.error('Original content:', generatedContent);
       throw new Error('Invalid JSON response from AI');
     }
 
