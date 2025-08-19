@@ -42,51 +42,47 @@ serve(async (req) => {
     const input: BMCInput = await req.json();
     console.log('Generating BMC for:', input.companyName);
 
-    const prompt = `You are a world-class business strategy consultant and venture capital advisor with expertise in creating comprehensive Business Model Canvases for Fortune 500 companies and successful startups. 
-
-Analyze this business and create a strategic, industry-specific Business Model Canvas:
-
-**COMPANY PROFILE:**
-• Company: ${input.companyName}
-• Industry: ${input.industry} 
-• Target Market: ${input.targetCustomers}
-• Offering: ${input.productService}
-• Stage: ${input.businessStage}
-${input.additionalContext ? `• Context: ${input.additionalContext}` : ''}
-
-**STRATEGIC FRAMEWORK:**
-Apply industry best practices, competitive analysis, and proven business model patterns. Consider market dynamics, technological trends, regulatory environment, and scalability factors specific to the ${input.industry} industry.
-
-**QUALITY REQUIREMENTS:**
-- Provide 3-5 strategic, specific, and actionable items per section
-- Use simple bullet points (•) followed by concise descriptions
-- Avoid complex formatting, special characters, or nested structures
-- Focus on competitive advantages and differentiation
-- Consider both short-term execution and long-term strategic value
-- Align all sections for coherent business strategy
-
-**OUTPUT FORMAT:**
-Respond with detailed, professional content in this exact JSON structure with clean formatting:
-{
-  "keyPartners": "• Strategic partnership type 1\\n• Strategic partnership type 2\\n• Strategic partnership type 3",
-  "keyActivities": "• Critical activity 1\\n• Critical activity 2\\n• Critical activity 3", 
-  "keyResources": "• Essential resource 1\\n• Essential resource 2\\n• Essential resource 3",
-  "valuePropositions": "• Compelling value proposition 1\\n• Compelling value proposition 2\\n• Compelling value proposition 3",
-  "customerRelationships": "• Relationship strategy 1\\n• Relationship strategy 2\\n• Relationship strategy 3",
-  "channels": "• Distribution channel 1\\n• Distribution channel 2\\n• Distribution channel 3",
-  "customerSegments": "• Specific market segment 1\\n• Specific market segment 2\\n• Specific market segment 3",
-  "costStructure": "• Major cost driver 1\\n• Major cost driver 2\\n• Major cost driver 3",
-  "revenueStreams": "• Revenue model 1\\n• Revenue model 2\\n• Revenue model 3"
-}
-
-CRITICAL: Use only simple bullet points (•), newlines (\\n), and basic text. No special formatting, quotes within text, or complex characters.
-
-Create content that demonstrates deep industry knowledge and strategic thinking for ${input.companyName}.
+    // Build prompt without template literals
+    let prompt = 'You are a world-class business strategy consultant and venture capital advisor with expertise in creating comprehensive Business Model Canvases for Fortune 500 companies and successful startups.\n\n';
+    prompt += 'Analyze this business and create a strategic, industry-specific Business Model Canvas:\n\n';
+    prompt += '**COMPANY PROFILE:**\n';
+    prompt += '• Company: ' + input.companyName + '\n';
+    prompt += '• Industry: ' + input.industry + '\n';
+    prompt += '• Target Market: ' + input.targetCustomers + '\n';
+    prompt += '• Offering: ' + input.productService + '\n';
+    prompt += '• Stage: ' + input.businessStage + '\n';
+    if (input.additionalContext) {
+      prompt += '• Context: ' + input.additionalContext + '\n';
+    }
+    prompt += '\n**STRATEGIC FRAMEWORK:**\n';
+    prompt += 'Apply industry best practices, competitive analysis, and proven business model patterns. Consider market dynamics, technological trends, regulatory environment, and scalability factors specific to the ' + input.industry + ' industry.\n\n';
+    prompt += '**QUALITY REQUIREMENTS:**\n';
+    prompt += '- Provide 3-5 strategic, specific, and actionable items per section\n';
+    prompt += '- Use simple bullet points (•) followed by concise descriptions\n';
+    prompt += '- Avoid complex formatting, special characters, or nested structures\n';
+    prompt += '- Focus on competitive advantages and differentiation\n';
+    prompt += '- Consider both short-term execution and long-term strategic value\n';
+    prompt += '- Align all sections for coherent business strategy\n\n';
+    prompt += '**OUTPUT FORMAT:**\n';
+    prompt += 'Respond with detailed, professional content in this exact JSON structure with clean formatting:\n';
+    prompt += '{\n';
+    prompt += '  "keyPartners": "• Strategic partnership type 1\\n• Strategic partnership type 2\\n• Strategic partnership type 3",\n';
+    prompt += '  "keyActivities": "• Critical activity 1\\n• Critical activity 2\\n• Critical activity 3",\n';
+    prompt += '  "keyResources": "• Essential resource 1\\n• Essential resource 2\\n• Essential resource 3",\n';
+    prompt += '  "valuePropositions": "• Compelling value proposition 1\\n• Compelling value proposition 2\\n• Compelling value proposition 3",\n';
+    prompt += '  "customerRelationships": "• Relationship strategy 1\\n• Relationship strategy 2\\n• Relationship strategy 3",\n';
+    prompt += '  "channels": "• Distribution channel 1\\n• Distribution channel 2\\n• Distribution channel 3",\n';
+    prompt += '  "customerSegments": "• Specific market segment 1\\n• Specific market segment 2\\n• Specific market segment 3",\n';
+    prompt += '  "costStructure": "• Major cost driver 1\\n• Major cost driver 2\\n• Major cost driver 3",\n';
+    prompt += '  "revenueStreams": "• Revenue model 1\\n• Revenue model 2\\n• Revenue model 3"\n';
+    prompt += '}\n\n';
+    prompt += 'CRITICAL: Use only simple bullet points (•), newlines (\\n), and basic text. No special formatting, quotes within text, or complex characters.\n\n';
+    prompt += 'Create content that demonstrates deep industry knowledge and strategic thinking for ' + input.companyName + '.';
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': 'Bearer ' + openAIApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -119,23 +115,31 @@ Create content that demonstrates deep industry knowledge and strategic thinking 
       // Remove markdown code blocks and clean content
       let cleanedContent = generatedContent.trim();
       
-      // Define markdown patterns without using backticks in source code
-      const backtick = String.fromCharCode(96); // backtick character
-      const jsonCodeBlock = backtick + backtick + backtick + 'json';
-      const codeBlock = backtick + backtick + backtick;
-      
-      // Remove markdown code blocks using string methods
-      if (cleanedContent.includes(jsonCodeBlock)) {
-        const start = cleanedContent.indexOf(jsonCodeBlock);
-        const end = cleanedContent.lastIndexOf(codeBlock);
-        if (start !== -1 && end !== -1 && end > start) {
-          cleanedContent = cleanedContent.substring(start + jsonCodeBlock.length, end).trim();
+      // Simple approach to remove markdown code blocks without using backticks in source
+      if (cleanedContent.startsWith('{')) {
+        // Already clean JSON
+      } else {
+        // Try to extract JSON from markdown
+        const lines = cleanedContent.split('\n');
+        let jsonStart = -1;
+        let jsonEnd = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].trim().startsWith('{')) {
+            jsonStart = i;
+            break;
+          }
         }
-      } else if (cleanedContent.includes(codeBlock)) {
-        const start = cleanedContent.indexOf(codeBlock);
-        const end = cleanedContent.lastIndexOf(codeBlock);
-        if (start !== -1 && end !== -1 && end > start) {
-          cleanedContent = cleanedContent.substring(start + codeBlock.length, end).trim();
+        
+        for (let i = lines.length - 1; i >= 0; i--) {
+          if (lines[i].trim().endsWith('}')) {
+            jsonEnd = i;
+            break;
+          }
+        }
+        
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          cleanedContent = lines.slice(jsonStart, jsonEnd + 1).join('\n');
         }
       }
       
