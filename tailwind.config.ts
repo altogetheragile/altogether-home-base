@@ -29,6 +29,14 @@ export default {
 					foreground: 'hsl(var(--primary-foreground))',
 					glow: 'hsl(var(--primary-glow))'
 				},
+				'bmc-orange': {
+					DEFAULT: 'hsl(var(--bmc-orange))',
+					light: 'hsl(var(--bmc-orange-light))',
+					dark: 'hsl(var(--bmc-orange-dark))'
+				},
+				'bmc-accent': 'hsl(var(--bmc-accent))',
+				'bmc-text': 'hsl(var(--bmc-text))',
+				'bmc-muted': 'hsl(var(--bmc-muted))',
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
