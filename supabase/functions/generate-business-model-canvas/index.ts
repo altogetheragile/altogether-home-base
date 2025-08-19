@@ -42,42 +42,17 @@ serve(async (req) => {
     const input: BMCInput = await req.json();
     console.log('Generating BMC for:', input.companyName);
 
-    // Build prompt without template literals
-    let prompt = 'You are a world-class business strategy consultant and venture capital advisor with expertise in creating comprehensive Business Model Canvases for Fortune 500 companies and successful startups.\n\n';
-    prompt += 'Analyze this business and create a strategic, industry-specific Business Model Canvas:\n\n';
-    prompt += '**COMPANY PROFILE:**\n';
-    prompt += '• Company: ' + input.companyName + '\n';
-    prompt += '• Industry: ' + input.industry + '\n';
-    prompt += '• Target Market: ' + input.targetCustomers + '\n';
-    prompt += '• Offering: ' + input.productService + '\n';
-    prompt += '• Stage: ' + input.businessStage + '\n';
-    if (input.additionalContext) {
-      prompt += '• Context: ' + input.additionalContext + '\n';
-    }
-    prompt += '\n**STRATEGIC FRAMEWORK:**\n';
-    prompt += 'Apply industry best practices, competitive analysis, and proven business model patterns. Consider market dynamics, technological trends, regulatory environment, and scalability factors specific to the ' + input.industry + ' industry.\n\n';
-    prompt += '**QUALITY REQUIREMENTS:**\n';
-    prompt += '- Provide 3-5 strategic, specific, and actionable items per section\n';
-    prompt += '- Use simple bullet points (•) followed by concise descriptions\n';
-    prompt += '- Avoid complex formatting, special characters, or nested structures\n';
-    prompt += '- Focus on competitive advantages and differentiation\n';
-    prompt += '- Consider both short-term execution and long-term strategic value\n';
-    prompt += '- Align all sections for coherent business strategy\n\n';
-    prompt += '**OUTPUT FORMAT:**\n';
-    prompt += 'Respond with detailed, professional content in this exact JSON structure with clean formatting:\n';
-    prompt += '{\n';
-    prompt += '  "keyPartners": "• Strategic partnership type 1\\n• Strategic partnership type 2\\n• Strategic partnership type 3",\n';
-    prompt += '  "keyActivities": "• Critical activity 1\\n• Critical activity 2\\n• Critical activity 3",\n';
-    prompt += '  "keyResources": "• Essential resource 1\\n• Essential resource 2\\n• Essential resource 3",\n';
-    prompt += '  "valuePropositions": "• Compelling value proposition 1\\n• Compelling value proposition 2\\n• Compelling value proposition 3",\n';
-    prompt += '  "customerRelationships": "• Relationship strategy 1\\n• Relationship strategy 2\\n• Relationship strategy 3",\n';
-    prompt += '  "channels": "• Distribution channel 1\\n• Distribution channel 2\\n• Distribution channel 3",\n';
-    prompt += '  "customerSegments": "• Specific market segment 1\\n• Specific market segment 2\\n• Specific market segment 3",\n';
-    prompt += '  "costStructure": "• Major cost driver 1\\n• Major cost driver 2\\n• Major cost driver 3",\n';
-    prompt += '  "revenueStreams": "• Revenue model 1\\n• Revenue model 2\\n• Revenue model 3"\n';
-    prompt += '}\n\n';
-    prompt += 'CRITICAL: Use only simple bullet points (•), newlines (\\n), and basic text. No special formatting, quotes within text, or complex characters.\n\n';
-    prompt += 'Create content that demonstrates deep industry knowledge and strategic thinking for ' + input.companyName + '.';
+    const systemPrompt = 'You are a world-class business strategy consultant. Always respond with valid JSON only. Use simple bullet points and newlines in your text content.';
+    
+    const userPrompt = 'Create a Business Model Canvas for:\n' + 
+      'Company: ' + input.companyName + '\n' +
+      'Industry: ' + input.industry + '\n' +
+      'Target: ' + input.targetCustomers + '\n' +
+      'Product: ' + input.productService + '\n' +
+      'Stage: ' + input.businessStage + '\n' +
+      (input.additionalContext ? 'Context: ' + input.additionalContext + '\n' : '') +
+      '\nReturn only this JSON format:\n' +
+      '{"keyPartners":"content","keyActivities":"content","keyResources":"content","valuePropositions":"content","customerRelationships":"content","channels":"content","customerSegments":"content","costStructure":"content","revenueStreams":"content"}';
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -86,80 +61,46 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are a world-class business strategy consultant with expertise from McKinsey, BCG, and successful venture capital firms. You create Business Model Canvases that have helped companies raise millions in funding and scale successfully. Always respond with valid JSON format containing strategic, actionable insights. Use simple formatting with bullet points and newlines only.' 
-          },
-          { role: 'user', content: prompt }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
         ],
-        max_completion_tokens: 2000,
+        max_completion_tokens: 1500,
+        temperature: 0.3
       }),
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI API error:', error);
-      throw new Error('OpenAI API error: ' + response.status + ' - ' + error);
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error('OpenAI API failed');
     }
 
     const data = await response.json();
-    const generatedContent = data.choices[0].message.content;
+    const content = data.choices[0].message.content.trim();
+    console.log('Raw AI response:', content);
 
-    console.log('Generated BMC content:', generatedContent);
-
-    // Clean and parse the JSON response
+    // Parse JSON response
     let bmcData: BMCOutput;
     try {
-      // Remove markdown code blocks and clean content
-      let cleanedContent = generatedContent.trim();
-      
-      // Simple approach to remove markdown code blocks without using backticks in source
-      if (cleanedContent.startsWith('{')) {
-        // Already clean JSON
-      } else {
-        // Try to extract JSON from markdown
-        const lines = cleanedContent.split('\n');
-        let jsonStart = -1;
-        let jsonEnd = -1;
-        
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].trim().startsWith('{')) {
-            jsonStart = i;
-            break;
-          }
-        }
-        
-        for (let i = lines.length - 1; i >= 0; i--) {
-          if (lines[i].trim().endsWith('}')) {
-            jsonEnd = i;
-            break;
-          }
-        }
-        
-        if (jsonStart !== -1 && jsonEnd !== -1) {
-          cleanedContent = lines.slice(jsonStart, jsonEnd + 1).join('\n');
-        }
-      }
-      
-      // Clean up any remaining formatting issues
-      cleanedContent = cleanedContent.trim();
-      
-      // Handle bullet points and newlines that might cause JSON parsing issues
-      const lines = cleanedContent.split('\n');
-      const cleanedLines = lines.map(line => {
-        // Escape problematic characters in JSON strings
-        return line.replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ');
-      });
-      cleanedContent = cleanedLines.join('\n');
-      
-      console.log('Cleaned content for parsing:', cleanedContent.substring(0, 200) + '...');
-      bmcData = JSON.parse(cleanedContent);
+      bmcData = JSON.parse(content);
     } catch (parseError) {
-      console.error('Failed to parse JSON response:', parseError);
-      console.error('Original content:', generatedContent);
-      throw new Error('Invalid JSON response from AI');
+      console.error('JSON parse error:', parseError);
+      console.error('Content that failed to parse:', content);
+      
+      // Fallback: create a basic BMC structure
+      bmcData = {
+        keyPartners: 'AI response parsing failed',
+        keyActivities: 'Please try again',
+        keyResources: 'Generation incomplete',
+        valuePropositions: 'Unable to parse AI response',
+        customerRelationships: 'Please regenerate',
+        channels: 'Try different inputs',
+        customerSegments: 'Parsing error occurred',
+        costStructure: 'Technical issue',
+        revenueStreams: 'Please retry generation'
+      };
     }
 
     return new Response(JSON.stringify({ 

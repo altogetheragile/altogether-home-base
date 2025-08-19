@@ -70,28 +70,37 @@ const BMCGeneratorDialog: React.FC = () => {
     setIsGenerating(true);
     
     try {
+      console.log('Calling BMC generation with data:', formData);
+      
       const { data, error } = await supabase.functions.invoke('generate-business-model-canvas', {
         body: formData
       });
 
-      if (error) throw error;
+      console.log('BMC generation response:', { data, error });
 
-      if (data.success) {
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Function call failed: ${error.message}`);
+      }
+
+      if (data?.success) {
         setGeneratedBMC(data.data);
-        setCompanyName(data.companyName);
+        setCompanyName(data.companyName || formData.companyName);
         toast({
           title: "🎉 BMC Generated Successfully!",
           description: "Your strategic Business Model Canvas is ready for review and export"
         });
       } else {
-        throw new Error(data.error);
+        const errorMsg = data?.error || 'Unknown generation error';
+        console.error('AI generation failed:', errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('Error generating BMC:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Generation Failed",
-        description: `Failed to generate Business Model Canvas: ${errorMessage}. Please try again or contact support if the issue persists.`,
+        description: `Unable to generate BMC: ${errorMessage}. Please check your inputs and try again.`,
         variant: "destructive"
       });
     } finally {
