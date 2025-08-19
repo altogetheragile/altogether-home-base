@@ -119,11 +119,23 @@ Create content that demonstrates deep industry knowledge and strategic thinking 
       // Remove markdown code blocks and clean content
       let cleanedContent = generatedContent.trim();
       
-      // Remove markdown code blocks
-      if (cleanedContent.includes('```json')) {
-        cleanedContent = cleanedContent.replace(/```json\s*/, '').replace(/\s*```$/, '');
-      } else if (cleanedContent.includes('```')) {
-        cleanedContent = cleanedContent.replace(/```\s*/, '').replace(/\s*```$/, '');
+      // Define markdown patterns to avoid backtick parsing issues
+      const jsonCodeBlock = '```json';
+      const codeBlock = '```';
+      
+      // Remove markdown code blocks using string methods instead of regex with backticks
+      if (cleanedContent.includes(jsonCodeBlock)) {
+        const start = cleanedContent.indexOf(jsonCodeBlock);
+        const end = cleanedContent.lastIndexOf(codeBlock);
+        if (start !== -1 && end !== -1 && end > start) {
+          cleanedContent = cleanedContent.substring(start + jsonCodeBlock.length, end).trim();
+        }
+      } else if (cleanedContent.includes(codeBlock)) {
+        const start = cleanedContent.indexOf(codeBlock);
+        const end = cleanedContent.lastIndexOf(codeBlock);
+        if (start !== -1 && end !== -1 && end > start) {
+          cleanedContent = cleanedContent.substring(start + codeBlock.length, end).trim();
+        }
       }
       
       // Clean up any remaining formatting issues
