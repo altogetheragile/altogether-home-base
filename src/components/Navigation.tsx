@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, Settings, LayoutDashboard, Shield } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, LayoutDashboard, Shield, Sparkles, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import BMCGeneratorDialog from "@/components/bmc/BMCGeneratorDialog";
 
 const Navigation = () => {
   const location = useLocation();
@@ -109,10 +110,36 @@ const Navigation = () => {
                 >
                   <Settings className="h-4 w-4" />
                   <span>Admin</span>
-                  <Shield className="h-3 w-3" />
-                </Link>
-              )}
-            </div>
+                   <Shield className="h-3 w-3" />
+                 </Link>
+               )}
+             </div>
+
+             {/* AI Tools Section - Desktop */}
+             <div className="flex items-center space-x-4">
+               <DropdownMenu>
+                 <DropdownMenuTrigger asChild>
+                   <Button 
+                     variant="outline" 
+                     size="sm" 
+                     className="border-bmc-orange/30 hover:bg-bmc-orange/10 text-bmc-orange-dark hover:text-bmc-orange-dark"
+                   >
+                     <Sparkles className="h-4 w-4 mr-2" />
+                     AI Tools
+                     <ChevronDown className="h-4 w-4 ml-2" />
+                   </Button>
+                 </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end" className="w-60">
+                   <div className="p-2">
+                     <BMCGeneratorDialog />
+                   </div>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                     More AI tools coming soon...
+                   </DropdownMenuItem>
+                 </DropdownMenuContent>
+               </DropdownMenu>
+             </div>
 
             {/* Auth Section */}
             {loading ? (
@@ -255,11 +282,24 @@ const Navigation = () => {
                   <Settings className="h-4 w-4" />
                   <span>Admin</span>
                   <Shield className="h-3 w-3" />
-                </Link>
-              )}
-              
-              {/* Mobile Auth Section */}
-              <div className="border-t border-border pt-2 mt-2">
+                 </Link>
+               )}
+               
+               {/* AI Tools Section - Mobile */}
+               <div className="border-t border-border pt-2 mt-2">
+                 <div className="px-3 py-2">
+                   <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center">
+                     <Sparkles className="h-4 w-4 mr-2" />
+                     AI Tools
+                   </h4>
+                   <div className="pl-2">
+                     <BMCGeneratorDialog />
+                   </div>
+                 </div>
+               </div>
+               
+               {/* Mobile Auth Section */}
+               <div className="border-t border-border pt-2 mt-2">
                 {loading ? (
                   <div className="px-3 py-2">Loading...</div>
                 ) : user ? (

@@ -88,9 +88,10 @@ const BMCGeneratorDialog: React.FC = () => {
       }
     } catch (error) {
       console.error('Error generating BMC:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Generation Failed",
-        description: "Failed to generate Business Model Canvas. Please check your inputs and try again.",
+        description: `Failed to generate Business Model Canvas: ${errorMessage}. Please try again or contact support if the issue persists.`,
         variant: "destructive"
       });
     } finally {
@@ -124,7 +125,7 @@ const BMCGeneratorDialog: React.FC = () => {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-background to-bmc-accent/5">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-background border-2 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-bmc-orange-dark flex items-center">
             <Sparkles className="w-6 h-6 mr-2" />
@@ -134,7 +135,7 @@ const BMCGeneratorDialog: React.FC = () => {
         
         {!generatedBMC ? (
           <div className="space-y-6">
-            <div className="bg-bmc-accent/20 p-4 rounded-lg border border-bmc-orange/20">
+            <div className="bg-gradient-to-r from-bmc-orange/10 to-bmc-orange-light/10 p-4 rounded-lg border border-bmc-orange/30 shadow-sm">
               <p className="text-sm text-bmc-text">
                 <strong>✨ Enhanced AI Generation:</strong> Our GPT-5 powered system creates strategic, 
                 industry-specific Business Model Canvases with actionable insights and competitive analysis.

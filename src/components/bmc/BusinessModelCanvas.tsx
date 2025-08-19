@@ -92,7 +92,7 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
   );
 
   return (
-    <div id="bmc-canvas" className="bmc-container w-full max-w-7xl mx-auto p-6 bg-gradient-to-br from-background to-bmc-accent/10">
+    <div id="bmc-canvas" className="bmc-container w-full max-w-7xl mx-auto p-6 bg-background border-2 border-bmc-orange/20 rounded-lg shadow-lg">
       {companyName && (
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-bmc-orange to-bmc-orange-dark rounded-full mb-4 shadow-lg">
