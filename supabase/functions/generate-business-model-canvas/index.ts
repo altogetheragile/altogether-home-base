@@ -119,11 +119,12 @@ Create content that demonstrates deep industry knowledge and strategic thinking 
       // Remove markdown code blocks and clean content
       let cleanedContent = generatedContent.trim();
       
-      // Define markdown patterns to avoid backtick parsing issues
-      const jsonCodeBlock = '```json';
-      const codeBlock = '```';
+      // Define markdown patterns without using backticks in source code
+      const backtick = String.fromCharCode(96); // backtick character
+      const jsonCodeBlock = backtick + backtick + backtick + 'json';
+      const codeBlock = backtick + backtick + backtick;
       
-      // Remove markdown code blocks using string methods instead of regex with backticks
+      // Remove markdown code blocks using string methods
       if (cleanedContent.includes(jsonCodeBlock)) {
         const start = cleanedContent.indexOf(jsonCodeBlock);
         const end = cleanedContent.lastIndexOf(codeBlock);
