@@ -72,6 +72,9 @@ verify_jwt = true
 [functions.send-notification]
 verify_jwt = true
 
+[functions.generate-business-model-canvas]
+verify_jwt = true
+
 [edge-runtime]
 enabled = true
 port = 54330

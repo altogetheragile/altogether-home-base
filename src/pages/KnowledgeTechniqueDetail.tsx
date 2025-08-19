@@ -15,6 +15,7 @@ import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
 import { ReadingProgress } from "@/components/knowledge/ReadingProgress";
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton";
 import { CommentsSection } from "@/components/knowledge/CommentsSection";
+import BMCGeneratorDialog from "@/components/bmc/BMCGeneratorDialog";
 import { useState } from "react";
 import { useViewTracking } from "@/hooks/useViewTracking";
 
@@ -211,6 +212,27 @@ const KnowledgeTechniqueDetail = () => {
                 )}
               </div>
             </div>
+
+            {/* AI Generator for Business Model Canvas */}
+            {technique.slug === 'business-model-canvas' && (
+              <div className="mb-8">
+                <Card className="p-6">
+                  <CardHeader className="px-0 pt-0">
+                    <CardTitle className="flex items-center gap-2">
+                      <span className="text-2xl">🤖</span>
+                      AI Business Model Canvas Generator
+                    </CardTitle>
+                    <CardDescription>
+                      Use AI to generate a customized Business Model Canvas for your company. 
+                      Simply provide some basic information and get a complete BMC tailored to your business.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="px-0 pb-0">
+                    <BMCGeneratorDialog />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Media Gallery */}
             {mediaItems.length > 0 && (
