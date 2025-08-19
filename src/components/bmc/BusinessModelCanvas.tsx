@@ -44,7 +44,7 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
       if (!trimmedLine) return null;
       
       return (
-        <div key={index} className="mb-2 text-sm leading-relaxed">
+        <div key={index} className="mb-1 text-xs leading-tight break-words">
           {trimmedLine}
         </div>
       );
@@ -79,7 +79,7 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
             placeholder={`Enter ${title.toLowerCase()}...`}
           />
         ) : (
-          <div className="text-sm text-bmc-text space-y-2 overflow-y-auto max-h-full">
+          <div className="text-xs text-bmc-text leading-tight overflow-y-auto max-h-full break-words">
             {content ? formatContent(content) : (
               <span className="text-muted-foreground italic text-center block text-xs">
                 No content generated
@@ -92,41 +92,41 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
   );
 
   return (
-    <div id="bmc-canvas" className="bmc-container w-full max-w-[1400px] mx-auto p-6 bg-background border-2 border-bmc-orange/20 rounded-xl shadow-xl print:shadow-none print:border-gray-400">
+    <div id="bmc-canvas" className="bmc-container w-full max-w-[1100px] mx-auto p-4 bg-background border border-bmc-orange/30 rounded-lg print:shadow-none print:border-gray-400">
       {companyName && (
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold text-bmc-orange-dark mb-1">
+        <div className="text-center mb-3">
+          <h1 className="text-lg font-bold text-bmc-orange-dark mb-1">
             Business Model Canvas
           </h1>
-          <p className="text-lg text-bmc-text font-medium">
+          <p className="text-sm text-bmc-text font-medium">
             {companyName}
           </p>
         </div>
       )}
       
-      {/* Standard BMC Layout - 5 Columns */}
-      <div className="space-y-3">
-        {/* Top Row - 5 Equal Columns */}
-        <div className="grid grid-cols-5 gap-3">
+      {/* Standard BMC Layout matching the reference */}
+      <div className="space-y-2">
+        {/* Top row: All 5 sections */}
+        <div className="grid grid-cols-5 gap-2 h-48">
           <SectionCard
             title="Key Partners"
             content={data?.keyPartners || ''}
             section="keyPartners"
-            className="h-48"
+            className="h-full"
           />
           
           <SectionCard
             title="Key Activities"
             content={data?.keyActivities || ''}
             section="keyActivities"
-            className="h-48"
+            className="h-full"
           />
           
           <SectionCard
             title="Value Propositions"
             content={data?.valuePropositions || ''}
             section="valuePropositions"
-            className="h-48"
+            className="h-full"
             isHighlight={true}
           />
           
@@ -134,50 +134,51 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
             title="Customer Relationships"
             content={data?.customerRelationships || ''}
             section="customerRelationships"
-            className="h-48"
+            className="h-full"
           />
           
           <SectionCard
             title="Customer Segments"
             content={data?.customerSegments || ''}
             section="customerSegments"
-            className="h-48"
+            className="h-full"
           />
         </div>
 
-        {/* Middle Row - Key Resources and Channels */}
-        <div className="grid grid-cols-5 gap-3">
+        {/* Middle row: Key Resources, empty space for Value Props continuation, Channels */}
+        <div className="grid grid-cols-5 gap-2 h-32">
           <SectionCard
             title="Key Resources"
             content={data?.keyResources || ''}
             section="keyResources"
-            className="h-32"
+            className="h-full"
           />
           
+          {/* Empty space for columns 2 and 3 (Value Propositions continues visually) */}
           <div className="col-span-3"></div>
           
           <SectionCard
             title="Channels"
             content={data?.channels || ''}
             section="channels"
-            className="h-32"
+            className="h-full"
           />
         </div>
 
-        {/* Bottom Row - Cost Structure and Revenue Streams */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Bottom row: Cost Structure and Revenue Streams */}
+        <div className="grid grid-cols-2 gap-2 h-28">
           <SectionCard
             title="Cost Structure"
             content={data?.costStructure || ''}
             section="costStructure"
-            className="h-40"
+            className="h-full"
           />
           
           <SectionCard
             title="Revenue Streams"
             content={data?.revenueStreams || ''}
             section="revenueStreams"
-            className="h-40"
+            className="h-full"
             isHighlight={true}
           />
         </div>
