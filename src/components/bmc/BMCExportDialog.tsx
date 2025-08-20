@@ -42,10 +42,13 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         canvasElement = canvasRef.current.getCanvasElement();
       }
       
-      // Fallback to DOM query if ref not available
+      // Fallback to DOM query targeting the actual BMC content
       if (!canvasElement) {
         console.log('Fallback to DOM query');
-        canvasElement = document.querySelector('#bmc-canvas') as HTMLElement;
+        canvasElement = document.querySelector('#bmc-canvas [data-canvas="true"]') as HTMLElement;
+        if (!canvasElement) {
+          canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
+        }
       }
       
       if (!canvasElement) {
@@ -53,6 +56,19 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         toast({
           title: "Export Failed",
           description: "Canvas not found. Please ensure the BMC is loaded.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate that we have actual content
+      const hasContent = canvasElement.children.length > 0;
+      console.log('Canvas has content:', hasContent, 'Children count:', canvasElement.children.length);
+      
+      if (!hasContent) {
+        toast({
+          title: "Export Failed",
+          description: "BMC canvas appears to be empty.",
           variant: "destructive"
         });
         return;
@@ -119,9 +135,12 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         canvasElement = canvasRef.current.getCanvasElement();
       }
       
-      // Fallback to DOM query
+      // Fallback to DOM query targeting the actual BMC content
       if (!canvasElement) {
-        canvasElement = document.querySelector('#bmc-canvas') as HTMLElement;
+        canvasElement = document.querySelector('#bmc-canvas [data-canvas="true"]') as HTMLElement;
+        if (!canvasElement) {
+          canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
+        }
       }
       
       if (!canvasElement) {

@@ -33,8 +33,10 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
       return canvasRef.current.exportCanvas(options);
     },
     getCanvasElement: () => {
-      console.log('Getting canvas element:', containerRef.current);
-      return containerRef.current;
+      // Return the actual BMC canvas element, not the wrapper
+      const canvasElement = containerRef.current?.querySelector('[data-canvas="true"]') as HTMLElement;
+      console.log('Getting BMC canvas element:', canvasElement);
+      return canvasElement || containerRef.current;
     }
   }), []);
 
