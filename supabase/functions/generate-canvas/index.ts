@@ -4,10 +4,25 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 // Text processing utilities for BMC content
-const cleanupText = (text: string): string => {
-  if (!text) return text;
+const cleanupText = (text: string | string[] | any): string => {
+  if (!text) return '';
   
-  return text
+  let textToProcess: string;
+  
+  // Handle arrays by joining them into a formatted string
+  if (Array.isArray(text)) {
+    console.log(`Processing array with ${text.length} items:`, text);
+    textToProcess = text
+      .map(item => String(item).trim())
+      .filter(item => item.length > 0)
+      .join('. ') + (text.length > 0 ? '.' : '');
+  } else {
+    textToProcess = String(text);
+  }
+  
+  console.log(`Cleaning text: "${textToProcess.substring(0, 100)}..."`);
+  
+  return textToProcess
     // Fix missing spaces after periods
     .replace(/\.([A-Z])/g, '. $1')
     // Fix missing spaces after commas
@@ -25,9 +40,9 @@ const cleanupText = (text: string): string => {
 const validateSpacing = (text: string): boolean => {
   if (!text) return true;
   
-  // Check for common spacing issues
-  const hasProperPeriodSpacing = !text.includes(/\.[A-Z]/.test(text));
-  const hasProperCommaSpacing = !text.includes(/,[A-Z]/.test(text));
+  // Check for common spacing issues using proper regex testing
+  const hasProperPeriodSpacing = !/\.[A-Z]/.test(text);
+  const hasProperCommaSpacing = !/,[A-Z]/.test(text);
   const noDoubleSpaces = !text.includes('  ');
   
   return hasProperPeriodSpacing && hasProperCommaSpacing && noDoubleSpaces;
