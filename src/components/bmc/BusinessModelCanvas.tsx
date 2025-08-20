@@ -63,25 +63,25 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
         ? "bg-gradient-to-br from-bmc-orange/15 to-bmc-orange-light/10 border-2 border-bmc-orange/50 shadow-lg" 
         : "bg-card border border-border hover:border-bmc-orange/30"
     } ${className}`}>
-      <CardHeader className="pb-2 px-4 pt-4">
-        <CardTitle className={`text-sm font-bold text-center ${
+      <CardHeader className="pb-2 px-3 pt-3 print:px-2 print:pt-2">
+        <CardTitle className={`text-xs font-bold text-center print:text-[10px] ${
           isHighlight ? "text-bmc-orange-dark" : "text-foreground"
         }`}>
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 px-4 pb-4 flex-1 overflow-hidden">
+      <CardContent className="pt-0 px-3 pb-3 flex-1 overflow-hidden print:px-2 print:pb-2">
         {isEditable ? (
           <textarea
             value={content}
             onChange={(e) => handleSectionChange(section, e.target.value)}
-            className="w-full h-full min-h-[120px] text-sm resize-none border-none outline-none bg-transparent placeholder-muted-foreground focus:bg-background/50 rounded p-2"
+            className="w-full h-full min-h-[80px] text-xs resize-none border-none outline-none bg-transparent placeholder-muted-foreground focus:bg-background/50 rounded p-1 print:text-[9px]"
             placeholder={`Enter ${title.toLowerCase()}...`}
           />
         ) : (
-          <div className="text-xs text-bmc-text leading-tight overflow-y-auto max-h-full break-words">
+          <div className="text-xs text-bmc-text leading-tight overflow-y-auto max-h-full break-words hyphens-auto print:text-[9px] print:leading-none">
             {content ? formatContent(content) : (
-              <span className="text-muted-foreground italic text-center block text-xs">
+              <span className="text-muted-foreground italic text-center block text-xs print:text-[8px]">
                 No content generated
               </span>
             )}
@@ -92,96 +92,87 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
   );
 
   return (
-    <div id="bmc-canvas" className="bmc-container w-full max-w-[1100px] mx-auto p-4 bg-background border border-bmc-orange/30 rounded-lg print:shadow-none print:border-gray-400">
+    <div id="bmc-canvas" className="bmc-container w-full max-w-[1200px] mx-auto p-4 bg-background border border-bmc-orange/30 rounded-lg print:shadow-none print:border-gray-400 print:p-2">
       {companyName && (
-        <div className="text-center mb-3">
-          <h1 className="text-lg font-bold text-bmc-orange-dark mb-1">
+        <div className="text-center mb-4">
+          <h1 className="text-xl font-bold text-bmc-orange-dark mb-1 print:text-lg">
             Business Model Canvas
           </h1>
-          <p className="text-sm text-bmc-text font-medium">
+          <p className="text-sm text-bmc-text font-medium print:text-xs">
             {companyName}
           </p>
         </div>
       )}
       
-      {/* Standard BMC Layout matching the reference */}
-      <div className="space-y-2">
-        {/* Top row: All 5 sections */}
-        <div className="grid grid-cols-5 gap-2 h-48">
-          <SectionCard
-            title="Key Partners"
-            content={data?.keyPartners || ''}
-            section="keyPartners"
-            className="h-full"
-          />
-          
-          <SectionCard
-            title="Key Activities"
-            content={data?.keyActivities || ''}
-            section="keyActivities"
-            className="h-full"
-          />
-          
-          <SectionCard
-            title="Value Propositions"
-            content={data?.valuePropositions || ''}
-            section="valuePropositions"
-            className="h-full"
-            isHighlight={true}
-          />
-          
-          <SectionCard
-            title="Customer Relationships"
-            content={data?.customerRelationships || ''}
-            section="customerRelationships"
-            className="h-full"
-          />
-          
-          <SectionCard
-            title="Customer Segments"
-            content={data?.customerSegments || ''}
-            section="customerSegments"
-            className="h-full"
-          />
-        </div>
+      {/* Traditional BMC Layout - 3x3 Grid Structure */}
+      <div className="grid grid-cols-5 grid-rows-3 gap-2 h-[600px] print:h-[500px]">
+        {/* Row 1 */}
+        <SectionCard
+          title="Key Partners"
+          content={data?.keyPartners || ''}
+          section="keyPartners"
+          className="row-span-2"
+        />
+        
+        <SectionCard
+          title="Key Activities"
+          content={data?.keyActivities || ''}
+          section="keyActivities"
+          className=""
+        />
+        
+        <SectionCard
+          title="Value Propositions"
+          content={data?.valuePropositions || ''}
+          section="valuePropositions"
+          className="row-span-2"
+          isHighlight={true}
+        />
+        
+        <SectionCard
+          title="Customer Relationships"
+          content={data?.customerRelationships || ''}
+          section="customerRelationships"
+          className=""
+        />
+        
+        <SectionCard
+          title="Customer Segments"
+          content={data?.customerSegments || ''}
+          section="customerSegments"
+          className="row-span-2"
+        />
 
-        {/* Middle row: Key Resources, empty space for Value Props continuation, Channels */}
-        <div className="grid grid-cols-5 gap-2 h-32">
-          <SectionCard
-            title="Key Resources"
-            content={data?.keyResources || ''}
-            section="keyResources"
-            className="h-full"
-          />
-          
-          {/* Empty space for columns 2 and 3 (Value Propositions continues visually) */}
-          <div className="col-span-3"></div>
-          
-          <SectionCard
-            title="Channels"
-            content={data?.channels || ''}
-            section="channels"
-            className="h-full"
-          />
-        </div>
+        {/* Row 2 - Only Key Resources and Channels (others span from row 1) */}
+        <SectionCard
+          title="Key Resources"
+          content={data?.keyResources || ''}
+          section="keyResources"
+          className=""
+        />
+        
+        <SectionCard
+          title="Channels"
+          content={data?.channels || ''}
+          section="channels"
+          className=""
+        />
 
-        {/* Bottom row: Cost Structure and Revenue Streams */}
-        <div className="grid grid-cols-2 gap-2 h-28">
-          <SectionCard
-            title="Cost Structure"
-            content={data?.costStructure || ''}
-            section="costStructure"
-            className="h-full"
-          />
-          
-          <SectionCard
-            title="Revenue Streams"
-            content={data?.revenueStreams || ''}
-            section="revenueStreams"
-            className="h-full"
-            isHighlight={true}
-          />
-        </div>
+        {/* Row 3 - Cost Structure and Revenue Streams */}
+        <SectionCard
+          title="Cost Structure"
+          content={data?.costStructure || ''}
+          section="costStructure"
+          className="col-span-2"
+        />
+        
+        <SectionCard
+          title="Revenue Streams"
+          content={data?.revenueStreams || ''}
+          section="revenueStreams"
+          className="col-span-2"
+          isHighlight={true}
+        />
       </div>
     </div>
   );
