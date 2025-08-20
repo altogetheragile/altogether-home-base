@@ -3,6 +3,36 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
+// Text processing utilities for BMC content
+const cleanupText = (text: string): string => {
+  if (!text) return text;
+  
+  return text
+    // Fix missing spaces after periods
+    .replace(/\.([A-Z])/g, '. $1')
+    // Fix missing spaces after commas
+    .replace(/,([A-Z])/g, ', $1')
+    // Fix missing spaces after colons
+    .replace(/:([A-Z])/g, ': $1')
+    // Fix missing spaces between words (basic pattern)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    // Fix multiple spaces
+    .replace(/\s+/g, ' ')
+    // Trim whitespace
+    .trim();
+};
+
+const validateSpacing = (text: string): boolean => {
+  if (!text) return true;
+  
+  // Check for common spacing issues
+  const hasProperPeriodSpacing = !text.includes(/\.[A-Z]/.test(text));
+  const hasProperCommaSpacing = !text.includes(/,[A-Z]/.test(text));
+  const noDoubleSpaces = !text.includes('  ');
+  
+  return hasProperPeriodSpacing && hasProperCommaSpacing && noDoubleSpaces;
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -31,18 +61,46 @@ interface BMCOutput {
 }
 
 const generateBMCPrompt = (input: CanvasInput): string => {
-  return `You are an expert business strategist. Generate a comprehensive Business Model Canvas for the following company:
+  return `You are an expert business strategist specializing in Business Model Canvas creation.
 
-Company: ${input.companyName || 'Unnamed Company'}
-Industry: ${input.industry || 'Not specified'}
-Description: ${input.description || 'No description provided'}
-Target Audience: ${input.targetAudience || 'Not specified'}
-Business Model: ${input.businessModel || 'Not specified'}
-Additional Context: ${input.additionalContext || 'None'}
+MANDATORY TEXT FORMATTING REQUIREMENTS:
+- ALWAYS add proper spaces after periods (. ), commas (, ), and colons (: )
+- NEVER concatenate words together
+- Each sentence must have proper spacing between all words
+- Use clear, readable formatting with proper punctuation spacing
 
-Please provide detailed, specific, and actionable content for each of the 9 Business Model Canvas sections. Each section should contain 3-5 bullet points or detailed descriptions.
+INCORRECT EXAMPLES TO AVOID:
+❌ "Centralized kitchen and meal prep facilities with specialized equipment for bulk healthy food preparation.,A proprietary digital platform"
+❌ "Strong supplier relationships for consistent access to premium ingredients and sustainable packaging.,Brand assets"
 
-Return your response as a JSON object with exactly these keys:
+CORRECT EXAMPLES TO FOLLOW:
+✅ "Centralized kitchen and meal prep facilities with specialized equipment for bulk healthy food preparation. A proprietary digital platform handling meal customization and subscription management."
+✅ "Strong supplier relationships for consistent access to premium ingredients and sustainable packaging. Brand assets and marketing collateral tailored to health focus."
+
+STEP-BY-STEP INSTRUCTIONS:
+1. Generate content for each BMC section
+2. Review each sentence for proper spacing after punctuation
+3. Ensure no words are concatenated together
+4. Add proper spaces between all words and after punctuation marks
+5. Double-check formatting before finalizing
+
+Company Details:
+- Company: ${input.companyName || 'Unnamed Company'}
+- Industry: ${input.industry || 'Not specified'}
+- Description: ${input.description || 'No description provided'}
+- Target Audience: ${input.targetAudience || 'Not specified'}
+- Business Model: ${input.businessModel || 'Not specified'}
+- Additional Context: ${input.additionalContext || 'None'}
+
+Generate comprehensive Business Model Canvas content with 3-5 detailed points for each section.
+
+FINAL CHECK: Before submitting, verify that:
+- Every period is followed by a space before the next word
+- Every comma is followed by a space before the next word
+- No words are concatenated together
+- All sentences are properly formatted and readable
+
+Return as JSON with these exact keys:
 - keyPartners
 - keyActivities  
 - keyResources
@@ -51,9 +109,7 @@ Return your response as a JSON object with exactly these keys:
 - channels
 - customerSegments
 - costStructure
-- revenueStreams
-
-Make each section comprehensive and industry-specific. Avoid generic responses.`;
+- revenueStreams`;
 };
 
 const generateUserStoryMapPrompt = (input: CanvasInput): string => {
@@ -115,13 +171,12 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-5-2025-08-07',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_completion_tokens: 2000,
-        response_format: { type: 'json_object' }
+        max_completion_tokens: 2000
       }),
     });
 
@@ -144,6 +199,31 @@ serve(async (req) => {
     let parsedContent;
     try {
       parsedContent = JSON.parse(generatedContent);
+      
+      // Apply post-processing for BMC content
+      if (input.type === 'bmc' && parsedContent) {
+        console.log('Applying text cleanup for BMC content...');
+        
+        // Clean up all BMC sections
+        const bmcKeys = ['keyPartners', 'keyActivities', 'keyResources', 'valuePropositions', 
+                        'customerRelationships', 'channels', 'customerSegments', 'costStructure', 'revenueStreams'];
+        
+        for (const key of bmcKeys) {
+          if (parsedContent[key]) {
+            const original = parsedContent[key];
+            parsedContent[key] = cleanupText(original);
+            
+            if (original !== parsedContent[key]) {
+              console.log(`Cleaned up ${key}: "${original}" -> "${parsedContent[key]}"`);
+            }
+            
+            // Validate spacing
+            if (!validateSpacing(parsedContent[key])) {
+              console.warn(`Spacing validation failed for ${key}: "${parsedContent[key]}"`);
+            }
+          }
+        }
+      }
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
       console.error('Raw content:', generatedContent);
