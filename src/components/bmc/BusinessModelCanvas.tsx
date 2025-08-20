@@ -26,10 +26,10 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
   }, [canvasRef.current]);
 
   return (
-    <div id="bmc-canvas" className="w-full max-w-[1200px] mx-auto">
+    <div id="bmc-canvas" className="w-full max-w-[900px] mx-auto">
       {companyName && (
-        <div className="text-center mb-6">
-          <h1 className="text-xl font-bold text-foreground mb-1">
+        <div className="text-center mb-4">
+          <h1 className="text-lg font-bold text-foreground mb-1">
             Business Model Canvas
           </h1>
           <p className="text-sm text-muted-foreground font-medium">
@@ -43,8 +43,8 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
         data={data}
         isEditable={isEditable}
         onDataChange={onDataChange}
-        width={1200}
-        height={800}
+        width={900}
+        height={600}
       />
     </div>
   );

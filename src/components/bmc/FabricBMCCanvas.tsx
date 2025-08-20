@@ -84,8 +84,8 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
   data,
   isEditable = false,
   onDataChange,
-  width = 1200,
-  height = 800
+  width = 900,
+  height = 600
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
@@ -146,9 +146,9 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
 
       // Create title text
       const title = new IText(config.title, {
-        left: actualX + 10,
-        top: actualY + 10,
-        fontSize: 14,
+        left: actualX + 8,
+        top: actualY + 8,
+        fontSize: 11,
         fontWeight: 'bold',
         fill: config.highlight ? colors.accentForeground : colors.foreground,
         selectable: false,
@@ -159,16 +159,19 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
       // Create content text with proper null safety
       const textContent = String(safeData[sectionKey] || '');
       const content = new Textbox(textContent, {
-        left: actualX + 10,
-        top: actualY + 35,
-        width: actualWidth - 20,
-        height: actualHeight - 45,
-        fontSize: 12,
+        left: actualX + 8,
+        top: actualY + 28,
+        width: actualWidth - 16,
+        height: actualHeight - 36,
+        fontSize: 10,
         fill: colors.foreground,
         fontFamily: 'system-ui, sans-serif',
         selectable: isEditable,
         evented: isEditable,
         splitByGrapheme: true,
+        textAlign: 'left',
+        lineHeight: 1.2,
+        charSpacing: 0,
         styles: {},
       });
 
