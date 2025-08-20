@@ -58,9 +58,9 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
     isHighlight?: boolean;
   }> = ({ title, content, section, gridArea, isHighlight = false }) => (
     <Card 
-      className={`flex flex-col min-h-0 ${
+      className={`flex flex-col h-full ${
         isHighlight 
-          ? "bg-bmc-orange/10 border-2 border-bmc-orange shadow-md" 
+          ? "bg-bmc-accent border-bmc-orange shadow-md" 
           : "bg-card border border-border"
       }`}
       style={{ gridArea }}
@@ -72,7 +72,7 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 px-3 pb-3 flex-1 min-h-0 overflow-auto">
+      <CardContent className="pt-0 px-3 pb-3 flex-1 overflow-auto">
         {isEditable ? (
           <textarea
             value={content}
@@ -111,13 +111,13 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr',
-          gridTemplateRows: 'minmax(180px, auto) minmax(180px, auto) minmax(140px, auto)',
+          gridTemplateRows: '200px 200px 160px',
           gridTemplateAreas: `
             "partners activities value relationships segments"
             "partners resources value channels segments"
             "costs costs costs revenue revenue"
           `,
-          minHeight: '500px'
+          height: '560px'
         }}
       >
         <SectionCard
