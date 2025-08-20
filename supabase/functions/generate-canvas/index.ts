@@ -171,22 +171,25 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4-1106-preview',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_completion_tokens: 2000
+        max_tokens: 4000,
+        temperature: 0.7,
+        response_format: { type: "json_object" }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+      console.error('OpenAI API error:', response.status, response.statusText, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('OpenAI response received:', JSON.stringify(data, null, 2));
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       console.error('Unexpected OpenAI response structure:', data);
@@ -194,7 +197,8 @@ serve(async (req) => {
     }
 
     const generatedContent = data.choices[0].message.content;
-    console.log('Generated content:', generatedContent);
+    console.log('Generated content length:', generatedContent?.length);
+    console.log('Generated content preview:', generatedContent?.substring(0, 200));
 
     let parsedContent;
     try {
