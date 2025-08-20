@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
-import FabricBMCCanvas, { BMCData, FabricBMCCanvasRef } from './FabricBMCCanvas';
-
+import BMCCanvas, { BMCData, BMCCanvasRef } from '../canvas/templates/BMCCanvas';
 
 interface BusinessModelCanvasProps {
   data?: BMCData;
@@ -15,36 +14,25 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
   isEditable = false,
   onDataChange
 }) => {
-  const canvasRef = useRef<FabricBMCCanvasRef>(null);
+  const canvasRef = useRef<BMCCanvasRef>(null);
 
   // Expose canvas reference for export functionality
   React.useEffect(() => {
     const container = document.querySelector('#bmc-canvas');
     if (container && canvasRef.current) {
-      (container as any)._fabricCanvasRef = canvasRef.current;
+      (container as any)._canvasRef = canvasRef.current;
     }
   }, [canvasRef.current]);
 
   return (
-    <div id="bmc-canvas" className="w-full max-w-[900px] mx-auto">
-      {companyName && (
-        <div className="text-center mb-4">
-          <h1 className="text-lg font-bold text-foreground mb-1">
-            Business Model Canvas
-          </h1>
-          <p className="text-sm text-muted-foreground font-medium">
-            {companyName}
-          </p>
-        </div>
-      )}
-      
-      <FabricBMCCanvas
+    <div id="bmc-canvas" className="w-full max-w-[1200px] mx-auto">
+      <BMCCanvas
         ref={canvasRef}
         data={data}
+        companyName={companyName}
         isEditable={isEditable}
         onDataChange={onDataChange}
-        width={900}
-        height={600}
+        className="min-h-[700px]"
       />
     </div>
   );
