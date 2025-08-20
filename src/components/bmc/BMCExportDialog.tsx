@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, FileText, Image, Printer, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { exportBMC, printBMC, ExportOptions } from '@/utils/bmcExport';
+import { exportFabricBMC, printFabricBMC, ExportOptions } from '@/utils/fabricBMCExport';
 
 interface BMCExportDialogProps {
   companyName?: string;
@@ -27,20 +27,40 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
     setIsExporting(true);
     
     try {
+      // Get the canvas reference from the BusinessModelCanvas component
+      const bmcContainer = document.querySelector('#bmc-canvas');
+      const fabricCanvas = (bmcContainer as any)?._fabricCanvasRef;
+      
+      if (!fabricCanvas) {
+        toast({
+          title: "Export Failed",
+          description: "Canvas not found. Please ensure the BMC is loaded.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const options: ExportOptions = {
         format,
         filename,
         quality: format === 'jpeg' ? parseInt(quality) / 100 : undefined,
       };
       
-      await exportBMC('bmc-canvas', options);
+      const result = await exportFabricBMC(fabricCanvas, options);
       
-      toast({
-        title: "Export Successful",
-        description: `Business Model Canvas exported as ${format.toUpperCase()}`,
-      });
-      
-      setIsOpen(false);
+      if (result.success) {
+        toast({
+          title: "Export Successful",
+          description: result.message,
+        });
+        setIsOpen(false);
+      } else {
+        toast({
+          title: "Export Failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Export error:', error);
       toast({
@@ -55,11 +75,33 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
 
   const handlePrint = async () => {
     try {
-      printBMC('bmc-canvas');
-      toast({
-        title: "Print Dialog Opened",
-        description: "Print dialog has been opened for your Business Model Canvas",
-      });
+      // Get the canvas reference from the BusinessModelCanvas component
+      const bmcContainer = document.querySelector('#bmc-canvas');
+      const fabricCanvas = (bmcContainer as any)?._fabricCanvasRef;
+      
+      if (!fabricCanvas) {
+        toast({
+          title: "Print Failed",
+          description: "Canvas not found. Please ensure the BMC is loaded.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const result = await printFabricBMC(fabricCanvas);
+      
+      if (result.success) {
+        toast({
+          title: "Print Dialog Opened",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Print Failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Print error:', error);
       toast({
