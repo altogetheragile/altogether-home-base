@@ -56,16 +56,20 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
     content: string;
     section: keyof BMCData;
     className?: string;
+    style?: React.CSSProperties;
     isHighlight?: boolean;
-  }> = ({ title, content, section, className = "", isHighlight = false }) => (
-    <Card className={`flex flex-col transition-all duration-200 hover:shadow-md ${
-      isHighlight 
-        ? "bg-bmc-orange/10 border-2 border-bmc-orange/60 shadow-lg" 
-        : "bg-card border border-border hover:border-bmc-orange/30"
-    } ${className}`}>
+  }> = ({ title, content, section, className = "", style, isHighlight = false }) => (
+    <Card 
+      className={`flex flex-col transition-all duration-200 hover:shadow-md ${
+        isHighlight 
+          ? "bg-primary/10 border-2 border-primary shadow-lg" 
+          : "bg-card border border-border hover:border-primary/30"
+      } ${className}`}
+      style={style}
+    >
       <CardHeader className="pb-2 px-3 pt-3 print:px-2 print:pt-2 flex-shrink-0">
         <CardTitle className={`text-xs font-bold text-center print:text-[10px] ${
-          isHighlight ? "text-bmc-orange" : "text-foreground"
+          isHighlight ? "text-primary" : "text-foreground"
         }`}>
           {title}
         </CardTitle>
@@ -75,11 +79,21 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
           <textarea
             value={content}
             onChange={(e) => handleSectionChange(section, e.target.value)}
-            className="w-full h-full min-h-[120px] text-xs resize-none border-none outline-none bg-transparent placeholder-muted-foreground focus:bg-background/50 rounded p-1 print:text-[9px]"
+            className="w-full h-full min-h-[80px] text-xs resize-none border-none outline-none bg-transparent placeholder-muted-foreground focus:bg-background/50 rounded p-1 print:text-[9px] overflow-hidden"
             placeholder={`Enter ${title.toLowerCase()}...`}
+            style={{ 
+              height: 'auto',
+              minHeight: '80px',
+              maxHeight: 'none'
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = `${target.scrollHeight}px`;
+            }}
           />
         ) : (
-          <div className="text-xs text-bmc-text leading-tight break-words hyphens-auto print:text-[9px] print:leading-tight">
+          <div className="text-xs text-foreground leading-tight break-words hyphens-auto print:text-[9px] print:leading-tight">
             {content ? formatContent(content) : (
               <span className="text-muted-foreground italic text-center block text-xs print:text-[8px]">
                 No content generated
@@ -92,40 +106,50 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
   );
 
   return (
-    <div id="bmc-canvas" className="bmc-container w-full max-w-[1200px] mx-auto p-4 bg-background border border-bmc-orange/30 rounded-lg print:shadow-none print:border-gray-400 print:p-2">
+    <div id="bmc-canvas" className="bmc-container w-full max-w-[1200px] mx-auto p-4 bg-background border border-primary/30 rounded-lg print:shadow-none print:border-gray-400 print:p-2">
       {companyName && (
         <div className="text-center mb-4">
-          <h1 className="text-xl font-bold text-bmc-orange-dark mb-1 print:text-lg">
+          <h1 className="text-xl font-bold text-primary mb-1 print:text-lg">
             Business Model Canvas
           </h1>
-          <p className="text-sm text-bmc-text font-medium print:text-xs">
+          <p className="text-sm text-foreground font-medium print:text-xs">
             {companyName}
           </p>
         </div>
       )}
       
-      {/* Traditional BMC Layout - Dynamic height with proper bottom row centering */}
-      <div className="grid grid-cols-10 gap-2 auto-rows-min print:gap-1">
-        {/* Row 1 */}
+      {/* Traditional BMC Layout using CSS Grid with proper fractional units */}
+      <div 
+        className="bmc-grid gap-2 print:gap-1" 
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr',
+          gridTemplateRows: 'auto auto auto',
+          width: '100%'
+        }}
+      >
+        {/* Row 1 - Top sections */}
         <SectionCard
           title="Key Partners"
           content={data?.keyPartners || ''}
           section="keyPartners"
-          className="col-span-2 row-span-2"
+          className="row-span-2"
+          style={{ gridColumn: '1 / 2', gridRow: '1 / 3' }}
         />
         
         <SectionCard
           title="Key Activities"
           content={data?.keyActivities || ''}
           section="keyActivities"
-          className="col-span-2"
+          style={{ gridColumn: '2 / 3', gridRow: '1 / 2' }}
         />
         
         <SectionCard
           title="Value Propositions"
           content={data?.valuePropositions || ''}
           section="valuePropositions"
-          className="col-span-2 row-span-2"
+          className="row-span-2"
+          style={{ gridColumn: '3 / 4', gridRow: '1 / 3' }}
           isHighlight={true}
         />
         
@@ -133,44 +157,45 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
           title="Customer Relationships"
           content={data?.customerRelationships || ''}
           section="customerRelationships"
-          className="col-span-2"
+          style={{ gridColumn: '4 / 5', gridRow: '1 / 2' }}
         />
         
         <SectionCard
           title="Customer Segments"
           content={data?.customerSegments || ''}
           section="customerSegments"
-          className="col-span-2 row-span-2"
+          className="row-span-2"
+          style={{ gridColumn: '5 / 6', gridRow: '1 / 3' }}
         />
 
-        {/* Row 2 - Only Key Resources and Channels (others span from row 1) */}
+        {/* Row 2 - Middle sections */}
         <SectionCard
           title="Key Resources"
           content={data?.keyResources || ''}
           section="keyResources"
-          className="col-span-2"
+          style={{ gridColumn: '2 / 3', gridRow: '2 / 3' }}
         />
         
         <SectionCard
           title="Channels"
           content={data?.channels || ''}
           section="channels"
-          className="col-span-2"
+          style={{ gridColumn: '4 / 5', gridRow: '2 / 3' }}
         />
 
-        {/* Row 3 - Cost Structure and Revenue Streams - Equal and centered */}
+        {/* Row 3 - Bottom sections - Equal width spanning 2.5 columns each */}
         <SectionCard
           title="Cost Structure"
           content={data?.costStructure || ''}
           section="costStructure"
-          className="col-span-5"
+          style={{ gridColumn: '1 / 3.5', gridRow: '3 / 4' }}
         />
         
         <SectionCard
           title="Revenue Streams"
           content={data?.revenueStreams || ''}
           section="revenueStreams"
-          className="col-span-5"
+          style={{ gridColumn: '3.5 / 6', gridRow: '3 / 4' }}
           isHighlight={true}
         />
       </div>

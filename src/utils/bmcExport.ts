@@ -13,14 +13,53 @@ export const exportBMC = async (elementId: string, options: ExportOptions) => {
     throw new Error('BMC element not found');
   }
 
+  // Prepare element for export - ensure all content is visible
+  const originalOverflow = element.style.overflow;
+  const originalHeight = element.style.height;
+  element.style.overflow = 'visible';
+  element.style.height = 'auto';
+
+  // Force layout recalculation
+  element.offsetHeight;
+
   const canvas = await html2canvas(element, {
-    scale: 2,
+    scale: 3, // Higher scale for better text rendering
     backgroundColor: '#ffffff',
     useCORS: true,
     allowTaint: true,
     width: element.scrollWidth,
     height: element.scrollHeight,
+    scrollX: 0,
+    scrollY: 0,
+    ignoreElements: (element) => {
+      // Ignore scroll elements that might interfere
+      return element.classList.contains('scroll-area') || 
+             element.tagName === 'SCROLLBAR';
+    },
+    onclone: (clonedDoc) => {
+      // Ensure all text areas are visible in the clone
+      const textareas = clonedDoc.querySelectorAll('textarea');
+      textareas.forEach(textarea => {
+        const div = clonedDoc.createElement('div');
+        div.innerHTML = textarea.value.replace(/\n/g, '<br>');
+        div.style.cssText = textarea.style.cssText;
+        div.className = textarea.className;
+        textarea.parentNode?.replaceChild(div, textarea);
+      });
+      
+      // Ensure all content is visible
+      const elements = clonedDoc.querySelectorAll('*');
+      elements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.overflow = 'visible';
+        }
+      });
+    }
   });
+
+  // Restore original styles
+  element.style.overflow = originalOverflow;
+  element.style.height = originalHeight;
 
   const { format, quality = 0.95, filename = 'business-model-canvas' } = options;
 
