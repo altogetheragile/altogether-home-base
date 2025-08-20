@@ -1,8 +1,13 @@
 import React, { useRef, useImperativeHandle } from 'react';
-import BaseCanvas, { BaseCanvasRef, CanvasData } from '../BaseCanvas';
-import { ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import TextElement from '../elements/TextElement';
 import { cn } from '@/lib/utils';
+
+interface ExportOptions {
+  format?: 'png' | 'pdf';
+  quality?: number;
+  filename?: string;
+}
 
 export interface BMCData {
   keyPartners: string;
@@ -24,7 +29,8 @@ interface BMCCanvasProps {
   className?: string;
 }
 
-export interface BMCCanvasRef extends BaseCanvasRef {
+export interface BMCCanvasRef {
+  exportCanvas: (options?: ExportOptions) => Promise<string>;
   getBMCData: () => BMCData;
 }
 
@@ -35,7 +41,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   companyName,
   className,
 }, ref) => {
-  const baseCanvasRef = useRef<BaseCanvasRef>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   const defaultData: BMCData = {
     keyPartners: '',
@@ -58,8 +64,53 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
   const getBMCData = (): BMCData => bmcData;
 
+  const exportCanvas = async (options: ExportOptions = {}): Promise<string> => {
+    if (!canvasRef.current) {
+      throw new Error('Canvas not available for export');
+    }
+
+    const { default: html2canvas } = await import('html2canvas');
+    
+    const canvas = await html2canvas(canvasRef.current, {
+      backgroundColor: 'white',
+      scale: options.quality || 2,
+      useCORS: true,
+      allowTaint: true,
+    });
+
+    if (options.format === 'pdf') {
+      const { default: jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const canvasAspectRatio = canvas.width / canvas.height;
+      let imgWidth = pdfWidth - 20;
+      let imgHeight = imgWidth / canvasAspectRatio;
+      
+      if (imgHeight > pdfHeight - 20) {
+        imgHeight = pdfHeight - 20;
+        imgWidth = imgHeight * canvasAspectRatio;
+      }
+      
+      const x = (pdfWidth - imgWidth) / 2;
+      const y = (pdfHeight - imgHeight) / 2;
+      
+      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+      return pdf.output('dataurlstring');
+    }
+
+    return canvas.toDataURL('image/png');
+  };
+
   useImperativeHandle(ref, () => ({
-    ...baseCanvasRef.current!,
+    exportCanvas,
     getBMCData,
   }));
 
@@ -99,7 +150,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   );
 
   return (
-    <div className={cn('w-full h-full', className)}>
+    <div className={cn('w-full h-full', className)} ref={canvasRef} data-canvas="true">
       {companyName && (
         <div className="text-center mb-4 p-4 bg-card border border-border rounded-lg">
           <h1 className="text-lg font-bold text-foreground mb-1">
@@ -111,17 +162,11 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
         </div>
       )}
       
-      <BaseCanvas
-        ref={baseCanvasRef}
-        layout="template"
-        direction="vertical"
-        className="min-h-[600px]"
-        data-canvas="true"
-      >
-        {/* Top Row */}
-        <ResizablePanel defaultSize={40} minSize={30}>
-          <div className="h-full">
-            <BaseCanvas layout="template" direction="horizontal">
+      <div className="w-full min-h-[600px] bg-background border border-border rounded-lg overflow-hidden">
+        <ResizablePanelGroup direction="vertical" className="h-full">
+          {/* Top Row */}
+          <ResizablePanel defaultSize={40} minSize={30}>
+            <ResizablePanelGroup direction="horizontal" className="h-full">
               {/* Key Partners */}
               <ResizablePanel defaultSize={20} minSize={15}>
                 <BMCSection
@@ -137,7 +182,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               
               {/* Key Activities and Resources */}
               <ResizablePanel defaultSize={20} minSize={15}>
-                <BaseCanvas layout="template" direction="vertical">
+                <ResizablePanelGroup direction="vertical" className="h-full">
                   <ResizablePanel defaultSize={50}>
                     <BMCSection
                       title="Key Activities"
@@ -159,7 +204,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                       headerColor="bg-green-100 dark:bg-green-900/30"
                     />
                   </ResizablePanel>
-                </BaseCanvas>
+                </ResizablePanelGroup>
               </ResizablePanel>
               
               <ResizableHandle withHandle />
@@ -179,7 +224,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               
               {/* Customer Relationships and Channels */}
               <ResizablePanel defaultSize={20} minSize={15}>
-                <BaseCanvas layout="template" direction="vertical">
+                <ResizablePanelGroup direction="vertical" className="h-full">
                   <ResizablePanel defaultSize={50}>
                     <BMCSection
                       title="Customer Relationships"
@@ -201,7 +246,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                       headerColor="bg-orange-100 dark:bg-orange-900/30"
                     />
                   </ResizablePanel>
-                </BaseCanvas>
+                </ResizablePanelGroup>
               </ResizablePanel>
               
               <ResizableHandle withHandle />
@@ -216,41 +261,41 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                   headerColor="bg-red-100 dark:bg-red-900/30"
                 />
               </ResizablePanel>
-            </BaseCanvas>
-          </div>
-        </ResizablePanel>
-        
-        <ResizableHandle withHandle />
-        
-        {/* Bottom Row */}
-        <ResizablePanel defaultSize={60} minSize={40}>
-          <BaseCanvas layout="template" direction="horizontal">
-            {/* Cost Structure */}
-            <ResizablePanel defaultSize={50}>
-              <BMCSection
-                title="Cost Structure"
-                value={bmcData.costStructure}
-                onChange={(value) => handleSectionChange('costStructure', value)}
-                placeholder="What are the most important costs in your business model?"
-                headerColor="bg-purple-100 dark:bg-purple-900/30"
-              />
-            </ResizablePanel>
-            
-            <ResizableHandle withHandle />
-            
-            {/* Revenue Streams */}
-            <ResizablePanel defaultSize={50}>
-              <BMCSection
-                title="Revenue Streams"
-                value={bmcData.revenueStreams}
-                onChange={(value) => handleSectionChange('revenueStreams', value)}
-                placeholder="What revenue streams generate income?"
-                headerColor="bg-indigo-100 dark:bg-indigo-900/30"
-              />
-            </ResizablePanel>
-          </BaseCanvas>
-        </ResizablePanel>
-      </BaseCanvas>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Bottom Row */}
+          <ResizablePanel defaultSize={60} minSize={40}>
+            <ResizablePanelGroup direction="horizontal" className="h-full">
+              {/* Cost Structure */}
+              <ResizablePanel defaultSize={50}>
+                <BMCSection
+                  title="Cost Structure"
+                  value={bmcData.costStructure}
+                  onChange={(value) => handleSectionChange('costStructure', value)}
+                  placeholder="What are the most important costs in your business model?"
+                  headerColor="bg-purple-100 dark:bg-purple-900/30"
+                />
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle />
+              
+              {/* Revenue Streams */}
+              <ResizablePanel defaultSize={50}>
+                <BMCSection
+                  title="Revenue Streams"
+                  value={bmcData.revenueStreams}
+                  onChange={(value) => handleSectionChange('revenueStreams', value)}
+                  placeholder="What revenue streams generate income?"
+                  headerColor="bg-indigo-100 dark:bg-indigo-900/30"
+                />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
     </div>
   );
 });

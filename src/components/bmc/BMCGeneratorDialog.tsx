@@ -147,10 +147,12 @@ const BMCGeneratorDialog: React.FC = () => {
     <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
       <DialogTrigger asChild>
         <Button 
-          className="bg-gradient-to-r from-bmc-orange to-bmc-orange-dark hover:from-bmc-orange-dark hover:to-bmc-orange text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 w-full justify-start text-left font-medium"
+          variant="outline" 
+          size="sm" 
+          className="border-bmc-orange/30 hover:bg-bmc-orange/10 text-bmc-orange-dark hover:text-bmc-orange-dark"
         >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Generate Business Model Canvas
+          <Sparkles className="h-4 w-4 mr-2" />
+          AI BMC Generator
         </Button>
       </DialogTrigger>
       

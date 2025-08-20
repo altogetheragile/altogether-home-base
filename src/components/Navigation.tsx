@@ -115,31 +115,10 @@ const Navigation = () => {
                )}
              </div>
 
-             {/* AI Tools Section - Desktop */}
-             <div className="flex items-center space-x-4">
-               <DropdownMenu>
-                 <DropdownMenuTrigger asChild>
-                   <Button 
-                     variant="outline" 
-                     size="sm" 
-                     className="border-bmc-orange/30 hover:bg-bmc-orange/10 text-bmc-orange-dark hover:text-bmc-orange-dark"
-                   >
-                     <Sparkles className="h-4 w-4 mr-2" />
-                     AI Tools
-                     <ChevronDown className="h-4 w-4 ml-2" />
-                   </Button>
-                 </DropdownMenuTrigger>
-                 <DropdownMenuContent align="end" className="w-60">
-                   <div className="p-2">
-                     <BMCGeneratorDialog />
-                   </div>
-                   <DropdownMenuSeparator />
-                   <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                     More AI tools coming soon...
-                   </DropdownMenuItem>
-                 </DropdownMenuContent>
-               </DropdownMenu>
-             </div>
+              {/* AI Tools Section - Desktop */}
+              <div className="flex items-center space-x-4">
+                <BMCGeneratorDialog />
+              </div>
 
             {/* Auth Section */}
             {loading ? (
@@ -285,18 +264,12 @@ const Navigation = () => {
                  </Link>
                )}
                
-               {/* AI Tools Section - Mobile */}
-               <div className="border-t border-border pt-2 mt-2">
-                 <div className="px-3 py-2">
-                   <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center">
-                     <Sparkles className="h-4 w-4 mr-2" />
-                     AI Tools
-                   </h4>
-                   <div className="pl-2">
-                     <BMCGeneratorDialog />
-                   </div>
-                 </div>
-               </div>
+                {/* AI Tools Section - Mobile */}
+                <div className="border-t border-border pt-2 mt-2">
+                  <div className="px-3 py-2">
+                    <BMCGeneratorDialog />
+                  </div>
+                </div>
                
                {/* Mobile Auth Section */}
                <div className="border-t border-border pt-2 mt-2">
