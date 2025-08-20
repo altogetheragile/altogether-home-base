@@ -115,7 +115,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   }));
 
   const SectionHeader = ({ title, color = 'bg-primary/10' }: { title: string; color?: string }) => (
-    <div className={cn('p-2 border-b border-border/50 font-medium text-sm text-center', color)}>
+    <div className={cn('p-1 border-b border-border/50 font-medium text-xs text-center', color)}>
       {title}
     </div>
   );
@@ -133,9 +133,9 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     placeholder: string;
     headerColor?: string;
   }) => (
-    <div className="h-full flex flex-col bg-card border-2 border-border/30 rounded-md overflow-hidden shadow-sm">
+    <div className="h-full flex flex-col bg-card border-2 border-border/30 overflow-hidden shadow-sm">
       <SectionHeader title={title} color={headerColor} />
-      <div className="flex-1 p-2 min-h-[80px]">
+      <div className="flex-1 p-1 min-h-[120px]">
         <TextElement
           content={value}
           isEditable={isEditable}
@@ -162,8 +162,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
         </div>
       )}
       
-      <div className="w-full h-[600px] bg-background border border-border rounded-lg overflow-hidden">
-        <ResizablePanelGroup direction="vertical" className="h-[600px]">
+      <div className="w-full h-[calc(100vh-150px)] min-h-[500px] bg-background border border-border overflow-hidden">
+        <ResizablePanelGroup direction="vertical" className="h-full">
           {/* Top Row */}
           <ResizablePanel defaultSize={70} minSize={40}>
             <ResizablePanelGroup direction="horizontal" className="h-full">

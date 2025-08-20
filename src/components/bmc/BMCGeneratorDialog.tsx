@@ -156,10 +156,10 @@ const BMCGeneratorDialog: React.FC = () => {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-6xl h-[95vh] overflow-y-auto bg-background border-2 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-bmc-orange-dark flex items-center">
-            <Sparkles className="w-5 h-5 mr-2" />
+      <DialogContent className="max-w-7xl h-[98vh] overflow-y-auto bg-background border-2 shadow-2xl p-3">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-base font-bold text-bmc-orange-dark flex items-center">
+            <Sparkles className="w-4 h-4 mr-2" />
             AI Business Model Canvas Generator
           </DialogTitle>
         </DialogHeader>
