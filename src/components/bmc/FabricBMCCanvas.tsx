@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Canvas as FabricCanvas, Rect, Textbox, IText } from 'fabric';
 import { toast } from 'sonner';
+import { resolveFabricColors, useFabricColors, type FabricColors } from '../../utils/fabricColors';
 
 interface BMCData {
   keyPartners: string;
@@ -64,6 +65,7 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [sections, setSections] = useState<Record<string, { rect: Rect; title: IText; content: Textbox }>>({});
+  const [colors, setColors] = useState<FabricColors>(resolveFabricColors());
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -71,17 +73,17 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
     const canvas = new FabricCanvas(canvasRef.current, {
       width,
       height,
-      backgroundColor: 'hsl(var(--background))',
+      backgroundColor: colors.background,
       selection: isEditable,
       allowTouchScrolling: false,
     });
 
     setFabricCanvas(canvas);
 
-    return () => {
+      return () => {
       canvas.dispose();
     };
-  }, [width, height, isEditable]);
+  }, [width, height, isEditable, colors]);
 
   useEffect(() => {
     if (!fabricCanvas) return;
@@ -107,8 +109,8 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
         top: actualY,
         width: actualWidth,
         height: actualHeight,
-        fill: config.highlight ? 'hsl(var(--accent))' : 'hsl(var(--card))',
-        stroke: 'hsl(var(--border))',
+        fill: config.highlight ? colors.accent : colors.card,
+        stroke: colors.border,
         strokeWidth: 2,
         selectable: false,
         evented: false,
@@ -120,7 +122,7 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
         top: actualY + 10,
         fontSize: 14,
         fontWeight: 'bold',
-        fill: config.highlight ? 'hsl(var(--accent-foreground))' : 'hsl(var(--foreground))',
+        fill: config.highlight ? colors.accentForeground : colors.foreground,
         selectable: false,
         evented: false,
         fontFamily: 'system-ui, sans-serif',
@@ -133,7 +135,7 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
         width: actualWidth - 20,
         height: actualHeight - 45,
         fontSize: 12,
-        fill: 'hsl(var(--foreground))',
+        fill: colors.foreground,
         fontFamily: 'system-ui, sans-serif',
         selectable: isEditable,
         evented: isEditable,
@@ -164,7 +166,16 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
 
     setSections(newSections);
     fabricCanvas.renderAll();
-  }, [fabricCanvas, data, isEditable, onDataChange, width, height]);
+  }, [fabricCanvas, data, isEditable, onDataChange, width, height, colors]);
+
+  // Handle theme changes
+  useFabricColors((newColors) => {
+    setColors(newColors);
+    if (fabricCanvas) {
+      fabricCanvas.backgroundColor = newColors.background;
+      fabricCanvas.renderAll();
+    }
+  });
 
   // Export functionality
   const exportCanvas = (format: 'png' | 'jpeg' | 'pdf' = 'png', quality: number = 1.0): string | null => {
