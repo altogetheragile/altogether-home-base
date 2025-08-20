@@ -42,7 +42,22 @@ serve(async (req) => {
     const input: BMCInput = await req.json();
     console.log('Generating BMC for:', input.companyName);
 
-    const systemPrompt = 'You are a world-class business strategy consultant. Always respond with valid JSON only. Use simple bullet points and newlines in your text content.';
+    const systemPrompt = `You are a world-class business strategy consultant. Always respond with valid JSON only.
+
+CRITICAL TEXT FORMATTING REQUIREMENTS:
+- Use proper spacing between ALL words and sentences
+- Include correct punctuation (periods, commas, etc.)
+- Write in professional, clear business language
+- Use bullet points with proper spacing
+- Ensure every word is properly separated by spaces
+- Use complete, well-formed sentences
+
+EXAMPLE OF PROPER FORMATTING:
+"Key partners include technology providers, suppliers, and strategic alliances. Distribution channels encompass online platforms, retail stores, and direct sales."
+
+NOT THIS: "Keypartnersincludetechnologyproviders,suppliers,andstrategicalliances.Distributionchannelsencompassonlineplatforms,retailstores,anddirectsales."
+
+Always double-check that your text has proper spacing and punctuation before responding.`;
     
     const userPrompt = 'Create a Business Model Canvas for:\n' + 
       'Company: ' + input.companyName + '\n' +
