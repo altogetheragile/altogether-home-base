@@ -43,7 +43,7 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
       if (!trimmedLine) return null;
       
       return (
-        <div key={index} className="mb-1 text-xs leading-relaxed break-words overflow-wrap-anywhere hyphens-auto">
+        <div key={index} className="mb-1 text-xs leading-relaxed break-words">
           {trimmedLine}
         </div>
       );
@@ -54,16 +54,16 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
     title: string;
     content: string;
     section: keyof BMCData;
-    gridArea: string;
+    className?: string;
     isHighlight?: boolean;
-  }> = ({ title, content, section, gridArea, isHighlight = false }) => (
+  }> = ({ title, content, section, className = "", isHighlight = false }) => (
     <Card 
-      className={`flex flex-col h-full ${
+      className={`flex flex-col ${
         isHighlight 
           ? "bg-bmc-accent border-bmc-orange shadow-md" 
           : "bg-card border border-border"
-      }`}
-      style={{ gridArea }}
+      } ${className}`}
+      data-section={section}
     >
       <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
         <CardTitle className={`text-xs font-bold text-center ${
@@ -77,11 +77,11 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
           <textarea
             value={content}
             onChange={(e) => handleSectionChange(section, e.target.value)}
-            className="w-full h-full min-h-[120px] text-xs resize-none border-none outline-none bg-transparent placeholder-muted-foreground p-1 leading-relaxed"
+            className="w-full h-full min-h-[100px] text-xs resize-none border-none outline-none bg-transparent placeholder-muted-foreground p-1 leading-relaxed"
             placeholder={`Enter ${title.toLowerCase()}...`}
           />
         ) : (
-          <div className="text-xs text-foreground leading-relaxed break-words overflow-wrap-anywhere hyphens-auto">
+          <div className="text-xs text-foreground leading-relaxed break-words">
             {content ? formatContent(content) : (
               <span className="text-muted-foreground italic text-center block text-xs">
                 No content generated
@@ -106,84 +106,78 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
         </div>
       )}
       
-      <div 
-        className="bmc-grid w-full gap-4"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr',
-          gridTemplateRows: '200px 200px 160px',
-          gridTemplateAreas: `
-            "partners activities value relationships segments"
-            "partners resources value channels segments"
-            "costs costs costs revenue revenue"
-          `,
-          height: '560px'
-        }}
-      >
-        <SectionCard
-          title="Key Partners"
-          content={data?.keyPartners || ''}
-          section="keyPartners"
-          gridArea="partners"
-        />
-        
-        <SectionCard
-          title="Key Activities"
-          content={data?.keyActivities || ''}
-          section="keyActivities"
-          gridArea="activities"
-        />
-        
-        <SectionCard
-          title="Value Propositions"
-          content={data?.valuePropositions || ''}
-          section="valuePropositions"
-          gridArea="value"
-          isHighlight={true}
-        />
-        
-        <SectionCard
-          title="Customer Relationships"
-          content={data?.customerRelationships || ''}
-          section="customerRelationships"
-          gridArea="relationships"
-        />
-        
-        <SectionCard
-          title="Customer Segments"
-          content={data?.customerSegments || ''}
-          section="customerSegments"
-          gridArea="segments"
-        />
+      {/* Flexbox Layout - Replacing CSS Grid */}
+      <div className="flex flex-col gap-4 h-[640px]">
+        {/* Top Row */}
+        <div className="flex gap-4 h-[200px]">
+          <SectionCard
+            title="Key Partners"
+            content={data?.keyPartners || ''}
+            section="keyPartners"
+            className="flex-1"
+          />
+          <SectionCard
+            title="Key Activities"
+            content={data?.keyActivities || ''}
+            section="keyActivities"
+            className="flex-1"
+          />
+          <SectionCard
+            title="Value Propositions"
+            content={data?.valuePropositions || ''}
+            section="valuePropositions"
+            className="flex-1"
+            isHighlight={true}
+          />
+          <SectionCard
+            title="Customer Relationships"
+            content={data?.customerRelationships || ''}
+            section="customerRelationships"
+            className="flex-1"
+          />
+          <SectionCard
+            title="Customer Segments"
+            content={data?.customerSegments || ''}
+            section="customerSegments"
+            className="flex-1"
+          />
+        </div>
 
-        <SectionCard
-          title="Key Resources"
-          content={data?.keyResources || ''}
-          section="keyResources"
-          gridArea="resources"
-        />
-        
-        <SectionCard
-          title="Channels"
-          content={data?.channels || ''}
-          section="channels"
-          gridArea="channels"
-        />
+        {/* Middle Row */}
+        <div className="flex gap-4 h-[200px]">
+          <div className="flex-1"></div> {/* Empty space for Key Partners */}
+          <SectionCard
+            title="Key Resources"
+            content={data?.keyResources || ''}
+            section="keyResources"
+            className="flex-1"
+          />
+          <div className="flex-1"></div> {/* Empty space for Value Propositions */}
+          <SectionCard
+            title="Channels"
+            content={data?.channels || ''}
+            section="channels"
+            className="flex-1"
+          />
+          <div className="flex-1"></div> {/* Empty space for Customer Segments */}
+        </div>
 
-        <SectionCard
-          title="Cost Structure"
-          content={data?.costStructure || ''}
-          section="costStructure"
-          gridArea="costs"
-        />
-        
-        <SectionCard
-          title="Revenue Streams"
-          content={data?.revenueStreams || ''}
-          section="revenueStreams"
-          gridArea="revenue"
-          isHighlight={true}
-        />
+        {/* Bottom Row */}
+        <div className="flex gap-4 h-[200px]">
+          <SectionCard
+            title="Cost Structure"
+            content={data?.costStructure || ''}
+            section="costStructure"
+            className="flex-[3]"
+          />
+          <SectionCard
+            title="Revenue Streams"
+            content={data?.revenueStreams || ''}
+            section="revenueStreams"
+            className="flex-[2]"
+            isHighlight={true}
+          />
+        </div>
       </div>
     </div>
   );
