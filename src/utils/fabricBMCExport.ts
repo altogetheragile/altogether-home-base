@@ -31,7 +31,7 @@ export const exportFabricBMC = async (canvasElement: any, options: ExportOptions
       // Calculate dimensions to fit A4 landscape while maintaining aspect ratio
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasAspectRatio = 1200 / 800; // BMC canvas aspect ratio
+      const canvasAspectRatio = 900 / 600; // BMC canvas aspect ratio (1.5)
       
       let imgWidth = pdfWidth - 20; // 10mm margin on each side
       let imgHeight = imgWidth / canvasAspectRatio;

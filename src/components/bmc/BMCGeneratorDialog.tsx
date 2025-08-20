@@ -57,6 +57,16 @@ const BMCGeneratorDialog: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Close any open dropdowns when dialog opens
+  const handleDialogOpen = (open: boolean) => {
+    if (open) {
+      // Close any open dropdowns by clicking elsewhere
+      const event = new MouseEvent('click', { bubbles: true });
+      document.body.dispatchEvent(event);
+    }
+    setIsOpen(open);
+  };
+
   const generateBMC = async () => {
     if (!formData.companyName || !formData.industry || !formData.targetCustomers || !formData.productService) {
       toast({
@@ -126,7 +136,7 @@ const BMCGeneratorDialog: React.FC = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
       <DialogTrigger asChild>
         <Button 
           className="bg-gradient-to-r from-bmc-orange to-bmc-orange-dark hover:from-bmc-orange-dark hover:to-bmc-orange text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 w-full justify-start text-left font-medium"
@@ -138,8 +148,8 @@ const BMCGeneratorDialog: React.FC = () => {
       
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-background border-2 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-bmc-orange-dark flex items-center">
-            <Sparkles className="w-6 h-6 mr-2" />
+          <DialogTitle className="text-lg font-bold text-bmc-orange-dark flex items-center">
+            <Sparkles className="w-5 h-5 mr-2" />
             AI Business Model Canvas Generator
           </DialogTitle>
         </DialogHeader>
