@@ -58,28 +58,28 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
     className?: string;
     isHighlight?: boolean;
   }> = ({ title, content, section, className = "", isHighlight = false }) => (
-    <Card className={`h-full transition-all duration-200 hover:shadow-md ${
+    <Card className={`flex flex-col transition-all duration-200 hover:shadow-md ${
       isHighlight 
-        ? "bg-gradient-to-br from-bmc-orange/15 to-bmc-orange-light/10 border-2 border-bmc-orange/50 shadow-lg" 
+        ? "bg-bmc-orange/10 border-2 border-bmc-orange/60 shadow-lg" 
         : "bg-card border border-border hover:border-bmc-orange/30"
     } ${className}`}>
-      <CardHeader className="pb-2 px-3 pt-3 print:px-2 print:pt-2">
+      <CardHeader className="pb-2 px-3 pt-3 print:px-2 print:pt-2 flex-shrink-0">
         <CardTitle className={`text-xs font-bold text-center print:text-[10px] ${
-          isHighlight ? "text-bmc-orange-dark" : "text-foreground"
+          isHighlight ? "text-bmc-orange" : "text-foreground"
         }`}>
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 px-3 pb-3 flex-1 overflow-hidden print:px-2 print:pb-2">
+      <CardContent className="pt-0 px-3 pb-3 flex-1 print:px-2 print:pb-2">
         {isEditable ? (
           <textarea
             value={content}
             onChange={(e) => handleSectionChange(section, e.target.value)}
-            className="w-full h-full min-h-[80px] text-xs resize-none border-none outline-none bg-transparent placeholder-muted-foreground focus:bg-background/50 rounded p-1 print:text-[9px]"
+            className="w-full h-full min-h-[120px] text-xs resize-none border-none outline-none bg-transparent placeholder-muted-foreground focus:bg-background/50 rounded p-1 print:text-[9px]"
             placeholder={`Enter ${title.toLowerCase()}...`}
           />
         ) : (
-          <div className="text-xs text-bmc-text leading-tight overflow-y-auto max-h-full break-words hyphens-auto print:text-[9px] print:leading-none">
+          <div className="text-xs text-bmc-text leading-tight break-words hyphens-auto print:text-[9px] print:leading-tight">
             {content ? formatContent(content) : (
               <span className="text-muted-foreground italic text-center block text-xs print:text-[8px]">
                 No content generated
@@ -104,28 +104,28 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
         </div>
       )}
       
-      {/* Traditional BMC Layout - 3x3 Grid Structure */}
-      <div className="grid grid-cols-5 grid-rows-3 gap-2 h-[600px] print:h-[500px]">
+      {/* Traditional BMC Layout - Dynamic height with proper bottom row centering */}
+      <div className="grid grid-cols-10 gap-2 auto-rows-min print:gap-1">
         {/* Row 1 */}
         <SectionCard
           title="Key Partners"
           content={data?.keyPartners || ''}
           section="keyPartners"
-          className="row-span-2"
+          className="col-span-2 row-span-2"
         />
         
         <SectionCard
           title="Key Activities"
           content={data?.keyActivities || ''}
           section="keyActivities"
-          className=""
+          className="col-span-2"
         />
         
         <SectionCard
           title="Value Propositions"
           content={data?.valuePropositions || ''}
           section="valuePropositions"
-          className="row-span-2"
+          className="col-span-2 row-span-2"
           isHighlight={true}
         />
         
@@ -133,14 +133,14 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
           title="Customer Relationships"
           content={data?.customerRelationships || ''}
           section="customerRelationships"
-          className=""
+          className="col-span-2"
         />
         
         <SectionCard
           title="Customer Segments"
           content={data?.customerSegments || ''}
           section="customerSegments"
-          className="row-span-2"
+          className="col-span-2 row-span-2"
         />
 
         {/* Row 2 - Only Key Resources and Channels (others span from row 1) */}
@@ -148,29 +148,29 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
           title="Key Resources"
           content={data?.keyResources || ''}
           section="keyResources"
-          className=""
+          className="col-span-2"
         />
         
         <SectionCard
           title="Channels"
           content={data?.channels || ''}
           section="channels"
-          className=""
+          className="col-span-2"
         />
 
-        {/* Row 3 - Cost Structure and Revenue Streams */}
+        {/* Row 3 - Cost Structure and Revenue Streams - Equal and centered */}
         <SectionCard
           title="Cost Structure"
           content={data?.costStructure || ''}
           section="costStructure"
-          className="col-span-2"
+          className="col-span-5"
         />
         
         <SectionCard
           title="Revenue Streams"
           content={data?.revenueStreams || ''}
           section="revenueStreams"
-          className="col-span-2"
+          className="col-span-5"
           isHighlight={true}
         />
       </div>
