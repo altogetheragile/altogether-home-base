@@ -152,11 +152,11 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   return (
     <div className={cn('w-full h-full', className)} ref={canvasRef} data-canvas="true">
       {companyName && (
-        <div className="text-center mb-4 p-4 bg-card border border-border rounded-lg">
-          <h1 className="text-lg font-bold text-foreground mb-1">
+        <div className="text-center mb-2 p-2 bg-card border border-border rounded-lg">
+          <h1 className="text-base font-bold text-foreground mb-0.5">
             Business Model Canvas
           </h1>
-          <p className="text-sm text-muted-foreground font-medium">
+          <p className="text-xs text-muted-foreground font-medium">
             {companyName}
           </p>
         </div>
@@ -165,7 +165,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
       <div className="w-full h-[600px] bg-background border border-border rounded-lg overflow-hidden">
         <ResizablePanelGroup direction="vertical" className="h-[600px]">
           {/* Top Row */}
-          <ResizablePanel defaultSize={40} minSize={30}>
+          <ResizablePanel defaultSize={70} minSize={40}>
             <ResizablePanelGroup direction="horizontal" className="h-full">
               {/* Key Partners */}
               <ResizablePanel defaultSize={20} minSize={15}>
@@ -267,7 +267,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
           <ResizableHandle withHandle />
           
           {/* Bottom Row */}
-          <ResizablePanel defaultSize={60} minSize={40}>
+          <ResizablePanel defaultSize={30} minSize={15}>
             <ResizablePanelGroup direction="horizontal" className="h-full">
               {/* Cost Structure */}
               <ResizablePanel defaultSize={50}>
