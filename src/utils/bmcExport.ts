@@ -13,53 +13,60 @@ export const exportBMC = async (elementId: string, options: ExportOptions) => {
     throw new Error('BMC element not found');
   }
 
-  // Prepare element for export - ensure all content is visible
+  // Get actual dimensions
+  const rect = element.getBoundingClientRect();
+  
+  // Prepare element for capture
   const originalOverflow = element.style.overflow;
-  const originalHeight = element.style.height;
   element.style.overflow = 'visible';
-  element.style.height = 'auto';
-
-  // Force layout recalculation
-  element.offsetHeight;
+  
+  // Wait for layout to stabilize
+  await new Promise(resolve => requestAnimationFrame(resolve));
+  await new Promise(resolve => setTimeout(resolve, 300));
 
   const canvas = await html2canvas(element, {
-    scale: 3, // Higher scale for better text rendering
-    backgroundColor: '#ffffff',
+    scale: 2,
     useCORS: true,
     allowTaint: true,
-    width: element.scrollWidth,
-    height: element.scrollHeight,
+    backgroundColor: '#ffffff',
+    width: Math.ceil(rect.width),
+    height: Math.ceil(rect.height),
     scrollX: 0,
     scrollY: 0,
-    ignoreElements: (element) => {
-      // Ignore scroll elements that might interfere
-      return element.classList.contains('scroll-area') || 
-             element.tagName === 'SCROLLBAR';
-    },
     onclone: (clonedDoc) => {
-      // Ensure all text areas are visible in the clone
-      const textareas = clonedDoc.querySelectorAll('textarea');
-      textareas.forEach(textarea => {
-        const div = clonedDoc.createElement('div');
-        div.innerHTML = textarea.value.replace(/\n/g, '<br>');
-        div.style.cssText = textarea.style.cssText;
-        div.className = textarea.className;
-        textarea.parentNode?.replaceChild(div, textarea);
-      });
-      
-      // Ensure all content is visible
-      const elements = clonedDoc.querySelectorAll('*');
-      elements.forEach(el => {
-        if (el instanceof HTMLElement) {
-          el.style.overflow = 'visible';
-        }
-      });
+      const clonedElement = clonedDoc.getElementById(elementId);
+      if (clonedElement) {
+        // Fix text rendering issues
+        clonedElement.style.overflow = 'visible';
+        
+        // Replace textareas with divs for better rendering
+        const textareas = clonedElement.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+          const div = clonedDoc.createElement('div');
+          div.textContent = textarea.value;
+          div.style.cssText = textarea.style.cssText;
+          div.style.whiteSpace = 'pre-wrap';
+          div.style.wordBreak = 'break-word';
+          div.style.overflowWrap = 'break-word';
+          div.className = textarea.className;
+          textarea.parentNode?.replaceChild(div, textarea);
+        });
+        
+        // Ensure all containers are properly sized
+        const containers = clonedElement.querySelectorAll('[class*="Card"], [class*="text-"]');
+        containers.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.style.overflow = 'visible';
+            el.style.height = 'auto';
+            el.style.minHeight = 'auto';
+          }
+        });
+      }
     }
   });
 
   // Restore original styles
   element.style.overflow = originalOverflow;
-  element.style.height = originalHeight;
 
   const { format, quality = 0.95, filename = 'business-model-canvas' } = options;
 
