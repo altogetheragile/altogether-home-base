@@ -45,22 +45,34 @@ interface BMCSectionConfig {
   highlight?: boolean;
 }
 
-// BMC section definitions with proper proportions
+// BMC section definitions with proper Business Model Canvas proportions
 const BMC_SECTIONS: Record<keyof BMCData, BMCSectionConfig> = {
-  // Top row - 5 equal sections
-  keyPartners: { x: 0, y: 0, width: 0.2, height: 0.4, title: 'Key Partners' },
-  keyActivities: { x: 0.2, y: 0, width: 0.2, height: 0.4, title: 'Key Activities' },
-  valuePropositions: { x: 0.4, y: 0, width: 0.2, height: 0.4, title: 'Value Propositions', highlight: true },
-  customerRelationships: { x: 0.6, y: 0, width: 0.2, height: 0.4, title: 'Customer Relationships' },
-  customerSegments: { x: 0.8, y: 0, width: 0.2, height: 0.4, title: 'Customer Segments' },
+  // Left column - Key Partners (full height)
+  keyPartners: { x: 0, y: 0, width: 0.18, height: 0.65, title: 'Key Partners' },
   
-  // Middle row - 2 sections
-  keyResources: { x: 0.2, y: 0.4, width: 0.2, height: 0.3, title: 'Key Resources' },
-  channels: { x: 0.6, y: 0.4, width: 0.2, height: 0.3, title: 'Channels' },
+  // Center-left column, top - Key Activities
+  keyActivities: { x: 0.18, y: 0, width: 0.18, height: 0.32, title: 'Key Activities' },
   
-  // Bottom row - 2 sections with different proportions
-  costStructure: { x: 0, y: 0.7, width: 0.6, height: 0.3, title: 'Cost Structure' },
-  revenueStreams: { x: 0.6, y: 0.7, width: 0.4, height: 0.3, title: 'Revenue Streams', highlight: true },
+  // Center-left column, bottom - Key Resources  
+  keyResources: { x: 0.18, y: 0.32, width: 0.18, height: 0.33, title: 'Key Resources' },
+  
+  // Center column - Value Propositions (full height, highlighted)
+  valuePropositions: { x: 0.36, y: 0, width: 0.28, height: 0.65, title: 'Value Propositions', highlight: true },
+  
+  // Center-right column, top - Customer Relationships
+  customerRelationships: { x: 0.64, y: 0, width: 0.18, height: 0.32, title: 'Customer Relationships' },
+  
+  // Center-right column, bottom - Channels
+  channels: { x: 0.64, y: 0.32, width: 0.18, height: 0.33, title: 'Channels' },
+  
+  // Right column - Customer Segments (full height)
+  customerSegments: { x: 0.82, y: 0, width: 0.18, height: 0.65, title: 'Customer Segments' },
+  
+  // Bottom row, left - Cost Structure
+  costStructure: { x: 0, y: 0.65, width: 0.5, height: 0.35, title: 'Cost Structure' },
+  
+  // Bottom row, right - Revenue Streams (highlighted)
+  revenueStreams: { x: 0.5, y: 0.65, width: 0.5, height: 0.35, title: 'Revenue Streams', highlight: true },
 };
 
 export interface FabricBMCCanvasRef {
