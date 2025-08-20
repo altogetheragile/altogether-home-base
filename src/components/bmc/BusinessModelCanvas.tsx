@@ -11,6 +11,7 @@ interface BusinessModelCanvasProps {
 export interface BusinessModelCanvasRef {
   exportCanvas: (options?: any) => Promise<string>;
   getCanvasElement: () => HTMLElement | null;
+  setExportMode: (isExporting: boolean) => void;
 }
 
 const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanvasProps>(({
@@ -37,6 +38,11 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
       const canvasElement = containerRef.current?.querySelector('[data-canvas="true"]') as HTMLElement;
       console.log('Getting BMC canvas element:', canvasElement);
       return canvasElement || containerRef.current;
+    },
+    setExportMode: (isExporting: boolean) => {
+      if (canvasRef.current?.setExportMode) {
+        canvasRef.current.setExportMode(isExporting);
+      }
     }
   }), []);
 

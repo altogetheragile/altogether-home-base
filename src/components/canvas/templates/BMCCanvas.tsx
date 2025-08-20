@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle } from 'react';
+import React, { useRef, useImperativeHandle, useState } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import TextElement from '../elements/TextElement';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,7 @@ interface BMCCanvasProps {
 export interface BMCCanvasRef {
   exportCanvas: (options?: ExportOptions) => Promise<string>;
   getBMCData: () => BMCData;
+  setExportMode: (isExporting: boolean) => void;
 }
 
 const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
@@ -42,6 +43,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   className,
 }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const defaultData: BMCData = {
     keyPartners: '',
@@ -69,20 +71,39 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
       throw new Error('Canvas not available for export');
     }
 
-    // Add delay to ensure rendering is complete
-    await new Promise(resolve => setTimeout(resolve, 100));
+    try {
+      // Set export mode to force non-editable text rendering
+      console.log('Setting export mode to true');
+      setIsExporting(true);
+      
+      // Wait for React to re-render with non-editable TextElements
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-    const { default: html2canvas } = await import('html2canvas');
-    
-    const canvas = await html2canvas(canvasRef.current, {
-      backgroundColor: 'white',
-      scale: options.quality || 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      width: canvasRef.current.offsetWidth,
-      height: canvasRef.current.offsetHeight,
-    });
+      const { default: html2canvas } = await import('html2canvas');
+      
+      const canvas = await html2canvas(canvasRef.current, {
+        backgroundColor: 'white',
+        scale: options.quality || 2,
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: false,
+        logging: false,
+        width: canvasRef.current.offsetWidth,
+        height: canvasRef.current.offsetHeight,
+        onclone: (clonedDoc) => {
+          // Ensure all textarea elements are converted to divs in the clone
+          const textareas = clonedDoc.querySelectorAll('textarea');
+          textareas.forEach(textarea => {
+            const div = clonedDoc.createElement('div');
+            div.textContent = textarea.value;
+            div.style.cssText = textarea.style.cssText;
+            div.className = textarea.className;
+            textarea.parentNode?.replaceChild(div, textarea);
+          });
+        }
+      });
+
+      console.log('Export canvas created, dimensions:', canvas.width, 'x', canvas.height);
 
     if (options.format === 'pdf') {
       const { default: jsPDF } = await import('jspdf');
@@ -112,12 +133,18 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
       return pdf.output('dataurlstring');
     }
 
-    return canvas.toDataURL('image/png');
+      return canvas.toDataURL('image/png');
+    } finally {
+      // Always reset export mode
+      console.log('Resetting export mode to false');
+      setIsExporting(false);
+    }
   };
 
   useImperativeHandle(ref, () => ({
     exportCanvas,
     getBMCData,
+    setExportMode: setIsExporting,
   }));
 
   const SectionHeader = ({ title, color = 'bg-primary/10' }: { title: string; color?: string }) => (
@@ -144,7 +171,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
       <div className="flex-1 p-1 min-h-[120px]">
         <TextElement
           content={value}
-          isEditable={isEditable}
+          isEditable={isEditable && !isExporting}
           onChange={onChange}
           placeholder={placeholder}
           fontSize="xs"

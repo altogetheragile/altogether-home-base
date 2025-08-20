@@ -27,9 +27,21 @@ export const exportCanvas = async (
       scale,
       useCORS: true,
       allowTaint: true,
+      foreignObjectRendering: false,
       logging: false,
       width: element.offsetWidth,
       height: element.offsetHeight,
+      onclone: (clonedDoc) => {
+        // Ensure all textarea elements are converted to divs in the clone
+        const textareas = clonedDoc.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+          const div = clonedDoc.createElement('div');
+          div.textContent = textarea.value;
+          div.style.cssText = textarea.style.cssText;
+          div.className = textarea.className;
+          textarea.parentNode?.replaceChild(div, textarea);
+        });
+      }
     });
 
     if (format === 'pdf') {

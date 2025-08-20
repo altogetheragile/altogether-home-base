@@ -31,15 +31,19 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
     try {
       console.log('Starting export process...');
       
-      // Add delay to ensure UI is fully rendered
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       let canvasElement: HTMLElement | null = null;
       
-      // Try to get canvas element through the ref first
+      // Try to get canvas element from ref first
       if (canvasRef?.current) {
-        console.log('Using provided canvas ref');
+        console.log('Getting canvas element from ref');
         canvasElement = canvasRef.current.getCanvasElement();
+        
+        // Set export mode on the canvas to force non-editable rendering
+        console.log('Setting canvas to export mode');
+        canvasRef.current.setExportMode?.(true);
+        
+        // Wait for React to re-render with non-editable elements
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Fallback to DOM query targeting the actual BMC content
@@ -120,6 +124,11 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         variant: "destructive"
       });
     } finally {
+      // Reset export mode on canvas
+      if (canvasRef?.current?.setExportMode) {
+        console.log('Resetting canvas export mode');
+        canvasRef.current.setExportMode(false);
+      }
       setIsExporting(false);
     }
   };
@@ -130,9 +139,16 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
       
       let canvasElement: HTMLElement | null = null;
       
-      // Try to get canvas element through the ref first
+      // Try to get canvas element from ref first and set export mode
       if (canvasRef?.current) {
         canvasElement = canvasRef.current.getCanvasElement();
+        
+        // Set export mode for printing too
+        console.log('Setting canvas to export mode for printing');
+        canvasRef.current.setExportMode?.(true);
+        
+        // Wait for React to re-render with non-editable elements
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
       
       // Fallback to DOM query targeting the actual BMC content
@@ -166,6 +182,12 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         description: "Failed to open print dialog. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      // Reset export mode after printing
+      if (canvasRef?.current?.setExportMode) {
+        console.log('Resetting canvas export mode after printing');
+        canvasRef.current.setExportMode(false);
+      }
     }
   };
 
