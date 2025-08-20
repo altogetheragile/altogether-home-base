@@ -69,6 +69,9 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
       throw new Error('Canvas not available for export');
     }
 
+    // Add delay to ensure rendering is complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     const { default: html2canvas } = await import('html2canvas');
     
     const canvas = await html2canvas(canvasRef.current, {
@@ -76,6 +79,9 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
       scale: options.quality || 2,
       useCORS: true,
       allowTaint: true,
+      logging: false,
+      width: canvasRef.current.offsetWidth,
+      height: canvasRef.current.offsetHeight,
     });
 
     if (options.format === 'pdf') {
@@ -152,20 +158,19 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   return (
     <div className={cn('w-full h-full', className)} ref={canvasRef} data-canvas="true">
       {companyName && (
-        <div className="text-center mb-2 p-2 bg-card border border-border rounded-lg">
-          <h1 className="text-base font-bold text-foreground mb-0.5">
-            Business Model Canvas
-          </h1>
-          <p className="text-xs text-muted-foreground font-medium">
-            {companyName}
-          </p>
+        <div className="text-center mb-1 p-1 bg-card border border-border rounded">
+          <div className="flex items-center justify-center gap-2 text-xs">
+            <span className="font-bold text-foreground">Business Model Canvas</span>
+            <span className="text-muted-foreground">-</span>
+            <span className="font-medium text-foreground">{companyName}</span>
+          </div>
         </div>
       )}
       
       <div className="w-full h-[calc(100vh-150px)] min-h-[500px] bg-background border border-border overflow-hidden">
         <ResizablePanelGroup direction="vertical" className="h-full">
           {/* Top Row */}
-          <ResizablePanel defaultSize={70} minSize={40}>
+          <ResizablePanel defaultSize={60} minSize={40}>
             <ResizablePanelGroup direction="horizontal" className="h-full">
               {/* Key Partners */}
               <ResizablePanel defaultSize={20} minSize={15}>
@@ -267,7 +272,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
           <ResizableHandle withHandle />
           
           {/* Bottom Row */}
-          <ResizablePanel defaultSize={30} minSize={15}>
+          <ResizablePanel defaultSize={40} minSize={10}>
             <ResizablePanelGroup direction="horizontal" className="h-full">
               {/* Cost Structure */}
               <ResizablePanel defaultSize={50}>

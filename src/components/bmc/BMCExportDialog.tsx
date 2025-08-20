@@ -27,6 +27,9 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
     setIsExporting(true);
     
     try {
+      // Add delay to ensure UI is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       // Get the canvas reference from the BusinessModelCanvas component
       const bmcContainer = document.querySelector('#bmc-canvas');
       const canvasRef = (bmcContainer as any)?._canvasRef;
@@ -43,7 +46,7 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
       const options = {
         format,
         filename,
-        quality: format === 'jpeg' ? parseInt(quality) / 100 : undefined,
+        quality: format === 'jpeg' ? parseInt(quality) / 100 : 2,
       };
       
       const dataUrl = await canvasRef.exportCanvas(options);
@@ -179,25 +182,27 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
             <Button
               variant="outline"
               onClick={handlePrint}
-              className="flex-1"
+              className="flex-1 h-8 text-xs"
+              size="sm"
             >
-              <Printer className="w-4 h-4 mr-2" />
+              <Printer className="w-3 h-3 mr-1" />
               Print
             </Button>
             
             <Button
               onClick={handleExport}
               disabled={isExporting}
-              className="flex-1 bg-bmc-orange hover:bg-bmc-orange-dark text-white"
+              className="flex-1 h-8 text-xs bg-bmc-orange hover:bg-bmc-orange-dark text-white"
+              size="sm"
             >
               {isExporting ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                   Exporting...
                 </>
               ) : (
                 <>
-                  <Download className="w-4 h-4 mr-2" />
+                  <Download className="w-3 h-3 mr-1" />
                   Export
                 </>
               )}
