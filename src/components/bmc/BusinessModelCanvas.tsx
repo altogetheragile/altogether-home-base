@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import BMCCanvas, { BMCData, BMCCanvasRef } from '../canvas/templates/BMCCanvas';
 
 interface BusinessModelCanvasProps {
@@ -8,24 +8,43 @@ interface BusinessModelCanvasProps {
   onDataChange?: (data: BMCData) => void;
 }
 
-const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
+export interface BusinessModelCanvasRef {
+  exportCanvas: (options?: any) => Promise<string>;
+  getCanvasElement: () => HTMLElement | null;
+}
+
+const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanvasProps>(({
   data,
   companyName,
   isEditable = false,
   onDataChange
-}) => {
+}, ref) => {
   const canvasRef = useRef<BMCCanvasRef>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Expose canvas reference for export functionality
-  React.useEffect(() => {
-    const container = document.querySelector('#bmc-canvas');
-    if (container && canvasRef.current) {
-      (container as any)._canvasRef = canvasRef.current;
+  useImperativeHandle(ref, () => ({
+    exportCanvas: async (options = {}) => {
+      console.log('BusinessModelCanvas exportCanvas called with options:', options);
+      
+      if (!canvasRef.current) {
+        throw new Error('Canvas reference not available');
+      }
+      
+      return canvasRef.current.exportCanvas(options);
+    },
+    getCanvasElement: () => {
+      console.log('Getting canvas element:', containerRef.current);
+      return containerRef.current;
     }
-  }, [canvasRef.current]);
+  }), []);
 
   return (
-    <div id="bmc-canvas" className="w-full max-w-[1200px] mx-auto">
+    <div 
+      ref={containerRef}
+      id="bmc-canvas" 
+      className="w-full max-w-[1200px] mx-auto"
+      data-testid="bmc-container"
+    >
       <BMCCanvas
         ref={canvasRef}
         data={data}
@@ -36,6 +55,6 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
       />
     </div>
   );
-};
+});
 
 export default BusinessModelCanvas;

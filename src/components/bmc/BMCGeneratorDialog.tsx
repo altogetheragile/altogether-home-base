@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Sparkles, RotateCcw, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import BusinessModelCanvas from './BusinessModelCanvas';
+import BusinessModelCanvas, { BusinessModelCanvasRef } from './BusinessModelCanvas';
 import BMCExportDialog from './BMCExportDialog';
 
 interface BMCData {
@@ -28,6 +28,7 @@ const BMCGeneratorDialog: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedBMC, setGeneratedBMC] = useState<BMCData | null>(null);
   const [companyName, setCompanyName] = useState('');
+  const canvasRef = useRef<BusinessModelCanvasRef>(null);
   const [formData, setFormData] = useState({
     companyName: '',
     industry: '',
@@ -299,6 +300,7 @@ const BMCGeneratorDialog: React.FC = () => {
         ) : (
           <div className="space-y-6">
             <BusinessModelCanvas
+              ref={canvasRef}
               data={generatedBMC}
               companyName={companyName}
               isEditable={true}
@@ -318,7 +320,10 @@ const BMCGeneratorDialog: React.FC = () => {
               </div>
               
               <div className="flex space-x-2">
-                <BMCExportDialog companyName={companyName} />
+                <BMCExportDialog 
+                  companyName={companyName} 
+                  canvasRef={canvasRef}
+                />
                 <Button
                   variant="outline"
                   onClick={handleClose}

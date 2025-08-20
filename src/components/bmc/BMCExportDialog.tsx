@@ -7,12 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Download, FileText, Image, Printer, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { exportCanvas, printCanvas } from '@/utils/canvas/canvasExporter';
+import { BusinessModelCanvasRef } from './BusinessModelCanvas';
 
 interface BMCExportDialogProps {
   companyName?: string;
+  canvasRef?: React.RefObject<BusinessModelCanvasRef>;
 }
 
-const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
+const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRef }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [format, setFormat] = useState<'pdf' | 'png' | 'jpeg'>('pdf');
@@ -27,14 +29,27 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
     setIsExporting(true);
     
     try {
+      console.log('Starting export process...');
+      
       // Add delay to ensure UI is fully rendered
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Get the canvas reference from the BusinessModelCanvas component
-      const bmcContainer = document.querySelector('#bmc-canvas');
-      const canvasRef = (bmcContainer as any)?._canvasRef;
+      let canvasElement: HTMLElement | null = null;
       
-      if (!canvasRef) {
+      // Try to get canvas element through the ref first
+      if (canvasRef?.current) {
+        console.log('Using provided canvas ref');
+        canvasElement = canvasRef.current.getCanvasElement();
+      }
+      
+      // Fallback to DOM query if ref not available
+      if (!canvasElement) {
+        console.log('Fallback to DOM query');
+        canvasElement = document.querySelector('#bmc-canvas') as HTMLElement;
+      }
+      
+      if (!canvasElement) {
+        console.error('Canvas element not found');
         toast({
           title: "Export Failed",
           description: "Canvas not found. Please ensure the BMC is loaded.",
@@ -43,13 +58,30 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
         return;
       }
 
+      console.log('Canvas element found:', canvasElement);
+      console.log('Canvas dimensions:', {
+        width: canvasElement.offsetWidth,
+        height: canvasElement.offsetHeight,
+        scrollWidth: canvasElement.scrollWidth,
+        scrollHeight: canvasElement.scrollHeight
+      });
+
       const options = {
         format,
         filename,
         quality: format === 'jpeg' ? parseInt(quality) / 100 : 2,
       };
       
-      const dataUrl = await canvasRef.exportCanvas(options);
+      console.log('Export options:', options);
+
+      // Use exportCanvas utility directly
+      const dataUrl = await exportCanvas(canvasElement, options);
+      
+      if (!dataUrl || dataUrl === 'data:,') {
+        throw new Error('Export generated empty result');
+      }
+      
+      console.log('Export successful, data URL length:', dataUrl.length);
       
       // Create download
       const link = document.createElement('a');
@@ -68,7 +100,7 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
       console.error('Export error:', error);
       toast({
         title: "Export Failed",
-        description: "Failed to export Business Model Canvas. Please try again.",
+        description: `Failed to export Business Model Canvas: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -78,9 +110,19 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
 
   const handlePrint = async () => {
     try {
-      // Get the canvas element directly
-      const bmcContainer = document.querySelector('#bmc-canvas');
-      const canvasElement = bmcContainer?.querySelector('[data-canvas="true"]') as HTMLElement;
+      console.log('Starting print process...');
+      
+      let canvasElement: HTMLElement | null = null;
+      
+      // Try to get canvas element through the ref first
+      if (canvasRef?.current) {
+        canvasElement = canvasRef.current.getCanvasElement();
+      }
+      
+      // Fallback to DOM query
+      if (!canvasElement) {
+        canvasElement = document.querySelector('#bmc-canvas') as HTMLElement;
+      }
       
       if (!canvasElement) {
         toast({
@@ -91,6 +133,7 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName }) => {
         return;
       }
 
+      console.log('Printing canvas element:', canvasElement);
       await printCanvas(canvasElement);
       
       toast({
