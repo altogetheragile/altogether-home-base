@@ -15,6 +15,19 @@ interface BMCData {
   revenueStreams: string;
 }
 
+// Default empty BMC data
+const DEFAULT_BMC_DATA: BMCData = {
+  keyPartners: '',
+  keyActivities: '',
+  keyResources: '',
+  valuePropositions: '',
+  customerRelationships: '',
+  channels: '',
+  customerSegments: '',
+  costStructure: '',
+  revenueStreams: '',
+};
+
 interface FabricBMCCanvasProps {
   data?: BMCData;
   isEditable?: boolean;
@@ -91,6 +104,9 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
     // Clear existing objects
     fabricCanvas.clear();
     
+    // Use safe data with fallback to default
+    const safeData = data || DEFAULT_BMC_DATA;
+    
     const newSections: Record<string, { rect: Rect; title: IText; content: Textbox }> = {};
 
     // Create BMC sections
@@ -128,8 +144,9 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
         fontFamily: 'system-ui, sans-serif',
       });
 
-      // Create content text
-      const content = new Textbox(data?.[sectionKey] || '', {
+      // Create content text with proper null safety
+      const textContent = String(safeData[sectionKey] || '');
+      const content = new Textbox(textContent, {
         left: actualX + 10,
         top: actualY + 35,
         width: actualWidth - 20,
@@ -146,13 +163,12 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
       // Handle text changes
       if (isEditable && onDataChange) {
         content.on('changed', () => {
-          if (data) {
-            const newData = {
-              ...data,
-              [sectionKey]: content.text || '',
-            };
-            onDataChange(newData);
-          }
+          const currentData = data || DEFAULT_BMC_DATA;
+          const newData = {
+            ...currentData,
+            [sectionKey]: String(content.text || ''),
+          };
+          onDataChange(newData);
         });
       }
 
