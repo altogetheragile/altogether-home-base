@@ -1,6 +1,7 @@
 import React, { useRef, useImperativeHandle, useState } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import TextElement from '../elements/TextElement';
+import FormattedTextDisplay from '../elements/FormattedTextDisplay';
 import { cn } from '@/lib/utils';
 
 interface ExportOptions {
@@ -158,26 +159,37 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     value, 
     onChange, 
     placeholder,
-    headerColor = 'bg-primary/10'
+    headerColor = 'bg-primary/10',
+    sectionType
   }: { 
     title: string; 
     value: string; 
     onChange: (value: string) => void;
     placeholder: string;
     headerColor?: string;
+    sectionType?: 'partners' | 'activities' | 'resources' | 'value' | 'relationships' | 'channels' | 'segments' | 'costs' | 'revenue';
   }) => (
     <div className="h-full flex flex-col bg-card border-2 border-border/30 overflow-hidden shadow-sm">
       <SectionHeader title={title} color={headerColor} />
       <div className="flex-1 p-1 min-h-[120px]">
-        <TextElement
-          content={value}
-          isEditable={isEditable && !isExporting}
-          onChange={onChange}
-          placeholder={placeholder}
-          fontSize="xs"
-          autoResize={false}
-          className="h-full"
-        />
+        {isEditable && !isExporting ? (
+          <TextElement
+            content={value}
+            isEditable={true}
+            onChange={onChange}
+            placeholder={placeholder}
+            fontSize="xs"
+            autoResize={false}
+            className="h-full"
+          />
+        ) : (
+          <FormattedTextDisplay
+            content={value}
+            placeholder={placeholder}
+            className="h-full"
+            sectionType={sectionType}
+          />
+        )}
       </div>
     </div>
   );
@@ -207,6 +219,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                   onChange={(value) => handleSectionChange('keyPartners', value)}
                   placeholder="Who are your key partners and suppliers?"
                   headerColor="bg-blue-100 dark:bg-blue-900/30"
+                  sectionType="partners"
                 />
               </ResizablePanel>
               
@@ -222,6 +235,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                       onChange={(value) => handleSectionChange('keyActivities', value)}
                       placeholder="What key activities does your business require?"
                       headerColor="bg-green-100 dark:bg-green-900/30"
+                      sectionType="activities"
                     />
                   </ResizablePanel>
                   
@@ -234,6 +248,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                       onChange={(value) => handleSectionChange('keyResources', value)}
                       placeholder="What key resources does your business require?"
                       headerColor="bg-green-100 dark:bg-green-900/30"
+                      sectionType="resources"
                     />
                   </ResizablePanel>
                 </ResizablePanelGroup>
@@ -249,6 +264,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                   onChange={(value) => handleSectionChange('valuePropositions', value)}
                   placeholder="What value do you deliver to customers?"
                   headerColor="bg-yellow-100 dark:bg-yellow-900/30"
+                  sectionType="value"
                 />
               </ResizablePanel>
               
@@ -264,6 +280,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                       onChange={(value) => handleSectionChange('customerRelationships', value)}
                       placeholder="What relationships do you establish with customers?"
                       headerColor="bg-orange-100 dark:bg-orange-900/30"
+                      sectionType="relationships"
                     />
                   </ResizablePanel>
                   
@@ -276,6 +293,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                       onChange={(value) => handleSectionChange('channels', value)}
                       placeholder="Through which channels do you reach customers?"
                       headerColor="bg-orange-100 dark:bg-orange-900/30"
+                      sectionType="channels"
                     />
                   </ResizablePanel>
                 </ResizablePanelGroup>
@@ -291,6 +309,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                   onChange={(value) => handleSectionChange('customerSegments', value)}
                   placeholder="Who are your most important customers?"
                   headerColor="bg-red-100 dark:bg-red-900/30"
+                  sectionType="segments"
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -309,6 +328,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                   onChange={(value) => handleSectionChange('costStructure', value)}
                   placeholder="What are the most important costs in your business model?"
                   headerColor="bg-purple-100 dark:bg-purple-900/30"
+                  sectionType="costs"
                 />
               </ResizablePanel>
               
@@ -322,6 +342,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                   onChange={(value) => handleSectionChange('revenueStreams', value)}
                   placeholder="What revenue streams generate income?"
                   headerColor="bg-indigo-100 dark:bg-indigo-900/30"
+                  sectionType="revenue"
                 />
               </ResizablePanel>
             </ResizablePanelGroup>

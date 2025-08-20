@@ -78,26 +78,19 @@ interface BMCOutput {
 const generateBMCPrompt = (input: CanvasInput): string => {
   return `You are an expert business strategist specializing in Business Model Canvas creation.
 
-MANDATORY TEXT FORMATTING REQUIREMENTS:
-- ALWAYS add proper spaces after periods (. ), commas (, ), and colons (: )
-- NEVER concatenate words together
-- Each sentence must have proper spacing between all words
-- Use clear, readable formatting with proper punctuation spacing
+MANDATORY FORMATTING REQUIREMENTS:
+- Format each section as clear, structured bullet points for maximum readability
+- Use bullet point symbols (•) to separate distinct points
+- Each bullet point should be a complete, valuable insight
+- Add proper spacing and punctuation
+- Make content scannable and professional
 
-INCORRECT EXAMPLES TO AVOID:
-❌ "Centralized kitchen and meal prep facilities with specialized equipment for bulk healthy food preparation.,A proprietary digital platform"
-❌ "Strong supplier relationships for consistent access to premium ingredients and sustainable packaging.,Brand assets"
-
-CORRECT EXAMPLES TO FOLLOW:
-✅ "Centralized kitchen and meal prep facilities with specialized equipment for bulk healthy food preparation. A proprietary digital platform handling meal customization and subscription management."
-✅ "Strong supplier relationships for consistent access to premium ingredients and sustainable packaging. Brand assets and marketing collateral tailored to health focus."
-
-STEP-BY-STEP INSTRUCTIONS:
-1. Generate content for each BMC section
-2. Review each sentence for proper spacing after punctuation
-3. Ensure no words are concatenated together
-4. Add proper spaces between all words and after punctuation marks
-5. Double-check formatting before finalizing
+FORMATTING EXAMPLE:
+• First key insight or point with detailed explanation
+• Second important aspect that adds strategic value  
+• Third critical element for business success
+• Fourth component that drives competitive advantage
+• Fifth strategic element that completes the section
 
 Company Details:
 - Company: ${input.companyName || 'Unnamed Company'}
@@ -107,13 +100,11 @@ Company Details:
 - Business Model: ${input.businessModel || 'Not specified'}
 - Additional Context: ${input.additionalContext || 'None'}
 
-Generate comprehensive Business Model Canvas content with 3-5 detailed points for each section.
+Generate comprehensive Business Model Canvas content with 3-5 detailed bullet points for each section.
+Focus on creating actionable, strategic insights that provide real business value.
 
-FINAL CHECK: Before submitting, verify that:
-- Every period is followed by a space before the next word
-- Every comma is followed by a space before the next word
-- No words are concatenated together
-- All sentences are properly formatted and readable
+CRITICAL: Format each section's content as bullet points using the • symbol.
+Each bullet point should be on its own line and provide specific, actionable business insights.
 
 Return as JSON with these exact keys:
 - keyPartners
