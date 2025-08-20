@@ -133,9 +133,9 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     placeholder: string;
     headerColor?: string;
   }) => (
-    <div className="h-full flex flex-col bg-card border border-border/50 rounded-md overflow-hidden">
+    <div className="h-full flex flex-col bg-card border-2 border-border/30 rounded-md overflow-hidden shadow-sm">
       <SectionHeader title={title} color={headerColor} />
-      <div className="flex-1 p-1">
+      <div className="flex-1 p-2 min-h-[80px]">
         <TextElement
           content={value}
           isEditable={isEditable}
@@ -162,8 +162,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
         </div>
       )}
       
-      <div className="w-full min-h-[600px] bg-background border border-border rounded-lg overflow-hidden">
-        <ResizablePanelGroup direction="vertical" className="h-full">
+      <div className="w-full h-[600px] bg-background border border-border rounded-lg overflow-hidden">
+        <ResizablePanelGroup direction="vertical" className="h-[600px]">
           {/* Top Row */}
           <ResizablePanel defaultSize={40} minSize={30}>
             <ResizablePanelGroup direction="horizontal" className="h-full">

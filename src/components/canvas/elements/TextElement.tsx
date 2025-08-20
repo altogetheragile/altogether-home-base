@@ -76,7 +76,7 @@ const TextElement: React.FC<TextElementProps> = ({
           'w-full h-full p-2 whitespace-pre-wrap break-words',
           fontSizeClasses[fontSize],
           alignClasses[align],
-          'text-foreground',
+          content ? 'text-foreground' : 'text-muted-foreground/60',
           className
         )}
       >
@@ -95,7 +95,8 @@ const TextElement: React.FC<TextElementProps> = ({
         placeholder={placeholder}
         className={cn(
           'w-full h-full resize-none border-0 bg-transparent p-2',
-          'focus:ring-0 focus:border-transparent',
+          'focus:ring-1 focus:ring-primary/30 focus:border-transparent',
+          'placeholder:text-muted-foreground/50',
           fontSizeClasses[fontSize],
           alignClasses[align],
           autoResize && 'overflow-hidden'
