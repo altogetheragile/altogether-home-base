@@ -13,72 +13,92 @@ export const exportBMC = async (elementId: string, options: ExportOptions) => {
     throw new Error('BMC element not found');
   }
 
-  // Get actual dimensions
-  const rect = element.getBoundingClientRect();
-  
-  // Prepare element for capture
-  const originalOverflow = element.style.overflow;
-  element.style.overflow = 'visible';
-  
-  // Wait for layout to stabilize
-  await new Promise(resolve => requestAnimationFrame(resolve));
-  await new Promise(resolve => setTimeout(resolve, 300));
+  try {
+    // Force element to be fully visible and get complete dimensions
+    const originalOverflow = element.style.overflow;
+    const originalPosition = element.style.position;
+    
+    element.style.overflow = 'visible';
+    element.style.position = 'relative';
+    
+    // Wait for layout to stabilize
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Get the full content dimensions
+    const scrollWidth = Math.max(element.scrollWidth, element.offsetWidth, 1200);
+    const scrollHeight = Math.max(element.scrollHeight, element.offsetHeight, 600);
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: '#ffffff',
-    width: Math.ceil(rect.width),
-    height: Math.ceil(rect.height),
-    scrollX: 0,
-    scrollY: 0,
-    onclone: (clonedDoc) => {
-      const clonedElement = clonedDoc.getElementById(elementId);
-      if (clonedElement) {
-        // Fix text rendering issues
-        clonedElement.style.overflow = 'visible';
-        
-        // Replace textareas with divs for better rendering
-        const textareas = clonedElement.querySelectorAll('textarea');
-        textareas.forEach(textarea => {
-          const div = clonedDoc.createElement('div');
-          div.textContent = textarea.value;
-          div.style.cssText = textarea.style.cssText;
-          div.style.whiteSpace = 'pre-wrap';
-          div.style.wordBreak = 'break-word';
-          div.style.overflowWrap = 'break-word';
-          div.className = textarea.className;
-          textarea.parentNode?.replaceChild(div, textarea);
-        });
-        
-        // Ensure all containers are properly sized
-        const containers = clonedElement.querySelectorAll('[class*="Card"], [class*="text-"]');
-        containers.forEach((el) => {
-          if (el instanceof HTMLElement) {
-            el.style.overflow = 'visible';
-            el.style.height = 'auto';
-            el.style.minHeight = 'auto';
-          }
-        });
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: scrollWidth,
+      height: scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      foreignObjectRendering: false,
+      removeContainer: true,
+      logging: false,
+      onclone: (clonedDoc) => {
+        const clonedElement = clonedDoc.getElementById(elementId);
+        if (clonedElement) {
+          // Ensure the cloned element maintains full dimensions
+          clonedElement.style.width = `${scrollWidth}px`;
+          clonedElement.style.height = 'auto';
+          clonedElement.style.minHeight = `${scrollHeight}px`;
+          clonedElement.style.overflow = 'visible';
+          clonedElement.style.position = 'relative';
+          
+          // Replace textareas with divs for better rendering
+          const textareas = clonedElement.querySelectorAll('textarea');
+          textareas.forEach(textarea => {
+            const div = clonedDoc.createElement('div');
+            div.textContent = textarea.value;
+            div.style.cssText = textarea.style.cssText;
+            div.style.whiteSpace = 'pre-wrap';
+            div.style.wordBreak = 'break-word';
+            div.style.overflowWrap = 'anywhere';
+            div.style.hyphens = 'auto';
+            div.className = textarea.className;
+            textarea.parentNode?.replaceChild(div, textarea);
+          });
+          
+          // Ensure all grid items are visible
+          const gridItems = clonedElement.querySelectorAll('[style*="grid-area"]');
+          gridItems.forEach((el) => {
+            if (el instanceof HTMLElement) {
+              el.style.overflow = 'visible';
+              el.style.height = 'auto';
+              el.style.minHeight = '150px';
+            }
+          });
+        }
       }
+    });
+
+    // Restore original styles
+    element.style.overflow = originalOverflow;
+    element.style.position = originalPosition;
+
+    const { format, quality = 0.95, filename = 'business-model-canvas' } = options;
+
+    switch (format) {
+      case 'pdf':
+        return exportToPDF(canvas, filename);
+      case 'png':
+        return exportToImage(canvas, 'png', filename);
+      case 'jpeg':
+        return exportToImage(canvas, 'jpeg', filename, quality);
+      default:
+        throw new Error(`Unsupported format: ${format}`);
     }
-  });
-
-  // Restore original styles
-  element.style.overflow = originalOverflow;
-
-  const { format, quality = 0.95, filename = 'business-model-canvas' } = options;
-
-  switch (format) {
-    case 'pdf':
-      return exportToPDF(canvas, filename);
-    case 'png':
-      return exportToImage(canvas, 'png', filename);
-    case 'jpeg':
-      return exportToImage(canvas, 'jpeg', filename, quality);
-    default:
-      throw new Error(`Unsupported format: ${format}`);
+  } catch (error) {
+    console.error('Export failed:', error);
+    throw new Error('Failed to export BMC');
   }
 };
 
