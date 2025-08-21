@@ -32,14 +32,57 @@ export const exportCanvas = async (
       width: element.offsetWidth,
       height: element.offsetHeight,
       onclone: (clonedDoc) => {
-        // Ensure all textarea elements are converted to divs in the clone
+        // Helper functions for proper text conversion
+        const escapeHtml = (s: string) => {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        };
+
+        const formatTextareaForExport = (value: string) => {
+          // Ensure bullets have a trailing space; keep user typed spaces intact
+          const normalized = value.replace(/•\s?/g, "• ");
+          // Escape HTML then bring back line breaks as <br>
+          return escapeHtml(normalized).replace(/\r\n|\r|\n/g, "<br>");
+        };
+
+        // Convert all textarea elements to properly formatted divs
         const textareas = clonedDoc.querySelectorAll('textarea');
         textareas.forEach(textarea => {
+          const ta = textarea as HTMLTextAreaElement;
+          
+          // Build an export-safe div that visually matches the textarea
           const div = clonedDoc.createElement('div');
-          div.textContent = textarea.value;
-          div.style.cssText = textarea.style.cssText;
-          div.className = textarea.className;
-          textarea.parentNode?.replaceChild(div, textarea);
+          
+          // Copy classes (for font, color, size) then enforce export-safe text layout
+          div.className = ta.className;
+          div.style.cssText = (ta as HTMLElement).style.cssText;
+          
+          // Critical: preserve whitespace and wrapping behavior for multi-line content
+          div.style.whiteSpace = "pre-wrap";       // keep spaces + wrap lines
+          div.style.wordBreak = "break-word";      // avoid overflow
+          div.style.overflow = "hidden";           // no scrollbars in export
+          div.style.display = "block";
+          
+          // Match box metrics from textarea so layout doesn't shift
+          const cs = clonedDoc.defaultView!.getComputedStyle(ta);
+          div.style.padding = cs.padding;
+          div.style.border = cs.border;
+          div.style.boxSizing = cs.boxSizing;
+          div.style.lineHeight = cs.lineHeight;
+          div.style.letterSpacing = cs.letterSpacing || "normal";
+          div.style.wordSpacing = cs.wordSpacing || "0";
+          
+          // Disable fancy features that can confuse html2canvas
+          div.style.fontKerning = "normal";
+          div.style.fontFeatureSettings = "normal";
+          
+          // Push formatted content
+          div.innerHTML = formatTextareaForExport(ta.value);
+          
+          // Swap node
+          ta.parentNode?.replaceChild(div, ta);
         });
       }
     });

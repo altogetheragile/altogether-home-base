@@ -160,6 +160,11 @@
     transition: none !important;
   }
 
+  /* ensure textareas don't flicker while swapped in onclone */
+  .exporting textarea {
+    visibility: hidden;
+  }
+
   /* Bigger hit area on touch devices */
   @media (pointer: coarse) {
     [data-panel-group-direction="horizontal"] [data-panel-resize-handle-enabled] { 
