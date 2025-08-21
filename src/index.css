@@ -138,4 +138,31 @@
   .content-block-spacing:first-child {
     margin-top: 0;
   }
+
+  /* Style the little "grip" inside shadcn's ResizableHandle when withHandle is set */
+  [data-panel-group-direction="horizontal"] [data-panel-resize-handle-enabled] > div {
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    background: color-mix(in oklab, currentColor 55%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklab, white 70%, transparent);
+  }
+
+  [data-panel-group-direction="vertical"] [data-panel-resize-handle-enabled] > div {
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    background: color-mix(in oklab, currentColor 55%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklab, white 70%, transparent);
+  }
+
+  /* Bigger hit area on touch devices */
+  @media (pointer: coarse) {
+    [data-panel-group-direction="horizontal"] [data-panel-resize-handle-enabled] { 
+      min-width: 14px; 
+    }
+    [data-panel-group-direction="vertical"] [data-panel-resize-handle-enabled] { 
+      min-height: 14px; 
+    }
+  }
 }

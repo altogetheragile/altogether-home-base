@@ -139,6 +139,15 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Centralized handle styling
+  const handleCx = `
+    z-50 touch-none select-none
+    data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:-mx-1
+    data-[panel-group-direction=horizontal]:cursor-col-resize data-[panel-group-direction=horizontal]:hover:bg-primary/10
+    data-[panel-group-direction=vertical]:h-3 data-[panel-group-direction=vertical]:-my-1
+    data-[panel-group-direction=vertical]:cursor-row-resize data-[panel-group-direction=vertical]:hover:bg-primary/10
+  `;
+
   const normalizedData = normalizeBmc(data);
 
   const defaultData: BMCData = {
@@ -267,7 +276,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   }) => (
     <div className="h-full flex flex-col bg-card border-2 border-border/30 overflow-hidden shadow-sm">
       <SectionHeader title={title} color={headerColor} />
-      <div className="flex-1 p-1 min-h-[120px]">
+      <div className="flex-1 p-1 min-h-[120px] overflow-auto relative z-0">
         {isEditable && !isExporting ? (
           <TextElement
             content={value}
@@ -308,10 +317,10 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
       )}
       <ResizablePanelGroup direction="vertical" className="w-full h-full min-h-[600px]">
         {/* Top Panel - Main BMC Sections */}
-        <ResizablePanel defaultSize={70} minSize={35} className="overflow-hidden">
+        <ResizablePanel defaultSize={70} minSize={35} className="overflow-hidden relative">
           <ResizablePanelGroup direction="horizontal" className="w-full h-full">
             {/* Left Column */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative">
               <BMCSection
                 title="Key Partners"
                 value={bmcData.keyPartners}
@@ -322,12 +331,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               />
             </ResizablePanel>
 
-            <ResizableHandle withHandle />
+            <ResizableHandle withHandle className={handleCx} />
 
             {/* Center Left Column - Key Activities and Key Resources (vertical split) */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative">
               <ResizablePanelGroup direction="vertical" className="h-full">
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative">
                   <BMCSection
                     title="Key Activities"
                     value={bmcData.keyActivities}
@@ -337,8 +346,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                     sectionType="activities"
                   />
                 </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                <ResizableHandle withHandle className={handleCx} />
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative">
                   <BMCSection
                     title="Key Resources"
                     value={bmcData.keyResources}
@@ -351,10 +360,10 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               </ResizablePanelGroup>
             </ResizablePanel>
 
-            <ResizableHandle withHandle />
+            <ResizableHandle withHandle className={handleCx} />
 
             {/* Center Column - Value Propositions */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative">
               <BMCSection
                 title="Value Propositions"
                 value={bmcData.valuePropositions}
@@ -365,12 +374,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               />
             </ResizablePanel>
 
-            <ResizableHandle withHandle />
+            <ResizableHandle withHandle className={handleCx} />
 
             {/* Center Right Column - Customer Relationships and Channels (vertical split) */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative">
               <ResizablePanelGroup direction="vertical" className="h-full">
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative">
                   <BMCSection
                     title="Customer Relationships"
                     value={bmcData.customerRelationships}
@@ -380,8 +389,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
                     sectionType="relationships"
                   />
                 </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                <ResizableHandle withHandle className={handleCx} />
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative">
                   <BMCSection
                     title="Channels"
                     value={bmcData.channels}
@@ -394,10 +403,10 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               </ResizablePanelGroup>
             </ResizablePanel>
 
-            <ResizableHandle withHandle />
+            <ResizableHandle withHandle className={handleCx} />
 
             {/* Right Column */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative">
               <BMCSection
                 title="Customer Segments"
                 value={bmcData.customerSegments}
@@ -410,12 +419,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
           </ResizablePanelGroup>
         </ResizablePanel>
 
-        <ResizableHandle withHandle />
+        <ResizableHandle withHandle className={handleCx} />
 
         {/* Bottom Panel - Cost Structure and Revenue Streams */}
-        <ResizablePanel defaultSize={30} minSize={20} className="overflow-hidden">
+        <ResizablePanel defaultSize={30} minSize={20} className="overflow-hidden relative">
           <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative">
               <BMCSection
                 title="Cost Structure"
                 value={bmcData.costStructure}
@@ -426,9 +435,9 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               />
             </ResizablePanel>
 
-            <ResizableHandle withHandle />
+            <ResizableHandle withHandle className={handleCx} />
 
-            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative">
               <BMCSection
                 title="Revenue Streams"
                 value={bmcData.revenueStreams}
