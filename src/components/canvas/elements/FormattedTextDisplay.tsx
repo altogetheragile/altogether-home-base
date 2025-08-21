@@ -24,25 +24,25 @@ const FormattedTextDisplay: React.FC<FormattedTextDisplayProps> = ({
 
   // Parse content to identify bullet points
   const parseContent = (text: string) => {
-    console.log('FormattedTextDisplay parsing content:', text);
+    console.log('FormattedTextDisplay parsing content:', text.substring(0, 200));
     
     // Check if content is already properly formatted with bullets and newlines
     const hasBulletsAndNewlines = text.includes('•') && text.includes('\n');
     
     if (hasBulletsAndNewlines) {
       console.log('Content already has proper bullet formatting, preserving as-is');
-      // Content is already properly formatted, just split by newlines and clean up
+      // Content is already properly formatted, split by newlines and preserve bullets
       const lines = text.split('\n')
         .map(line => line.trim())
-        .filter(line => line.length > 0);
+        .filter(line => line.length > 0 && line !== '•');
       
       return lines.map(line => {
-        // If line already has a bullet, keep it as-is
+        // If line already has a bullet, remove it since we'll add it back in display
         if (line.startsWith('•')) {
-          return line.substring(1).trim(); // Remove bullet, we'll add it back in display
+          return line.substring(1).trim();
         }
         return line;
-      });
+      }).filter(line => line.length > 0);
     }
     
     // Legacy parsing for unformatted content
@@ -77,6 +77,7 @@ const FormattedTextDisplay: React.FC<FormattedTextDisplayProps> = ({
   };
 
   const parsedLines = parseContent(content);
+  console.log('FormattedTextDisplay parsed lines:', parsedLines);
   
   // Section-specific styling
   const getSectionStyles = (type?: string) => {

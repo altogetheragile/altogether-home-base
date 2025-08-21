@@ -190,6 +190,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
             sectionType={sectionType}
           />
         )}
+        {/* Debug content display */}
+        {process.env.NODE_ENV === 'development' && value && (
+          <div className="absolute bottom-0 right-0 text-xs bg-yellow-100 p-1 opacity-50">
+            Content: {value.substring(0, 20)}...
+          </div>
+        )}
       </div>
     </div>
   );

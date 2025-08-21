@@ -87,19 +87,18 @@ interface BMCOutput {
 const generateBMCPrompt = (input: CanvasInput): string => {
   return `You are an expert business strategist specializing in Business Model Canvas creation.
 
-MANDATORY FORMATTING REQUIREMENTS:
-- Format each section as clear, structured bullet points for maximum readability
-- Use bullet point symbols (•) to separate distinct points
+CRITICAL JSON STRUCTURE REQUIREMENT:
+You MUST return a valid JSON object with EXACTLY these 9 keys. Each value MUST be a STRING (not an array).
+
+MANDATORY FORMATTING FOR EACH STRING VALUE:
+- Format as bullet points separated by newline characters (\n)
+- Start each bullet point with the • symbol
 - Each bullet point should be a complete, valuable insight
-- Add proper spacing and punctuation
+- Use proper spacing and punctuation
 - Make content scannable and professional
 
-FORMATTING EXAMPLE:
-• First key insight or point with detailed explanation
-• Second important aspect that adds strategic value  
-• Third critical element for business success
-• Fourth component that drives competitive advantage
-• Fifth strategic element that completes the section
+EXACT FORMATTING EXAMPLE FOR EACH SECTION:
+"• First key insight with detailed explanation\n• Second important aspect that adds strategic value\n• Third critical element for business success\n• Fourth component that drives competitive advantage"
 
 Company Details:
 - Company: ${input.companyName || 'Unnamed Company'}
@@ -112,19 +111,27 @@ Company Details:
 Generate comprehensive Business Model Canvas content with 3-5 detailed bullet points for each section.
 Focus on creating actionable, strategic insights that provide real business value.
 
-CRITICAL: Format each section's content as bullet points using the • symbol.
-Each bullet point should be on its own line and provide specific, actionable business insights.
+CRITICAL JSON OUTPUT REQUIREMENTS:
+1. Return ONLY valid JSON - no additional text
+2. Use EXACTLY these 9 keys (case-sensitive):
+   - keyPartners
+   - keyActivities  
+   - keyResources
+   - valuePropositions
+   - customerRelationships
+   - channels
+   - customerSegments
+   - costStructure
+   - revenueStreams
+3. Each value MUST be a STRING containing bullet points separated by \\n
+4. Start each bullet point with • followed by a space
+5. Each section should have 3-5 bullet points
 
-Return as JSON with these exact keys:
-- keyPartners
-- keyActivities  
-- keyResources
-- valuePropositions
-- customerRelationships
-- channels
-- customerSegments
-- costStructure
-- revenueStreams`;
+Example JSON structure:
+{
+  "keyPartners": "• First partner insight\\n• Second partnership strategy\\n• Third key alliance",
+  "keyActivities": "• Core activity description\\n• Strategic operation detail\\n• Essential process insight"
+}`;
 };
 
 const generateUserStoryMapPrompt = (input: CanvasInput): string => {
@@ -186,13 +193,12 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-1106-preview',
+        model: 'gpt-5-2025-08-07',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 4000,
-        temperature: 0.7,
+        max_completion_tokens: 4000,
         response_format: { type: "json_object" }
       }),
     });
@@ -213,7 +219,8 @@ serve(async (req) => {
 
     const generatedContent = data.choices[0].message.content;
     console.log('Generated content length:', generatedContent?.length);
-    console.log('Generated content preview:', generatedContent?.substring(0, 200));
+    console.log('Generated content preview:', generatedContent?.substring(0, 500));
+    console.log('Full generated content:', generatedContent);
 
     let parsedContent;
     try {
