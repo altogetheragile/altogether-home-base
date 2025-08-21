@@ -32,21 +32,6 @@ export const exportCanvas = async (
       width: element.offsetWidth,
       height: element.offsetHeight,
       onclone: (clonedDoc) => {
-        // Helper functions for proper text conversion
-        const escapeHtml = (s: string) => {
-          return s
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-        };
-
-        const formatTextareaForExport = (value: string) => {
-          // Ensure bullets have a trailing space; keep user typed spaces intact
-          const normalized = value.replace(/•\s?/g, "• ");
-          // Escape HTML then bring back line breaks as <br>
-          return escapeHtml(normalized).replace(/\r\n|\r|\n/g, "<br>");
-        };
-
         // Convert all textarea elements to properly formatted divs
         const textareas = clonedDoc.querySelectorAll('textarea');
         textareas.forEach(textarea => {
@@ -55,33 +40,30 @@ export const exportCanvas = async (
           // Build an export-safe div that visually matches the textarea
           const div = clonedDoc.createElement('div');
           
-          // Copy classes (for font, color, size) then enforce export-safe text layout
+          // Copy classes and inline styles (for font/color/size etc.)
           div.className = ta.className;
           div.style.cssText = (ta as HTMLElement).style.cssText;
           
-          // Critical: preserve whitespace and wrapping behavior for multi-line content
-          div.style.whiteSpace = "pre-wrap";       // keep spaces + wrap lines
-          div.style.wordBreak = "break-word";      // avoid overflow
-          div.style.overflow = "hidden";           // no scrollbars in export
-          div.style.display = "block";
+          // Use raw text; DO NOT inject HTML. Preserve natural spaces/newlines via CSS.
+          div.textContent = ta.value;
           
-          // Match box metrics from textarea so layout doesn't shift
+          // Compute styles so the box dimensions & font match exactly
           const cs = clonedDoc.defaultView!.getComputedStyle(ta);
+          div.style.whiteSpace = "pre-wrap";        // preserve spaces & newlines, wrap long lines
+          div.style.wordBreak = "break-word";       // avoid overflow
+          div.style.overflow = "hidden";            // no scrollbars in export
+          div.style.boxSizing = cs.boxSizing;
           div.style.padding = cs.padding;
           div.style.border = cs.border;
-          div.style.boxSizing = cs.boxSizing;
-          div.style.lineHeight = cs.lineHeight;
-          div.style.letterSpacing = cs.letterSpacing || "normal";
-          div.style.wordSpacing = cs.wordSpacing || "0";
+          div.style.font = cs.font;                 // includes family/size/weight/line-height
+          div.style.letterSpacing = cs.letterSpacing;
+          div.style.wordSpacing = cs.wordSpacing;
+          div.style.textAlign = cs.textAlign;
+          div.style.width = cs.width;               // keep the same width constraints
+          div.style.maxWidth = cs.maxWidth;
+          div.style.minWidth = cs.minWidth;
           
-          // Disable fancy features that can confuse html2canvas
-          div.style.fontKerning = "normal";
-          div.style.fontFeatureSettings = "normal";
-          
-          // Push formatted content
-          div.innerHTML = formatTextareaForExport(ta.value);
-          
-          // Swap node
+          // Swap the nodes
           ta.parentNode?.replaceChild(div, ta);
         });
       }
