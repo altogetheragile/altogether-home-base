@@ -140,20 +140,24 @@
   }
 
   /* Style the little "grip" inside shadcn's ResizableHandle when withHandle is set */
-  [data-panel-group-direction="horizontal"] [data-panel-resize-handle-enabled] > div {
-    width: 12px;
-    height: 12px;
-    border-radius: 9999px;
-    background: color-mix(in oklab, currentColor 55%, transparent);
-    box-shadow: 0 0 0 2px color-mix(in oklab, white 70%, transparent);
-  }
-
+  [data-panel-group-direction="horizontal"] [data-panel-resize-handle-enabled] > div,
   [data-panel-group-direction="vertical"] [data-panel-resize-handle-enabled] > div {
     width: 12px;
     height: 12px;
     border-radius: 9999px;
-    background: color-mix(in oklab, currentColor 55%, transparent);
-    box-shadow: 0 0 0 2px color-mix(in oklab, white 70%, transparent);
+    background-color: rgba(100, 100, 100, 0.55);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+  }
+
+  /* Export-safe mode styling */
+  .exporting [data-panel-resize-handle-enabled] > div {
+    background-color: #666 !important;
+    box-shadow: 0 0 0 2px #fff !important;
+  }
+  
+  .exporting * {
+    animation: none !important;
+    transition: none !important;
   }
 
   /* Bigger hit area on touch devices */
