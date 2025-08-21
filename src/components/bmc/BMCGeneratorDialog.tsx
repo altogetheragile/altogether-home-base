@@ -85,53 +85,35 @@ const BMCGeneratorDialog: React.FC = () => {
       
       const { data, error } = await supabase.functions.invoke('generate-business-model-canvas', {
         body: {
-          type: 'bmc',
           companyName: formData.companyName,
           industry: formData.industry,
-          targetAudience: formData.targetCustomers,
-          description: formData.productService,
-          businessModel: formData.businessStage,
+          targetCustomers: formData.targetCustomers,
+          productService: formData.productService,
+          businessStage: formData.businessStage,
           additionalContext: formData.additionalContext
         }
       });
 
       if (error) {
-        console.error("[BMC] Edge function error:", error);
-        throw new Error(error.message ?? "Edge function invocation failed");
+        // Supabase Functions client wraps non-2xx as error
+        console.error('[BMC] Edge function error:', error);
+        throw new Error(error.message ?? 'Edge function failed');
       }
 
-      // Debug the raw shape once
-      console.debug("[BMC] edge response (raw):", data);
-
-      // Parse JSON string if needed and extract BMC payload
-      const parsed = typeof data === "string" ? JSON.parse(data) : data;
-      
-      // Prefer .data, else .bmc, else assume it's already the fields
-      const candidate = parsed?.data ?? parsed?.bmc ?? parsed;
-      
-      // Light validation: ensure at least one known BMC field exists
-      if (
-        candidate &&
-        typeof candidate === "object" &&
-        (
-          "keyPartners" in candidate ||
-          "key_activities" in candidate || 
-          "keyActivities" in candidate ||
-          "valuePropositions" in candidate || 
-          "value_propositions" in candidate
-        )
-      ) {
-        console.debug("[BMC] extracted BMC:", candidate);
-        setGeneratedBMC(candidate);
-        setCompanyName(parsed.companyName || formData.companyName);
-        toast({
-          title: "🎉 BMC Generated Successfully!",
-          description: "Your strategic Business Model Canvas is ready for review and export"
-        });
-      } else {
-        console.error("[BMC] Unable to extract BMC payload from response:", data);
-        throw new Error("Could not extract Business Model Canvas from response.");
+      const raw = typeof data === "string" ? JSON.parse(data) : data;
+      if (!raw?.success) {
+        console.error('[BMC] LLM parsing failed:', raw?.error, raw?.raw?.slice?.(0, 400));
+        throw new Error('AI response could not be parsed. Please try again.');
       }
+
+      const bmcData = raw.data;        // <- flat object with the nine fields
+      console.debug("[BMC] extracted BMC:", bmcData);
+      setGeneratedBMC(bmcData);          // <- pass directly into BMC canvas
+      setCompanyName(formData.companyName);
+      toast({
+        title: "🎉 BMC Generated Successfully!",
+        description: "Your strategic Business Model Canvas is ready for review and export"
+      });
     } catch (error) {
       console.error('Error generating BMC:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
