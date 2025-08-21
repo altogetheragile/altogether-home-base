@@ -95,6 +95,8 @@ const BMCGeneratorDialog: React.FC = () => {
         }
       });
 
+      // Log the raw response structure
+      console.debug("[BMC] edge response:", JSON.stringify(data, null, 2));
       console.log('BMC generation response:', { data, error });
 
       if (error) {
@@ -103,7 +105,10 @@ const BMCGeneratorDialog: React.FC = () => {
       }
 
       if (data?.success) {
-        setGeneratedBMC(data.data);
+        // Handle data unwrapping properly
+        const bmcData = data?.data?.bmc ?? data?.data;
+        console.debug("[BMC] Extracted BMC data:", bmcData);
+        setGeneratedBMC(bmcData);
         setCompanyName(data.companyName || formData.companyName);
         toast({
           title: "🎉 BMC Generated Successfully!",

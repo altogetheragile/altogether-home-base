@@ -1,14 +1,45 @@
 import React, { useRef, useImperativeHandle, useState } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import TextElement from '../elements/TextElement';
-import FormattedTextDisplay from '../elements/FormattedTextDisplay';
+import FormattedTextDisplay from '@/components/common/FormattedTextDisplay';
 import { cn } from '@/lib/utils';
+import { z } from 'zod';
 
 interface ExportOptions {
   format?: 'png' | 'pdf';
   quality?: number;
   filename?: string;
 }
+
+// Schema to handle both snake_case and camelCase from edge function
+const BmcSchema = z.object({
+  // support both shapes
+  key_partners: z.union([z.string(), z.array(z.string())]).optional(),
+  keyPartners: z.union([z.string(), z.array(z.string())]).optional(),
+
+  key_activities: z.union([z.string(), z.array(z.string())]).optional(),
+  keyActivities: z.union([z.string(), z.array(z.string())]).optional(),
+
+  key_resources: z.union([z.string(), z.array(z.string())]).optional(),
+  keyResources: z.union([z.string(), z.array(z.string())]).optional(),
+
+  value_propositions: z.union([z.string(), z.array(z.string())]).optional(),
+  valuePropositions: z.union([z.string(), z.array(z.string())]).optional(),
+
+  customer_relationships: z.union([z.string(), z.array(z.string())]).optional(),
+  customerRelationships: z.union([z.string(), z.array(z.string())]).optional(),
+
+  channels: z.union([z.string(), z.array(z.string())]).optional(),
+
+  customer_segments: z.union([z.string(), z.array(z.string())]).optional(),
+  customerSegments: z.union([z.string(), z.array(z.string())]).optional(),
+
+  cost_structure: z.union([z.string(), z.array(z.string())]).optional(),
+  costStructure: z.union([z.string(), z.array(z.string())]).optional(),
+
+  revenue_streams: z.union([z.string(), z.array(z.string())]).optional(),
+  revenueStreams: z.union([z.string(), z.array(z.string())]).optional(),
+});
 
 export interface BMCData {
   keyPartners: string;
@@ -23,11 +54,57 @@ export interface BMCData {
 }
 
 interface BMCCanvasProps {
-  data?: BMCData;
+  data?: unknown; // Accept any data shape from edge function
   isEditable?: boolean;
   onDataChange?: (data: BMCData) => void;
   companyName?: string;
   className?: string;
+}
+
+function pick<T>(a: T | undefined, b: T | undefined): T | undefined {
+  return a !== undefined ? a : b;
+}
+
+function normalizeBmc(data: unknown): BMCData {
+  const parsed = BmcSchema.safeParse(data);
+  if (!parsed.success) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[BMCCanvas] BMC schema parse failed:", parsed.error?.flatten());
+      console.debug("[BMCCanvas] Raw data:", data);
+    }
+    return {
+      keyPartners: '',
+      keyActivities: '',
+      keyResources: '',
+      valuePropositions: '',
+      customerRelationships: '',
+      channels: '',
+      customerSegments: '',
+      costStructure: '',
+      revenueStreams: '',
+    };
+  }
+  
+  const d = parsed.data;
+  
+  // Helper function to convert string | string[] to string
+  const toString = (value: string | string[] | undefined): string => {
+    if (!value) return '';
+    if (Array.isArray(value)) return value.join('\n');
+    return value;
+  };
+  
+  return {
+    keyPartners: toString(pick(d.keyPartners, d.key_partners)),
+    keyActivities: toString(pick(d.keyActivities, d.key_activities)),
+    keyResources: toString(pick(d.keyResources, d.key_resources)),
+    valuePropositions: toString(pick(d.valuePropositions, d.value_propositions)),
+    customerRelationships: toString(pick(d.customerRelationships, d.customer_relationships)),
+    channels: toString(d.channels),
+    customerSegments: toString(pick(d.customerSegments, d.customer_segments)),
+    costStructure: toString(pick(d.costStructure, d.cost_structure)),
+    revenueStreams: toString(pick(d.revenueStreams, d.revenue_streams)),
+  };
 }
 
 export interface BMCCanvasRef {
@@ -58,7 +135,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     revenueStreams: '',
   };
 
-  const bmcData = { ...defaultData, ...data };
+  const normalizedData = normalizeBmc(data);
+  const bmcData = { ...defaultData, ...normalizedData };
+
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[BMCCanvas] normalized BMC:", bmcData);
+  }
 
   const handleSectionChange = (section: keyof BMCData, content: string) => {
     const newData = { ...bmcData, [section]: content };
@@ -184,10 +266,9 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
           />
         ) : (
           <FormattedTextDisplay
-            content={value}
-            placeholder={placeholder}
-            className="h-full"
-            sectionType={sectionType}
+            text={value}
+            debugKey={title.replace(/\s+/g, '')}
+            className="h-full text-sm"
           />
         )}
         {/* Debug content display */}
@@ -212,7 +293,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
         </div>
       )}
       
-      <div className="w-full min-h-[600px] max-h-[800px] bg-background border border-border overflow-hidden">
+      <div className="w-full min-h-[600px] max-h-[800px] bg-background border border-border overflow-y-auto">
         <ResizablePanelGroup direction="vertical" className="h-full">
           {/* Top Row */}
           <ResizablePanel defaultSize={60} minSize={40}>
