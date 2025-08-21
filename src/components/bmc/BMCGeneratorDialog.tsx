@@ -83,7 +83,7 @@ const BMCGeneratorDialog: React.FC = () => {
     try {
       console.log('Calling BMC generation with data:', formData);
       
-      const { data, error } = await supabase.functions.invoke('generate-canvas', {
+      const { data, error } = await supabase.functions.invoke('generate-business-model-canvas', {
         body: {
           type: 'bmc',
           companyName: formData.companyName,

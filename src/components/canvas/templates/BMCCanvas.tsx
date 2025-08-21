@@ -5,9 +5,6 @@ import FormattedTextDisplay from '@/components/common/FormattedTextDisplay';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
 
-// --- TEMP: force logs in all builds
-const log = (...args: any[]) => { try { console.log(...args); } catch {} };
-
 interface ExportOptions {
   format?: 'png' | 'pdf';
   quality?: number;
@@ -71,8 +68,7 @@ function pick<T>(a: T | undefined, b: T | undefined): T | undefined {
 function normalizeBmc(data: unknown): BMCData {
   const parsed = BmcSchema.safeParse(data);
   if (!parsed.success) {
-    log("[BMCCanvas] schema parse failed:", parsed.error?.flatten());
-    log("[BMCCanvas] raw data (parse fail):", data);
+    console.error("[BMCCanvas] schema parse failed:", parsed.error?.flatten());
     return {
       keyPartners: '',
       keyActivities: '',
@@ -124,17 +120,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  // --- visible probe (always renders)
-  const looksLikeBmc =
-    data && typeof data === "object" &&
-    ("keyPartners" in (data as any) || "key_partners" in (data as any));
-
-  // TEMP toggle: set to true to completely bypass Zod while debugging
-  const BYPASS_NORMALIZATION = true;
-
-  const normalizedData = (BYPASS_NORMALIZATION && looksLikeBmc)
-    ? (data as any)
-    : normalizeBmc(data);
+  const normalizedData = normalizeBmc(data);
 
   const defaultData: BMCData = {
     keyPartners: '',
@@ -149,9 +135,6 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   };
 
   const bmcData = { ...defaultData, ...normalizedData };
-
-  log("[BMCCanvas] received data:", data);
-  log("[BMCCanvas] normalized BMC:", bmcData);
 
   const handleSectionChange = (section: keyof BMCData, content: string) => {
     const newData = { ...bmcData, [section]: content };
@@ -304,41 +287,115 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
         </div>
       )}
       
-      <div className="w-full min-h-[600px] max-h-[800px] bg-background text-foreground border border-border overflow-y-auto flex flex-col">
-        {/* TEMP DEBUG — remove later */}
-        <details open className="p-3 text-xs opacity-70 border-b">
-          <summary className="cursor-pointer">BMC payload (as received by BMCCanvas)</summary>
-          <pre className="whitespace-pre-wrap break-words">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        </details>
+      <ResizablePanelGroup direction="horizontal" className="w-full h-full min-h-[600px]">
+        {/* Left Column */}
+        <ResizablePanel defaultSize={20} minSize={15}>
+          <div className="h-full flex flex-col gap-1">
+            <BMCSection
+              title="Key Partners"
+              value={bmcData.keyPartners}
+              onChange={(value) => handleSectionChange('keyPartners', value)}
+              placeholder="Who are your key partners and suppliers?"
+              headerColor="bg-yellow-100 text-yellow-800"
+              sectionType="partners"
+            />
+            <BMCSection
+              title="Cost Structure"
+              value={bmcData.costStructure}
+              onChange={(value) => handleSectionChange('costStructure', value)}
+              placeholder="What are the most important costs in your business model?"
+              headerColor="bg-red-100 text-red-800"
+              sectionType="costs"
+            />
+          </div>
+        </ResizablePanel>
 
-        {/* Guarantee visible content, even if normalizer returns {} */}
-        <section className="p-4 border-b">
-          <h3 className="font-semibold mb-2">Key Partners</h3>
+        <ResizableHandle withHandle />
 
-          {/* Raw proof: always show *something* */}
-          <p className="whitespace-pre-wrap leading-relaxed mb-2 italic opacity-80">
-            {typeof (bmcData as any)?.keyPartners === "string"
-              ? (bmcData as any).keyPartners
-              : JSON.stringify((bmcData as any)?.keyPartners ?? "(no keyPartners field)")}
-          </p>
+        {/* Center-Left Column */}
+        <ResizablePanel defaultSize={20} minSize={15}>
+          <div className="h-full flex flex-col gap-1">
+            <BMCSection
+              title="Key Activities"
+              value={bmcData.keyActivities}
+              onChange={(value) => handleSectionChange('keyActivities', value)}
+              placeholder="What key activities does your value proposition require?"
+              headerColor="bg-blue-100 text-blue-800"
+              sectionType="activities"
+            />
+            <BMCSection
+              title="Key Resources"
+              value={bmcData.keyResources}
+              onChange={(value) => handleSectionChange('keyResources', value)}
+              placeholder="What key resources does your value proposition require?"
+              headerColor="bg-green-100 text-green-800"
+              sectionType="resources"
+            />
+          </div>
+        </ResizablePanel>
 
-          {/* Final list-render (works when FormattedTextDisplay gets a string/array) */}
-          <FormattedTextDisplay text={(bmcData as any)?.keyPartners} debugKey="keyPartners" />
-        </section>
+        <ResizableHandle withHandle />
 
-        {/* Repeat this block for a second section to double-confirm */}
-        <section className="p-4 border-b">
-          <h3 className="font-semibold mb-2">Value Propositions</h3>
-          <p className="whitespace-pre-wrap leading-relaxed mb-2 italic opacity-80">
-            {typeof (bmcData as any)?.valuePropositions === "string"
-              ? (bmcData as any).valuePropositions
-              : JSON.stringify((bmcData as any)?.valuePropositions ?? "(no valuePropositions field)")}
-          </p>
-          <FormattedTextDisplay text={(bmcData as any)?.valuePropositions} debugKey="valuePropositions" />
-        </section>
-      </div>
+        {/* Center Column */}
+        <ResizablePanel defaultSize={20} minSize={15}>
+          <BMCSection
+            title="Value Propositions"
+            value={bmcData.valuePropositions}
+            onChange={(value) => handleSectionChange('valuePropositions', value)}
+            placeholder="What value do you deliver to your customers?"
+            headerColor="bg-purple-100 text-purple-800"
+            sectionType="value"
+          />
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Center-Right Column */}
+        <ResizablePanel defaultSize={20} minSize={15}>
+          <div className="h-full flex flex-col gap-1">
+            <BMCSection
+              title="Customer Relationships"
+              value={bmcData.customerRelationships}
+              onChange={(value) => handleSectionChange('customerRelationships', value)}
+              placeholder="What type of relationship does each customer segment expect?"
+              headerColor="bg-indigo-100 text-indigo-800"
+              sectionType="relationships"
+            />
+            <BMCSection
+              title="Channels"
+              value={bmcData.channels}
+              onChange={(value) => handleSectionChange('channels', value)}
+              placeholder="Through which channels do you reach your customers?"
+              headerColor="bg-pink-100 text-pink-800"
+              sectionType="channels"
+            />
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Right Column */}
+        <ResizablePanel defaultSize={20} minSize={15}>
+          <div className="h-full flex flex-col gap-1">
+            <BMCSection
+              title="Customer Segments"
+              value={bmcData.customerSegments}
+              onChange={(value) => handleSectionChange('customerSegments', value)}
+              placeholder="For whom are you creating value?"
+              headerColor="bg-orange-100 text-orange-800"
+              sectionType="segments"
+            />
+            <BMCSection
+              title="Revenue Streams"
+              value={bmcData.revenueStreams}
+              onChange={(value) => handleSectionChange('revenueStreams', value)}
+              placeholder="For what value are customers really willing to pay?"
+              headerColor="bg-emerald-100 text-emerald-800"
+              sectionType="revenue"
+            />
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 });
