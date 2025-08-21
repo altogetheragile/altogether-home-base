@@ -306,12 +306,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
           </div>
         </div>
       )}
-      <div className="flex flex-col w-full h-full min-h-[600px] gap-1">
-        {/* Top Section - Main BMC Sections */}
-        <div className="flex-[2] min-h-[400px]">
+      <ResizablePanelGroup direction="vertical" className="w-full h-full min-h-[600px]">
+        {/* Top Panel - Main BMC Sections */}
+        <ResizablePanel defaultSize={70} minSize={35} className="overflow-hidden">
           <ResizablePanelGroup direction="horizontal" className="w-full h-full">
             {/* Left Column */}
-            <ResizablePanel defaultSize={20} minSize={15}>
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
               <BMCSection
                 title="Key Partners"
                 value={bmcData.keyPartners}
@@ -324,32 +324,37 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
             <ResizableHandle withHandle />
 
-            {/* Center-Left Column */}
-            <ResizablePanel defaultSize={20} minSize={15}>
-              <div className="h-full flex flex-col gap-1">
-                <BMCSection
-                  title="Key Activities"
-                  value={bmcData.keyActivities}
-                  onChange={(value) => handleSectionChange('keyActivities', value)}
-                  placeholder="What key activities does your value proposition require?"
-                  headerColor="bg-blue-100 text-blue-800"
-                  sectionType="activities"
-                />
-                <BMCSection
-                  title="Key Resources"
-                  value={bmcData.keyResources}
-                  onChange={(value) => handleSectionChange('keyResources', value)}
-                  placeholder="What key resources does your value proposition require?"
-                  headerColor="bg-green-100 text-green-800"
-                  sectionType="resources"
-                />
-              </div>
+            {/* Center Left Column - Key Activities and Key Resources (vertical split) */}
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
+              <ResizablePanelGroup direction="vertical" className="h-full">
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                  <BMCSection
+                    title="Key Activities"
+                    value={bmcData.keyActivities}
+                    onChange={(value) => handleSectionChange('keyActivities', value)}
+                    placeholder="What key activities does your value proposition require?"
+                    headerColor="bg-blue-100 text-blue-800"
+                    sectionType="activities"
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                  <BMCSection
+                    title="Key Resources"
+                    value={bmcData.keyResources}
+                    onChange={(value) => handleSectionChange('keyResources', value)}
+                    placeholder="What key resources does your value proposition require?"
+                    headerColor="bg-green-100 text-green-800"
+                    sectionType="resources"
+                  />
+                </ResizablePanel>
+              </ResizablePanelGroup>
             </ResizablePanel>
 
             <ResizableHandle withHandle />
 
-            {/* Center Column */}
-            <ResizablePanel defaultSize={20} minSize={15}>
+            {/* Center Column - Value Propositions */}
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
               <BMCSection
                 title="Value Propositions"
                 value={bmcData.valuePropositions}
@@ -362,32 +367,37 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
             <ResizableHandle withHandle />
 
-            {/* Center-Right Column */}
-            <ResizablePanel defaultSize={20} minSize={15}>
-              <div className="h-full flex flex-col gap-1">
-                <BMCSection
-                  title="Customer Relationships"
-                  value={bmcData.customerRelationships}
-                  onChange={(value) => handleSectionChange('customerRelationships', value)}
-                  placeholder="What type of relationship does each customer segment expect?"
-                  headerColor="bg-indigo-100 text-indigo-800"
-                  sectionType="relationships"
-                />
-                <BMCSection
-                  title="Channels"
-                  value={bmcData.channels}
-                  onChange={(value) => handleSectionChange('channels', value)}
-                  placeholder="Through which channels do you reach your customers?"
-                  headerColor="bg-pink-100 text-pink-800"
-                  sectionType="channels"
-                />
-              </div>
+            {/* Center Right Column - Customer Relationships and Channels (vertical split) */}
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
+              <ResizablePanelGroup direction="vertical" className="h-full">
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                  <BMCSection
+                    title="Customer Relationships"
+                    value={bmcData.customerRelationships}
+                    onChange={(value) => handleSectionChange('customerRelationships', value)}
+                    placeholder="What type of relationship does each customer segment expect?"
+                    headerColor="bg-indigo-100 text-indigo-800"
+                    sectionType="relationships"
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
+                  <BMCSection
+                    title="Channels"
+                    value={bmcData.channels}
+                    onChange={(value) => handleSectionChange('channels', value)}
+                    placeholder="Through which channels do you reach your customers?"
+                    headerColor="bg-pink-100 text-pink-800"
+                    sectionType="channels"
+                  />
+                </ResizablePanel>
+              </ResizablePanelGroup>
             </ResizablePanel>
 
             <ResizableHandle withHandle />
 
             {/* Right Column */}
-            <ResizablePanel defaultSize={20} minSize={15}>
+            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden">
               <BMCSection
                 title="Customer Segments"
                 value={bmcData.customerSegments}
@@ -398,12 +408,14 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               />
             </ResizablePanel>
           </ResizablePanelGroup>
-        </div>
+        </ResizablePanel>
 
-        {/* Bottom Section - Cost Structure and Revenue Streams */}
-        <div className="flex-1 min-h-[200px]">
+        <ResizableHandle withHandle />
+
+        {/* Bottom Panel - Cost Structure and Revenue Streams */}
+        <ResizablePanel defaultSize={30} minSize={20} className="overflow-hidden">
           <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-            <ResizablePanel defaultSize={50} minSize={40}>
+            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
               <BMCSection
                 title="Cost Structure"
                 value={bmcData.costStructure}
@@ -416,7 +428,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
             <ResizableHandle withHandle />
 
-            <ResizablePanel defaultSize={50} minSize={40}>
+            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden">
               <BMCSection
                 title="Revenue Streams"
                 value={bmcData.revenueStreams}
@@ -427,8 +439,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               />
             </ResizablePanel>
           </ResizablePanelGroup>
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 });
