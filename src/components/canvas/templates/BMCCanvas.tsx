@@ -66,9 +66,12 @@ function pick<T>(a: T | undefined, b: T | undefined): T | undefined {
 }
 
 function normalizeBmc(data: unknown): BMCData {
+  console.log("[BMCCanvas] Raw data received:", data);
+  
   const parsed = BmcSchema.safeParse(data);
   if (!parsed.success) {
     console.error("[BMCCanvas] schema parse failed:", parsed.error?.flatten());
+    console.error("[BMCCanvas] failed data shape:", data);
     return {
       keyPartners: '',
       keyActivities: '',
@@ -83,15 +86,28 @@ function normalizeBmc(data: unknown): BMCData {
   }
   
   const d = parsed.data;
+  console.log("[BMCCanvas] Parsed data:", d);
   
-  // Helper function to convert string | string[] to string
+  // Helper function to convert string | string[] to string with bullets
   const toString = (value: string | string[] | undefined): string => {
     if (!value) return '';
-    if (Array.isArray(value)) return value.join('\n');
-    return value;
+    if (Array.isArray(value)) {
+      const items = value.filter(Boolean).map(item => item.trim());
+      return items.length ? `• ${items.join('\n• ')}` : '';
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      // If it already has bullet points, return as is
+      if (trimmed.includes('•')) return trimmed;
+      // Split by newlines and add bullets
+      const lines = trimmed.split('\n').map(line => line.trim()).filter(Boolean);
+      return lines.length ? `• ${lines.join('\n• ')}` : '';
+    }
+    return '';
   };
   
-  return {
+  const normalized = {
     keyPartners: toString(pick(d.keyPartners, d.key_partners)),
     keyActivities: toString(pick(d.keyActivities, d.key_activities)),
     keyResources: toString(pick(d.keyResources, d.key_resources)),
@@ -102,6 +118,9 @@ function normalizeBmc(data: unknown): BMCData {
     costStructure: toString(pick(d.costStructure, d.cost_structure)),
     revenueStreams: toString(pick(d.revenueStreams, d.revenue_streams)),
   };
+  
+  console.log("[BMCCanvas] Normalized BMC:", normalized);
+  return normalized;
 }
 
 export interface BMCCanvasRef {
@@ -135,6 +154,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   };
 
   const bmcData = { ...defaultData, ...normalizedData };
+  console.log("[BMCCanvas] Final BMC data for rendering:", bmcData);
 
   const handleSectionChange = (section: keyof BMCData, content: string) => {
     const newData = { ...bmcData, [section]: content };
