@@ -297,153 +297,152 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   );
 
   return (
-    <div className={cn('w-full h-full', className)} ref={canvasRef} data-canvas="true">
-      {companyName && (
-        <div className="text-center mb-1 p-1 bg-card border border-border rounded">
-          <div className="flex items-center justify-center gap-2 text-xs">
-            <span className="font-bold text-foreground">Business Model Canvas</span>
-            <span className="text-muted-foreground">-</span>
-            <span className="font-medium text-foreground">{companyName}</span>
-          </div>
-        </div>
-      )}
-      {/* Main vertical splitter for Top vs Bottom rows */}
-      <ResizablePanelGroup direction="vertical" className="h-[calc(80vh-40px)] min-h-0">
-        {/* TOP ROW (default 60%) */}
-        <ResizablePanel defaultSize={60} minSize={35} className="overflow-hidden relative min-h-0">
-          <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
-            {/* Left Column */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
-              <BMCSection
-                title="Key Partners"
-                value={bmcData.keyPartners}
-                onChange={(value) => handleSectionChange('keyPartners', value)}
-                placeholder="Who are your key partners and suppliers?"
-                headerColor="bg-yellow-100 text-yellow-800"
-                sectionType="partners"
-              />
-            </ResizablePanel>
+    <div className={cn('w-full h-[80vh] min-h-[600px] bg-background text-foreground border border-border rounded-lg', className)} ref={canvasRef} data-canvas="true">
+      {/* Header */}
+      <div className="px-3 py-2 text-center text-sm font-semibold border-b">
+        Business Model Canvas{companyName ? ` – ${companyName}` : ""}
+      </div>
 
-            <ResizableHandle withHandle className={handleCx} />
+      {/* Body with explicit height for percentage calculations */}
+      <div className="h-[calc(80vh-40px)] min-h-0">
+        {/* Main vertical splitter for Top vs Bottom rows */}
+        <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
+          {/* TOP ROW (default 60%) */}
+          <ResizablePanel defaultSize={60} minSize={35} className="overflow-hidden relative min-h-0">
+            <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
+              {/* Left Column */}
+              <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
+                <BMCSection
+                  title="Key Partners"
+                  value={bmcData.keyPartners}
+                  onChange={(value) => handleSectionChange('keyPartners', value)}
+                  placeholder="Who are your key partners and suppliers?"
+                  headerColor="bg-yellow-100 text-yellow-800"
+                  sectionType="partners"
+                />
+              </ResizablePanel>
 
-            {/* Center Left Column - Key Activities and Key Resources (vertical split) */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
-              <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
-                  <BMCSection
-                    title="Key Activities"
-                    value={bmcData.keyActivities}
-                    onChange={(value) => handleSectionChange('keyActivities', value)}
-                    placeholder="What key activities does your value proposition require?"
-                    headerColor="bg-blue-100 text-blue-800"
-                    sectionType="activities"
-                  />
-                </ResizablePanel>
-                <ResizableHandle withHandle className={handleCx} />
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
-                  <BMCSection
-                    title="Key Resources"
-                    value={bmcData.keyResources}
-                    onChange={(value) => handleSectionChange('keyResources', value)}
-                    placeholder="What key resources does your value proposition require?"
-                    headerColor="bg-green-100 text-green-800"
-                    sectionType="resources"
-                  />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </ResizablePanel>
+              <ResizableHandle withHandle className={handleCx} />
 
-            <ResizableHandle withHandle className={handleCx} />
+              {/* Center Left Column - Key Activities and Key Resources (vertical split) */}
+              <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
+                <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
+                  <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
+                    <BMCSection
+                      title="Key Activities"
+                      value={bmcData.keyActivities}
+                      onChange={(value) => handleSectionChange('keyActivities', value)}
+                      placeholder="What key activities does your value proposition require?"
+                      headerColor="bg-blue-100 text-blue-800"
+                      sectionType="activities"
+                    />
+                  </ResizablePanel>
+                  <ResizableHandle withHandle className={handleCx} />
+                  <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
+                    <BMCSection
+                      title="Key Resources"
+                      value={bmcData.keyResources}
+                      onChange={(value) => handleSectionChange('keyResources', value)}
+                      placeholder="What key resources does your value proposition require?"
+                      headerColor="bg-green-100 text-green-800"
+                      sectionType="resources"
+                    />
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </ResizablePanel>
 
-            {/* Center Column - Value Propositions */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
-              <BMCSection
-                title="Value Propositions"
-                value={bmcData.valuePropositions}
-                onChange={(value) => handleSectionChange('valuePropositions', value)}
-                placeholder="What value do you deliver to your customers?"
-                headerColor="bg-purple-100 text-purple-800"
-                sectionType="value"
-              />
-            </ResizablePanel>
+              <ResizableHandle withHandle className={handleCx} />
 
-            <ResizableHandle withHandle className={handleCx} />
+              {/* Center Column - Value Propositions */}
+              <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
+                <BMCSection
+                  title="Value Propositions"
+                  value={bmcData.valuePropositions}
+                  onChange={(value) => handleSectionChange('valuePropositions', value)}
+                  placeholder="What value do you deliver to your customers?"
+                  headerColor="bg-purple-100 text-purple-800"
+                  sectionType="value"
+                />
+              </ResizablePanel>
 
-            {/* Center Right Column - Customer Relationships and Channels (vertical split) */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
-              <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
-                  <BMCSection
-                    title="Customer Relationships"
-                    value={bmcData.customerRelationships}
-                    onChange={(value) => handleSectionChange('customerRelationships', value)}
-                    placeholder="What type of relationship does each customer segment expect?"
-                    headerColor="bg-indigo-100 text-indigo-800"
-                    sectionType="relationships"
-                  />
-                </ResizablePanel>
-                <ResizableHandle withHandle className={handleCx} />
-                <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
-                  <BMCSection
-                    title="Channels"
-                    value={bmcData.channels}
-                    onChange={(value) => handleSectionChange('channels', value)}
-                    placeholder="Through which channels do you reach your customers?"
-                    headerColor="bg-pink-100 text-pink-800"
-                    sectionType="channels"
-                  />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </ResizablePanel>
+              <ResizableHandle withHandle className={handleCx} />
 
-            <ResizableHandle withHandle className={handleCx} />
+              {/* Center Right Column - Customer Relationships and Channels (vertical split) */}
+              <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
+                <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
+                  <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
+                    <BMCSection
+                      title="Customer Relationships"
+                      value={bmcData.customerRelationships}
+                      onChange={(value) => handleSectionChange('customerRelationships', value)}
+                      placeholder="What type of relationship does each customer segment expect?"
+                      headerColor="bg-indigo-100 text-indigo-800"
+                      sectionType="relationships"
+                    />
+                  </ResizablePanel>
+                  <ResizableHandle withHandle className={handleCx} />
+                  <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
+                    <BMCSection
+                      title="Channels"
+                      value={bmcData.channels}
+                      onChange={(value) => handleSectionChange('channels', value)}
+                      placeholder="Through which channels do you reach your customers?"
+                      headerColor="bg-pink-100 text-pink-800"
+                      sectionType="channels"
+                    />
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </ResizablePanel>
 
-            {/* Right Column */}
-            <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
-              <BMCSection
-                title="Customer Segments"
-                value={bmcData.customerSegments}
-                onChange={(value) => handleSectionChange('customerSegments', value)}
-                placeholder="For whom are you creating value?"
-                headerColor="bg-orange-100 text-orange-800"
-                sectionType="segments"
-              />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
+              <ResizableHandle withHandle className={handleCx} />
 
-        {/* Handle between top and bottom rows */}
-        <ResizableHandle withHandle className={handleCx} />
+              {/* Right Column */}
+              <ResizablePanel defaultSize={20} minSize={12} className="overflow-hidden relative min-h-0">
+                <BMCSection
+                  title="Customer Segments"
+                  value={bmcData.customerSegments}
+                  onChange={(value) => handleSectionChange('customerSegments', value)}
+                  placeholder="For whom are you creating value?"
+                  headerColor="bg-orange-100 text-orange-800"
+                  sectionType="segments"
+                />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
 
-        {/* BOTTOM ROW (default 40%) */}
-        <ResizablePanel defaultSize={40} minSize={20} className="overflow-hidden relative min-h-0">
-          <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
-            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
-              <BMCSection
-                title="Cost Structure"
-                value={bmcData.costStructure}
-                onChange={(value) => handleSectionChange('costStructure', value)}
-                placeholder="What are the most important costs in your business model?"
-                headerColor="bg-red-100 text-red-800"
-                sectionType="costs"
-              />
-            </ResizablePanel>
+          {/* Handle between top and bottom rows */}
+          <ResizableHandle withHandle className={handleCx} />
 
-            <ResizableHandle withHandle className={handleCx} />
+          {/* BOTTOM ROW (default 40%) */}
+          <ResizablePanel defaultSize={40} minSize={20} className="overflow-hidden relative min-h-0">
+            <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
+              <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
+                <BMCSection
+                  title="Cost Structure"
+                  value={bmcData.costStructure}
+                  onChange={(value) => handleSectionChange('costStructure', value)}
+                  placeholder="What are the most important costs in your business model?"
+                  headerColor="bg-red-100 text-red-800"
+                  sectionType="costs"
+                />
+              </ResizablePanel>
 
-            <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
-              <BMCSection
-                title="Revenue Streams"
-                value={bmcData.revenueStreams}
-                onChange={(value) => handleSectionChange('revenueStreams', value)}
-                placeholder="For what value are your customers really willing to pay?"
-                headerColor="bg-emerald-100 text-emerald-800"
-                sectionType="revenue"
-              />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+              <ResizableHandle withHandle className={handleCx} />
+
+              <ResizablePanel defaultSize={50} minSize={25} className="overflow-hidden relative min-h-0">
+                <BMCSection
+                  title="Revenue Streams"
+                  value={bmcData.revenueStreams}
+                  onChange={(value) => handleSectionChange('revenueStreams', value)}
+                  placeholder="For what value are your customers really willing to pay?"
+                  headerColor="bg-emerald-100 text-emerald-800"
+                  sectionType="revenue"
+                />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
     </div>
   );
 });
