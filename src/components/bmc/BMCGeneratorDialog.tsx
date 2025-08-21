@@ -95,29 +95,42 @@ const BMCGeneratorDialog: React.FC = () => {
         }
       });
 
-      // Log the raw response structure
-      console.debug("[BMC] edge response:", JSON.stringify(data, null, 2));
-      console.log('BMC generation response:', { data, error });
-
       if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(`Function call failed: ${error.message}`);
+        console.error("[BMC] Edge function error:", error);
+        throw new Error(error.message ?? "Edge function invocation failed");
       }
 
-      if (data?.success) {
-        // Handle data unwrapping properly
-        const bmcData = data?.data?.bmc ?? data?.data;
-        console.debug("[BMC] Extracted BMC data:", bmcData);
-        setGeneratedBMC(bmcData);
-        setCompanyName(data.companyName || formData.companyName);
+      // Debug the raw shape once
+      console.debug("[BMC] edge response (raw):", data);
+
+      // Parse JSON string if needed and extract BMC payload
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      
+      // Prefer .data, else .bmc, else assume it's already the fields
+      const candidate = parsed?.data ?? parsed?.bmc ?? parsed;
+      
+      // Light validation: ensure at least one known BMC field exists
+      if (
+        candidate &&
+        typeof candidate === "object" &&
+        (
+          "keyPartners" in candidate ||
+          "key_activities" in candidate || 
+          "keyActivities" in candidate ||
+          "valuePropositions" in candidate || 
+          "value_propositions" in candidate
+        )
+      ) {
+        console.debug("[BMC] extracted BMC:", candidate);
+        setGeneratedBMC(candidate);
+        setCompanyName(parsed.companyName || formData.companyName);
         toast({
           title: "🎉 BMC Generated Successfully!",
           description: "Your strategic Business Model Canvas is ready for review and export"
         });
       } else {
-        const errorMsg = data?.error || 'Unknown generation error';
-        console.error('AI generation failed:', errorMsg);
-        throw new Error(errorMsg);
+        console.error("[BMC] Unable to extract BMC payload from response:", data);
+        throw new Error("Could not extract Business Model Canvas from response.");
       }
     } catch (error) {
       console.error('Error generating BMC:', error);
