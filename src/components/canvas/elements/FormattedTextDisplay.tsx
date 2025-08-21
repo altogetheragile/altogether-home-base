@@ -24,7 +24,29 @@ const FormattedTextDisplay: React.FC<FormattedTextDisplayProps> = ({
 
   // Parse content to identify bullet points
   const parseContent = (text: string) => {
-    // First try to split by newlines (for properly formatted content)
+    console.log('FormattedTextDisplay parsing content:', text);
+    
+    // Check if content is already properly formatted with bullets and newlines
+    const hasBulletsAndNewlines = text.includes('•') && text.includes('\n');
+    
+    if (hasBulletsAndNewlines) {
+      console.log('Content already has proper bullet formatting, preserving as-is');
+      // Content is already properly formatted, just split by newlines and clean up
+      const lines = text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+      
+      return lines.map(line => {
+        // If line already has a bullet, keep it as-is
+        if (line.startsWith('•')) {
+          return line.substring(1).trim(); // Remove bullet, we'll add it back in display
+        }
+        return line;
+      });
+    }
+    
+    // Legacy parsing for unformatted content
+    console.log('Content needs formatting, applying parsing logic');
     let lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     
     // If no newlines, try splitting by bullet points
@@ -43,11 +65,11 @@ const FormattedTextDisplay: React.FC<FormattedTextDisplayProps> = ({
         .filter(line => line.length > 0);
     }
 
-    // Clean up the lines and remove any existing bullet symbols
+    // Clean up the lines and add proper punctuation
     return lines.map(line => {
       // Remove existing bullet symbols from the start
       const cleanLine = line.replace(/^[•·‣▪▫]\s*/, '').trim();
-      // Ensure proper punctuation
+      // Ensure proper punctuation for non-bullet content
       return cleanLine && !cleanLine.endsWith('.') && !cleanLine.endsWith('!') && !cleanLine.endsWith('?') 
         ? cleanLine + '.' 
         : cleanLine;
