@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, useState } from 'react';
+import React, { useRef, useImperativeHandle, useState, useMemo, useCallback } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import TextElement from '../elements/TextElement';
 import FormattedTextDisplay from '@/components/common/FormattedTextDisplay';
@@ -66,12 +66,8 @@ function pick<T>(a: T | undefined, b: T | undefined): T | undefined {
 }
 
 function normalizeBmc(data: unknown): BMCData {
-  console.log("[BMCCanvas] Raw data received:", data);
-  
   const parsed = BmcSchema.safeParse(data);
   if (!parsed.success) {
-    console.error("[BMCCanvas] schema parse failed:", parsed.error?.flatten());
-    console.error("[BMCCanvas] failed data shape:", data);
     return {
       keyPartners: '',
       keyActivities: '',
@@ -86,7 +82,6 @@ function normalizeBmc(data: unknown): BMCData {
   }
   
   const d = parsed.data;
-  console.log("[BMCCanvas] Parsed data:", d);
   
   // Helper function to convert string | string[] to string with bullets
   const toString = (value: string | string[] | undefined): string => {
@@ -107,7 +102,7 @@ function normalizeBmc(data: unknown): BMCData {
     return '';
   };
   
-  const normalized = {
+  return {
     keyPartners: toString(pick(d.keyPartners, d.key_partners)),
     keyActivities: toString(pick(d.keyActivities, d.key_activities)),
     keyResources: toString(pick(d.keyResources, d.key_resources)),
@@ -118,9 +113,6 @@ function normalizeBmc(data: unknown): BMCData {
     costStructure: toString(pick(d.costStructure, d.cost_structure)),
     revenueStreams: toString(pick(d.revenueStreams, d.revenue_streams)),
   };
-  
-  console.log("[BMCCanvas] Normalized BMC:", normalized);
-  return normalized;
 }
 
 export interface BMCCanvasRef {
@@ -148,9 +140,10 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     data-[panel-group-direction=vertical]:cursor-row-resize data-[panel-group-direction=vertical]:hover:bg-primary/10
   `;
 
-  const normalizedData = normalizeBmc(data);
+  // Memoize data normalization to prevent infinite re-renders
+  const normalizedData = useMemo(() => normalizeBmc(data), [data]);
 
-  const defaultData: BMCData = {
+  const defaultData: BMCData = useMemo(() => ({
     keyPartners: '',
     keyActivities: '',
     keyResources: '',
@@ -160,15 +153,14 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     customerSegments: '',
     costStructure: '',
     revenueStreams: '',
-  };
+  }), []);
 
-  const bmcData = { ...defaultData, ...normalizedData };
-  console.log("[BMCCanvas] Final BMC data for rendering:", bmcData);
+  const bmcData = useMemo(() => ({ ...defaultData, ...normalizedData }), [defaultData, normalizedData]);
 
-  const handleSectionChange = (section: keyof BMCData, content: string) => {
+  const handleSectionChange = useCallback((section: keyof BMCData, content: string) => {
     const newData = { ...bmcData, [section]: content };
     onDataChange?.(newData);
-  };
+  }, [bmcData, onDataChange]);
 
   const getBMCData = (): BMCData => bmcData;
 

@@ -43,7 +43,6 @@ const TextElement: React.FC<TextElementProps> = ({
   };
 
   useEffect(() => {
-    console.log("[TextElement] Content prop changed:", { content, currentValue: value });
     setValue(content);
   }, [content]);
 
