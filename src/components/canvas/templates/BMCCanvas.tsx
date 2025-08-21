@@ -276,7 +276,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   }) => (
     <div className="h-full flex flex-col min-h-0 bg-card border-2 border-border/30 overflow-hidden shadow-sm">
       <SectionHeader title={title} color={headerColor} />
-      <div className="flex-1 p-1 min-h-[120px] min-h-0 overflow-auto relative z-0">
+      <div className="flex-1 p-1 min-h-[120px] overflow-auto relative z-0">
         {isEditable && !isExporting ? (
           <TextElement
             content={value}
@@ -315,7 +315,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
           </div>
         </div>
       )}
-      <ResizablePanelGroup direction="vertical" className="w-full h-full min-h-[600px] min-h-0">
+      <ResizablePanelGroup direction="vertical" className="w-full h-full min-h-[600px]">
         {/* Top Panel - Main BMC Sections */}
         <ResizablePanel defaultSize={70} minSize={35} className="overflow-hidden relative min-h-0">
           <ResizablePanelGroup direction="horizontal" className="w-full h-full min-h-0">
