@@ -12,24 +12,29 @@ const cleanupText = (text: string | string[] | any): string => {
   // Handle arrays by preserving bullet structure
   if (Array.isArray(text)) {
     console.log(`Processing array with ${text.length} items:`, text);
-    textToProcess = text
+    const processedItems = text
       .map(item => {
         const cleanItem = String(item).trim();
         // Ensure each item starts with a bullet point
         return cleanItem.startsWith('•') ? cleanItem : `• ${cleanItem}`;
       })
-      .filter(item => item.length > 2) // Filter out items that are just bullets
-      .join('\n');
+      .filter(item => item.length > 2); // Filter out items that are just bullets
+    
+    // Return the joined string directly for arrays - no further cleanup needed
+    const result = processedItems.join('\n');
+    console.log(`Array converted to string: "${result.substring(0, 100)}..."`);
+    return result;
   } else {
     textToProcess = String(text);
   }
   
   console.log(`Cleaning text: "${textToProcess.substring(0, 100)}..."`);
   
+  // Only apply text cleanup to non-array content
   return textToProcess
     // Fix missing spaces after periods
     .replace(/\.([A-Z])/g, '. $1')
-    // Fix missing spaces after commas
+    // Fix missing spaces after commas (but not in bullet lists)
     .replace(/,([A-Z])/g, ', $1')
     // Fix missing spaces after colons
     .replace(/:([A-Z])/g, ': $1')
