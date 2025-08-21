@@ -206,7 +206,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
         </div>
       )}
       
-      <div className="w-full h-[calc(100vh-150px)] min-h-[500px] bg-background border border-border overflow-hidden">
+      <div className="w-full min-h-[600px] max-h-[800px] bg-background border border-border overflow-hidden">
         <ResizablePanelGroup direction="vertical" className="h-full">
           {/* Top Row */}
           <ResizablePanel defaultSize={60} minSize={40}>

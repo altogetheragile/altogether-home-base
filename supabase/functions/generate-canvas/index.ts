@@ -9,13 +9,17 @@ const cleanupText = (text: string | string[] | any): string => {
   
   let textToProcess: string;
   
-  // Handle arrays by joining them into a formatted string
+  // Handle arrays by preserving bullet structure
   if (Array.isArray(text)) {
     console.log(`Processing array with ${text.length} items:`, text);
     textToProcess = text
-      .map(item => String(item).trim())
-      .filter(item => item.length > 0)
-      .join('. ') + (text.length > 0 ? '.' : '');
+      .map(item => {
+        const cleanItem = String(item).trim();
+        // Ensure each item starts with a bullet point
+        return cleanItem.startsWith('•') ? cleanItem : `• ${cleanItem}`;
+      })
+      .filter(item => item.length > 2) // Filter out items that are just bullets
+      .join('\n');
   } else {
     textToProcess = String(text);
   }

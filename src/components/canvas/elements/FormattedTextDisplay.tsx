@@ -24,22 +24,34 @@ const FormattedTextDisplay: React.FC<FormattedTextDisplayProps> = ({
 
   // Parse content to identify bullet points
   const parseContent = (text: string) => {
-    // Split by bullet points or periods, then clean up
-    const lines = text
-      .split(/[•·‣▪▫]/) // Split on various bullet symbols
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-
-    // If no bullet points found, split by periods and create bullet points
+    // First try to split by newlines (for properly formatted content)
+    let lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    // If no newlines, try splitting by bullet points
     if (lines.length <= 1) {
-      return text
-        .split(/\.(?=\s[A-Z])/) // Split on periods followed by space and capital letter
+      lines = text
+        .split(/[•·‣▪▫]/) // Split on various bullet symbols
         .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .map(line => line.endsWith('.') ? line : line + '.');
+        .filter(line => line.length > 0);
     }
 
-    return lines.map(line => line.endsWith('.') ? line : line + '.');
+    // If still no splits, try splitting by periods (fallback)
+    if (lines.length <= 1) {
+      lines = text
+        .split(/\.(?=\s[A-Z])/) // Split on periods followed by space and capital letter
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+    }
+
+    // Clean up the lines and remove any existing bullet symbols
+    return lines.map(line => {
+      // Remove existing bullet symbols from the start
+      const cleanLine = line.replace(/^[•·‣▪▫]\s*/, '').trim();
+      // Ensure proper punctuation
+      return cleanLine && !cleanLine.endsWith('.') && !cleanLine.endsWith('!') && !cleanLine.endsWith('?') 
+        ? cleanLine + '.' 
+        : cleanLine;
+    }).filter(line => line.length > 0);
   };
 
   const parsedLines = parseContent(content);
