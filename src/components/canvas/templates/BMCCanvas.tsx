@@ -306,10 +306,9 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
           </div>
         </div>
       )}
-      
-      <ResizablePanelGroup direction="vertical" className="w-full h-full min-h-[600px]">
-        {/* Top Panel - Main BMC Sections */}
-        <ResizablePanel defaultSize={70} minSize={60}>
+      <div className="flex flex-col w-full h-full min-h-[600px] gap-1">
+        {/* Top Section - Main BMC Sections */}
+        <div className="flex-[2] min-h-[400px]">
           <ResizablePanelGroup direction="horizontal" className="w-full h-full">
             {/* Left Column */}
             <ResizablePanel defaultSize={20} minSize={15}>
@@ -399,12 +398,10 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               />
             </ResizablePanel>
           </ResizablePanelGroup>
-        </ResizablePanel>
+        </div>
 
-        <ResizableHandle withHandle />
-
-        {/* Bottom Panel - Cost Structure and Revenue Streams */}
-        <ResizablePanel defaultSize={30} minSize={25}>
+        {/* Bottom Section - Cost Structure and Revenue Streams */}
+        <div className="flex-1 min-h-[200px]">
           <ResizablePanelGroup direction="horizontal" className="w-full h-full">
             <ResizablePanel defaultSize={50} minSize={40}>
               <BMCSection
@@ -430,8 +427,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
               />
             </ResizablePanel>
           </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+      </div>
     </div>
   );
 });
