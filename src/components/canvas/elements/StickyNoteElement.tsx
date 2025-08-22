@@ -15,6 +15,7 @@ interface StickyNoteElementProps {
   onSelect?: () => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
+  onContentChange?: (data: { text: string; color?: string }) => void;
 }
 
 export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
@@ -26,13 +27,17 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
   onSelect,
   onResize,
   onMove,
+  onContentChange,
 }) => {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editText, setEditText] = React.useState(data.text);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSelect?.();
 
-    if (!onMove) return;
+    if (isEditing || !onMove) return;
 
     const startX = e.clientX - position.x;
     const startY = e.clientY - position.y;
@@ -53,6 +58,36 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onContentChange) {
+      setIsEditing(true);
+      setEditText(data.text);
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    }
+  };
+
+  const handleSave = () => {
+    onContentChange?.({ ...data, text: editText });
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditText(data.text);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  };
+
   const stickyColors = {
     yellow: 'bg-yellow-100 border-yellow-200',
     blue: 'bg-blue-100 border-blue-200',
@@ -66,9 +101,10 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
   return (
     <div
       className={cn(
-        "absolute select-none cursor-move border-2 rounded-lg",
+        "absolute select-none border-2 rounded-lg",
         isSelected ? "border-primary" : "border-transparent",
-        "hover:border-primary/50 transition-colors"
+        "hover:border-primary/50 transition-colors",
+        isEditing ? "cursor-text" : "cursor-move"
       )}
       style={{
         left: position.x,
@@ -80,14 +116,29 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
       }}
       onMouseDown={handleMouseDown}
     >
-      <Card className={cn("w-full h-full shadow-md", colorClass)}>
+      <Card className={cn("w-full h-full shadow-md", colorClass, isEditing && "ring-2 ring-primary")}>
         <CardContent className="p-3 h-full">
           <div className="flex items-start gap-2 h-full">
             <StickyNote className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div className="flex-1 h-full">
-              <p className="text-sm text-foreground break-words overflow-auto">
-                {data.text || 'Click to edit...'}
-              </p>
+              {isEditing ? (
+                <textarea
+                  ref={textareaRef}
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleSave}
+                  className="w-full h-full text-sm resize-none border-none outline-none bg-transparent text-foreground"
+                  placeholder="Enter your note..."
+                />
+              ) : (
+                <p 
+                  className="text-sm text-foreground break-words overflow-auto cursor-text"
+                  onDoubleClick={handleDoubleClick}
+                >
+                  {data.text || 'Double-click to edit...'}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

@@ -15,10 +15,13 @@ import { useStoryMutations } from '@/hooks/useUserStories';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useProjects } from '@/hooks/useProjects';
+import { useCanvasMutations } from '@/hooks/useCanvas';
 
 interface UserStoryClarifierDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  projectId?: string;
 }
 
 interface StoryAnalysisResult {
@@ -42,7 +45,7 @@ interface StoryAnalysisResult {
   };
 }
 
-export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifierDialogProps) {
+export function UserStoryClarifierDialog({ isOpen, onClose, projectId }: UserStoryClarifierDialogProps) {
   const [storyType, setStoryType] = useState<'epic' | 'feature' | 'story'>('story');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -50,10 +53,14 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<StoryAnalysisResult | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || '');
+  const [saveToCanvas, setSaveToCanvas] = useState(false);
   
   const { toast } = useToast();
   const { createStory, createEpic, createFeature, createBulkStories } = useStoryMutations();
   const { user } = useAuth();
+  const { data: projects } = useProjects();
+  const { updateCanvas } = useCanvasMutations();
 
   const handleAnalyze = async () => {
     if (!title.trim()) {
@@ -155,22 +162,30 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
     };
 
     try {
-      if (storyType === 'epic') {
-        await createEpic.mutateAsync({
-          title: storyToCreate.title,
-          description: storyToCreate.description,
-          status: 'draft',
-        });
-      } else {
-        await createStory.mutateAsync({
-          title: storyToCreate.title,
-          description: storyToCreate.description,
-          acceptance_criteria: storyToCreate.acceptanceCriteria,
-          status: 'draft',
-          priority: 'medium',
-          issue_type: storyType === 'feature' ? 'story' : storyType,
-          story_points: storyType === 'story' ? 3 : undefined,
-        });
+      // Save to database if requested
+      if (!saveToCanvas) {
+        if (storyType === 'epic') {
+          await createEpic.mutateAsync({
+            title: storyToCreate.title,
+            description: storyToCreate.description,
+            status: 'draft',
+          });
+        } else {
+          await createStory.mutateAsync({
+            title: storyToCreate.title,
+            description: storyToCreate.description,
+            acceptance_criteria: storyToCreate.acceptanceCriteria,
+            status: 'draft',
+            priority: 'medium',
+            issue_type: storyType === 'feature' ? 'story' : storyType,
+            story_points: storyType === 'story' ? 3 : undefined,
+          });
+        }
+      }
+
+      // Save to canvas if project is selected
+      if (saveToCanvas && selectedProjectId) {
+        await saveStoryToCanvas(storyToCreate);
       }
       
       if (!storyData) {
@@ -182,12 +197,81 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
     }
   };
 
+  const saveStoryToCanvas = async (storyData: {
+    title: string;
+    description: string;
+    acceptanceCriteria: string[];
+  }) => {
+    try {
+      // Get existing canvas or create new one
+      const { data: existingCanvas } = await supabase
+        .from('canvases')
+        .select('*')
+        .eq('project_id', selectedProjectId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const newElement = {
+        id: crypto.randomUUID(),
+        type: 'story',
+        position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
+        size: { width: 280, height: 160 },
+        content: {
+          title: storyData.title,
+          story: storyData.description,
+          priority: 'medium',
+          storyPoints: 3,
+          status: 'draft'
+        },
+      };
+
+      const updatedData = existingCanvas 
+        ? {
+            ...existingCanvas.data,
+            elements: [...(existingCanvas.data?.elements || []), newElement]
+          }
+        : {
+            elements: [newElement],
+            metadata: {}
+          };
+
+      if (existingCanvas) {
+        await updateCanvas.mutateAsync({
+          projectId: selectedProjectId,
+          data: updatedData,
+        });
+      } else {
+        await supabase.from('canvases').insert([{
+          project_id: selectedProjectId,
+          data: updatedData,
+        }]);
+      }
+
+      toast({
+        title: "Story added to canvas",
+        description: "Your story has been added to the project canvas.",
+      });
+    } catch (error) {
+      console.error('Error saving story to canvas:', error);
+      toast({
+        title: "Failed to save to canvas",
+        description: "Could not add the story to the canvas.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleReset = () => {
     setTitle('');
     setDescription('');
     setAnalysisResult(null);
     setAnalysisType('user-story-generation');
     setStoryType('story');
+    setSaveToCanvas(false);
+    if (!projectId) {
+      setSelectedProjectId('');
+    }
   };
 
   const handleCopyToClipboard = async (content?: string) => {
@@ -598,6 +682,45 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
                        </SelectContent>
                     </Select>
                   </div>
+                  
+                  {user && (
+                    <div className="md:col-span-2 space-y-4 pt-4 border-t">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="saveToCanvas"
+                          checked={saveToCanvas}
+                          onChange={(e) => setSaveToCanvas(e.target.checked)}
+                          className="rounded"
+                        />
+                        <Label htmlFor="saveToCanvas" className="text-sm font-medium">
+                          Save to Project Canvas
+                        </Label>
+                      </div>
+                      
+                      {saveToCanvas && (
+                        <div className="space-y-2">
+                          <Label htmlFor="projectSelect">Select Project</Label>
+                          <Select
+                            value={selectedProjectId}
+                            onValueChange={setSelectedProjectId}
+                            disabled={!!projectId}
+                          >
+                            <SelectTrigger id="projectSelect">
+                              <SelectValue placeholder="Choose a project..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {projects?.map((project) => (
+                                <SelectItem key={project.id} value={project.id}>
+                                  {project.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -644,9 +767,25 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
                 </Button>
                 {analysisResult && !analysisResult.splitStories && (
                   user ? (
-                    <Button onClick={() => handleCreateStory()} disabled={createStory.isPending || createEpic.isPending}>
-                      Create {storyType}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => handleCreateStory()} 
+                        disabled={createStory.isPending || createEpic.isPending || (saveToCanvas && !selectedProjectId)}
+                      >
+                        {saveToCanvas ? `Add to Canvas` : `Create ${storyType}`}
+                      </Button>
+                      {!saveToCanvas && (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setSaveToCanvas(true);
+                            if (projects?.[0]) setSelectedProjectId(projects[0].id);
+                          }}
+                        >
+                          Save to Canvas Instead
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <Button onClick={handleSignInRedirect} variant="default">
                       <LogIn className="h-4 w-4 mr-2" />

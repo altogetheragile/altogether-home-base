@@ -150,6 +150,17 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     handleDataChange(newData);
   };
 
+  const handleElementContentChange = (elementId: string, content: any) => {
+    const newData = {
+      ...canvasData,
+      elements: canvasData.elements.map(el =>
+        el.id === elementId ? { ...el, content } : el
+      ),
+    };
+    setCanvasData(newData);
+    debouncedDataChange(newData);
+  };
+
   const handleElementDelete = (elementId: string) => {
     const newData = {
       ...canvasData,
@@ -219,9 +230,21 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       case 'bmc':
         return <BMCCanvasElement key={element.id} {...commonProps} />;
       case 'story':
-        return <StoryCardElement key={element.id} {...commonProps} />;
+        return (
+          <StoryCardElement 
+            key={element.id} 
+            {...commonProps} 
+            onContentChange={(content) => handleElementContentChange(element.id, content)}
+          />
+        );
       case 'sticky':
-        return <StickyNoteElement key={element.id} {...commonProps} />;
+        return (
+          <StickyNoteElement 
+            key={element.id} 
+            {...commonProps} 
+            onContentChange={(content) => handleElementContentChange(element.id, content)}
+          />
+        );
       default:
         return null;
     }

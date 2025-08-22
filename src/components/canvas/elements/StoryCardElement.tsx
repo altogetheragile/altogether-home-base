@@ -20,6 +20,14 @@ interface StoryCardElementProps {
   onSelect?: () => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
+  onContentChange?: (data: {
+    title: string;
+    story: string;
+    priority?: string;
+    storyPoints?: number;
+    epic?: string;
+    status?: string;
+  }) => void;
 }
 
 export const StoryCardElement: React.FC<StoryCardElementProps> = ({
@@ -31,13 +39,20 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   onSelect,
   onResize,
   onMove,
+  onContentChange,
 }) => {
+  const [isEditingTitle, setIsEditingTitle] = React.useState(false);
+  const [isEditingStory, setIsEditingStory] = React.useState(false);
+  const [editTitle, setEditTitle] = React.useState(data.title);
+  const [editStory, setEditStory] = React.useState(data.story);
+  const titleInputRef = React.useRef<HTMLInputElement>(null);
+  const storyTextareaRef = React.useRef<HTMLTextAreaElement>(null);
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSelect?.();
 
-    if (!onMove) return;
+    if ((isEditingTitle || isEditingStory) || !onMove) return;
 
     const startX = e.clientX - position.x;
     const startY = e.clientY - position.y;
@@ -58,6 +73,66 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleTitleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onContentChange) {
+      setIsEditingTitle(true);
+      setEditTitle(data.title);
+      setTimeout(() => titleInputRef.current?.focus(), 0);
+    }
+  };
+
+  const handleStoryDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onContentChange) {
+      setIsEditingStory(true);
+      setEditStory(data.story);
+      setTimeout(() => storyTextareaRef.current?.focus(), 0);
+    }
+  };
+
+  const handleTitleSave = () => {
+    onContentChange?.({ ...data, title: editTitle });
+    setIsEditingTitle(false);
+  };
+
+  const handleStorySave = () => {
+    onContentChange?.({ ...data, story: editStory });
+    setIsEditingStory(false);
+  };
+
+  const handleTitleCancel = () => {
+    setEditTitle(data.title);
+    setIsEditingTitle(false);
+  };
+
+  const handleStoryCancel = () => {
+    setEditStory(data.story);
+    setIsEditingStory(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleTitleCancel();
+    }
+  };
+
+  const handleStoryKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleStorySave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleStoryCancel();
+    }
+  };
+
   const getPriorityColor = (priority?: string) => {
     switch (priority?.toLowerCase()) {
       case 'high': return 'bg-red-100 text-red-800 border-red-200';
@@ -70,9 +145,10 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   return (
     <div
       className={cn(
-        "absolute select-none cursor-move border-2 rounded-lg",
+        "absolute select-none border-2 rounded-lg",
         isSelected ? "border-primary" : "border-transparent",
-        "hover:border-primary/50 transition-colors"
+        "hover:border-primary/50 transition-colors",
+        (isEditingTitle || isEditingStory) ? "cursor-text" : "cursor-move"
       )}
       style={{
         left: position.x,
@@ -107,13 +183,48 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
               )}
             </div>
           </div>
-          <CardTitle className="text-sm line-clamp-2">{data.title}</CardTitle>
+          <CardTitle className="text-sm line-clamp-2">
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleSave}
+                className="w-full text-sm border-none outline-none bg-transparent text-foreground"
+                placeholder="Enter story title..."
+              />
+            ) : (
+              <span 
+                className="cursor-text"
+                onDoubleClick={handleTitleDoubleClick}
+              >
+                {data.title || 'Double-click to edit title...'}
+              </span>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-3 pt-0">
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground line-clamp-3">
-              {data.story}
-            </p>
+            {isEditingStory ? (
+              <textarea
+                ref={storyTextareaRef}
+                value={editStory}
+                onChange={(e) => setEditStory(e.target.value)}
+                onKeyDown={handleStoryKeyDown}
+                onBlur={handleStorySave}
+                className="w-full text-xs resize-none border-none outline-none bg-transparent text-muted-foreground"
+                placeholder="Enter story description..."
+                rows={3}
+              />
+            ) : (
+              <p 
+                className="text-xs text-muted-foreground line-clamp-3 cursor-text"
+                onDoubleClick={handleStoryDoubleClick}
+              >
+                {data.story || 'Double-click to edit story...'}
+              </p>
+            )}
             {data.epic && (
               <div className="flex items-center gap-1">
                 <Badge variant="outline" className="text-xs">
