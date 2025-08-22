@@ -23,7 +23,9 @@ export const useCanvas = (projectId: string) => {
         .from('canvases')
         .select('*')
         .eq('project_id', projectId)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no canvas exists
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(); // Get the most recent canvas if multiple exist
 
       if (error) {
         console.error('Error fetching canvas:', error);

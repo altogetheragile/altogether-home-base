@@ -48,7 +48,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     if (canvas?.data) {
       console.log('Setting canvas data from existing canvas');
       setCanvasData(canvas.data);
-    } else if (!canvas && !isLoading && !createCanvas.isPending) {
+    } else if (!canvas && !isLoading && !createCanvas.isPending && projectId) {
       console.log('Creating new canvas for project:', projectId);
       // Create new canvas if none exists
       const initialData = { elements: [], metadata: {} };
@@ -66,7 +66,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         }
       });
     }
-  }, [canvas, isLoading, createCanvas, projectId]);
+  }, [canvas, isLoading, projectId]); // Removed createCanvas from dependency array
 
   // Real-time collaboration
   const { isConnected, activeUsers } = useCanvasRealtime({
