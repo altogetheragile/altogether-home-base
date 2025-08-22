@@ -322,7 +322,15 @@ serve(async (req) => {
 
     // Parse the response and clean up content
     const generatedContent = responseData.choices[0].message.content;
-    let parsedContent = JSON.parse(generatedContent);
+    
+    let parsedContent;
+    try {
+      parsedContent = JSON.parse(generatedContent);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response as JSON:', parseError);
+      console.error('Raw response:', generatedContent);
+      throw new Error('Invalid JSON response from OpenAI API');
+    }
     
     // Apply cleanup and validation based on canvas type
     if (canvasType === 'business-model-canvas' || type === 'bmc') {
@@ -355,25 +363,25 @@ serve(async (req) => {
       
       parsedContent = cleanedContent;
     } else if (canvasType === 'story-analysis') {
-      // Clean up story analysis content
-      if (parsedContent.suggestions) {
+      // Clean up story analysis content with safe array checks
+      if (parsedContent.suggestions && Array.isArray(parsedContent.suggestions)) {
         parsedContent.suggestions = parsedContent.suggestions.map((s: string) => cleanupText(s));
       }
-      if (parsedContent.acceptanceCriteria) {
+      if (parsedContent.acceptanceCriteria && Array.isArray(parsedContent.acceptanceCriteria)) {
         parsedContent.acceptanceCriteria = parsedContent.acceptanceCriteria.map((s: string) => cleanupText(s));
       }
-      if (parsedContent.refinementQuestions) {
+      if (parsedContent.refinementQuestions && Array.isArray(parsedContent.refinementQuestions)) {
         parsedContent.refinementQuestions = parsedContent.refinementQuestions.map((s: string) => cleanupText(s));
       }
-      if (parsedContent.splitStories) {
+      if (parsedContent.splitStories && Array.isArray(parsedContent.splitStories)) {
         parsedContent.splitStories = parsedContent.splitStories.map((story: any) => ({
           ...story,
           title: cleanupText(story.title),
           description: cleanupText(story.description),
-          acceptanceCriteria: story.acceptanceCriteria?.map((s: string) => cleanupText(s)) || []
+          acceptanceCriteria: Array.isArray(story.acceptanceCriteria) ? story.acceptanceCriteria.map((s: string) => cleanupText(s)) : []
         }));
       }
-      if (parsedContent.spidrAnalysis) {
+      if (parsedContent.spidrAnalysis && typeof parsedContent.spidrAnalysis === 'object') {
         for (const [key, value] of Object.entries(parsedContent.spidrAnalysis)) {
           if (Array.isArray(value)) {
             parsedContent.spidrAnalysis[key] = value.map((s: string) => cleanupText(s));

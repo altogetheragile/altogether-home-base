@@ -41,9 +41,10 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
   const [storyType, setStoryType] = useState<'epic' | 'feature' | 'story'>('story');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [analysisType, setAnalysisType] = useState<'spidr' | 'split' | 'acceptance_criteria' | 'refine'>('spidr');
+  const [analysisType, setAnalysisType] = useState<'spidr' | 'split' | 'acceptance_criteria' | 'refine'>('refine');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<StoryAnalysisResult | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   
   const { toast } = useToast();
   const { createStory, createEpic } = useStoryMutations();
@@ -243,60 +244,73 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>AI-Powered User Story Clarifier</DialogTitle>
+          <DialogTitle>Story Clarifier - Turn Ideas into User Stories</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="storyType">Story Type</Label>
-              <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select story type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="epic">Epic</SelectItem>
-                  <SelectItem value="feature">Feature</SelectItem>
-                  <SelectItem value="story">User Story</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="title">What are you trying to build? *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., Lean Eat meal delivery service"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="analysisType">Analysis Type</Label>
-              <Select value={analysisType} onValueChange={(value: any) => setAnalysisType(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select analysis type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="spidr">SPIDR Analysis</SelectItem>
-                  <SelectItem value="split">Split Story</SelectItem>
-                  <SelectItem value="acceptance_criteria">Acceptance Criteria</SelectItem>
-                  <SelectItem value="refine">Refinement Questions</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="description">Additional Details (Optional)</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Any additional context, requirements, or ideas..."
+                rows={3}
+              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="As a user, I want to..."
-            />
-          </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="text-sm"
+            >
+              {showAdvanced ? '← Simple Mode' : '→ Advanced Options'}
+            </Button>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide additional context and details about this story..."
-              rows={4}
-            />
+            {showAdvanced && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                <div className="space-y-2">
+                  <Label htmlFor="storyType">Story Type</Label>
+                  <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
+                    <SelectTrigger id="storyType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="story">User Story</SelectItem>
+                      <SelectItem value="feature">Feature</SelectItem>
+                      <SelectItem value="epic">Epic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="analysisType">Analysis Type</Label>
+                  <Select value={analysisType} onValueChange={(value: 'spidr' | 'split' | 'acceptance_criteria' | 'refine') => setAnalysisType(value)}>
+                    <SelectTrigger id="analysisType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="refine">Story Refinement (Default)</SelectItem>
+                      <SelectItem value="acceptance_criteria">Acceptance Criteria</SelectItem>
+                      <SelectItem value="spidr">SPIDR Analysis</SelectItem>
+                      <SelectItem value="split">Split Into Smaller Stories</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between">
