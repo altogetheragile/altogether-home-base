@@ -1,5 +1,6 @@
 import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import BMCCanvas, { BMCData, BMCCanvasRef } from '../canvas/templates/BMCCanvas';
+import { BMCData as ExportBMCData } from '@/utils/bmcExport';
 
 interface BusinessModelCanvasProps {
   data?: BMCData;
@@ -12,6 +13,7 @@ export interface BusinessModelCanvasRef {
   exportCanvas: (options?: any) => Promise<string>;
   getCanvasElement: () => HTMLElement | null;
   setExportMode: (isExporting: boolean) => void;
+  getBMCData: () => ExportBMCData | undefined;
 }
 
 const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanvasProps>(({
@@ -43,8 +45,18 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
       if (canvasRef.current?.setExportMode) {
         canvasRef.current.setExportMode(isExporting);
       }
+    },
+    getBMCData: () => {
+      if (canvasRef.current?.getBMCData) {
+        return canvasRef.current.getBMCData();
+      }
+      // Convert BMCCanvas data to export format
+      if (data) {
+        return data as ExportBMCData;
+      }
+      return undefined;
     }
-  }), []);
+  }), [data]);
 
   return (
     <div 

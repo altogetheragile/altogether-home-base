@@ -165,6 +165,21 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
   const getBMCData = (): BMCData => bmcData;
 
+  const getBMCDataForExport = () => {
+    // Convert internal BMCData to export format
+    return {
+      keyPartners: bmcData.keyPartners,
+      keyActivities: bmcData.keyActivities, 
+      keyResources: bmcData.keyResources,
+      valuePropositions: bmcData.valuePropositions,
+      customerRelationships: bmcData.customerRelationships,
+      channels: bmcData.channels,
+      customerSegments: bmcData.customerSegments,
+      costStructure: bmcData.costStructure,
+      revenueStreams: bmcData.revenueStreams
+    };
+  };
+
   const exportCanvasMethod = async (options: ExportOptions = {}): Promise<string> => {
     if (!canvasRef.current) {
       throw new Error('Canvas not available for export');
@@ -182,7 +197,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
   useImperativeHandle(ref, () => ({
     exportCanvas: exportCanvasMethod,
-    getBMCData,
+    getBMCData: getBMCDataForExport,
     setExportMode: setIsExporting,
   }));
 

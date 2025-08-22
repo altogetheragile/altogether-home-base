@@ -6,15 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, FileText, Image, Printer, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { exportCanvas, printCanvas } from '@/utils/canvas/canvasExporter';
+import { exportBMC, downloadBMC, printBMC, BMCData } from '@/utils/bmcExport';
 import { BusinessModelCanvasRef } from './BusinessModelCanvas';
 
 interface BMCExportDialogProps {
   companyName?: string;
   canvasRef?: React.RefObject<BusinessModelCanvasRef>;
+  bmcData?: BMCData;
 }
 
-const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRef }) => {
+const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRef, bmcData }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [format, setFormat] = useState<'pdf' | 'png' | 'jpeg'>('pdf');
@@ -29,87 +30,47 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
     setIsExporting(true);
     
     try {
-      console.log('Starting export process...');
+      console.log('🎯 Starting new export system...');
       
-      let canvasElement: HTMLElement | null = null;
+      // Get BMC data - try from prop first, then from canvas ref
+      let currentBmcData = bmcData;
       
-      // Try to get canvas element from ref first
-      if (canvasRef?.current) {
-        console.log('Getting canvas element from ref');
-        canvasElement = canvasRef.current.getCanvasElement();
-        
-        // Set export mode on the canvas to force non-editable rendering
-        console.log('Setting canvas to export mode');
-        canvasRef.current.setExportMode?.(true);
-        
-        // Wait for React to re-render with non-editable elements
-        await new Promise(resolve => setTimeout(resolve, 500));
+      if (!currentBmcData && canvasRef?.current) {
+        console.log('📊 Getting BMC data from canvas ref...');
+        currentBmcData = canvasRef.current.getBMCData?.();
       }
       
-      // Fallback to DOM query targeting the actual BMC content
-      if (!canvasElement) {
-        console.log('Fallback to DOM query');
-        canvasElement = document.querySelector('#bmc-canvas [data-canvas="true"]') as HTMLElement;
-        if (!canvasElement) {
-          canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
-        }
-      }
-      
-      if (!canvasElement) {
-        console.error('Canvas element not found');
+      if (!currentBmcData) {
         toast({
           title: "Export Failed",
-          description: "Canvas not found. Please ensure the BMC is loaded.",
+          description: "No BMC data available to export.",
           variant: "destructive"
         });
         return;
       }
 
-      // Validate that we have actual content
-      const hasContent = canvasElement.children.length > 0;
-      console.log('Canvas has content:', hasContent, 'Children count:', canvasElement.children.length);
-      
-      if (!hasContent) {
-        toast({
-          title: "Export Failed",
-          description: "BMC canvas appears to be empty.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      console.log('Canvas element found:', canvasElement);
-      console.log('Canvas dimensions:', {
-        width: canvasElement.offsetWidth,
-        height: canvasElement.offsetHeight,
-        scrollWidth: canvasElement.scrollWidth,
-        scrollHeight: canvasElement.scrollHeight
-      });
+      console.log('📋 BMC data to export:', currentBmcData);
 
       const options = {
         format,
         filename,
-        quality: format === 'jpeg' ? parseInt(quality) / 100 : 2,
+        quality: format === 'jpeg' ? parseInt(quality) / 100 : 0.95,
+        companyName,
       };
       
-      console.log('Export options:', options);
+      console.log('⚙️ Export options:', options);
 
-      // Use exportCanvas utility directly
-      const dataUrl = await exportCanvas(canvasElement, options);
+      // Use new BMC export utility
+      const dataUrl = await exportBMC(currentBmcData, options);
       
       if (!dataUrl || dataUrl === 'data:,') {
         throw new Error('Export generated empty result');
       }
       
-      console.log('Export successful, data URL length:', dataUrl.length);
+      console.log('✅ Export successful, downloading file...');
       
-      // Create download
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `${filename}.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Download the file
+      downloadBMC(dataUrl, filename, format);
 
       toast({
         title: "Export Successful",
@@ -117,77 +78,54 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
       });
       setIsOpen(false);
     } catch (error) {
-      console.error('Export error:', error);
+      console.error('❌ Export error:', error);
       toast({
         title: "Export Failed",
         description: `Failed to export Business Model Canvas: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
-      // Reset export mode on canvas
-      if (canvasRef?.current?.setExportMode) {
-        console.log('Resetting canvas export mode');
-        canvasRef.current.setExportMode(false);
-      }
       setIsExporting(false);
     }
   };
 
   const handlePrint = async () => {
     try {
-      console.log('Starting print process...');
+      console.log('🖨️ Starting new print system...');
       
-      let canvasElement: HTMLElement | null = null;
+      // Get BMC data - try from prop first, then from canvas ref
+      let currentBmcData = bmcData;
       
-      // Try to get canvas element from ref first and set export mode
-      if (canvasRef?.current) {
-        canvasElement = canvasRef.current.getCanvasElement();
-        
-        // Set export mode for printing too
-        console.log('Setting canvas to export mode for printing');
-        canvasRef.current.setExportMode?.(true);
-        
-        // Wait for React to re-render with non-editable elements
-        await new Promise(resolve => setTimeout(resolve, 300));
+      if (!currentBmcData && canvasRef?.current) {
+        console.log('📊 Getting BMC data from canvas ref for print...');
+        currentBmcData = canvasRef.current.getBMCData?.();
       }
       
-      // Fallback to DOM query targeting the actual BMC content
-      if (!canvasElement) {
-        canvasElement = document.querySelector('#bmc-canvas [data-canvas="true"]') as HTMLElement;
-        if (!canvasElement) {
-          canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
-        }
-      }
-      
-      if (!canvasElement) {
+      if (!currentBmcData) {
         toast({
           title: "Print Failed",
-          description: "Canvas not found. Please ensure the BMC is loaded.",
+          description: "No BMC data available to print.",
           variant: "destructive"
         });
         return;
       }
 
-      console.log('Printing canvas element:', canvasElement);
-      await printCanvas(canvasElement);
+      console.log('📋 BMC data to print:', currentBmcData);
+
+      // Use new BMC print utility
+      await printBMC(currentBmcData, companyName);
       
       toast({
         title: "Print Dialog Opened",
         description: "Print dialog has been opened in a new window.",
       });
     } catch (error) {
-      console.error('Print error:', error);
+      console.error('❌ Print error:', error);
       toast({
         title: "Print Failed",
-        description: "Failed to open print dialog. Please try again.",
+        description: `Failed to open print dialog: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
-    } finally {
-      // Reset export mode after printing
-      if (canvasRef?.current?.setExportMode) {
-        console.log('Resetting canvas export mode after printing');
-        canvasRef.current.setExportMode(false);
-      }
     }
   };
 
