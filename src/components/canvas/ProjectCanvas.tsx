@@ -6,6 +6,7 @@ import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { useCanvas, useCanvasMutations } from '@/hooks/useCanvas';
 import { useCanvasRealtime } from '@/hooks/canvas/useCanvasRealtime';
+import { useDebounceCanvas } from '@/hooks/useDebounceCanvas';
 import { Button } from '@/components/ui/button';
 import { Toolbar } from './Toolbar';
 import { 
@@ -54,17 +55,26 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
   // Real-time collaboration
   const { isConnected, activeUsers } = useCanvasRealtime({
-    canvasId: projectId,
+    canvasId: canvas?.id || '',
     onDataChange: (data: CanvasData) => {
       setCanvasData(data);
     },
-    isEnabled: !!canvas,
+    isEnabled: !!canvas?.id,
   });
 
   const handleDataChange = useCallback((newData: CanvasData) => {
     setCanvasData(newData);
-    updateCanvas.mutate({ projectId, data: newData });
-  }, [updateCanvas, projectId]);
+    // Only update if canvas exists to prevent race conditions
+    if (canvas?.id) {
+      updateCanvas.mutate({ projectId, data: newData });
+    }
+  }, [updateCanvas, projectId, canvas?.id]);
+
+  // Debounced version for frequent updates like dragging
+  const { debouncedCallback: debouncedDataChange, flushCallback: flushDataChange } = useDebounceCanvas(
+    handleDataChange, 
+    200
+  );
 
   const handleAddElement = (type: string) => {
     const newElement: CanvasElement = {
@@ -77,13 +87,14 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       },
       size: getDefaultSize(type),
     };
-
+    
     const newData = {
       ...canvasData,
       elements: [...canvasData.elements, newElement],
     };
     
-    handleDataChange(newData);
+    setCanvasData(newData);
+    flushDataChange(newData);  // Immediate save for new elements
     setSelectedElements([newElement.id]);
   };
 
@@ -147,7 +158,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       isSelected,
       onSelect: () => setSelectedElements([element.id]),
       onMove: (position: { x: number; y: number }) => {
-        handleElementUpdate(element.id, { position });
+        // Update immediately for smooth dragging, debounce database saves
+        const newData = {
+          ...canvasData,
+          elements: canvasData.elements.map(el =>
+            el.id === element.id ? { ...el, position } : el
+          ),
+        };
+        setCanvasData(newData);
+        debouncedDataChange(newData);
       },
       onResize: (size: { width: number; height: number }) => {
         handleElementUpdate(element.id, { size });

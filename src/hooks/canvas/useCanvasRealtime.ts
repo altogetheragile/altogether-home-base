@@ -64,6 +64,7 @@ export const useCanvasRealtime = ({
         filter: `id=eq.${canvasId}`,
       },
       (payload) => {
+        console.log('Canvas update received:', payload);
         const update = payload.new as RealtimeUpdate;
         if (update.data) {
           onDataChange(update.data);
