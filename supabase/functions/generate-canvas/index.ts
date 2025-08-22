@@ -14,6 +14,18 @@ const cleanupText = (text: string | string[] | any): string => {
     console.log(`Processing array with ${text.length} items:`, text);
     const processedItems = text
       .map(item => {
+        // Handle objects within arrays
+        if (typeof item === 'object' && item !== null) {
+          // If object has a 'text' or 'content' property, use that
+          if (item.text) return String(item.text).trim();
+          if (item.content) return String(item.content).trim();
+          if (item.question) return String(item.question).trim();
+          if (item.suggestion) return String(item.suggestion).trim();
+          // Otherwise try to extract meaningful content from object
+          const values = Object.values(item).filter(v => typeof v === 'string' && v.trim());
+          if (values.length > 0) return String(values[0]).trim();
+          return String(item).trim();
+        }
         const cleanItem = String(item).trim();
         // Ensure each item starts with a bullet point
         return cleanItem.startsWith('•') ? cleanItem : `• ${cleanItem}`;
@@ -24,6 +36,18 @@ const cleanupText = (text: string | string[] | any): string => {
     const result = processedItems.join('\n');
     console.log(`Array converted to string: "${result.substring(0, 100)}..."`);
     return result;
+  } else if (typeof text === 'object' && text !== null) {
+    // Handle single objects by extracting meaningful content
+    console.log('Processing object:', text);
+    if (text.text) textToProcess = String(text.text);
+    else if (text.content) textToProcess = String(text.content);
+    else if (text.question) textToProcess = String(text.question);
+    else if (text.suggestion) textToProcess = String(text.suggestion);
+    else {
+      // Try to extract the first string value from the object
+      const values = Object.values(text).filter(v => typeof v === 'string' && v.trim());
+      textToProcess = values.length > 0 ? String(values[0]) : JSON.stringify(text);
+    }
   } else {
     textToProcess = String(text);
   }
@@ -364,28 +388,36 @@ serve(async (req) => {
       
       parsedContent = cleanedContent;
     } else if (canvasType === 'story-analysis') {
-      // Clean up story analysis content with safe array checks
+      // Clean up story analysis content with safe array and object checks
+      console.log('Processing story analysis content:', parsedContent);
+      
       if (parsedContent.suggestions && Array.isArray(parsedContent.suggestions)) {
-        parsedContent.suggestions = parsedContent.suggestions.map((s: string) => cleanupText(s));
+        parsedContent.suggestions = parsedContent.suggestions.map((s: any) => cleanupText(s));
       }
       if (parsedContent.acceptanceCriteria && Array.isArray(parsedContent.acceptanceCriteria)) {
-        parsedContent.acceptanceCriteria = parsedContent.acceptanceCriteria.map((s: string) => cleanupText(s));
+        parsedContent.acceptanceCriteria = parsedContent.acceptanceCriteria.map((s: any) => cleanupText(s));
       }
       if (parsedContent.refinementQuestions && Array.isArray(parsedContent.refinementQuestions)) {
-        parsedContent.refinementQuestions = parsedContent.refinementQuestions.map((s: string) => cleanupText(s));
+        console.log('Processing refinement questions:', parsedContent.refinementQuestions);
+        parsedContent.refinementQuestions = parsedContent.refinementQuestions.map((s: any) => {
+          const cleaned = cleanupText(s);
+          console.log('Cleaned refinement question:', cleaned);
+          return cleaned;
+        });
       }
       if (parsedContent.splitStories && Array.isArray(parsedContent.splitStories)) {
         parsedContent.splitStories = parsedContent.splitStories.map((story: any) => ({
           ...story,
           title: cleanupText(story.title),
           description: cleanupText(story.description),
-          acceptanceCriteria: Array.isArray(story.acceptanceCriteria) ? story.acceptanceCriteria.map((s: string) => cleanupText(s)) : []
+          acceptanceCriteria: Array.isArray(story.acceptanceCriteria) ? story.acceptanceCriteria.map((s: any) => cleanupText(s)) : []
         }));
       }
       if (parsedContent.spidrAnalysis && typeof parsedContent.spidrAnalysis === 'object') {
         for (const [key, value] of Object.entries(parsedContent.spidrAnalysis)) {
           if (Array.isArray(value)) {
-            parsedContent.spidrAnalysis[key] = value.map((s: string) => cleanupText(s));
+            console.log(`Processing SPIDR ${key}:`, value);
+            parsedContent.spidrAnalysis[key] = value.map((s: any) => cleanupText(s));
           }
         }
       }

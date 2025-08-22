@@ -20,20 +20,20 @@ interface UserStoryClarifierDialogProps {
 
 interface StoryAnalysisResult {
   analysisType: string;
-  suggestions?: string[];
-  acceptanceCriteria?: string[];
-  refinementQuestions?: string[];
+  suggestions?: (string | any)[];
+  acceptanceCriteria?: (string | any)[];
+  refinementQuestions?: (string | any)[];
   splitStories?: Array<{
     title: string;
     description: string;
-    acceptanceCriteria: string[];
+    acceptanceCriteria: (string | any)[];
   }>;
   spidrAnalysis?: {
-    spike: string[];
-    path: string[];
-    interface: string[];
-    data: string[];
-    rules: string[];
+    spike: (string | any)[];
+    path: (string | any)[];
+    interface: (string | any)[];
+    data: (string | any)[];
+    rules: (string | any)[];
   };
 }
 
@@ -197,13 +197,16 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
                      key === 'data' ? 'Data (Storage)' :
                      'Rules (Business Logic)'}
                   </h4>
-                  <div className="space-y-1">
-                    {items.map((item: string, index: number) => (
-                      <div key={index} className="text-sm p-2 bg-muted rounded">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
+                   <div className="space-y-1">
+                     {items.map((item: any, index: number) => (
+                       <div key={index} className="text-sm p-2 bg-muted rounded">
+                         {typeof item === 'string' ? item : 
+                          typeof item === 'object' && item !== null ? 
+                          ((item as any).text || (item as any).content || JSON.stringify(item)) :
+                          String(item)}
+                       </div>
+                     ))}
+                   </div>
                 </div>
               ))}
             </div>
@@ -261,7 +264,12 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
               {analysisResult.refinementQuestions.map((question, index) => (
                 <div key={index} className="flex items-start gap-2 p-2 bg-muted rounded">
                   <HelpCircle className="h-4 w-4 mt-0.5 text-blue-600" />
-                  <span className="text-sm">{question}</span>
+                  <span className="text-sm">
+                    {typeof question === 'string' ? question : 
+                     typeof question === 'object' && question !== null ? 
+                     ((question as any).text || (question as any).content || (question as any).question || JSON.stringify(question)) :
+                     String(question)}
+                  </span>
                 </div>
               ))}
             </div>
