@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Edit, Plus, Search } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useUserStories, useEpics, useFeatures, useStoryMutations, type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from './UserStoryClarifierDialog';
 import { StoryEditDialog } from './StoryEditDialog';
@@ -33,6 +32,7 @@ export function StoryList() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingStory, setEditingStory] = useState<UserStory | Epic | null>(null);
   const [editingType, setEditingType] = useState<'story' | 'epic'>('story');
+  const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(new Set());
 
   const { data: stories = [], isLoading: storiesLoading } = useUserStories();
   const { data: epics = [], isLoading: epicsLoading } = useEpics();
@@ -50,6 +50,16 @@ export function StoryList() {
     setEditingStory(null);
   };
 
+  const toggleCriteriaExpansion = (storyId: string) => {
+    const newExpanded = new Set(expandedCriteria);
+    if (newExpanded.has(storyId)) {
+      newExpanded.delete(storyId);
+    } else {
+      newExpanded.add(storyId);
+    }
+    setExpandedCriteria(newExpanded);
+  };
+
   const filteredStories = stories.filter((story) => {
     const matchesSearch = story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (story.description || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -64,7 +74,7 @@ export function StoryList() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">User Stories</h2>
         <Button onClick={() => setShowClarifier(true)}>
@@ -119,23 +129,23 @@ export function StoryList() {
       {epics.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Epics</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {epics.map((epic) => (
               <Card key={epic.id} className="border-l-4 border-l-purple-500">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-base leading-tight">{epic.title}</CardTitle>
-                    <Badge variant="outline" className={`${statusColors[epic.status]} text-white text-xs`}>
+                    <CardTitle className="text-lg">{epic.title}</CardTitle>
+                    <Badge variant="outline" className={`${statusColors[epic.status]} text-white`}>
                       {epic.status}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent>
                   {epic.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">{epic.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{epic.description}</p>
                   )}
                   {epic.theme && (
-                    <Badge variant="secondary" className="text-xs">{epic.theme}</Badge>
+                    <Badge variant="secondary" className="mb-3">{epic.theme}</Badge>
                   )}
                   <div className="flex justify-end space-x-2">
                     <Button size="sm" variant="outline" onClick={() => handleEditStory(epic, 'epic')}>
@@ -160,62 +170,70 @@ export function StoryList() {
       {/* User Stories */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">User Stories ({filteredStories.length})</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStories.map((story) => (
             <Card key={story.id} className="border-l-4 border-l-blue-500">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start gap-2">
-                  <CardTitle className="text-base leading-tight line-clamp-2">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg leading-tight">
                     {story.title.startsWith('As a') ? story.title : `As a user, I want ${story.title.toLowerCase()}`}
                   </CardTitle>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <Badge variant="outline" className={`${statusColors[story.status]} text-white text-xs`}>
+                  <div className="flex gap-1">
+                    <Badge variant="outline" className={`${statusColors[story.status]} text-white`}>
                       {story.status}
                     </Badge>
-                    <Badge className={`${priorityColors[story.priority]} text-xs`}>
+                    <Badge className={priorityColors[story.priority]}>
                       {story.priority}
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Tabs defaultValue="details" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
-                    <TabsTrigger value="criteria" className="text-xs">
-                      Criteria ({story.acceptance_criteria?.length || 0})
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="details" className="space-y-2 mt-3">
-                    {story.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{story.description}</p>
-                    )}
-                    
-                    <div className="flex justify-between items-center">
-                      <Badge variant="outline" className="text-xs">{story.issue_type}</Badge>
-                      {story.story_points && (
-                        <Badge variant="secondary" className="text-xs">{story.story_points} pts</Badge>
+              <CardContent>
+                {story.description && (
+                  <p className="text-sm text-muted-foreground mb-3">{story.description}</p>
+                )}
+                
+                <div className="flex justify-between items-center mb-3">
+                  <Badge variant="outline">{story.issue_type}</Badge>
+                  {story.story_points && (
+                    <Badge variant="secondary">{story.story_points} pts</Badge>
+                  )}
+                </div>
+
+                {story.acceptance_criteria && story.acceptance_criteria.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-sm font-medium mb-2">Acceptance Criteria:</p>
+                    <div className="space-y-1">
+                      {story.acceptance_criteria.slice(0, expandedCriteria.has(story.id) ? undefined : 2).map((criteria, index) => (
+                        <div key={index} className="text-sm p-2 bg-muted/50 rounded border-l-2 border-primary/30">
+                          {criteria}
+                        </div>
+                      ))}
+                      {story.acceptance_criteria.length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleCriteriaExpansion(story.id)}
+                          className="text-xs text-muted-foreground h-auto p-1 hover:text-foreground"
+                        >
+                          {expandedCriteria.has(story.id) ? (
+                            <>
+                              <ChevronUp className="h-3 w-3 mr-1" />
+                              Show less
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-3 w-3 mr-1" />
+                              +{story.acceptance_criteria.length - 2} more criteria
+                            </>
+                          )}
+                        </Button>
                       )}
                     </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="criteria" className="mt-3">
-                    {story.acceptance_criteria && story.acceptance_criteria.length > 0 ? (
-                      <div className="space-y-2 max-h-32 overflow-y-auto">
-                        {story.acceptance_criteria.map((criteria, index) => (
-                          <div key={index} className="text-xs p-2 bg-muted/50 rounded border-l-2 border-primary/30">
-                            {criteria}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No acceptance criteria defined.</p>
-                    )}
-                  </TabsContent>
-                </Tabs>
+                  </div>
+                )}
 
-                <div className="flex justify-end space-x-2 pt-2">
+                <div className="flex justify-end space-x-2">
                   <Button size="sm" variant="outline" onClick={() => handleEditStory(story, 'story')}>
                     <Edit className="h-4 w-4" />
                   </Button>
