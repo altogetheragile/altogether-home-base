@@ -191,6 +191,36 @@ Title: ${input.title}
 Description: ${input.description || 'Not provided'}`;
 
   switch (input.analysisType) {
+    case 'user-story-generation':
+      return `${baseContext}
+
+Transform this rough idea into a properly formatted user story with clear acceptance criteria:
+
+1. Create a well-structured user story using the format: "As a [type of user], I want [goal/desire] so that [benefit/value]"
+2. Generate 3-5 clear, testable acceptance criteria using Given-When-Then format where appropriate
+3. Ensure the story is focused, actionable, and deliverable within a sprint
+4. Add any important technical considerations or dependencies
+
+Focus on creating something immediately actionable rather than analysis.
+
+Return as JSON format matching the StoryAnalysisOutput interface with:
+- title: The formatted user story title
+- description: The complete user story description in proper format
+- acceptanceCriteria: Array of specific, testable acceptance criteria
+- suggestions: Any additional implementation notes or technical considerations
+
+Example format:
+{
+  "title": "User Registration with Email Verification",
+  "description": "As a new user, I want to register for an account with email verification so that I can securely access the platform and ensure my email is valid.",
+  "acceptanceCriteria": [
+    "Given I am on the registration page, When I enter valid details and submit, Then I receive a verification email",
+    "Given I click the verification link, When the token is valid, Then my account is activated",
+    "Given my account is not verified, When I try to login, Then I see a message to verify my email first"
+  ],
+  "suggestions": ["Consider rate limiting for registration attempts", "Email template should be branded and clear"]
+}`;
+
     case 'spidr':
       return `${baseContext}
 

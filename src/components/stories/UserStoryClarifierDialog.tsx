@@ -20,6 +20,8 @@ interface UserStoryClarifierDialogProps {
 
 interface StoryAnalysisResult {
   analysisType: string;
+  title?: string;
+  description?: string;
   suggestions?: (string | any)[];
   acceptanceCriteria?: (string | any)[];
   refinementQuestions?: (string | any)[];
@@ -41,7 +43,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
   const [storyType, setStoryType] = useState<'epic' | 'feature' | 'story'>('story');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [analysisType, setAnalysisType] = useState<'spidr' | 'split' | 'acceptance_criteria' | 'refine'>('refine');
+  const [analysisType, setAnalysisType] = useState<'user-story-generation' | 'spidr' | 'split' | 'acceptance_criteria' | 'refine'>('user-story-generation');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<StoryAnalysisResult | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -100,10 +102,20 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
         return;
       }
 
-      setAnalysisResult(data.generatedCanvas);
+      const result = data.generatedCanvas;
+      setAnalysisResult(result);
+      
+      // Auto-populate fields if we got a user story generation
+      if (result.analysisType === 'user-story-generation' || analysisType === 'user-story-generation') {
+        if (result.title) setTitle(result.title);
+        if (result.description) setDescription(result.description);
+      }
+      
       toast({
         title: "Analysis complete!",
-        description: "Your story has been successfully analyzed.",
+        description: analysisType === 'user-story-generation' ? 
+          "Your user story has been generated!" : 
+          "Your story has been successfully analyzed.",
       });
     } catch (error) {
       console.error('Error analyzing story:', error);
@@ -170,7 +182,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
     setTitle('');
     setDescription('');
     setAnalysisResult(null);
-    setAnalysisType('spidr');
+    setAnalysisType('user-story-generation');
     setStoryType('story');
   };
 
@@ -294,7 +306,11 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Story Clarifier - Turn Ideas into User Stories</DialogTitle>
+          <DialogTitle>
+            {analysisType === 'user-story-generation' ? 
+              'Generate User Story - Turn Ideas into Actionable Stories' : 
+              'Story Clarifier - Turn Ideas into User Stories'}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -347,13 +363,14 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
 
                 <div className="space-y-2">
                   <Label htmlFor="analysisType">Analysis Type</Label>
-                  <Select value={analysisType} onValueChange={(value: 'spidr' | 'split' | 'acceptance_criteria' | 'refine') => setAnalysisType(value)}>
+                  <Select value={analysisType} onValueChange={(value: 'user-story-generation' | 'spidr' | 'split' | 'acceptance_criteria' | 'refine') => setAnalysisType(value)}>
                     <SelectTrigger id="analysisType">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="refine">Story Refinement (Default)</SelectItem>
+                      <SelectItem value="user-story-generation">Generate User Story (Default)</SelectItem>
                       <SelectItem value="acceptance_criteria">Acceptance Criteria</SelectItem>
+                      <SelectItem value="refine">Story Refinement</SelectItem>
                       <SelectItem value="spidr">SPIDR Analysis</SelectItem>
                       <SelectItem value="split">Split Into Smaller Stories</SelectItem>
                     </SelectContent>
@@ -377,7 +394,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Analyze with AI
+                    {analysisType === 'user-story-generation' ? 'Generate Story' : 'Analyze with AI'}
                   </>
                 )}
               </Button>

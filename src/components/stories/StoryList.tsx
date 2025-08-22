@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Edit, Plus, Search } from 'lucide-react';
 import { useUserStories, useEpics, useFeatures, useStoryMutations, type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from './UserStoryClarifierDialog';
+import { StoryEditDialog } from './StoryEditDialog';
 
 const statusColors = {
   draft: 'bg-gray-500',
@@ -28,11 +29,25 @@ export function StoryList() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [showClarifier, setShowClarifier] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingStory, setEditingStory] = useState<UserStory | Epic | null>(null);
+  const [editingType, setEditingType] = useState<'story' | 'epic'>('story');
 
   const { data: stories = [], isLoading: storiesLoading } = useUserStories();
   const { data: epics = [], isLoading: epicsLoading } = useEpics();
   const { data: features = [], isLoading: featuresLoading } = useFeatures();
   const { deleteStory } = useStoryMutations();
+
+  const handleEditStory = (story: UserStory | Epic, type: 'story' | 'epic') => {
+    setEditingStory(story);
+    setEditingType(type);
+    setShowEditDialog(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setShowEditDialog(false);
+    setEditingStory(null);
+  };
 
   const filteredStories = stories.filter((story) => {
     const matchesSearch = story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,7 +137,7 @@ export function StoryList() {
                     <Badge variant="secondary" className="mb-3">{epic.theme}</Badge>
                   )}
                   <div className="flex justify-end space-x-2">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => handleEditStory(epic, 'epic')}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -149,7 +164,9 @@ export function StoryList() {
             <Card key={story.id} className="border-l-4 border-l-blue-500">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{story.title}</CardTitle>
+                  <CardTitle className="text-lg leading-tight">
+                    {story.title.startsWith('As a') ? story.title : `As a user, I want ${story.title.toLowerCase()}`}
+                  </CardTitle>
                   <div className="flex gap-1">
                     <Badge variant="outline" className={`${statusColors[story.status]} text-white`}>
                       {story.status}
@@ -174,20 +191,24 @@ export function StoryList() {
 
                 {story.acceptance_criteria && story.acceptance_criteria.length > 0 && (
                   <div className="mb-3">
-                    <p className="text-sm font-medium mb-1">Acceptance Criteria:</p>
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                    <p className="text-sm font-medium mb-2">Acceptance Criteria:</p>
+                    <div className="space-y-1">
                       {story.acceptance_criteria.slice(0, 2).map((criteria, index) => (
-                        <li key={index} className="truncate">• {criteria}</li>
+                        <div key={index} className="text-sm p-2 bg-muted/50 rounded border-l-2 border-primary/30">
+                          {criteria}
+                        </div>
                       ))}
                       {story.acceptance_criteria.length > 2 && (
-                        <li className="text-xs">+{story.acceptance_criteria.length - 2} more</li>
+                        <div className="text-xs text-muted-foreground p-1">
+                          +{story.acceptance_criteria.length - 2} more criteria
+                        </div>
                       )}
-                    </ul>
+                    </div>
                   </div>
                 )}
 
                 <div className="flex justify-end space-x-2">
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={() => handleEditStory(story, 'story')}>
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button 
@@ -214,6 +235,13 @@ export function StoryList() {
       <UserStoryClarifierDialog 
         isOpen={showClarifier} 
         onClose={() => setShowClarifier(false)} 
+      />
+      
+      <StoryEditDialog
+        isOpen={showEditDialog}
+        onClose={handleCloseEditDialog}
+        story={editingStory}
+        type={editingType}
       />
     </div>
   );
