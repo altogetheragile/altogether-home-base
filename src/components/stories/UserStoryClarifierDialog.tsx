@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from '@/hooks/useUserStories';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface UserStoryClarifierDialogProps {
   isOpen: boolean;
@@ -402,151 +403,183 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {analysisType === 'user-story-generation' ? 
-              'Generate User Story - Turn Ideas into Actionable Stories' : 
-              'Story Clarifier - Turn Ideas into User Stories'}
-          </DialogTitle>
-        </DialogHeader>
+    <TooltipProvider>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {analysisType === 'user-story-generation' ? 
+                'Generate User Story - Turn Ideas into Actionable Stories' : 
+                'Story Clarifier - Turn Ideas into User Stories'}
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-6">
-          {!user && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in. 
-                Sign in to save your stories and manage them in projects.
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">What are you trying to build? *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Lean Eat meal delivery service"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Additional Details (Optional)</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Any additional context, requirements, or ideas..."
-                rows={3}
-              />
-            </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-sm"
-            >
-              {showAdvanced ? '← Simple Mode' : '→ Advanced Options'}
-            </Button>
-
-            {showAdvanced && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
-                <div className="space-y-2">
-                  <Label htmlFor="storyType">Story Type</Label>
-                  <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
-                    <SelectTrigger id="storyType">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="story">User Story</SelectItem>
-                      <SelectItem value="feature">Feature</SelectItem>
-                      <SelectItem value="epic">Epic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="analysisType">Analysis Type</Label>
-                  <Select value={analysisType} onValueChange={(value: 'user-story-generation' | 'spidr' | 'split' | 'acceptance_criteria' | 'refine') => setAnalysisType(value)}>
-                    <SelectTrigger id="analysisType">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user-story-generation">Generate User Story (Default)</SelectItem>
-                      <SelectItem value="acceptance_criteria">Acceptance Criteria</SelectItem>
-                      <SelectItem value="refine">Story Refinement</SelectItem>
-                      <SelectItem value="spidr">SPIDR Analysis</SelectItem>
-                      <SelectItem value="split">Split Into Smaller Stories</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+          <div className="space-y-6">
+            {!user && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in. 
+                  Sign in to save your stories and manage them in projects.
+                </AlertDescription>
+              </Alert>
             )}
-          </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">What are you trying to build? *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Lean Eat meal delivery service"
+                />
+              </div>
 
-          <div className="flex justify-between">
-            <div className="space-x-2">
-              <Button variant="outline" onClick={handleReset}>
-                Reset
+              <div className="space-y-2">
+                <Label htmlFor="description">Additional Details (Optional)</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Any additional context, requirements, or ideas..."
+                  rows={3}
+                />
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="text-sm"
+              >
+                {showAdvanced ? '← Simple Mode' : '→ Advanced Options'}
               </Button>
-              {analysisResult && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleCopyToClipboard()}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleExport('text')}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                </>
+
+              {showAdvanced && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="storyType">Story Type</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <div className="space-y-2">
+                            <p><strong>User Story:</strong> Small, user-focused requirement (1-3 days of work)</p>
+                            <p><strong>Feature:</strong> Larger functional component containing multiple user stories (1-2 weeks)</p>
+                            <p><strong>Epic:</strong> High-level initiative spanning multiple features (1-3 months)</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
+                      <SelectTrigger id="storyType">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="story">User Story</SelectItem>
+                        <SelectItem value="feature">Feature</SelectItem>
+                        <SelectItem value="epic">Epic</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="analysisType">Analysis Type</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm">
+                          <div className="space-y-2">
+                            <p><strong>Generate User Story:</strong> Create a complete user story with title, description, and acceptance criteria</p>
+                            <p><strong>Acceptance Criteria:</strong> Generate detailed, testable acceptance criteria for existing stories</p>
+                            <p><strong>Story Refinement:</strong> Get questions and suggestions to improve story clarity and completeness</p>
+                            <p><strong>SPIDR Analysis:</strong> Break down using SPIDR framework: Spike, Path, Interface, Data, Rules</p>
+                            <p><strong>Split Stories:</strong> Break large stories into smaller, manageable pieces for better implementation</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Select value={analysisType} onValueChange={(value: 'user-story-generation' | 'spidr' | 'split' | 'acceptance_criteria' | 'refine') => setAnalysisType(value)}>
+                      <SelectTrigger id="analysisType">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user-story-generation">Generate User Story (Default)</SelectItem>
+                        <SelectItem value="acceptance_criteria">Acceptance Criteria</SelectItem>
+                        <SelectItem value="refine">Story Refinement</SelectItem>
+                        <SelectItem value="spidr">SPIDR Analysis</SelectItem>
+                        <SelectItem value="split">Split Into Smaller Stories</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               )}
             </div>
-            <div className="space-x-2">
-              <Button onClick={handleAnalyze} disabled={isAnalyzing}>
-                {isAnalyzing ? (
+
+            <div className="flex justify-between">
+              <div className="space-x-2">
+                <Button variant="outline" onClick={handleReset}>
+                  Reset
+                </Button>
+                {analysisResult && (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    {analysisType === 'user-story-generation' ? 'Generate Story' : 'Analyze with AI'}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleCopyToClipboard()}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleExport('text')}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
                   </>
                 )}
-              </Button>
-              {analysisResult && !analysisResult.splitStories && (
-                user ? (
-                  <Button onClick={() => handleCreateStory()} disabled={createStory.isPending || createEpic.isPending}>
-                    Create {storyType}
-                  </Button>
-                ) : (
-                  <Button onClick={handleSignInRedirect} variant="default">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Sign in to Save
-                  </Button>
-                )
-              )}
+              </div>
+              <div className="space-x-2">
+                <Button onClick={handleAnalyze} disabled={isAnalyzing}>
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {analysisType === 'user-story-generation' ? 'Generate Story' : 'Analyze with AI'}
+                    </>
+                  )}
+                </Button>
+                {analysisResult && !analysisResult.splitStories && (
+                  user ? (
+                    <Button onClick={() => handleCreateStory()} disabled={createStory.isPending || createEpic.isPending}>
+                      Create {storyType}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleSignInRedirect} variant="default">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign in to Save
+                    </Button>
+                  )
+                )}
+              </div>
             </div>
-          </div>
 
-          {renderAnalysisResult()}
-        </div>
-      </DialogContent>
-    </Dialog>
+            {renderAnalysisResult()}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 }
