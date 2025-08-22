@@ -31,7 +31,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   projectId,
   projectName,
 }) => {
-  const { data: canvas, isLoading } = useCanvas(projectId);
+  const { data: canvas, isLoading, error } = useCanvas(projectId);
   const { createCanvas, updateCanvas } = useCanvasMutations();
   const { toast } = useToast();
   const canvasRef = useRef<BaseCanvasRef>(null);
@@ -43,13 +43,28 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
   // Initialize canvas data
   useEffect(() => {
-    if (canvas) {
+    console.log('Canvas initialization:', { canvas: canvas?.id, isLoading, error: error?.message });
+    
+    if (canvas?.data) {
+      console.log('Setting canvas data from existing canvas');
       setCanvasData(canvas.data);
-    } else if (!isLoading) {
-      // Create initial canvas if none exists
-      const initialData: CanvasData = { elements: [] };
-      setCanvasData(initialData);
-      createCanvas.mutate({ projectId, data: initialData });
+    } else if (!canvas && !isLoading && !createCanvas.isPending) {
+      console.log('Creating new canvas for project:', projectId);
+      // Create new canvas if none exists
+      const initialData = { elements: [], metadata: {} };
+      setCanvasData(initialData); // Set immediately for UI responsiveness
+      
+      createCanvas.mutate({
+        projectId,
+        data: initialData
+      }, {
+        onSuccess: (newCanvas) => {
+          console.log('Canvas created successfully:', newCanvas.id);
+        },
+        onError: (error) => {
+          console.error('Failed to create canvas:', error);
+        }
+      });
     }
   }, [canvas, isLoading, createCanvas, projectId]);
 
@@ -63,10 +78,25 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   });
 
   const handleDataChange = useCallback((newData: CanvasData) => {
+    console.log('Canvas data change:', { elements: newData.elements.length, canvasId: canvas?.id });
     setCanvasData(newData);
+    
     // Only update if canvas exists to prevent race conditions
     if (canvas?.id) {
-      updateCanvas.mutate({ projectId, data: newData });
+      console.log('Saving canvas data to database');
+      updateCanvas.mutate(
+        { projectId, data: newData },
+        {
+          onSuccess: () => {
+            console.log('Canvas data saved successfully');
+          },
+          onError: (error) => {
+            console.error('Failed to save canvas data:', error);
+          }
+        }
+      );
+    } else {
+      console.log('Canvas not available, skipping database save');
     }
   }, [updateCanvas, projectId, canvas?.id]);
 
@@ -77,24 +107,36 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   );
 
   const handleAddElement = (type: string) => {
+    console.log('Adding element of type:', type);
+    
+    // Don't add elements if canvas creation is in progress
+    if (createCanvas.isPending) {
+      console.warn('Cannot add element: canvas creation in progress');
+      return;
+    }
+
     const newElement: CanvasElement = {
       id: `${type}-${Date.now()}`,
-      type: type as any,
-      content: getDefaultContent(type),
-      position: { 
-        x: Math.random() * 400 + 100, 
-        y: Math.random() * 300 + 100 
+      type: type as CanvasElement['type'],
+      position: { x: 100, y: 100 },
+      content: {
+        ...getDefaultContent(type),
       },
       size: getDefaultSize(type),
     };
+    
+    console.log('Created new element:', newElement.id);
     
     const newData = {
       ...canvasData,
       elements: [...canvasData.elements, newElement],
     };
     
+    console.log('Updating canvas data with new element');
     setCanvasData(newData);
-    flushDataChange(newData);  // Immediate save for new elements
+    
+    // Save immediately for new elements
+    flushDataChange(newData);
     setSelectedElements([newElement.id]);
   };
 
@@ -185,10 +227,30 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || createCanvas.isPending) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mr-4"></div>
+        <div className="text-muted-foreground">
+          {isLoading ? 'Loading canvas...' : 'Creating canvas...'}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-destructive mb-2">Failed to load canvas</div>
+          <div className="text-sm text-muted-foreground mb-4">{error.message}</div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+          >
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }

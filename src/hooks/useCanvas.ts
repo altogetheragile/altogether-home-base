@@ -17,22 +17,35 @@ export const useCanvas = (projectId: string) => {
   return useQuery({
     queryKey: ['canvas', projectId],
     queryFn: async () => {
+      console.log('Fetching canvas for project:', projectId);
+      
       const { data, error } = await supabase
         .from('canvases')
         .select('*')
         .eq('project_id', projectId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no canvas exists
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No canvas found, return null to trigger creation
-          return null;
-        }
+        console.error('Error fetching canvas:', error);
         throw error;
       }
-      return data as Canvas;
+      
+      if (data) {
+        console.log('Canvas found:', data.id);
+      } else {
+        console.log('No canvas found for project');
+      }
+      
+      return data as Canvas | null;
     },
     enabled: !!projectId,
+    retry: (failureCount, error: any) => {
+      // Don't retry if it's a permissions error
+      if (error?.code === 'PGRST301' || error?.code === '42501') {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 };
 
