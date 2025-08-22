@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Project, ProjectStats } from '@/hooks/useProjects';
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
 
 interface ProjectCardProps {
@@ -39,11 +40,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onArchive,
   onDelete,
 }) => {
+  const navigate = useNavigate();
+
+  const handleOpenProject = () => {
+    navigate(`/projects/${project.id}/canvas`);
+  };
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer group">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1" onClick={() => onOpen(project)}>
+          <div className="flex-1" onClick={handleOpenProject}>
             <div className="flex items-center gap-2 mb-2">
               <div 
                 className="w-3 h-3 rounded-full"
@@ -91,7 +97,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent onClick={() => onOpen(project)}>
+      <CardContent onClick={handleOpenProject}>
         <div className="space-y-4">
           {/* Project Stats */}
           <div className="grid grid-cols-2 gap-4">
@@ -118,8 +124,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <Badge variant="secondary" className="text-xs">
               Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
             </Badge>
-            <Button size="sm" variant="outline">
-              Open Project
+            <Button size="sm" variant="outline" onClick={handleOpenProject}>
+              Open Canvas
             </Button>
           </div>
         </div>

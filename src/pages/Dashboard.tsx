@@ -143,119 +143,21 @@ const Dashboard = () => {
           </div>
           
           <Tabs defaultValue="projects" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="projects">Projects</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
-              <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
               <TabsTrigger value="learning-paths">Learning Paths</TabsTrigger>
               <TabsTrigger value="progress">Reading Progress</TabsTrigger>
             </TabsList>
 
             <TabsContent value="projects" className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Your Projects</h2>
+                <h2 className="text-xl font-semibold">Your Project Canvases</h2>
+                <p className="text-sm text-muted-foreground">
+                  Each project is an infinite canvas where you can create BMCs, user stories, and more
+                </p>
               </div>
               
               <ProjectsList />
-            </TabsContent>
-
-            <TabsContent value="events" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Event Registrations</h2>
-                <Button variant="outline" asChild>
-                  <Link to="/events">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Browse Events
-                  </Link>
-                </Button>
-              </div>
-              
-              <RegistrationsList registrations={registrations} isLoading={registrationsLoading} />
-            </TabsContent>
-
-            <TabsContent value="bookmarks" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Your Bookmarks</h2>
-                <Button variant="outline" asChild>
-                  <Link to="/knowledge">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Browse Techniques
-                  </Link>
-                </Button>
-              </div>
-
-              {bookmarksLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, i) => (
-                    <Card key={i} className="animate-pulse">
-                      <CardContent className="p-6">
-                        <div className="h-4 bg-muted rounded mb-2"></div>
-                        <div className="h-3 bg-muted rounded w-2/3 mb-4"></div>
-                        <div className="h-8 bg-muted rounded"></div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : bookmarks && bookmarks.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {bookmarks.map((bookmark) => (
-                    <Card key={bookmark.id} className="hover:shadow-md transition-shadow">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg leading-tight">
-                            {bookmark.technique?.name}
-                          </CardTitle>
-                          {bookmark.technique?.category && (
-                            <Badge 
-                              variant="secondary"
-                              style={{
-                                backgroundColor: `${bookmark.technique.category.color}20`,
-                                color: bookmark.technique.category.color
-                              }}
-                            >
-                              {bookmark.technique.category.name}
-                            </Badge>
-                          )}
-                        </div>
-                        {bookmark.technique?.summary && (
-                          <CardDescription className="line-clamp-2">
-                            {bookmark.technique.summary}
-                          </CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {bookmark.technique?.difficulty_level && (
-                              <DifficultyBadge difficulty={bookmark.technique.difficulty_level} />
-                            )}
-                          </div>
-                          <Button size="sm" asChild>
-                            <Link to={`/knowledge/${bookmark.technique?.slug}`}>
-                              Read <ArrowRight className="h-3 w-3 ml-1" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-medium mb-2">No bookmarks yet</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Start bookmarking techniques you want to read later.
-                    </p>
-                    <Button asChild>
-                      <Link to="/knowledge">
-                        Browse Knowledge Base
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
             </TabsContent>
 
             <TabsContent value="learning-paths" className="space-y-6">

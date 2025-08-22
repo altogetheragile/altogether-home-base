@@ -5,6 +5,7 @@ import { Plus, FolderOpen } from 'lucide-react';
 import { useProjects, useProjectMutations, Project } from '@/hooks/useProjects';
 import { ProjectCard } from './ProjectCard';
 import { ProjectDialog } from './ProjectDialog';
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import {
 export const ProjectsList: React.FC = () => {
   const { data: projects, isLoading } = useProjects();
   const { createProject, updateProject, deleteProject, archiveProject } = useProjectMutations();
+  const navigate = useNavigate();
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -36,8 +38,7 @@ export const ProjectsList: React.FC = () => {
   };
 
   const handleOpenProject = (project: Project) => {
-    // TODO: Navigate to project detail view
-    console.log('Opening project:', project.id);
+    navigate(`/projects/${project.id}/canvas`);
   };
 
   const handleArchiveProject = (project: Project) => {

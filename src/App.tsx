@@ -45,6 +45,7 @@ import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
 import EditInstructor from "./pages/admin/EditInstructor";
 import { PageEditor } from "./components/pageEditor/PageEditor";
+import ProjectCanvas from "./pages/ProjectCanvas";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
               <Route path="/user-stories" element={<ProtectedRoute><UserStories /></ProtectedRoute>} />
               <Route path="/account/security" element={<AccountSecurity />} />
               <Route path="/learning-paths" element={<LearningPaths />} />
