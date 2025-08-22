@@ -13,7 +13,8 @@ import {
   Clock,
   ArrowRight,
   Calendar,
-  CalendarCheck
+  CalendarCheck,
+  FolderOpen
 } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRegistrations } from "@/hooks/useUserRegistrations";
@@ -26,6 +27,8 @@ import RegistrationsList from "@/components/dashboard/RegistrationsList";
 import { Navigate, Link } from "react-router-dom";
 import { DifficultyBadge } from '@/components/knowledge/DifficultyBadge';
 import { LearningPathCard } from '@/components/knowledge/LearningPathCard';
+import { ProjectsList } from '@/components/dashboard/ProjectsList';
+import { useProjects } from '@/hooks/useProjects';
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -33,6 +36,7 @@ const Dashboard = () => {
   const { data: profile } = useUserProfile();
   const { bookmarks, isLoading: bookmarksLoading } = useUserBookmarks();
   const { paths, isLoading: pathsLoading } = useLearningPaths();
+  const { data: projects } = useProjects();
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -66,10 +70,16 @@ const Dashboard = () => {
 
   const stats = [
     {
+      icon: FolderOpen,
+      label: 'Projects',
+      value: projects?.length || 0,
+      color: 'text-blue-600',
+    },
+    {
       icon: BookOpen,
       label: 'Techniques Read',
       value: completedTechniques,
-      color: 'text-blue-600',
+      color: 'text-green-600',
     },
     {
       icon: Bookmark,
@@ -81,12 +91,6 @@ const Dashboard = () => {
       icon: Clock,
       label: 'Reading Time',
       value: `${Math.floor(totalReadingTime / 60)}h`,
-      color: 'text-green-600',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Learning Streak',
-      value: `${currentStreak} days`,
       color: 'text-purple-600',
     },
     {
@@ -138,13 +142,22 @@ const Dashboard = () => {
             })}
           </div>
           
-          <Tabs defaultValue="events" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="projects" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="projects">Projects</TabsTrigger>
               <TabsTrigger value="events">Events</TabsTrigger>
               <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
               <TabsTrigger value="learning-paths">Learning Paths</TabsTrigger>
               <TabsTrigger value="progress">Reading Progress</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="projects" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Your Projects</h2>
+              </div>
+              
+              <ProjectsList />
+            </TabsContent>
 
             <TabsContent value="events" className="space-y-6">
               <div className="flex items-center justify-between">
