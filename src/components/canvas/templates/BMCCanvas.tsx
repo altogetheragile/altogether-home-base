@@ -269,7 +269,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     <div className="h-full flex flex-col min-h-0 bg-card border-2 border-border/30 overflow-hidden shadow-sm">
       <SectionHeader title={title} color={headerColor} />
       <div className="flex-1 p-1 min-h-[120px] overflow-auto relative z-0">
-        {isEditable && !isExporting ? (
+        {isEditable ? (
+          // Always use TextElement; the overlay handles export rendering
           <TextElement
             content={value}
             isEditable={true}
