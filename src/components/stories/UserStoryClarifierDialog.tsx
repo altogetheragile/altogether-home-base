@@ -60,6 +60,8 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
     }
 
     setIsAnalyzing(true);
+    setAnalysisResult(null);
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-canvas', {
         body: {
@@ -71,13 +73,53 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error analyzing story:', error);
+        let errorMessage = "Failed to analyze story. Please try again.";
+        
+        if (error.message?.includes('Failed to send a request')) {
+          errorMessage = "Network connection issue. Please check your internet connection and try again.";
+        } else if (error.message?.includes('non-2xx status code')) {
+          errorMessage = "AI service is temporarily unavailable. Please try again in a moment.";
+        }
+        
+        toast({
+          title: "Analysis failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data || !data.generatedCanvas) {
+        toast({
+          title: "No results",
+          description: "The analysis didn't return any results. Please try rephrasing your story.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setAnalysisResult(data.generatedCanvas);
+      toast({
+        title: "Analysis complete!",
+        description: "Your story has been successfully analyzed.",
+      });
     } catch (error) {
       console.error('Error analyzing story:', error);
+      let errorMessage = "An unexpected error occurred.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Analysis failed",
-        description: error instanceof Error ? error.message : "Failed to analyze story",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
