@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, Plus, Search } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useUserStories, useEpics, useFeatures, useStoryMutations, type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from './UserStoryClarifierDialog';
 import { StoryEditDialog } from './StoryEditDialog';
@@ -32,6 +32,7 @@ export function StoryList() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingStory, setEditingStory] = useState<UserStory | Epic | null>(null);
   const [editingType, setEditingType] = useState<'story' | 'epic'>('story');
+  const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(new Set());
 
   const { data: stories = [], isLoading: storiesLoading } = useUserStories();
   const { data: epics = [], isLoading: epicsLoading } = useEpics();
@@ -47,6 +48,16 @@ export function StoryList() {
   const handleCloseEditDialog = () => {
     setShowEditDialog(false);
     setEditingStory(null);
+  };
+
+  const toggleCriteriaExpansion = (storyId: string) => {
+    const newExpanded = new Set(expandedCriteria);
+    if (newExpanded.has(storyId)) {
+      newExpanded.delete(storyId);
+    } else {
+      newExpanded.add(storyId);
+    }
+    setExpandedCriteria(newExpanded);
   };
 
   const filteredStories = stories.filter((story) => {
@@ -193,15 +204,30 @@ export function StoryList() {
                   <div className="mb-3">
                     <p className="text-sm font-medium mb-2">Acceptance Criteria:</p>
                     <div className="space-y-1">
-                      {story.acceptance_criteria.slice(0, 2).map((criteria, index) => (
+                      {story.acceptance_criteria.slice(0, expandedCriteria.has(story.id) ? undefined : 2).map((criteria, index) => (
                         <div key={index} className="text-sm p-2 bg-muted/50 rounded border-l-2 border-primary/30">
                           {criteria}
                         </div>
                       ))}
                       {story.acceptance_criteria.length > 2 && (
-                        <div className="text-xs text-muted-foreground p-1">
-                          +{story.acceptance_criteria.length - 2} more criteria
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleCriteriaExpansion(story.id)}
+                          className="text-xs text-muted-foreground h-auto p-1 hover:text-foreground"
+                        >
+                          {expandedCriteria.has(story.id) ? (
+                            <>
+                              <ChevronUp className="h-3 w-3 mr-1" />
+                              Show less
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-3 w-3 mr-1" />
+                              +{story.acceptance_criteria.length - 2} more criteria
+                            </>
+                          )}
+                        </Button>
                       )}
                     </div>
                   </div>

@@ -201,14 +201,14 @@ export function StoryEditDialog({ isOpen, onClose, story, type }: StoryEditDialo
               <div className="space-y-2">
                 <Label htmlFor="storyPoints">Story Points</Label>
                 <Select 
-                  value={storyPoints?.toString() || ''} 
-                  onValueChange={(value) => setStoryPoints(value ? parseInt(value) : undefined)}
+                  value={storyPoints?.toString() || 'none'} 
+                  onValueChange={(value) => setStoryPoints(value === 'none' ? undefined : parseInt(value))}
                 >
                   <SelectTrigger id="storyPoints">
                     <SelectValue placeholder="Select points" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     <SelectItem value="1">1</SelectItem>
                     <SelectItem value="2">2</SelectItem>
                     <SelectItem value="3">3</SelectItem>
