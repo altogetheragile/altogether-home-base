@@ -28,22 +28,23 @@ const cleanupText = (text: string | string[] | any): string => {
     textToProcess = String(text);
   }
   
-  console.log(`Cleaning text: "${textToProcess.substring(0, 100)}..."`);
+  console.log(`Original text: "${textToProcess}"`);
   
-  // Only apply text cleanup to non-array content
-  return textToProcess
-    // Fix missing spaces after periods
+  // MINIMAL cleanup - only fix obvious issues, don't touch properly spaced text
+  const cleaned = textToProcess
+    // Only fix missing spaces after periods followed immediately by capital letters
     .replace(/\.([A-Z])/g, '. $1')
-    // Fix missing spaces after commas (but not in bullet lists)
+    // Only fix missing spaces after commas followed immediately by capital letters  
     .replace(/,([A-Z])/g, ', $1')
-    // Fix missing spaces after colons
-    .replace(/:([A-Z])/g, ': $1')
-    // Fix missing spaces between words (basic pattern)
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    // Fix multiple spaces
-    .replace(/\s+/g, ' ')
-    // Trim whitespace
+    // Fix multiple spaces but preserve intentional spacing
+    .replace(/\s{2,}/g, ' ')
+    // Trim only leading/trailing whitespace
     .trim();
+  
+  console.log(`Cleaned text: "${cleaned}"`);
+  
+  // Only return cleaned if it actually fixed something, otherwise return original
+  return cleaned !== textToProcess ? cleaned : textToProcess;
 };
 
 const validateSpacing = (text: string): boolean => {
@@ -228,7 +229,7 @@ serve(async (req) => {
       
       // Apply post-processing for BMC content
       if (input.type === 'bmc' && parsedContent) {
-        console.log('Applying text cleanup for BMC content...');
+        console.log('Raw OpenAI response before cleanup:', JSON.stringify(parsedContent, null, 2));
         
         // Clean up all BMC sections
         const bmcKeys = ['keyPartners', 'keyActivities', 'keyResources', 'valuePropositions', 
@@ -237,10 +238,14 @@ serve(async (req) => {
         for (const key of bmcKeys) {
           if (parsedContent[key]) {
             const original = parsedContent[key];
+            console.log(`Processing ${key}: "${original}"`);
+            
             parsedContent[key] = cleanupText(original);
             
             if (original !== parsedContent[key]) {
               console.log(`Cleaned up ${key}: "${original}" -> "${parsedContent[key]}"`);
+            } else {
+              console.log(`No cleanup needed for ${key}`);
             }
             
             // Validate spacing
@@ -249,6 +254,8 @@ serve(async (req) => {
             }
           }
         }
+        
+        console.log('Final processed content:', JSON.stringify(parsedContent, null, 2));
       }
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
