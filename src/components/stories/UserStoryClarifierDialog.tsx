@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Sparkles, Split, Combine, CheckCircle, HelpCircle } from 'lucide-react';
+import { Loader2, Sparkles, Split, Combine, CheckCircle, HelpCircle, Copy, Download, LogIn, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from '@/hooks/useUserStories';
+import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface UserStoryClarifierDialogProps {
   isOpen: boolean;
@@ -50,6 +52,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
   
   const { toast } = useToast();
   const { createStory, createEpic } = useStoryMutations();
+  const { user } = useAuth();
 
   const handleAnalyze = async () => {
     if (!title.trim()) {
@@ -186,6 +189,89 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
     setStoryType('story');
   };
 
+  const handleCopyToClipboard = async (content?: string) => {
+    const textToCopy = content || formatForExport();
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast({
+        title: "Copied to clipboard",
+        description: "Content has been copied to your clipboard.",
+      });
+    } catch (error) {
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy content to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExport = (format: 'json' | 'text') => {
+    const content = format === 'json' ? 
+      JSON.stringify({ title, description, analysisResult }, null, 2) :
+      formatForExport();
+    
+    const blob = new Blob([content], { 
+      type: format === 'json' ? 'application/json' : 'text/plain' 
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `user-story-${Date.now()}.${format === 'json' ? 'json' : 'txt'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export successful",
+      description: `Content exported as ${format.toUpperCase()} file.`,
+    });
+  };
+
+  const formatForExport = (): string => {
+    let content = `Title: ${title}\n`;
+    if (description) content += `Description: ${description}\n`;
+    
+    if (analysisResult) {
+      content += `\nAnalysis Type: ${analysisResult.analysisType}\n`;
+      
+      if (analysisResult.acceptanceCriteria) {
+        content += '\nAcceptance Criteria:\n';
+        analysisResult.acceptanceCriteria.forEach((criteria, idx) => {
+          content += `${idx + 1}. ${criteria}\n`;
+        });
+      }
+      
+      if (analysisResult.suggestions) {
+        content += '\nSuggestions:\n';
+        analysisResult.suggestions.forEach((suggestion, idx) => {
+          content += `${idx + 1}. ${suggestion}\n`;
+        });
+      }
+      
+      if (analysisResult.splitStories) {
+        content += '\nSplit Stories:\n';
+        analysisResult.splitStories.forEach((story, idx) => {
+          content += `\n${idx + 1}. ${story.title}\n`;
+          content += `   Description: ${story.description}\n`;
+          if (story.acceptanceCriteria.length > 0) {
+            content += '   Acceptance Criteria:\n';
+            story.acceptanceCriteria.forEach((criteria) => {
+              content += `   - ${criteria}\n`;
+            });
+          }
+        });
+      }
+    }
+    
+    return content;
+  };
+
+  const handleSignInRedirect = () => {
+    window.open('/auth', '_blank');
+  };
+
   const renderAnalysisResult = () => {
     if (!analysisResult) return null;
 
@@ -230,17 +316,30 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
               {analysisResult.splitStories.map((story, index) => (
                 <Card key={index} className="border-l-4 border-l-primary">
                   <CardContent className="pt-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium">{story.title}</h5>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCreateStory(story)}
-                        disabled={createStory.isPending}
-                      >
-                        Create Story
-                      </Button>
-                    </div>
+                     <div className="flex justify-between items-start mb-2">
+                       <h5 className="font-medium">{story.title}</h5>
+                       <div className="flex gap-2">
+                         {user ? (
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => handleCreateStory(story)}
+                             disabled={createStory.isPending}
+                           >
+                             Create Story
+                           </Button>
+                         ) : (
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => handleCopyToClipboard(`${story.title}\n${story.description}\n\nAcceptance Criteria:\n${story.acceptanceCriteria.join('\n')}`)}
+                           >
+                             <Copy className="h-3 w-3 mr-1" />
+                             Copy
+                           </Button>
+                         )}
+                       </div>
+                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{story.description}</p>
                     {story.acceptanceCriteria.length > 0 && (
                       <div className="space-y-1">
@@ -314,6 +413,16 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
         </DialogHeader>
 
         <div className="space-y-6">
+          {!user && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in. 
+                Sign in to save your stories and manage them in projects.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">What are you trying to build? *</Label>
@@ -381,9 +490,31 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={handleReset}>
-              Reset
-            </Button>
+            <div className="space-x-2">
+              <Button variant="outline" onClick={handleReset}>
+                Reset
+              </Button>
+              {analysisResult && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleCopyToClipboard()}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleExport('text')}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </>
+              )}
+            </div>
             <div className="space-x-2">
               <Button onClick={handleAnalyze} disabled={isAnalyzing}>
                 {isAnalyzing ? (
@@ -399,9 +530,16 @@ export function UserStoryClarifierDialog({ isOpen, onClose }: UserStoryClarifier
                 )}
               </Button>
               {analysisResult && !analysisResult.splitStories && (
-                <Button onClick={() => handleCreateStory()} disabled={createStory.isPending || createEpic.isPending}>
-                  Create {storyType}
-                </Button>
+                user ? (
+                  <Button onClick={() => handleCreateStory()} disabled={createStory.isPending || createEpic.isPending}>
+                    Create {storyType}
+                  </Button>
+                ) : (
+                  <Button onClick={handleSignInRedirect} variant="default">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Sign in to Save
+                  </Button>
+                )
               )}
             </div>
           </div>
