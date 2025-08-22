@@ -331,6 +331,7 @@ export type Database = {
           id: string
           jira_issue_key: string | null
           position: number | null
+          project_id: string | null
           status: string | null
           theme: string | null
           title: string
@@ -344,6 +345,7 @@ export type Database = {
           id?: string
           jira_issue_key?: string | null
           position?: number | null
+          project_id?: string | null
           status?: string | null
           theme?: string | null
           title: string
@@ -357,13 +359,22 @@ export type Database = {
           id?: string
           jira_issue_key?: string | null
           position?: number | null
+          project_id?: string | null
           status?: string | null
           theme?: string | null
           title?: string
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "epics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_categories: {
         Row: {
@@ -718,6 +729,7 @@ export type Database = {
           id: string
           jira_issue_key: string | null
           position: number | null
+          project_id: string | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -730,6 +742,7 @@ export type Database = {
           id?: string
           jira_issue_key?: string | null
           position?: number | null
+          project_id?: string | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -742,11 +755,19 @@ export type Database = {
           id?: string
           jira_issue_key?: string | null
           position?: number | null
+          project_id?: string | null
           title?: string
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "features_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_features_epic"
             columns: ["epic_id"]
@@ -1451,6 +1472,39 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          color_theme: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_archived: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color_theme?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color_theme?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       search_analytics: {
         Row: {
           clicked_technique_id: string | null
@@ -1881,6 +1935,7 @@ export type Database = {
           jira_issue_key: string | null
           position: number | null
           priority: string | null
+          project_id: string | null
           status: string | null
           story_points: number | null
           title: string
@@ -1899,6 +1954,7 @@ export type Database = {
           jira_issue_key?: string | null
           position?: number | null
           priority?: string | null
+          project_id?: string | null
           status?: string | null
           story_points?: number | null
           title: string
@@ -1917,6 +1973,7 @@ export type Database = {
           jira_issue_key?: string | null
           position?: number | null
           priority?: string | null
+          project_id?: string | null
           status?: string | null
           story_points?: number | null
           title?: string
@@ -1936,6 +1993,13 @@ export type Database = {
             columns: ["feature_id"]
             isOneToOne: false
             referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
