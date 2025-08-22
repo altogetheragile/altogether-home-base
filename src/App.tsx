@@ -9,15 +9,18 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/components/admin/AdminLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
-import Blog from "./pages/Blog";
+import Events from "./pages/Events";
+import LearningPaths from "./pages/LearningPaths";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import KnowledgeTechniqueDetail from "./pages/KnowledgeTechniqueDetail";
-import Auth from "./pages/Auth";
+import Blog from "./pages/Blog";
 import Dashboard from "./pages/Dashboard";
+import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import AccountSecurity from "./pages/AccountSecurity";
+import UserStories from "./pages/UserStories";
+import NotFound from "./pages/NotFound";
 
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminInstructors from "./pages/admin/AdminInstructors";
@@ -43,9 +46,6 @@ import CreateInstructor from "./pages/admin/CreateInstructor";
 import EditInstructor from "./pages/admin/EditInstructor";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
-import NotFound from "./pages/NotFound";
-
-import LearningPaths from "./pages/LearningPaths";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +66,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/user-stories" element={<ProtectedRoute><UserStories /></ProtectedRoute>} />
               <Route path="/account/security" element={<AccountSecurity />} />
               <Route path="/learning-paths" element={<LearningPaths />} />
               

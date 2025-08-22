@@ -64,128 +64,230 @@ const corsHeaders = {
 };
 
 interface CanvasInput {
-  type: 'bmc' | 'user-story-map' | 'customer-journey' | 'process-flow';
-  companyName?: string;
-  industry?: string;
-  description?: string;
+  canvasType: string;
+  businessDescription?: string;
   targetAudience?: string;
-  businessModel?: string;
-  additionalContext?: string;
+  keyObjectives?: string[];
+  [key: string]: any;
 }
 
 interface BMCOutput {
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
+  keyPartners: string[];
+  keyActivities: string[];
+  keyResources: string[];
+  valuePropositions: string[];
+  customerRelationships: string[];
+  channels: string[];
+  customerSegments: string[];
+  costStructure: string[];
+  revenueStreams: string[];
 }
 
-const generateBMCPrompt = (input: CanvasInput): string => {
-  return `You are an expert business strategist specializing in Business Model Canvas creation.
+interface StoryAnalysisInput {
+  storyType: 'epic' | 'feature' | 'story';
+  title: string;
+  description?: string;
+  analysisType: 'spidr' | 'split' | 'combine' | 'refine' | 'acceptance_criteria';
+  relatedStories?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+  }>;
+}
 
-CRITICAL JSON STRUCTURE REQUIREMENT:
-You MUST return a valid JSON object with EXACTLY these 9 keys. Each value MUST be a STRING (not an array).
+interface StoryAnalysisOutput {
+  analysisType: string;
+  suggestions: string[];
+  acceptanceCriteria?: string[];
+  refinementQuestions?: string[];
+  splitStories?: Array<{
+    title: string;
+    description: string;
+    acceptanceCriteria: string[];
+  }>;
+  spidrAnalysis?: {
+    spike: string[];
+    path: string[];
+    interface: string[];
+    data: string[];
+    rules: string[];
+  };
+}
 
-MANDATORY FORMATTING FOR EACH STRING VALUE:
-- Format as bullet points separated by newline characters (\n)
-- Start each bullet point with the • symbol
-- Each bullet point should be a complete, valuable insight
-- Use proper spacing and punctuation
-- Make content scannable and professional
-
-EXACT FORMATTING EXAMPLE FOR EACH SECTION:
-"• First key insight with detailed explanation\n• Second important aspect that adds strategic value\n• Third critical element for business success\n• Fourth component that drives competitive advantage"
-
-Company Details:
-- Company: ${input.companyName || 'Unnamed Company'}
-- Industry: ${input.industry || 'Not specified'}
-- Description: ${input.description || 'No description provided'}
-- Target Audience: ${input.targetAudience || 'Not specified'}
-- Business Model: ${input.businessModel || 'Not specified'}
-- Additional Context: ${input.additionalContext || 'None'}
-
-Generate comprehensive Business Model Canvas content with 3-5 detailed bullet points for each section.
-Focus on creating actionable, strategic insights that provide real business value.
-
-CRITICAL JSON OUTPUT REQUIREMENTS:
-1. Return ONLY valid JSON - no additional text
-2. Use EXACTLY these 9 keys (case-sensitive):
-   - keyPartners
-   - keyActivities  
-   - keyResources
-   - valuePropositions
-   - customerRelationships
-   - channels
-   - customerSegments
-   - costStructure
-   - revenueStreams
-3. Each value MUST be a STRING containing bullet points separated by \\n
-4. Start each bullet point with • followed by a space
-5. Each section should have 3-5 bullet points
-
-Example JSON structure:
-{
-  "keyPartners": "• First partner insight\\n• Second partnership strategy\\n• Third key alliance",
-  "keyActivities": "• Core activity description\\n• Strategic operation detail\\n• Essential process insight"
-}`;
-};
-
-const generateUserStoryMapPrompt = (input: CanvasInput): string => {
-  return `Generate a user story map for: ${input.companyName}
-Industry: ${input.industry}
-Description: ${input.description}
-
-Create a hierarchical user story map with epics, user stories, and tasks.
-Return as JSON with structure: { epics: [{ name, stories: [{ title, tasks: [] }] }] }`;
-};
-
-const generateCustomerJourneyPrompt = (input: CanvasInput): string => {
-  return `Generate a customer journey map for: ${input.companyName}
+function generateBMCPrompt(input: CanvasInput): string {
+  return `Generate a Business Model Canvas for: ${input.businessDescription}
 Target Audience: ${input.targetAudience}
-Industry: ${input.industry}
+Key Objectives: ${input.keyObjectives?.join(', ') || 'Not specified'}
 
-Create journey stages with touchpoints, emotions, and pain points.
-Return as JSON with structure: { stages: [{ name, touchpoints: [], emotions: [], painPoints: [] }] }`;
-};
+Please provide a comprehensive Business Model Canvas with all 9 building blocks:
+1. Key Partners - Who are the key partners and suppliers?
+2. Key Activities - What key activities does the value proposition require?
+3. Key Resources - What key resources does the value proposition require?
+4. Value Propositions - What value do we deliver to customers?
+5. Customer Relationships - What type of relationship does each customer segment expect?
+6. Channels - Through which channels do our customer segments want to be reached?
+7. Customer Segments - For whom are we creating value?
+8. Cost Structure - What are the most important costs inherent in the business model?
+9. Revenue Streams - For what value are customers really willing to pay?
+
+Return as JSON format matching the BMCOutput interface.`;
+}
+
+function generateUserStoryMapPrompt(input: CanvasInput): string {
+  return `Create a User Story Map for: ${input.businessDescription}
+Target Users: ${input.targetAudience}
+
+Generate a hierarchical user story map with:
+1. User Activities (high-level goals)
+2. User Tasks (steps to achieve goals)
+3. User Stories (specific functionality)
+
+Format as a structured breakdown with priorities and dependencies.`;
+}
+
+function generateCustomerJourneyPrompt(input: CanvasInput): string {
+  return `Create a Customer Journey Map for: ${input.businessDescription}
+Target Customer: ${input.targetAudience}
+
+Map the customer journey across:
+1. Awareness - How do customers discover us?
+2. Consideration - How do they evaluate options?
+3. Purchase - How do they buy from us?
+4. Onboarding - How do they get started?
+5. Usage - How do they use our product/service?
+6. Support - How do we help them when needed?
+7. Advocacy - How do they become promoters?
+
+Include touchpoints, emotions, pain points, and opportunities at each stage.`;
+}
+
+function generateStoryAnalysisPrompt(input: StoryAnalysisInput): string {
+  const baseContext = `Story Type: ${input.storyType}
+Title: ${input.title}
+Description: ${input.description || 'Not provided'}`;
+
+  switch (input.analysisType) {
+    case 'spidr':
+      return `${baseContext}
+
+Perform a SPIDR analysis to break down this ${input.storyType} into clear components:
+
+**SPIDR Framework:**
+- **S**pike: What research, proof-of-concepts, or unknowns need investigation?
+- **P**ath: What is the happy path user journey and main flow?
+- **I**nterface: What UI/UX elements, screens, or user interactions are needed?
+- **D**ata: What data needs to be stored, retrieved, validated, or processed?
+- **R**ules: What business rules, validations, constraints, or logic apply?
+
+Provide specific, actionable items for each category that will help break this down into implementable user stories.
+
+Return as JSON format matching the StoryAnalysisOutput interface with spidrAnalysis populated.`;
+
+    case 'split':
+      return `${baseContext}
+
+This ${input.storyType} appears to be too large or complex. Suggest how to split it into smaller, more manageable user stories.
+
+Consider:
+- Independent value delivery
+- Testable increments
+- Clear acceptance criteria
+- Appropriate story point sizing (1-8 points per story)
+- Dependencies between split stories
+
+Provide 3-6 smaller user stories with titles, descriptions, and acceptance criteria.
+
+Return as JSON format matching the StoryAnalysisOutput interface with splitStories populated.`;
+
+    case 'combine':
+      return `${baseContext}
+
+Related Stories:
+${input.relatedStories?.map(s => `- ${s.title}: ${s.description || 'No description'}`).join('\n') || 'None provided'}
+
+Analyze if these related stories should be combined into a single larger story or feature. Consider:
+- Similar functionality or user goals
+- Shared acceptance criteria
+- Implementation dependencies
+- Value delivery timing
+
+Provide recommendations on whether to combine and how.
+
+Return as JSON format matching the StoryAnalysisOutput interface with suggestions populated.`;
+
+    case 'acceptance_criteria':
+      return `${baseContext}
+
+Generate comprehensive acceptance criteria for this ${input.storyType}. Include:
+- Happy path scenarios
+- Edge cases and error conditions
+- Performance requirements
+- Security considerations
+- Accessibility requirements
+- Cross-browser/device compatibility
+
+Use Given-When-Then format where appropriate.
+
+Return as JSON format matching the StoryAnalysisOutput interface with acceptanceCriteria populated.`;
+
+    case 'refine':
+      return `${baseContext}
+
+Analyze this ${input.storyType} and provide refinement questions that a Product Owner should consider:
+- User value and business justification
+- Scope clarity and boundaries
+- Dependencies and assumptions
+- Risk assessment
+- Definition of done
+- Success metrics
+
+Provide thoughtful questions that will improve story quality and team understanding.
+
+Return as JSON format matching the StoryAnalysisOutput interface with refinementQuestions populated.`;
+
+    default:
+      return `${baseContext}
+
+Provide general analysis and improvement suggestions for this ${input.storyType}.`;
+  }
+}
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    const input: CanvasInput = await req.json();
+    console.log('Request received');
+    
+    const { canvasType, analysisType, type, ...inputData } = await req.json();
+    console.log('Canvas type:', canvasType || type, 'Analysis type:', analysisType);
     
     let systemPrompt = '';
     let userPrompt = '';
     
-    switch (input.type) {
-      case 'bmc':
-        systemPrompt = 'You are an expert business strategist specializing in Business Model Canvas creation.';
-        userPrompt = generateBMCPrompt(input);
-        break;
-      case 'user-story-map':
-        systemPrompt = 'You are an expert product manager specializing in user story mapping.';
-        userPrompt = generateUserStoryMapPrompt(input);
-        break;
-      case 'customer-journey':
-        systemPrompt = 'You are an expert UX researcher specializing in customer journey mapping.';  
-        userPrompt = generateCustomerJourneyPrompt(input);
-        break;
-      default:
-        throw new Error(`Unsupported canvas type: ${input.type}`);
+    // Handle story analysis requests
+    if (canvasType === 'story-analysis') {
+      systemPrompt = 'You are an expert agile coach and product owner specializing in user story analysis and refinement. Provide actionable insights to improve story quality and team understanding.';
+      userPrompt = generateStoryAnalysisPrompt({
+        ...inputData,
+        analysisType
+      } as StoryAnalysisInput);
+    } else if (canvasType === 'business-model-canvas' || type === 'bmc') {
+      systemPrompt = 'You are an expert business analyst specializing in Business Model Canvas creation. Generate comprehensive, actionable business model components based on the provided information.';
+      userPrompt = generateBMCPrompt(inputData as CanvasInput);
+    } else if (canvasType === 'user-story-map' || type === 'user-story-map') {
+      systemPrompt = 'You are an expert product manager and agile coach specializing in User Story Mapping. Create detailed, user-focused story maps.';
+      userPrompt = generateUserStoryMapPrompt(inputData as CanvasInput);
+    } else if (canvasType === 'customer-journey-map' || type === 'customer-journey') {
+      systemPrompt = 'You are an expert UX researcher and customer experience specialist. Create detailed customer journey maps with insights and opportunities.';
+      userPrompt = generateCustomerJourneyPrompt(inputData as CanvasInput);
+    } else {
+      throw new Error(`Unsupported canvas type: ${canvasType || type}`);
     }
 
-    console.log('Generating canvas with OpenAI...', { type: input.type, company: input.companyName });
+    console.log('Generating canvas with OpenAI...', { canvasType: canvasType || type, inputData });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -210,79 +312,80 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json();
-    console.log('OpenAI response received:', JSON.stringify(data, null, 2));
+    const responseData = await response.json();
+    console.log('OpenAI response received');
     
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error('Unexpected OpenAI response structure:', data);
+    if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
+      console.error('Unexpected OpenAI response structure:', responseData);
       throw new Error('Invalid response from OpenAI API');
     }
 
-    const generatedContent = data.choices[0].message.content;
-    console.log('Generated content length:', generatedContent?.length);
-    console.log('Generated content preview:', generatedContent?.substring(0, 500));
-    console.log('Full generated content:', generatedContent);
-
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(generatedContent);
+    // Parse the response and clean up content
+    const generatedContent = responseData.choices[0].message.content;
+    let parsedContent = JSON.parse(generatedContent);
+    
+    // Apply cleanup and validation based on canvas type
+    if (canvasType === 'business-model-canvas' || type === 'bmc') {
+      const cleanedContent: BMCOutput = {} as BMCOutput;
       
-      // Apply post-processing for BMC content
-      if (input.type === 'bmc' && parsedContent) {
-        console.log('Raw OpenAI response before cleanup:', JSON.stringify(parsedContent, null, 2));
-        
-        // Clean up all BMC sections
-        const bmcKeys = ['keyPartners', 'keyActivities', 'keyResources', 'valuePropositions', 
-                        'customerRelationships', 'channels', 'customerSegments', 'costStructure', 'revenueStreams'];
-        
-        for (const key of bmcKeys) {
-          if (parsedContent[key]) {
-            const original = parsedContent[key];
-            console.log(`Processing ${key}: "${original}"`);
-            
-            parsedContent[key] = cleanupText(original);
-            
-            if (original !== parsedContent[key]) {
-              console.log(`Cleaned up ${key}: "${original}" -> "${parsedContent[key]}"`);
-            } else {
-              console.log(`No cleanup needed for ${key}`);
-            }
-            
-            // Validate spacing
-            if (!validateSpacing(parsedContent[key])) {
-              console.warn(`Spacing validation failed for ${key}: "${parsedContent[key]}"`);
+      for (const [key, value] of Object.entries(parsedContent)) {
+        if (Array.isArray(value)) {
+          cleanedContent[key as keyof BMCOutput] = value.map(item => cleanupText(item));
+        } else if (typeof value === 'string') {
+          cleanedContent[key as keyof BMCOutput] = [cleanupText(value)];
+        }
+      }
+      
+      // Validate spacing for all BMC content
+      let hasSpacingIssues = false;
+      for (const items of Object.values(cleanedContent)) {
+        if (Array.isArray(items)) {
+          for (const item of items) {
+            if (typeof item === 'string' && !validateSpacing(item)) {
+              hasSpacingIssues = true;
+              break;
             }
           }
         }
-        
-        console.log('Final processed content:', JSON.stringify(parsedContent, null, 2));
       }
-    } catch (parseError) {
-      console.error('Failed to parse OpenAI response as JSON:', parseError);
-      console.error('Raw content:', generatedContent);
       
-      // Fallback for BMC
-      if (input.type === 'bmc') {
-        parsedContent = {
-          keyPartners: "Key partners and suppliers to be identified",
-          keyActivities: "Core activities to be defined", 
-          keyResources: "Essential resources to be determined",
-          valuePropositions: "Value propositions to be developed",
-          customerRelationships: "Customer relationship strategies to be established",
-          channels: "Distribution and communication channels to be selected",
-          customerSegments: "Target customer segments to be identified",
-          costStructure: "Cost structure to be analyzed",
-          revenueStreams: "Revenue streams to be developed"
-        };
-      } else {
-        throw new Error('Failed to parse generated content');
+      if (hasSpacingIssues) {
+        console.warn('Spacing issues detected in BMC content');
+      }
+      
+      parsedContent = cleanedContent;
+    } else if (canvasType === 'story-analysis') {
+      // Clean up story analysis content
+      if (parsedContent.suggestions) {
+        parsedContent.suggestions = parsedContent.suggestions.map((s: string) => cleanupText(s));
+      }
+      if (parsedContent.acceptanceCriteria) {
+        parsedContent.acceptanceCriteria = parsedContent.acceptanceCriteria.map((s: string) => cleanupText(s));
+      }
+      if (parsedContent.refinementQuestions) {
+        parsedContent.refinementQuestions = parsedContent.refinementQuestions.map((s: string) => cleanupText(s));
+      }
+      if (parsedContent.splitStories) {
+        parsedContent.splitStories = parsedContent.splitStories.map((story: any) => ({
+          ...story,
+          title: cleanupText(story.title),
+          description: cleanupText(story.description),
+          acceptanceCriteria: story.acceptanceCriteria?.map((s: string) => cleanupText(s)) || []
+        }));
+      }
+      if (parsedContent.spidrAnalysis) {
+        for (const [key, value] of Object.entries(parsedContent.spidrAnalysis)) {
+          if (Array.isArray(value)) {
+            parsedContent.spidrAnalysis[key] = value.map((s: string) => cleanupText(s));
+          }
+        }
       }
     }
 
     return new Response(JSON.stringify({
       success: true,
-      data: parsedContent,
-      type: input.type
+      generatedCanvas: parsedContent,
+      canvasType: canvasType || type
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

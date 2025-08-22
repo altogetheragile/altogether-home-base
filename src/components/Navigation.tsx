@@ -64,6 +64,16 @@ const Navigation = () => {
                 Events
               </Link>
               <Link
+                to="/user-stories"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/user-stories")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Story Mapping
+              </Link>
+              <Link
                 to="/knowledge"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive("/knowledge")
@@ -208,6 +218,17 @@ const Navigation = () => {
                 }`}
               >
                 Events
+              </Link>
+              <Link
+                to="/user-stories"
+                onClick={() => setIsMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isActive("/user-stories")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Story Mapping
               </Link>
               <Link
                 to="/knowledge"

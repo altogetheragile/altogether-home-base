@@ -323,6 +323,48 @@ export type Database = {
           },
         ]
       }
+      epics: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          jira_issue_key: string | null
+          position: number | null
+          status: string | null
+          theme: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          status?: string | null
+          theme?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          status?: string | null
+          theme?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       event_categories: {
         Row: {
           id: string
@@ -663,6 +705,53 @@ export type Database = {
             columns: ["level_id"]
             isOneToOne: false
             referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      features: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          epic_id: string | null
+          id: string
+          jira_issue_key: string | null
+          position: number | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          epic_id?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          epic_id?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_features_epic"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
             referencedColumns: ["id"]
           },
         ]
@@ -1398,6 +1487,48 @@ export type Database = {
         }
         Relationships: []
       }
+      story_relationships: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          relationship_type: string
+          source_story_id: string
+          target_story_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relationship_type: string
+          source_story_id: string
+          target_story_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relationship_type?: string
+          source_story_id?: string
+          target_story_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_story_relationships_source"
+            columns: ["source_story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_story_relationships_target"
+            columns: ["target_story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technique_comments: {
         Row: {
           content: string
@@ -1736,6 +1867,78 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_stories: {
+        Row: {
+          acceptance_criteria: string[] | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          epic_id: string | null
+          feature_id: string | null
+          id: string
+          issue_type: string | null
+          jira_issue_key: string | null
+          position: number | null
+          priority: string | null
+          status: string | null
+          story_points: number | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          acceptance_criteria?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          epic_id?: string | null
+          feature_id?: string | null
+          id?: string
+          issue_type?: string | null
+          jira_issue_key?: string | null
+          position?: number | null
+          priority?: string | null
+          status?: string | null
+          story_points?: number | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          acceptance_criteria?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          epic_id?: string | null
+          feature_id?: string | null
+          id?: string
+          issue_type?: string | null
+          jira_issue_key?: string | null
+          position?: number | null
+          priority?: string | null
+          status?: string | null
+          story_points?: number | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_stories_epic"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_stories_feature"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

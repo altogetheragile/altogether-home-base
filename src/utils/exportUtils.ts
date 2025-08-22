@@ -32,7 +32,7 @@ export const exportToCSV = (data: any[], filename: string) => {
   document.body.removeChild(link);
 };
 
-export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 'instructors' | 'techniques' | 'categories' | 'tags' | 'analytics') => {
+export function formatDataForExport(data: any[], type: 'events' | 'locations' | 'instructors' | 'techniques' | 'categories' | 'tags' | 'analytics' | 'user_stories' | 'epics'): any[] {
   switch (type) {
     case 'events':
       return data.map(event => ({
@@ -95,15 +95,49 @@ export const formatDataForExport = (data: any[], type: 'events' | 'locations' | 
     
     case 'analytics':
       return data.map(item => ({
-        Query: item.query,
-        'Results Count': item.results_count,
+        'Query': item.query || '',
+        'Results Count': item.results_count || 0,
+        'Created At': item.created_at || '',
         'User ID': item.user_id || '',
         'Session ID': item.session_id || '',
         'IP Address': item.ip_address || '',
-        'Created At': new Date(item.created_at).toLocaleDateString(),
+        'Clicked Technique ID': item.clicked_technique_id || ''
+      }));
+    
+    case 'user_stories':
+      return data.map(item => ({
+        'Issue Type': item.issue_type || 'Story',
+        'Summary': item.title || '',
+        'Description': item.description || '',
+        'Priority': item.priority || 'Medium',
+        'Status': item.status || 'To Do',
+        'Story Points': item.story_points || '',
+        'Epic Link': item.epic_id || '',
+        'Component/s': item.feature_id || '',
+        'Labels': item.acceptance_criteria ? item.acceptance_criteria.join('; ') : '',
+        'Created': item.created_at || '',
+        'Updated': item.updated_at || '',
+        'Reporter': item.created_by || '',
+        'Assignee': '',
+        'Custom Field (Acceptance Criteria)': item.acceptance_criteria ? item.acceptance_criteria.join('\n\n') : ''
+      }));
+    
+    case 'epics':
+      return data.map(item => ({
+        'Issue Type': 'Epic',
+        'Summary': item.title || '',
+        'Description': item.description || '',
+        'Priority': 'Medium',
+        'Status': item.status || 'To Do',
+        'Epic Name': item.title || '',
+        'Epic Theme': item.theme || '',
+        'Created': item.created_at || '',
+        'Updated': item.updated_at || '',
+        'Reporter': item.created_by || '',
+        'Assignee': ''
       }));
     
     default:
       return data;
   }
-};
+}
