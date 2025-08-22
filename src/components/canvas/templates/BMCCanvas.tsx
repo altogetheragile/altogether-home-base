@@ -1,9 +1,10 @@
-import React, { useRef, useImperativeHandle, useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useImperativeHandle, forwardRef } from 'react';
+import { z } from 'zod';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { cn } from '@/lib/utils';
 import TextElement from '../elements/TextElement';
 import FormattedTextDisplay from '@/components/common/FormattedTextDisplay';
-import { cn } from '@/lib/utils';
-import { z } from 'zod';
+import { exportCanvas } from '@/utils/canvas/canvasExporter';
 
 interface ExportOptions {
   format?: 'png' | 'pdf';
@@ -164,83 +165,23 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
   const getBMCData = (): BMCData => bmcData;
 
-  const exportCanvas = async (options: ExportOptions = {}): Promise<string> => {
+  const exportCanvasMethod = async (options: ExportOptions = {}): Promise<string> => {
     if (!canvasRef.current) {
       throw new Error('Canvas not available for export');
     }
 
-    try {
-      // Set export mode to force non-editable text rendering
-      console.log('Setting export mode to true');
-      setIsExporting(true);
-      
-      // Wait for React to re-render with non-editable TextElements
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      const { default: html2canvas } = await import('html2canvas');
-      
-      const canvas = await html2canvas(canvasRef.current, {
-        backgroundColor: 'white',
-        scale: options.quality || 2,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: false,
-        logging: false,
-        width: canvasRef.current.offsetWidth,
-        height: canvasRef.current.offsetHeight,
-        onclone: (clonedDoc) => {
-          // Ensure all textarea elements are converted to divs in the clone
-          const textareas = clonedDoc.querySelectorAll('textarea');
-          textareas.forEach(textarea => {
-            const div = clonedDoc.createElement('div');
-            div.textContent = textarea.value;
-            div.style.cssText = textarea.style.cssText;
-            div.className = textarea.className;
-            textarea.parentNode?.replaceChild(div, textarea);
-          });
-        }
-      });
-
-      console.log('Export canvas created, dimensions:', canvas.width, 'x', canvas.height);
-
-    if (options.format === 'pdf') {
-      const { default: jsPDF } = await import('jspdf');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      const canvasAspectRatio = canvas.width / canvas.height;
-      let imgWidth = pdfWidth - 20;
-      let imgHeight = imgWidth / canvasAspectRatio;
-      
-      if (imgHeight > pdfHeight - 20) {
-        imgHeight = pdfHeight - 20;
-        imgWidth = imgHeight * canvasAspectRatio;
-      }
-      
-      const x = (pdfWidth - imgWidth) / 2;
-      const y = (pdfHeight - imgHeight) / 2;
-      
-      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-      return pdf.output('dataurlstring');
-    }
-
-      return canvas.toDataURL('image/png');
-    } finally {
-      // Always reset export mode
-      console.log('Resetting export mode to false');
-      setIsExporting(false);
-    }
+    // Use the shared canvas exporter utility
+    return await exportCanvas(canvasRef.current, {
+      format: options.format || 'png',
+      quality: options.quality || 2,
+      filename: options.filename || 'bmc-export',
+      scale: 2,
+      backgroundColor: 'white',
+    });
   };
 
   useImperativeHandle(ref, () => ({
-    exportCanvas,
+    exportCanvas: exportCanvasMethod,
     getBMCData,
     setExportMode: setIsExporting,
   }));

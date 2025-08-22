@@ -33,7 +33,7 @@ export const exportCanvas = async (
       logging: false,
       width: element.offsetWidth,
       height: element.offsetHeight,
-    });
+    } as any); // Cast to bypass TypeScript issue with letterRendering
 
     if (format === 'pdf') {
       return exportToPDF(canvas, filename);
