@@ -14,6 +14,11 @@ interface TextElementProps {
   align?: 'left' | 'center' | 'right';
 }
 
+function normalizeForExport(text: string) {
+  // Ensure bullets are "• " (bullet + space) but don't touch normal spaces
+  return text.replace(/•\s?/g, "• ");
+}
+
 const TextElement: React.FC<TextElementProps> = ({
   content,
   isEditable = false,
@@ -86,7 +91,8 @@ const TextElement: React.FC<TextElementProps> = ({
   }
 
   return (
-    <div className={cn('relative w-full h-full', className)}>
+    <div className="relative h-full min-h-0">
+      {/* Live editor (on-screen only) */}
       <Textarea
         ref={textareaRef}
         value={value}
@@ -99,12 +105,27 @@ const TextElement: React.FC<TextElementProps> = ({
           'placeholder:text-muted-foreground/50',
           fontSizeClasses[fontSize],
           alignClasses[align],
-          autoResize && 'overflow-hidden'
+          autoResize && 'overflow-hidden',
+          className
         )}
         style={{
           minHeight: autoResize ? 'auto' : '100%',
         }}
       />
+
+      {/* Export-only mirror (hidden normally; shown in .exporting) */}
+      <div
+        className={cn(
+          'text-export-overlay hidden h-full w-full p-1',
+          'whitespace-break-spaces break-words overflow-hidden',
+          fontSizeClasses[fontSize],
+          alignClasses[align]
+        )}
+        aria-hidden
+      >
+        {normalizeForExport(value)}
+      </div>
+
       {maxLength && (
         <div className="absolute bottom-1 right-2 text-xs text-muted-foreground">
           {value.length}/{maxLength}

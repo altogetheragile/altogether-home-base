@@ -160,9 +160,12 @@
     transition: none !important;
   }
 
-  /* ensure textareas don't flicker while swapped in onclone */
-  .exporting textarea {
-    visibility: hidden;
+  /* Export mode styles - show mirrors and hide textareas for clean html2canvas rendering */
+  .exporting textarea { 
+    display: none !important; 
+  }
+  .exporting .text-export-overlay { 
+    display: block !important; 
   }
 
   /* Bigger hit area on touch devices */

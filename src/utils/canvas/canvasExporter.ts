@@ -22,6 +22,8 @@ export const exportCanvas = async (
   } = options;
 
   try {
+    element.classList.add('exporting');
+
     const canvas = await html2canvas(element, {
       backgroundColor,
       scale,
@@ -31,42 +33,6 @@ export const exportCanvas = async (
       logging: false,
       width: element.offsetWidth,
       height: element.offsetHeight,
-      onclone: (clonedDoc) => {
-        // Convert all textarea elements to properly formatted divs
-        const textareas = clonedDoc.querySelectorAll('textarea');
-        textareas.forEach(textarea => {
-          const ta = textarea as HTMLTextAreaElement;
-          
-          // Build an export-safe div that visually matches the textarea
-          const div = clonedDoc.createElement('div');
-          
-          // Copy classes and inline styles (for font/color/size etc.)
-          div.className = ta.className;
-          div.style.cssText = (ta as HTMLElement).style.cssText;
-          
-          // Use raw text; DO NOT inject HTML. Preserve natural spaces/newlines via CSS.
-          div.textContent = ta.value;
-          
-          // Compute styles so the box dimensions & font match exactly
-          const cs = clonedDoc.defaultView!.getComputedStyle(ta);
-          div.style.whiteSpace = "pre-wrap";        // preserve spaces & newlines, wrap long lines
-          div.style.wordBreak = "break-word";       // avoid overflow
-          div.style.overflow = "hidden";            // no scrollbars in export
-          div.style.boxSizing = cs.boxSizing;
-          div.style.padding = cs.padding;
-          div.style.border = cs.border;
-          div.style.font = cs.font;                 // includes family/size/weight/line-height
-          div.style.letterSpacing = cs.letterSpacing;
-          div.style.wordSpacing = cs.wordSpacing;
-          div.style.textAlign = cs.textAlign;
-          div.style.width = cs.width;               // keep the same width constraints
-          div.style.maxWidth = cs.maxWidth;
-          div.style.minWidth = cs.minWidth;
-          
-          // Swap the nodes
-          ta.parentNode?.replaceChild(div, ta);
-        });
-      }
     });
 
     if (format === 'pdf') {
@@ -79,6 +45,8 @@ export const exportCanvas = async (
   } catch (error) {
     console.error('Export failed:', error);
     throw new Error('Failed to export canvas');
+  } finally {
+    element.classList.remove('exporting');
   }
 };
 
