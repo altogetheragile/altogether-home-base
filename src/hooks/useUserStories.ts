@@ -277,11 +277,82 @@ export function useStoryMutations() {
     },
   });
 
+  const createFeature = useMutation({
+    mutationFn: async (feature: Omit<Feature, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('features')
+        .insert({
+          ...feature,
+          created_by: user.user.id,
+          updated_by: user.user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['features'] });
+      toast({
+        title: "Feature created",
+        description: "Feature has been created successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error creating feature",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createBulkStories = useMutation({
+    mutationFn: async (stories: Array<Omit<UserStory, 'id' | 'created_at' | 'updated_at'>>) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
+      const storiesWithUser = stories.map(story => ({
+        ...story,
+        created_by: user.user.id,
+        updated_by: user.user.id,
+      }));
+
+      const { data, error } = await supabase
+        .from('user_stories')
+        .insert(storiesWithUser)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['user-stories'] });
+      toast({
+        title: "Stories created",
+        description: `${data?.length || 0} user stories have been created successfully.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error creating stories",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     createStory,
     updateStory,
     deleteStory,
     createEpic,
     updateEpic,
+    createFeature,
+    createBulkStories,
   };
 }
