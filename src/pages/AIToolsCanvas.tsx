@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import BMCGeneratorDialog from '@/components/bmc/BMCGeneratorDialog';
+import BMCGenerator from '@/components/bmc/BMCGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sparkles, FileText, StickyNote, Lightbulb } from 'lucide-react';
@@ -27,27 +27,24 @@ export default function AIToolsCanvas() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          {/* Business Model Canvas Generator */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <FileText className="h-6 w-6 text-primary" />
-                <div>
-                  <CardTitle>Business Model Canvas</CardTitle>
-                  <CardDescription>
-                    Generate a complete business model canvas for your startup or project
-                  </CardDescription>
-                </div>
+        {/* Business Model Canvas Generator */}
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <FileText className="h-8 w-8 text-primary" />
+              <div>
+                <h2 className="text-2xl font-bold">Business Model Canvas Generator</h2>
+                <p className="text-muted-foreground">
+                  Generate a complete business model canvas for your startup or project
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <BMCGeneratorDialog />
-            </CardContent>
-          </Card>
+            </div>
+            <BMCGenerator />
+          </div>
+        </div>
 
-          {/* Future AI Tools */}
+        {/* Future AI Tools */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-12">
           <Card className="opacity-60">
             <CardHeader>
               <div className="flex items-center gap-3">
