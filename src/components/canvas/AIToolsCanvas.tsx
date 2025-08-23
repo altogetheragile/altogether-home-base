@@ -8,8 +8,8 @@ import { useProjectMutations } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { BMCCanvasElement } from './elements/BMCCanvasElement';
-import { StoryCardElement } from './elements/StoryCardElement';
+import { InteractiveBMCElement } from './elements/InteractiveBMCElement';
+import { InteractiveStoryElement } from './elements/InteractiveStoryElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 
 interface AIToolsCanvasProps {
@@ -215,7 +215,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     switch (element.type) {
       case 'bmc':
         return (
-          <BMCCanvasElement 
+          <InteractiveBMCElement 
             key={element.id}
             id={element.id}
             position={element.position}
@@ -225,11 +225,29 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             onSelect={handleSelect}
             onMove={handleMove}
             onResize={handleResize}
+            onContentChange={(newContent) => {
+              const updatedElement = { ...element, content: newContent };
+              const updatedData = {
+                ...canvasData,
+                elements: canvasData.elements.map(el => 
+                  el.id === element.id ? updatedElement : el
+                ),
+              };
+              handleDataChange(updatedData);
+            }}
+            onDelete={() => {
+              const updatedData = {
+                ...canvasData,
+                elements: canvasData.elements.filter(el => el.id !== element.id)
+              };
+              handleDataChange(updatedData);
+              setSelectedElements([]);
+            }}
           />
         );
       case 'story':
         return (
-          <StoryCardElement 
+          <InteractiveStoryElement 
             key={element.id}
             id={element.id}
             position={element.position}
@@ -239,6 +257,24 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             onSelect={handleSelect}
             onMove={handleMove}
             onResize={handleResize}
+            onContentChange={(newContent) => {
+              const updatedElement = { ...element, content: newContent };
+              const updatedData = {
+                ...canvasData,
+                elements: canvasData.elements.map(el => 
+                  el.id === element.id ? updatedElement : el
+                ),
+              };
+              handleDataChange(updatedData);
+            }}
+            onDelete={() => {
+              const updatedData = {
+                ...canvasData,
+                elements: canvasData.elements.filter(el => el.id !== element.id)
+              };
+              handleDataChange(updatedData);
+              setSelectedElements([]);
+            }}
           />
         );
       case 'sticky':
@@ -253,6 +289,16 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             onSelect={handleSelect}
             onMove={handleMove}
             onResize={handleResize}
+            onContentChange={(newContent) => {
+              const updatedElement = { ...element, content: newContent };
+              const updatedData = {
+                ...canvasData,
+                elements: canvasData.elements.map(el => 
+                  el.id === element.id ? updatedElement : el
+                ),
+              };
+              handleDataChange(updatedData);
+            }}
           />
         );
       default:
