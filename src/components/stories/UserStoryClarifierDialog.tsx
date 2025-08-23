@@ -22,6 +22,7 @@ interface UserStoryClarifierDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectId?: string;
+  onStoryGenerated?: (storyData: any) => void;
 }
 
 interface StoryAnalysisResult {
@@ -45,7 +46,7 @@ interface StoryAnalysisResult {
   };
 }
 
-export function UserStoryClarifierDialog({ isOpen, onClose, projectId }: UserStoryClarifierDialogProps) {
+export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGenerated }: UserStoryClarifierDialogProps) {
   const [storyType, setStoryType] = useState<'epic' | 'feature' | 'story'>('story');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -120,6 +121,20 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId }: UserSto
       if (result.analysisType === 'user-story-generation' || analysisType === 'user-story-generation') {
         if (result.title) setTitle(result.title);
         if (result.description) setDescription(result.description);
+        
+        // If canvas integration is enabled, pass the data back immediately
+        if (onStoryGenerated && result.title && result.description) {
+          onStoryGenerated({
+            title: result.title,
+            story: result.description,
+            acceptanceCriteria: result.acceptanceCriteria || [],
+            priority: 'medium',
+            storyPoints: 3,
+            status: 'draft'
+          });
+          onClose();
+          return;
+        }
       }
       
       toast({

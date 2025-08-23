@@ -43,6 +43,56 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     onSave?.(data);
   }, [onSave]);
 
+  const handleAddBMCFromGenerator = useCallback((generatedData: any) => {
+    const newElement: CanvasElement = {
+      id: crypto.randomUUID(),
+      type: 'bmc' as any,
+      position: { 
+        x: 100 + (canvasData.elements.length * 20), 
+        y: 100 + (canvasData.elements.length * 20) 
+      },
+      size: { width: 800, height: 600 },
+      content: generatedData,
+    };
+
+    const updatedData = {
+      ...canvasData,
+      elements: [...canvasData.elements, newElement],
+    };
+    
+    handleDataChange(updatedData);
+    
+    toast({
+      title: "BMC Added to Canvas",
+      description: `${generatedData.companyName} Business Model Canvas has been added to your canvas`,
+    });
+  }, [canvasData, handleDataChange, toast]);
+
+  const handleAddStoryFromGenerator = useCallback((storyData: any) => {
+    const newElement: CanvasElement = {
+      id: crypto.randomUUID(),
+      type: 'story' as any,
+      position: { 
+        x: 100 + (canvasData.elements.length * 20), 
+        y: 100 + (canvasData.elements.length * 20) 
+      },
+      size: { width: 300, height: 200 },
+      content: storyData,
+    };
+
+    const updatedData = {
+      ...canvasData,
+      elements: [...canvasData.elements, newElement],
+    };
+    
+    handleDataChange(updatedData);
+    
+    toast({
+      title: "User Story Added to Canvas",
+      description: `${storyData.title} has been added to your canvas`,
+    });
+  }, [canvasData, handleDataChange, toast]);
+
   const handleAddElement = useCallback((type: string) => {
     const newElement: CanvasElement = {
       id: crypto.randomUUID(),
@@ -353,6 +403,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           onZoomOut={handleZoomOut}
           onExport={handleExport}
           zoom={zoom}
+          projectId={projectId}
+          onBMCGenerated={handleAddBMCFromGenerator}
+          onStoryGenerated={handleAddStoryFromGenerator}
         />
       </div>
 
@@ -382,13 +435,13 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
                     Welcome to AI Tools Canvas
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Get started by adding AI-powered tools to your canvas. Use the "Add Element" button above to begin.
+                    Get started by generating content with our sophisticated AI tools, or add blank elements to create manually.
                   </p>
                   <Button 
                     onClick={() => handleAddElement('bmc')}
                     variant="outline"
                   >
-                    Add Your First Tool
+                    Add Your First Element
                   </Button>
                 </div>
               </div>

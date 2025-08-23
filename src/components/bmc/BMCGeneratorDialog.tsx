@@ -27,8 +27,24 @@ interface BMCData {
   revenueStreams: string;
 }
 
-const BMCGeneratorDialog: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface BMCGeneratorDialogProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  projectId?: string;
+  saveToCanvas?: boolean;
+  onBMCGenerated?: (bmcData: any) => void;
+}
+
+const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
+  projectId,
+  saveToCanvas = false,
+  onBMCGenerated,
+}) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = externalOnClose ? externalOnClose : setInternalIsOpen;
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedBMC, setGeneratedBMC] = useState<BMCData | null>(null);
@@ -74,7 +90,11 @@ const BMCGeneratorDialog: React.FC = () => {
       const event = new MouseEvent('click', { bubbles: true });
       document.body.dispatchEvent(event);
     }
-    setIsOpen(open);
+    if (externalOnClose) {
+      if (!open) externalOnClose();
+    } else {
+      setInternalIsOpen(open);
+    }
   };
 
   const generateBMC = async () => {
@@ -119,6 +139,17 @@ const BMCGeneratorDialog: React.FC = () => {
       console.debug("[BMC] extracted BMC:", bmcData);
       setGeneratedBMC(bmcData);          // <- pass directly into BMC canvas
       setCompanyName(formData.companyName);
+      
+      // If canvas integration is enabled, pass the data back
+      if (saveToCanvas && onBMCGenerated) {
+        onBMCGenerated({
+          companyName: formData.companyName,
+          bmcData: bmcData
+        });
+        externalOnClose?.();
+        return;
+      }
+      
       toast({
         title: "🎉 BMC Generated Successfully!",
         description: "Your strategic Business Model Canvas is ready for review and export"
@@ -150,7 +181,11 @@ const BMCGeneratorDialog: React.FC = () => {
   };
 
   const handleClose = () => {
-    setIsOpen(false);
+    if (externalOnClose) {
+      externalOnClose();
+    } else {
+      setInternalIsOpen(false);
+    }
   };
 
   const saveAsProject = async () => {
@@ -228,16 +263,18 @@ const BMCGeneratorDialog: React.FC = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="border-bmc-orange/30 hover:bg-bmc-orange/10 text-bmc-orange-dark hover:text-bmc-orange-dark"
-        >
-          <Sparkles className="h-4 w-4 mr-2" />
-          AI BMC Generator
-        </Button>
-      </DialogTrigger>
+      {!externalOnClose && (
+        <DialogTrigger asChild>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-bmc-orange/30 hover:bg-bmc-orange/10 text-bmc-orange-dark hover:text-bmc-orange-dark"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            AI BMC Generator
+          </Button>
+        </DialogTrigger>
+      )}
       
       <DialogContent className="max-w-7xl h-[98vh] overflow-y-auto bg-background border-2 shadow-2xl p-3">
         <DialogHeader className="pb-2">
@@ -355,7 +392,13 @@ const BMCGeneratorDialog: React.FC = () => {
             <div className="flex justify-end space-x-3 pt-4">
               <Button
                 variant="outline"
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  if (externalOnClose) {
+                    externalOnClose();
+                  } else {
+                    setInternalIsOpen(false);
+                  }
+                }}
                 className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
               >
                 Cancel
