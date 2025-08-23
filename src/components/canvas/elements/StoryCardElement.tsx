@@ -1,33 +1,33 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, User, Move3D } from 'lucide-react';
+import { FileText, Edit, Trash2, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AIToolElement from './AIToolElement';
+
+interface StoryData {
+  title: string;
+  story: string;
+  acceptanceCriteria?: string[];
+  priority: string;
+  storyPoints: number;
+  epic?: string;
+  status: string;
+}
 
 interface StoryCardElementProps {
   id: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
-  data: {
-    title: string;
-    story: string;
-    priority?: string;
-    storyPoints?: number;
-    epic?: string;
-    status?: string;
-  };
+  data?: StoryData;
   isSelected?: boolean;
   onSelect?: () => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
-  onContentChange?: (data: {
-    title: string;
-    story: string;
-    priority?: string;
-    storyPoints?: number;
-    epic?: string;
-    status?: string;
-  }) => void;
+  onContentChange?: (data: StoryData) => void;
+  onDelete?: () => void;
+  onEdit?: () => void;
 }
 
 export const StoryCardElement: React.FC<StoryCardElementProps> = ({
@@ -40,97 +40,11 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   onResize,
   onMove,
   onContentChange,
+  onDelete,
+  onEdit,
 }) => {
-  const [isEditingTitle, setIsEditingTitle] = React.useState(false);
-  const [isEditingStory, setIsEditingStory] = React.useState(false);
-  const [editTitle, setEditTitle] = React.useState(data.title);
-  const [editStory, setEditStory] = React.useState(data.story);
-  const titleInputRef = React.useRef<HTMLInputElement>(null);
-  const storyTextareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect?.();
-
-    if ((isEditingTitle || isEditingStory) || !onMove) return;
-
-    const startX = e.clientX - position.x;
-    const startY = e.clientY - position.y;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      onMove({
-        x: e.clientX - startX,
-        y: e.clientY - startY,
-      });
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleTitleDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onContentChange) {
-      setIsEditingTitle(true);
-      setEditTitle(data.title);
-      setTimeout(() => titleInputRef.current?.focus(), 0);
-    }
-  };
-
-  const handleStoryDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onContentChange) {
-      setIsEditingStory(true);
-      setEditStory(data.story);
-      setTimeout(() => storyTextareaRef.current?.focus(), 0);
-    }
-  };
-
-  const handleTitleSave = () => {
-    onContentChange?.({ ...data, title: editTitle });
-    setIsEditingTitle(false);
-  };
-
-  const handleStorySave = () => {
-    onContentChange?.({ ...data, story: editStory });
-    setIsEditingStory(false);
-  };
-
-  const handleTitleCancel = () => {
-    setEditTitle(data.title);
-    setIsEditingTitle(false);
-  };
-
-  const handleStoryCancel = () => {
-    setEditStory(data.story);
-    setIsEditingStory(false);
-  };
-
-  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleTitleSave();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleTitleCancel();
-    }
-  };
-
-  const handleStoryKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleStorySave();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleStoryCancel();
-    }
+  const handleUpdate = (element: any) => {
+    onMove?.(element.position);
   };
 
   const getPriorityColor = (priority?: string) => {
@@ -142,112 +56,136 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
     }
   };
 
+  const getStatusColor = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case 'todo': 
+      case 'backlog': return 'bg-gray-100 text-gray-800';
+      case 'in progress': 
+      case 'development': return 'bg-blue-100 text-blue-800';
+      case 'done': 
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'blocked': return 'bg-red-100 text-red-800';
+      default: return 'bg-secondary text-secondary-foreground';
+    }
+  };
+
+  const element = {
+    id,
+    type: 'story' as const,
+    position,
+    size,
+    content: data || {}
+  };
+
   return (
-    <div
-      className={cn(
-        "absolute select-none border-2 rounded-lg",
-        isSelected ? "border-primary" : "border-transparent",
-        "hover:border-primary/50 transition-colors",
-        (isEditingTitle || isEditingStory) ? "cursor-text" : "cursor-move"
-      )}
-      style={{
-        left: position.x,
-        top: position.y,
-        width: size.width,
-        height: size.height,
-        minWidth: 240,
-        minHeight: 120,
-      }}
-      onMouseDown={handleMouseDown}
+    <AIToolElement
+      element={element}
+      isSelected={isSelected || false}
+      onSelect={onSelect || (() => {})}
+      onUpdate={handleUpdate}
+      onDelete={onDelete || (() => {})}
     >
-      <Card className="w-full h-full">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+      <Card className="h-full border-2 hover:border-primary/50 transition-colors">
+        <CardContent className="p-4 h-full flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              <div className="flex items-center gap-2">
-                <User className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Story</span>
-              </div>
+              <span className="text-sm font-medium">User Story</span>
             </div>
-            <div className="flex items-center gap-1">
-              {data.priority && (
-                <Badge variant="outline" className={cn("text-xs", getPriorityColor(data.priority))}>
-                  {data.priority}
-                </Badge>
-              )}
-              {data.storyPoints && (
-                <Badge variant="secondary" className="text-xs">
-                  {data.storyPoints} pts
-                </Badge>
+            <div className="flex items-center gap-2">
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onEdit}
+                  className="h-6 w-6 p-0"
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
               )}
             </div>
           </div>
-          <CardTitle className="text-sm line-clamp-2">
-            {isEditingTitle ? (
-              <input
-                ref={titleInputRef}
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
-                onBlur={handleTitleSave}
-                className="w-full text-sm border-none outline-none bg-transparent text-foreground"
-                placeholder="Enter story title..."
-              />
+
+          {/* Story Content */}
+          <div className="flex-1 space-y-3">
+            {data ? (
+              <>
+                {/* Title */}
+                <h4 className="text-sm font-semibold line-clamp-2 min-h-[2.5rem]">
+                  {data.title}
+                </h4>
+
+                {/* Story Text */}
+                <p className="text-xs text-muted-foreground line-clamp-3 min-h-[3rem]">
+                  {data.story}
+                </p>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-1.5">
+                  {data.priority && (
+                    <Badge 
+                      variant="outline" 
+                      className={cn("text-xs px-2 py-0.5", getPriorityColor(data.priority))}
+                    >
+                      {data.priority}
+                    </Badge>
+                  )}
+                  {data.storyPoints && (
+                    <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                      {data.storyPoints} pts
+                    </Badge>
+                  )}
+                  {data.status && (
+                    <Badge 
+                      variant="outline" 
+                      className={cn("text-xs px-2 py-0.5", getStatusColor(data.status))}
+                    >
+                      {data.status}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Epic */}
+                {data.epic && (
+                  <div className="text-xs text-muted-foreground">
+                    Epic: {data.epic}
+                  </div>
+                )}
+
+                {/* Acceptance Criteria Count */}
+                {data.acceptanceCriteria && data.acceptanceCriteria.length > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    {data.acceptanceCriteria.length} criteria
+                  </div>
+                )}
+              </>
             ) : (
-              <span 
-                className="cursor-text"
-                onDoubleClick={handleTitleDoubleClick}
-              >
-                {data.title || 'Double-click to edit title...'}
-              </span>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <div className="space-y-2">
-            {isEditingStory ? (
-              <textarea
-                ref={storyTextareaRef}
-                value={editStory}
-                onChange={(e) => setEditStory(e.target.value)}
-                onKeyDown={handleStoryKeyDown}
-                onBlur={handleStorySave}
-                className="w-full text-xs resize-none border-none outline-none bg-transparent text-muted-foreground"
-                placeholder="Enter story description..."
-                rows={3}
-              />
-            ) : (
-              <p 
-                className="text-xs text-muted-foreground line-clamp-3 cursor-text"
-                onDoubleClick={handleStoryDoubleClick}
-              >
-                {data.story || 'Double-click to edit story...'}
-              </p>
-            )}
-            {data.epic && (
-              <div className="flex items-center gap-1">
-                <Badge variant="outline" className="text-xs">
-                  Epic: {data.epic}
-                </Badge>
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No story data</p>
+                  <p className="text-xs">Click edit to create</p>
+                </div>
               </div>
             )}
-            {data.status && (
-              <div className="flex justify-end">
-                <Badge variant="secondary" className="text-xs">
-                  {data.status}
-                </Badge>
-              </div>
-            )}
+          </div>
+
+          {/* Footer */}
+          <div className="pt-2 border-t">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              className="w-full h-8 text-xs"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              {data ? 'Edit Story' : 'Create Story'}
+            </Button>
           </div>
         </CardContent>
       </Card>
-      
-      {isSelected && (
-        <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full cursor-se-resize flex items-center justify-center">
-          <Move3D className="w-2 h-2 text-primary-foreground" />
-        </div>
-      )}
-    </div>
+    </AIToolElement>
   );
 };

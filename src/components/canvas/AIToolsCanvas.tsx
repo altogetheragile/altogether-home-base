@@ -8,8 +8,8 @@ import { useProjectMutations } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { InteractiveBMCElement } from './elements/InteractiveBMCElement';
-import { InteractiveStoryElement } from './elements/InteractiveStoryElement';
+import { BMCCanvasElement } from './elements/BMCCanvasElement';
+import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 
 interface AIToolsCanvasProps {
@@ -265,7 +265,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     switch (element.type) {
       case 'bmc':
         return (
-          <InteractiveBMCElement 
+          <BMCCanvasElement 
             key={element.id}
             id={element.id}
             position={element.position}
@@ -297,7 +297,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         );
       case 'story':
         return (
-          <InteractiveStoryElement 
+          <StoryCardElement 
             key={element.id}
             id={element.id}
             position={element.position}

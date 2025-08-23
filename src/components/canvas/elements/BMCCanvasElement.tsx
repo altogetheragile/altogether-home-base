@@ -1,18 +1,24 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Move3D } from 'lucide-react';
+import { Building2, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AIToolElement from './AIToolElement';
+import BMCCanvas, { BMCCanvasRef, BMCData } from '../templates/BMCCanvas';
 
 interface BMCCanvasElementProps {
   id: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
-  data: any;
+  data?: BMCData;
   isSelected?: boolean;
   onSelect?: () => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
+  onContentChange?: (data: BMCData) => void;
+  onDelete?: () => void;
+  onEdit?: () => void;
 }
 
 export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
@@ -24,95 +30,67 @@ export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
   onSelect,
   onResize,
   onMove,
+  onContentChange,
+  onDelete,
+  onEdit,
 }) => {
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect?.();
+  const bmcRef = useRef<BMCCanvasRef>(null);
 
-    if (!onMove) return;
+  const handleUpdate = (element: any) => {
+    onMove?.(element.position);
+  };
 
-    const startX = e.clientX - position.x;
-    const startY = e.clientY - position.y;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      onMove({
-        x: e.clientX - startX,
-        y: e.clientY - startY,
-      });
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+  const element = {
+    id,
+    type: 'bmc' as const,
+    position,
+    size,
+    content: data || {}
   };
 
   return (
-    <div
-      className={cn(
-        "absolute select-none cursor-move border-2 rounded-lg",
-        isSelected ? "border-primary" : "border-transparent",
-        "hover:border-primary/50 transition-colors"
-      )}
-      style={{
-        left: position.x,
-        top: position.y,
-        width: size.width,
-        height: size.height,
-      }}
-      onMouseDown={handleMouseDown}
+    <AIToolElement
+      element={element}
+      isSelected={isSelected || false}
+      onSelect={onSelect || (() => {})}
+      onUpdate={handleUpdate}
+      onDelete={onDelete || (() => {})}
     >
-      <Card className="w-full h-full">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-primary" />
-              <CardTitle className="text-sm">Business Model Canvas</CardTitle>
-            </div>
+      <div className="w-full h-full flex flex-col">
+        {/* Header with controls */}
+        <div className="flex items-center justify-between p-3 border-b bg-background">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Business Model Canvas</span>
+          </div>
+          <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
-              BMC
+              AI Generated
             </Badge>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onEdit}
+                className="h-6 w-6 p-0"
+              >
+                <Edit className="h-3 w-3" />
+              </Button>
+            )}
           </div>
-        </CardHeader>
-        <CardContent className="p-3">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="space-y-1">
-              <div className="font-medium text-muted-foreground">Key Partners</div>
-              <div className="text-[10px] line-clamp-2">
-                {data?.keyPartners || 'No key partners defined'}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="font-medium text-muted-foreground">Value Propositions</div>
-              <div className="text-[10px] line-clamp-2">
-                {data?.valuePropositions || 'No value propositions defined'}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="font-medium text-muted-foreground">Key Activities</div>
-              <div className="text-[10px] line-clamp-2">
-                {data?.keyActivities || 'No key activities defined'}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="font-medium text-muted-foreground">Customer Segments</div>
-              <div className="text-[10px] line-clamp-2">
-                {data?.customerSegments || 'No customer segments defined'}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {isSelected && (
-        <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full cursor-se-resize flex items-center justify-center">
-          <Move3D className="w-2 h-2 text-primary-foreground" />
         </div>
-      )}
-    </div>
+
+        {/* BMC Canvas Content */}
+        <div className="flex-1 min-h-0">
+          <BMCCanvas
+            ref={bmcRef}
+            data={data}
+            isEditable={true}
+            onDataChange={onContentChange}
+            className="h-full border-0 rounded-none"
+          />
+        </div>
+      </div>
+    </AIToolElement>
   );
 };
