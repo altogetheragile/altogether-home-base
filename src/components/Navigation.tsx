@@ -126,9 +126,10 @@ const Navigation = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <div className="w-full">
-                      <BMCGeneratorDialog />
-                    </div>
+                    <Link to="/ai-tools" className="w-full">
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      AI Tools Canvas
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -277,18 +278,25 @@ const Navigation = () => {
                  </Link>
                )}
                
-                {/* AI Tools Section - Mobile */}
-                <div className="border-t border-border pt-2 mt-2">
-                  <div className="px-3 py-2 text-sm font-medium text-muted-foreground mb-2">
-                    <div className="flex items-center space-x-2">
-                      <Sparkles className="h-4 w-4" />
-                      <span>AI Tools</span>
-                    </div>
-                  </div>
-                  <div className="px-3 py-2">
-                    <BMCGeneratorDialog />
-                  </div>
-                </div>
+                 {/* AI Tools Section - Mobile */}
+                 <div className="border-t border-border pt-2 mt-2">
+                   <div className="px-3 py-2 text-sm font-medium text-muted-foreground mb-2">
+                     <div className="flex items-center space-x-2">
+                       <Sparkles className="h-4 w-4" />
+                       <span>AI Tools</span>
+                     </div>
+                   </div>
+                   <Link
+                     to="/ai-tools"
+                     onClick={() => setIsMenuOpen(false)}
+                     className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                   >
+                     <div className="flex items-center space-x-2">
+                       <Sparkles className="h-4 w-4" />
+                       <span>AI Tools Canvas</span>
+                     </div>
+                   </Link>
+                 </div>
                
                {/* Mobile Auth Section */}
                <div className="border-t border-border pt-2 mt-2">

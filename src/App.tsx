@@ -16,6 +16,7 @@ import KnowledgeBase from "./pages/KnowledgeBase";
 import KnowledgeTechniqueDetail from "./pages/KnowledgeTechniqueDetail";
 import Blog from "./pages/Blog";
 import Dashboard from "./pages/Dashboard";
+import AIToolsCanvas from "./pages/AIToolsCanvas";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import AccountSecurity from "./pages/AccountSecurity";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/ai-tools" element={<AIToolsCanvas />} />
               <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
               
               <Route path="/account/security" element={<AccountSecurity />} />
