@@ -19,7 +19,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import AccountSecurity from "./pages/AccountSecurity";
-import UserStories from "./pages/UserStories";
+
 import NotFound from "./pages/NotFound";
 
 import AdminEvents from "./pages/admin/AdminEvents";
@@ -68,7 +68,7 @@ const App = () => (
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
-              <Route path="/user-stories" element={<ProtectedRoute><UserStories /></ProtectedRoute>} />
+              
               <Route path="/account/security" element={<AccountSecurity />} />
               <Route path="/learning-paths" element={<LearningPaths />} />
               

@@ -7,6 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Sparkles, RotateCcw, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProjectMutations } from '@/hooks/useProjects';
+import { useCanvasMutations } from '@/hooks/useCanvas';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from './BusinessModelCanvas';
 import BMCExportDialog from './BMCExportDialog';
@@ -26,6 +30,7 @@ interface BMCData {
 const BMCGeneratorDialog: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [generatedBMC, setGeneratedBMC] = useState<BMCData | null>(null);
   const [companyName, setCompanyName] = useState('');
   const canvasRef = useRef<BusinessModelCanvasRef>(null);
@@ -39,6 +44,10 @@ const BMCGeneratorDialog: React.FC = () => {
   });
   
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { createProject } = useProjectMutations();
+  const { createCanvas } = useCanvasMutations();
 
   const industries = [
     'Technology', 'Healthcare', 'Finance', 'Retail', 'Education', 
@@ -142,6 +151,79 @@ const BMCGeneratorDialog: React.FC = () => {
 
   const handleClose = () => {
     setIsOpen(false);
+  };
+
+  const saveAsProject = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to save your BMC as a project",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!generatedBMC) {
+      toast({
+        title: "No BMC Generated",
+        description: "Please generate a BMC first before saving as project",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      // Create the project
+      const projectResult = await createProject.mutateAsync({
+        name: `${companyName} - Business Model Canvas`,
+        description: `AI-generated Business Model Canvas for ${companyName} in the ${formData.industry} industry`,
+        color_theme: '#F97316'
+      });
+
+      // Create the canvas with BMC data
+      const bmcElement = {
+        id: crypto.randomUUID(),
+        type: 'bmc' as const,
+        position: { x: 100, y: 100 },
+        size: { width: 800, height: 600 },
+        content: {
+          companyName,
+          bmcData: generatedBMC
+        }
+      };
+
+      await createCanvas.mutateAsync({
+        projectId: projectResult.id,
+        data: {
+          elements: [bmcElement],
+          metadata: {
+            generatedAt: new Date().toISOString(),
+            source: 'AI BMC Generator'
+          }
+        }
+      });
+
+      toast({
+        title: "🎉 Project Created!",
+        description: `${companyName} BMC has been saved as a project and you can now collaborate on it.`
+      });
+
+      // Navigate to the project canvas
+      navigate(`/projects/${projectResult.id}/canvas`);
+      setIsOpen(false);
+      
+    } catch (error) {
+      console.error('Error saving BMC as project:', error);
+      toast({
+        title: "Save Failed",
+        description: "Unable to save BMC as project. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -320,6 +402,40 @@ const BMCGeneratorDialog: React.FC = () => {
               </div>
               
               <div className="flex space-x-2">
+                {user && (
+                  <Button
+                    onClick={saveAsProject}
+                    disabled={isSaving}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving as Project...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save as Project
+                      </>
+                    )}
+                  </Button>
+                )}
+                {!user && (
+                  <Button
+                    onClick={() => {
+                      toast({
+                        title: "Sign In Required",
+                        description: "Please sign in to save BMC as a project"
+                      });
+                    }}
+                    variant="outline"
+                    className="border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save as Project (Sign In)
+                  </Button>
+                )}
                 <BMCExportDialog 
                   companyName={companyName} 
                   canvasRef={canvasRef}

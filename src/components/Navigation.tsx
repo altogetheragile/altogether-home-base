@@ -13,12 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import BMCGeneratorDialog from "@/components/bmc/BMCGeneratorDialog";
-import { UserStoryClarifierDialog } from "@/components/stories/UserStoryClarifierDialog";
 
 const Navigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showUserStoryClarifier, setShowUserStoryClarifier] = useState(false);
   const { user, signOut, loading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
 
@@ -64,16 +62,6 @@ const Navigation = () => {
                 }`}
               >
                 Events
-              </Link>
-              <Link
-                to="/user-stories"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/user-stories")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                User Story AI
               </Link>
               <Link
                 to="/knowledge"
@@ -137,10 +125,6 @@ const Navigation = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setShowUserStoryClarifier(true)}>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    User Story AI
-                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <div className="w-full">
                       <BMCGeneratorDialog />
@@ -239,17 +223,6 @@ const Navigation = () => {
                 Events
               </Link>
               <Link
-                to="/user-stories"
-                onClick={() => setIsMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive("/user-stories")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                User Story AI
-              </Link>
-              <Link
                 to="/knowledge"
                 onClick={() => setIsMenuOpen(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
@@ -312,15 +285,6 @@ const Navigation = () => {
                       <span>AI Tools</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setShowUserStoryClarifier(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
-                  >
-                    User Story AI
-                  </button>
                   <div className="px-3 py-2">
                     <BMCGeneratorDialog />
                   </div>
@@ -360,11 +324,6 @@ const Navigation = () => {
           </div>
         )}
       </div>
-      
-      <UserStoryClarifierDialog 
-        isOpen={showUserStoryClarifier} 
-        onClose={() => setShowUserStoryClarifier(false)} 
-      />
     </nav>
   );
 };
