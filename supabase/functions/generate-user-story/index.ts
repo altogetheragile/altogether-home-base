@@ -92,28 +92,35 @@ Return the response as a JSON object with the following structure:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are an expert product manager and agile coach. Generate well-structured user stories with clear acceptance criteria and appropriate estimations. Always respond with valid JSON only.'
+            content: 'You are an expert product manager and agile coach. Generate well-structured user stories with clear acceptance criteria and appropriate estimations. Always respond with valid JSON only. Do not include any text before or after the JSON object.'
           },
           { role: 'user', content: prompt }
         ],
-        max_completion_tokens: 800,
+        max_tokens: 800,
+        temperature: 0.2,
+        response_format: { type: "json_object" }
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
       console.error('OpenAI API error:', response.status, errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
-    const generatedContent = data.choices[0].message.content;
+    const generatedContent = data.choices?.[0]?.message?.content;
 
     console.log('Generated content:', generatedContent);
+
+    if (!generatedContent) {
+      console.error('Empty response from OpenAI:', data);
+      throw new Error('Empty response from OpenAI API');
+    }
 
     // Parse the JSON response
     let userStory: UserStoryResponse;
