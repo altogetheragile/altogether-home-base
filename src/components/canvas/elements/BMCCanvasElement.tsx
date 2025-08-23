@@ -1,11 +1,9 @@
 import React, { useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Edit, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Building2, Edit } from 'lucide-react';
 import AIToolElement from './AIToolElement';
-import BMCCanvas, { BMCCanvasRef, BMCData } from '../templates/BMCCanvas';
+import FabricBMCCanvas, { FabricBMCCanvasRef, BMCData } from '../../bmc/FabricBMCCanvas';
 
 interface BMCCanvasElementProps {
   id: string;
@@ -34,7 +32,7 @@ export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
   onDelete,
   onEdit,
 }) => {
-  const bmcRef = useRef<BMCCanvasRef>(null);
+  const bmcRef = useRef<FabricBMCCanvasRef>(null);
 
   const handleUpdate = (element: any) => {
     onMove?.(element.position);
@@ -56,9 +54,9 @@ export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
       onUpdate={handleUpdate}
       onDelete={onDelete || (() => {})}
     >
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full flex flex-col bg-background">
         {/* Header with controls */}
-        <div className="flex items-center justify-between p-3 border-b bg-background">
+        <div className="flex items-center justify-between p-2 border-b bg-background">
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">Business Model Canvas</span>
@@ -82,12 +80,13 @@ export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
 
         {/* BMC Canvas Content */}
         <div className="flex-1 min-h-0">
-          <BMCCanvas
+          <FabricBMCCanvas
             ref={bmcRef}
             data={data}
             isEditable={true}
             onDataChange={onContentChange}
-            className="h-full border-0 rounded-none"
+            width={size.width - 4}
+            height={size.height - 60}
           />
         </div>
       </div>
