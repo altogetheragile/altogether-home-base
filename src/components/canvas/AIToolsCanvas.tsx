@@ -8,7 +8,7 @@ import { useProjectMutations } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { BMCCanvasElement } from './elements/BMCCanvasElement';
+import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 

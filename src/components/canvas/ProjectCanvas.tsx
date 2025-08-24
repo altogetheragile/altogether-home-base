@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
 import { CanvasProvider } from './CanvasProvider';
-import { BMCCanvasElement } from './elements/BMCCanvasElement';
+import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { useCanvas, useCanvasMutations } from '@/hooks/useCanvas';
