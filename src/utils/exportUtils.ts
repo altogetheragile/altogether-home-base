@@ -71,7 +71,9 @@ export function formatDataForExport(data: any[], type: 'events' | 'locations' | 
         'Reading Time': technique.estimated_reading_time || 0,
         Published: technique.is_published ? 'Yes' : 'No',
         'View Count': technique.view_count || 0,
-        Category: technique.category || '',
+        Category: technique.category?.name || 'No category',
+        'Category Color': technique.category?.color || '',
+        Tags: technique.knowledge_tags?.map((tagRelation: any) => tagRelation.knowledge_tags?.name || tagRelation.name).filter(Boolean).join(', ') || 'No tags',
         'Created At': new Date(technique.created_at).toLocaleDateString(),
       }));
     
