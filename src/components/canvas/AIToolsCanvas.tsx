@@ -434,15 +434,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
                   <h3 className="text-lg font-medium text-muted-foreground mb-2">
                     Welcome to AI Tools Canvas
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Get started by generating content with our sophisticated AI tools, or add blank elements to create manually.
+                  <p className="text-sm text-muted-foreground">
+                    Use the AI BMC Generator or AI Story Generator from the toolbar above to create sophisticated content, or add blank user stories and sticky notes for manual creation.
                   </p>
-                  <Button 
-                    onClick={() => handleAddElement('bmc')}
-                    variant="outline"
-                  >
-                    Add Your First Element
-                  </Button>
                 </div>
               </div>
             )}

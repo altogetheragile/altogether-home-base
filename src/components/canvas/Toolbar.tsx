@@ -79,10 +79,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => onAddElement('bmc')}>
-              <Building2 className="h-4 w-4 mr-2" />
-              Blank BMC
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAddElement('story')}>
               <FileText className="h-4 w-4 mr-2" />
               Blank User Story
