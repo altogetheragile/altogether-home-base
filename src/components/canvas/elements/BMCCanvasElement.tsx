@@ -5,16 +5,35 @@ import { Building2, Edit } from 'lucide-react';
 import AIToolElement from './AIToolElement';
 import FabricBMCCanvas, { FabricBMCCanvasRef, BMCData } from '../../bmc/FabricBMCCanvas';
 
+// Default empty BMC data
+const DEFAULT_BMC_DATA: BMCData = {
+  keyPartners: '',
+  keyActivities: '',
+  keyResources: '',
+  valuePropositions: '',
+  customerRelationships: '',
+  channels: '',
+  customerSegments: '',
+  costStructure: '',
+  revenueStreams: '',
+};
+
+// Interface for data that might come from AI generator (nested structure)
+interface BMCGeneratedData {
+  companyName?: string;
+  bmcData?: BMCData;
+}
+
 interface BMCCanvasElementProps {
   id: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
-  data?: BMCData;
+  data?: BMCData | BMCGeneratedData;
   isSelected?: boolean;
   onSelect?: () => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
-  onContentChange?: (data: BMCData) => void;
+  onContentChange?: (data: BMCData | BMCGeneratedData) => void;
   onDelete?: () => void;
   onEdit?: () => void;
 }
@@ -33,6 +52,55 @@ export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
   onEdit,
 }) => {
   const bmcRef = useRef<FabricBMCCanvasRef>(null);
+
+  // Helper function to check if data is in nested format
+  const isNestedData = (data: any): data is BMCGeneratedData => {
+    return data && ('companyName' in data || 'bmcData' in data);
+  };
+
+  // Extract BMC data from nested structure or use flat structure
+  const extractBMCData = (data?: BMCData | BMCGeneratedData): BMCData => {
+    if (!data) return DEFAULT_BMC_DATA;
+    
+    console.log('🔍 [BMC] Raw data received:', data);
+    
+    if (isNestedData(data)) {
+      console.log('📊 [BMC] Extracting nested bmcData:', data.bmcData);
+      return data.bmcData || DEFAULT_BMC_DATA;
+    }
+    
+    console.log('📊 [BMC] Using flat BMC data:', data);
+    return data as BMCData;
+  };
+
+  // Extract company name from nested structure
+  const getCompanyName = (data?: BMCData | BMCGeneratedData): string | undefined => {
+    if (!data || !isNestedData(data)) return undefined;
+    return data.companyName;
+  };
+
+  const bmcData = extractBMCData(data);
+  const companyName = getCompanyName(data);
+
+  // Handle content changes and maintain the original data structure
+  const handleContentChange = (newBmcData: BMCData) => {
+    console.log('✏️ [BMC] Content changed:', newBmcData);
+    
+    if (!onContentChange) return;
+
+    // If original data was nested, maintain that structure
+    if (isNestedData(data)) {
+      const updatedData: BMCGeneratedData = {
+        companyName: companyName,
+        bmcData: newBmcData
+      };
+      console.log('📤 [BMC] Sending nested data update:', updatedData);
+      onContentChange(updatedData);
+    } else {
+      console.log('📤 [BMC] Sending flat data update:', newBmcData);
+      onContentChange(newBmcData);
+    }
+  };
 
   const handleUpdate = (element: any) => {
     onMove?.(element.position);
@@ -59,7 +127,9 @@ export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
         <div className="flex items-center justify-between p-2 border-b bg-background">
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Business Model Canvas</span>
+            <span className="text-sm font-medium">
+              {companyName ? `${companyName} - Business Model Canvas` : 'Business Model Canvas'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
@@ -82,9 +152,9 @@ export const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
         <div className="flex-1 min-h-0">
           <FabricBMCCanvas
             ref={bmcRef}
-            data={data}
+            data={bmcData}
             isEditable={true}
-            onDataChange={onContentChange}
+            onDataChange={handleContentChange}
             width={size.width - 4}
             height={size.height - 60}
           />
