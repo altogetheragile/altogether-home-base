@@ -225,7 +225,47 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         return;
       }
 
-      const fieldMappings = importRecord.mapping_config?.field_mappings || {};
+      // Auto-configure field mappings if not set
+      let fieldMappings = importRecord.mapping_config?.field_mappings || {};
+      
+      if (Object.keys(fieldMappings).length === 0 && stagingData.length > 0) {
+        // Auto-map based on Excel column names
+        const sampleRow = stagingData[0].raw_data;
+        fieldMappings = {
+          name: 'Activity',
+          description: 'Activity Description',
+          summary: 'Generic Summary (Narrative Form)',
+          generic_what: 'Generic What',
+          generic_how: 'Generic How',
+          generic_when: 'Generic When',
+          generic_where: 'Generic Where',
+          generic_who: 'Generic Who',
+          generic_why: 'Generic Why',
+          example_what: 'What',
+          example_how: 'How',
+          example_when: 'When', 
+          example_where: 'Where',
+          example_who: 'Who',
+          example_why: 'Why',
+          originator: 'Background',
+          category_name: 'Category',
+          activity_focus_name: 'Focus',
+          activity_domain_name: 'Domain',
+          planning_layers: 'Planning Layer'
+        };
+        
+        // Update the import record with these mappings
+        await supabase
+          .from('data_imports')
+          .update({ 
+            mapping_config: { 
+              ...importRecord.mapping_config,
+              field_mappings: fieldMappings
+            }
+          })
+          .eq('id', importRecord.id);
+      }
+
       const totalRows = stagingData.length;
       let processed = 0;
       let errors = 0;
@@ -296,12 +336,8 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
   };
 
   const canProcess = () => {
-    const fieldMappings = importRecord.mapping_config?.field_mappings || {};
-    const requiredMapped = Object.entries(fieldMappings).filter(([field, source]) => 
-      field === 'name' && source // At least name is required
-    ).length > 0;
-    
-    return requiredMapped && importRecord.status !== 'processing';
+    // Allow processing if we have data, as we now have auto-mapping
+    return importRecord.status !== 'processing' && importRecord.total_rows > 0;
   };
 
   if (isProcessing) {
