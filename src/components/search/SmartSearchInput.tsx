@@ -39,7 +39,7 @@ export const SmartSearchInput: React.FC<SmartSearchInputProps> = ({
   const logSearch = useLogSearch();
 
   useEffect(() => {
-    setIsOpen(searchQuery.length >= 2);
+    setIsOpen(false); // Never auto-open the dropdown
     setSelectedIndex(-1);
   }, [searchQuery]);
 
