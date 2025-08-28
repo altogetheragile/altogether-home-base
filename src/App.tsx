@@ -95,7 +95,7 @@ const App = () => (
                 <Route path="formats" element={<AdminFormats />} />
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
-                <Route path="knowledge/techniques" element={<AdminKnowledgeTechniquesRoute />} />
+                <Route path="knowledge/items" element={<AdminKnowledgeTechniquesRoute />} />
                 <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
                 <Route path="knowledge/categories" element={<AdminKnowledgeCategoriesRoute />} />
                 <Route path="knowledge/tags" element={<AdminKnowledgeTagsRoute />} />

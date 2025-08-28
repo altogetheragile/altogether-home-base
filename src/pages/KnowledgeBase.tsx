@@ -1,10 +1,15 @@
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import KnowledgeFilter from "@/components/knowledge/KnowledgeFilter";
+import { KnowledgeItemsFilter } from "@/components/knowledge/KnowledgeItemsFilter";
+import { PlanningLayerBadges } from "@/components/knowledge/PlanningLayerBadges";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useKnowledgeTags } from "@/hooks/useKnowledgeTags";
-import { useKnowledgeTechniques } from "@/hooks/useKnowledgeTechniques";
+import { useKnowledgeItems } from "@/hooks/useKnowledgeItems";
+import { useActivityCategories } from "@/hooks/useActivityCategories";
+import { useActivityDomains } from "@/hooks/useActivityDomains";
+import { useActivityFocus } from "@/hooks/useActivityFocus";
+import { usePlanningLayers } from "@/hooks/usePlanningLayers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,23 +23,35 @@ import { Link } from "react-router-dom";
 
 const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>("all");
-  const [selectedTag, setSelectedTag] = useState<string | undefined>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedFocus, setSelectedFocus] = useState<string>("all");
+  const [selectedDomain, setSelectedDomain] = useState<string>("all");
+  const [selectedActivityCategory, setSelectedActivityCategory] = useState<string>("all");
+  const [selectedPlanningLayer, setSelectedPlanningLayer] = useState<string>("all");
+  const [selectedTag, setSelectedTag] = useState<string>("all");
   const [sortBy, setSortBy] = useState("popularity");
 
   const { data: categories } = useKnowledgeCategories();
   const { data: tags } = useKnowledgeTags();
+  const { data: activityCategories } = useActivityCategories();
+  const { data: domains } = useActivityDomains();
+  const { data: focus } = useActivityFocus();
+  const { data: planningLayers } = usePlanningLayers();
 
   const logSearch = useSearchAnalytics();
 
-  const { data: filteredTechniques, isLoading: loading } = useKnowledgeTechniques({
+  const { data: filteredItems, isLoading: loading } = useKnowledgeItems({
     search: searchQuery,
     categoryId: selectedCategory === "all" ? undefined : selectedCategory,
+    focusId: selectedFocus === "all" ? undefined : selectedFocus,
+    domainId: selectedDomain === "all" ? undefined : selectedDomain,
+    activityCategoryId: selectedActivityCategory === "all" ? undefined : selectedActivityCategory,
+    planningLayerId: selectedPlanningLayer === "all" ? undefined : selectedPlanningLayer,
     tag: selectedTag === "all" ? undefined : selectedTag,
     sortBy: sortBy,
   });
 
-  const { data: featuredTechniques, isLoading: featuredLoading } = useKnowledgeTechniques({
+  const { data: featuredItems, isLoading: featuredLoading } = useKnowledgeItems({
     featured: true,
     limit: 3
   });
@@ -46,6 +63,10 @@ const KnowledgeBase = () => {
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
+    setSelectedFocus("all");
+    setSelectedDomain("all");
+    setSelectedActivityCategory("all");
+    setSelectedPlanningLayer("all");
     setSelectedTag("all");
     setSortBy("popularity");
   };
@@ -59,25 +80,25 @@ const KnowledgeBase = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Product Delivery Techniques
+              Product Delivery Knowledge Base
             </h1>
             <p className="text-base text-muted-foreground mb-4">
-              Discover, learn, and apply proven techniques for building better products
+              Discover, learn, and apply proven knowledge items for building better products
             </p>
 
             {/* Compact Stats */}
             <div className="flex justify-center gap-6">
               <div className="text-center">
-                <div className="text-lg font-bold text-primary">{filteredTechniques?.length || 0}</div>
-                <div className="text-xs text-muted-foreground">Techniques</div>
+                <div className="text-lg font-bold text-primary">{filteredItems?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Knowledge Items</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-primary">{categories?.length || 0}</div>
+                <div className="text-lg font-bold text-primary">{activityCategories?.length || 0}</div>
                 <div className="text-xs text-muted-foreground">Categories</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-primary">{tags?.length || 0}</div>
-                <div className="text-xs text-muted-foreground">Tags</div>
+                <div className="text-lg font-bold text-primary">{planningLayers?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Planning Layers</div>
               </div>
             </div>
           </div>
@@ -92,46 +113,53 @@ const KnowledgeBase = () => {
               searchQuery={searchQuery}
               onSearchChange={handleSearch}
               onSearch={() => {}}
-              resultsCount={filteredTechniques?.length || 0}
-              placeholder="Search techniques with AI suggestions..."
+              resultsCount={filteredItems?.length || 0}
+              placeholder="Search knowledge items with AI suggestions..."
               showAISuggestions={true}
             />
           </div>
           <h2 className="text-xl font-semibold text-center">
-            {searchQuery || selectedCategory !== "all" || selectedTag !== "all" 
+            {searchQuery || selectedCategory !== "all" || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
               ? "Search Results" 
-              : "All Techniques"
+              : "All Knowledge Items"
             }
           </h2>
         </div>
 
-        <KnowledgeFilter
-          searchQuery={searchQuery}
-          onSearchChange={handleSearch}
+        <KnowledgeItemsFilter
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
+          selectedFocus={selectedFocus}
+          onFocusChange={setSelectedFocus}
+          selectedDomain={selectedDomain}
+          onDomainChange={setSelectedDomain}
+          selectedActivityCategory={selectedActivityCategory}
+          onActivityCategoryChange={setSelectedActivityCategory}
+          selectedPlanningLayer={selectedPlanningLayer}
+          onPlanningLayerChange={setSelectedPlanningLayer}
           selectedTag={selectedTag}
           onTagChange={setSelectedTag}
           sortBy={sortBy}
-          onSortChange={setSortBy}
+          onSortByChange={setSortBy}
+          onClearFilters={clearFilters}
         />
 
         {/* Recommendations Section - Only show when no search is active */}
-        {!searchQuery && selectedCategory === "all" && selectedTag === "all" && (
+        {!searchQuery && selectedCategory === "all" && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <RecommendationsSection
-            title="Recommended Techniques for You"
+            title="Recommended Knowledge Items for You"
             contentType="technique"
             limit={6}
             className="mb-8"
           />
         )}
 
-        {/* Featured Techniques - Only show when no filters are active */}
-        {!searchQuery && selectedCategory === "all" && selectedTag === "all" && (
+        {/* Featured Knowledge Items - Only show when no filters are active */}
+        {!searchQuery && selectedCategory === "all" && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <div className="space-y-4 mb-8">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
-              Featured Techniques
+              Featured Knowledge Items
             </h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {featuredLoading ? (
@@ -147,47 +175,65 @@ const KnowledgeBase = () => {
                   </Card>
                 ))
               ) : (
-                featuredTechniques?.slice(0, 3).map((technique) => (
-                  <Link key={technique.id} to={`/knowledge/${technique.slug}`}>
+                featuredItems?.slice(0, 3).map((item) => (
+                  <Link key={item.id} to={`/knowledge/${item.slug}`}>
                      <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
                        <CardHeader className="pb-3">
                          <div className="flex items-start justify-between">
                            <div className="flex-1">
                              <div className="flex items-center gap-2 mb-2">
-                               {technique.knowledge_categories && (
+                               {item.activity_categories && (
+                                 <Badge 
+                                   variant="default" 
+                                   className="text-xs"
+                                   style={{ backgroundColor: item.activity_categories.color }}
+                                 >
+                                   {item.activity_categories.name}
+                                 </Badge>
+                               )}
+                               {item.activity_domains && (
                                  <Badge 
                                    variant="secondary" 
                                    className="text-xs"
-                                   style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
+                                   style={{ borderColor: item.activity_domains.color, color: item.activity_domains.color }}
                                  >
-                                   {technique.knowledge_categories.name}
+                                   {item.activity_domains.name}
                                  </Badge>
                                )}
-                               <DifficultyBadge difficulty={technique.difficulty} />
+                               <DifficultyBadge difficulty={item.difficulty_level} />
                              </div>
                              <CardTitle className="text-xl font-bold leading-tight mb-1 text-foreground">
-                               {technique.name}
+                               {item.name}
                              </CardTitle>
                            </div>
                          </div>
                        </CardHeader>
                       <CardContent className="pt-0">
                         <CardDescription className="text-sm line-clamp-3 mb-3">
-                          {technique.description}
+                          {item.purpose || item.description}
                         </CardDescription>
+                        <div className="mb-3">
+                          <PlanningLayerBadges 
+                            layers={item.knowledge_item_planning_layers?.map(pl => ({
+                              ...pl.planning_layers,
+                              is_primary: pl.is_primary
+                            })) || []} 
+                            maxVisible={2} 
+                          />
+                        </div>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
                               <Eye className="h-3 w-3" />
-                              <span>{technique.views || 0}</span>
+                              <span>{item.view_count || 0}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Star className="h-3 w-3" />
-                              <span>{technique.popularity_score || 0}</span>
+                              <span>{item.popularity_score || 0}</span>
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-1">
-                            {technique.knowledge_technique_tags?.slice(0, 2).map((tag) => (
+                            {item.knowledge_item_tags?.slice(0, 2).map((tag) => (
                               <Badge key={tag.knowledge_tags.id} variant="outline" className="text-xs px-1 py-0">
                                 {tag.knowledge_tags.name}
                               </Badge>
@@ -203,7 +249,7 @@ const KnowledgeBase = () => {
           </div>
         )}
 
-        {/* All Techniques */}
+        {/* All Knowledge Items */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {loading ? (
             Array.from({ length: 6 }, (_, i) => (
@@ -217,48 +263,66 @@ const KnowledgeBase = () => {
                 </CardContent>
               </Card>
             ))
-          ) : filteredTechniques && filteredTechniques.length > 0 ? (
-            filteredTechniques.map((technique) => (
-              <Link key={technique.id} to={`/knowledge/${technique.slug}`}>
+          ) : filteredItems && filteredItems.length > 0 ? (
+            filteredItems.map((item) => (
+              <Link key={item.id} to={`/knowledge/${item.slug}`}>
                  <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
                    <CardHeader className="pb-3">
                      <div className="flex items-start justify-between">
                        <div className="flex-1">
                          <div className="flex items-center gap-2 mb-2">
-                           {technique.knowledge_categories && (
+                           {item.activity_categories && (
+                             <Badge 
+                               variant="default" 
+                               className="text-xs"
+                               style={{ backgroundColor: item.activity_categories.color }}
+                             >
+                               {item.activity_categories.name}
+                             </Badge>
+                           )}
+                           {item.activity_domains && (
                              <Badge 
                                variant="secondary" 
                                className="text-xs"
-                               style={{ backgroundColor: `${technique.knowledge_categories.color}20`, color: technique.knowledge_categories.color }}
+                               style={{ borderColor: item.activity_domains.color, color: item.activity_domains.color }}
                              >
-                               {technique.knowledge_categories.name}
+                               {item.activity_domains.name}
                              </Badge>
                            )}
-                           <DifficultyBadge difficulty={technique.difficulty} />
+                           <DifficultyBadge difficulty={item.difficulty_level} />
                          </div>
                          <CardTitle className="text-xl font-bold leading-tight mb-1 text-foreground">
-                           {technique.name}
+                           {item.name}
                          </CardTitle>
                        </div>
                      </div>
                    </CardHeader>
                   <CardContent className="pt-0">
                     <CardDescription className="text-sm line-clamp-3 mb-3">
-                      {technique.description}
+                      {item.purpose || item.description}
                     </CardDescription>
+                    <div className="mb-3">
+                      <PlanningLayerBadges 
+                        layers={item.knowledge_item_planning_layers?.map(pl => ({
+                          ...pl.planning_layers,
+                          is_primary: pl.is_primary
+                        })) || []} 
+                        maxVisible={2} 
+                      />
+                    </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
-                          <span>{technique.views || 0}</span>
+                          <span>{item.view_count || 0}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="h-3 w-3" />
-                          <span>{technique.popularity_score || 0}</span>
+                          <span>{item.popularity_score || 0}</span>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {technique.knowledge_technique_tags?.slice(0, 2).map((tag) => (
+                        {item.knowledge_item_tags?.slice(0, 2).map((tag) => (
                           <Badge key={tag.knowledge_tags.id} variant="outline" className="text-xs px-1 py-0">
                             {tag.knowledge_tags.name}
                           </Badge>
@@ -273,15 +337,15 @@ const KnowledgeBase = () => {
             <div className="col-span-full text-center py-12">
               <div className="text-center">
                 <div className="text-lg font-medium text-muted-foreground mb-2">
-                  No techniques found
+                  No knowledge items found
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {searchQuery || selectedCategory !== "all" || selectedTag !== "all"
+                  {searchQuery || selectedCategory !== "all" || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
                     ? "Try adjusting your search criteria"
-                    : "No techniques have been published yet"
+                    : "No knowledge items have been published yet"
                   }
                 </p>
-                {(searchQuery || selectedCategory !== "all" || selectedTag !== "all") && (
+                {(searchQuery || selectedCategory !== "all" || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all") && (
                   <Button variant="outline" onClick={clearFilters}>
                     Clear filters
                   </Button>
