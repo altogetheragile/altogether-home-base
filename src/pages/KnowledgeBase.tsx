@@ -23,7 +23,6 @@ import { Link } from "react-router-dom";
 
 const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedFocus, setSelectedFocus] = useState<string>("all");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
   const [selectedActivityCategory, setSelectedActivityCategory] = useState<string>("all");
@@ -42,7 +41,6 @@ const KnowledgeBase = () => {
 
   const { data: filteredItems, isLoading: loading } = useKnowledgeItems({
     search: searchQuery,
-    categoryId: selectedCategory === "all" ? undefined : selectedCategory,
     focusId: selectedFocus === "all" ? undefined : selectedFocus,
     domainId: selectedDomain === "all" ? undefined : selectedDomain,
     activityCategoryId: selectedActivityCategory === "all" ? undefined : selectedActivityCategory,
@@ -62,7 +60,6 @@ const KnowledgeBase = () => {
 
   const clearFilters = () => {
     setSearchQuery("");
-    setSelectedCategory("all");
     setSelectedFocus("all");
     setSelectedDomain("all");
     setSelectedActivityCategory("all");
@@ -119,7 +116,7 @@ const KnowledgeBase = () => {
             />
           </div>
           <h2 className="text-xl font-semibold text-center">
-            {searchQuery || selectedCategory !== "all" || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
+            {searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
               ? "Search Results" 
               : "All Knowledge Items"
             }
@@ -127,8 +124,6 @@ const KnowledgeBase = () => {
         </div>
 
         <KnowledgeItemsFilter
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
           selectedFocus={selectedFocus}
           onFocusChange={setSelectedFocus}
           selectedDomain={selectedDomain}
@@ -145,7 +140,7 @@ const KnowledgeBase = () => {
         />
 
         {/* Recommendations Section - Only show when no search is active */}
-        {!searchQuery && selectedCategory === "all" && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
+        {!searchQuery && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <RecommendationsSection
             title="Recommended Knowledge Items for You"
             contentType="technique"
@@ -155,7 +150,7 @@ const KnowledgeBase = () => {
         )}
 
         {/* Featured Knowledge Items - Only show when no filters are active */}
-        {!searchQuery && selectedCategory === "all" && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
+        {!searchQuery && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <div className="space-y-4 mb-8">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
@@ -340,12 +335,12 @@ const KnowledgeBase = () => {
                   No knowledge items found
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {searchQuery || selectedCategory !== "all" || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
+                  {searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
                     ? "Try adjusting your search criteria"
                     : "No knowledge items have been published yet"
                   }
                 </p>
-                {(searchQuery || selectedCategory !== "all" || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all") && (
+                {(searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all") && (
                   <Button variant="outline" onClick={clearFilters}>
                     Clear filters
                   </Button>

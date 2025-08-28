@@ -9,7 +9,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { X, Filter, Target, Users, Layers, Tag, Folder } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { X, Filter, Target, Users, Layers, Tag, Folder, Info } from "lucide-react";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useKnowledgeTags } from "@/hooks/useKnowledgeTags";
 import { useActivityFocus } from "@/hooks/useActivityFocus";
@@ -18,14 +19,12 @@ import { useActivityDomains } from "@/hooks/useActivityDomains";
 import { useActivityCategories } from "@/hooks/useActivityCategories";
 
 interface KnowledgeItemsFilterProps {
-  selectedCategory?: string;
   selectedFocus?: string;
   selectedDomain?: string;
   selectedActivityCategory?: string;
   selectedPlanningLayer?: string;
   selectedTag?: string;
   sortBy?: string;
-  onCategoryChange: (category?: string) => void;
   onFocusChange: (focus?: string) => void;
   onDomainChange: (domain?: string) => void;
   onActivityCategoryChange: (category?: string) => void;
@@ -36,14 +35,12 @@ interface KnowledgeItemsFilterProps {
 }
 
 export const KnowledgeItemsFilter = ({
-  selectedCategory,
   selectedFocus,
   selectedDomain,
   selectedActivityCategory,
   selectedPlanningLayer,
   selectedTag,
   sortBy = 'popularity',
-  onCategoryChange,
   onFocusChange,
   onDomainChange,
   onActivityCategoryChange,
@@ -62,7 +59,6 @@ export const KnowledgeItemsFilter = ({
   const { data: activityCategories = [] } = useActivityCategories();
 
   const activeFiltersCount = [
-    selectedCategory,
     selectedFocus,
     selectedDomain,
     selectedActivityCategory,
@@ -108,13 +104,22 @@ export const KnowledgeItemsFilter = ({
         </div>
 
         {/* Primary Filters - Always Visible */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {/* Activity Category (What) - Primary Tag */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Folder className="h-4 w-4 text-primary" />
-              <label className="text-sm font-medium">What (Category)</label>
-            </div>
+        <TooltipProvider>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Activity Category - Primary Tag */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Folder className="h-4 w-4 text-primary" />
+                <label className="text-sm font-medium">Category</label>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-3 w-3 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>What type of activity or technique this is</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             <Select 
               value={selectedActivityCategory || "all"} 
               onValueChange={(value) => onActivityCategoryChange(value === "all" ? undefined : value)}
@@ -139,21 +144,29 @@ export const KnowledgeItemsFilter = ({
             </Select>
           </div>
 
-          {/* Activity Domain (Who) - Primary Tag */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-secondary" />
-              <label className="text-sm font-medium">Who (Domain)</label>
-            </div>
-            <Select 
-              value={selectedDomain || "all"} 
-              onValueChange={(value) => onDomainChange(value === "all" ? undefined : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select domain..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Domains</SelectItem>
+            {/* Activity Domain - Primary Tag */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-secondary" />
+                <label className="text-sm font-medium">Domain of Interest</label>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-3 w-3 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>The primary role or area of expertise that typically uses this knowledge item</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Select 
+                value={selectedDomain || "all"} 
+                onValueChange={(value) => onDomainChange(value === "all" ? undefined : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select domain..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Domains of Interest</SelectItem>
                 {domains.map((domain) => (
                   <SelectItem key={domain.id} value={domain.id}>
                     <div className="flex items-center gap-2">
@@ -169,12 +182,20 @@ export const KnowledgeItemsFilter = ({
             </Select>
           </div>
 
-          {/* Planning Layer - Visual Range Indicator */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-accent" />
-              <label className="text-sm font-medium">Planning Layer</label>
-            </div>
+            {/* Planning Layer - Visual Range Indicator */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-accent" />
+                <label className="text-sm font-medium">Planning Layer</label>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-3 w-3 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>At what organizational level this is typically applied</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             <Select 
               value={selectedPlanningLayer || "all"} 
               onValueChange={(value) => onPlanningLayerChange(value === "all" ? undefined : value)}
@@ -196,19 +217,29 @@ export const KnowledgeItemsFilter = ({
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+              </Select>
+            </div>
           </div>
-        </div>
+        </TooltipProvider>
 
         {/* Secondary Filters - Expandable */}
         {isExpanded && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t">
-            {/* Activity Focus */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Focus</label>
-              </div>
+          <TooltipProvider>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+              {/* Activity Focus */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-medium">Focus</label>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-3 w-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>The primary area of concentration for this item</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               <Select 
                 value={selectedFocus || "all"} 
                 onValueChange={(value) => onFocusChange(value === "all" ? undefined : value)}
@@ -233,76 +264,46 @@ export const KnowledgeItemsFilter = ({
               </Select>
             </div>
 
-            {/* Legacy Category */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Folder className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Legacy Category</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-medium">Tag</label>
+                </div>
+                <Select 
+                  value={selectedTag || "all"} 
+                  onValueChange={(value) => onTagChange(value === "all" ? undefined : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tag..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Tags</SelectItem>
+                    {tags.map((tag) => (
+                      <SelectItem key={tag.id} value={tag.slug}>
+                        {tag.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select 
-                value={selectedCategory || "all"} 
-                onValueChange={(value) => onCategoryChange(value === "all" ? undefined : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: category.color }}
-                        />
-                        {category.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Tags */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Tag</label>
+              {/* Sort By */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Sort By</label>
+                <Select value={sortBy} onValueChange={onSortByChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popularity">Popularity</SelectItem>
+                    <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                    <SelectItem value="recent">Most Recent</SelectItem>
+                    <SelectItem value="difficulty">Difficulty</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select 
-                value={selectedTag || "all"} 
-                onValueChange={(value) => onTagChange(value === "all" ? undefined : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tag..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tags</SelectItem>
-                  {tags.map((tag) => (
-                    <SelectItem key={tag.id} value={tag.slug}>
-                      {tag.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
-
-            {/* Sort By */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Sort By</label>
-              <Select value={sortBy} onValueChange={onSortByChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="popularity">Popularity</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="difficulty">Difficulty</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          </TooltipProvider>
         )}
 
         {/* Active Filters Display */}
@@ -310,7 +311,7 @@ export const KnowledgeItemsFilter = ({
           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
             {selectedActivityCategory && (
               <Badge variant="outline" className="gap-1">
-                What: {activityCategories.find(c => c.id === selectedActivityCategory)?.name}
+                Category: {activityCategories.find(c => c.id === selectedActivityCategory)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onActivityCategoryChange(undefined)}
@@ -319,7 +320,7 @@ export const KnowledgeItemsFilter = ({
             )}
             {selectedDomain && (
               <Badge variant="outline" className="gap-1">
-                Who: {domains.find(d => d.id === selectedDomain)?.name}
+                Domain of Interest: {domains.find(d => d.id === selectedDomain)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onDomainChange(undefined)}
@@ -341,15 +342,6 @@ export const KnowledgeItemsFilter = ({
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onFocusChange(undefined)}
-                />
-              </Badge>
-            )}
-            {selectedCategory && (
-              <Badge variant="outline" className="gap-1">
-                Category: {categories.find(c => c.id === selectedCategory)?.name}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onCategoryChange(undefined)}
                 />
               </Badge>
             )}
