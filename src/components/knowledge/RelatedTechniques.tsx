@@ -18,12 +18,12 @@ export const RelatedTechniques = ({ techniqueId, categoryId }: RelatedTechniques
     queryFn: async () => {
       // First, try to get explicitly related techniques
       const { data: explicitRelations } = await supabase
-        .from('technique_relations')
+        .from('knowledge_item_relations')
         .select(`
-          related_technique_id,
+          related_knowledge_item_id,
           relation_type,
           strength,
-          knowledge_techniques!technique_relations_related_technique_id_fkey(
+          knowledge_items!knowledge_item_relations_related_knowledge_item_id_fkey(
             id,
             name,
             slug,
@@ -32,16 +32,16 @@ export const RelatedTechniques = ({ techniqueId, categoryId }: RelatedTechniques
             estimated_reading_time
           )
         `)
-        .eq('source_technique_id', techniqueId)
+        .eq('knowledge_item_id', techniqueId)
         .order('strength', { ascending: false })
         .limit(3);
 
-      let techniques: any[] = explicitRelations?.map(rel => rel.knowledge_techniques).filter(Boolean) || [];
+      let techniques: any[] = explicitRelations?.map(rel => rel.knowledge_items).filter(Boolean) || [];
 
       // If we don't have enough explicit relations, find techniques in the same category
       if (techniques.length < 3 && categoryId) {
         const { data: categoryTechniques } = await supabase
-          .from('knowledge_techniques')
+          .from('knowledge_items')
           .select('id, name, slug, summary, difficulty_level, estimated_reading_time')
           .eq('category_id', categoryId)
           .eq('is_published', true)

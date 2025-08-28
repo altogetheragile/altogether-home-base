@@ -13,14 +13,14 @@ export const useViewTracking = (techniqueId: string) => {
       if (error) {
         // Fallback: update view count manually
         const { data: currentTechnique } = await supabase
-          .from('knowledge_techniques')
+          .from('knowledge_items')
           .select('view_count')
           .eq('id', techniqueId)
           .single();
         
         if (currentTechnique) {
           await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .update({ view_count: (currentTechnique.view_count || 0) + 1 })
             .eq('id', techniqueId);
         }

@@ -23,17 +23,17 @@ export const useTechniqueRelations = (techniqueId: string) => {
     queryKey: ['technique-relations', techniqueId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('technique_relations')
+        .from('knowledge_item_relations')
         .select(`
           *,
-          knowledge_techniques!technique_relations_related_technique_id_fkey(
+          knowledge_items!knowledge_item_relations_related_knowledge_item_id_fkey(
             id,
             name,
             slug,
             summary
           )
         `)
-        .eq('source_technique_id', techniqueId)
+        .eq('knowledge_item_id', techniqueId)
         .order('strength', { ascending: false });
 
       if (error) throw error;
@@ -49,10 +49,10 @@ export const useCreateTechniqueRelation = () => {
   return useMutation({
     mutationFn: async (relationData: CreateRelationData) => {
       const { data, error } = await supabase
-        .from('technique_relations')
+        .from('knowledge_item_relations')
         .insert({
-          source_technique_id: relationData.source_technique_id,
-          related_technique_id: relationData.related_technique_id,
+          knowledge_item_id: relationData.source_technique_id,
+          related_knowledge_item_id: relationData.related_technique_id,
           relation_type: relationData.relation_type,
           strength: relationData.strength || 1,
         });
@@ -85,7 +85,7 @@ export const useDeleteTechniqueRelation = () => {
   return useMutation({
     mutationFn: async (relationId: string) => {
       const { error } = await supabase
-        .from('technique_relations')
+        .from('knowledge_item_relations')
         .delete()
         .eq('id', relationId);
 

@@ -106,7 +106,7 @@ export const useRecommendations = (
               
               if (item.content_type === 'technique') {
                 const { data } = await supabase
-                  .from('knowledge_techniques')
+                  .from('knowledge_items')
                   .select('id, name, slug, description, difficulty_level, image_url, view_count')
                   .eq('id', item.content_id)
                   .eq('is_published', true)
@@ -158,7 +158,7 @@ const generateFreshRecommendations = async (
   if (!contentType || contentType === 'technique') {
     // Get popular techniques
     let techniqueQuery = supabase
-      .from('knowledge_techniques')
+      .from('knowledge_items')
       .select('id, name, slug, description, difficulty_level, image_url, view_count, popularity_score')
       .eq('is_published', true)
       .order('popularity_score', { ascending: false })

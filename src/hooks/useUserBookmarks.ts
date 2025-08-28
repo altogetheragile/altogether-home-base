@@ -15,7 +15,7 @@ export const useUserBookmarks = () => {
         .from('user_bookmarks')
         .select(`
           *,
-          technique:knowledge_techniques(
+          technique:knowledge_items(
             id,
             name,
             slug,

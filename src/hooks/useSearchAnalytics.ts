@@ -46,7 +46,7 @@ export const useSearchSuggestions = (searchTerm: string, enabled = true) => {
 
       // Get technique suggestions
       const { data: techniques } = await supabase
-        .from('knowledge_techniques')
+        .from('knowledge_items')
         .select('name, slug')
         .eq('is_published', true)
         .ilike('name', `${searchTerm}%`)
