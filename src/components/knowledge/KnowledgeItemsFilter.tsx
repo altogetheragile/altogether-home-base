@@ -115,12 +115,15 @@ export const KnowledgeItemsFilter = ({
               <Folder className="h-4 w-4 text-primary" />
               <label className="text-sm font-medium">What (Category)</label>
             </div>
-            <Select value={selectedActivityCategory} onValueChange={onActivityCategoryChange}>
+            <Select 
+              value={selectedActivityCategory || "all"} 
+              onValueChange={(value) => onActivityCategoryChange(value === "all" ? undefined : value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select category..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {activityCategories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     <div className="flex items-center gap-2">
@@ -142,12 +145,15 @@ export const KnowledgeItemsFilter = ({
               <Users className="h-4 w-4 text-secondary" />
               <label className="text-sm font-medium">Who (Domain)</label>
             </div>
-            <Select value={selectedDomain} onValueChange={onDomainChange}>
+            <Select 
+              value={selectedDomain || "all"} 
+              onValueChange={(value) => onDomainChange(value === "all" ? undefined : value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select domain..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Domains</SelectItem>
+                <SelectItem value="all">All Domains</SelectItem>
                 {domains.map((domain) => (
                   <SelectItem key={domain.id} value={domain.id}>
                     <div className="flex items-center gap-2">
@@ -169,12 +175,15 @@ export const KnowledgeItemsFilter = ({
               <Layers className="h-4 w-4 text-accent" />
               <label className="text-sm font-medium">Planning Layer</label>
             </div>
-            <Select value={selectedPlanningLayer} onValueChange={onPlanningLayerChange}>
+            <Select 
+              value={selectedPlanningLayer || "all"} 
+              onValueChange={(value) => onPlanningLayerChange(value === "all" ? undefined : value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select layer..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Layers</SelectItem>
+                <SelectItem value="all">All Layers</SelectItem>
                 {planningLayers.map((layer) => (
                   <SelectItem key={layer.id} value={layer.id}>
                     <div className="flex items-center gap-2">
@@ -200,12 +209,15 @@ export const KnowledgeItemsFilter = ({
                 <Target className="h-4 w-4 text-muted-foreground" />
                 <label className="text-sm font-medium">Focus</label>
               </div>
-              <Select value={selectedFocus} onValueChange={onFocusChange}>
+              <Select 
+                value={selectedFocus || "all"} 
+                onValueChange={(value) => onFocusChange(value === "all" ? undefined : value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select focus..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Focus</SelectItem>
+                  <SelectItem value="all">All Focus</SelectItem>
                   {focusOptions.map((focus) => (
                     <SelectItem key={focus.id} value={focus.id}>
                       <div className="flex items-center gap-2">
@@ -227,12 +239,15 @@ export const KnowledgeItemsFilter = ({
                 <Folder className="h-4 w-4 text-muted-foreground" />
                 <label className="text-sm font-medium">Legacy Category</label>
               </div>
-              <Select value={selectedCategory} onValueChange={onCategoryChange}>
+              <Select 
+                value={selectedCategory || "all"} 
+                onValueChange={(value) => onCategoryChange(value === "all" ? undefined : value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       <div className="flex items-center gap-2">
@@ -254,12 +269,15 @@ export const KnowledgeItemsFilter = ({
                 <Tag className="h-4 w-4 text-muted-foreground" />
                 <label className="text-sm font-medium">Tag</label>
               </div>
-              <Select value={selectedTag} onValueChange={onTagChange}>
+              <Select 
+                value={selectedTag || "all"} 
+                onValueChange={(value) => onTagChange(value === "all" ? undefined : value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select tag..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Tags</SelectItem>
+                  <SelectItem value="all">All Tags</SelectItem>
                   {tags.map((tag) => (
                     <SelectItem key={tag.id} value={tag.slug}>
                       {tag.name}
@@ -295,7 +313,7 @@ export const KnowledgeItemsFilter = ({
                 What: {activityCategories.find(c => c.id === selectedActivityCategory)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onActivityCategoryChange('')}
+                  onClick={() => onActivityCategoryChange(undefined)}
                 />
               </Badge>
             )}
@@ -304,7 +322,7 @@ export const KnowledgeItemsFilter = ({
                 Who: {domains.find(d => d.id === selectedDomain)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onDomainChange('')}
+                  onClick={() => onDomainChange(undefined)}
                 />
               </Badge>
             )}
@@ -313,7 +331,7 @@ export const KnowledgeItemsFilter = ({
                 Layer: {planningLayers.find(l => l.id === selectedPlanningLayer)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onPlanningLayerChange('')}
+                  onClick={() => onPlanningLayerChange(undefined)}
                 />
               </Badge>
             )}
@@ -322,7 +340,7 @@ export const KnowledgeItemsFilter = ({
                 Focus: {focusOptions.find(f => f.id === selectedFocus)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onFocusChange('')}
+                  onClick={() => onFocusChange(undefined)}
                 />
               </Badge>
             )}
@@ -331,7 +349,7 @@ export const KnowledgeItemsFilter = ({
                 Category: {categories.find(c => c.id === selectedCategory)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onCategoryChange('')}
+                  onClick={() => onCategoryChange(undefined)}
                 />
               </Badge>
             )}
@@ -340,7 +358,7 @@ export const KnowledgeItemsFilter = ({
                 Tag: {tags.find(t => t.slug === selectedTag)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onTagChange('')}
+                  onClick={() => onTagChange(undefined)}
                 />
               </Badge>
             )}
