@@ -361,6 +361,60 @@ export type Database = {
           },
         ]
       }
+      data_imports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          failed_rows: number | null
+          file_size: number | null
+          file_type: string
+          filename: string
+          id: string
+          mapping_config: Json | null
+          original_filename: string | null
+          processed_at: string | null
+          processing_log: Json | null
+          status: string
+          successful_rows: number | null
+          target_entity: string
+          total_rows: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          failed_rows?: number | null
+          file_size?: number | null
+          file_type: string
+          filename: string
+          id?: string
+          mapping_config?: Json | null
+          original_filename?: string | null
+          processed_at?: string | null
+          processing_log?: Json | null
+          status?: string
+          successful_rows?: number | null
+          target_entity: string
+          total_rows?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          failed_rows?: number | null
+          file_size?: number | null
+          file_type?: string
+          filename?: string
+          id?: string
+          mapping_config?: Json | null
+          original_filename?: string | null
+          processed_at?: string | null
+          processing_log?: Json | null
+          status?: string
+          successful_rows?: number | null
+          target_entity?: string
+          total_rows?: number | null
+        }
+        Relationships: []
+      }
       epics: {
         Row: {
           created_at: string
@@ -1578,6 +1632,59 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      staging_data: {
+        Row: {
+          created_at: string
+          id: string
+          import_id: string
+          mapped_data: Json | null
+          processed_at: string | null
+          processing_errors: Json | null
+          processing_status: string
+          raw_data: Json
+          row_number: number
+          target_record_id: string | null
+          validation_errors: Json | null
+          validation_status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          import_id: string
+          mapped_data?: Json | null
+          processed_at?: string | null
+          processing_errors?: Json | null
+          processing_status?: string
+          raw_data?: Json
+          row_number: number
+          target_record_id?: string | null
+          validation_errors?: Json | null
+          validation_status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          import_id?: string
+          mapped_data?: Json | null
+          processed_at?: string | null
+          processing_errors?: Json | null
+          processing_status?: string
+          raw_data?: Json
+          row_number?: number
+          target_record_id?: string | null
+          validation_errors?: Json | null
+          validation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staging_data_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       story_relationships: {
         Row: {
