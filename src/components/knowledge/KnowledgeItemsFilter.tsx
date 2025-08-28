@@ -16,18 +16,16 @@ import { useKnowledgeTags } from "@/hooks/useKnowledgeTags";
 import { useActivityFocus } from "@/hooks/useActivityFocus";
 import { usePlanningLayers } from "@/hooks/usePlanningLayers";
 import { useActivityDomains } from "@/hooks/useActivityDomains";
-import { useActivityCategories } from "@/hooks/useActivityCategories";
-
 interface KnowledgeItemsFilterProps {
   selectedFocus?: string;
   selectedDomain?: string;
-  selectedActivityCategory?: string;
+  selectedCategory?: string;
   selectedPlanningLayer?: string;
   selectedTag?: string;
   sortBy?: string;
   onFocusChange: (focus?: string) => void;
   onDomainChange: (domain?: string) => void;
-  onActivityCategoryChange: (category?: string) => void;
+  onCategoryChange: (category?: string) => void;
   onPlanningLayerChange: (layer?: string) => void;
   onTagChange: (tag?: string) => void;
   onSortByChange: (sortBy: string) => void;
@@ -37,13 +35,13 @@ interface KnowledgeItemsFilterProps {
 export const KnowledgeItemsFilter = ({
   selectedFocus,
   selectedDomain,
-  selectedActivityCategory,
+  selectedCategory,
   selectedPlanningLayer,
   selectedTag,
   sortBy = 'popularity',
   onFocusChange,
   onDomainChange,
-  onActivityCategoryChange,
+  onCategoryChange,
   onPlanningLayerChange,
   onTagChange,
   onSortByChange,
@@ -56,12 +54,11 @@ export const KnowledgeItemsFilter = ({
   const { data: focusOptions = [] } = useActivityFocus();
   const { data: planningLayers = [] } = usePlanningLayers();
   const { data: domains = [] } = useActivityDomains();
-  const { data: activityCategories = [] } = useActivityCategories();
 
   const activeFiltersCount = [
     selectedFocus,
     selectedDomain,
-    selectedActivityCategory,
+    selectedCategory,
     selectedPlanningLayer,
     selectedTag,
   ].filter(Boolean).length;
@@ -121,15 +118,15 @@ export const KnowledgeItemsFilter = ({
                 </Tooltip>
               </div>
             <Select 
-              value={selectedActivityCategory || "all"} 
-              onValueChange={(value) => onActivityCategoryChange(value === "all" ? undefined : value)}
+              value={selectedCategory || "all"} 
+              onValueChange={(value) => onCategoryChange(value === "all" ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select category..." />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {activityCategories.map((category) => (
+                {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     <div className="flex items-center gap-2">
                       <div 
@@ -309,12 +306,12 @@ export const KnowledgeItemsFilter = ({
         {/* Active Filters Display */}
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-            {selectedActivityCategory && (
+            {selectedCategory && (
               <Badge variant="outline" className="gap-1">
-                Category: {activityCategories.find(c => c.id === selectedActivityCategory)?.name}
+                Category: {categories.find(c => c.id === selectedCategory)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onActivityCategoryChange(undefined)}
+                  onClick={() => onCategoryChange(undefined)}
                 />
               </Badge>
             )}

@@ -25,14 +25,14 @@ const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFocus, setSelectedFocus] = useState<string>("all");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
-  const [selectedActivityCategory, setSelectedActivityCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPlanningLayer, setSelectedPlanningLayer] = useState<string>("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [sortBy, setSortBy] = useState("popularity");
 
   const { data: categories } = useKnowledgeCategories();
   const { data: tags } = useKnowledgeTags();
-  const { data: activityCategories } = useActivityCategories();
+  
   const { data: domains } = useActivityDomains();
   const { data: focus } = useActivityFocus();
   const { data: planningLayers } = usePlanningLayers();
@@ -43,7 +43,7 @@ const KnowledgeBase = () => {
     search: searchQuery,
     focusId: selectedFocus === "all" ? undefined : selectedFocus,
     domainId: selectedDomain === "all" ? undefined : selectedDomain,
-    activityCategoryId: selectedActivityCategory === "all" ? undefined : selectedActivityCategory,
+    categoryId: selectedCategory === "all" ? undefined : selectedCategory,
     planningLayerId: selectedPlanningLayer === "all" ? undefined : selectedPlanningLayer,
     tag: selectedTag === "all" ? undefined : selectedTag,
     sortBy: sortBy,
@@ -62,7 +62,7 @@ const KnowledgeBase = () => {
     setSearchQuery("");
     setSelectedFocus("all");
     setSelectedDomain("all");
-    setSelectedActivityCategory("all");
+    setSelectedCategory("all");
     setSelectedPlanningLayer("all");
     setSelectedTag("all");
     setSortBy("popularity");
@@ -90,7 +90,7 @@ const KnowledgeBase = () => {
                 <div className="text-xs text-muted-foreground">Knowledge Items</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-primary">{activityCategories?.length || 0}</div>
+                <div className="text-lg font-bold text-primary">{categories?.length || 0}</div>
                 <div className="text-xs text-muted-foreground">Categories</div>
               </div>
               <div className="text-center">
@@ -116,7 +116,7 @@ const KnowledgeBase = () => {
             />
           </div>
           <h2 className="text-xl font-semibold text-center">
-            {searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
+            {searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
               ? "Search Results" 
               : "All Knowledge Items"
             }
@@ -128,8 +128,8 @@ const KnowledgeBase = () => {
           onFocusChange={setSelectedFocus}
           selectedDomain={selectedDomain}
           onDomainChange={setSelectedDomain}
-          selectedActivityCategory={selectedActivityCategory}
-          onActivityCategoryChange={setSelectedActivityCategory}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
           selectedPlanningLayer={selectedPlanningLayer}
           onPlanningLayerChange={setSelectedPlanningLayer}
           selectedTag={selectedTag}
@@ -140,7 +140,7 @@ const KnowledgeBase = () => {
         />
 
         {/* Recommendations Section - Only show when no search is active */}
-        {!searchQuery && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
+        {!searchQuery && selectedFocus === "all" && selectedDomain === "all" && selectedCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <RecommendationsSection
             title="Recommended Knowledge Items for You"
             contentType="technique"
@@ -150,7 +150,7 @@ const KnowledgeBase = () => {
         )}
 
         {/* Featured Knowledge Items - Only show when no filters are active */}
-        {!searchQuery && selectedFocus === "all" && selectedDomain === "all" && selectedActivityCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
+        {!searchQuery && selectedFocus === "all" && selectedDomain === "all" && selectedCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <div className="space-y-4 mb-8">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
@@ -335,12 +335,12 @@ const KnowledgeBase = () => {
                   No knowledge items found
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
-                    ? "Try adjusting your search criteria"
-                    : "No knowledge items have been published yet"
-                  }
+                    {searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
+                      ? "Try adjusting your search criteria"
+                      : "No knowledge items have been published yet"
+                    }
                 </p>
-                {(searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedActivityCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all") && (
+                {(searchQuery || selectedFocus !== "all" || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all") && (
                   <Button variant="outline" onClick={clearFilters}>
                     Clear filters
                   </Button>
