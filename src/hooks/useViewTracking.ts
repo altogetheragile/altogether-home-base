@@ -6,8 +6,8 @@ export const useViewTracking = (techniqueId: string) => {
   const trackView = useMutation({
     mutationFn: async () => {
       // Increment view count
-      const { error } = await supabase.rpc('increment_view_count', {
-        technique_id: techniqueId
+      const { error } = await supabase.rpc('increment_knowledge_item_view_count', {
+        item_id: techniqueId
       });
       
       if (error) {
