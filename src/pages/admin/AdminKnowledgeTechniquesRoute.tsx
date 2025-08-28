@@ -1,7 +1,7 @@
-import AdminKnowledgeTechniques from './AdminKnowledgeTechniques';
+import AdminKnowledgeItems from './AdminKnowledgeItems';
 
 const AdminKnowledgeTechniquesRoute = () => {
-  return <AdminKnowledgeTechniques />;
+  return <AdminKnowledgeItems />;
 };
 
 export default AdminKnowledgeTechniquesRoute;
