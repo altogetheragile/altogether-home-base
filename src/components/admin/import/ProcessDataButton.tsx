@@ -369,7 +369,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
       <Alert>
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          Please configure column mappings and ensure at least the "Name" field is mapped before processing.
+          Cannot process import: {importRecord.status === 'processing' ? 'Already processing' : 'No data to process'}.
         </AlertDescription>
       </Alert>
     );
