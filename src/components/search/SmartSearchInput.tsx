@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Sparkles, Zap, Clock, TrendingUp } from 'lucide-react';
+import { Search, Sparkles, Zap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useSearchSuggestions, usePopularSearches, useLogSearch } from '@/hooks/useSearchAnalytics';
+import { useSearchSuggestions, useLogSearch } from '@/hooks/useSearchAnalytics';
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface SmartSearchInputProps {
@@ -35,11 +35,11 @@ export const SmartSearchInput: React.FC<SmartSearchInputProps> = ({
     debouncedQuery, 
     showAISuggestions && debouncedQuery.length >= 2
   );
-  const { data: popularSearches = [] } = usePopularSearches();
+  
   const logSearch = useLogSearch();
 
   useEffect(() => {
-    setIsOpen(searchQuery.length >= 2 || searchQuery.length === 0);
+    setIsOpen(searchQuery.length >= 2);
     setSelectedIndex(-1);
   }, [searchQuery]);
 
@@ -68,7 +68,7 @@ export const SmartSearchInput: React.FC<SmartSearchInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const totalItems = suggestions.length + popularSearches.length;
+    const totalItems = suggestions.length;
     
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -83,10 +83,6 @@ export const SmartSearchInput: React.FC<SmartSearchInputProps> = ({
       } else if (selectedIndex < suggestions.length) {
         const suggestion = suggestions[selectedIndex];
         handleSubmit(suggestion.name);
-      } else {
-        const popularIndex = selectedIndex - suggestions.length;
-        const popular = popularSearches[popularIndex];
-        if (popular) handleSubmit(popular.query);
       }
     } else if (e.key === 'Escape') {
       setIsOpen(false);
@@ -111,7 +107,7 @@ export const SmartSearchInput: React.FC<SmartSearchInputProps> = ({
     }
   };
 
-  const showDropdown = isOpen && (searchQuery.length >= 2 ? suggestions.length > 0 : popularSearches.length > 0);
+  const showDropdown = isOpen && searchQuery.length >= 2 && suggestions.length > 0;
 
   return (
     <div className="relative w-full max-w-2xl" ref={dropdownRef}>
@@ -163,31 +159,7 @@ export const SmartSearchInput: React.FC<SmartSearchInputProps> = ({
                 ))}
               </div>
             )}
-
-            {searchQuery.length < 2 && popularSearches.length > 0 && (
-              <div className="p-2">
-                <div className="flex items-center gap-2 px-2 py-1 text-sm text-muted-foreground">
-                  <TrendingUp className="h-4 w-4" />
-                  Popular Searches
-                </div>
-                {popularSearches.map((popular, index) => (
-                  <button
-                    key={popular.query}
-                    onClick={() => handleSuggestionClick(popular.query)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent rounded-md transition-colors ${
-                      selectedIndex === suggestions.length + index ? 'bg-accent' : ''
-                    }`}
-                  >
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{popular.query}</span>
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      {popular.count}
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-            )}
-
+            
             {suggestionsLoading && searchQuery.length >= 2 && (
               <div className="p-4 text-center text-muted-foreground">
                 <div className="flex items-center justify-center gap-2">
