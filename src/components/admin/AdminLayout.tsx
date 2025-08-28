@@ -80,10 +80,10 @@ const AdminLayout = () => {
 
   const knowledgeItems = [
     {
-      label: 'Techniques',
-      href: '/admin/knowledge/techniques',
+      label: 'Knowledge Items',
+      href: '/admin/knowledge/items',
       icon: BookOpen,
-      description: 'Manage knowledge techniques'
+      description: 'Manage knowledge items'
     },
     {
       label: 'Analytics',
@@ -159,7 +159,7 @@ const AdminLayout = () => {
       label: 'Knowledge Base',
       icon: BookOpen,
       paths: ['/admin/knowledge'],
-      href: '/admin/knowledge/techniques',
+      href: '/admin/knowledge/items',
       items: knowledgeItems
     },
     {
