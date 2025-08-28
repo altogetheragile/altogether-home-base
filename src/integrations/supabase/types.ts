@@ -2433,8 +2433,8 @@ export type Database = {
         Args: { post_id: string }
         Returns: undefined
       }
-      increment_view_count: {
-        Args: { technique_id: string }
+      increment_knowledge_item_view_count: {
+        Args: { item_id: string }
         Returns: undefined
       }
       is_admin: {
