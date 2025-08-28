@@ -10,17 +10,22 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useKnowledgeTags } from '@/hooks/useKnowledgeTags';
 import { exportToCSV, formatDataForExport } from '@/utils/exportUtils';
+import ImportManager from './import/ImportManager';
 
 interface BulkContentOperationsProps {
   techniques: any[];
   selectedTechniques: string[];
   onSelectionChange: (selectedIds: string[]) => void;
+  showImportManager?: boolean;
+  onToggleImportManager?: () => void;
 }
 
 export const BulkContentOperations = ({ 
   techniques, 
   selectedTechniques, 
-  onSelectionChange 
+  onSelectionChange,
+  showImportManager = false,
+  onToggleImportManager
 }: BulkContentOperationsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -590,6 +595,10 @@ export const BulkContentOperations = ({
     }
   };
 
+  if (showImportManager) {
+    return <ImportManager />;
+  }
+
   if (techniques.length === 0) return null;
 
   return (
@@ -621,6 +630,17 @@ export const BulkContentOperations = ({
                 <Upload className="h-4 w-4 mr-1" />
                 Import JSON
               </Button>
+              
+              {onToggleImportManager && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onToggleImportManager}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  Advanced Import
+                </Button>
+              )}
               
               <input
                 ref={fileInputRef}

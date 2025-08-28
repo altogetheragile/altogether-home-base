@@ -2,21 +2,26 @@
 import React, { useRef, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2, Download } from 'lucide-react';
+import { Trash2, Download, Upload } from 'lucide-react';
 import { exportToCSV } from '@/utils/exportUtils';
+import ImportManager from './import/ImportManager';
 
 interface BulkOperationsProps {
   selectedItems: string[];
   allItems: any[];
   onSelectAll: (checked: boolean) => void;
   type: 'events' | 'instructors' | 'locations' | 'templates';
+  showImportManager?: boolean;
+  onToggleImportManager?: () => void;
 }
 
 const BulkOperations: React.FC<BulkOperationsProps> = ({
   selectedItems,
   allItems,
   onSelectAll,
-  type
+  type,
+  showImportManager = false,
+  onToggleImportManager
 }) => {
   const checkboxRef = useRef<HTMLInputElement>(null);
 
@@ -44,6 +49,10 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
     // In real app, this would call mutation
     console.log(`Delete ${selectedItems.length} ${type}`);
   };
+
+  if (showImportManager) {
+    return <ImportManager />;
+  }
 
   if (allItems.length === 0) return null;
 
@@ -82,6 +91,17 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
             Delete
           </Button>
         </div>
+      )}
+
+      {onToggleImportManager && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToggleImportManager}
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Import Data
+        </Button>
       )}
     </div>
   );
