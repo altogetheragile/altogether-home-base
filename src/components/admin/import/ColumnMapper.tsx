@@ -15,19 +15,68 @@ interface ColumnMapperProps {
 // Mapping configurations for different target entities
 const getTargetFields = (targetEntity: string) => {
   switch (targetEntity) {
-    case 'knowledge_techniques':
+    case 'knowledge_items':
       return [
+        // Core fields
         { key: 'name', label: 'Name/Title', required: true },
+        { key: 'slug', label: 'URL Slug', required: false },
         { key: 'description', label: 'Description', required: false },
         { key: 'summary', label: 'Summary', required: false },
         { key: 'purpose', label: 'Purpose', required: false },
-        { key: 'difficulty_level', label: 'Difficulty Level', required: false },
-        { key: 'estimated_reading_time', label: 'Reading Time (minutes)', required: false },
         { key: 'originator', label: 'Originator/Source', required: false },
-        { key: 'category_name', label: 'Category Name', required: false },
-        { key: 'tags', label: 'Tags (comma-separated)', required: false },
+        
+        // Status and visibility
         { key: 'is_published', label: 'Published (true/false)', required: false },
         { key: 'is_featured', label: 'Featured (true/false)', required: false },
+        { key: 'is_complete', label: 'Complete (true/false)', required: false },
+        
+        // Categorization
+        { key: 'category_name', label: 'Category Name', required: false },
+        { key: 'activity_focus_name', label: 'Activity Focus', required: false },
+        { key: 'activity_domain_name', label: 'Activity Domain', required: false },
+        { key: 'activity_category_name', label: 'Activity Category', required: false },
+        { key: 'planning_layers', label: 'Planning Layers (comma-separated)', required: false },
+        { key: 'tags', label: 'Tags (comma-separated)', required: false },
+        
+        // Metadata
+        { key: 'difficulty_level', label: 'Difficulty Level', required: false },
+        { key: 'estimated_reading_time', label: 'Reading Time (minutes)', required: false },
+        { key: 'industry_context', label: 'Industry Context', required: false },
+        { key: 'team_size_min', label: 'Min Team Size', required: false },
+        { key: 'team_size_max', label: 'Max Team Size', required: false },
+        { key: 'duration_min_minutes', label: 'Min Duration (minutes)', required: false },
+        { key: 'duration_max_minutes', label: 'Max Duration (minutes)', required: false },
+        
+        // Generic fields (6W framework)
+        { key: 'generic_who', label: 'Generic Who', required: false },
+        { key: 'generic_what', label: 'Generic What', required: false },
+        { key: 'generic_when', label: 'Generic When', required: false },
+        { key: 'generic_where', label: 'Generic Where', required: false },
+        { key: 'generic_why', label: 'Generic Why', required: false },
+        { key: 'generic_how', label: 'Generic How', required: false },
+        
+        // Example fields
+        { key: 'example_who', label: 'Example Who', required: false },
+        { key: 'example_what', label: 'Example What', required: false },
+        { key: 'example_when', label: 'Example When', required: false },
+        { key: 'example_where', label: 'Example Where', required: false },
+        { key: 'example_why', label: 'Example Why', required: false },
+        { key: 'example_how', label: 'Example How', required: false },
+        
+        // Rich arrays (pipe-separated in Excel)
+        { key: 'typical_participants', label: 'Typical Participants (pipe-separated)', required: false },
+        { key: 'required_skills', label: 'Required Skills (pipe-separated)', required: false },
+        { key: 'success_criteria', label: 'Success Criteria (pipe-separated)', required: false },
+        { key: 'common_pitfalls', label: 'Common Pitfalls (pipe-separated)', required: false },
+        { key: 'related_practices', label: 'Related Practices (pipe-separated)', required: false },
+        
+        // Additional content
+        { key: 'planning_considerations', label: 'Planning Considerations', required: false },
+        
+        // SEO fields
+        { key: 'seo_title', label: 'SEO Title', required: false },
+        { key: 'seo_description', label: 'SEO Description', required: false },
+        { key: 'seo_keywords', label: 'SEO Keywords (comma-separated)', required: false },
       ];
     case 'events':
       return [

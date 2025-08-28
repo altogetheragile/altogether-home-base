@@ -7,7 +7,7 @@ export interface DataImport {
   filename: string;
   file_type: 'excel' | 'csv' | 'json';
   status: 'uploaded' | 'processing' | 'completed' | 'failed' | 'cancelled';
-  target_entity: 'knowledge_techniques' | 'events' | 'instructors' | 'categories' | 'tags' | 'learning_paths';
+  target_entity: 'knowledge_items' | 'events' | 'instructors' | 'categories' | 'tags' | 'learning_paths';
   created_by?: string;
   created_at: string;
   processed_at?: string;

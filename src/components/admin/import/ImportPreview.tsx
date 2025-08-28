@@ -9,6 +9,7 @@ import { ArrowLeft, Play, FileText, AlertTriangle, CheckCircle, XCircle } from '
 import { DataImport } from '@/hooks/useDataImports';
 import { useStagingData } from '@/hooks/useDataImports';
 import { ColumnMapper } from './ColumnMapper';
+import { ProcessDataButton } from './ProcessDataButton';
 import { format } from 'date-fns';
 
 interface ImportPreviewProps {
@@ -179,7 +180,13 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({ importRecord, onBa
         </TabsContent>
 
         <TabsContent value="mapping">
-          <ColumnMapper importRecord={importRecord} headers={headers} />
+          <div className="space-y-6">
+            <ColumnMapper importRecord={importRecord} headers={headers} />
+            <ProcessDataButton 
+              importRecord={importRecord} 
+              onProcessingComplete={() => window.location.reload()} 
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="validation">

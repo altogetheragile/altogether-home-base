@@ -9,7 +9,7 @@ import { parseFile, validateFileSize, getFileSizeDisplay } from '@/utils/filePar
 import { useToast } from '@/hooks/use-toast';
 
 const targetEntities = [
-  { value: 'knowledge_techniques', label: 'Knowledge Techniques' },
+  { value: 'knowledge_items', label: 'Knowledge Items' },
   { value: 'events', label: 'Events' },
   { value: 'instructors', label: 'Instructors' },
   { value: 'categories', label: 'Categories' },
