@@ -11,7 +11,7 @@ export const ContentAnalyticsDashboard = () => {
     queryFn: async () => {
       // Get top viewed techniques
       const { data: topViewed } = await supabase
-        .from('knowledge_techniques')
+        .from('knowledge_items')
         .select('name, view_count, slug')
         .eq('is_published', true)
         .order('view_count', { ascending: false })

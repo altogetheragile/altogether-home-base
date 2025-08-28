@@ -40,28 +40,28 @@ export const BulkContentOperations = ({
       switch (operation) {
         case 'publish':
           await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .update({ is_published: true })
             .in('id', selectedTechniques);
           break;
 
         case 'unpublish':
           await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .update({ is_published: false })
             .in('id', selectedTechniques);
           break;
 
         case 'feature':
           await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .update({ is_featured: true })
             .in('id', selectedTechniques);
           break;
 
         case 'unfeature':
           await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .update({ is_featured: false })
             .in('id', selectedTechniques);
           break;
@@ -85,7 +85,7 @@ export const BulkContentOperations = ({
             return;
           }
           await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .delete()
             .in('id', selectedTechniques);
           break;
@@ -147,7 +147,7 @@ export const BulkContentOperations = ({
         try {
           // Check if technique already exists by slug
           const { data: existingTechnique } = await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .select('id, name')
             .eq('slug', technique.slug)
             .maybeSingle();
@@ -176,7 +176,7 @@ export const BulkContentOperations = ({
             // Only update if there are changes
             if (Object.keys(updateData).length > 0) {
               const { error: updateError } = await supabase
-                .from('knowledge_techniques')
+                .from('knowledge_items')
                 .update(updateData)
                 .eq('id', existingTechnique.id);
               
@@ -215,7 +215,7 @@ export const BulkContentOperations = ({
               // Update category if different
               if (categoryId) {
                 await supabase
-                  .from('knowledge_techniques')
+                  .from('knowledge_items')
                   .update({ category_id: categoryId })
                   .eq('id', existingTechnique.id);
               }
@@ -318,7 +318,7 @@ export const BulkContentOperations = ({
 
           // Insert technique
           const { data: insertedTechnique, error: techniqueError } = await supabase
-            .from('knowledge_techniques')
+            .from('knowledge_items')
             .insert({
               name: technique.name,
               slug: technique.slug,

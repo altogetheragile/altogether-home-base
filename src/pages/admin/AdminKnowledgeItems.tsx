@@ -42,8 +42,8 @@ const AdminKnowledgeTechniques = () => {
   const { data: allTechniques, isLoading, refetch } = useQuery({
     queryKey: ['admin-knowledge-techniques'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('knowledge_techniques')
+    const { data, error } = await supabase
+      .from('knowledge_items')
         .select(`
           *,
           category:knowledge_categories(id, name, color),
@@ -106,7 +106,7 @@ const AdminKnowledgeTechniques = () => {
       
       if (editingTechnique) {
         const { error } = await supabase
-          .from('knowledge_techniques')
+          .from('knowledge_items')
           .update({
             name,
             slug,
@@ -122,7 +122,7 @@ const AdminKnowledgeTechniques = () => {
         techniqueId = editingTechnique.id;
       } else {
         const { data, error } = await supabase
-          .from('knowledge_techniques')
+          .from('knowledge_items')
           .insert({
             name,
             slug,
@@ -219,7 +219,7 @@ const AdminKnowledgeTechniques = () => {
 
     try {
       const { error } = await supabase
-        .from('knowledge_techniques')
+        .from('knowledge_items')
         .delete()
         .eq('id', id);
 
@@ -243,7 +243,7 @@ const AdminKnowledgeTechniques = () => {
   const togglePublished = async (technique: any) => {
     try {
       const { error } = await supabase
-        .from('knowledge_techniques')
+        .from('knowledge_items')
         .update({ is_published: !technique.is_published })
         .eq('id', technique.id);
 
