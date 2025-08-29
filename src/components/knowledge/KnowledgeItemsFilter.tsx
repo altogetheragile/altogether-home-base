@@ -61,7 +61,7 @@ export const KnowledgeItemsFilter = ({
     selectedCategory,
     selectedPlanningLayer,
     selectedTag,
-  ].filter(Boolean).length;
+  ].filter(value => value && value !== "all").length;
 
   const hasActiveFilters = activeFiltersCount > 0;
 
@@ -306,7 +306,7 @@ export const KnowledgeItemsFilter = ({
         {/* Active Filters Display */}
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-            {selectedCategory && (
+            {selectedCategory && selectedCategory !== "all" && (
               <Badge variant="outline" className="gap-1">
                 Category: {categories.find(c => c.id === selectedCategory)?.name}
                 <X 
@@ -315,7 +315,7 @@ export const KnowledgeItemsFilter = ({
                 />
               </Badge>
             )}
-            {selectedDomain && (
+            {selectedDomain && selectedDomain !== "all" && (
               <Badge variant="outline" className="gap-1">
                 Domain of Interest: {domains.find(d => d.id === selectedDomain)?.name}
                 <X 
@@ -324,7 +324,7 @@ export const KnowledgeItemsFilter = ({
                 />
               </Badge>
             )}
-            {selectedPlanningLayer && (
+            {selectedPlanningLayer && selectedPlanningLayer !== "all" && (
               <Badge variant="outline" className="gap-1">
                 Layer: {planningLayers.find(l => l.id === selectedPlanningLayer)?.name}
                 <X 
@@ -333,7 +333,7 @@ export const KnowledgeItemsFilter = ({
                 />
               </Badge>
             )}
-            {selectedFocus && (
+            {selectedFocus && selectedFocus !== "all" && (
               <Badge variant="outline" className="gap-1">
                 Focus: {focusOptions.find(f => f.id === selectedFocus)?.name}
                 <X 
@@ -342,7 +342,7 @@ export const KnowledgeItemsFilter = ({
                 />
               </Badge>
             )}
-            {selectedTag && (
+            {selectedTag && selectedTag !== "all" && (
               <Badge variant="outline" className="gap-1">
                 Tag: {tags.find(t => t.slug === selectedTag)?.name}
                 <X 
