@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BulkContentOperations } from '@/components/admin/BulkContentOperations';
 import { ContentAnalyticsDashboard } from '@/components/admin/ContentAnalyticsDashboard';
 import SearchAndFilter from '@/components/admin/SearchAndFilter';
-import TechniqueFormDialog from '@/components/admin/TechniqueFormDialog';
+import TechniqueFormDialog from '@/components/admin/EnhancedTechniqueForm';
 
 const AdminKnowledgeTechniques = () => {
   const { toast } = useToast();
@@ -100,22 +100,109 @@ const AdminKnowledgeTechniques = () => {
 
   const handleSubmit = async (formData: any) => {
     try {
-      const { name, slug, description, purpose, originator, category_id, media, tags: selectedTags } = formData;
+      // Extract all the fields from the comprehensive form data
+      const {
+        // Basic fields
+        name, slug, description, purpose, originator, category_id, summary, background, source,
+        content_type, difficulty_level, estimated_reading_time, image_url,
+        is_published, is_featured, is_complete,
+        
+        // W5H Generic fields
+        generic_who, generic_what, generic_when, generic_where, generic_why, generic_how, 
+        generic_how_much, generic_summary,
+        
+        // W5H Example fields  
+        example_who, example_what, example_when, example_where, example_why, example_how,
+        example_how_much, example_use_case, example_summary,
+        
+        // Implementation fields
+        planning_considerations, industry_context, focus_description,
+        typical_participants, required_skills, success_criteria, common_pitfalls, related_practices,
+        team_size_min, team_size_max, duration_min_minutes, duration_max_minutes,
+        
+        // Classification fields
+        activity_focus_id, activity_domain_id, activity_category_id,
+        
+        // SEO fields
+        seo_title, seo_description, seo_keywords,
+        
+        // Media and tags
+        media, tags: selectedTags
+      } = formData;
       
       let techniqueId: string;
+      
+      // Prepare the update/insert data with all fields
+      const techniqueData = {
+        name,
+        slug,
+        description,
+        purpose,
+        originator,
+        category_id: category_id || null,
+        summary,
+        background,
+        source,
+        content_type,
+        difficulty_level,
+        estimated_reading_time: estimated_reading_time ? parseInt(estimated_reading_time) : null,
+        image_url,
+        is_published: Boolean(is_published),
+        is_featured: Boolean(is_featured),
+        is_complete: Boolean(is_complete),
+        
+        // W5H Generic
+        generic_who,
+        generic_what,
+        generic_when,
+        generic_where,
+        generic_why,
+        generic_how,
+        generic_how_much,
+        generic_summary,
+        
+        // W5H Example
+        example_who,
+        example_what,
+        example_when,
+        example_where,
+        example_why,
+        example_how,
+        example_how_much,
+        example_use_case,
+        example_summary,
+        
+        // Implementation
+        planning_considerations,
+        industry_context,
+        focus_description,
+        typical_participants,
+        required_skills,
+        success_criteria,
+        common_pitfalls,
+        related_practices,
+        team_size_min: team_size_min ? parseInt(team_size_min) : null,
+        team_size_max: team_size_max ? parseInt(team_size_max) : null,
+        duration_min_minutes: duration_min_minutes ? parseInt(duration_min_minutes) : null,
+        duration_max_minutes: duration_max_minutes ? parseInt(duration_max_minutes) : null,
+        
+        // Classification
+        activity_focus_id: activity_focus_id || null,
+        activity_domain_id: activity_domain_id || null,
+        activity_category_id: activity_category_id || null,
+        
+        // SEO
+        seo_title,
+        seo_description,
+        seo_keywords,
+        
+        updated_at: new Date().toISOString(),
+      };
       
       if (editingTechnique) {
         const { error } = await supabase
           .from('knowledge_items')
-          .update({
-            name,
-            slug,
-            description,
-            purpose,
-            originator,
-            category_id: category_id || null,
-            updated_at: new Date().toISOString(),
-          })
+          .update(techniqueData)
           .eq('id', editingTechnique.id);
 
         if (error) throw error;
@@ -123,14 +210,7 @@ const AdminKnowledgeTechniques = () => {
       } else {
         const { data, error } = await supabase
           .from('knowledge_items')
-          .insert({
-            name,
-            slug,
-            description,
-            purpose,
-            originator,
-            category_id: category_id || null,
-          })
+          .insert(techniqueData)
           .select()
           .single();
 

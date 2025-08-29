@@ -16,10 +16,11 @@ interface SimpleFormProps {
   onSubmit: (data: any) => Promise<void>;
   editingItem?: any;
   onCancel: () => void;
+  showActions?: boolean;
   fields: Array<{
     key: string;
     label: string;
-    type: 'text' | 'textarea' | 'select' | 'multiselect' | 'image' | 'media';
+    type: 'text' | 'textarea' | 'select' | 'multiselect' | 'image' | 'media' | 'array' | 'number' | 'checkbox';
     required?: boolean;
     placeholder?: string;
     options?: Array<{ value: string; label: string }>;
@@ -27,7 +28,7 @@ interface SimpleFormProps {
   }>;
 }
 
-const SimpleForm = ({ title, onSubmit, editingItem, onCancel, fields }: SimpleFormProps) => {
+const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions = true, fields }: SimpleFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState(() => {
     const initial: any = {};
