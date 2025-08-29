@@ -101,22 +101,27 @@ export const KnowledgeItemsFilter = ({
         </div>
 
         {/* Primary Filters - Always Visible */}
-        <TooltipProvider>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            {/* Activity Category - Primary Tag */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Folder className="h-4 w-4 text-primary" />
-                <label className="text-sm font-medium">Category</label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-3 w-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>What type of activity or technique this is</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Activity Category - Primary Tag */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Folder className="h-4 w-4 text-primary" />
+              <label className="text-sm font-medium">Category</label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    aria-label="Category information"
+                  >
+                    <Info className="h-3 w-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="z-50">
+                  <p>What type of activity or technique this is</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <Select 
               value={selectedCategory || "all"} 
               onValueChange={(value) => onCategoryChange(value === "all" ? undefined : value)}
@@ -147,10 +152,16 @@ export const KnowledgeItemsFilter = ({
                 <Users className="h-4 w-4 text-secondary" />
                 <label className="text-sm font-medium">Domain of Interest</label>
                 <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-3 w-3 text-muted-foreground" />
+                  <TooltipTrigger asChild>
+                    <button 
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      aria-label="Domain of Interest information"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent side="top" className="z-50">
                     <p>The primary role or area of expertise that typically uses this knowledge item</p>
                   </TooltipContent>
                 </Tooltip>
@@ -185,10 +196,16 @@ export const KnowledgeItemsFilter = ({
                 <Layers className="h-4 w-4 text-accent" />
                 <label className="text-sm font-medium">Planning Layer</label>
                 <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-3 w-3 text-muted-foreground" />
+                  <TooltipTrigger asChild>
+                    <button 
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      aria-label="Planning Layer information"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent side="top" className="z-50">
                     <p>At what organizational level this is typically applied</p>
                   </TooltipContent>
                 </Tooltip>
@@ -217,26 +234,30 @@ export const KnowledgeItemsFilter = ({
               </Select>
             </div>
           </div>
-        </TooltipProvider>
 
         {/* Secondary Filters - Expandable */}
         {isExpanded && (
-          <TooltipProvider>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-              {/* Activity Focus */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  <label className="text-sm font-medium">Focus</label>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-3 w-3 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>The primary area of concentration for this item</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+            {/* Activity Focus */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-muted-foreground" />
+                <label className="text-sm font-medium">Focus</label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      aria-label="Focus information"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="z-50">
+                    <p>The primary area of concentration for this item</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <Select 
                 value={selectedFocus || "all"} 
                 onValueChange={(value) => onFocusChange(value === "all" ? undefined : value)}
@@ -300,7 +321,6 @@ export const KnowledgeItemsFilter = ({
                 </Select>
               </div>
             </div>
-          </TooltipProvider>
         )}
 
         {/* Active Filters Display */}
