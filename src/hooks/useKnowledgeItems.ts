@@ -255,9 +255,12 @@ export const useKnowledgeItems = (params?: {
       }
 
       if (params?.planningLayerId) {
+        console.log('🔍 Filtering by planning layer:', params.planningLayerId);
+        console.log('🔍 Items before planning layer filter:', filteredData.length);
         filteredData = filteredData.filter(item => 
           item.planning_layers?.some(layer => layer.id === params.planningLayerId)
         );
+        console.log('🔍 Items after planning layer filter:', filteredData.length);
       }
 
       return filteredData;
