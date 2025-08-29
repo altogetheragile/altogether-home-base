@@ -13,17 +13,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { X, Filter, Target, Users, Layers, Tag, Folder, Info } from "lucide-react";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useKnowledgeTags } from "@/hooks/useKnowledgeTags";
-import { useActivityFocus } from "@/hooks/useActivityFocus";
 import { usePlanningLayers } from "@/hooks/usePlanningLayers";
 import { useActivityDomains } from "@/hooks/useActivityDomains";
 interface KnowledgeItemsFilterProps {
-  selectedFocus?: string;
   selectedDomain?: string;
   selectedCategory?: string;
   selectedPlanningLayer?: string;
   selectedTag?: string;
   sortBy?: string;
-  onFocusChange: (focus?: string) => void;
   onDomainChange: (domain?: string) => void;
   onCategoryChange: (category?: string) => void;
   onPlanningLayerChange: (layer?: string) => void;
@@ -33,13 +30,11 @@ interface KnowledgeItemsFilterProps {
 }
 
 export const KnowledgeItemsFilter = ({
-  selectedFocus,
   selectedDomain,
   selectedCategory,
   selectedPlanningLayer,
   selectedTag,
   sortBy = 'popularity',
-  onFocusChange,
   onDomainChange,
   onCategoryChange,
   onPlanningLayerChange,
@@ -51,12 +46,10 @@ export const KnowledgeItemsFilter = ({
 
   const { data: categories = [] } = useKnowledgeCategories();
   const { data: tags = [] } = useKnowledgeTags();
-  const { data: focusOptions = [] } = useActivityFocus();
   const { data: planningLayers = [] } = usePlanningLayers();
   const { data: domains = [] } = useActivityDomains();
 
   const activeFiltersCount = [
-    selectedFocus,
     selectedDomain,
     selectedCategory,
     selectedPlanningLayer,
@@ -237,51 +230,7 @@ export const KnowledgeItemsFilter = ({
 
         {/* Secondary Filters - Expandable */}
         {isExpanded && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-            {/* Activity Focus */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Focus</label>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button 
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      aria-label="Focus information"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="z-50">
-                    <p>The primary area of concentration for this item</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <Select 
-                value={selectedFocus || "all"} 
-                onValueChange={(value) => onFocusChange(value === "all" ? undefined : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select focus..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Focus</SelectItem>
-                  {focusOptions.map((focus) => (
-                    <SelectItem key={focus.id} value={focus.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: focus.color }}
-                        />
-                        {focus.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-muted-foreground" />
@@ -350,15 +299,6 @@ export const KnowledgeItemsFilter = ({
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onPlanningLayerChange(undefined)}
-                />
-              </Badge>
-            )}
-            {selectedFocus && selectedFocus !== "all" && (
-              <Badge variant="outline" className="gap-1">
-                Focus: {focusOptions.find(f => f.id === selectedFocus)?.name}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => onFocusChange(undefined)}
                 />
               </Badge>
             )}

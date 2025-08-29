@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Calendar, User, Tag, Clock, Eye, BookOpen } from "lucide-react";
+import { Calendar, User, Tag, Clock, Eye, BookOpen, Target } from "lucide-react";
 import { DifficultyBadge } from "./DifficultyBadge";
 import { BookmarkButton } from "./BookmarkButton";
 import { ReadingProgress } from "./ReadingProgress";
@@ -43,6 +43,21 @@ export const EnhancedTechniqueHeader = ({ item }: EnhancedTechniqueHeaderProps) 
                 <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl">
                   {item.purpose || item.generic_summary}
                 </p>
+              )}
+
+              {/* Focus Description - Rich Purpose Statement */}
+              {item.focus_description && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg border border-primary/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 bg-primary/10 rounded-md">
+                      <Target className="h-4 w-4 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-primary">Focus & Application</h3>
+                  </div>
+                  <p className="text-foreground leading-relaxed text-lg">
+                    {item.focus_description}
+                  </p>
+                </div>
               )}
             </div>
             

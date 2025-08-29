@@ -26,6 +26,7 @@ export interface KnowledgeItem {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+  focus_description?: string;
   
   // Rich data fields from Excel
   generic_who?: string;

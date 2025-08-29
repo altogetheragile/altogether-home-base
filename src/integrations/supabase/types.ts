@@ -1255,6 +1255,7 @@ export type Database = {
           example_where: string | null
           example_who: string | null
           example_why: string | null
+          focus_description: string | null
           generic_how: string | null
           generic_how_much: string | null
           generic_summary: string | null
@@ -1315,6 +1316,7 @@ export type Database = {
           example_where?: string | null
           example_who?: string | null
           example_why?: string | null
+          focus_description?: string | null
           generic_how?: string | null
           generic_how_much?: string | null
           generic_summary?: string | null
@@ -1375,6 +1377,7 @@ export type Database = {
           example_where?: string | null
           example_who?: string | null
           example_why?: string | null
+          focus_description?: string | null
           generic_how?: string | null
           generic_how_much?: string | null
           generic_summary?: string | null
