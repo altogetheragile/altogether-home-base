@@ -186,7 +186,7 @@ export const KnowledgeItemsFilter = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4 text-accent" />
-                <label className="text-sm font-medium">Planning Layer</label>
+                <label className="text-sm font-medium">Where it fits</label>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button 
@@ -198,7 +198,7 @@ export const KnowledgeItemsFilter = ({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="z-50">
-                    <p>At what organizational level this is typically applied</p>
+                    <p>At what stage in product development this is typically used</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -210,7 +210,7 @@ export const KnowledgeItemsFilter = ({
                   <SelectValue placeholder="Select layer..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Layers</SelectItem>
+                  <SelectItem value="all">All Usage Stages</SelectItem>
                   {planningLayers.map((layer) => (
                     <SelectItem key={layer.id} value={layer.id}>
                       <div className="flex items-center gap-2">
@@ -324,7 +324,7 @@ export const KnowledgeItemsFilter = ({
             )}
             {selectedPlanningLayer && selectedPlanningLayer !== "all" && (
               <Badge variant="outline" className="gap-1">
-                Layer: {planningLayers.find(l => l.id === selectedPlanningLayer)?.name}
+                Usage Stage: {planningLayers.find(l => l.id === selectedPlanningLayer)?.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onPlanningLayerChange(undefined)}

@@ -164,7 +164,7 @@ const KnowledgeBase = () => {
                 ))
               ) : (
                 featuredItems?.slice(0, 3).map((item) => (
-                  <EnhancedTechniqueCard key={item.id} item={item} showDetails={true} />
+                  <EnhancedTechniqueCard key={item.id} item={item} />
                 ))
               )}
             </div>
@@ -187,7 +187,7 @@ const KnowledgeBase = () => {
             ))
           ) : filteredItems && filteredItems.length > 0 ? (
             filteredItems.map((item) => (
-              <EnhancedTechniqueCard key={item.id} item={item} showDetails={false} />
+              <EnhancedTechniqueCard key={item.id} item={item} />
             ))
           ) : (
             <div className="col-span-full text-center py-12">
