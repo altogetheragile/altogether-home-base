@@ -88,13 +88,13 @@ export const KnowledgeItemsFilter = ({
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
             >
-              {isExpanded ? 'Fewer' : 'More'} Filters
+              {isExpanded ? 'Fewer' : 'More'} Options
             </Button>
           </div>
         </div>
 
         {/* Primary Filters - Always Visible */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           {/* Activity Category - Primary Tag */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export const KnowledgeItemsFilter = ({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="z-50">
-                    <p>The primary role or area of expertise that typically uses this knowledge item</p>
+                    <p>The primary role or area of expertise that typically uses this technique</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -183,7 +183,6 @@ export const KnowledgeItemsFilter = ({
             </Select>
           </div>
 
-            {/* Planning Layer - Visual Range Indicator */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4 text-accent" />
@@ -203,27 +202,59 @@ export const KnowledgeItemsFilter = ({
                   </TooltipContent>
                 </Tooltip>
               </div>
-            <Select 
-              value={selectedPlanningLayer || "all"} 
-              onValueChange={(value) => onPlanningLayerChange(value === "all" ? undefined : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select layer..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Layers</SelectItem>
-                {planningLayers.map((layer) => (
-                  <SelectItem key={layer.id} value={layer.id}>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: layer.color }}
-                      />
-                      {layer.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
+              <Select 
+                value={selectedPlanningLayer || "all"} 
+                onValueChange={(value) => onPlanningLayerChange(value === "all" ? undefined : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select layer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Layers</SelectItem>
+                  {planningLayers.map((layer) => (
+                    <SelectItem key={layer.id} value={layer.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: layer.color }}
+                        />
+                        {layer.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-accent" />
+                <label className="text-sm font-medium">Sort By</label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      aria-label="Sort options"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="z-50">
+                    <p>Choose how to order the techniques</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Select value={sortBy} onValueChange={onSortByChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="popularity">Most Popular</SelectItem>
+                  <SelectItem value="alphabetical">A-Z</SelectItem>
+                  <SelectItem value="recent">Recently Added</SelectItem>
+                  <SelectItem value="difficulty">By Difficulty</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>
@@ -253,19 +284,17 @@ export const KnowledgeItemsFilter = ({
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Sort By */}
+              
+              {/* View Options */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Sort By</label>
-                <Select value={sortBy} onValueChange={onSortByChange}>
+                <label className="text-sm font-medium">View</label>
+                <Select defaultValue="grid">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="popularity">Popularity</SelectItem>
-                    <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                    <SelectItem value="recent">Most Recent</SelectItem>
-                    <SelectItem value="difficulty">Difficulty</SelectItem>
+                    <SelectItem value="grid">Grid View</SelectItem>
+                    <SelectItem value="list">List View</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

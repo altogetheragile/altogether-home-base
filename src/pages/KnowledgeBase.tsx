@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { SmartSearchInput } from "@/components/search/SmartSearchInput";
 import { RecommendationsSection } from "@/components/recommendations/RecommendationsSection";
 import { useSearchAnalytics } from "@/hooks/useSearchAnalytics";
-import { EnhancedKnowledgeCard } from "@/components/knowledge/EnhancedKnowledgeCard";
+import { EnhancedTechniqueCard } from "@/components/knowledge/EnhancedTechniqueCard";
 
 const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,17 +72,17 @@ const KnowledgeBase = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Product Delivery Knowledge Base
+              Product Delivery Techniques Library
             </h1>
             <p className="text-base text-muted-foreground mb-4">
-              Discover, learn, and apply proven knowledge items for building better products
+              Discover, learn, and master proven techniques for building exceptional products
             </p>
 
             {/* Compact Stats */}
             <div className="flex justify-center gap-6">
               <div className="text-center">
                 <div className="text-lg font-bold text-primary">{filteredItems?.length || 0}</div>
-                <div className="text-xs text-muted-foreground">Knowledge Items</div>
+                <div className="text-xs text-muted-foreground">Techniques</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-primary">{categories?.length || 0}</div>
@@ -106,14 +106,14 @@ const KnowledgeBase = () => {
               onSearchChange={handleSearch}
               onSearch={() => {}}
               resultsCount={filteredItems?.length || 0}
-              placeholder="Search knowledge items with AI suggestions..."
+              placeholder="Search techniques with AI suggestions..."
               showAISuggestions={true}
             />
           </div>
           <h2 className="text-xl font-semibold text-center">
             {searchQuery || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
               ? "Search Results" 
-              : "All Knowledge Items"
+              : "All Techniques"
             }
           </h2>
         </div>
@@ -135,7 +135,7 @@ const KnowledgeBase = () => {
         {/* Recommendations Section - Only show when no search is active */}
         {!searchQuery && selectedDomain === "all" && selectedCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <RecommendationsSection
-            title="Recommended Knowledge Items for You"
+            title="Recommended Techniques for You"
             contentType="technique"
             limit={6}
             className="mb-8"
@@ -147,7 +147,7 @@ const KnowledgeBase = () => {
           <div className="space-y-4 mb-8">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
-              Featured Knowledge Items
+              Featured Techniques
             </h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {featuredLoading ? (
@@ -164,7 +164,7 @@ const KnowledgeBase = () => {
                 ))
               ) : (
                 featuredItems?.slice(0, 3).map((item) => (
-                  <EnhancedKnowledgeCard key={item.id} item={item} showDetails={true} />
+                  <EnhancedTechniqueCard key={item.id} item={item} showDetails={true} />
                 ))
               )}
             </div>
@@ -187,18 +187,18 @@ const KnowledgeBase = () => {
             ))
           ) : filteredItems && filteredItems.length > 0 ? (
             filteredItems.map((item) => (
-              <EnhancedKnowledgeCard key={item.id} item={item} showDetails={false} />
+              <EnhancedTechniqueCard key={item.id} item={item} showDetails={false} />
             ))
           ) : (
             <div className="col-span-full text-center py-12">
               <div className="text-center">
                 <div className="text-lg font-medium text-muted-foreground mb-2">
-                  No knowledge items found
+                  No techniques found
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
                     {searchQuery || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
                       ? "Try adjusting your search criteria"
-                      : "No knowledge items have been published yet"
+                      : "No techniques have been published yet"
                     }
                 </p>
                 {(searchQuery || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all") && (
