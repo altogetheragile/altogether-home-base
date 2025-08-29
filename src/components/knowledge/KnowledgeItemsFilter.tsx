@@ -88,7 +88,7 @@ export const KnowledgeItemsFilter = ({
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
             >
-              {isExpanded ? 'Less' : 'More'} Filters
+              {isExpanded ? 'Fewer' : 'More'} Filters
             </Button>
           </div>
         </div>
