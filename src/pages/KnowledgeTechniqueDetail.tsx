@@ -1,9 +1,10 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, User, Tag, ExternalLink, Play, FileText, Image, ChevronLeft, ChevronRight, Clock, Eye, Download, Maximize2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Play, FileText, Image, ChevronLeft, ChevronRight, Download, Maximize2, Sparkles, BookOpen } from "lucide-react";
 import { useKnowledgeItemBySlug } from "@/hooks/useKnowledgeItems";
-import { W5HSection } from "@/components/knowledge/W5HSection";
-import { TechniqueMetadata } from "@/components/knowledge/TechniqueMetadata";
-import { Badge } from "@/components/ui/badge";
+import { AtAGlanceSection } from "@/components/knowledge/AtAGlanceSection";
+import { PracticalDetailsSection } from "@/components/knowledge/PracticalDetailsSection";
+import { EnhancedTechniqueHeader } from "@/components/knowledge/EnhancedTechniqueHeader";
+import { EnhancedRelatedTechniques } from "@/components/knowledge/EnhancedRelatedTechniques";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +13,6 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import Navigation from "@/components/Navigation";
 import { FeedbackWidget } from "@/components/knowledge/FeedbackWidget";
-import { RelatedTechniques } from "@/components/knowledge/RelatedTechniques";
-import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
-import { ReadingProgress } from "@/components/knowledge/ReadingProgress";
-import { BookmarkButton } from "@/components/knowledge/BookmarkButton";
 import { CommentsSection } from "@/components/knowledge/CommentsSection";
 import BMCGeneratorDialog from "@/components/bmc/BMCGeneratorDialog";
 import { useState } from "react";
@@ -126,118 +123,45 @@ const KnowledgeTechniqueDetail = () => {
       <Navigation />
       
       {/* Breadcrumb */}
-      <div className="border-b bg-muted/30">
+      <div className="border-b bg-gradient-to-r from-primary/5 to-secondary/5">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/knowledge">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Knowledge Base
-              </Link>
-            </Button>
-            
-            <div className="flex items-center gap-2">
-              <BookmarkButton techniqueId={technique.id} showLabel />
-              <ReadingProgress techniqueId={technique.id} />
-            </div>
-          </div>
+          <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10">
+            <Link to="/knowledge">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Knowledge Base
+            </Link>
+          </Button>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Main Content */}
-          <div>
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-start justify-between mb-4">
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                  {technique.name}
-                </h1>
-                {technique.knowledge_categories && (
-                  <Badge 
-                    variant="secondary" 
-                    style={{ 
-                      backgroundColor: `${technique.knowledge_categories.color}20`, 
-                      color: technique.knowledge_categories.color 
-                    }}
-                    className="ml-4"
-                  >
-                    {technique.knowledge_categories.name}
-                  </Badge>
-                )}
-              </div>
-              
-              {(technique.summary || technique.purpose) && (
-                <p className="text-xl text-muted-foreground mb-4">
-                  {technique.summary || technique.purpose}
-                </p>
-              )}
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Enhanced Header */}
+          <EnhancedTechniqueHeader item={technique} />
 
-              {/* Meta information badges */}
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <DifficultyBadge difficulty={technique.difficulty_level} />
-                {technique.estimated_reading_time && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {technique.estimated_reading_time} min read
-                  </Badge>
-                )}
-                {technique.content_type && technique.content_type !== 'technique' && (
-                  <Badge variant="secondary">
-                    {technique.content_type}
-                  </Badge>
-                )}
-              </div>
-
-              {technique.knowledge_tags && technique.knowledge_tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {technique.knowledge_tags.map((tag) => (
-                    <Badge key={tag.id} variant="outline">
-                      <Tag className="mr-1 h-3 w-3" />
-                      {tag.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  {new Date(technique.created_at).toLocaleDateString()}
-                </div>
-                {technique.originator && (
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    {technique.originator}
+          {/* AI Generator for Business Model Canvas */}
+          {technique.slug === 'business-model-canvas' && (
+            <Card className="overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Sparkles className="h-6 w-6 text-primary" />
                   </div>
-                )}
-              </div>
-            </div>
+                  AI Business Model Canvas Generator
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Generate a customized Business Model Canvas for your company using AI. 
+                  Simply provide some basic information and get a complete BMC tailored to your business.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BMCGeneratorDialog />
+              </CardContent>
+            </Card>
+          )}
 
-            {/* AI Generator for Business Model Canvas */}
-            {technique.slug === 'business-model-canvas' && (
-              <div className="mb-8">
-                <Card className="p-6">
-                  <CardHeader className="px-0 pt-0">
-                    <CardTitle className="flex items-center gap-2">
-                      <span className="text-2xl">🤖</span>
-                      AI Business Model Canvas Generator
-                    </CardTitle>
-                    <CardDescription>
-                      Use AI to generate a customized Business Model Canvas for your company. 
-                      Simply provide some basic information and get a complete BMC tailored to your business.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-0 pb-0">
-                    <BMCGeneratorDialog />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Media Gallery */}
-            {mediaItems.length > 0 && (
+          {/* Media Gallery */}
+          {mediaItems.length > 0 && (
               <div className="mb-8">
                 <Card className="p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -408,101 +332,109 @@ const KnowledgeTechniqueDetail = () => {
                     </div>
                   )}
                 </Card>
-              </div>
-            )}
-
-            {/* Detailed Content Sections */}
-            <div className="space-y-8">
-              {/* Summary Section */}
-              {technique.summary && (
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-                    <span className="text-green-600">✅</span> Summary
-                  </h2>
-                  <p className="text-foreground leading-relaxed">
-                    {technique.summary}
-                  </p>
-                </Card>
-              )}
-
-              {/* Description Section */}
-              {technique.description && (
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-                    <span className="text-blue-600">📖</span> Description
-                  </h2>
-                  <div className="prose prose-gray max-w-none">
-                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                      {technique.description}
-                    </p>
-                  </div>
-                </Card>
-              )}
-
-              {/* Purpose Section */}
-              {technique.purpose && (
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-                    <span className="text-purple-600">🎯</span> Purpose
-                  </h2>
-                  <p className="text-foreground leading-relaxed">
-                    {technique.purpose}
-                  </p>
-                </Card>
-              )}
             </div>
+          )}
 
-            {/* W5H Framework Analysis */}
-            <W5HSection item={technique} />
+          {/* Comprehensive Overview Section */}
+          {technique.description && (
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-muted/30">
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Overview
+                </CardTitle>
+                <CardDescription>
+                  A comprehensive understanding of this technique
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="prose prose-gray max-w-none">
+                  <p className="text-foreground leading-relaxed text-lg whitespace-pre-wrap">
+                    {technique.description}
+                  </p>
+                </div>
+                {technique.purpose && technique.purpose !== technique.description && (
+                  <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                    <h4 className="font-semibold text-primary mb-2">Purpose</h4>
+                    <p className="text-foreground leading-relaxed">{technique.purpose}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Technique Metadata */}
-            <TechniqueMetadata item={technique} />
+          {/* At a Glance Section - Enhanced W5H */}
+          <AtAGlanceSection item={technique} />
 
-            {/* Media Attachments */}
-            {technique.knowledge_media && technique.knowledge_media.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Resources</h2>
+          {/* Practical Details Section - Enhanced Metadata */}
+          <PracticalDetailsSection item={technique} />
+
+          {/* Media Attachments */}
+          {technique.knowledge_media && technique.knowledge_media.length > 0 && (
+            <Card className="overflow-hidden">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Additional Resources
+                </CardTitle>
+                <CardDescription>
+                  Supplementary materials and references
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
                 <div className="space-y-4">
                   {technique.knowledge_media.map(renderMediaItem)}
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Examples */}
-            {technique.knowledge_examples && technique.knowledge_examples.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Real-World Examples</h2>
+          {/* Examples */}
+          {technique.knowledge_examples && technique.knowledge_examples.length > 0 && (
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-green-600" />
+                  Success Stories
+                </CardTitle>
+                <CardDescription>
+                  Real-world applications and their outcomes
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
                 <div className="space-y-6">
                   {technique.knowledge_examples.map((example) => (
-                    <Card key={example.id}>
+                    <Card key={example.id} className="bg-muted/30">
                       <CardHeader>
-                        <CardTitle className="text-lg">{example.title}</CardTitle>
+                        <CardTitle className="text-lg text-green-700 dark:text-green-300">
+                          {example.title}
+                        </CardTitle>
                         {example.context && (
-                          <CardDescription>{example.context}</CardDescription>
+                          <CardDescription className="text-base">{example.context}</CardDescription>
                         )}
                       </CardHeader>
                       <CardContent>
-                        <p className="text-foreground mb-4 whitespace-pre-wrap">
+                        <p className="text-foreground mb-6 leading-relaxed whitespace-pre-wrap">
                           {example.description}
                         </p>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           {example.industry && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Industry:</span>
-                              <p className="text-foreground">{example.industry}</p>
+                            <div className="p-3 bg-background rounded-lg">
+                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Industry</span>
+                              <p className="text-sm font-semibold text-foreground mt-1">{example.industry}</p>
                             </div>
                           )}
                           {example.company_size && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Company Size:</span>
-                              <p className="text-foreground">{example.company_size}</p>
+                            <div className="p-3 bg-background rounded-lg">
+                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Company Size</span>
+                              <p className="text-sm font-semibold text-foreground mt-1">{example.company_size}</p>
                             </div>
                           )}
                           {example.outcome && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Outcome:</span>
-                              <p className="text-foreground">{example.outcome}</p>
+                            <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                              <span className="text-xs font-medium text-primary uppercase tracking-wide">Outcome</span>
+                              <p className="text-sm font-semibold text-foreground mt-1">{example.outcome}</p>
                             </div>
                           )}
                         </div>
@@ -510,24 +442,28 @@ const KnowledgeTechniqueDetail = () => {
                     </Card>
                   ))}
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Comments Section */}
-            <div className="mb-8">
+          {/* Enhanced Related Techniques */}
+          <EnhancedRelatedTechniques techniqueId={technique.id} />
+
+          {/* Comments Section with Enhanced Design */}
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle>Share Your Experience</CardTitle>
+              <CardDescription>
+                Help others learn by sharing how you've used this technique or ask questions
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
               <CommentsSection techniqueId={technique.id} />
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Related Techniques */}
-            <div className="mb-8">
-              <RelatedTechniques techniqueId={technique.id} />
-            </div>
-
-            {/* Feedback Widget */}
-            <div className="mb-8">
-              <FeedbackWidget techniqueId={technique.id} />
-            </div>
-          </div>
+          {/* Feedback Widget */}
+          <FeedbackWidget techniqueId={technique.id} />
         </div>
       </div>
     </div>
