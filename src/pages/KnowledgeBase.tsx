@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { SmartSearchInput } from "@/components/search/SmartSearchInput";
 import { RecommendationsSection } from "@/components/recommendations/RecommendationsSection";
 import { useSearchAnalytics } from "@/hooks/useSearchAnalytics";
-import { Link } from "react-router-dom";
+import { EnhancedKnowledgeCard } from "@/components/knowledge/EnhancedKnowledgeCard";
 
 const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -171,73 +171,7 @@ const KnowledgeBase = () => {
                 ))
               ) : (
                 featuredItems?.slice(0, 3).map((item) => (
-                  <Link key={item.id} to={`/knowledge/${item.slug}`}>
-                     <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                       <CardHeader className="pb-3">
-                         <div className="flex items-start justify-between">
-                           <div className="flex-1">
-                             <div className="flex items-center gap-2 mb-2">
-                               {item.activity_categories && (
-                                 <Badge 
-                                   variant="default" 
-                                   className="text-xs"
-                                   style={{ backgroundColor: item.activity_categories.color }}
-                                 >
-                                   {item.activity_categories.name}
-                                 </Badge>
-                               )}
-                               {item.activity_domains && (
-                                 <Badge 
-                                   variant="secondary" 
-                                   className="text-xs"
-                                   style={{ borderColor: item.activity_domains.color, color: item.activity_domains.color }}
-                                 >
-                                   {item.activity_domains.name}
-                                 </Badge>
-                               )}
-                               <DifficultyBadge difficulty={item.difficulty_level} />
-                             </div>
-                             <CardTitle className="text-xl font-bold leading-tight mb-1 text-foreground">
-                               {item.name}
-                             </CardTitle>
-                           </div>
-                         </div>
-                       </CardHeader>
-                      <CardContent className="pt-0">
-                        <CardDescription className="text-sm line-clamp-3 mb-3">
-                          {item.purpose || item.description}
-                        </CardDescription>
-                        <div className="mb-3">
-                          <PlanningLayerBadges 
-                            layers={item.knowledge_item_planning_layers?.map(pl => ({
-                              ...pl.planning_layers,
-                              is_primary: pl.is_primary
-                            })) || []} 
-                            maxVisible={2} 
-                          />
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                              <Eye className="h-3 w-3" />
-                              <span>{item.view_count || 0}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-3 w-3" />
-                              <span>{item.popularity_score || 0}</span>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {item.knowledge_item_tags?.slice(0, 2).map((tag) => (
-                              <Badge key={tag.knowledge_tags.id} variant="outline" className="text-xs px-1 py-0">
-                                {tag.knowledge_tags.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  <EnhancedKnowledgeCard key={item.id} item={item} showDetails={true} />
                 ))
               )}
             </div>
@@ -260,73 +194,7 @@ const KnowledgeBase = () => {
             ))
           ) : filteredItems && filteredItems.length > 0 ? (
             filteredItems.map((item) => (
-              <Link key={item.id} to={`/knowledge/${item.slug}`}>
-                 <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                   <CardHeader className="pb-3">
-                     <div className="flex items-start justify-between">
-                       <div className="flex-1">
-                         <div className="flex items-center gap-2 mb-2">
-                           {item.activity_categories && (
-                             <Badge 
-                               variant="default" 
-                               className="text-xs"
-                               style={{ backgroundColor: item.activity_categories.color }}
-                             >
-                               {item.activity_categories.name}
-                             </Badge>
-                           )}
-                           {item.activity_domains && (
-                             <Badge 
-                               variant="secondary" 
-                               className="text-xs"
-                               style={{ borderColor: item.activity_domains.color, color: item.activity_domains.color }}
-                             >
-                               {item.activity_domains.name}
-                             </Badge>
-                           )}
-                           <DifficultyBadge difficulty={item.difficulty_level} />
-                         </div>
-                         <CardTitle className="text-xl font-bold leading-tight mb-1 text-foreground">
-                           {item.name}
-                         </CardTitle>
-                       </div>
-                     </div>
-                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <CardDescription className="text-sm line-clamp-3 mb-3">
-                      {item.purpose || item.description}
-                    </CardDescription>
-                    <div className="mb-3">
-                      <PlanningLayerBadges 
-                        layers={item.knowledge_item_planning_layers?.map(pl => ({
-                          ...pl.planning_layers,
-                          is_primary: pl.is_primary
-                        })) || []} 
-                        maxVisible={2} 
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          <span>{item.view_count || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3" />
-                          <span>{item.popularity_score || 0}</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {item.knowledge_item_tags?.slice(0, 2).map((tag) => (
-                          <Badge key={tag.knowledge_tags.id} variant="outline" className="text-xs px-1 py-0">
-                            {tag.knowledge_tags.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <EnhancedKnowledgeCard key={item.id} item={item} showDetails={false} />
             ))
           ) : (
             <div className="col-span-full text-center py-12">

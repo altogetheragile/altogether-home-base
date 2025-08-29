@@ -20,6 +20,8 @@ export interface KnowledgeItem {
   is_complete: boolean;
   view_count: number;
   popularity_score: number;
+  difficulty_level?: string;
+  estimated_reading_time?: number;
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -32,12 +34,19 @@ export interface KnowledgeItem {
   generic_where?: string;
   generic_why?: string;
   generic_how?: string;
+  generic_how_much?: string;
+  generic_summary?: string;
+  example_use_case?: string;
   example_who?: string;
   example_what?: string;
   example_when?: string;
   example_where?: string;
   example_why?: string;
   example_how?: string;
+  example_how_much?: string;
+  example_summary?: string;
+  source?: string;
+  background?: string;
   planning_considerations?: string;
   typical_participants?: string[];
   required_skills?: string[];
@@ -75,6 +84,16 @@ export interface KnowledgeItem {
     slug: string;
     color: string;
   };
+  knowledge_item_planning_layers?: Array<{
+    is_primary: boolean;
+    planning_layers: {
+      id: string;
+      name: string;
+      slug: string;
+      color: string;
+      display_order: number;
+    };
+  }>;
   planning_layers?: Array<{
     id: string;
     name: string;
@@ -82,6 +101,13 @@ export interface KnowledgeItem {
     color: string;
     display_order: number;
     is_primary: boolean;
+  }>;
+  knowledge_item_tags?: Array<{
+    knowledge_tags: {
+      id: string;
+      name: string;
+      slug: string;
+    };
   }>;
   knowledge_tags?: Array<{
     id: string;

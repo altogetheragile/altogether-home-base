@@ -1235,6 +1235,7 @@ export type Database = {
           activity_category_id: string | null
           activity_domain_id: string | null
           activity_focus_id: string | null
+          background: string | null
           category_id: string | null
           common_pitfalls: string[] | null
           content_type: string | null
@@ -1246,12 +1247,17 @@ export type Database = {
           duration_min_minutes: number | null
           estimated_reading_time: number | null
           example_how: string | null
+          example_how_much: string | null
+          example_summary: string | null
+          example_use_case: string | null
           example_what: string | null
           example_when: string | null
           example_where: string | null
           example_who: string | null
           example_why: string | null
           generic_how: string | null
+          generic_how_much: string | null
+          generic_summary: string | null
           generic_what: string | null
           generic_when: string | null
           generic_where: string | null
@@ -1275,6 +1281,7 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           slug: string
+          source: string | null
           success_criteria: string[] | null
           summary: string | null
           team_size_max: number | null
@@ -1288,6 +1295,7 @@ export type Database = {
           activity_category_id?: string | null
           activity_domain_id?: string | null
           activity_focus_id?: string | null
+          background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
           content_type?: string | null
@@ -1299,12 +1307,17 @@ export type Database = {
           duration_min_minutes?: number | null
           estimated_reading_time?: number | null
           example_how?: string | null
+          example_how_much?: string | null
+          example_summary?: string | null
+          example_use_case?: string | null
           example_what?: string | null
           example_when?: string | null
           example_where?: string | null
           example_who?: string | null
           example_why?: string | null
           generic_how?: string | null
+          generic_how_much?: string | null
+          generic_summary?: string | null
           generic_what?: string | null
           generic_when?: string | null
           generic_where?: string | null
@@ -1328,6 +1341,7 @@ export type Database = {
           seo_keywords?: string[] | null
           seo_title?: string | null
           slug: string
+          source?: string | null
           success_criteria?: string[] | null
           summary?: string | null
           team_size_max?: number | null
@@ -1341,6 +1355,7 @@ export type Database = {
           activity_category_id?: string | null
           activity_domain_id?: string | null
           activity_focus_id?: string | null
+          background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
           content_type?: string | null
@@ -1352,12 +1367,17 @@ export type Database = {
           duration_min_minutes?: number | null
           estimated_reading_time?: number | null
           example_how?: string | null
+          example_how_much?: string | null
+          example_summary?: string | null
+          example_use_case?: string | null
           example_what?: string | null
           example_when?: string | null
           example_where?: string | null
           example_who?: string | null
           example_why?: string | null
           generic_how?: string | null
+          generic_how_much?: string | null
+          generic_summary?: string | null
           generic_what?: string | null
           generic_when?: string | null
           generic_where?: string | null
@@ -1381,6 +1401,7 @@ export type Database = {
           seo_keywords?: string[] | null
           seo_title?: string | null
           slug?: string
+          source?: string | null
           success_criteria?: string[] | null
           summary?: string | null
           team_size_max?: number | null

@@ -1,6 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Calendar, User, Tag, ExternalLink, Play, FileText, Image, ChevronLeft, ChevronRight, Clock, Eye, Download, Maximize2 } from "lucide-react";
-import { useKnowledgeTechniqueBySlug } from "@/hooks/useKnowledgeTechniques";
+import { useKnowledgeItemBySlug } from "@/hooks/useKnowledgeItems";
+import { W5HSection } from "@/components/knowledge/W5HSection";
+import { TechniqueMetadata } from "@/components/knowledge/TechniqueMetadata";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +23,7 @@ import { useViewTracking } from "@/hooks/useViewTracking";
 
 const KnowledgeTechniqueDetail = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { data: technique, isLoading, error } = useKnowledgeTechniqueBySlug(slug!);
+  const { data: technique, isLoading, error } = useKnowledgeItemBySlug(slug!);
   
   // Track view when technique is loaded
   useViewTracking(technique?.id || '');
@@ -449,6 +451,12 @@ const KnowledgeTechniqueDetail = () => {
                 </Card>
               )}
             </div>
+
+            {/* W5H Framework Analysis */}
+            <W5HSection item={technique} />
+
+            {/* Technique Metadata */}
+            <TechniqueMetadata item={technique} />
 
             {/* Media Attachments */}
             {technique.knowledge_media && technique.knowledge_media.length > 0 && (
