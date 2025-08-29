@@ -48,7 +48,7 @@ const AdminKnowledgeTechniques = () => {
           *,
           category:knowledge_categories(id, name, color),
           knowledge_media(id, type, title, description, url, thumbnail_url, position),
-          knowledge_tags:knowledge_technique_tags(knowledge_tags(id, name, slug))
+          knowledge_tags:knowledge_item_tags(knowledge_tags(id, name, slug))
         `)
         .order('created_at', { ascending: false });
 
@@ -144,11 +144,11 @@ const AdminKnowledgeTechniques = () => {
         await supabase
           .from('knowledge_media')
           .delete()
-          .eq('technique_id', techniqueId);
+          .eq('knowledge_item_id', techniqueId);
 
         // Then insert new media items
         const mediaToInsert = media.map((item: MediaItem, index: number) => ({
-          technique_id: techniqueId,
+          knowledge_item_id: techniqueId,
           type: item.type,
           title: item.title,
           description: item.description,
@@ -168,19 +168,19 @@ const AdminKnowledgeTechniques = () => {
       if (selectedTags && Array.isArray(selectedTags)) {
         // First, delete existing tag associations
         await supabase
-          .from('knowledge_technique_tags')
+          .from('knowledge_item_tags')
           .delete()
-          .eq('technique_id', techniqueId);
+          .eq('knowledge_item_id', techniqueId);
 
         // Then insert new tag associations
         if (selectedTags.length > 0) {
           const tagAssociations = selectedTags.map((tagId: string) => ({
-            technique_id: techniqueId,
+            knowledge_item_id: techniqueId,
             tag_id: tagId
           }));
 
           const { error: tagsError } = await supabase
-            .from('knowledge_technique_tags')
+            .from('knowledge_item_tags')
             .insert(tagAssociations);
 
           if (tagsError) throw tagsError;
