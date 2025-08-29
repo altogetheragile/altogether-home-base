@@ -72,17 +72,17 @@ const KnowledgeBase = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Product Delivery Techniques Library
+              Knowledge Library
             </h1>
             <p className="text-base text-muted-foreground mb-4">
-              Discover, learn, and master proven techniques for building exceptional products
+              Discover, learn, and master proven techniques and frameworks for building exceptional products
             </p>
 
             {/* Compact Stats */}
             <div className="flex justify-center gap-6">
               <div className="text-center">
                 <div className="text-lg font-bold text-primary">{filteredItems?.length || 0}</div>
-                <div className="text-xs text-muted-foreground">Techniques</div>
+                <div className="text-xs text-muted-foreground">Items</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-primary">{categories?.length || 0}</div>
@@ -106,14 +106,14 @@ const KnowledgeBase = () => {
               onSearchChange={handleSearch}
               onSearch={() => {}}
               resultsCount={filteredItems?.length || 0}
-              placeholder="Search techniques with AI suggestions..."
+              placeholder="Search knowledge items with AI suggestions..."
               showAISuggestions={true}
             />
           </div>
           <h2 className="text-xl font-semibold text-center">
             {searchQuery || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
               ? "Search Results" 
-              : "All Techniques"
+              : "All Knowledge Items"
             }
           </h2>
         </div>
@@ -135,7 +135,7 @@ const KnowledgeBase = () => {
         {/* Recommendations Section - Only show when no search is active */}
         {!searchQuery && selectedDomain === "all" && selectedCategory === "all" && selectedPlanningLayer === "all" && selectedTag === "all" && (
           <RecommendationsSection
-            title="Recommended Techniques for You"
+            title="Recommended Knowledge Items for You"
             contentType="technique"
             limit={6}
             className="mb-8"
@@ -147,7 +147,7 @@ const KnowledgeBase = () => {
           <div className="space-y-4 mb-8">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
-              Featured Techniques
+              Featured Knowledge Items
             </h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {featuredLoading ? (
@@ -193,12 +193,12 @@ const KnowledgeBase = () => {
             <div className="col-span-full text-center py-12">
               <div className="text-center">
                 <div className="text-lg font-medium text-muted-foreground mb-2">
-                  No techniques found
+                  No knowledge items found
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
                     {searchQuery || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all"
                       ? "Try adjusting your search criteria"
-                      : "No techniques have been published yet"
+                      : "No knowledge items have been published yet"
                     }
                 </p>
                 {(searchQuery || selectedDomain !== "all" || selectedCategory !== "all" || selectedPlanningLayer !== "all" || selectedTag !== "all") && (

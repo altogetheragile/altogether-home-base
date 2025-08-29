@@ -10,7 +10,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X, Filter, Target, Users, Layers, Tag, Folder, Info } from "lucide-react";
+import { X, Filter, Target, Users, Layers, Tag, Folder, Info, FileText } from "lucide-react";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useKnowledgeTags } from "@/hooks/useKnowledgeTags";
 import { usePlanningLayers } from "@/hooks/usePlanningLayers";
@@ -20,11 +20,13 @@ interface KnowledgeItemsFilterProps {
   selectedCategory?: string;
   selectedPlanningLayer?: string;
   selectedTag?: string;
+  selectedContentType?: string;
   sortBy?: string;
   onDomainChange: (domain?: string) => void;
   onCategoryChange: (category?: string) => void;
   onPlanningLayerChange: (layer?: string) => void;
   onTagChange: (tag?: string) => void;
+  onContentTypeChange?: (type?: string) => void;
   onSortByChange: (sortBy: string) => void;
   onClearFilters: () => void;
 }
@@ -34,11 +36,13 @@ export const KnowledgeItemsFilter = ({
   selectedCategory,
   selectedPlanningLayer,
   selectedTag,
+  selectedContentType,
   sortBy = 'popularity',
   onDomainChange,
   onCategoryChange,
   onPlanningLayerChange,
   onTagChange,
+  onContentTypeChange,
   onSortByChange,
   onClearFilters,
 }: KnowledgeItemsFilterProps) => {
@@ -54,6 +58,7 @@ export const KnowledgeItemsFilter = ({
     selectedCategory,
     selectedPlanningLayer,
     selectedTag,
+    selectedContentType,
   ].filter(value => value && value !== "all").length;
 
   const hasActiveFilters = activeFiltersCount > 0;
@@ -261,7 +266,34 @@ export const KnowledgeItemsFilter = ({
 
         {/* Secondary Filters - Expandable */}
         {isExpanded && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+              {/* Content Type Filter */}
+              {onContentTypeChange && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <label className="text-sm font-medium">Content Type</label>
+                  </div>
+                  <Select 
+                    value={selectedContentType || "all"} 
+                    onValueChange={(value) => onContentTypeChange(value === "all" ? undefined : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="technique">Techniques</SelectItem>
+                      <SelectItem value="framework">Frameworks</SelectItem>
+                      <SelectItem value="template">Templates</SelectItem>
+                      <SelectItem value="case study">Case Studies</SelectItem>
+                      <SelectItem value="principle">Principles</SelectItem>
+                      <SelectItem value="method">Methods</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-muted-foreground" />
@@ -328,6 +360,15 @@ export const KnowledgeItemsFilter = ({
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onPlanningLayerChange(undefined)}
+                />
+              </Badge>
+            )}
+            {selectedContentType && selectedContentType !== "all" && (
+              <Badge variant="outline" className="gap-1">
+                Content Type: {selectedContentType}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => onContentTypeChange?.(undefined)}
                 />
               </Badge>
             )}

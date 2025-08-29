@@ -15,6 +15,7 @@ import { DifficultyBadge } from "@/components/knowledge/DifficultyBadge";
 import { PlanningLayerBadges } from "@/components/knowledge/PlanningLayerBadges";
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton";
 import { getTechniqueIcon, getCategoryColor } from "@/components/knowledge/TechniqueIcon";
+import { ContentTypeBadge } from "@/components/knowledge/ContentTypeBadge";
 import { Link } from "react-router-dom";
 import type { KnowledgeItem } from "@/hooks/useKnowledgeItems";
 
@@ -25,6 +26,12 @@ interface EnhancedTechniqueCardProps {
 export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
   const TechniqueIcon = getTechniqueIcon(item.name, item.activity_categories?.name);
   const categoryColor = getCategoryColor(item.activity_categories?.name);
+
+  // Determine content type for future expansion
+  const getContentType = () => {
+    // For now, everything is a "Technique", but this prepares for expansion
+    return "Technique";
+  };
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,8 +68,8 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
     return `~${minHours} ${minHours === 1 ? 'hour' : 'hours'}`;
   };
 
-  // Smart truncation that completes sentences
-  const smartTruncate = (text: string, maxLength: number = 120) => {
+  // Smart truncation that completes sentences - more compact
+  const smartTruncate = (text: string, maxLength: number = 80) => {
     if (text.length <= maxLength) return text;
     
     const truncated = text.substring(0, maxLength);
@@ -97,40 +104,48 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
       )}
 
       <Link to={`/knowledge/${item.slug}`} className="block h-full">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between mb-3">
-            {/* Title and CTA Row */}
-            <div className="flex-1 pr-2">
-              <CardTitle className="text-lg font-semibold leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
+        <CardHeader className="pb-2">
+          {/* Top Tier: Title, Type Badge, and CTA */}
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1 pr-2 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <ContentTypeBadge type={getContentType()} />
+              </div>
+              <CardTitle className="text-lg font-semibold leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-1">
                 {item.name}
               </CardTitle>
             </div>
             
             {/* Prominent CTA */}
             <Button 
-              variant="ghost" 
+              variant="default" 
               size="sm" 
-              className="text-primary hover:text-primary-foreground hover:bg-primary shrink-0 font-medium text-xs"
+              className="shrink-0 font-medium text-xs h-8 px-3"
             >
-              View Details
+              View Item
               <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </div>
 
+          {/* One-line description */}
+          <p className="text-sm text-muted-foreground line-clamp-1 mb-3 leading-relaxed">
+            {smartTruncate(item.generic_summary || item.purpose || item.description || '', 80)}
+          </p>
+
           {/* Category, Domain, and Difficulty Row */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Technique Icon */}
             <div 
               className="p-1.5 rounded-md flex-shrink-0"
-              style={{ backgroundColor: `${categoryColor}15`, color: categoryColor }}
+              style={{ backgroundColor: `hsl(var(--primary) / 0.1)`, color: `hsl(var(--primary))` }}
             >
-              <TechniqueIcon className="h-4 w-4" />
+              <TechniqueIcon className="h-3.5 w-3.5" />
             </div>
             
             {item.activity_categories && (
               <Badge 
                 variant="default" 
-                className="text-xs font-medium border-0"
+                className="text-xs font-medium border-0 px-2 py-0.5"
                 style={{ 
                   backgroundColor: item.activity_categories.color,
                   color: "white"
@@ -142,7 +157,7 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
             {item.activity_domains && (
               <Badge 
                 variant="outline" 
-                className="text-xs font-medium"
+                className="text-xs font-medium px-2 py-0.5"
                 style={{ 
                   borderColor: item.activity_domains.color, 
                   color: item.activity_domains.color 
@@ -155,13 +170,8 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
           </div>
         </CardHeader>
         
-        <CardContent className="pt-0 pb-4">
-          {/* Summary with Smart Truncation */}
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-            {smartTruncate(item.generic_summary || item.purpose || item.description || '', 120)}
-          </p>
-          
-          {/* Planning Layers - Compact */}
+        <CardContent className="pt-0 pb-3">
+          {/* Planning Layers - More Compact */}
           {item.planning_layers && item.planning_layers.length > 0 && (
             <div className="mb-3">
               <PlanningLayerBadges 
@@ -171,32 +181,23 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
             </div>
           )}
           
-          {/* Key Metadata - Enhanced Icons */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4 text-xs">
-              {/* Participants as Badges */}
+          {/* Key Metadata - Compact Row */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3 text-xs">
+              {/* Participants - Simplified */}
               {item.typical_participants && item.typical_participants.length > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-blue-500" />
-                  <div className="flex flex-wrap gap-1">
-                    {item.typical_participants.slice(0, 2).map((participant, index) => (
-                      <Badge key={index} variant="outline" className="text-xs px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-200">
-                        {participant.length > 12 ? participant.substring(0, 12) + '...' : participant}
-                      </Badge>
-                    ))}
-                    {item.typical_participants.length > 2 && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 text-muted-foreground">
-                        +{item.typical_participants.length - 2}
-                      </Badge>
-                    )}
-                  </div>
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3 text-primary" />
+                  <span className="text-muted-foreground font-medium">
+                    {item.typical_participants.length} roles
+                  </span>
                 </div>
               )}
               
               {/* Duration - Standardized */}
               {item.duration_min_minutes && (
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5 text-orange-500" />
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className="h-3 w-3 text-primary" />
                   <span className="font-medium">
                     {formatDuration(item.duration_min_minutes, item.duration_max_minutes)}
                   </span>
@@ -205,27 +206,27 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
             </div>
           </div>
           
-          {/* Footer: Clear Stats and Quick Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-border/50">
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {/* Footer: Clear Stats and Quick Actions - Compact */}
+          <div className="flex items-center justify-between pt-2 border-t border-border/50">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-1" title="Comments">
-                <MessageCircle className="h-3.5 w-3.5" />
+                <MessageCircle className="h-3 w-3" />
                 <span>0</span>
               </div>
               <div className="flex items-center gap-1" title="Popularity Score">
-                <Star className="h-3.5 w-3.5" />
+                <Star className="h-3 w-3" />
                 <span>{Math.round(item.popularity_score || 0)}</span>
               </div>
               {item.estimated_reading_time && (
                 <div className="flex items-center gap-1" title="Reading Time">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>{item.estimated_reading_time} min read</span>
+                  <Clock className="h-3 w-3" />
+                  <span>{item.estimated_reading_time}min</span>
                 </div>
               )}
             </div>
             
             {/* Quick Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <BookmarkButton 
                 techniqueId={item.id} 
                 variant="ghost" 
@@ -234,9 +235,9 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 hover:bg-primary/10"
+                className="h-6 w-6 p-0 hover:bg-primary/10"
                 onClick={handleShare}
-                title="Share technique"
+                title="Share item"
               >
                 <Share2 className="h-3 w-3 text-muted-foreground" />
               </Button>
