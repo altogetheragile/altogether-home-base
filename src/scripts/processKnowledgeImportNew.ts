@@ -1,40 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-interface ImportMappingConfig {
-  [sourceColumn: string]: string;
-}
-
-// Excel column mappings to database fields (matching actual Excel headers)
-const EXCEL_FIELD_MAPPINGS: ImportMappingConfig = {
-  'Knowledge Item': 'name',
-  'Knowledge Item Description': 'description',
-  'Category': 'category_name',
-  'Category Description': 'category_description',
-  'Planning Layer': 'planning_layer_name',
-  'Planning Layer Description': 'planning_layer_description',
-  'Domain of Interest': 'domain_name',
-  'Domain of Interest Description': 'domain_description',
-  'Generic Use Case - Who': 'generic_who',
-  'Generic Use Case - What': 'generic_what',
-  'Generic Use Case - When': 'generic_when',
-  'Generic Use Case - Where': 'generic_where',
-  'Generic Use Case - Why': 'generic_why',
-  'Generic Use Case - How': 'generic_how',
-  'Generic Use Case - How Much': 'generic_how_much',
-  'Generic Summary (Narrative Form)': 'generic_summary',
-  'Example / Use Case': 'example_use_case',
-  'Example / Use Case - Who': 'example_who',
-  'Example / Use Case - What': 'example_what',
-  'Example / Use Case - When': 'example_when',
-  'Example / Use Case - Where': 'example_where',
-  'Example / Use Case - Why': 'example_why',
-  'Example / Use Case - How': 'example_how',
-  'Example / Use Case - How Much': 'example_how_much',
-  'Example / Use Case - Summary (Narrative Form)': 'example_summary',
-  'Source': 'source',
-  'Background': 'background'
-};
-
 // Helper function to create slug from name
 function createSlug(name: string): string {
   return name
@@ -186,6 +151,14 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
       throw new Error('Import record not found');
     }
     
+    // Get the field mappings from the import record
+    const fieldMappings = (importRecord.mapping_config?.field_mappings || {}) as Record<string, string>;
+    console.log('📋 Using field mappings:', fieldMappings);
+    
+    if (Object.keys(fieldMappings).length === 0) {
+      throw new Error('No field mappings configured for this import');
+    }
+    
     // Get staging data
     const { data: stagingData, error: stagingError } = await supabase
       .from('staging_data')
@@ -209,8 +182,9 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
     for (const row of stagingData) {
       try {
         const rawData = row.raw_data as any;
+        console.log('🔍 Processing row with data:', Object.keys(rawData));
         
-        // Map Excel data to KI fields
+        // Map Excel data to KI fields using the configured mapping
         const kiData: any = {
           content_type: 'technique',
           is_published: true,
@@ -221,9 +195,12 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           estimated_reading_time: 5,
         };
         
-        // Map all fields from Excel
-        Object.entries(EXCEL_FIELD_MAPPINGS).forEach(([excelCol, dbField]) => {
+        // Map all fields using the configured field mappings
+        Object.entries(fieldMappings).forEach(([dbField, excelCol]) => {
+          if (!excelCol) return; // Skip unmapped fields
+          
           const value = rawData[excelCol];
+          console.log(`📝 Mapping ${excelCol} -> ${dbField}:`, value);
           
           if (value !== undefined && value !== null && value !== '') {
             // Handle array fields
@@ -249,30 +226,36 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           kiData.slug = createSlug(kiData.name);
         }
         
-        // Handle category
+        // Handle category (get the mapped column name)
         let categoryId = '';
-        if (rawData['Category']) {
+        const categoryCol = Object.entries(fieldMappings).find(([field]) => field === 'category_name')?.[1];
+        const categoryDescCol = Object.entries(fieldMappings).find(([field]) => field === 'category_description')?.[1];
+        if (categoryCol && rawData[categoryCol]) {
           categoryId = await findOrCreateCategory(
-            rawData['Category'],
-            rawData['Category Description']
+            rawData[categoryCol],
+            categoryDescCol ? rawData[categoryDescCol] : undefined
           );
         }
         
-        // Handle planning layer  
+        // Handle planning layer (get the mapped column name)
         let planningLayerId = '';
-        if (rawData['Planning Layer']) {
+        const planningCol = Object.entries(fieldMappings).find(([field]) => field === 'planning_layers')?.[1];
+        const planningDescCol = Object.entries(fieldMappings).find(([field]) => field === 'planning_layer_description')?.[1];
+        if (planningCol && rawData[planningCol]) {
           planningLayerId = await findOrCreatePlanningLayer(
-            rawData['Planning Layer'],
-            rawData['Planning Layer Description']
+            rawData[planningCol],
+            planningDescCol ? rawData[planningDescCol] : undefined
           );
         }
         
-        // Handle activity domain
+        // Handle activity domain (get the mapped column name)
         let activityDomainId = '';
-        if (rawData['Domain of Interest']) {
+        const domainCol = Object.entries(fieldMappings).find(([field]) => field === 'activity_domain_name')?.[1];
+        const domainDescCol = Object.entries(fieldMappings).find(([field]) => field === 'domain_description')?.[1];
+        if (domainCol && rawData[domainCol]) {
           activityDomainId = await findOrCreateActivityDomain(
-            rawData['Domain of Interest'],
-            rawData['Domain of Interest Description']
+            rawData[domainCol],
+            domainDescCol ? rawData[domainDescCol] : undefined
           );
         }
         
