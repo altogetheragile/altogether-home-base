@@ -20,8 +20,6 @@ export interface KnowledgeItem {
   is_featured: boolean;
   is_complete: boolean;
   view_count: number;
-  popularity_score: number;
-  difficulty_level?: string;
   estimated_reading_time?: number;
   created_at: string;
   updated_at: string;
@@ -175,13 +173,10 @@ export const useKnowledgeItems = (params?: {
         case 'alphabetical':
           query = query.order('name', { ascending: true });
           break;
-        case 'difficulty':
-          query = query.order('difficulty_level', { ascending: true, nullsFirst: true });
-          break;
         case 'popularity':
         default:
-          query = query.order('popularity_score', { ascending: false })
-                      .order('view_count', { ascending: false });
+          query = query.order('view_count', { ascending: false })
+                      .order('created_at', { ascending: false });
           break;
       }
 

@@ -51,7 +51,7 @@ export const EnhancedKnowledgeCard = ({ item, showDetails = false }: EnhancedKno
                     {item.activity_domains.name}
                   </Badge>
                 )}
-                <DifficultyBadge difficulty={item.difficulty_level} />
+                {/* Removed difficulty badge since it's not in the simplified schema */}
               </div>
               
               {/* Title */}
@@ -180,7 +180,7 @@ export const EnhancedKnowledgeCard = ({ item, showDetails = false }: EnhancedKno
               </div>
               <div className="flex items-center gap-1">
                 <Star className="h-3 w-3" />
-                <span>{item.popularity_score || 0}</span>
+                <span>{item.view_count || 0}</span>
               </div>
               {item.estimated_reading_time && (
                 <div className="flex items-center gap-1">

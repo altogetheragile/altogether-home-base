@@ -115,7 +115,7 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
   return (
     <Card className="h-full hover:shadow-lg transition-all duration-200 cursor-pointer group border border-border hover:border-primary/50 relative bg-card">
       {/* Popular/Featured Badge */}
-      {item.popularity_score && item.popularity_score > 75 && (
+      {item.view_count && item.view_count > 100 && (
         <div className="absolute top-3 right-3 z-10">
           <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs font-medium">
             <Sparkles className="h-3 w-3 mr-1" />
@@ -188,7 +188,6 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
                 {item.activity_domains.name}
               </Badge>
             )}
-            <DifficultyBadge difficulty={item.difficulty_level} />
           </div>
         </CardHeader>
         
@@ -232,9 +231,9 @@ export const EnhancedTechniqueCard = ({ item }: EnhancedTechniqueCardProps) => {
                 <MessageCircle className="h-4 w-4 text-primary" />
                 <span className="font-medium text-muted-foreground">0</span>
               </div>
-              <div className="flex items-center gap-1.5" title="Popularity Score">
-                <Star className="h-4 w-4 text-primary" />
-                <span className="font-medium text-muted-foreground">{Math.round(item.popularity_score || 0)}</span>
+              <div className="flex items-center gap-1.5" title="Views">
+                <Eye className="h-4 w-4 text-primary" />
+                <span className="font-medium text-muted-foreground">{item.view_count || 0}</span>
               </div>
               {item.estimated_reading_time && (
                 <div className="flex items-center gap-1.5" title="Reading Time">

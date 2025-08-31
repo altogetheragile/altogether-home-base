@@ -84,7 +84,7 @@ export const EnhancedRelatedTechniques = ({ techniqueId }: EnhancedRelatedTechni
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <DifficultyBadge difficulty={technique.difficulty_level} />
+              {/* Removed difficulty badge since it's not in the simplified schema */}
               
               {technique.estimated_reading_time && (
                 <div className="flex items-center gap-1">

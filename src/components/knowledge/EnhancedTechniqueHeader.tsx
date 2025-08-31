@@ -32,7 +32,7 @@ export const EnhancedTechniqueHeader = ({ item }: EnhancedTechniqueHeaderProps) 
                     {item.knowledge_categories.name}
                   </Badge>
                 )}
-                <DifficultyBadge difficulty={item.difficulty_level} />
+                {/* Removed difficulty badge since it's not in the simplified schema */}
               </div>
               
               <h1 className="text-4xl font-bold text-foreground mb-4 leading-tight">
