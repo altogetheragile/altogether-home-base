@@ -17,13 +17,14 @@ const getTargetFields = (targetEntity: string) => {
   switch (targetEntity) {
     case 'knowledge_items':
       return [
-        // Core fields - matching Excel structure
+        // Core fields
         { key: 'name', label: 'Knowledge Item', required: true },
         { key: 'description', label: 'Knowledge Item Description', required: false },
         { key: 'background', label: 'Background', required: false },
         { key: 'originator', label: 'Source', required: false },
+        { key: 'summary', label: 'Summary', required: false },
         
-        // Categorization - matching Excel structure
+        // Taxonomy fields
         { key: 'category_name', label: 'Category', required: false },
         { key: 'category_description', label: 'Category Description', required: false },
         { key: 'planning_layers', label: 'Planning Layer', required: false },
@@ -31,7 +32,7 @@ const getTargetFields = (targetEntity: string) => {
         { key: 'activity_domain_name', label: 'Domain of Interest', required: false },
         { key: 'domain_description', label: 'Domain of Interest Description', required: false },
         
-        // Generic Use Case fields - matching Excel structure
+        // Generic Use Case (W5H)
         { key: 'generic_who', label: 'Generic Use Case - Who', required: false },
         { key: 'generic_what', label: 'Generic Use Case - What', required: false },
         { key: 'generic_when', label: 'Generic Use Case - When', required: false },
@@ -41,7 +42,7 @@ const getTargetFields = (targetEntity: string) => {
         { key: 'generic_how_much', label: 'Generic Use Case - How Much', required: false },
         { key: 'generic_summary', label: 'Generic Use Case - Summary', required: false },
         
-        // Example Use Case fields - matching Excel structure
+        // Example Use Case (W5H)
         { key: 'example_who', label: 'Example / Use Case - Who', required: false },
         { key: 'example_what', label: 'Example / Use Case - What', required: false },
         { key: 'example_when', label: 'Example / Use Case - When', required: false },
@@ -51,43 +52,6 @@ const getTargetFields = (targetEntity: string) => {
         { key: 'example_how_much', label: 'Example / Use Case - How Much', required: false },
         { key: 'example_summary', label: 'Example / Use Case - Summary', required: false },
         { key: 'example_use_case', label: 'Example / Use Case', required: false },
-        
-        // Additional metadata fields
-        { key: 'slug', label: 'URL Slug', required: false },
-        { key: 'summary', label: 'Summary', required: false },
-        { key: 'purpose', label: 'Purpose', required: false },
-        { key: 'difficulty_level', label: 'Difficulty Level', required: false },
-        { key: 'estimated_reading_time', label: 'Reading Time (minutes)', required: false },
-        { key: 'industry_context', label: 'Industry Context', required: false },
-        { key: 'team_size_min', label: 'Min Team Size', required: false },
-        { key: 'team_size_max', label: 'Max Team Size', required: false },
-        { key: 'duration_min_minutes', label: 'Min Duration (minutes)', required: false },
-        { key: 'duration_max_minutes', label: 'Max Duration (minutes)', required: false },
-        
-        // Status and visibility
-        { key: 'is_published', label: 'Published (true/false)', required: false },
-        { key: 'is_featured', label: 'Featured (true/false)', required: false },
-        { key: 'is_complete', label: 'Complete (true/false)', required: false },
-        
-        // Tags and additional categorization
-        { key: 'tags', label: 'Tags (comma-separated)', required: false },
-        { key: 'activity_focus_name', label: 'Activity Focus', required: false },
-        { key: 'activity_category_name', label: 'Activity Category', required: false },
-        
-        // Rich arrays (pipe-separated in Excel)
-        { key: 'typical_participants', label: 'Typical Participants (pipe-separated)', required: false },
-        { key: 'required_skills', label: 'Required Skills (pipe-separated)', required: false },
-        { key: 'success_criteria', label: 'Success Criteria (pipe-separated)', required: false },
-        { key: 'common_pitfalls', label: 'Common Pitfalls (pipe-separated)', required: false },
-        { key: 'related_practices', label: 'Related Practices (pipe-separated)', required: false },
-        
-        // Additional content fields
-        { key: 'planning_considerations', label: 'Planning Considerations', required: false },
-        
-        // SEO fields
-        { key: 'seo_title', label: 'SEO Title', required: false },
-        { key: 'seo_description', label: 'SEO Description', required: false },
-        { key: 'seo_keywords', label: 'SEO Keywords (comma-separated)', required: false },
       ];
     case 'events':
       return [
@@ -173,6 +137,7 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
           description: ['knowledge item description', 'desc', 'content'],
           background: ['background'],
           originator: ['source', 'author', 'created by'],
+          summary: ['brief', 'overview', 'narrative form'],
           category_name: ['category'],
           category_description: ['category description'],
           planning_layers: ['planning layer'],
@@ -196,20 +161,17 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
           example_how_much: ['example / use case - how much'],
           example_summary: ['example / use case - summary'],
           example_use_case: ['example / use case'],
-          summary: ['brief', 'overview', 'narrative form'],
-          purpose: ['why', 'objective'],
-          difficulty_level: ['difficulty', 'level'],
-          tags: ['tag', 'keywords'],
-          start_date: ['date', 'when', 'start'],
-          capacity: ['max', 'limit', 'size'],
         };
         
         const alternatives = specialMappings[fieldKey] || [];
-        matchedHeader = headers.find(header => 
-          alternatives.some(alt => 
-            header.toLowerCase().includes(alt) || alt.includes(header.toLowerCase())
-          )
-        );
+        matchedHeader = headers.find(header => {
+          const headerLower = header.toLowerCase();
+          return alternatives.some(alt => 
+            headerLower === alt || 
+            headerLower.includes(alt) || 
+            alt.includes(headerLower)
+          );
+        });
       }
       
       if (matchedHeader) {
