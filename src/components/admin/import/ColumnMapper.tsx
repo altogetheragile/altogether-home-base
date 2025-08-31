@@ -147,16 +147,32 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
         );
       }
       
-      // Special mappings for common variations
+      // Special mappings for knowledge items Excel structure
       if (!matchedHeader) {
         const specialMappings: Record<string, string[]> = {
-          name: ['title', 'activity', 'technique', 'event'],
-          description: ['desc', 'content', 'activity description'],
-          summary: ['brief', 'overview', 'generic summary'],
+          name: ['knowledge item', 'title', 'activity', 'technique'],
+          description: ['knowledge item description', 'desc', 'content'],
+          summary: ['brief', 'overview', 'generic summary', 'narrative form'],
           purpose: ['why', 'generic why', 'objective'],
           originator: ['source', 'author', 'created by'],
           difficulty_level: ['difficulty', 'level'],
-          category_name: ['category', 'type', 'domain'],
+          category_name: ['category'],
+          activity_domain_name: ['domain of interest'],
+          planning_layers: ['planning layer'],
+          generic_who: ['generic use case - who'],
+          generic_what: ['generic use case - what'],
+          generic_when: ['generic use case - when'],
+          generic_where: ['generic use case - where'],
+          generic_why: ['generic use case - why'],
+          generic_how: ['generic use case - how'],
+          example_who: ['example / use case - who'],
+          example_what: ['example / use case - what'],
+          example_when: ['example / use case - when'],
+          example_where: ['example / use case - where'],
+          example_why: ['example / use case - why'],
+          example_how: ['example / use case - how'],
+          example_use_case: ['example / use case'],
+          example_summary: ['example / use case - summary'],
           tags: ['tag', 'keywords'],
           start_date: ['date', 'when', 'start'],
           capacity: ['max', 'limit', 'size'],
