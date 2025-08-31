@@ -41,7 +41,8 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
           } else if (targetField.includes('keywords') || targetField === 'tags') {
             value = String(value).split(',').map(s => s.trim()).filter(Boolean);
           } else if (['typical_participants', 'required_skills', 'success_criteria', 'common_pitfalls', 'related_practices'].includes(targetField)) {
-            value = String(value).split('|').map(s => s.trim()).filter(Boolean);
+            // Handle array fields - split by various delimiters
+            value = String(value).split(/[,;|]/).map(s => s.trim()).filter(Boolean);
           }
           
           mappedData[targetField] = value;
@@ -155,15 +156,18 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         
         if (!layer) {
           // Create planning layer if it doesn't exist
-          const { data: newLayer } = await supabase
-            .from('planning_layers')
-            .insert([{
-              name: layerName,
-              slug: layerName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-              description: stagingRow.raw_data['Planning Layer Description'] || null
-            }])
-            .select('id')
-            .single();
+           const { data: newLayer } = await supabase
+             .from('planning_layers')
+             .insert([{
+               name: layerName,
+               slug: layerName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+               description: stagingRow.raw_data['Planning Layer Description'] || null,
+               full_description: stagingRow.raw_data['Planning Layer Description'] || null,
+               color: '#3B82F6',
+               display_order: 0
+             }])
+             .select('id')
+             .single();
           layer = newLayer;
         }
         
@@ -274,29 +278,47 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
       let fieldMappings = importRecord.mapping_config?.field_mappings || {};
       
       if (Object.keys(fieldMappings).length === 0 && stagingData.length > 0) {
-        // Auto-map based on Excel column names for the 2025 knowledge items structure
+        // Auto-map based on Excel column names for the new 2025 knowledge items structure
         const sampleRow = stagingData[0].raw_data;
         fieldMappings = {
-          name: 'Knowledge Item',
-          description: 'Knowledge Item Description',
-          summary: 'Generic Summary (Narrative Form)',
-          generic_who: 'Generic Use Case - Who',
-          generic_what: 'Generic Use Case - What',
-          generic_when: 'Generic Use Case - When',
-          generic_where: 'Generic Use Case - Where',
-          generic_why: 'Generic Use Case - Why',
-          generic_how: 'Generic Use Case - How',
-          generic_how_much: 'Generic Use Case - How Much',
-          example_who: 'Example / Use Case - Who',
-          example_what: 'Example / Use Case - What',
-          example_when: 'Example / Use Case - When',
-          example_where: 'Example / Use Case - Where',
-          example_why: 'Example / Use Case - Why',
-          example_how: 'Example / Use Case - How',
-          example_how_much: 'Example / Use Case - How Much',
-          example_summary: 'Example / Use Case - Summary (Narrative Form)',
-          source: 'Source',
+          name: 'Name',
+          slug: 'Slug', 
+          summary: 'Summary',
+          description: 'Description',
+          purpose: 'Purpose',
+          originator: 'Originator',
           background: 'Background',
+          source: 'Source',
+          difficulty_level: 'Difficulty Level',
+          duration_min_minutes: 'Duration Min (minutes)',
+          duration_max_minutes: 'Duration Max (minutes)', 
+          team_size_min: 'Team Size Min',
+          team_size_max: 'Team Size Max',
+          generic_who: 'Generic Who',
+          generic_what: 'Generic What',
+          generic_when: 'Generic When',
+          generic_where: 'Generic Where',
+          generic_why: 'Generic Why',
+          generic_how: 'Generic How',
+          generic_how_much: 'Generic How Much',
+          generic_summary: 'Generic Summary',
+          example_who: 'Example Who',
+          example_what: 'Example What',
+          example_when: 'Example When',
+          example_where: 'Example Where',
+          example_why: 'Example Why',
+          example_how: 'Example How',
+          example_how_much: 'Example How Much',
+          example_use_case: 'Example Use Case',
+          example_summary: 'Example Summary',
+          industry_context: 'Industry Context',
+          planning_considerations: 'Planning Considerations',
+          focus_description: 'Focus Description',
+          required_skills: 'Required Skills',
+          success_criteria: 'Success Criteria',
+          common_pitfalls: 'Common Pitfalls',
+          related_practices: 'Related Practices',
+          typical_participants: 'Typical Participants',
           category_name: 'Category',
           activity_domain_name: 'Domain of Interest',
           planning_layers: 'Planning Layer'

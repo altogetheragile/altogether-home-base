@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,19 +15,18 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import SimpleForm from '@/components/admin/SimpleForm';
-import { BulkCategoryOperations } from '@/components/admin/BulkCategoryOperations';
 
-const AdminKnowledgeCategories = () => {
+const AdminActivityDomains = () => {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<any>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [editingDomain, setEditingDomain] = useState<any>(null);
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
 
-  const { data: categories, isLoading, refetch } = useQuery({
-    queryKey: ['admin-knowledge-categories'],
+  const { data: domains, isLoading, refetch } = useQuery({
+    queryKey: ['admin-activity-domains'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('knowledge_categories')
+        .from('activity_domains')
         .select('*')
         .order('name');
 
@@ -39,9 +38,9 @@ const AdminKnowledgeCategories = () => {
   const handleSubmit = async (formData: any) => {
     const { name, slug, description, full_description, color } = formData;
     
-    if (editingCategory) {
+    if (editingDomain) {
       const { error } = await supabase
-        .from('knowledge_categories')
+        .from('activity_domains')
         .update({
           name,
           slug,
@@ -50,12 +49,12 @@ const AdminKnowledgeCategories = () => {
           color: color || '#3B82F6',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', editingCategory.id);
+        .eq('id', editingDomain.id);
 
       if (error) throw error;
     } else {
       const { error } = await supabase
-        .from('knowledge_categories')
+        .from('activity_domains')
         .insert({
           name,
           slug,
@@ -70,17 +69,17 @@ const AdminKnowledgeCategories = () => {
     refetch();
   };
 
-  const handleEdit = (category: any) => {
-    setEditingCategory(category);
+  const handleEdit = (domain: any) => {
+    setEditingDomain(domain);
     setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+    if (!confirm('Are you sure you want to delete this activity domain?')) return;
 
     try {
       const { error } = await supabase
-        .from('knowledge_categories')
+        .from('activity_domains')
         .delete()
         .eq('id', id);
 
@@ -88,14 +87,14 @@ const AdminKnowledgeCategories = () => {
 
       toast({
         title: "Success",
-        description: "Category deleted successfully.",
+        description: "Activity domain deleted successfully.",
       });
       refetch();
     } catch (error) {
       console.error('Delete error:', error);
       toast({
         title: "Error",
-        description: "Failed to delete category.",
+        description: "Failed to delete activity domain.",
         variant: "destructive",
       });
     }
@@ -121,29 +120,27 @@ const AdminKnowledgeCategories = () => {
     <div className="space-y-6">
       {showForm && (
         <SimpleForm
-          title="Category"
+          title="Activity Domain"
           onSubmit={handleSubmit}
-          editingItem={editingCategory}
+          editingItem={editingDomain}
           onCancel={() => {
             setShowForm(false);
-            setEditingCategory(null);
+            setEditingDomain(null);
           }}
           fields={formFields}
         />
       )}
 
-      <div className="flex justify-end items-center">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <Target className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Activity Domains</h1>
+        </div>
         <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
           <Plus className="h-4 w-4" />
-          <span>Add Category</span>
+          <span>Add Activity Domain</span>
         </Button>
       </div>
-
-      <BulkCategoryOperations
-        categories={categories || []}
-        selectedCategories={selectedCategories}
-        onSelectionChange={setSelectedCategories}
-      />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <Table>
@@ -151,12 +148,12 @@ const AdminKnowledgeCategories = () => {
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedCategories.length === categories?.length && categories.length > 0}
+                  checked={selectedDomains.length === domains?.length && domains.length > 0}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      setSelectedCategories(categories?.map(c => c.id) || []);
+                      setSelectedDomains(domains?.map(d => d.id) || []);
                     } else {
-                      setSelectedCategories([]);
+                      setSelectedDomains([]);
                     }
                   }}
                 />
@@ -169,40 +166,40 @@ const AdminKnowledgeCategories = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories?.map((category) => (
-              <TableRow key={category.id}>
+            {domains?.map((domain) => (
+              <TableRow key={domain.id}>
                 <TableCell>
                   <Checkbox
-                    checked={selectedCategories.includes(category.id)}
+                    checked={selectedDomains.includes(domain.id)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setSelectedCategories([...selectedCategories, category.id]);
+                        setSelectedDomains([...selectedDomains, domain.id]);
                       } else {
-                        setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                        setSelectedDomains(selectedDomains.filter(id => id !== domain.id));
                       }
                     }}
                   />
                 </TableCell>
-                <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell className="font-mono text-sm">{category.slug}</TableCell>
+                <TableCell className="font-medium">{domain.name}</TableCell>
+                <TableCell className="font-mono text-sm">{domain.slug}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <div 
                       className="w-4 h-4 rounded-full border" 
-                      style={{ backgroundColor: category.color }}
+                      style={{ backgroundColor: domain.color }}
                     />
-                    <Badge style={{ backgroundColor: category.color + '20', color: category.color }}>
-                      {category.color}
+                    <Badge style={{ backgroundColor: domain.color + '20', color: domain.color }}>
+                      {domain.color}
                     </Badge>
                   </div>
                 </TableCell>
-                <TableCell className="max-w-xs truncate">{category.description || '-'}</TableCell>
+                <TableCell className="max-w-xs truncate">{domain.description || '-'}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(category)}
+                      onClick={() => handleEdit(domain)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -210,7 +207,7 @@ const AdminKnowledgeCategories = () => {
                       variant="outline"
                       size="sm"
                       className="text-red-600 hover:text-red-700"
-                      onClick={() => handleDelete(category.id)}
+                      onClick={() => handleDelete(domain.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -218,10 +215,10 @@ const AdminKnowledgeCategories = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {!categories?.length && (
+            {!domains?.length && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No categories found. Create your first category to get started.
+                  No activity domains found. Create your first activity domain to get started.
                 </TableCell>
               </TableRow>
             )}
@@ -232,4 +229,4 @@ const AdminKnowledgeCategories = () => {
   );
 };
 
-export default AdminKnowledgeCategories;
+export default AdminActivityDomains;

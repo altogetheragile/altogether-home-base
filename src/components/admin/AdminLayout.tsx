@@ -1,6 +1,6 @@
 
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -96,6 +96,18 @@ const AdminLayout = () => {
       href: '/admin/knowledge/categories',
       icon: FolderOpen,
       description: 'Organize knowledge categories'
+    },
+    {
+      label: 'Planning Layers',
+      href: '/admin/knowledge/planning-layers',
+      icon: Layers,
+      description: 'Manage planning layers'
+    },
+    {
+      label: 'Activity Domains',
+      href: '/admin/knowledge/activity-domains',
+      icon: Target,
+      description: 'Manage activity domains'
     },
     {
       label: 'Tags',
