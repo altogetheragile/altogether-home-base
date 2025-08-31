@@ -107,26 +107,26 @@ const TechniqueFormDialog = ({
   ];
 
   const w5hFields = [
-    // Generic W5H
-    { key: 'generic_who', label: 'Who (Generic)', type: 'textarea' as const, placeholder: 'Who typically uses this technique?' },
-    { key: 'generic_what', label: 'What (Generic)', type: 'textarea' as const, placeholder: 'What is this technique about?' },
-    { key: 'generic_when', label: 'When (Generic)', type: 'textarea' as const, placeholder: 'When should this technique be used?' },
-    { key: 'generic_where', label: 'Where (Generic)', type: 'textarea' as const, placeholder: 'Where is this technique applicable?' },
-    { key: 'generic_why', label: 'Why (Generic)', type: 'textarea' as const, placeholder: 'Why use this technique?' },
-    { key: 'generic_how', label: 'How (Generic)', type: 'textarea' as const, placeholder: 'How is this technique executed?' },
-    { key: 'generic_how_much', label: 'How Much (Generic)', type: 'textarea' as const, placeholder: 'What resources/time needed?' },
+    // Generic Use Case
+    { key: 'generic_who', label: 'Generic Use Case - Who', type: 'textarea' as const, placeholder: 'Who typically uses this technique?' },
+    { key: 'generic_what', label: 'Generic Use Case - What', type: 'textarea' as const, placeholder: 'What is this technique about?' },
+    { key: 'generic_when', label: 'Generic Use Case - When', type: 'textarea' as const, placeholder: 'When should this technique be used?' },
+    { key: 'generic_where', label: 'Generic Use Case - Where', type: 'textarea' as const, placeholder: 'Where is this technique applicable?' },
+    { key: 'generic_why', label: 'Generic Use Case - Why', type: 'textarea' as const, placeholder: 'Why use this technique?' },
+    { key: 'generic_how', label: 'Generic Use Case - How', type: 'textarea' as const, placeholder: 'How is this technique executed?' },
+    { key: 'generic_how_much', label: 'Generic Use Case - How Much', type: 'textarea' as const, placeholder: 'What resources/time needed?' },
     { key: 'generic_summary', label: 'Generic Summary', type: 'textarea' as const },
     
-    // Example W5H
-    { key: 'example_who', label: 'Who (Example)', type: 'textarea' as const, placeholder: 'Specific example of who uses this' },
-    { key: 'example_what', label: 'What (Example)', type: 'textarea' as const, placeholder: 'Specific example scenario' },
-    { key: 'example_when', label: 'When (Example)', type: 'textarea' as const, placeholder: 'Specific timing example' },
-    { key: 'example_where', label: 'Where (Example)', type: 'textarea' as const, placeholder: 'Specific location/context example' },
-    { key: 'example_why', label: 'Why (Example)', type: 'textarea' as const, placeholder: 'Specific reason example' },
-    { key: 'example_how', label: 'How (Example)', type: 'textarea' as const, placeholder: 'Specific execution example' },
-    { key: 'example_how_much', label: 'How Much (Example)', type: 'textarea' as const, placeholder: 'Specific resource example' },
+    // Example / Use Case
+    { key: 'example_who', label: 'Example / Use Case - Who', type: 'textarea' as const, placeholder: 'Specific example of who uses this' },
+    { key: 'example_what', label: 'Example / Use Case - What', type: 'textarea' as const, placeholder: 'Specific example scenario' },
+    { key: 'example_when', label: 'Example / Use Case - When', type: 'textarea' as const, placeholder: 'Specific timing example' },
+    { key: 'example_where', label: 'Example / Use Case - Where', type: 'textarea' as const, placeholder: 'Specific location/context example' },
+    { key: 'example_why', label: 'Example / Use Case - Why', type: 'textarea' as const, placeholder: 'Specific reason example' },
+    { key: 'example_how', label: 'Example / Use Case - How', type: 'textarea' as const, placeholder: 'Specific execution example' },
+    { key: 'example_how_much', label: 'Example / Use Case - How Much', type: 'textarea' as const, placeholder: 'Specific resource example' },
     { key: 'example_use_case', label: 'Example Use Case', type: 'textarea' as const },
-    { key: 'example_summary', label: 'Example Summary', type: 'textarea' as const }
+    { key: 'example_summary', label: 'Example / Use Case - Summary (Narrative Form)', type: 'textarea' as const }
   ];
 
   const implementationFields = [
@@ -198,7 +198,7 @@ const TechniqueFormDialog = ({
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {editingTechnique ? 'Edit Technique' : 'Create New Technique'}
+            {editingTechnique ? 'Edit Knowledge Item' : 'Create New Knowledge Item'}
           </DialogTitle>
         </DialogHeader>
         
@@ -213,7 +213,7 @@ const TechniqueFormDialog = ({
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="w5h">W5H Framework</TabsTrigger>
+              <TabsTrigger value="w5h">Use Cases</TabsTrigger>
               <TabsTrigger value="implementation">Implementation</TabsTrigger>
               <TabsTrigger value="classification">Classification</TabsTrigger>
               <TabsTrigger value="seo">SEO & Media</TabsTrigger>
@@ -288,7 +288,7 @@ const TechniqueFormDialog = ({
                 // We'll need to modify SimpleForm to handle this better
                 handleSubmit({});
               }} disabled={isSubmitting}>
-                {editingTechnique ? 'Update' : 'Create'} Technique
+                {editingTechnique ? 'Update' : 'Create'} Knowledge Item
               </Button>
             </div>
           </Tabs>

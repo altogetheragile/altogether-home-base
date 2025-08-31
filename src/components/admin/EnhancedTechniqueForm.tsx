@@ -283,7 +283,7 @@ const EnhancedTechniqueForm = ({
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="w5h">W5H Framework</TabsTrigger>
+              <TabsTrigger value="w5h">Use Cases</TabsTrigger>
               <TabsTrigger value="implementation">Implementation</TabsTrigger>
               <TabsTrigger value="classification">Classification</TabsTrigger>
               <TabsTrigger value="seo">SEO & Media</TabsTrigger>
@@ -455,126 +455,155 @@ const EnhancedTechniqueForm = ({
 
             <TabsContent value="w5h" className="mt-4 space-y-4">
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Generic W5H Framework</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Who</Label>
-                      <Textarea
-                        value={formData.generic_who}
-                        onChange={(e) => updateFormData('generic_who', e.target.value)}
-                        placeholder="Who typically uses this technique?"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>What</Label>
-                      <Textarea
-                        value={formData.generic_what}
-                        onChange={(e) => updateFormData('generic_what', e.target.value)}
-                        placeholder="What is this technique about?"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>When</Label>
-                      <Textarea
-                        value={formData.generic_when}
-                        onChange={(e) => updateFormData('generic_when', e.target.value)}
-                        placeholder="When should this technique be used?"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Where</Label>
-                      <Textarea
-                        value={formData.generic_where}
-                        onChange={(e) => updateFormData('generic_where', e.target.value)}
-                        placeholder="Where is this technique applicable?"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Why</Label>
-                      <Textarea
-                        value={formData.generic_why}
-                        onChange={(e) => updateFormData('generic_why', e.target.value)}
-                        placeholder="Why use this technique?"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>How</Label>
-                      <Textarea
-                        value={formData.generic_how}
-                        onChange={(e) => updateFormData('generic_how', e.target.value)}
-                        placeholder="How is this technique executed?"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                </div>
+                 <div>
+                   <h3 className="text-lg font-semibold mb-4">Generic Use Case</h3>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                       <Label>Generic Use Case - Who</Label>
+                       <Textarea
+                         value={formData.generic_who}
+                         onChange={(e) => updateFormData('generic_who', e.target.value)}
+                         placeholder="Who typically uses this technique?"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Generic Use Case - What</Label>
+                       <Textarea
+                         value={formData.generic_what}
+                         onChange={(e) => updateFormData('generic_what', e.target.value)}
+                         placeholder="What is this technique about?"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Generic Use Case - When</Label>
+                       <Textarea
+                         value={formData.generic_when}
+                         onChange={(e) => updateFormData('generic_when', e.target.value)}
+                         placeholder="When should this technique be used?"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Generic Use Case - Where</Label>
+                       <Textarea
+                         value={formData.generic_where}
+                         onChange={(e) => updateFormData('generic_where', e.target.value)}
+                         placeholder="Where is this technique applicable?"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Generic Use Case - Why</Label>
+                       <Textarea
+                         value={formData.generic_why}
+                         onChange={(e) => updateFormData('generic_why', e.target.value)}
+                         placeholder="Why use this technique?"
+                         rows={3}
+                       />
+                     </div>
+                      <div className="space-y-2">
+                        <Label>Generic Use Case - How</Label>
+                        <Textarea
+                          value={formData.generic_how}
+                          onChange={(e) => updateFormData('generic_how', e.target.value)}
+                          placeholder="How is this technique executed?"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Generic Use Case - How Much</Label>
+                        <Textarea
+                          value={formData.generic_how_much}
+                          onChange={(e) => updateFormData('generic_how_much', e.target.value)}
+                          placeholder="What resources/effort is required?"
+                          rows={3}
+                        />
+                      </div>
+                   </div>
+                 </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Example W5H Framework</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Who (Example)</Label>
-                      <Textarea
-                        value={formData.example_who}
-                        onChange={(e) => updateFormData('example_who', e.target.value)}
-                        placeholder="Specific example of who uses this"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>What (Example)</Label>
-                      <Textarea
-                        value={formData.example_what}
-                        onChange={(e) => updateFormData('example_what', e.target.value)}
-                        placeholder="Specific example scenario"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>When (Example)</Label>
-                      <Textarea
-                        value={formData.example_when}
-                        onChange={(e) => updateFormData('example_when', e.target.value)}
-                        placeholder="Specific timing example"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Where (Example)</Label>
-                      <Textarea
-                        value={formData.example_where}
-                        onChange={(e) => updateFormData('example_where', e.target.value)}
-                        placeholder="Specific location/context example"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Why (Example)</Label>
-                      <Textarea
-                        value={formData.example_why}
-                        onChange={(e) => updateFormData('example_why', e.target.value)}
-                        placeholder="Specific reason example"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>How (Example)</Label>
-                      <Textarea
-                        value={formData.example_how}
-                        onChange={(e) => updateFormData('example_how', e.target.value)}
-                        placeholder="Specific execution example"
-                        rows={3}
-                      />
-                    </div>
+                 <div>
+                   <h3 className="text-lg font-semibold mb-4">Example / Use Case</h3>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                       <Label>Example / Use Case - Who</Label>
+                       <Textarea
+                         value={formData.example_who}
+                         onChange={(e) => updateFormData('example_who', e.target.value)}
+                         placeholder="Specific example of who uses this"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Example / Use Case - What</Label>
+                       <Textarea
+                         value={formData.example_what}
+                         onChange={(e) => updateFormData('example_what', e.target.value)}
+                         placeholder="Specific example scenario"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Example / Use Case - When</Label>
+                       <Textarea
+                         value={formData.example_when}
+                         onChange={(e) => updateFormData('example_when', e.target.value)}
+                         placeholder="Specific timing example"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Example / Use Case - Where</Label>
+                       <Textarea
+                         value={formData.example_where}
+                         onChange={(e) => updateFormData('example_where', e.target.value)}
+                         placeholder="Specific location/context example"
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Example / Use Case - Why</Label>
+                       <Textarea
+                         value={formData.example_why}
+                         onChange={(e) => updateFormData('example_why', e.target.value)}
+                         placeholder="Specific reason example"
+                         rows={3}
+                       />
+                     </div>
+                      <div className="space-y-2">
+                        <Label>Example / Use Case - How</Label>
+                        <Textarea
+                          value={formData.example_how}
+                          onChange={(e) => updateFormData('example_how', e.target.value)}
+                          placeholder="Specific execution example"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Example / Use Case - How Much</Label>
+                        <Textarea
+                          value={formData.example_how_much}
+                          onChange={(e) => updateFormData('example_how_much', e.target.value)}
+                          placeholder="Specific resource/effort example"
+                          rows={3}
+                        />
+                      </div>
+                     </div>
+                     <div className="mt-4">
+                       <div className="space-y-2">
+                         <Label>Example / Use Case - Summary (Narrative Form)</Label>
+                         <Textarea
+                           value={formData.example_summary}
+                           onChange={(e) => updateFormData('example_summary', e.target.value)}
+                           placeholder="Narrative summary of the complete example"
+                           rows={4}
+                         />
+                       </div>
+                     </div>
                   </div>
-                </div>
-              </div>
+               </div>
             </TabsContent>
 
             <TabsContent value="implementation" className="mt-4 space-y-4">
