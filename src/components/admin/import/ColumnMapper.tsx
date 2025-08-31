@@ -17,28 +17,45 @@ const getTargetFields = (targetEntity: string) => {
   switch (targetEntity) {
     case 'knowledge_items':
       return [
-        // Core fields
-        { key: 'name', label: 'Name/Title', required: true },
+        // Core fields - matching Excel structure
+        { key: 'name', label: 'Knowledge Item', required: true },
+        { key: 'description', label: 'Knowledge Item Description', required: false },
+        { key: 'background', label: 'Background', required: false },
+        { key: 'originator', label: 'Source', required: false },
+        
+        // Categorization - matching Excel structure
+        { key: 'category_name', label: 'Category', required: false },
+        { key: 'category_description', label: 'Category Description', required: false },
+        { key: 'planning_layers', label: 'Planning Layer', required: false },
+        { key: 'planning_layer_description', label: 'Planning Layer Description', required: false },
+        { key: 'activity_domain_name', label: 'Domain of Interest', required: false },
+        { key: 'domain_description', label: 'Domain of Interest Description', required: false },
+        
+        // Generic Use Case fields - matching Excel structure
+        { key: 'generic_who', label: 'Generic Use Case - Who', required: false },
+        { key: 'generic_what', label: 'Generic Use Case - What', required: false },
+        { key: 'generic_when', label: 'Generic Use Case - When', required: false },
+        { key: 'generic_where', label: 'Generic Use Case - Where', required: false },
+        { key: 'generic_why', label: 'Generic Use Case - Why', required: false },
+        { key: 'generic_how', label: 'Generic Use Case - How', required: false },
+        { key: 'generic_how_much', label: 'Generic Use Case - How Much', required: false },
+        { key: 'generic_summary', label: 'Generic Use Case - Summary', required: false },
+        
+        // Example Use Case fields - matching Excel structure
+        { key: 'example_who', label: 'Example / Use Case - Who', required: false },
+        { key: 'example_what', label: 'Example / Use Case - What', required: false },
+        { key: 'example_when', label: 'Example / Use Case - When', required: false },
+        { key: 'example_where', label: 'Example / Use Case - Where', required: false },
+        { key: 'example_why', label: 'Example / Use Case - Why', required: false },
+        { key: 'example_how', label: 'Example / Use Case - How', required: false },
+        { key: 'example_how_much', label: 'Example / Use Case - How Much', required: false },
+        { key: 'example_summary', label: 'Example / Use Case - Summary', required: false },
+        { key: 'example_use_case', label: 'Example / Use Case', required: false },
+        
+        // Additional metadata fields
         { key: 'slug', label: 'URL Slug', required: false },
-        { key: 'description', label: 'Description', required: false },
         { key: 'summary', label: 'Summary', required: false },
         { key: 'purpose', label: 'Purpose', required: false },
-        { key: 'originator', label: 'Originator/Source', required: false },
-        
-        // Status and visibility
-        { key: 'is_published', label: 'Published (true/false)', required: false },
-        { key: 'is_featured', label: 'Featured (true/false)', required: false },
-        { key: 'is_complete', label: 'Complete (true/false)', required: false },
-        
-        // Categorization
-        { key: 'category_name', label: 'Category Name', required: false },
-        { key: 'activity_focus_name', label: 'Activity Focus', required: false },
-        { key: 'activity_domain_name', label: 'Activity Domain', required: false },
-        { key: 'activity_category_name', label: 'Activity Category', required: false },
-        { key: 'planning_layers', label: 'Planning Layers (comma-separated)', required: false },
-        { key: 'tags', label: 'Tags (comma-separated)', required: false },
-        
-        // Metadata
         { key: 'difficulty_level', label: 'Difficulty Level', required: false },
         { key: 'estimated_reading_time', label: 'Reading Time (minutes)', required: false },
         { key: 'industry_context', label: 'Industry Context', required: false },
@@ -47,21 +64,15 @@ const getTargetFields = (targetEntity: string) => {
         { key: 'duration_min_minutes', label: 'Min Duration (minutes)', required: false },
         { key: 'duration_max_minutes', label: 'Max Duration (minutes)', required: false },
         
-        // Generic fields (6W framework)
-        { key: 'generic_who', label: 'Generic Who', required: false },
-        { key: 'generic_what', label: 'Generic What', required: false },
-        { key: 'generic_when', label: 'Generic When', required: false },
-        { key: 'generic_where', label: 'Generic Where', required: false },
-        { key: 'generic_why', label: 'Generic Why', required: false },
-        { key: 'generic_how', label: 'Generic How', required: false },
+        // Status and visibility
+        { key: 'is_published', label: 'Published (true/false)', required: false },
+        { key: 'is_featured', label: 'Featured (true/false)', required: false },
+        { key: 'is_complete', label: 'Complete (true/false)', required: false },
         
-        // Example fields
-        { key: 'example_who', label: 'Example Who', required: false },
-        { key: 'example_what', label: 'Example What', required: false },
-        { key: 'example_when', label: 'Example When', required: false },
-        { key: 'example_where', label: 'Example Where', required: false },
-        { key: 'example_why', label: 'Example Why', required: false },
-        { key: 'example_how', label: 'Example How', required: false },
+        // Tags and additional categorization
+        { key: 'tags', label: 'Tags (comma-separated)', required: false },
+        { key: 'activity_focus_name', label: 'Activity Focus', required: false },
+        { key: 'activity_category_name', label: 'Activity Category', required: false },
         
         // Rich arrays (pipe-separated in Excel)
         { key: 'typical_participants', label: 'Typical Participants (pipe-separated)', required: false },
@@ -70,7 +81,7 @@ const getTargetFields = (targetEntity: string) => {
         { key: 'common_pitfalls', label: 'Common Pitfalls (pipe-separated)', required: false },
         { key: 'related_practices', label: 'Related Practices (pipe-separated)', required: false },
         
-        // Additional content
+        // Additional content fields
         { key: 'planning_considerations', label: 'Planning Considerations', required: false },
         
         // SEO fields
@@ -160,27 +171,34 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
         const specialMappings: Record<string, string[]> = {
           name: ['knowledge item', 'title', 'activity', 'technique'],
           description: ['knowledge item description', 'desc', 'content'],
-          summary: ['brief', 'overview', 'generic summary', 'narrative form'],
-          purpose: ['why', 'generic why', 'objective'],
+          background: ['background'],
           originator: ['source', 'author', 'created by'],
-          difficulty_level: ['difficulty', 'level'],
           category_name: ['category'],
-          activity_domain_name: ['domain of interest'],
+          category_description: ['category description'],
           planning_layers: ['planning layer'],
+          planning_layer_description: ['planning layer description'],
+          activity_domain_name: ['domain of interest'],
+          domain_description: ['domain of interest description'],
           generic_who: ['generic use case - who'],
           generic_what: ['generic use case - what'],
           generic_when: ['generic use case - when'],
           generic_where: ['generic use case - where'],
           generic_why: ['generic use case - why'],
           generic_how: ['generic use case - how'],
+          generic_how_much: ['generic use case - how much'],
+          generic_summary: ['generic use case - summary'],
           example_who: ['example / use case - who'],
           example_what: ['example / use case - what'],
           example_when: ['example / use case - when'],
           example_where: ['example / use case - where'],
           example_why: ['example / use case - why'],
           example_how: ['example / use case - how'],
-          example_use_case: ['example / use case'],
+          example_how_much: ['example / use case - how much'],
           example_summary: ['example / use case - summary'],
+          example_use_case: ['example / use case'],
+          summary: ['brief', 'overview', 'narrative form'],
+          purpose: ['why', 'objective'],
+          difficulty_level: ['difficulty', 'level'],
           tags: ['tag', 'keywords'],
           start_date: ['date', 'when', 'start'],
           capacity: ['max', 'limit', 'size'],
