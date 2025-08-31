@@ -49,6 +49,7 @@ export type Database = {
           color: string | null
           created_at: string
           description: string | null
+          full_description: string | null
           id: string
           name: string
           slug: string
@@ -58,6 +59,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          full_description?: string | null
           id?: string
           name: string
           slug: string
@@ -67,6 +69,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          full_description?: string | null
           id?: string
           name?: string
           slug?: string
@@ -1044,6 +1047,7 @@ export type Database = {
           color: string | null
           created_at: string
           description: string | null
+          full_description: string | null
           id: string
           name: string
           slug: string
@@ -1053,6 +1057,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          full_description?: string | null
           id?: string
           name: string
           slug: string
@@ -1062,6 +1067,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          full_description?: string | null
           id?: string
           name?: string
           slug?: string
@@ -1445,6 +1451,192 @@ export type Database = {
           },
         ]
       }
+      knowledge_items_backup: {
+        Row: {
+          activity_category_id: string | null
+          activity_domain_id: string | null
+          activity_focus_id: string | null
+          background: string | null
+          category_id: string | null
+          common_pitfalls: string[] | null
+          content_type: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty_level: string | null
+          duration_max_minutes: number | null
+          duration_min_minutes: number | null
+          estimated_reading_time: number | null
+          example_how: string | null
+          example_how_much: string | null
+          example_summary: string | null
+          example_use_case: string | null
+          example_what: string | null
+          example_when: string | null
+          example_where: string | null
+          example_who: string | null
+          example_why: string | null
+          focus_description: string | null
+          generic_how: string | null
+          generic_how_much: string | null
+          generic_summary: string | null
+          generic_what: string | null
+          generic_when: string | null
+          generic_where: string | null
+          generic_who: string | null
+          generic_why: string | null
+          id: string | null
+          image_url: string | null
+          industry_context: string | null
+          is_complete: boolean | null
+          is_featured: boolean | null
+          is_published: boolean | null
+          last_reviewed_at: string | null
+          name: string | null
+          originator: string | null
+          planning_considerations: string | null
+          popularity_score: number | null
+          purpose: string | null
+          related_practices: string[] | null
+          required_skills: string[] | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          slug: string | null
+          source: string | null
+          success_criteria: string[] | null
+          summary: string | null
+          team_size_max: number | null
+          team_size_min: number | null
+          typical_participants: string[] | null
+          updated_at: string | null
+          updated_by: string | null
+          view_count: number | null
+        }
+        Insert: {
+          activity_category_id?: string | null
+          activity_domain_id?: string | null
+          activity_focus_id?: string | null
+          background?: string | null
+          category_id?: string | null
+          common_pitfalls?: string[] | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_max_minutes?: number | null
+          duration_min_minutes?: number | null
+          estimated_reading_time?: number | null
+          example_how?: string | null
+          example_how_much?: string | null
+          example_summary?: string | null
+          example_use_case?: string | null
+          example_what?: string | null
+          example_when?: string | null
+          example_where?: string | null
+          example_who?: string | null
+          example_why?: string | null
+          focus_description?: string | null
+          generic_how?: string | null
+          generic_how_much?: string | null
+          generic_summary?: string | null
+          generic_what?: string | null
+          generic_when?: string | null
+          generic_where?: string | null
+          generic_who?: string | null
+          generic_why?: string | null
+          id?: string | null
+          image_url?: string | null
+          industry_context?: string | null
+          is_complete?: boolean | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          last_reviewed_at?: string | null
+          name?: string | null
+          originator?: string | null
+          planning_considerations?: string | null
+          popularity_score?: number | null
+          purpose?: string | null
+          related_practices?: string[] | null
+          required_skills?: string[] | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string | null
+          source?: string | null
+          success_criteria?: string[] | null
+          summary?: string | null
+          team_size_max?: number | null
+          team_size_min?: number | null
+          typical_participants?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          activity_category_id?: string | null
+          activity_domain_id?: string | null
+          activity_focus_id?: string | null
+          background?: string | null
+          category_id?: string | null
+          common_pitfalls?: string[] | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_max_minutes?: number | null
+          duration_min_minutes?: number | null
+          estimated_reading_time?: number | null
+          example_how?: string | null
+          example_how_much?: string | null
+          example_summary?: string | null
+          example_use_case?: string | null
+          example_what?: string | null
+          example_when?: string | null
+          example_where?: string | null
+          example_who?: string | null
+          example_why?: string | null
+          focus_description?: string | null
+          generic_how?: string | null
+          generic_how_much?: string | null
+          generic_summary?: string | null
+          generic_what?: string | null
+          generic_when?: string | null
+          generic_where?: string | null
+          generic_who?: string | null
+          generic_why?: string | null
+          id?: string | null
+          image_url?: string | null
+          industry_context?: string | null
+          is_complete?: boolean | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          last_reviewed_at?: string | null
+          name?: string | null
+          originator?: string | null
+          planning_considerations?: string | null
+          popularity_score?: number | null
+          purpose?: string | null
+          related_practices?: string[] | null
+          required_skills?: string[] | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string | null
+          source?: string | null
+          success_criteria?: string[] | null
+          summary?: string | null
+          team_size_max?: number | null
+          team_size_min?: number | null
+          typical_participants?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       knowledge_learning_paths: {
         Row: {
           created_at: string
@@ -1768,6 +1960,7 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number | null
+          full_description: string | null
           id: string
           name: string
           slug: string
@@ -1778,6 +1971,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          full_description?: string | null
           id?: string
           name: string
           slug: string
@@ -1788,6 +1982,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          full_description?: string | null
           id?: string
           name?: string
           slug?: string
