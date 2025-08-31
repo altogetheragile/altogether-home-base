@@ -56,17 +56,36 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
           .substring(0, 50);
       }
 
-      // Set content_type default
+      // Set defaults for published knowledge items
       mappedData.content_type = 'technique';
+      mappedData.is_published = true;
+      mappedData.is_complete = true;
+      mappedData.is_featured = false;
       
       // Handle dimension lookups (categories, focus, etc.)
       if (fieldMappings.category_name && stagingRow.raw_data[fieldMappings.category_name]) {
         const categoryName = stagingRow.raw_data[fieldMappings.category_name];
-        const { data: category } = await supabase
+        let { data: category } = await supabase
           .from('knowledge_categories')
           .select('id')
           .eq('name', categoryName)
-          .single();
+          .maybeSingle();
+        
+        if (!category) {
+          // Create category if it doesn't exist
+          const { data: newCategory } = await supabase
+            .from('knowledge_categories')
+            .insert([{
+              name: categoryName,
+              slug: categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              description: stagingRow.raw_data['Category Description'] || null,
+              full_description: stagingRow.raw_data['Category Description'] || null
+            }])
+            .select('id')
+            .single();
+          category = newCategory;
+        }
+        
         if (category) mappedData.category_id = category.id;
       }
 
@@ -82,11 +101,27 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
 
       if (fieldMappings.activity_domain_name && stagingRow.raw_data[fieldMappings.activity_domain_name]) {
         const domainName = stagingRow.raw_data[fieldMappings.activity_domain_name];
-        const { data: domain } = await supabase
+        let { data: domain } = await supabase
           .from('activity_domains')
           .select('id')
           .eq('name', domainName)
-          .single();
+          .maybeSingle();
+        
+        if (!domain) {
+          // Create domain if it doesn't exist
+          const { data: newDomain } = await supabase
+            .from('activity_domains')
+            .insert([{
+              name: domainName,
+              slug: domainName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              description: stagingRow.raw_data['Domain of Interest Description'] || null,
+              full_description: stagingRow.raw_data['Domain of Interest Description'] || null
+            }])
+            .select('id')
+            .single();
+          domain = newDomain;
+        }
+        
         if (domain) mappedData.activity_domain_id = domain.id;
       }
 
@@ -109,27 +144,37 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
 
       if (error) throw error;
 
-      // Handle planning layers
+      // Handle planning layers (single layer, not comma-separated)
       if (fieldMappings.planning_layers && stagingRow.raw_data[fieldMappings.planning_layers]) {
-        const layerNames = String(stagingRow.raw_data[fieldMappings.planning_layers])
-          .split(',').map(s => s.trim()).filter(Boolean);
+        const layerName = stagingRow.raw_data[fieldMappings.planning_layers];
+        let { data: layer } = await supabase
+          .from('planning_layers')
+          .select('id')
+          .eq('name', layerName)
+          .maybeSingle();
         
-        for (const layerName of layerNames) {
-          const { data: layer } = await supabase
+        if (!layer) {
+          // Create planning layer if it doesn't exist
+          const { data: newLayer } = await supabase
             .from('planning_layers')
+            .insert([{
+              name: layerName,
+              slug: layerName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              description: stagingRow.raw_data['Planning Layer Description'] || null
+            }])
             .select('id')
-            .eq('name', layerName)
             .single();
-          
-          if (layer) {
-            await supabase
-              .from('knowledge_item_planning_layers')
-              .insert([{
-                knowledge_item_id: knowledgeItem.id,
-                planning_layer_id: layer.id,
-                is_primary: layerNames.indexOf(layerName) === 0
-              }]);
-          }
+          layer = newLayer;
+        }
+        
+        if (layer) {
+          await supabase
+            .from('knowledge_item_planning_layers')
+            .insert([{
+              knowledge_item_id: knowledgeItem.id,
+              planning_layer_id: layer.id,
+              is_primary: true
+            }]);
         }
       }
 
@@ -229,28 +274,31 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
       let fieldMappings = importRecord.mapping_config?.field_mappings || {};
       
       if (Object.keys(fieldMappings).length === 0 && stagingData.length > 0) {
-        // Auto-map based on Excel column names
+        // Auto-map based on Excel column names for the 2025 knowledge items structure
         const sampleRow = stagingData[0].raw_data;
         fieldMappings = {
-          name: 'Activity',
-          description: 'Activity Description',
+          name: 'Knowledge Item',
+          description: 'Knowledge Item Description',
           summary: 'Generic Summary (Narrative Form)',
-          generic_what: 'Generic What',
-          generic_how: 'Generic How',
-          generic_when: 'Generic When',
-          generic_where: 'Generic Where',
-          generic_who: 'Generic Who',
-          generic_why: 'Generic Why',
-          example_what: 'What',
-          example_how: 'How',
-          example_when: 'When', 
-          example_where: 'Where',
-          example_who: 'Who',
-          example_why: 'Why',
-          originator: 'Background',
+          generic_who: 'Generic Use Case - Who',
+          generic_what: 'Generic Use Case - What',
+          generic_when: 'Generic Use Case - When',
+          generic_where: 'Generic Use Case - Where',
+          generic_why: 'Generic Use Case - Why',
+          generic_how: 'Generic Use Case - How',
+          generic_how_much: 'Generic Use Case - How Much',
+          example_who: 'Example / Use Case - Who',
+          example_what: 'Example / Use Case - What',
+          example_when: 'Example / Use Case - When',
+          example_where: 'Example / Use Case - Where',
+          example_why: 'Example / Use Case - Why',
+          example_how: 'Example / Use Case - How',
+          example_how_much: 'Example / Use Case - How Much',
+          example_summary: 'Example / Use Case - Summary (Narrative Form)',
+          source: 'Source',
+          background: 'Background',
           category_name: 'Category',
-          activity_focus_name: 'Focus',
-          activity_domain_name: 'Domain',
+          activity_domain_name: 'Domain of Interest',
           planning_layers: 'Planning Layer'
         };
         
