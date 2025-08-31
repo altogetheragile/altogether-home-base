@@ -296,12 +296,8 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           .from('staging_data')
           .update({
             processing_status: 'processed',
-            processing_result: { 
-              knowledge_item_id: newKI.id,
-              category_id: categoryId,
-              planning_layer_id: planningLayerId,
-              activity_domain_id: activityDomainId
-            }
+            target_record_id: newKI.id,
+            processed_at: new Date().toISOString()
           })
           .eq('id', row.id);
         
@@ -319,7 +315,8 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           .from('staging_data')
           .update({
             processing_status: 'failed',
-            processing_result: { error: errorMsg }
+            processing_errors: [errorMsg],
+            processed_at: new Date().toISOString()
           })
           .eq('id', row.id);
       }
