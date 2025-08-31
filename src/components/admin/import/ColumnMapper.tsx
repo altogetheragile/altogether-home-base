@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -119,6 +119,14 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
   );
   
   const updateImport = useUpdateDataImport();
+
+  // Auto-map columns on load for knowledge_items imports if no existing mappings
+  useEffect(() => {
+    const existingMappings = Object.values(mapping).filter(val => val).length;
+    if (existingMappings === 0 && importRecord.target_entity === 'knowledge_items' && headers.length > 0) {
+      autoMap();
+    }
+  }, [headers, importRecord.target_entity]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMappingChange = (targetField: string, sourceColumn: string) => {
     setMapping(prev => ({
