@@ -26,25 +26,14 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
 
   const processKnowledgeItem = async (stagingRow: any, fieldMappings: Record<string, string>) => {
     try {
+      console.log('Processing row:', stagingRow.row_number, 'Raw data:', stagingRow.raw_data);
+      
       const mappedData: any = {};
       
-      // Map basic fields
+      // Map basic fields directly
       Object.entries(fieldMappings).forEach(([targetField, sourceColumn]) => {
         if (sourceColumn && stagingRow.raw_data[sourceColumn]) {
           let value = stagingRow.raw_data[sourceColumn];
-          
-          // Handle special field types
-          if (targetField.includes('_min') || targetField.includes('_max') || targetField === 'estimated_reading_time') {
-            value = parseInt(value) || null;
-          } else if (targetField.startsWith('is_')) {
-            value = String(value).toLowerCase() === 'true';
-          } else if (targetField.includes('keywords') || targetField === 'tags') {
-            value = String(value).split(',').map(s => s.trim()).filter(Boolean);
-          } else if (['typical_participants', 'required_skills', 'success_criteria', 'common_pitfalls', 'related_practices'].includes(targetField)) {
-            // Handle array fields - split by various delimiters
-            value = String(value).split(/[,;|]/).map(s => s.trim()).filter(Boolean);
-          }
-          
           mappedData[targetField] = value;
         }
       });
@@ -57,165 +46,144 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
           .substring(0, 50);
       }
 
-      // Set defaults for published knowledge items
-      mappedData.content_type = 'technique';
+      // Set default published state
       mappedData.is_published = true;
-      mappedData.is_complete = true;
-      mappedData.is_featured = false;
       
-      // Handle dimension lookups (categories, focus, etc.)
+      // Handle category lookup/creation
       if (fieldMappings.category_name && stagingRow.raw_data[fieldMappings.category_name]) {
         const categoryName = stagingRow.raw_data[fieldMappings.category_name];
-        let { data: category } = await supabase
-          .from('knowledge_categories')
+        console.log('Looking for category:', categoryName);
+        
+        let { data: category, error: categoryError } = await supabase
+          .from('categories_v2')
           .select('id')
           .eq('name', categoryName)
           .maybeSingle();
         
+        if (categoryError) {
+          console.error('Category lookup error:', categoryError);
+        }
+        
         if (!category) {
-          // Create category if it doesn't exist
-          const { data: newCategory } = await supabase
-            .from('knowledge_categories')
+          console.log('Creating new category:', categoryName);
+          const { data: newCategory, error: createError } = await supabase
+            .from('categories_v2')
             .insert([{
               name: categoryName,
               slug: categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-              description: stagingRow.raw_data['Category Description'] || null,
-              full_description: stagingRow.raw_data['Category Description'] || null
+              description: stagingRow.raw_data['Category Description'] || null
             }])
             .select('id')
             .single();
+          
+          if (createError) {
+            console.error('Category creation error:', createError);
+            throw createError;
+          }
           category = newCategory;
         }
         
-        if (category) mappedData.category_id = category.id;
+        if (category) {
+          mappedData.category_id = category.id;
+          console.log('Assigned category_id:', category.id);
+        }
       }
 
-      if (fieldMappings.activity_focus_name && stagingRow.raw_data[fieldMappings.activity_focus_name]) {
-        const focusName = stagingRow.raw_data[fieldMappings.activity_focus_name];
-        const { data: focus } = await supabase
-          .from('activity_focus')
-          .select('id')
-          .eq('name', focusName)
-          .single();
-        if (focus) mappedData.activity_focus_id = focus.id;
-      }
-
+      // Handle domain lookup/creation
       if (fieldMappings.activity_domain_name && stagingRow.raw_data[fieldMappings.activity_domain_name]) {
         const domainName = stagingRow.raw_data[fieldMappings.activity_domain_name];
-        let { data: domain } = await supabase
-          .from('activity_domains')
+        console.log('Looking for domain:', domainName);
+        
+        let { data: domain, error: domainError } = await supabase
+          .from('domains_v2')
           .select('id')
           .eq('name', domainName)
           .maybeSingle();
         
+        if (domainError) {
+          console.error('Domain lookup error:', domainError);
+        }
+        
         if (!domain) {
-          // Create domain if it doesn't exist
-          const { data: newDomain } = await supabase
-            .from('activity_domains')
+          console.log('Creating new domain:', domainName);
+          const { data: newDomain, error: createError } = await supabase
+            .from('domains_v2')
             .insert([{
               name: domainName,
               slug: domainName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-              description: stagingRow.raw_data['Domain of Interest Description'] || null,
-              full_description: stagingRow.raw_data['Domain of Interest Description'] || null
+              description: stagingRow.raw_data['Domain of Interest Description'] || null
             }])
             .select('id')
             .single();
+          
+          if (createError) {
+            console.error('Domain creation error:', createError);
+            throw createError;
+          }
           domain = newDomain;
         }
         
-        if (domain) mappedData.activity_domain_id = domain.id;
+        if (domain) {
+          mappedData.domain_id = domain.id;
+          console.log('Assigned domain_id:', domain.id);
+        }
       }
 
-      if (fieldMappings.activity_category_name && stagingRow.raw_data[fieldMappings.activity_category_name]) {
-        const categoryName = stagingRow.raw_data[fieldMappings.activity_category_name];
-        const { data: category } = await supabase
-          .from('activity_categories')
-          .select('id')
-          .eq('name', categoryName)
-          .single();
-        if (category) mappedData.activity_category_id = category.id;
-      }
-
-      // Insert knowledge item
-      const { data: knowledgeItem, error } = await supabase
-        .from('knowledge_items')
-        .insert([mappedData])
-        .select('id')
-        .single();
-
-      if (error) throw error;
-
-      // Handle planning layers (single layer, not comma-separated)
+      // Handle planning layer lookup/creation
       if (fieldMappings.planning_layers && stagingRow.raw_data[fieldMappings.planning_layers]) {
         const layerName = stagingRow.raw_data[fieldMappings.planning_layers];
-        let { data: layer } = await supabase
-          .from('planning_layers')
+        console.log('Looking for planning layer:', layerName);
+        
+        let { data: layer, error: layerError } = await supabase
+          .from('planning_layers_v2')
           .select('id')
           .eq('name', layerName)
           .maybeSingle();
         
+        if (layerError) {
+          console.error('Planning layer lookup error:', layerError);
+        }
+        
         if (!layer) {
-          // Create planning layer if it doesn't exist
-           const { data: newLayer } = await supabase
-             .from('planning_layers')
-             .insert([{
-               name: layerName,
-               slug: layerName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-               description: stagingRow.raw_data['Planning Layer Description'] || null,
-               full_description: stagingRow.raw_data['Planning Layer Description'] || null,
-               color: '#3B82F6',
-               display_order: 0
-             }])
-             .select('id')
-             .single();
+          console.log('Creating new planning layer:', layerName);
+          const { data: newLayer, error: createError } = await supabase
+            .from('planning_layers_v2')
+            .insert([{
+              name: layerName,
+              slug: layerName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              description: stagingRow.raw_data['Planning Layer Description'] || null
+            }])
+            .select('id')
+            .single();
+          
+          if (createError) {
+            console.error('Planning layer creation error:', createError);
+            throw createError;
+          }
           layer = newLayer;
         }
         
         if (layer) {
-          await supabase
-            .from('knowledge_item_planning_layers')
-            .insert([{
-              knowledge_item_id: knowledgeItem.id,
-              planning_layer_id: layer.id,
-              is_primary: true
-            }]);
+          mappedData.planning_layer_id = layer.id;
+          console.log('Assigned planning_layer_id:', layer.id);
         }
       }
 
-      // Handle tags
-      if (fieldMappings.tags && stagingRow.raw_data[fieldMappings.tags]) {
-        const tagNames = mappedData.tags || [];
-        
-        for (const tagName of tagNames) {
-          // Get or create tag
-          let { data: tag } = await supabase
-            .from('knowledge_tags')
-            .select('id')
-            .eq('name', tagName)
-            .single();
-          
-          if (!tag) {
-            const { data: newTag } = await supabase
-              .from('knowledge_tags')
-              .insert([{ 
-                name: tagName, 
-                slug: tagName.toLowerCase().replace(/[^a-z0-9]/g, '-')
-              }])
-              .select('id')
-              .single();
-            tag = newTag;
-          }
-          
-          if (tag) {
-            await supabase
-              .from('knowledge_item_tags')
-              .insert([{
-                knowledge_item_id: knowledgeItem.id,
-                tag_id: tag.id
-              }]);
-          }
-        }
+      console.log('Final mapped data for knowledge item:', mappedData);
+
+      // Insert knowledge item into v2 table
+      const { data: knowledgeItem, error: insertError } = await supabase
+        .from('knowledge_items_v2')
+        .insert([mappedData])
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('Knowledge item insertion error:', insertError);
+        throw insertError;
       }
+
+      console.log('Successfully created knowledge item:', knowledgeItem.id);
 
       // Update staging row as processed
       await supabase
@@ -232,17 +200,23 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
     } catch (error) {
       console.error('Processing error for row:', stagingRow.row_number, error);
       
-      // Update staging row as failed
+      // Extract more detailed error information
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorDetails = error && typeof error === 'object' ? JSON.stringify(error, null, 2) : errorMessage;
+      
+      console.error('Detailed error:', errorDetails);
+      
+      // Update staging row as failed with detailed error
       await supabase
         .from('staging_data')
         .update({
           processing_status: 'failed',
-          processing_errors: [error instanceof Error ? error.message : String(error)],
+          processing_errors: [errorDetails],
           processed_at: new Date().toISOString()
         })
         .eq('id', stagingRow.id);
 
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
+      return { success: false, error: errorMessage };
     }
   };
 
