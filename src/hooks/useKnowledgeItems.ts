@@ -12,6 +12,7 @@ export interface KnowledgeItem {
   activity_focus_id?: string;
   activity_domain_id?: string;
   activity_category_id?: string;
+  planning_layer_id?: string;
   seo_title?: string;
   seo_description?: string;
   seo_keywords?: string[];
@@ -60,7 +61,7 @@ export interface KnowledgeItem {
   duration_min_minutes?: number;
   duration_max_minutes?: number;
   
-  // Relations
+  // Direct relations (no junction tables)
   knowledge_categories?: {
     id: string;
     name: string;
@@ -85,48 +86,18 @@ export interface KnowledgeItem {
     slug: string;
     color: string;
   };
-  knowledge_item_planning_layers?: Array<{
-    is_primary: boolean;
-    planning_layers: {
-      id: string;
-      name: string;
-      slug: string;
-      color: string;
-      display_order: number;
-    };
-  }>;
   planning_layers?: Array<{
     id: string;
     name: string;
     slug: string;
     color: string;
     display_order: number;
-    is_primary: boolean;
   }>;
-  knowledge_item_tags?: Array<{
-    knowledge_tags: {
-      id: string;
-      name: string;
-      slug: string;
-    };
-  }>;
+  // Backward compatibility fields (empty arrays for simplified schema)
   knowledge_tags?: Array<{
     id: string;
     name: string;
     slug: string;
-  }>;
-  knowledge_media?: Array<{
-    id: string;
-    type: string;
-    title?: string;
-    url: string;
-    thumbnail_url?: string;
-  }>;
-  knowledge_examples?: Array<{
-    id: string;
-    title: string;
-    description: string;
-    context?: string;
   }>;
 }
 
@@ -155,15 +126,7 @@ export const useKnowledgeItems = (params?: {
           activity_focus (id, name, slug, color),
           activity_domains (id, name, slug, color),
           activity_categories (id, name, slug, color),
-          knowledge_item_planning_layers (
-            is_primary,
-            planning_layers (id, name, slug, color, display_order)
-          ),
-          knowledge_item_tags (
-            knowledge_tags (id, name, slug)
-          ),
-          knowledge_media (id, type, title, url, thumbnail_url),
-          knowledge_examples (id, title, description, context)
+          planning_layers (id, name, slug, color, display_order)
         `)
         .eq('is_published', true);
       
@@ -174,7 +137,7 @@ export const useKnowledgeItems = (params?: {
         const searchTerm = params.search.trim();
         console.log('🔍 Search term after trim:', searchTerm);
         if (searchTerm) {
-          const searchFilter = `name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,summary.ilike.%${searchTerm}%,purpose.ilike.%${searchTerm}%`;
+          const searchFilter = `name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,generic_summary.ilike.%${searchTerm}%,purpose.ilike.%${searchTerm}%`;
           console.log('🔍 Applying search filter:', searchFilter);
           query = query.or(searchFilter);
         }
@@ -194,6 +157,10 @@ export const useKnowledgeItems = (params?: {
 
       if (params?.activityCategoryId) {
         query = query.eq('activity_category_id', params.activityCategoryId);
+      }
+
+      if (params?.planningLayerId) {
+        query = query.eq('planning_layer_id', params.planningLayerId);
       }
 
       if (params?.featured) {
@@ -233,37 +200,14 @@ export const useKnowledgeItems = (params?: {
       console.log('✅ Query successful, results count:', data?.length || 0);
       console.log('📋 Raw data sample:', data?.slice(0, 2));
 
-      // Transform the data to flatten structures
-      const transformedData = data.map(item => ({
+      // Transform data for backward compatibility
+      const transformedData = data?.map(item => ({
         ...item,
-        knowledge_tags: item.knowledge_item_tags?.map(tt => tt.knowledge_tags).filter(Boolean) || [],
-        planning_layers: item.knowledge_item_planning_layers?.map(pl => ({
-          ...pl.planning_layers,
-          is_primary: pl.is_primary
-        })).filter(Boolean).sort((a, b) => a.display_order - b.display_order) || []
-      }));
+        knowledge_tags: [], // Empty array for simplified schema
+        planning_layers: item.planning_layers ? [item.planning_layers] : [] // Convert single object to array for compatibility
+      })) || [];
 
-      console.log('🔄 Transformed data sample:', transformedData?.slice(0, 2));
-
-      // Additional client-side filtering for tags and planning layers
-      let filteredData = transformedData;
-
-      if (params?.tag) {
-        filteredData = filteredData.filter(item => 
-          item.knowledge_tags?.some(tag => tag.slug === params.tag)
-        );
-      }
-
-      if (params?.planningLayerId) {
-        console.log('🔍 Filtering by planning layer:', params.planningLayerId);
-        console.log('🔍 Items before planning layer filter:', filteredData.length);
-        filteredData = filteredData.filter(item => 
-          item.planning_layers?.some(layer => layer.id === params.planningLayerId)
-        );
-        console.log('🔍 Items after planning layer filter:', filteredData.length);
-      }
-
-      return filteredData;
+      return transformedData;
     },
   });
 };
@@ -280,15 +224,7 @@ export const useKnowledgeItemBySlug = (slug: string) => {
           activity_focus (id, name, slug, color),
           activity_domains (id, name, slug, color),
           activity_categories (id, name, slug, color),
-          knowledge_item_planning_layers (
-            is_primary,
-            planning_layers (id, name, slug, color, display_order)
-          ),
-          knowledge_item_tags (
-            knowledge_tags (id, name, slug)
-          ),
-          knowledge_media (id, type, title, description, url, thumbnail_url, position),
-          knowledge_examples (id, title, description, context, industry, company_size, outcome, position)
+          planning_layers (id, name, slug, color, display_order)
         `)
         .eq('slug', slug)
         .eq('is_published', true)
@@ -296,16 +232,11 @@ export const useKnowledgeItemBySlug = (slug: string) => {
 
       if (error) throw error;
 
-      // Transform and sort the data
+      // Transform data for backward compatibility
       return {
         ...data,
-        knowledge_tags: data.knowledge_item_tags?.map(tt => tt.knowledge_tags).filter(Boolean) || [],
-        planning_layers: data.knowledge_item_planning_layers?.map(pl => ({
-          ...pl.planning_layers,
-          is_primary: pl.is_primary
-        })).filter(Boolean).sort((a, b) => a.display_order - b.display_order) || [],
-        knowledge_media: data.knowledge_media?.sort((a, b) => a.position - b.position) || [],
-        knowledge_examples: data.knowledge_examples?.sort((a, b) => a.position - b.position) || []
+        knowledge_tags: [], // Empty array for simplified schema
+        planning_layers: data.planning_layers ? [data.planning_layers] : [] // Convert single object to array for compatibility
       };
     },
     enabled: !!slug,

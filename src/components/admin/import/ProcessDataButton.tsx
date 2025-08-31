@@ -55,7 +55,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         console.log('Looking for category:', categoryName);
         
         let { data: category, error: categoryError } = await supabase
-          .from('categories_v2')
+          .from('knowledge_categories')
           .select('id')
           .eq('name', categoryName)
           .maybeSingle();
@@ -67,7 +67,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         if (!category) {
           console.log('Creating new category:', categoryName);
           const { data: newCategory, error: createError } = await supabase
-            .from('categories_v2')
+            .from('knowledge_categories')
             .insert([{
               name: categoryName,
               slug: categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -95,7 +95,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         console.log('Looking for domain:', domainName);
         
         let { data: domain, error: domainError } = await supabase
-          .from('domains_v2')
+          .from('activity_domains')
           .select('id')
           .eq('name', domainName)
           .maybeSingle();
@@ -107,7 +107,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         if (!domain) {
           console.log('Creating new domain:', domainName);
           const { data: newDomain, error: createError } = await supabase
-            .from('domains_v2')
+            .from('activity_domains')
             .insert([{
               name: domainName,
               slug: domainName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -135,7 +135,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         console.log('Looking for planning layer:', layerName);
         
         let { data: layer, error: layerError } = await supabase
-          .from('planning_layers_v2')
+          .from('planning_layers')
           .select('id')
           .eq('name', layerName)
           .maybeSingle();
@@ -147,7 +147,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
         if (!layer) {
           console.log('Creating new planning layer:', layerName);
           const { data: newLayer, error: createError } = await supabase
-            .from('planning_layers_v2')
+            .from('planning_layers')
             .insert([{
               name: layerName,
               slug: layerName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -171,9 +171,9 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
 
       console.log('Final mapped data for knowledge item:', mappedData);
 
-      // Insert knowledge item into v2 table
+      // Insert knowledge item into main table
       const { data: knowledgeItem, error: insertError } = await supabase
-        .from('knowledge_items_v2')
+        .from('knowledge_items')
         .insert([mappedData])
         .select('id')
         .single();
