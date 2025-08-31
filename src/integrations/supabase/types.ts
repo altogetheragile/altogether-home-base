@@ -357,6 +357,33 @@ export type Database = {
           },
         ]
       }
+      categories_v2: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comment_votes: {
         Row: {
           comment_id: string
@@ -505,6 +532,33 @@ export type Database = {
           successful_rows?: number | null
           target_entity?: string
           total_rows?: number | null
+        }
+        Relationships: []
+      }
+      domains_v2: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1637,6 +1691,145 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_items_v2: {
+        Row: {
+          background: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          domain_id: string | null
+          example_how: string | null
+          example_how_much: string | null
+          example_summary: string | null
+          example_what: string | null
+          example_when: string | null
+          example_where: string | null
+          example_who: string | null
+          example_why: string | null
+          focus_description: string | null
+          generic_how: string | null
+          generic_how_much: string | null
+          generic_summary: string | null
+          generic_what: string | null
+          generic_when: string | null
+          generic_where: string | null
+          generic_who: string | null
+          generic_why: string | null
+          id: string
+          industry_context: string | null
+          is_published: boolean | null
+          name: string
+          originator: string | null
+          planning_considerations: string | null
+          planning_layer_id: string | null
+          purpose: string | null
+          slug: string
+          source: string | null
+          updated_at: string
+          updated_by: string | null
+          view_count: number | null
+        }
+        Insert: {
+          background?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id?: string | null
+          example_how?: string | null
+          example_how_much?: string | null
+          example_summary?: string | null
+          example_what?: string | null
+          example_when?: string | null
+          example_where?: string | null
+          example_who?: string | null
+          example_why?: string | null
+          focus_description?: string | null
+          generic_how?: string | null
+          generic_how_much?: string | null
+          generic_summary?: string | null
+          generic_what?: string | null
+          generic_when?: string | null
+          generic_where?: string | null
+          generic_who?: string | null
+          generic_why?: string | null
+          id?: string
+          industry_context?: string | null
+          is_published?: boolean | null
+          name: string
+          originator?: string | null
+          planning_considerations?: string | null
+          planning_layer_id?: string | null
+          purpose?: string | null
+          slug: string
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          background?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id?: string | null
+          example_how?: string | null
+          example_how_much?: string | null
+          example_summary?: string | null
+          example_what?: string | null
+          example_when?: string | null
+          example_where?: string | null
+          example_who?: string | null
+          example_why?: string | null
+          focus_description?: string | null
+          generic_how?: string | null
+          generic_how_much?: string | null
+          generic_summary?: string | null
+          generic_what?: string | null
+          generic_when?: string | null
+          generic_where?: string | null
+          generic_who?: string | null
+          generic_why?: string | null
+          id?: string
+          industry_context?: string | null
+          is_published?: boolean | null
+          name?: string
+          originator?: string | null
+          planning_considerations?: string | null
+          planning_layer_id?: string | null
+          purpose?: string | null
+          slug?: string
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_items_v2_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_items_v2_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_items_v2_planning_layer_id_fkey"
+            columns: ["planning_layer_id"]
+            isOneToOne: false
+            referencedRelation: "planning_layers_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_learning_paths: {
         Row: {
           created_at: string
@@ -1983,6 +2176,36 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           full_description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      planning_layers_v2: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
           id?: string
           name?: string
           slug?: string
