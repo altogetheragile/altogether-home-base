@@ -33,10 +33,10 @@ import KnowledgeItemForm from '@/components/admin/knowledge/KnowledgeItemForm';
 
 const AdminKnowledgeItems = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [planningLayerFilter, setPlanningLayerFilter] = useState('');
-  const [domainFilter, setDomainFilter] = useState('');
-  const [publishedFilter, setPublishedFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [planningLayerFilter, setPlanningLayerFilter] = useState('all');
+  const [domainFilter, setDomainFilter] = useState('all');
+  const [publishedFilter, setPublishedFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
@@ -61,15 +61,15 @@ const AdminKnowledgeItems = () => {
         query = query.or(`name.ilike.%${searchTermEscaped}%,description.ilike.%${searchTermEscaped}%`);
       }
 
-      if (categoryFilter) {
+      if (categoryFilter && categoryFilter !== 'all') {
         query = query.eq('category_id', categoryFilter);
       }
 
-      if (planningLayerFilter) {
+      if (planningLayerFilter && planningLayerFilter !== 'all') {
         query = query.eq('planning_layer_id', planningLayerFilter);
       }
 
-      if (domainFilter) {
+      if (domainFilter && domainFilter !== 'all') {
         query = query.eq('domain_id', domainFilter);
       }
 
@@ -112,10 +112,10 @@ const AdminKnowledgeItems = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setCategoryFilter('');
-    setPlanningLayerFilter('');
-    setDomainFilter('');
-    setPublishedFilter('');
+    setCategoryFilter('all');
+    setPlanningLayerFilter('all');
+    setDomainFilter('all');
+    setPublishedFilter('all');
   };
 
   if (isLoading) {
@@ -155,7 +155,7 @@ const AdminKnowledgeItems = () => {
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories?.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
@@ -169,7 +169,7 @@ const AdminKnowledgeItems = () => {
               <SelectValue placeholder="All Layers" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Layers</SelectItem>
+              <SelectItem value="all">All Layers</SelectItem>
               {planningLayers?.map((layer) => (
                 <SelectItem key={layer.id} value={layer.id}>
                   {layer.name}
@@ -183,7 +183,7 @@ const AdminKnowledgeItems = () => {
               <SelectValue placeholder="All Domains" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Domains</SelectItem>
+              <SelectItem value="all">All Domains</SelectItem>
               {domains?.map((domain) => (
                 <SelectItem key={domain.id} value={domain.id}>
                   {domain.name}
@@ -197,7 +197,7 @@ const AdminKnowledgeItems = () => {
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="published">Published</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
             </SelectContent>
