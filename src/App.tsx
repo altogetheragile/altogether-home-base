@@ -30,6 +30,7 @@ import AdminLogsApplicationRoute from "./pages/admin/AdminLogsApplicationRoute";
 import AdminLogsDatabaseRoute from "./pages/admin/AdminLogsDatabaseRoute";
 import AdminLogsAuthRoute from "./pages/admin/AdminLogsAuthRoute";
 import AdminImports from "./pages/admin/AdminImports";
+import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminPlanningLayers from "./pages/admin/AdminPlanningLayers";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
 import CreateEvent from "./pages/admin/CreateEvent";
@@ -83,7 +84,8 @@ const App = () => (
                 <Route path="pages/:id/edit" element={<PageEditor />} />
                 <Route path="knowledge/planning-layers" element={<AdminPlanningLayers />} />
                 <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
-                <Route path="knowledge/imports" element={<AdminImports />} />
+                <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
+                <Route path="imports" element={<AdminImports />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
                 <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
