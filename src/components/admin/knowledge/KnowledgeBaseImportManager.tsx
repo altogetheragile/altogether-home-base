@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,7 @@ interface ImportStep {
 }
 
 const KnowledgeBaseImportManager: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [importProgress, setImportProgress] = useState(0);
@@ -114,14 +116,16 @@ const KnowledgeBaseImportManager: React.FC = () => {
         throw new Error(`Missing required columns: ${missingColumns.join(', ')}`);
       }
 
-      // Create import record
+      // Create import record with proper field mapping structure
       const importRecord = await createImport.mutateAsync({
         filename: selectedFile.name,
         original_filename: selectedFile.name,
         file_type: 'excel',
         file_size: selectedFile.size,
         target_entity: 'knowledge_items',
-        mapping_config: KB_COLUMN_MAPPING,
+        mapping_config: { 
+          field_mappings: KB_COLUMN_MAPPING 
+        },
         status: 'uploaded'
       });
 
@@ -286,7 +290,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
                 <Button onClick={resetImport} variant="outline">
                   Import Another File
                 </Button>
-                <Button onClick={() => window.location.href = '/admin/imports'}>
+                <Button onClick={() => navigate('/admin/imports')}>
                   View Import Status
                 </Button>
               </div>

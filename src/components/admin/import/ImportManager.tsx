@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, Eye, Trash2, Download, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useDataImports, useDeleteDataImport, DataImport } from '@/hooks/useDataImports';
+import { useToast } from '@/hooks/use-toast';
 import { ImportUploader } from './ImportUploader';
 import { ImportPreview } from './ImportPreview';
 import { getFileSizeDisplay } from '@/utils/fileParser';
@@ -16,6 +17,8 @@ const ImportManager: React.FC = () => {
   const deleteImport = useDeleteDataImport();
   const [selectedImport, setSelectedImport] = useState<DataImport | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [processingImports, setProcessingImports] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const getStatusIcon = (status: DataImport['status']) => {
     switch (status) {
@@ -59,6 +62,58 @@ const ImportManager: React.FC = () => {
   const handleDelete = async (importId: string) => {
     if (confirm('Are you sure you want to delete this import? This will also remove all associated staging data.')) {
       deleteImport.mutate(importId);
+    }
+  };
+
+  const handleProcessImport = async (importRecord: DataImport) => {
+    if (importRecord.status !== 'uploaded') {
+      toast({
+        title: "Cannot Process",
+        description: "Only uploaded imports can be processed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessingImports(prev => new Set([...prev, importRecord.id]));
+
+    try {
+      // Call the edge function to process the import
+      const response = await fetch(`https://wqaplkypnetifpqrungv.supabase.co/functions/v1/process-knowledge-import`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxYXBsa3lwbmV0aWZwcXJ1bmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODg2OTUsImV4cCI6MjA2NDg2NDY5NX0.sE0cIatVX-tynJ7Z5dGp4L6f4-SA0s9KWU3WYtVoDzM'}`,
+        },
+        body: JSON.stringify({ importId: importRecord.id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Processing failed');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Processing Complete",
+          description: result.message,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      toast({
+        title: "Processing Failed",
+        description: error instanceof Error ? error.message : 'Failed to process import',
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingImports(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(importRecord.id);
+        return newSet;
+      });
     }
   };
 
@@ -135,6 +190,21 @@ const ImportManager: React.FC = () => {
                         <Badge variant={getStatusVariant(importRecord.status)}>
                           {importRecord.status}
                         </Badge>
+                        {importRecord.status === 'uploaded' && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleProcessImport(importRecord)}
+                            disabled={processingImports.has(importRecord.id)}
+                          >
+                            {processingImports.has(importRecord.id) ? (
+                              <Clock className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                            )}
+                            {processingImports.has(importRecord.id) ? 'Processing...' : 'Process'}
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
