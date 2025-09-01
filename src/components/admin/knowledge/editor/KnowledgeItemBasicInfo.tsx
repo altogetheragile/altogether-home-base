@@ -17,7 +17,7 @@ export const KnowledgeItemBasicInfo = ({
   onNameChange
 }: KnowledgeItemBasicInfoProps) => {
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Info className="h-5 w-5" />
@@ -28,81 +28,83 @@ export const KnowledgeItemBasicInfo = ({
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Item Details</CardTitle>
-          <CardDescription>
-            The name and slug will be used for navigation and SEO
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="Enter the knowledge item name"
-            />
-            <p className="text-xs text-muted-foreground">
-              A clear, descriptive name for this knowledge item
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="slug">URL Slug *</Label>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">/knowledge/</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Item Details</CardTitle>
+            <CardDescription>
+              The name and slug will be used for navigation and SEO
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
               <Input
-                id="slug"
-                value={formData.slug}
-                onChange={(e) => onFormChange('slug', e.target.value)}
-                placeholder="url-friendly-slug"
+                id="name"
+                value={formData.name}
+                onChange={(e) => onNameChange(e.target.value)}
+                placeholder="Enter the knowledge item name"
               />
+              <p className="text-xs text-muted-foreground">
+                A clear, descriptive name for this knowledge item
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Auto-generated from name, but you can customize it
-            </p>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => onFormChange('description', e.target.value)}
-              placeholder="Brief description of this knowledge item"
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">
-              A short summary that appears in search results and listings
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="slug">URL Slug *</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">/knowledge/</span>
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => onFormChange('slug', e.target.value)}
+                  placeholder="url-friendly-slug"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Auto-generated from name, but you can customize it
+              </p>
+            </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Additional Details</CardTitle>
-          <CardDescription>
-            Optional information about the source and background
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="source">Source</Label>
-            <Input
-              id="source"
-              value={formData.source}
-              onChange={(e) => onFormChange('source', e.target.value)}
-              placeholder="Book, website, author, etc."
-            />
-            <p className="text-xs text-muted-foreground">
-              Where this knowledge comes from (optional)
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => onFormChange('description', e.target.value)}
+                placeholder="Brief description of this knowledge item"
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                A short summary that appears in search results and listings
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Additional Details</CardTitle>
+            <CardDescription>
+              Optional information about the source and background
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="source">Source</Label>
+              <Input
+                id="source"
+                value={formData.source}
+                onChange={(e) => onFormChange('source', e.target.value)}
+                placeholder="Book, website, author, etc."
+              />
+              <p className="text-xs text-muted-foreground">
+                Where this knowledge comes from (optional)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

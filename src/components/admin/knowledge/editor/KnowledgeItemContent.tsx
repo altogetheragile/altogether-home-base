@@ -14,7 +14,7 @@ export const KnowledgeItemContent = ({
   onFormChange
 }: KnowledgeItemContentProps) => {
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <BookOpen className="h-5 w-5" />

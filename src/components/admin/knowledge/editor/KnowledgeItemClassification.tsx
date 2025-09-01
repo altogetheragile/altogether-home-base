@@ -25,7 +25,7 @@ export const KnowledgeItemClassification = ({
   const selectedDomain = domains?.find(d => d.id === formData.domain_id);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <FolderOpen className="h-5 w-5" />
@@ -36,171 +36,173 @@ export const KnowledgeItemClassification = ({
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <FolderOpen className="h-4 w-4" />
-            Category
-          </CardTitle>
-          <CardDescription>
-            Choose the primary category for this knowledge item
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Select
-            value={formData.category_id}
-            onValueChange={(value) => onFormChange('category_id', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories?.filter(category => category.id && category.id.trim() !== '')?.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    {category.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {selectedCategory && (
-            <div className="mt-2">
-              <Badge 
-                variant="secondary"
-                style={{ 
-                  backgroundColor: `${selectedCategory.color}15`, 
-                  color: selectedCategory.color,
-                  borderColor: `${selectedCategory.color}30`
-                }}
-              >
-                {selectedCategory.name}
-              </Badge>
-              {selectedCategory.description && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedCategory.description}
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FolderOpen className="h-4 w-4" />
+              Category
+            </CardTitle>
+            <CardDescription>
+              Choose the primary category for this knowledge item
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Select
+              value={formData.category_id}
+              onValueChange={(value) => onFormChange('category_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories?.filter(category => category.id && category.id.trim() !== '')?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {selectedCategory && (
+              <div className="mt-2">
+                <Badge 
+                  variant="secondary"
+                  style={{ 
+                    backgroundColor: `${selectedCategory.color}15`, 
+                    color: selectedCategory.color,
+                    borderColor: `${selectedCategory.color}30`
+                  }}
+                >
+                  {selectedCategory.name}
+                </Badge>
+                {selectedCategory.description && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedCategory.description}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Layers className="h-4 w-4" />
-            Planning Layer
-          </CardTitle>
-          <CardDescription>
-            Select the planning level this knowledge item belongs to
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Select
-            value={formData.planning_layer_id}
-            onValueChange={(value) => onFormChange('planning_layer_id', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a planning layer" />
-            </SelectTrigger>
-            <SelectContent>
-              {planningLayers
-                ?.filter(layer => layer.id && layer.id.trim() !== '')
-                ?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
-                ?.map((layer) => (
-                <SelectItem key={layer.id} value={layer.id}>
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: layer.color }}
-                    />
-                    {layer.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {selectedLayer && (
-            <div className="mt-2">
-              <Badge 
-                variant="outline"
-                style={{ 
-                  borderColor: selectedLayer.color, 
-                  color: selectedLayer.color 
-                }}
-              >
-                {selectedLayer.name}
-              </Badge>
-              {selectedLayer.description && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedLayer.description}
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Layers className="h-4 w-4" />
+              Planning Layer
+            </CardTitle>
+            <CardDescription>
+              Select the planning level this knowledge item belongs to
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Select
+              value={formData.planning_layer_id}
+              onValueChange={(value) => onFormChange('planning_layer_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a planning layer" />
+              </SelectTrigger>
+              <SelectContent>
+                {planningLayers
+                  ?.filter(layer => layer.id && layer.id.trim() !== '')
+                  ?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                  ?.map((layer) => (
+                  <SelectItem key={layer.id} value={layer.id}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: layer.color }}
+                      />
+                      {layer.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {selectedLayer && (
+              <div className="mt-2">
+                <Badge 
+                  variant="outline"
+                  style={{ 
+                    borderColor: selectedLayer.color, 
+                    color: selectedLayer.color 
+                  }}
+                >
+                  {selectedLayer.name}
+                </Badge>
+                {selectedLayer.description && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedLayer.description}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Activity Domain
-          </CardTitle>
-          <CardDescription>
-            Choose the domain of activity this knowledge applies to
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Select
-            value={formData.domain_id}
-            onValueChange={(value) => onFormChange('domain_id', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select an activity domain" />
-            </SelectTrigger>
-            <SelectContent>
-              {domains?.filter(domain => domain.id && domain.id.trim() !== '')?.map((domain) => (
-                <SelectItem key={domain.id} value={domain.id}>
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: domain.color }}
-                    />
-                    {domain.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {selectedDomain && (
-            <div className="mt-2">
-              <Badge 
-                variant="outline"
-                style={{ 
-                  borderColor: selectedDomain.color, 
-                  color: selectedDomain.color 
-                }}
-              >
-                {selectedDomain.name}
-              </Badge>
-              {selectedDomain.description && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedDomain.description}
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Activity Domain
+            </CardTitle>
+            <CardDescription>
+              Choose the domain of activity this knowledge applies to
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Select
+              value={formData.domain_id}
+              onValueChange={(value) => onFormChange('domain_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an activity domain" />
+              </SelectTrigger>
+              <SelectContent>
+                {domains?.filter(domain => domain.id && domain.id.trim() !== '')?.map((domain) => (
+                  <SelectItem key={domain.id} value={domain.id}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: domain.color }}
+                      />
+                      {domain.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {selectedDomain && (
+              <div className="mt-2">
+                <Badge 
+                  variant="outline"
+                  style={{ 
+                    borderColor: selectedDomain.color, 
+                    color: selectedDomain.color 
+                  }}
+                >
+                  {selectedDomain.name}
+                </Badge>
+                {selectedDomain.description && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedDomain.description}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Classification Summary */}
       <Card className="bg-muted/30">
