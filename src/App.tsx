@@ -87,6 +87,7 @@ const App = () => (
                 <Route path="knowledge/planning-layers" element={<AdminPlanningLayers />} />
                 <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
                 <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
+                <Route path="knowledge/imports" element={<AdminKnowledgeImport />} />
                 <Route path="imports" element={<AdminImports />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
