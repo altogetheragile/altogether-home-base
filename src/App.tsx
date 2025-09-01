@@ -33,6 +33,7 @@ import AdminImports from "./pages/admin/AdminImports";
 import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminPlanningLayers from "./pages/admin/AdminPlanningLayers";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
+import AdminKnowledgeItems from "./pages/admin/AdminKnowledgeItems";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="formats" element={<AdminFormats />} />
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
+                <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
                 <Route path="knowledge/planning-layers" element={<AdminPlanningLayers />} />
                 <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
                 <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
