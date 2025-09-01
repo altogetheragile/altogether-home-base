@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_domains: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       admin_logs: {
         Row: {
           action: string
@@ -903,6 +939,186 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      knowledge_items: {
+        Row: {
+          background: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          domain_id: string | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          name: string
+          planning_layer_id: string | null
+          slug: string
+          source: string | null
+          updated_at: string
+          updated_by: string | null
+          view_count: number | null
+        }
+        Insert: {
+          background?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          name: string
+          planning_layer_id?: string | null
+          slug: string
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          background?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          name?: string
+          planning_layer_id?: string | null
+          slug?: string
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_items_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "activity_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_items_planning_layer_id_fkey"
+            columns: ["planning_layer_id"]
+            isOneToOne: false
+            referencedRelation: "planning_layers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_use_cases: {
+        Row: {
+          case_type: string
+          created_at: string
+          created_by: string | null
+          how: string | null
+          how_much: string | null
+          id: string
+          knowledge_item_id: string
+          summary: string | null
+          title: string | null
+          updated_at: string
+          updated_by: string | null
+          what: string | null
+          when_used: string | null
+          where_used: string | null
+          who: string | null
+          why: string | null
+        }
+        Insert: {
+          case_type: string
+          created_at?: string
+          created_by?: string | null
+          how?: string | null
+          how_much?: string | null
+          id?: string
+          knowledge_item_id: string
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          what?: string | null
+          when_used?: string | null
+          where_used?: string | null
+          who?: string | null
+          why?: string | null
+        }
+        Update: {
+          case_type?: string
+          created_at?: string
+          created_by?: string | null
+          how?: string | null
+          how_much?: string | null
+          id?: string
+          knowledge_item_id?: string
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          what?: string | null
+          when_used?: string | null
+          where_used?: string | null
+          who?: string | null
+          why?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_use_cases_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       levels: {
         Row: {
           id: string
@@ -976,6 +1192,45 @@ export type Database = {
           is_published?: boolean | null
           slug?: string
           title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      planning_layers: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          slug?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -1490,6 +1745,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_knowledge_slug: {
+        Args: { input_text: string }
+        Returns: string
+      }
       get_popular_searches: {
         Args: { p_days?: number; p_limit?: number }
         Returns: {
