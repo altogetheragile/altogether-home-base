@@ -55,8 +55,7 @@ export const KnowledgeItemClassification = ({
               <SelectValue placeholder="Select a category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No Category</SelectItem>
-              {categories?.map((category) => (
+              {categories?.filter(category => category.id && category.id.trim() !== '')?.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   <div className="flex items-center gap-2">
                     <div 
@@ -111,8 +110,8 @@ export const KnowledgeItemClassification = ({
               <SelectValue placeholder="Select a planning layer" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No Planning Layer</SelectItem>
               {planningLayers
+                ?.filter(layer => layer.id && layer.id.trim() !== '')
                 ?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
                 ?.map((layer) => (
                 <SelectItem key={layer.id} value={layer.id}>
@@ -168,8 +167,7 @@ export const KnowledgeItemClassification = ({
               <SelectValue placeholder="Select an activity domain" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No Activity Domain</SelectItem>
-              {domains?.map((domain) => (
+              {domains?.filter(domain => domain.id && domain.id.trim() !== '')?.map((domain) => (
                 <SelectItem key={domain.id} value={domain.id}>
                   <div className="flex items-center gap-2">
                     <div 
