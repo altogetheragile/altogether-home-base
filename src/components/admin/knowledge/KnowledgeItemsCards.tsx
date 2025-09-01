@@ -15,11 +15,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { KnowledgeItemsFilters } from './KnowledgeItemsDashboard';
+import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
 import { formatDistanceToNow } from 'date-fns';
 
 interface KnowledgeItemsCardsProps {
-  filters: KnowledgeItemsFilters;
+  filters: KnowledgeItemsFiltersType;
   selectedItems: string[];
   onSelectionChange: (items: string[]) => void;
   onEdit: (item: any) => void;
