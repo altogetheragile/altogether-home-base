@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDeleteKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
@@ -15,14 +16,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { KnowledgeItemEditor } from '@/components/admin/knowledge/KnowledgeItemEditor';
 import { format } from 'date-fns';
 
 const AdminKnowledgeItems = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showEditor, setShowEditor] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: items, isLoading } = useQuery({
@@ -52,13 +51,11 @@ const AdminKnowledgeItems = () => {
   const updateMutation = useUpdateKnowledgeItem();
 
   const handleCreate = () => {
-    setEditingItem(null);
-    setShowEditor(true);
+    navigate('/admin/knowledge/items/new');
   };
 
   const handleEdit = (item: any) => {
-    setEditingItem(item);
-    setShowEditor(true);
+    navigate(`/admin/knowledge/items/${item.id}/edit`);
   };
 
   const handleDelete = (item: any) => {
@@ -74,15 +71,6 @@ const AdminKnowledgeItems = () => {
     });
   };
 
-  const handleCloseEditor = () => {
-    setShowEditor(false);
-    setEditingItem(null);
-  };
-
-  const handleSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin-knowledge-items'] });
-    handleCloseEditor();
-  };
 
   if (isLoading) {
     return <div className="p-8">Loading...</div>;
@@ -197,13 +185,6 @@ const AdminKnowledgeItems = () => {
         </Table>
       </div>
 
-      {/* Editor Dialog */}
-      <KnowledgeItemEditor
-        open={showEditor}
-        onOpenChange={setShowEditor}
-        editingItem={editingItem}
-        onSuccess={handleSuccess}
-      />
     </div>
   );
 };
