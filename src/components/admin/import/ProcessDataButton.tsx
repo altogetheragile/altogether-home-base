@@ -268,7 +268,6 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
           generic_how: 'Generic Use Case - How',
           generic_how_much: 'Generic Use Case - How Much',
           generic_summary: 'Generic Summary (Narrative Form)',
-          example_use_case: 'Example / Use Case',
           example_who: 'Example / Use Case - Who',
           example_what: 'Example / Use Case - What',
           example_when: 'Example / Use Case - When',
@@ -277,8 +276,13 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
           example_how: 'Example / Use Case - How',
           example_how_much: 'Example / Use Case - How Much',
           example_summary: 'Example / Use Case - Summary (Narrative Form)',
+          purpose: 'Purpose',
           source: 'Source',
-          background: 'Background'
+          background: 'Background',
+          originator: 'Originator',
+          focus_description: 'Focus Description',
+          planning_considerations: 'Planning Considerations',
+          industry_context: 'Industry Context'
         };
         
         // Update the import record with these mappings
