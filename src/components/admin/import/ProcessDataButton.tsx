@@ -130,8 +130,8 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
       }
 
       // Handle planning layer lookup/creation
-      if (fieldMappings.planning_layers && stagingRow.raw_data[fieldMappings.planning_layers]) {
-        const layerName = stagingRow.raw_data[fieldMappings.planning_layers];
+      if (fieldMappings.planning_layer_name && stagingRow.raw_data[fieldMappings.planning_layer_name]) {
+        const layerName = stagingRow.raw_data[fieldMappings.planning_layer_name];
         console.log('Looking for planning layer:', layerName);
         
         let { data: layer, error: layerError } = await supabase
@@ -258,7 +258,7 @@ export const ProcessDataButton: React.FC<ProcessDataButtonProps> = ({
           name: 'Knowledge Item',
           description: 'Knowledge Item Description',
           category_name: 'Category',
-          planning_layers: 'Planning Layer', 
+          planning_layer_name: 'Planning Layer', 
           activity_domain_name: 'Domain of Interest',
           generic_who: 'Generic Use Case - Who',
           generic_what: 'Generic Use Case - What',

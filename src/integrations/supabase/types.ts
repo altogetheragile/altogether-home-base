@@ -14,64 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      activity_categories: {
-        Row: {
-          color: string | null
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       activity_domains: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      activity_focus: {
         Row: {
           color: string | null
           created_at: string
@@ -998,38 +941,9 @@ export type Database = {
         }
         Relationships: []
       }
-      kb_feedback: {
-        Row: {
-          comment: string | null
-          created_at: string
-          id: string
-          ip_address: string | null
-          knowledge_item_id: string | null
-          rating: number | null
-          user_id: string | null
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          knowledge_item_id?: string | null
-          rating?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          knowledge_item_id?: string | null
-          rating?: number | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       knowledge_categories: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
           id: string
@@ -1038,6 +952,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -1046,6 +961,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -1054,6 +970,36 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      knowledge_item_tags: {
+        Row: {
+          knowledge_item_id: string
+          tag_id: string
+        }
+        Insert: {
+          knowledge_item_id: string
+          tag_id: string
+        }
+        Update: {
+          knowledge_item_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_tags_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledge_items: {
         Row: {
@@ -1172,326 +1118,24 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "knowledge_items_v2_category_id_fkey"
+            foreignKeyName: "knowledge_items_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "knowledge_categories"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "knowledge_items_v2_domain_id_fkey"
+            foreignKeyName: "knowledge_items_domain_id_fkey"
             columns: ["domain_id"]
             isOneToOne: false
             referencedRelation: "activity_domains"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "knowledge_items_v2_planning_layer_id_fkey"
+            foreignKeyName: "knowledge_items_planning_layer_id_fkey"
             columns: ["planning_layer_id"]
             isOneToOne: false
             referencedRelation: "planning_layers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      knowledge_items_backup: {
-        Row: {
-          activity_category_id: string | null
-          activity_domain_id: string | null
-          activity_focus_id: string | null
-          background: string | null
-          category_id: string | null
-          common_pitfalls: string[] | null
-          content_type: string | null
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          difficulty_level: string | null
-          duration_max_minutes: number | null
-          duration_min_minutes: number | null
-          estimated_reading_time: number | null
-          example_how: string | null
-          example_how_much: string | null
-          example_summary: string | null
-          example_use_case: string | null
-          example_what: string | null
-          example_when: string | null
-          example_where: string | null
-          example_who: string | null
-          example_why: string | null
-          focus_description: string | null
-          generic_how: string | null
-          generic_how_much: string | null
-          generic_summary: string | null
-          generic_what: string | null
-          generic_when: string | null
-          generic_where: string | null
-          generic_who: string | null
-          generic_why: string | null
-          id: string | null
-          image_url: string | null
-          industry_context: string | null
-          is_complete: boolean | null
-          is_featured: boolean | null
-          is_published: boolean | null
-          last_reviewed_at: string | null
-          name: string | null
-          originator: string | null
-          planning_considerations: string | null
-          popularity_score: number | null
-          purpose: string | null
-          related_practices: string[] | null
-          required_skills: string[] | null
-          seo_description: string | null
-          seo_keywords: string[] | null
-          seo_title: string | null
-          slug: string | null
-          source: string | null
-          success_criteria: string[] | null
-          summary: string | null
-          team_size_max: number | null
-          team_size_min: number | null
-          typical_participants: string[] | null
-          updated_at: string | null
-          updated_by: string | null
-          view_count: number | null
-        }
-        Insert: {
-          activity_category_id?: string | null
-          activity_domain_id?: string | null
-          activity_focus_id?: string | null
-          background?: string | null
-          category_id?: string | null
-          common_pitfalls?: string[] | null
-          content_type?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          difficulty_level?: string | null
-          duration_max_minutes?: number | null
-          duration_min_minutes?: number | null
-          estimated_reading_time?: number | null
-          example_how?: string | null
-          example_how_much?: string | null
-          example_summary?: string | null
-          example_use_case?: string | null
-          example_what?: string | null
-          example_when?: string | null
-          example_where?: string | null
-          example_who?: string | null
-          example_why?: string | null
-          focus_description?: string | null
-          generic_how?: string | null
-          generic_how_much?: string | null
-          generic_summary?: string | null
-          generic_what?: string | null
-          generic_when?: string | null
-          generic_where?: string | null
-          generic_who?: string | null
-          generic_why?: string | null
-          id?: string | null
-          image_url?: string | null
-          industry_context?: string | null
-          is_complete?: boolean | null
-          is_featured?: boolean | null
-          is_published?: boolean | null
-          last_reviewed_at?: string | null
-          name?: string | null
-          originator?: string | null
-          planning_considerations?: string | null
-          popularity_score?: number | null
-          purpose?: string | null
-          related_practices?: string[] | null
-          required_skills?: string[] | null
-          seo_description?: string | null
-          seo_keywords?: string[] | null
-          seo_title?: string | null
-          slug?: string | null
-          source?: string | null
-          success_criteria?: string[] | null
-          summary?: string | null
-          team_size_max?: number | null
-          team_size_min?: number | null
-          typical_participants?: string[] | null
-          updated_at?: string | null
-          updated_by?: string | null
-          view_count?: number | null
-        }
-        Update: {
-          activity_category_id?: string | null
-          activity_domain_id?: string | null
-          activity_focus_id?: string | null
-          background?: string | null
-          category_id?: string | null
-          common_pitfalls?: string[] | null
-          content_type?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          difficulty_level?: string | null
-          duration_max_minutes?: number | null
-          duration_min_minutes?: number | null
-          estimated_reading_time?: number | null
-          example_how?: string | null
-          example_how_much?: string | null
-          example_summary?: string | null
-          example_use_case?: string | null
-          example_what?: string | null
-          example_when?: string | null
-          example_where?: string | null
-          example_who?: string | null
-          example_why?: string | null
-          focus_description?: string | null
-          generic_how?: string | null
-          generic_how_much?: string | null
-          generic_summary?: string | null
-          generic_what?: string | null
-          generic_when?: string | null
-          generic_where?: string | null
-          generic_who?: string | null
-          generic_why?: string | null
-          id?: string | null
-          image_url?: string | null
-          industry_context?: string | null
-          is_complete?: boolean | null
-          is_featured?: boolean | null
-          is_published?: boolean | null
-          last_reviewed_at?: string | null
-          name?: string | null
-          originator?: string | null
-          planning_considerations?: string | null
-          popularity_score?: number | null
-          purpose?: string | null
-          related_practices?: string[] | null
-          required_skills?: string[] | null
-          seo_description?: string | null
-          seo_keywords?: string[] | null
-          seo_title?: string | null
-          slug?: string | null
-          source?: string | null
-          success_criteria?: string[] | null
-          summary?: string | null
-          team_size_max?: number | null
-          team_size_min?: number | null
-          typical_participants?: string[] | null
-          updated_at?: string | null
-          updated_by?: string | null
-          view_count?: number | null
-        }
-        Relationships: []
-      }
-      knowledge_learning_paths: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          difficulty_level: string | null
-          estimated_duration: string | null
-          id: string
-          is_published: boolean | null
-          name: string
-          slug: string
-          target_audience: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          difficulty_level?: string | null
-          estimated_duration?: string | null
-          id?: string
-          is_published?: boolean | null
-          name: string
-          slug: string
-          target_audience?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          difficulty_level?: string | null
-          estimated_duration?: string | null
-          id?: string
-          is_published?: boolean | null
-          name?: string
-          slug?: string
-          target_audience?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      knowledge_media: {
-        Row: {
-          created_at: string
-          description: string | null
-          file_size: number | null
-          id: string
-          knowledge_item_id: string | null
-          mime_type: string | null
-          position: number | null
-          thumbnail_url: string | null
-          title: string | null
-          type: string
-          url: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          file_size?: number | null
-          id?: string
-          knowledge_item_id?: string | null
-          mime_type?: string | null
-          position?: number | null
-          thumbnail_url?: string | null
-          title?: string | null
-          type: string
-          url: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          file_size?: number | null
-          id?: string
-          knowledge_item_id?: string | null
-          mime_type?: string | null
-          position?: number | null
-          thumbnail_url?: string | null
-          title?: string | null
-          type?: string
-          url?: string
-        }
-        Relationships: []
-      }
-      knowledge_path_techniques: {
-        Row: {
-          id: string
-          notes: string | null
-          path_id: string | null
-          position: number
-          technique_id: string | null
-        }
-        Insert: {
-          id?: string
-          notes?: string | null
-          path_id?: string | null
-          position: number
-          technique_id?: string | null
-        }
-        Update: {
-          id?: string
-          notes?: string | null
-          path_id?: string | null
-          position?: number
-          technique_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "knowledge_path_techniques_path_id_fkey"
-            columns: ["path_id"]
-            isOneToOne: false
-            referencedRelation: "knowledge_learning_paths"
             referencedColumns: ["id"]
           },
         ]
@@ -1517,83 +1161,6 @@ export type Database = {
           name?: string
           slug?: string
           usage_count?: number | null
-        }
-        Relationships: []
-      }
-      learning_path_steps: {
-        Row: {
-          created_at: string
-          description: string | null
-          estimated_minutes: number | null
-          id: string
-          is_optional: boolean | null
-          path_id: string
-          step_order: number
-          technique_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          estimated_minutes?: number | null
-          id?: string
-          is_optional?: boolean | null
-          path_id: string
-          step_order: number
-          technique_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          estimated_minutes?: number | null
-          id?: string
-          is_optional?: boolean | null
-          path_id?: string
-          step_order?: number
-          technique_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "learning_path_steps_path_id_fkey"
-            columns: ["path_id"]
-            isOneToOne: false
-            referencedRelation: "learning_paths"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      learning_paths: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          difficulty_level: string | null
-          estimated_duration_minutes: number | null
-          id: string
-          is_published: boolean | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          difficulty_level?: string | null
-          estimated_duration_minutes?: number | null
-          id?: string
-          is_published?: boolean | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          difficulty_level?: string | null
-          estimated_duration_minutes?: number | null
-          id?: string
-          is_published?: boolean | null
-          title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -1677,6 +1244,7 @@ export type Database = {
       }
       planning_layers: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
           display_order: number | null
@@ -1686,6 +1254,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
           display_order?: number | null
@@ -1695,6 +1264,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
           display_order?: number | null
@@ -2106,22 +1676,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_learning_path_progress_current_step_id_fkey"
-            columns: ["current_step_id"]
-            isOneToOne: false
-            referencedRelation: "learning_path_steps"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_learning_path_progress_path_id_fkey"
-            columns: ["path_id"]
-            isOneToOne: false
-            referencedRelation: "learning_paths"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_preferences: {
         Row: {
