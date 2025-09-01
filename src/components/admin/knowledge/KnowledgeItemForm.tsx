@@ -191,12 +191,11 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
+              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value || '' }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Category</SelectItem>
                   {categories?.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -208,12 +207,11 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
 
             <div className="space-y-2">
               <Label htmlFor="planning_layer">Planning Layer</Label>
-              <Select value={formData.planning_layer_id} onValueChange={(value) => setFormData(prev => ({ ...prev, planning_layer_id: value }))}>
+              <Select value={formData.planning_layer_id} onValueChange={(value) => setFormData(prev => ({ ...prev, planning_layer_id: value || '' }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select planning layer" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Layer</SelectItem>
                   {planningLayers?.map((layer) => (
                     <SelectItem key={layer.id} value={layer.id}>
                       {layer.name}
@@ -225,12 +223,11 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
 
             <div className="space-y-2">
               <Label htmlFor="domain">Activity Domain</Label>
-              <Select value={formData.domain_id} onValueChange={(value) => setFormData(prev => ({ ...prev, domain_id: value }))}>
+              <Select value={formData.domain_id} onValueChange={(value) => setFormData(prev => ({ ...prev, domain_id: value || '' }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select domain" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Domain</SelectItem>
                   {domains?.map((domain) => (
                     <SelectItem key={domain.id} value={domain.id}>
                       {domain.name}
