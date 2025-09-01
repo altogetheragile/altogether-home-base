@@ -45,12 +45,8 @@ export const ContentStudioDashboard = () => {
 
   const workflowItems = [
     { id: 'all', label: 'All Items', icon: FileText, count: 156 },
-    { id: 'drafts', label: 'My Drafts', icon: Clock, count: 12 },
-    { id: 'review', label: 'Ready for Review', icon: Eye, count: 5 },
-    { id: 'published', label: 'Published', icon: BookOpen, count: 89 },
-    { id: 'high-performing', label: 'High Performing', icon: TrendingUp, count: 23 },
-    { id: 'needs-attention', label: 'Needs Attention', icon: Target, count: 8 },
-    { id: 'archived', label: 'Archived', icon: Archive, count: 19 }
+    { id: 'drafts', label: 'Drafts', icon: Clock, count: 12 },
+    { id: 'published', label: 'Published', icon: BookOpen, count: 89 }
   ];
 
   const handleCreateNew = () => {

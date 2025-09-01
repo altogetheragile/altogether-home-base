@@ -285,8 +285,8 @@ export const KnowledgeItemEditor = ({
               </div>
 
               {/* Tab Content */}
-              <div className="flex-1 min-w-0">
-                <TabsContent value="basic" className="h-full p-6 mt-0">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <TabsContent value="basic" className="h-full overflow-y-auto p-6 mt-0">
                   <KnowledgeItemBasicInfo
                     formData={formData}
                     onFormChange={handleFormChange}
@@ -294,28 +294,28 @@ export const KnowledgeItemEditor = ({
                   />
                 </TabsContent>
 
-                <TabsContent value="classification" className="h-full p-6 mt-0">
+                <TabsContent value="classification" className="h-full overflow-y-auto p-6 mt-0">
                   <KnowledgeItemClassification
                     formData={formData}
                     onFormChange={handleFormChange}
                   />
                 </TabsContent>
 
-                <TabsContent value="content" className="h-full p-6 mt-0">
+                <TabsContent value="content" className="h-full overflow-y-auto p-6 mt-0">
                   <KnowledgeItemContent
                     formData={formData}
                     onFormChange={handleFormChange}
                   />
                 </TabsContent>
 
-                <TabsContent value="usecases" className="h-full p-6 mt-0">
+                <TabsContent value="usecases" className="h-full overflow-y-auto p-6 mt-0">
                   <KnowledgeItemUseCases
                     knowledgeItemId={editingItem?.id}
                   />
                 </TabsContent>
 
                 {editingItem && (
-                  <TabsContent value="analytics" className="h-full p-6 mt-0">
+                  <TabsContent value="analytics" className="h-full overflow-y-auto p-6 mt-0">
                     <KnowledgeItemAnalytics
                       knowledgeItem={editingItem}
                     />

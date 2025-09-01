@@ -241,45 +241,32 @@ export const ContentCards = ({
                     </DropdownMenu>
                   </div>
 
-                  {/* Content Preview */}
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-12 w-12 rounded-xl border-2 border-background shadow-sm">
-                        <AvatarFallback className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold text-sm">
-                          {item.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-start gap-2">
-                          <h4 className="font-semibold text-foreground text-sm line-clamp-2 leading-snug">
-                            {item.name}
-                          </h4>
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Content Preview */}
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10 rounded-lg">
+                          <AvatarFallback className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold text-sm">
+                            {item.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex items-start gap-2">
+                            <h4 className="font-semibold text-foreground text-sm line-clamp-1 leading-snug">
+                              {item.name}
+                            </h4>
                             {item.is_featured && (
-                              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 flex-shrink-0" />
                             )}
                           </div>
+                          {item.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 leading-relaxed">
+                              {item.description}
+                            </p>
+                          )}
                         </div>
-                        {item.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                            {item.description}
-                          </p>
-                        )}
                       </div>
                     </div>
-
-                    {/* Content Health & Progress */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Content Health</span>
-                        <span className={`font-medium ${getHealthColor(healthScore)}`}>
-                          {healthScore}%
-                        </span>
-                      </div>
-                      <Progress value={healthScore} className="h-1.5" />
-                    </div>
-                  </div>
                 </div>
 
                 {/* Classification */}
@@ -316,19 +303,11 @@ export const ContentCards = ({
                 {/* Stats Footer */}
                 <div className="px-4 py-3 border-t bg-muted/30">
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                        <FileText className="h-3.5 w-3.5" />
-                        <span className="font-medium">{genericCount}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                        <Target className="h-3.5 w-3.5" />
-                        <span className="font-medium">{exampleCount}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                        <TrendingUp className="h-3.5 w-3.5" />
-                        <span className="font-medium">{item.view_count || 0}</span>
-                      </div>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span className="text-xs">
+                        {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+                      </span>
                     </div>
                     
                     <Badge 
@@ -338,7 +317,7 @@ export const ContentCards = ({
                       {item.is_published ? (
                         <>
                           <Eye className="h-2.5 w-2.5 mr-1" />
-                          Live
+                          Published
                         </>
                       ) : (
                         <>
@@ -347,22 +326,6 @@ export const ContentCards = ({
                         </>
                       )}
                     </Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span className="text-xs">
-                        {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    
-                    {useCasesCount > 0 && (
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Users className="h-3 w-3" />
-                        <span className="text-xs">{useCasesCount} use cases</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </CardContent>
