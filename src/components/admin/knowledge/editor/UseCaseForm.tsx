@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -131,6 +132,9 @@ export const UseCaseForm = ({
               <Badge variant={formData.case_type === 'generic' ? 'default' : 'secondary'}>
                 {formData.case_type === 'generic' ? 'Generic' : 'Example'}
               </Badge>
+              <DialogDescription>
+                Define when, where, and how this knowledge item is used
+              </DialogDescription>
             </div>
 
             <div className="flex items-center gap-2">
