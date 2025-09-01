@@ -39,9 +39,9 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
     description: '',
     background: '',
     source: '',
-    category_id: '',
-    planning_layer_id: '',
-    domain_id: '',
+    category_id: undefined as string | undefined,
+    planning_layer_id: undefined as string | undefined,
+    domain_id: undefined as string | undefined,
     is_published: true,
     is_featured: false,
   });
@@ -56,9 +56,9 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
         description: editingItem.description || '',
         background: editingItem.background || '',
         source: editingItem.source || '',
-        category_id: editingItem.category_id || '',
-        planning_layer_id: editingItem.planning_layer_id || '',
-        domain_id: editingItem.domain_id || '',
+        category_id: editingItem.category_id || undefined,
+        planning_layer_id: editingItem.planning_layer_id || undefined,
+        domain_id: editingItem.domain_id || undefined,
         is_published: editingItem.is_published ?? true,
         is_featured: editingItem.is_featured ?? false,
       });
@@ -69,9 +69,9 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
         description: '',
         background: '',
         source: '',
-        category_id: '',
-        planning_layer_id: '',
-        domain_id: '',
+        category_id: undefined,
+        planning_layer_id: undefined,
+        domain_id: undefined,
         is_published: true,
         is_featured: false,
       });
@@ -191,7 +191,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value || '' }))}>
+              <Select value={formData.category_id || ""} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value === "" ? undefined : value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -207,7 +207,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
 
             <div className="space-y-2">
               <Label htmlFor="planning_layer">Planning Layer</Label>
-              <Select value={formData.planning_layer_id} onValueChange={(value) => setFormData(prev => ({ ...prev, planning_layer_id: value || '' }))}>
+              <Select value={formData.planning_layer_id || ""} onValueChange={(value) => setFormData(prev => ({ ...prev, planning_layer_id: value === "" ? undefined : value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select planning layer" />
                 </SelectTrigger>
@@ -223,7 +223,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
 
             <div className="space-y-2">
               <Label htmlFor="domain">Activity Domain</Label>
-              <Select value={formData.domain_id} onValueChange={(value) => setFormData(prev => ({ ...prev, domain_id: value || '' }))}>
+              <Select value={formData.domain_id || ""} onValueChange={(value) => setFormData(prev => ({ ...prev, domain_id: value === "" ? undefined : value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select domain" />
                 </SelectTrigger>
