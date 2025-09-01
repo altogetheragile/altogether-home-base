@@ -163,9 +163,9 @@ export const KnowledgeItemEditor = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-7xl h-[95vh] flex flex-col p-0">
         {/* Header */}
-        <DialogHeader className="px-6 py-4 border-b border-border">
+        <DialogHeader className="px-8 py-6 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <DialogTitle className="text-xl font-semibold">
@@ -228,100 +228,97 @@ export const KnowledgeItemEditor = ({
         </DialogHeader>
 
         {/* Content */}
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">
           <Tabs 
             value={activeTab} 
             onValueChange={setActiveTab} 
             className="flex-1 flex flex-col"
-            orientation="vertical"
           >
-            <div className="flex flex-1 min-h-0">
-              {/* Sidebar Tabs */}
-              <div className="w-64 border-r border-border bg-muted/30">
-                <TabsList className="flex flex-col h-full w-full bg-transparent p-2 space-y-1">
-                  <TabsTrigger 
-                    value="basic" 
-                    className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    <Info className="h-4 w-4 mr-2" />
-                    Basic Info
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="classification" 
-                    className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    <FolderOpen className="h-4 w-4 mr-2" />
-                    Classification
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="content" 
-                    className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Rich Content
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="usecases" 
-                    className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Use Cases
-                    {editingItem && (
-                      <Badge variant="secondary" className="ml-auto text-xs">
-                        {editingItem.knowledge_use_cases?.length || 0}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
+            {/* Horizontal Tabs */}
+            <div className="border-b border-border bg-muted/30">
+              <TabsList className="h-12 w-full justify-start bg-transparent px-8 rounded-none">
+                <TabsTrigger 
+                  value="basic" 
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                >
+                  <Info className="h-4 w-4 mr-2" />
+                  Basic Info
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="classification" 
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Classification
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="content" 
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Rich Content
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="usecases" 
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Use Cases
                   {editingItem && (
-                    <TabsTrigger 
-                      value="analytics" 
-                      className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Analytics
-                    </TabsTrigger>
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {editingItem.knowledge_use_cases?.length || 0}
+                    </Badge>
                   )}
-                </TabsList>
-              </div>
-
-              {/* Tab Content */}
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <TabsContent value="basic" className="h-full overflow-y-auto p-6 mt-0">
-                  <KnowledgeItemBasicInfo
-                    formData={formData}
-                    onFormChange={handleFormChange}
-                    onNameChange={handleNameChange}
-                  />
-                </TabsContent>
-
-                <TabsContent value="classification" className="h-full overflow-y-auto p-6 mt-0">
-                  <KnowledgeItemClassification
-                    formData={formData}
-                    onFormChange={handleFormChange}
-                  />
-                </TabsContent>
-
-                <TabsContent value="content" className="h-full overflow-y-auto p-6 mt-0">
-                  <KnowledgeItemContent
-                    formData={formData}
-                    onFormChange={handleFormChange}
-                  />
-                </TabsContent>
-
-                <TabsContent value="usecases" className="h-full overflow-y-auto p-6 mt-0">
-                  <KnowledgeItemUseCases
-                    knowledgeItemId={editingItem?.id}
-                  />
-                </TabsContent>
-
+                </TabsTrigger>
                 {editingItem && (
-                  <TabsContent value="analytics" className="h-full overflow-y-auto p-6 mt-0">
-                    <KnowledgeItemAnalytics
-                      knowledgeItem={editingItem}
-                    />
-                  </TabsContent>
+                  <TabsTrigger 
+                    value="analytics" 
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Analytics
+                  </TabsTrigger>
                 )}
-              </div>
+              </TabsList>
+            </div>
+
+            {/* Tab Content */}
+            <div className="flex-1 overflow-hidden">
+              <TabsContent value="basic" className="h-full overflow-y-auto p-8 mt-0">
+                <KnowledgeItemBasicInfo
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                  onNameChange={handleNameChange}
+                />
+              </TabsContent>
+
+              <TabsContent value="classification" className="h-full overflow-y-auto p-8 mt-0">
+                <KnowledgeItemClassification
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                />
+              </TabsContent>
+
+              <TabsContent value="content" className="h-full overflow-y-auto p-8 mt-0">
+                <KnowledgeItemContent
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                />
+              </TabsContent>
+
+              <TabsContent value="usecases" className="h-full overflow-y-auto p-8 mt-0">
+                <KnowledgeItemUseCases
+                  knowledgeItemId={editingItem?.id}
+                />
+              </TabsContent>
+
+              {editingItem && (
+                <TabsContent value="analytics" className="h-full overflow-y-auto p-8 mt-0">
+                  <KnowledgeItemAnalytics
+                    knowledgeItem={editingItem}
+                  />
+                </TabsContent>
+              )}
             </div>
           </Tabs>
         </div>
