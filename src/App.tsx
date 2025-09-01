@@ -34,6 +34,10 @@ import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminPlanningLayers from "./pages/admin/AdminPlanningLayers";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
 import AdminKnowledgeItems from "./pages/admin/AdminKnowledgeItems";
+import AdminKnowledgeCategories from "./pages/admin/AdminKnowledgeCategories";
+import AdminKnowledgeTags from "./pages/admin/AdminKnowledgeTags";
+import AdminKnowledgeLearningPaths from "./pages/admin/AdminKnowledgeLearningPaths";
+import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsRoute";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
@@ -84,6 +88,10 @@ const App = () => (
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
                 <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
+                <Route path="knowledge/categories" element={<AdminKnowledgeCategories />} />
+                <Route path="knowledge/tags" element={<AdminKnowledgeTags />} />
+                <Route path="knowledge/learning-paths" element={<AdminKnowledgeLearningPaths />} />
+                <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
                 <Route path="knowledge/planning-layers" element={<AdminPlanningLayers />} />
                 <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
                 <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
