@@ -9,7 +9,7 @@ import { ArrowLeft, Play, FileText, AlertTriangle, CheckCircle, XCircle } from '
 import { DataImport } from '@/hooks/useDataImports';
 import { useStagingData } from '@/hooks/useDataImports';
 import { ColumnMapper } from './ColumnMapper';
-import { ProcessDataButton } from './ProcessDataButton';
+// ProcessDataButton removed - KB functionality deleted
 import { format } from 'date-fns';
 
 interface ImportPreviewProps {
@@ -182,10 +182,13 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({ importRecord, onBa
         <TabsContent value="mapping">
           <div className="space-y-6">
             <ColumnMapper importRecord={importRecord} headers={headers} />
-            <ProcessDataButton 
-              importRecord={importRecord} 
-              onProcessingComplete={() => window.location.reload()} 
-            />
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-muted-foreground text-center">
+                  Knowledge Base functionality has been removed. Processing unavailable.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

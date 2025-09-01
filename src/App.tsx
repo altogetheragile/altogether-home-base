@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,18 +10,12 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 
 import EventDetail from "./pages/EventDetail";
 import Events from "./pages/Events";
-import LearningPaths from "./pages/LearningPaths";
-import KnowledgeBase from "./pages/KnowledgeBase";
-import KnowledgeTechniqueDetail from "./pages/KnowledgeTechniqueDetail";
 import Blog from "./pages/Blog";
-import Dashboard from "./pages/Dashboard";
-import AIToolsCanvas from "./pages/AIToolsCanvas";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import AIToolsCanvas from "./pages/AIToolsCanvas";
 import AccountSecurity from "./pages/AccountSecurity";
-
 import NotFound from "./pages/NotFound";
-
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminInstructors from "./pages/admin/AdminInstructors";
 import AdminLocations from "./pages/admin/AdminLocations";
@@ -33,11 +26,6 @@ import AdminLevels from "./pages/admin/AdminLevels";
 import AdminFormats from "./pages/admin/AdminFormats";
 import AdminPages from "./pages/admin/AdminPages";
 import AdminLogs from "./pages/admin/AdminLogs";
-import AdminKnowledgeTechniquesRoute from "./pages/admin/AdminKnowledgeTechniquesRoute";
-import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsRoute";
-import AdminKnowledgeCategoriesRoute from "./pages/admin/AdminKnowledgeCategoriesRoute";
-import AdminKnowledgeTagsRoute from "./pages/admin/AdminKnowledgeTagsRoute";
-import AdminLearningPathsRoute from "./pages/admin/AdminLearningPathsRoute";
 import AdminLogsApplicationRoute from "./pages/admin/AdminLogsApplicationRoute";
 import AdminLogsDatabaseRoute from "./pages/admin/AdminLogsDatabaseRoute";
 import AdminLogsAuthRoute from "./pages/admin/AdminLogsAuthRoute";
@@ -66,16 +54,12 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/blog" element={<Blog />} />
-              <Route path="/knowledge" element={<KnowledgeBase />} />
-              <Route path="/knowledge/:slug" element={<KnowledgeTechniqueDetail />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
-              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
               <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
               
               <Route path="/account/security" element={<AccountSecurity />} />
-              <Route path="/learning-paths" element={<LearningPaths />} />
               
               {/* Protected Admin Routes */}
               <Route path="/admin" element={
@@ -97,13 +81,8 @@ const App = () => (
                 <Route path="formats" element={<AdminFormats />} />
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
-                <Route path="knowledge/items" element={<AdminKnowledgeTechniquesRoute />} />
-                <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
-                <Route path="knowledge/categories" element={<AdminKnowledgeCategoriesRoute />} />
                 <Route path="knowledge/planning-layers" element={<AdminPlanningLayers />} />
                 <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
-                <Route path="knowledge/tags" element={<AdminKnowledgeTagsRoute />} />
-                <Route path="knowledge/learning-paths" element={<AdminLearningPathsRoute />} />
                 <Route path="knowledge/imports" element={<AdminImports />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
