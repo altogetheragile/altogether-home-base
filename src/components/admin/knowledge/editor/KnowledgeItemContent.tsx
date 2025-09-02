@@ -95,9 +95,9 @@ export const KnowledgeItemContent = ({
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2 mb-3">
-            <Badge variant="outline" className="text-blue-700 border-blue-300">Coming Soon</Badge>
-            <Badge variant="outline" className="text-blue-700 border-blue-300">Rich Text Editor</Badge>
-            <Badge variant="outline" className="text-blue-700 border-blue-300">Media Upload</Badge>
+            <span className="text-blue-700 font-medium text-sm">Coming Soon</span>
+            <span className="text-blue-700 font-medium text-sm">Rich Text Editor</span>
+            <span className="text-blue-700 font-medium text-sm">Media Upload</span>
           </div>
           <p className="text-sm text-blue-800 dark:text-blue-200">
             Advanced content editing features including WYSIWYG editor, image uploads, 
