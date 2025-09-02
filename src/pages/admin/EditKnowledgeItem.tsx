@@ -47,7 +47,7 @@ const EditKnowledgeItem = () => {
   const { data: knowledgeItem, isLoading } = useQuery({
     queryKey: ['knowledge-item', id],
     queryFn: async () => {
-      if (!isEditing) return null;
+      if (!isEditing || !id || id === 'new') return null;
       
       const { data, error } = await supabase
         .from('knowledge_items')
@@ -59,12 +59,12 @@ const EditKnowledgeItem = () => {
           knowledge_use_cases (*)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: isEditing,
+    enabled: isEditing && id && id !== 'new',
   });
 
   useEffect(() => {
