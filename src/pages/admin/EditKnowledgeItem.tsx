@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KnowledgeItemBasicInfo } from '@/components/admin/knowledge/editor/KnowledgeItemBasicInfo';
 import { KnowledgeItemClassification } from '@/components/admin/knowledge/editor/KnowledgeItemClassification';
@@ -17,6 +18,7 @@ const EditKnowledgeItem = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => {
     return searchParams.get('tab') || 'basic';
@@ -88,7 +90,10 @@ const EditKnowledgeItem = () => {
   }, [knowledgeItem, isEditing]);
 
   const handleSave = async () => {
+    console.log('📝 EditKnowledgeItem handleSave: Starting save process', { isEditing, formData });
+    
     if (!formData.name.trim()) {
+      console.warn('⚠️ EditKnowledgeItem: Missing name field');
       toast({
         title: "Validation Error",
         description: "Name is required",
@@ -99,6 +104,7 @@ const EditKnowledgeItem = () => {
     }
 
     if (!formData.slug.trim()) {
+      console.warn('⚠️ EditKnowledgeItem: Missing slug field');
       toast({
         title: "Validation Error", 
         description: "Slug is required",
@@ -109,13 +115,22 @@ const EditKnowledgeItem = () => {
     }
 
     try {
+      console.log('🔄 EditKnowledgeItem: Processing save...');
       if (isEditing) {
+        console.log('🔧 EditKnowledgeItem: Updating existing item', { id, formData });
         await updateKnowledgeItem.mutateAsync({
           id: id!,
-          ...formData
+          ...formData,
+          updated_by: user?.id
         });
       } else {
-        const newItem = await createKnowledgeItem.mutateAsync(formData);
+        console.log('🆕 EditKnowledgeItem: Creating new item', { formData });
+        const newItem = await createKnowledgeItem.mutateAsync({
+          ...formData,
+          created_by: user?.id,
+          updated_by: user?.id
+        });
+        console.log('✅ EditKnowledgeItem: New item created, navigating to edit mode', newItem);
         // For new items, redirect to edit mode so use cases can be added
         navigate(`/admin/knowledge/items/${newItem.id}/edit`);
         return;
@@ -128,7 +143,7 @@ const EditKnowledgeItem = () => {
       
       navigate('/admin/knowledge/items');
     } catch (error) {
-      console.error('Error saving knowledge item:', error);
+      console.error('❌ EditKnowledgeItem handleSave: Error during save', error);
       toast({
         title: "Error saving knowledge item",
         description: "Please try again or contact support.",

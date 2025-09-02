@@ -154,16 +154,26 @@ export const useCreateKnowledgeItem = () => {
 
   return useMutation({
     mutationFn: async (data: Partial<KnowledgeItem>) => {
+      console.log('🚀 useCreateKnowledgeItem: Starting creation with data:', data);
+      
       const { data: result, error } = await supabase
         .from('knowledge_items')
         .insert([data])
         .select()
         .single();
 
-      if (error) throw error;
+      console.log('📊 useCreateKnowledgeItem: Insert result:', { result, error });
+
+      if (error) {
+        console.error('❌ useCreateKnowledgeItem: Insert failed:', error);
+        throw error;
+      }
+      
+      console.log('✅ useCreateKnowledgeItem: Creation successful:', result);
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('🎉 useCreateKnowledgeItem: Success callback:', result);
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
       toast({
         title: "Success",
@@ -171,9 +181,10 @@ export const useCreateKnowledgeItem = () => {
       });
     },
     onError: (error) => {
+      console.error('❌ useCreateKnowledgeItem: Error callback:', error);
       toast({
-        title: "Error",
-        description: "Failed to create knowledge item",
+        title: "Error creating knowledge item",
+        description: error.message || "Failed to create knowledge item",
         variant: "destructive",
       });
     },
