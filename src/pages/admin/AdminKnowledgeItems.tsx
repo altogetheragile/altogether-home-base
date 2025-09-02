@@ -41,6 +41,8 @@ const AdminKnowledgeItems = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [domainFilter, setDomainFilter] = useState<string>('all');
+  const [planningLayerFilter, setPlanningLayerFilter] = useState<string>('all');
   const [sortColumn, setSortColumn] = useState<SortColumn>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -57,8 +59,34 @@ const AdminKnowledgeItems = () => {
     },
   });
 
+  // Fetch domains for filter dropdown
+  const { data: domains } = useQuery({
+    queryKey: ['activity-domains'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activity_domains')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch planning layers for filter dropdown
+  const { data: planningLayers } = useQuery({
+    queryKey: ['planning-layers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('planning_layers')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: items, isLoading } = useQuery({
-    queryKey: ['admin-knowledge-items', searchTerm, statusFilter, categoryFilter, sortColumn, sortDirection],
+    queryKey: ['admin-knowledge-items', searchTerm, statusFilter, categoryFilter, domainFilter, planningLayerFilter, sortColumn, sortDirection],
     queryFn: async () => {
       let query = supabase
         .from('knowledge_items')
@@ -84,6 +112,16 @@ const AdminKnowledgeItems = () => {
       // Apply category filter
       if (categoryFilter !== 'all') {
         query = query.eq('category_id', categoryFilter);
+      }
+
+      // Apply domain filter
+      if (domainFilter !== 'all') {
+        query = query.eq('domain_id', domainFilter);
+      }
+
+      // Apply planning layer filter
+      if (planningLayerFilter !== 'all') {
+        query = query.eq('planning_layer_id', planningLayerFilter);
       }
 
       // Apply sorting
@@ -170,7 +208,7 @@ const AdminKnowledgeItems = () => {
           />
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
           <div className="w-48">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
@@ -194,6 +232,38 @@ const AdminKnowledgeItems = () => {
                 {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-48">
+            <Select value={domainFilter} onValueChange={setDomainFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by domain" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Domains</SelectItem>
+                {domains?.map((domain) => (
+                  <SelectItem key={domain.id} value={domain.id}>
+                    {domain.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-48">
+            <Select value={planningLayerFilter} onValueChange={setPlanningLayerFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by planning layer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Planning Layers</SelectItem>
+                {planningLayers?.map((layer) => (
+                  <SelectItem key={layer.id} value={layer.id}>
+                    {layer.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -335,7 +405,7 @@ const AdminKnowledgeItems = () => {
             {items?.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' 
+                  {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || domainFilter !== 'all' || planningLayerFilter !== 'all'
                     ? 'No items found matching your filters.' 
                     : 'No knowledge items created yet.'
                   }
