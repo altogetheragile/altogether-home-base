@@ -1084,6 +1084,53 @@ export type Database = {
           },
         ]
       }
+      knowledge_media: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          knowledge_item_id: string
+          position: number
+          thumbnail_url: string | null
+          title: string | null
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          knowledge_item_id: string
+          position?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          type: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          knowledge_item_id?: string
+          position?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_media_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_tags: {
         Row: {
           created_at: string

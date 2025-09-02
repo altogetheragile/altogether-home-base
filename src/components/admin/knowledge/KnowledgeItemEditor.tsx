@@ -20,6 +20,7 @@ import { KnowledgeItemUseCases } from './editor/KnowledgeItemUseCases';
 import { KnowledgeItemAnalytics } from './editor/KnowledgeItemAnalytics';
 import { UseCaseForm } from './editor/UseCaseForm';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useKnowledgeMediaMutations } from '@/hooks/useKnowledgeMediaMutations';
 import { useToast } from '@/hooks/use-toast';
 
 interface KnowledgeItemEditorProps {
@@ -48,12 +49,14 @@ export const KnowledgeItemEditor = ({
     planning_layer_id: '',
     domain_id: '',
     is_published: false,
-    is_featured: false
+    is_featured: false,
+    mediaItems: []
   });
 
   const { toast } = useToast();
   const createKnowledgeItem = useCreateKnowledgeItem();
   const updateKnowledgeItem = useUpdateKnowledgeItem();
+  const { updateTechniqueMedia } = useKnowledgeMediaMutations();
 
   const prevOpenRef = useRef<boolean>(open);
   const prevEditingItemRef = useRef<typeof editingItem | null>(editingItem);
@@ -79,7 +82,8 @@ export const KnowledgeItemEditor = ({
         planning_layer_id: editingItem.planning_layer_id || '',
         domain_id: editingItem.domain_id || '',
         is_published: editingItem.is_published || false,
-        is_featured: editingItem.is_featured || false
+        is_featured: editingItem.is_featured || false,
+        mediaItems: editingItem.media || []
       });
     } else {
       setFormData({
@@ -92,7 +96,8 @@ export const KnowledgeItemEditor = ({
         planning_layer_id: '',
         domain_id: '',
         is_published: false,
-        is_featured: false
+        is_featured: false,
+        mediaItems: []
       });
     }
 
@@ -123,14 +128,29 @@ export const KnowledgeItemEditor = ({
     }
 
     try {
+      const { mediaItems, ...itemData } = formData;
+      let savedItem;
+      
       if (editingItem) {
-        await updateKnowledgeItem.mutateAsync({
+        savedItem = await updateKnowledgeItem.mutateAsync({
           id: editingItem.id,
-          ...formData
+          ...itemData
         });
       } else {
-        await createKnowledgeItem.mutateAsync(formData);
+        savedItem = await createKnowledgeItem.mutateAsync(itemData);
       }
+      
+      // Save media items if any
+      if (mediaItems && mediaItems.length > 0) {
+        const itemId = editingItem?.id || savedItem.id;
+        if (itemId) {
+          await updateTechniqueMedia.mutateAsync({
+            techniqueId: itemId,
+            mediaItems: mediaItems
+          });
+        }
+      }
+      
       onSuccess();
     } catch (error) {
       console.error('Error saving knowledge item:', error);
@@ -183,10 +203,13 @@ export const KnowledgeItemEditor = ({
       planning_layer_id: editingItem.planning_layer_id || '',
       domain_id: editingItem.domain_id || '',
       is_published: editingItem.is_published || false,
-      is_featured: editingItem.is_featured || false
+      is_featured: editingItem.is_featured || false,
+      mediaItems: editingItem.media || []
     })
   ) : Object.values(formData).some(value => 
-    typeof value === 'string' ? value.trim() !== '' : value !== false
+    typeof value === 'string' ? value.trim() !== '' : 
+    Array.isArray(value) ? value.length > 0 : 
+    value !== false
   );
 
   return (

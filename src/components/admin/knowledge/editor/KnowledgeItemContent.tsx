@@ -1,8 +1,8 @@
-import { BookOpen, FileText, Link as LinkIcon } from 'lucide-react';
+import { BookOpen, FileText, Image } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { MediaUpload } from '@/components/ui/media-upload';
 
 interface KnowledgeItemContentProps {
   formData: any;
@@ -38,16 +38,13 @@ export const KnowledgeItemContent = ({
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="background">Background Information</Label>
-            <Textarea
-              id="background"
-              value={formData.background}
-              onChange={(e) => onFormChange('background', e.target.value)}
+            <RichTextEditor
+              content={formData.background || ''}
+              onChange={(content) => onFormChange('background', content)}
               placeholder="Provide detailed background information, context, and explanations..."
-              rows={8}
-              className="min-h-[200px] resize-y"
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Support for Markdown formatting</span>
+              <span>Rich text editor with formatting options</span>
               <span>{formData.background?.length || 0} characters</span>
             </div>
           </div>
@@ -86,23 +83,22 @@ export const KnowledgeItemContent = ({
         </CardContent>
       </Card>
 
-      <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2 text-blue-900 dark:text-blue-100">
-            <LinkIcon className="h-4 w-4" />
-            Future Enhancements
+          <CardTitle className="text-base flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Media Gallery
           </CardTitle>
+          <CardDescription>
+            Upload and manage images, videos, documents, and embedded content
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2 mb-3">
-            <span className="text-blue-700 font-medium text-sm">Coming Soon</span>
-            <span className="text-blue-700 font-medium text-sm">Rich Text Editor</span>
-            <span className="text-blue-700 font-medium text-sm">Media Upload</span>
-          </div>
-          <p className="text-sm text-blue-800 dark:text-blue-200">
-            Advanced content editing features including WYSIWYG editor, image uploads, 
-            embedded videos, and interactive elements will be available in future updates.
-          </p>
+          <MediaUpload
+            value={formData.mediaItems || []}
+            onChange={(mediaItems) => onFormChange('mediaItems', mediaItems)}
+            bucketName="knowledge-base"
+          />
         </CardContent>
       </Card>
     </div>
