@@ -43,8 +43,8 @@ const EditKnowledgeItem = () => {
   const createKnowledgeItem = useCreateKnowledgeItem();
   const updateKnowledgeItem = useUpdateKnowledgeItem();
 
-  // For new items, id will be "new"
-  const isEditing = id !== 'new';
+  // For new items, id will be "new" or undefined
+  const isEditing = !!id && id !== 'new';
 
   const { data: knowledgeItem, isLoading } = useQuery({
     queryKey: ['knowledge-item', id],
