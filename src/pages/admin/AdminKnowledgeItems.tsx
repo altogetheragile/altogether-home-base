@@ -281,30 +281,13 @@ const AdminKnowledgeItems = () => {
                 onClick={() => handleSort('name')}
               >
                 <div className="flex items-center gap-2">
-                  Name
+                  Title
                   {getSortIcon('name')}
                 </div>
               </TableHead>
               <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-muted/50 select-none"
-                onClick={() => handleSort('views')}
-              >
-                <div className="flex items-center gap-2">
-                  Views
-                  {getSortIcon('views')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-muted/50 select-none"
-                onClick={() => handleSort('updated_at')}
-              >
-                <div className="flex items-center gap-2">
-                  Updated
-                  {getSortIcon('updated_at')}
-                </div>
-              </TableHead>
+              <TableHead>Domains of Interest</TableHead>
+              <TableHead>Planning Layers</TableHead>
               <TableHead className="w-[60px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -312,47 +295,60 @@ const AdminKnowledgeItems = () => {
             {items?.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    {item.description && (
-                      <div 
-                        className="text-sm text-muted-foreground max-w-xs truncate"
-                        title={item.description}
-                      >
-                        {item.description}
-                      </div>
-                    )}
-                  </div>
+                  <button 
+                    onClick={() => handleEdit(item)}
+                    className="font-medium text-left hover:text-primary cursor-pointer transition-colors"
+                  >
+                    {item.name}
+                  </button>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {item.knowledge_categories && (
-                      <Badge 
-                        variant="secondary" 
-                        className="text-xs"
-                        style={{ 
-                          backgroundColor: `${item.knowledge_categories.color}20`, 
-                          color: item.knowledge_categories.color 
-                        }}
-                      >
-                        {item.knowledge_categories.name}
-                      </Badge>
-                    )}
-                    {item.is_featured && (
-                      <Badge variant="outline" className="text-xs">Featured</Badge>
-                    )}
-                  </div>
+                  {item.knowledge_categories ? (
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs"
+                      style={{ 
+                        backgroundColor: `${item.knowledge_categories.color}20`, 
+                        color: item.knowledge_categories.color 
+                      }}
+                    >
+                      {item.knowledge_categories.name}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
+                  )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={item.is_published ? "default" : "secondary"}>
-                    {item.is_published ? "Published" : "Draft"}
-                  </Badge>
+                  {item.activity_domains ? (
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs"
+                      style={{ 
+                        backgroundColor: `${item.activity_domains.color}20`, 
+                        color: item.activity_domains.color 
+                      }}
+                    >
+                      {item.activity_domains.name}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
+                  )}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {item.view_count || 0}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {format(new Date(item.updated_at), 'MMM d, yyyy')}
+                <TableCell>
+                  {item.planning_layers ? (
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs"
+                      style={{ 
+                        backgroundColor: `${item.planning_layers.color}20`, 
+                        color: item.planning_layers.color 
+                      }}
+                    >
+                      {item.planning_layers.name}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -404,7 +400,7 @@ const AdminKnowledgeItems = () => {
             ))}
             {items?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || domainFilter !== 'all' || planningLayerFilter !== 'all'
                     ? 'No items found matching your filters.' 
                     : 'No knowledge items created yet.'
