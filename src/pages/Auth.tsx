@@ -35,11 +35,22 @@ const Auth = () => {
 useEffect(() => {
   let cancelled = false;
   (async () => {
-    if (!user || mfaRequired) return;
+    console.log('🔍 Auth useEffect: Starting navigation check', { 
+      hasUser: !!user, 
+      userEmail: user?.email, 
+      userId: user?.id,
+      mfaRequired 
+    });
+    
+    if (!user || mfaRequired) {
+      console.log('❌ Auth useEffect: No user or MFA required, staying on auth page');
+      return;
+    }
 
     // If another part of the app requested MFA prompt, honor it
     const flag = sessionStorage.getItem('mfa:prompt');
     if (flag) {
+      console.log('🔍 Auth useEffect: MFA prompt flag found, starting MFA');
       sessionStorage.removeItem('mfa:prompt');
       await handleStartMfa();
       return;
@@ -48,7 +59,10 @@ useEffect(() => {
     try {
       const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
       const currentLevel = aalData?.currentLevel;
+      console.log('🔍 Auth useEffect: AAL level check', { currentLevel });
+      
       if (currentLevel === 'aal2') {
+        console.log('✅ Auth useEffect: AAL2 confirmed, navigating to home');
         if (!cancelled) navigate("/");
         return;
       }
@@ -56,15 +70,24 @@ useEffect(() => {
       const { data: lf } = await (supabase as any).auth.mfa.listFactors();
       const all = lf?.all ?? [];
       const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
+      
+      console.log('🔍 Auth useEffect: MFA factors check', { 
+        totalFactors: all.length, 
+        hasVerifiedTotp: !!verifiedTotp 
+      });
+      
       if (verifiedTotp) {
+        console.log('🔍 Auth useEffect: Verified TOTP found, starting MFA challenge');
         await handleStartMfa(all);
         return;
       }
 
       // No verified TOTP → safe to redirect
+      console.log('✅ Auth useEffect: No TOTP factors, navigating to home');
       if (!cancelled) navigate("/");
     } catch (err) {
-      console.warn('AAL-aware redirect check failed:', err);
+      console.warn('❌ Auth useEffect: AAL-aware redirect check failed:', err);
+      console.log('✅ Auth useEffect: Error occurred, navigating to home anyway');
       if (!cancelled) navigate("/");
     }
   })();

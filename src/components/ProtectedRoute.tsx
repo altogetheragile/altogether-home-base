@@ -48,8 +48,32 @@ const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false 
     aalLevel,
     userRole,
     userId: user?.id,
+    userEmail: user?.email,
     timestamp: new Date().toISOString()
   });
+
+  // Add session debugging
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('🔍 ProtectedRoute Session Check:', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          sessionUserId: session?.user?.id,
+          sessionUserEmail: session?.user?.email,
+          sessionError: error,
+          accessToken: session?.access_token ? 'present' : 'missing'
+        });
+      } catch (err) {
+        console.error('❌ ProtectedRoute Session Error:', err);
+      }
+    };
+    
+    if (user) {
+      checkSession();
+    }
+  }, [user]);
 
   // Show enhanced loading state while checking authentication, role, and AAL level (if required)
   if (loading || roleLoading || (requireAAL2 && (aalLoading || aalLevel === null))) {

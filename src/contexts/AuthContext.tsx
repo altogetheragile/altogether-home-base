@@ -46,12 +46,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Check for existing session once on mount
   useEffect(() => {
     console.log('🔍 Checking for existing session...');
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('📋 Initial session check result:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        sessionUserId: session?.user?.id,
+        sessionUserEmail: session?.user?.email,
+        sessionError: error,
+        accessToken: session?.access_token ? 'present' : 'missing'
+      });
+      
       if (session) {
         setSession(session);
         setUser(session.user);
-        setLoading(false);
       }
+      setLoading(false);
+    }).catch((error) => {
+      console.error('❌ Session check failed:', error);
+      setLoading(false);
     });
   }, []);
 
