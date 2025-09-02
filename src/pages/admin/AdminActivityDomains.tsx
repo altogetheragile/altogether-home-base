@@ -134,11 +134,11 @@ const AdminActivityDomains = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Target className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Activity Domains</h1>
+          <h1 className="text-2xl font-bold">Domains of Interest</h1>
         </div>
         <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
           <Plus className="h-4 w-4" />
-          <span>Add Activity Domain</span>
+          <span>Add Domain of Interest</span>
         </Button>
       </div>
 
@@ -218,7 +218,7 @@ const AdminActivityDomains = () => {
             {!domains?.length && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No activity domains found. Create your first activity domain to get started.
+                  No domains of interest found. Create your first domain of interest to get started.
                 </TableCell>
               </TableRow>
             )}

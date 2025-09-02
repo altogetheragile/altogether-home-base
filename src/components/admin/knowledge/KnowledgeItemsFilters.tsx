@@ -252,7 +252,7 @@ export const KnowledgeItemsFilters = ({
       {/* Domains */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Activity Domains</Label>
+          <Label className="text-sm font-medium">Domains of Interest</Label>
           {filters.domains.length > 0 && (
             <Button
               variant="ghost"

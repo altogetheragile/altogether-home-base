@@ -104,10 +104,10 @@ const AdminLayout = () => {
       description: 'Manage planning layers'
     },
     {
-      label: 'Activity Domains',
+      label: 'Domains of Interest',
       href: '/admin/knowledge/activity-domains',
       icon: Target,
-      description: 'Manage activity domains'
+      description: 'Manage domains of interest'
     },
     {
       label: 'Tags',
