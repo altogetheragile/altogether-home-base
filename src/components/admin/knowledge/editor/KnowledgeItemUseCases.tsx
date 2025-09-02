@@ -14,19 +14,24 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { UseCaseForm } from './UseCaseForm';
+
 import { useKnowledgeUseCases, useDeleteKnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
 import { useToast } from '@/hooks/use-toast';
 
 interface KnowledgeItemUseCasesProps {
   knowledgeItemId?: string;
   onSaveItem?: () => Promise<void>;
+  onAddUseCase: (type: 'generic' | 'example') => void;
+  onEditUseCase: (useCase: any) => void;
 }
 
-export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: KnowledgeItemUseCasesProps) => {
+export const KnowledgeItemUseCases = ({ 
+  knowledgeItemId, 
+  onSaveItem, 
+  onAddUseCase,
+  onEditUseCase
+}: KnowledgeItemUseCasesProps) => {
   const [activeTab, setActiveTab] = useState('generic');
-  const [showForm, setShowForm] = useState(false);
-  const [editingUseCase, setEditingUseCase] = useState<any>(null);
   const [useCaseToDelete, setUseCaseToDelete] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -46,13 +51,11 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: Knowledge
       });
       return;
     }
-    setEditingUseCase({ case_type: type });
-    setShowForm(true);
+    onAddUseCase(type);
   };
 
   const handleEditUseCase = (useCase: any) => {
-    setEditingUseCase(useCase);
-    setShowForm(true);
+    onEditUseCase(useCase);
   };
 
   const handleDeleteUseCase = async () => {
@@ -309,18 +312,6 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: Knowledge
           </div>
         </TabsContent>
       </Tabs>
-
-      {/* Use Case Form Dialog */}
-      <UseCaseForm
-        open={showForm}
-        onOpenChange={setShowForm}
-        knowledgeItemId={knowledgeItemId}
-        editingUseCase={editingUseCase}
-        onSuccess={() => {
-          setShowForm(false);
-          setEditingUseCase(null);
-        }}
-      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!useCaseToDelete} onOpenChange={(open) => !open && setUseCaseToDelete(null)}>

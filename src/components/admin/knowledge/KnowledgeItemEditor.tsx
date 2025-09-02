@@ -18,6 +18,7 @@ import { KnowledgeItemClassification } from './editor/KnowledgeItemClassificatio
 import { KnowledgeItemContent } from './editor/KnowledgeItemContent';
 import { KnowledgeItemUseCases } from './editor/KnowledgeItemUseCases';
 import { KnowledgeItemAnalytics } from './editor/KnowledgeItemAnalytics';
+import { UseCaseForm } from './editor/UseCaseForm';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,6 +36,8 @@ export const KnowledgeItemEditor = ({
   onSuccess
 }: KnowledgeItemEditorProps) => {
   const [activeTab, setActiveTab] = useState('basic');
+  const [showUseCaseForm, setShowUseCaseForm] = useState(false);
+  const [editingUseCase, setEditingUseCase] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -157,6 +160,16 @@ export const KnowledgeItemEditor = ({
     }
   };
 
+  const handleAddUseCase = (type: 'generic' | 'example') => {
+    setEditingUseCase({ case_type: type });
+    setShowUseCaseForm(true);
+  };
+
+  const handleEditUseCase = (useCase: any) => {
+    setEditingUseCase(useCase);
+    setShowUseCaseForm(true);
+  };
+
   const isLoading = createKnowledgeItem.isPending || updateKnowledgeItem.isPending;
 
   const hasUnsavedChanges = editingItem ? (
@@ -177,6 +190,7 @@ export const KnowledgeItemEditor = ({
   );
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl h-[95vh] flex flex-col p-0">
         {/* Header */}
@@ -325,6 +339,8 @@ export const KnowledgeItemEditor = ({
                 <KnowledgeItemUseCases
                   knowledgeItemId={editingItem?.id}
                   onSaveItem={!editingItem ? handleSave : undefined}
+                  onAddUseCase={handleAddUseCase}
+                  onEditUseCase={handleEditUseCase}
                 />
               </TabsContent>
 
@@ -340,5 +356,18 @@ export const KnowledgeItemEditor = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Use Case Form - rendered as sibling to main dialog */}
+    <UseCaseForm
+      open={showUseCaseForm}
+      onOpenChange={setShowUseCaseForm}
+      knowledgeItemId={editingItem?.id}
+      editingUseCase={editingUseCase}
+      onSuccess={() => {
+        setShowUseCaseForm(false);
+        setEditingUseCase(null);
+      }}
+    />
+    </>
   );
 };

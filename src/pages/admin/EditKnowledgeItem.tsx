@@ -281,6 +281,20 @@ const EditKnowledgeItem = () => {
             <KnowledgeItemUseCases
               knowledgeItemId={isEditing ? id : undefined}
               onSaveItem={!isEditing ? handleSaveAndStay : undefined}
+              onAddUseCase={(type) => {
+                toast({
+                  title: "Feature Not Available",
+                  description: "Use case editing is available in the modal editor.",
+                  variant: "default",
+                });
+              }}
+              onEditUseCase={() => {
+                toast({
+                  title: "Feature Not Available",
+                  description: "Use case editing is available in the modal editor.",
+                  variant: "default",
+                });
+              }}
             />
           </TabsContent>
 
