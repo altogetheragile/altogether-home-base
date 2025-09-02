@@ -59,9 +59,12 @@ export const KnowledgeItemUseCases = ({
   };
 
   const handleDeleteUseCase = async () => {
-    if (useCaseToDelete) {
+    if (useCaseToDelete && knowledgeItemId) {
       try {
-        await deleteUseCase.mutateAsync(useCaseToDelete.id);
+        await deleteUseCase.mutateAsync({ 
+          id: useCaseToDelete.id, 
+          knowledgeItemId 
+        });
         setUseCaseToDelete(null);
       } catch (error) {
         console.error('Error deleting use case:', error);
