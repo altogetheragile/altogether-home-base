@@ -1,12 +1,25 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, MoreVertical, ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDeleteKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -18,14 +31,34 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
+type SortColumn = 'name' | 'views' | 'updated_at';
+type SortDirection = 'asc' | 'desc';
+
 const AdminKnowledgeItems = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('updated_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Fetch categories for filter dropdown
+  const { data: categories } = useQuery({
+    queryKey: ['knowledge-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('knowledge_categories')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ['admin-knowledge-items', searchTerm],
+    queryKey: ['admin-knowledge-items', searchTerm, statusFilter, categoryFilter, sortColumn, sortDirection],
     queryFn: async () => {
       let query = supabase
         .from('knowledge_items')
@@ -34,11 +67,33 @@ const AdminKnowledgeItems = () => {
           knowledge_categories (id, name, slug, color),
           planning_layers (id, name, slug, color),
           activity_domains (id, name, slug, color)
-        `)
-        .order('updated_at', { ascending: false });
+        `);
 
+      // Apply search filter
       if (searchTerm.trim()) {
         query = query.or(`name.ilike.%${searchTerm.trim()}%,description.ilike.%${searchTerm.trim()}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter === 'published') {
+        query = query.eq('is_published', true);
+      } else if (statusFilter === 'draft') {
+        query = query.eq('is_published', false);
+      }
+
+      // Apply category filter
+      if (categoryFilter !== 'all') {
+        query = query.eq('category_id', categoryFilter);
+      }
+
+      // Apply sorting
+      const ascending = sortDirection === 'asc';
+      if (sortColumn === 'name') {
+        query = query.order('name', { ascending });
+      } else if (sortColumn === 'views') {
+        query = query.order('view_count', { ascending });
+      } else {
+        query = query.order('updated_at', { ascending });
       }
 
       const { data, error } = await query;
@@ -71,6 +126,23 @@ const AdminKnowledgeItems = () => {
     });
   };
 
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4" />;
+    }
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="h-4 w-4" /> : 
+      <ArrowDown className="h-4 w-4" />;
+  };
 
   if (isLoading) {
     return <div className="p-8">Loading...</div>;
@@ -86,7 +158,8 @@ const AdminKnowledgeItems = () => {
         </Button>
       </div>
 
-      <div className="mb-4">
+      {/* Search and Filters */}
+      <div className="space-y-4 mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -96,18 +169,73 @@ const AdminKnowledgeItems = () => {
             className="pl-10"
           />
         </div>
+        
+        <div className="flex gap-4">
+          <div className="w-48">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="w-48">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 select-none"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center gap-2">
+                  Name
+                  {getSortIcon('name')}
+                </div>
+              </TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Views</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 select-none"
+                onClick={() => handleSort('views')}
+              >
+                <div className="flex items-center gap-2">
+                  Views
+                  {getSortIcon('views')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 select-none"
+                onClick={() => handleSort('updated_at')}
+              >
+                <div className="flex items-center gap-2">
+                  Updated
+                  {getSortIcon('updated_at')}
+                </div>
+              </TableHead>
+              <TableHead className="w-[60px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -117,28 +245,38 @@ const AdminKnowledgeItems = () => {
                   <div>
                     <div className="font-medium">{item.name}</div>
                     {item.description && (
-                      <div className="text-sm text-muted-foreground max-w-xs truncate">
+                      <div 
+                        className="text-sm text-muted-foreground max-w-xs truncate"
+                        title={item.description}
+                      >
                         {item.description}
                       </div>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  {item.knowledge_categories && (
-                    <Badge variant="secondary" style={{ backgroundColor: `${item.knowledge_categories.color}20`, color: item.knowledge_categories.color }}>
-                      {item.knowledge_categories.name}
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={item.is_published ? "default" : "secondary"}>
-                      {item.is_published ? "Published" : "Draft"}
-                    </Badge>
+                  <div className="flex flex-wrap gap-1">
+                    {item.knowledge_categories && (
+                      <Badge 
+                        variant="secondary" 
+                        className="text-xs"
+                        style={{ 
+                          backgroundColor: `${item.knowledge_categories.color}20`, 
+                          color: item.knowledge_categories.color 
+                        }}
+                      >
+                        {item.knowledge_categories.name}
+                      </Badge>
+                    )}
                     {item.is_featured && (
-                      <Badge variant="outline">Featured</Badge>
+                      <Badge variant="outline" className="text-xs">Featured</Badge>
                     )}
                   </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={item.is_published ? "default" : "secondary"}>
+                    {item.is_published ? "Published" : "Draft"}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {item.view_count || 0}
@@ -147,44 +285,66 @@ const AdminKnowledgeItems = () => {
                   {format(new Date(item.updated_at), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => togglePublished(item)}
-                      title={item.is_published ? "Unpublish" : "Publish"}
-                    >
-                      {item.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(item)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        aria-label="Open actions menu"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => togglePublished(item)}>
+                        <div className="flex items-center gap-2">
+                          {item.is_published ? (
+                            <>
+                              <EyeOff className="h-4 w-4" />
+                              Unpublish
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-4 w-4" />
+                              Publish
+                            </>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEdit(item)}>
+                        <div className="flex items-center gap-2">
+                          <Edit className="h-4 w-4" />
+                          Edit
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDelete(item)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
             {items?.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {searchTerm ? 'No items found matching your search.' : 'No knowledge items created yet.'}
+                  {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' 
+                    ? 'No items found matching your filters.' 
+                    : 'No knowledge items created yet.'
+                  }
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-
     </div>
   );
 };
