@@ -323,44 +323,38 @@ const AdminKnowledgeItems = () => {
                  </TableCell>
                  <TableCell>
                    {item.knowledge_categories && (
-                     <Badge 
-                       variant="secondary" 
-                       className="text-xs"
+                     <span 
+                       className="text-sm font-medium"
                        style={{ 
-                         backgroundColor: `${item.knowledge_categories.color}20`, 
                          color: item.knowledge_categories.color 
                        }}
                      >
                        {item.knowledge_categories.name}
-                     </Badge>
+                     </span>
                    )}
                  </TableCell>
                  <TableCell>
                    {item.activity_domains && (
-                     <Badge 
-                       variant="secondary" 
-                       className="text-xs"
+                     <span 
+                       className="text-sm font-medium"
                        style={{ 
-                         backgroundColor: `${item.activity_domains.color}20`, 
                          color: item.activity_domains.color 
                        }}
                      >
                        {item.activity_domains.name}
-                     </Badge>
+                     </span>
                    )}
                  </TableCell>
                  <TableCell>
                    {item.planning_layers && (
-                     <Badge 
-                       variant="secondary" 
-                       className="text-xs"
+                     <span 
+                       className="text-sm font-medium"
                        style={{ 
-                         backgroundColor: `${item.planning_layers.color}20`, 
                          color: item.planning_layers.color 
                        }}
                      >
                        {item.planning_layers.name}
-                     </Badge>
+                     </span>
                    )}
                  </TableCell>
                  <TableCell>
