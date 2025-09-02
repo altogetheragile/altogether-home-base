@@ -162,6 +162,9 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         </TabsList>
 
         <TabsContent value="browse" className="space-y-4">
+          <div className="text-sm text-muted-foreground mb-4 p-3 bg-muted/50 rounded-lg">
+            💡 <strong>How to select media:</strong> Click on any media item to select/deselect it for association with this Knowledge Item. Selected items will show a checkmark and blue border.
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
             {mediaAssets.map((asset) => (
               <Card 

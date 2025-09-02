@@ -21,15 +21,18 @@ export const KnowledgeItemContent = ({
   const selectedMediaIds = knowledgeItemMedia.map(media => media.id);
 
   const handleMediaSelectionChange = async (mediaIds: string[]) => {
-    if (formData?.id) {
-      try {
-        await updateKnowledgeItemMedia.mutateAsync({
-          knowledgeItemId: formData.id,
-          mediaAssetIds: mediaIds
-        });
-      } catch (error) {
-        console.error('Failed to update media:', error);
-      }
+    if (!formData?.id) {
+      // If Knowledge Item isn't saved yet, show a message
+      return;
+    }
+
+    try {
+      await updateKnowledgeItemMedia.mutateAsync({
+        knowledgeItemId: formData.id,
+        mediaAssetIds: mediaIds
+      });
+    } catch (error) {
+      console.error('Failed to update media:', error);
     }
   };
   return (
@@ -113,6 +116,11 @@ export const KnowledgeItemContent = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!formData?.id && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+              ⚠️ Please save this Knowledge Item first before selecting media to associate with it.
+            </div>
+          )}
           <MediaLibrary
             selectedMediaIds={selectedMediaIds}
             onSelectionChange={handleMediaSelectionChange}
