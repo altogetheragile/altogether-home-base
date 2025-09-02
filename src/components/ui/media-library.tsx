@@ -162,25 +162,16 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         </TabsList>
 
         <TabsContent value="browse" className="space-y-4">
-          {selectedMediaIds.length > 0 && (
-            <div className="bg-primary/10 border border-primary/20 rounded-md p-3 mb-4">
-              <p className="text-sm text-primary-foreground/80">
-                <strong>{selectedMediaIds.length}</strong> item{selectedMediaIds.length !== 1 ? 's' : ''} selected. 
-                Click items below to select/deselect them.
-              </p>
-            </div>
-          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
             {mediaAssets.map((asset) => (
               <Card 
                 key={asset.id}
-                className={`cursor-pointer transition-all duration-200 ${
+                className={`cursor-pointer transition-colors ${
                   selectedMediaIds.includes(asset.id) 
-                    ? 'ring-2 ring-primary bg-primary/10 shadow-md scale-[1.02]' 
-                    : 'hover:bg-muted/50 hover:shadow-sm'
+                    ? 'ring-2 ring-primary bg-primary/5' 
+                    : 'hover:bg-muted/50'
                 }`}
                 onClick={() => toggleSelection(asset.id)}
-                title={selectedMediaIds.includes(asset.id) ? 'Click to deselect' : 'Click to select'}
               >
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
@@ -191,10 +182,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                       </Badge>
                     </div>
                     {selectedMediaIds.includes(asset.id) && (
-                      <div className="flex items-center gap-1">
-                        <Check className="h-4 w-4 text-primary font-bold" />
-                        <span className="text-xs text-primary font-medium">Selected</span>
-                      </div>
+                      <Check className="h-4 w-4 text-primary" />
                     )}
                   </div>
                 </CardHeader>

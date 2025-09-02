@@ -109,33 +109,16 @@ export const KnowledgeItemContent = ({
             Media Library
           </CardTitle>
           <CardDescription>
-            Click on media items below to associate or disassociate them with this knowledge item. 
-            Selected items will show with a blue border and checkmark.
+            Browse and select media from the shared library
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {formData?.id ? (
-            <>
-              {selectedMediaIds.length > 0 && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-sm text-blue-800">
-                    <strong>{selectedMediaIds.length}</strong> media item{selectedMediaIds.length !== 1 ? 's' : ''} currently associated with this knowledge item
-                  </p>
-                </div>
-              )}
-              <MediaLibrary
-                selectedMediaIds={selectedMediaIds}
-                onSelectionChange={handleMediaSelectionChange}
-                multiSelect={true}
-                bucketName="knowledge-base"
-              />
-            </>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Save this knowledge item first to associate media</p>
-            </div>
-          )}
+          <MediaLibrary
+            selectedMediaIds={selectedMediaIds}
+            onSelectionChange={handleMediaSelectionChange}
+            multiSelect={true}
+            bucketName="knowledge-base"
+          />
         </CardContent>
       </Card>
     </div>
