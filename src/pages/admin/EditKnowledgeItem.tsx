@@ -91,8 +91,10 @@ const EditKnowledgeItem = () => {
 
   const handleSave = async () => {
     console.log('📝 EditKnowledgeItem handleSave: Starting save process', { isEditing, formData });
+    console.log('🔍 EditKnowledgeItem handleSave: Raw form data:', JSON.stringify(formData, null, 2));
     
-    if (!formData.name.trim()) {
+    // Validate required fields
+    if (!formData.name || !formData.name.trim()) {
       console.warn('⚠️ EditKnowledgeItem: Missing name field');
       toast({
         title: "Validation Error",
@@ -103,7 +105,7 @@ const EditKnowledgeItem = () => {
       return;
     }
 
-    if (!formData.slug.trim()) {
+    if (!formData.slug || !formData.slug.trim()) {
       console.warn('⚠️ EditKnowledgeItem: Missing slug field');
       toast({
         title: "Validation Error", 
@@ -116,17 +118,34 @@ const EditKnowledgeItem = () => {
 
     try {
       console.log('🔄 EditKnowledgeItem: Processing save...');
+      
+      // Sanitize data before sending to database
+      const sanitizedData = {
+        name: formData.name.trim(),
+        slug: formData.slug.trim(),
+        description: formData.description?.trim() || null,
+        background: formData.background?.trim() || null,
+        source: formData.source?.trim() || null,
+        category_id: formData.category_id?.trim() || null,
+        planning_layer_id: formData.planning_layer_id?.trim() || null,
+        domain_id: formData.domain_id?.trim() || null,
+        is_published: formData.is_published || false,
+        is_featured: formData.is_featured || false,
+      };
+
+      console.log('🧹 EditKnowledgeItem: Sanitized data:', JSON.stringify(sanitizedData, null, 2));
+      
       if (isEditing) {
-        console.log('🔧 EditKnowledgeItem: Updating existing item', { id, formData });
+        console.log('🔧 EditKnowledgeItem: Updating existing item', { id, sanitizedData });
         await updateKnowledgeItem.mutateAsync({
           id: id!,
-          ...formData,
+          ...sanitizedData,
           updated_by: user?.id
         });
       } else {
-        console.log('🆕 EditKnowledgeItem: Creating new item', { formData });
+        console.log('🆕 EditKnowledgeItem: Creating new item', { sanitizedData });
         const newItem = await createKnowledgeItem.mutateAsync({
-          ...formData,
+          ...sanitizedData,
           created_by: user?.id,
           updated_by: user?.id
         });
@@ -146,7 +165,7 @@ const EditKnowledgeItem = () => {
       console.error('❌ EditKnowledgeItem handleSave: Error during save', error);
       toast({
         title: "Error saving knowledge item",
-        description: "Please try again or contact support.",
+        description: error.message || "Please try again or contact support.",
         variant: "destructive",
       });
     }

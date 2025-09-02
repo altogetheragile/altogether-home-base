@@ -154,7 +154,7 @@ export const useCreateKnowledgeItem = () => {
 
   return useMutation({
     mutationFn: async (data: Partial<KnowledgeItem>) => {
-      console.log('🚀 useCreateKnowledgeItem: Starting creation with data:', data);
+      console.log('🚀 useCreateKnowledgeItem: Starting creation with data:', JSON.stringify(data, null, 2));
       
       const { data: result, error } = await supabase
         .from('knowledge_items')
@@ -165,8 +165,25 @@ export const useCreateKnowledgeItem = () => {
       console.log('📊 useCreateKnowledgeItem: Insert result:', { result, error });
 
       if (error) {
-        console.error('❌ useCreateKnowledgeItem: Insert failed:', error);
-        throw error;
+        console.error('❌ useCreateKnowledgeItem: Insert failed:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // Create a more descriptive error message
+        let errorMessage = error.message;
+        if (error.code === '23502') {
+          errorMessage = `Missing required field: ${error.details}`;
+        } else if (error.code === '23503') {
+          errorMessage = `Invalid reference: ${error.details}`;
+        } else if (error.code === '23505') {
+          errorMessage = `Duplicate value: ${error.details}`;
+        }
+        
+        throw new Error(errorMessage);
       }
       
       console.log('✅ useCreateKnowledgeItem: Creation successful:', result);
