@@ -71,7 +71,7 @@ const App = () => (
               
               {/* Protected Admin Routes */}
               <Route path="/admin" element={
-                <ProtectedRoute requiredRole="admin" requireAAL2>
+                <ProtectedRoute requiredRole="admin">
                   <AdminLayout />
                 </ProtectedRoute>
               }>
