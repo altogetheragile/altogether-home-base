@@ -309,6 +309,7 @@ export const KnowledgeItemEditor = ({
               <TabsContent value="usecases" className="h-full overflow-y-auto p-8 mt-0">
                 <KnowledgeItemUseCases
                   knowledgeItemId={editingItem?.id}
+                  onSaveItem={!editingItem ? handleSave : undefined}
                 />
               </TabsContent>
 
