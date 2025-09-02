@@ -975,6 +975,36 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_item_tags: {
+        Row: {
+          knowledge_item_id: string
+          tag_id: string
+        }
+        Insert: {
+          knowledge_item_id: string
+          tag_id: string
+        }
+        Update: {
+          knowledge_item_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_tags_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_items: {
         Row: {
           background: string | null
@@ -1053,6 +1083,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      knowledge_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          usage_count?: number | null
+        }
+        Relationships: []
       }
       knowledge_use_cases: {
         Row: {
