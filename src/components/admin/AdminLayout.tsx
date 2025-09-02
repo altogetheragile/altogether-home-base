@@ -1,6 +1,6 @@
 
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -175,6 +175,13 @@ const AdminLayout = () => {
       items: knowledgeItems
     },
     {
+      id: 'media',
+      label: 'Media Library',
+      icon: FileImage,
+      paths: ['/admin/media'],
+      href: '/admin/media'
+    },
+    {
       id: 'logs',
       label: 'System Logs',
       icon: Terminal,
@@ -241,7 +248,7 @@ const AdminLayout = () => {
           <div className="px-6 py-4">
             <Tabs value={activeTab} className="w-full">
               {/* Tab Headers */}
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
                 {tabs.map((tab) => (
                   <TabsTrigger
                     key={tab.id}

@@ -38,6 +38,7 @@ import AdminKnowledgeCategories from "./pages/admin/AdminKnowledgeCategories";
 import AdminKnowledgeTags from "./pages/admin/AdminKnowledgeTags";
 import AdminKnowledgeLearningPaths from "./pages/admin/AdminKnowledgeLearningPaths";
 import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsRoute";
+import AdminMedia from "./pages/admin/AdminMedia";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
@@ -104,6 +105,7 @@ const App = () => (
                 <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
                 <Route path="knowledge/imports" element={<AdminKnowledgeImport />} />
                 <Route path="imports" element={<AdminImports />} />
+                <Route path="media" element={<AdminMedia />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
                 <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
