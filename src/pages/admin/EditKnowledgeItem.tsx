@@ -112,7 +112,10 @@ const EditKnowledgeItem = () => {
           ...formData
         });
       } else {
-        await createKnowledgeItem.mutateAsync(formData);
+        const newItem = await createKnowledgeItem.mutateAsync(formData);
+        // For new items, redirect to edit mode so use cases can be added
+        navigate(`/admin/knowledge/items/${newItem.id}/edit`);
+        return;
       }
       
       toast({
@@ -121,6 +124,56 @@ const EditKnowledgeItem = () => {
       });
       
       navigate('/admin/knowledge/items');
+    } catch (error) {
+      console.error('Error saving knowledge item:', error);
+      toast({
+        title: "Error saving knowledge item",
+        description: "Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveAndStay = async () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Name is required",
+        variant: "destructive",
+      });
+      setActiveTab('basic');
+      return;
+    }
+
+    if (!formData.slug.trim()) {
+      toast({
+        title: "Validation Error", 
+        description: "Slug is required",
+        variant: "destructive",
+      });
+      setActiveTab('basic');
+      return;
+    }
+
+    try {
+      if (isEditing) {
+        await updateKnowledgeItem.mutateAsync({
+          id: id!,
+          ...formData
+        });
+        toast({
+          title: "Knowledge item updated",
+          description: "Your changes have been saved.",
+        });
+      } else {
+        const newItem = await createKnowledgeItem.mutateAsync(formData);
+        // Redirect to edit mode for the newly created item
+        navigate(`/admin/knowledge/items/${newItem.id}/edit`, { replace: true });
+        toast({
+          title: "Knowledge item created",
+          description: "You can now add use cases and continue editing.",
+        });
+      }
     } catch (error) {
       console.error('Error saving knowledge item:', error);
       toast({
@@ -227,6 +280,7 @@ const EditKnowledgeItem = () => {
           <TabsContent value="usecases" className="space-y-4 mt-6">
             <KnowledgeItemUseCases
               knowledgeItemId={isEditing ? id : undefined}
+              onSaveItem={!isEditing ? handleSaveAndStay : undefined}
             />
           </TabsContent>
 

@@ -19,9 +19,10 @@ import { useKnowledgeUseCases, useDeleteKnowledgeUseCase } from '@/hooks/useKnow
 
 interface KnowledgeItemUseCasesProps {
   knowledgeItemId?: string;
+  onSaveItem?: () => Promise<void>;
 }
 
-export const KnowledgeItemUseCases = ({ knowledgeItemId }: KnowledgeItemUseCasesProps) => {
+export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: KnowledgeItemUseCasesProps) => {
   const [activeTab, setActiveTab] = useState('generic');
   const [showForm, setShowForm] = useState(false);
   const [editingUseCase, setEditingUseCase] = useState<any>(null);
@@ -34,6 +35,10 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId }: KnowledgeItemUseCases
   const exampleUseCases = useCases.filter(uc => uc.case_type === 'example');
 
   const handleAddUseCase = (type: 'generic' | 'example') => {
+    if (!knowledgeItemId) {
+      // This shouldn't happen due to UI disabling, but just in case
+      return;
+    }
     setEditingUseCase({ case_type: type, knowledge_item_id: knowledgeItemId });
     setShowForm(true);
   };
@@ -59,9 +64,14 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId }: KnowledgeItemUseCases
       <div className="text-center py-12">
         <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
         <h3 className="text-lg font-medium mb-2">Save Item First</h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-4">
           Please save the knowledge item before adding use cases
         </p>
+        {onSaveItem && (
+          <Button onClick={onSaveItem} className="mt-2">
+            Save Item Now
+          </Button>
+        )}
       </div>
     );
   }
@@ -206,7 +216,11 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId }: KnowledgeItemUseCases
                     General scenarios where this knowledge applies
                   </CardDescription>
                 </div>
-                <Button onClick={() => handleAddUseCase('generic')} size="sm">
+                <Button 
+                  onClick={() => handleAddUseCase('generic')} 
+                  size="sm"
+                  disabled={!knowledgeItemId}
+                >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Generic
                 </Button>
@@ -223,7 +237,11 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId }: KnowledgeItemUseCases
               <div className="lg:col-span-2 text-center py-8">
                 <Users className="h-8 w-8 mx-auto mb-3 opacity-50" />
                 <p className="text-muted-foreground mb-3">No generic use cases defined</p>
-                <Button onClick={() => handleAddUseCase('generic')} variant="outline">
+                <Button 
+                  onClick={() => handleAddUseCase('generic')} 
+                  variant="outline"
+                  disabled={!knowledgeItemId}
+                >
                   <Plus className="h-4 w-4 mr-1" />
                   Add First Generic Use Case
                 </Button>
@@ -245,7 +263,11 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId }: KnowledgeItemUseCases
                     Specific real-world examples and case studies
                   </CardDescription>
                 </div>
-                <Button onClick={() => handleAddUseCase('example')} size="sm">
+                <Button 
+                  onClick={() => handleAddUseCase('example')} 
+                  size="sm"
+                  disabled={!knowledgeItemId}
+                >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Example
                 </Button>
@@ -262,7 +284,11 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId }: KnowledgeItemUseCases
               <div className="lg:col-span-2 text-center py-8">
                 <Lightbulb className="h-8 w-8 mx-auto mb-3 opacity-50" />
                 <p className="text-muted-foreground mb-3">No example use cases defined</p>
-                <Button onClick={() => handleAddUseCase('example')} variant="outline">
+                <Button 
+                  onClick={() => handleAddUseCase('example')} 
+                  variant="outline"
+                  disabled={!knowledgeItemId}
+                >
                   <Plus className="h-4 w-4 mr-1" />
                   Add First Example Use Case
                 </Button>
