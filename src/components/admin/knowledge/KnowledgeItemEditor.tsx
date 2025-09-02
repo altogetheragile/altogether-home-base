@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Info, FolderOpen, FileText, BookOpen, BarChart3, 
   Save, X, Eye, EyeOff, Star, StarOff 
@@ -52,7 +52,19 @@ export const KnowledgeItemEditor = ({
   const createKnowledgeItem = useCreateKnowledgeItem();
   const updateKnowledgeItem = useUpdateKnowledgeItem();
 
+  const prevOpenRef = useRef<boolean>(open);
+  const prevEditingItemRef = useRef<typeof editingItem | null>(editingItem);
+
   useEffect(() => {
+    const isOpening = !prevOpenRef.current && open;
+    const editingItemChanged =
+      prevEditingItemRef.current?.id !== editingItem?.id;
+
+    // Only reset the tab when the dialog opens for the first time or a new item is selected
+    if (isOpening || editingItemChanged) {
+      setActiveTab('basic');
+    }
+
     if (editingItem) {
       setFormData({
         name: editingItem.name || '',
@@ -80,7 +92,10 @@ export const KnowledgeItemEditor = ({
         is_featured: false
       });
     }
-    setActiveTab('basic');
+
+    // Update refs for next render
+    prevOpenRef.current = open;
+    prevEditingItemRef.current = editingItem;
   }, [editingItem, open]);
 
   const handleSave = async () => {
