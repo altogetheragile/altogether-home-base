@@ -281,14 +281,16 @@ const AdminKnowledgeItems = () => {
                 onClick={() => handleSort('name')}
               >
                 <div className="flex items-center gap-2">
-                  Name
+                  Title
                   {getSortIcon('name')}
                 </div>
               </TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="w-32">Category</TableHead>
+              <TableHead className="w-40">Domains of Interest</TableHead>
+              <TableHead className="w-40">Planning Layers</TableHead>
+              <TableHead className="w-24">Status</TableHead>
               <TableHead 
-                className="cursor-pointer hover:bg-muted/50 select-none"
+                className="w-20 cursor-pointer hover:bg-muted/50 select-none"
                 onClick={() => handleSort('views')}
               >
                 <div className="flex items-center gap-2">
@@ -297,7 +299,7 @@ const AdminKnowledgeItems = () => {
                 </div>
               </TableHead>
               <TableHead 
-                className="cursor-pointer hover:bg-muted/50 select-none"
+                className="w-28 cursor-pointer hover:bg-muted/50 select-none"
                 onClick={() => handleSort('updated_at')}
               >
                 <div className="flex items-center gap-2">
@@ -308,111 +310,134 @@ const AdminKnowledgeItems = () => {
               <TableHead className="w-[60px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {items?.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    {item.description && (
-                      <div 
-                        className="text-sm text-muted-foreground max-w-xs truncate"
-                        title={item.description}
-                      >
-                        {item.description}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {item.knowledge_categories && (
-                      <Badge 
-                        variant="secondary" 
-                        className="text-xs"
-                        style={{ 
-                          backgroundColor: `${item.knowledge_categories.color}20`, 
-                          color: item.knowledge_categories.color 
-                        }}
-                      >
-                        {item.knowledge_categories.name}
-                      </Badge>
-                    )}
-                    {item.is_featured && (
-                      <Badge variant="outline" className="text-xs">Featured</Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={item.is_published ? "default" : "secondary"}>
-                    {item.is_published ? "Published" : "Draft"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {item.view_count || 0}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {format(new Date(item.updated_at), 'MMM d, yyyy')}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0"
-                        aria-label="Open actions menu"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => togglePublished(item)}>
-                        <div className="flex items-center gap-2">
-                          {item.is_published ? (
-                            <>
-                              <EyeOff className="h-4 w-4" />
-                              Unpublish
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="h-4 w-4" />
-                              Publish
-                            </>
-                          )}
-                        </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(item)}>
-                        <div className="flex items-center gap-2">
-                          <Edit className="h-4 w-4" />
-                          Edit
-                        </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleDelete(item)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </div>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-            {items?.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || domainFilter !== 'all' || planningLayerFilter !== 'all'
-                    ? 'No items found matching your filters.' 
-                    : 'No knowledge items created yet.'
-                  }
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+           <TableBody>
+             {items?.map((item) => (
+               <TableRow key={item.id}>
+                 <TableCell>
+                   <button 
+                     onClick={() => handleEdit(item)}
+                     className="font-medium text-left hover:text-primary underline-offset-4 hover:underline cursor-pointer"
+                   >
+                     {item.name}
+                   </button>
+                 </TableCell>
+                 <TableCell>
+                   {item.knowledge_categories && (
+                     <Badge 
+                       variant="secondary" 
+                       className="text-xs"
+                       style={{ 
+                         backgroundColor: `${item.knowledge_categories.color}20`, 
+                         color: item.knowledge_categories.color 
+                       }}
+                     >
+                       {item.knowledge_categories.name}
+                     </Badge>
+                   )}
+                 </TableCell>
+                 <TableCell>
+                   {item.activity_domains && (
+                     <Badge 
+                       variant="secondary" 
+                       className="text-xs"
+                       style={{ 
+                         backgroundColor: `${item.activity_domains.color}20`, 
+                         color: item.activity_domains.color 
+                       }}
+                     >
+                       {item.activity_domains.name}
+                     </Badge>
+                   )}
+                 </TableCell>
+                 <TableCell>
+                   {item.planning_layers && (
+                     <Badge 
+                       variant="secondary" 
+                       className="text-xs"
+                       style={{ 
+                         backgroundColor: `${item.planning_layers.color}20`, 
+                         color: item.planning_layers.color 
+                       }}
+                     >
+                       {item.planning_layers.name}
+                     </Badge>
+                   )}
+                 </TableCell>
+                 <TableCell>
+                   <div className="flex items-center gap-2">
+                     <Badge variant={item.is_published ? "default" : "secondary"}>
+                       {item.is_published ? "Published" : "Draft"}
+                     </Badge>
+                     {item.is_featured && (
+                       <Badge variant="outline" className="text-xs">Featured</Badge>
+                     )}
+                   </div>
+                 </TableCell>
+                 <TableCell className="text-muted-foreground text-sm">
+                   {item.view_count || 0}
+                 </TableCell>
+                 <TableCell className="text-muted-foreground text-sm">
+                   {format(new Date(item.updated_at), 'MMM d')}
+                 </TableCell>
+                 <TableCell>
+                   <DropdownMenu>
+                     <DropdownMenuTrigger asChild>
+                       <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         className="h-8 w-8 p-0"
+                         aria-label="Open actions menu"
+                       >
+                         <MoreVertical className="h-4 w-4" />
+                       </Button>
+                     </DropdownMenuTrigger>
+                     <DropdownMenuContent align="end">
+                       <DropdownMenuItem onClick={() => togglePublished(item)}>
+                         <div className="flex items-center gap-2">
+                           {item.is_published ? (
+                             <>
+                               <EyeOff className="h-4 w-4" />
+                               Unpublish
+                             </>
+                           ) : (
+                             <>
+                               <Eye className="h-4 w-4" />
+                               Publish
+                             </>
+                           )}
+                         </div>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => handleEdit(item)}>
+                         <div className="flex items-center gap-2">
+                           <Edit className="h-4 w-4" />
+                           Edit
+                         </div>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem 
+                         onClick={() => handleDelete(item)}
+                         className="text-destructive focus:text-destructive"
+                       >
+                         <div className="flex items-center gap-2">
+                           <Trash2 className="h-4 w-4" />
+                           Delete
+                         </div>
+                       </DropdownMenuItem>
+                     </DropdownMenuContent>
+                   </DropdownMenu>
+                 </TableCell>
+               </TableRow>
+             ))}
+             {items?.length === 0 && (
+               <TableRow>
+                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                   {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || domainFilter !== 'all' || planningLayerFilter !== 'all'
+                     ? 'No items found matching your filters.' 
+                     : 'No knowledge items created yet.'
+                   }
+                 </TableCell>
+               </TableRow>
+             )}
+           </TableBody>
         </Table>
       </div>
     </div>
