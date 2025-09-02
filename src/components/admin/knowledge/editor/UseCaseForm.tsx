@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Save, X, FileText, Target } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -116,12 +116,12 @@ export const UseCaseForm = ({
   const isLoading = createUseCase.isPending || updateUseCase.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b border-border">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[600px] sm:w-[700px] flex flex-col p-0">
+        <SheetHeader className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <DialogTitle className="flex items-center gap-2">
+              <SheetTitle className="flex items-center gap-2">
                 {formData.case_type === 'generic' ? (
                   <>
                     <FileText className="h-5 w-5" />
@@ -133,13 +133,13 @@ export const UseCaseForm = ({
                     {editingUseCase?.id ? 'Edit Example Use Case' : 'Create Example Use Case'}
                   </>
                 )}
-              </DialogTitle>
+              </SheetTitle>
               <Badge variant={formData.case_type === 'generic' ? 'default' : 'secondary'}>
                 {formData.case_type === 'generic' ? 'Generic' : 'Example'}
               </Badge>
-              <DialogDescription>
+              <SheetDescription>
                 Define when, where, and how this knowledge item is used
-              </DialogDescription>
+              </SheetDescription>
             </div>
 
             <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ export const UseCaseForm = ({
               </Button>
             </div>
           </div>
-        </DialogHeader>
+        </SheetHeader>
 
         <div className="flex-1 overflow-auto p-6">
           <div className="space-y-6">
@@ -294,7 +294,7 @@ export const UseCaseForm = ({
             </Card>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };
