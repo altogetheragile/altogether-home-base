@@ -33,55 +33,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔐 Auth state changed:', event, {
-          userEmail: session?.user?.email,
-          hasAccessToken: !!session?.access_token,
-          tokenLength: session?.access_token?.length || 0,
-          uid: session?.user?.id
-        });
-        
+        console.log('🔐 Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
-        // Debug: Test database connection with new session
-        if (session?.access_token) {
-          console.log('✅ Session established, testing DB connection...');
-          // Use setTimeout to ensure the session is fully set
-          setTimeout(async () => {
-            try {
-              const { data, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-              console.log('🔍 Profile check result:', { data, error, uid: session.user.id });
-            } catch (err) {
-              console.error('Profile check failed:', err);
-            }
-          }, 100);
-        }
       }
     );
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Separate effect to check for existing session after auth listener is set up
+  // Check for existing session once on mount
   useEffect(() => {
     console.log('🔍 Checking for existing session...');
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('📋 Existing session check:', {
-        hasSession: !!session,
-        userEmail: session?.user?.email,
-        hasAccessToken: !!session?.access_token,
-        error
-      });
-      
-      // Only set if we don't already have a session
-      if (!session && !user) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(session.user);
         setLoading(false);
       }
     });
-  }, [user]); // Depend on user to avoid overwriting authenticated state
+  }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
