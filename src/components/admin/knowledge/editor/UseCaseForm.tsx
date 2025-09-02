@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 interface UseCaseFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  knowledgeItemId: string;
   editingUseCase?: any;
   onSuccess: () => void;
 }
@@ -26,6 +27,7 @@ interface UseCaseFormProps {
 export const UseCaseForm = ({
   open,
   onOpenChange,
+  knowledgeItemId,
   editingUseCase,
   onSuccess
 }: UseCaseFormProps) => {
@@ -48,10 +50,11 @@ export const UseCaseForm = ({
   const updateUseCase = useUpdateKnowledgeUseCase();
 
   useEffect(() => {
-    if (editingUseCase) {
+    if (editingUseCase?.id) {
+      // Editing existing use case
       setFormData({
         case_type: editingUseCase.case_type || 'generic',
-        knowledge_item_id: editingUseCase.knowledge_item_id || '',
+        knowledge_item_id: editingUseCase.knowledge_item_id || knowledgeItemId,
         title: editingUseCase.title || '',
         who: editingUseCase.who || '',
         what: editingUseCase.what || '',
@@ -62,10 +65,11 @@ export const UseCaseForm = ({
         how_much: editingUseCase.how_much || '',
         summary: editingUseCase.summary || ''
       });
-    } else {
+    } else if (open) {
+      // Creating new use case
       setFormData({
-        case_type: 'generic',
-        knowledge_item_id: '',
+        case_type: editingUseCase?.case_type || 'generic',
+        knowledge_item_id: knowledgeItemId,
         title: '',
         who: '',
         what: '',
@@ -77,7 +81,7 @@ export const UseCaseForm = ({
         summary: ''
       });
     }
-  }, [editingUseCase, open]);
+  }, [editingUseCase, open, knowledgeItemId]);
 
   const handleSave = async () => {
     if (!formData.knowledge_item_id) {

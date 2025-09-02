@@ -39,7 +39,7 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: Knowledge
       // This shouldn't happen due to UI disabling, but just in case
       return;
     }
-    setEditingUseCase({ case_type: type, knowledge_item_id: knowledgeItemId });
+    setEditingUseCase({ case_type: type });
     setShowForm(true);
   };
 
@@ -302,6 +302,7 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: Knowledge
       <UseCaseForm
         open={showForm}
         onOpenChange={setShowForm}
+        knowledgeItemId={knowledgeItemId}
         editingUseCase={editingUseCase}
         onSuccess={() => {
           setShowForm(false);
