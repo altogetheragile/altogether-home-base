@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { UseCaseForm } from './UseCaseForm';
 import { useKnowledgeUseCases, useDeleteKnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
+import { useToast } from '@/hooks/use-toast';
 
 interface KnowledgeItemUseCasesProps {
   knowledgeItemId?: string;
@@ -27,7 +28,9 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: Knowledge
   const [showForm, setShowForm] = useState(false);
   const [editingUseCase, setEditingUseCase] = useState<any>(null);
   const [useCaseToDelete, setUseCaseToDelete] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
+  const { toast } = useToast();
   const { data: useCases = [] } = useKnowledgeUseCases(knowledgeItemId || '');
   const deleteUseCase = useDeleteKnowledgeUseCase();
 
@@ -35,8 +38,12 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: Knowledge
   const exampleUseCases = useCases.filter(uc => uc.case_type === 'example');
 
   const handleAddUseCase = (type: 'generic' | 'example') => {
-    if (!knowledgeItemId) {
-      // This shouldn't happen due to UI disabling, but just in case
+    if (!knowledgeItemId || knowledgeItemId === 'new') {
+      toast({
+        title: "Save Required",
+        description: "Please save the knowledge item first before adding use cases.",
+        variant: "destructive",
+      });
       return;
     }
     setEditingUseCase({ case_type: type });
@@ -59,17 +66,22 @@ export const KnowledgeItemUseCases = ({ knowledgeItemId, onSaveItem }: Knowledge
     }
   };
 
-  if (!knowledgeItemId) {
+  if (!knowledgeItemId || knowledgeItemId === 'new') {
     return (
-      <div className="text-center py-12">
-        <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <h3 className="text-lg font-medium mb-2">Save Item First</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Please save the knowledge item before adding use cases
+      <div className="text-center py-12 space-y-4">
+        <p className="text-muted-foreground">
+          Please save the knowledge item first to add use cases.
         </p>
         {onSaveItem && (
-          <Button onClick={onSaveItem} className="mt-2">
-            Save Item Now
+          <Button onClick={async () => {
+            setIsProcessing(true);
+            try {
+              await onSaveItem();
+            } finally {
+              setIsProcessing(false);
+            }
+          }} disabled={isProcessing}>
+            {isProcessing ? 'Saving...' : 'Save Knowledge Item'}
           </Button>
         )}
       </div>

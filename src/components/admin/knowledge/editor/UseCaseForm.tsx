@@ -84,12 +84,13 @@ export const UseCaseForm = ({
   }, [editingUseCase, open, knowledgeItemId]);
 
   const handleSave = async () => {
-    if (!formData.knowledge_item_id) {
+    if (!formData.knowledge_item_id || formData.knowledge_item_id === 'new') {
       toast({
         title: "Error",
-        description: "Knowledge item ID is required",
+        description: "Please save the knowledge item first before adding use cases",
         variant: "destructive",
       });
+      onOpenChange(false);
       return;
     }
 
