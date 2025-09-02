@@ -44,6 +44,7 @@ import CreateInstructor from "./pages/admin/CreateInstructor";
 import EditInstructor from "./pages/admin/EditInstructor";
 import CreateKnowledgeItem from "./pages/admin/CreateKnowledgeItem";
 import EditKnowledgeItem from "./pages/admin/EditKnowledgeItem";
+import CreateKnowledgeUseCase from "./pages/admin/CreateKnowledgeUseCase";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
@@ -92,6 +93,8 @@ const App = () => (
                 <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
                 <Route path="knowledge/items/new" element={<CreateKnowledgeItem />} />
                 <Route path="knowledge/items/:id/edit" element={<EditKnowledgeItem />} />
+                <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
+                <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/categories" element={<AdminKnowledgeCategories />} />
                 <Route path="knowledge/tags" element={<AdminKnowledgeTags />} />
                 <Route path="knowledge/learning-paths" element={<AdminKnowledgeLearningPaths />} />
