@@ -1,8 +1,10 @@
+import React from 'react';
 import { BookOpen, FileText, Image } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
-import { MediaUpload } from '@/components/ui/media-upload';
+import { MediaLibrary } from '@/components/ui/media-library';
+import { useKnowledgeItemMedia, useKnowledgeItemMediaMutations } from '@/hooks/useMediaAssets';
 
 interface KnowledgeItemContentProps {
   formData: any;
@@ -13,6 +15,23 @@ export const KnowledgeItemContent = ({
   formData,
   onFormChange
 }: KnowledgeItemContentProps) => {
+  const { data: knowledgeItemMedia = [] } = useKnowledgeItemMedia(formData?.id);
+  const { updateKnowledgeItemMedia } = useKnowledgeItemMediaMutations();
+
+  const selectedMediaIds = knowledgeItemMedia.map(media => media.id);
+
+  const handleMediaSelectionChange = async (mediaIds: string[]) => {
+    if (formData?.id) {
+      try {
+        await updateKnowledgeItemMedia.mutateAsync({
+          knowledgeItemId: formData.id,
+          mediaAssetIds: mediaIds
+        });
+      } catch (error) {
+        console.error('Failed to update media:', error);
+      }
+    }
+  };
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -87,16 +106,17 @@ export const KnowledgeItemContent = ({
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Image className="h-4 w-4" />
-            Media Gallery
+            Media Library
           </CardTitle>
           <CardDescription>
-            Upload and manage images, videos, documents, and embedded content
+            Browse and select media from the shared library
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MediaUpload
-            value={formData.mediaItems || []}
-            onChange={(mediaItems) => onFormChange('mediaItems', mediaItems)}
+          <MediaLibrary
+            selectedMediaIds={selectedMediaIds}
+            onSelectionChange={handleMediaSelectionChange}
+            multiSelect={true}
             bucketName="knowledge-base"
           />
         </CardContent>

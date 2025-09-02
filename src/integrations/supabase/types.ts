@@ -1084,6 +1084,42 @@ export type Database = {
           },
         ]
       }
+      knowledge_items_media: {
+        Row: {
+          created_at: string
+          knowledge_item_id: string
+          media_asset_id: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          knowledge_item_id: string
+          media_asset_id: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          knowledge_item_id?: string
+          media_asset_id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_items_media_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_items_media_media_asset_id_fkey"
+            columns: ["media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_media: {
         Row: {
           created_at: string
@@ -1259,6 +1295,54 @@ export type Database = {
           name?: string
           updated_by?: string | null
           virtual_url?: string | null
+        }
+        Relationships: []
+      }
+      media_assets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          original_filename: string | null
+          thumbnail_url: string | null
+          title: string | null
+          type: string
+          updated_at: string
+          updated_by: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          original_filename?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          type: string
+          updated_at?: string
+          updated_by?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          original_filename?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string
         }
         Relationships: []
       }
