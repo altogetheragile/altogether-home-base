@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,17 @@ import { KnowledgeItemClassification } from '@/components/admin/knowledge/editor
 import { KnowledgeItemContent } from '@/components/admin/knowledge/editor/KnowledgeItemContent';
 import { KnowledgeItemUseCases } from '@/components/admin/knowledge/editor/KnowledgeItemUseCases';
 import { KnowledgeItemAnalytics } from '@/components/admin/knowledge/editor/KnowledgeItemAnalytics';
+import { UseCaseForm } from '@/components/admin/knowledge/editor/UseCaseForm';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 
 const EditKnowledgeItem = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('basic');
+  const [showUseCaseForm, setShowUseCaseForm] = useState(false);
+  const [editingUseCase, setEditingUseCase] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -207,6 +211,17 @@ const EditKnowledgeItem = () => {
     }
   };
 
+  // Handlers for opening the UseCaseForm sheet
+  const handleAddUseCase = (type: 'generic' | 'example') => {
+    setEditingUseCase({ case_type: type });
+    setShowUseCaseForm(true);
+  };
+
+  const handleEditUseCase = (useCase: any) => {
+    setEditingUseCase(useCase);
+    setShowUseCaseForm(true);
+  };
+
   const isLoading_ = createKnowledgeItem.isPending || updateKnowledgeItem.isPending;
 
   if (isLoading && isEditing) {
@@ -281,20 +296,8 @@ const EditKnowledgeItem = () => {
             <KnowledgeItemUseCases
               knowledgeItemId={isEditing ? id : undefined}
               onSaveItem={!isEditing ? handleSaveAndStay : undefined}
-              onAddUseCase={(type) => {
-                toast({
-                  title: "Feature Not Available",
-                  description: "Use case editing is available in the modal editor.",
-                  variant: "default",
-                });
-              }}
-              onEditUseCase={() => {
-                toast({
-                  title: "Feature Not Available",
-                  description: "Use case editing is available in the modal editor.",
-                  variant: "default",
-                });
-              }}
+              onAddUseCase={handleAddUseCase}
+              onEditUseCase={handleEditUseCase}
             />
           </TabsContent>
 
@@ -316,6 +319,21 @@ const EditKnowledgeItem = () => {
           </Button>
         </div>
       </form>
+
+      {/* Render the UseCaseForm as a sheet outside the Tabs */}
+      {id && (
+        <UseCaseForm
+          open={showUseCaseForm}
+          onOpenChange={setShowUseCaseForm}
+          knowledgeItemId={id!}
+          editingUseCase={editingUseCase}
+          onSuccess={async () => {
+            // refresh the current knowledge item after saving a use case
+            await queryClient.invalidateQueries({ queryKey: ['knowledge-item', id] });
+            setShowUseCaseForm(false);
+          }}
+        />
+      )}
     </div>
   );
 };
