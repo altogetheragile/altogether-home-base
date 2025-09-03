@@ -33,7 +33,7 @@ import AdminImports from "./pages/admin/AdminImports";
 import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminPlanningLayers from "./pages/admin/AdminPlanningLayers";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
-import AdminKnowledgeItems from "./pages/admin/AdminKnowledgeItems";
+import { ContentStudioDashboard } from "./components/admin/knowledge/ContentStudioDashboard";
 import AdminKnowledgeCategories from "./pages/admin/AdminKnowledgeCategories";
 import AdminKnowledgeTags from "./pages/admin/AdminKnowledgeTags";
 import AdminKnowledgeLearningPaths from "./pages/admin/AdminKnowledgeLearningPaths";
@@ -91,7 +91,7 @@ const App = () => (
                 <Route path="formats" element={<AdminFormats />} />
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
-                <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
+                <Route path="knowledge/items" element={<ContentStudioDashboard />} />
                 <Route path="knowledge/items/new" element={<CreateKnowledgeItem />} />
                 <Route path="knowledge/items/:id/edit" element={<EditKnowledgeItem />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
