@@ -31,7 +31,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-type SortColumn = 'name' | 'views' | 'updated_at';
+type SortColumn = 'name' | 'views' | 'updated_at' | 'category' | 'domain' | 'planning_layer';
 type SortDirection = 'asc' | 'desc';
 
 const AdminKnowledgeItems = () => {
@@ -130,6 +130,12 @@ const AdminKnowledgeItems = () => {
         query = query.order('name', { ascending });
       } else if (sortColumn === 'views') {
         query = query.order('view_count', { ascending });
+      } else if (sortColumn === 'category') {
+        query = query.order('knowledge_categories(name)', { ascending });
+      } else if (sortColumn === 'domain') {
+        query = query.order('activity_domains(name)', { ascending });
+      } else if (sortColumn === 'planning_layer') {
+        query = query.order('planning_layers(name)', { ascending });
       } else {
         query = query.order('updated_at', { ascending });
       }
@@ -285,9 +291,33 @@ const AdminKnowledgeItems = () => {
                   {getSortIcon('name')}
                 </div>
               </TableHead>
-              <TableHead className="w-32">Category</TableHead>
-              <TableHead className="w-40">Domains of Interest</TableHead>
-              <TableHead className="w-40">Planning Layers</TableHead>
+              <TableHead 
+                className="w-32 cursor-pointer hover:bg-muted/50 select-none"
+                onClick={() => handleSort('category')}
+              >
+                <div className="flex items-center gap-2">
+                  Category
+                  {getSortIcon('category')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="w-40 cursor-pointer hover:bg-muted/50 select-none"
+                onClick={() => handleSort('domain')}
+              >
+                <div className="flex items-center gap-2">
+                  Domains of Interest
+                  {getSortIcon('domain')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="w-40 cursor-pointer hover:bg-muted/50 select-none"
+                onClick={() => handleSort('planning_layer')}
+              >
+                <div className="flex items-center gap-2">
+                  Planning Layers
+                  {getSortIcon('planning_layer')}
+                </div>
+              </TableHead>
               <TableHead className="w-24">Status</TableHead>
               <TableHead 
                 className="w-20 cursor-pointer hover:bg-muted/50 select-none"
