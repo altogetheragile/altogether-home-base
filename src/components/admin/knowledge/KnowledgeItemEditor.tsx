@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   Info, FolderOpen, FileText, BookOpen, BarChart3, 
-  Save, X, Eye, EyeOff, Star, StarOff 
+  Save, X, Eye, EyeOff, Star, StarOff, Tag, Target
 } from 'lucide-react';
 import {
   Dialog,
@@ -18,6 +18,7 @@ import { KnowledgeItemClassification } from './editor/KnowledgeItemClassificatio
 import { KnowledgeItemContent } from './editor/KnowledgeItemContent';
 import { KnowledgeItemUseCases } from './editor/KnowledgeItemUseCases';
 import { KnowledgeItemAnalytics } from './editor/KnowledgeItemAnalytics';
+import { KnowledgeItemEnhancedFields } from './editor/KnowledgeItemEnhancedFields';
 import { UseCaseForm } from './editor/UseCaseForm';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useKnowledgeMediaMutations } from '@/hooks/useKnowledgeMediaMutations';
@@ -45,6 +46,14 @@ export const KnowledgeItemEditor = ({
     description: '',
     background: '',
     source: '',
+    author: '',
+    reference_url: '',
+    publication_year: '',
+    common_pitfalls: [] as string[],
+    evidence_sources: [] as string[],
+    related_techniques: [] as string[],
+    learning_value_summary: '',
+    key_terminology: {} as Record<string, string>,
     category_id: '',
     planning_layer_id: '',
     domain_id: '',
@@ -78,6 +87,14 @@ export const KnowledgeItemEditor = ({
         description: editingItem.description || '',
         background: editingItem.background || '',
         source: editingItem.source || '',
+        author: editingItem.author || '',
+        reference_url: editingItem.reference_url || '',
+        publication_year: editingItem.publication_year?.toString() || '',
+        common_pitfalls: editingItem.common_pitfalls || [],
+        evidence_sources: editingItem.evidence_sources || [],
+        related_techniques: editingItem.related_techniques || [],
+        learning_value_summary: editingItem.learning_value_summary || '',
+        key_terminology: editingItem.key_terminology || {},
         category_id: editingItem.category_id || '',
         planning_layer_id: editingItem.planning_layer_id || '',
         domain_id: editingItem.domain_id || '',
@@ -92,6 +109,14 @@ export const KnowledgeItemEditor = ({
         description: '',
         background: '',
         source: '',
+        author: '',
+        reference_url: '',
+        publication_year: '',
+        common_pitfalls: [],
+        evidence_sources: [],
+        related_techniques: [],
+        learning_value_summary: '',
+        key_terminology: {},
         category_id: '',
         planning_layer_id: '',
         domain_id: '',
@@ -129,15 +154,22 @@ export const KnowledgeItemEditor = ({
 
     try {
       const { mediaItems, ...itemData } = formData;
+      
+      // Convert publication_year to number if it exists
+      const sanitizedData = {
+        ...itemData,
+        publication_year: itemData.publication_year ? parseInt(itemData.publication_year) : null
+      };
+      
       let savedItem;
       
       if (editingItem) {
         savedItem = await updateKnowledgeItem.mutateAsync({
           id: editingItem.id,
-          ...itemData
+          ...sanitizedData
         });
       } else {
-        savedItem = await createKnowledgeItem.mutateAsync(itemData);
+        savedItem = await createKnowledgeItem.mutateAsync(sanitizedData);
       }
       
       // Save media items if any
@@ -310,18 +342,25 @@ export const KnowledgeItemEditor = ({
                   <BookOpen className="h-4 w-4 mr-2" />
                   Rich Content
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="usecases" 
-                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Use Cases
-                  {editingItem && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      {editingItem.knowledge_use_cases?.length || 0}
-                    </Badge>
-                  )}
-                </TabsTrigger>
+                 <TabsTrigger 
+                   value="enhanced" 
+                   className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                 >
+                   <Star className="h-4 w-4 mr-2" />
+                   Enhanced
+                 </TabsTrigger>
+                 <TabsTrigger 
+                   value="usecases" 
+                   className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                 >
+                   <Target className="h-4 w-4 mr-2" />
+                   Use Cases
+                   {editingItem && (
+                     <Badge variant="secondary" className="ml-2 text-xs">
+                       {editingItem.knowledge_use_cases?.length || 0}
+                     </Badge>
+                   )}
+                 </TabsTrigger>
                 {editingItem && (
                   <TabsTrigger 
                     value="analytics" 
@@ -353,6 +392,13 @@ export const KnowledgeItemEditor = ({
 
               <TabsContent value="content" className="h-full overflow-y-auto p-8 mt-0">
                 <KnowledgeItemContent
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                />
+              </TabsContent>
+
+              <TabsContent value="enhanced" className="h-full overflow-y-auto p-8 mt-0">
+                <KnowledgeItemEnhancedFields
                   formData={formData}
                   onFormChange={handleFormChange}
                 />
