@@ -79,7 +79,7 @@ const EditKnowledgeItem = () => {
         source: knowledgeItem.source || '',
         author: knowledgeItem.author || '',
         reference_url: knowledgeItem.reference_url || '',
-        publication_year: knowledgeItem.publication_year || '',
+        publication_year: knowledgeItem.publication_year ? knowledgeItem.publication_year.toString() : '',
         category_id: knowledgeItem.category_id || '',
         planning_layer_id: knowledgeItem.planning_layer_id || '',
         domain_id: knowledgeItem.domain_id || '',
@@ -126,6 +126,9 @@ const EditKnowledgeItem = () => {
         description: formData.description?.trim() || null,
         background: formData.background?.trim() || null,
         source: formData.source?.trim() || null,
+        author: formData.author?.trim() || null,
+        reference_url: formData.reference_url?.trim() || null,
+        publication_year: formData.publication_year ? parseInt(formData.publication_year) : null,
         category_id: formData.category_id?.trim() || null,
         planning_layer_id: formData.planning_layer_id?.trim() || null,
         domain_id: formData.domain_id?.trim() || null,
@@ -193,17 +196,23 @@ const EditKnowledgeItem = () => {
     }
 
     try {
+      // Convert publication_year from string to number before submitting
+      const submitData = {
+        ...formData,
+        publication_year: formData.publication_year ? parseInt(formData.publication_year) : undefined
+      };
+
       if (isEditing) {
         await updateKnowledgeItem.mutateAsync({
           id: id!,
-          ...formData
+          ...submitData
         });
         toast({
           title: "Knowledge item updated",
           description: "Your changes have been saved.",
         });
       } else {
-        const newItem = await createKnowledgeItem.mutateAsync(formData);
+        const newItem = await createKnowledgeItem.mutateAsync(submitData);
         // Redirect to edit mode for the newly created item
         navigate(`/admin/knowledge/items/${newItem.id}/edit`, { replace: true });
         toast({
