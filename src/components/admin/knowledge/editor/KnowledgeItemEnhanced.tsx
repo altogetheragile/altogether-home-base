@@ -15,7 +15,7 @@ interface KnowledgeItemEnhancedProps {
     key_terminology: Record<string, string>;
     author: string;
     reference_url: string;
-    publication_year: number | null;
+    publication_year: string;
   };
   onFormChange: (field: string, value: any) => void;
 }
@@ -106,7 +106,7 @@ export const KnowledgeItemEnhanced = ({ formData, onFormChange }: KnowledgeItemE
                 min="1900"
                 max={new Date().getFullYear()}
                 value={formData.publication_year || ''}
-                onChange={(e) => onFormChange('publication_year', e.target.value ? parseInt(e.target.value) : null)}
+                onChange={(e) => onFormChange('publication_year', e.target.value)}
                 placeholder="2023"
               />
             </div>

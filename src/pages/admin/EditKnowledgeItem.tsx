@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KnowledgeItemBasicInfo } from '@/components/admin/knowledge/editor/KnowledgeItemBasicInfo';
 import { KnowledgeItemClassification } from '@/components/admin/knowledge/editor/KnowledgeItemClassification';
 import { KnowledgeItemContent } from '@/components/admin/knowledge/editor/KnowledgeItemContent';
+import { KnowledgeItemEnhanced } from '@/components/admin/knowledge/editor/KnowledgeItemEnhanced';
 import { KnowledgeItemUseCases } from '@/components/admin/knowledge/editor/KnowledgeItemUseCases';
 import { KnowledgeItemAnalytics } from '@/components/admin/knowledge/editor/KnowledgeItemAnalytics';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
@@ -37,7 +38,13 @@ const EditKnowledgeItem = () => {
     planning_layer_id: '',
     domain_id: '',
     is_published: false,
-    is_featured: false
+    is_featured: false,
+    // Enhanced fields
+    common_pitfalls: [] as string[],
+    evidence_sources: [] as string[],
+    related_techniques: [] as string[],
+    learning_value_summary: '',
+    key_terminology: {} as Record<string, string>
   });
 
   const createKnowledgeItem = useCreateKnowledgeItem();
@@ -84,7 +91,13 @@ const EditKnowledgeItem = () => {
         planning_layer_id: knowledgeItem.planning_layer_id || '',
         domain_id: knowledgeItem.domain_id || '',
         is_published: knowledgeItem.is_published || false,
-        is_featured: knowledgeItem.is_featured || false
+        is_featured: knowledgeItem.is_featured || false,
+        // Enhanced fields
+        common_pitfalls: knowledgeItem.common_pitfalls || [],
+        evidence_sources: knowledgeItem.evidence_sources || [],
+        related_techniques: knowledgeItem.related_techniques || [],
+        learning_value_summary: knowledgeItem.learning_value_summary || '',
+        key_terminology: knowledgeItem.key_terminology || {}
       });
     }
   }, [knowledgeItem, isEditing]);
@@ -310,10 +323,11 @@ const EditKnowledgeItem = () => {
 
       <form className="max-w-7xl space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className={`grid w-full ${isEditing ? 'grid-cols-6' : 'grid-cols-5'}`}>
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
             <TabsTrigger value="classification">Classification</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="enhanced">Enhanced</TabsTrigger>
             <TabsTrigger value="usecases">Use Cases</TabsTrigger>
             {isEditing && <TabsTrigger value="analytics">Analytics</TabsTrigger>}
           </TabsList>
@@ -335,6 +349,13 @@ const EditKnowledgeItem = () => {
 
           <TabsContent value="content" className="space-y-4 mt-6">
             <KnowledgeItemContent
+              formData={formData}
+              onFormChange={handleFormChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="enhanced" className="space-y-4 mt-6">
+            <KnowledgeItemEnhanced
               formData={formData}
               onFormChange={handleFormChange}
             />

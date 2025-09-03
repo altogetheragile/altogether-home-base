@@ -60,7 +60,7 @@ export const KnowledgeItemEditor = ({
     key_terminology: {} as Record<string, string>,
     author: '',
     reference_url: '',
-    publication_year: null as number | null
+    publication_year: ''
   });
 
   const { toast } = useToast();
@@ -102,7 +102,7 @@ export const KnowledgeItemEditor = ({
         key_terminology: editingItem.key_terminology || {},
         author: editingItem.author || '',
         reference_url: editingItem.reference_url || '',
-        publication_year: editingItem.publication_year || null
+        publication_year: editingItem.publication_year ? editingItem.publication_year.toString() : ''
       });
     } else {
       setFormData({
@@ -125,7 +125,7 @@ export const KnowledgeItemEditor = ({
         key_terminology: {},
         author: '',
         reference_url: '',
-        publication_year: null
+        publication_year: ''
       });
     }
 
@@ -157,15 +157,22 @@ export const KnowledgeItemEditor = ({
 
     try {
       const { mediaItems, ...itemData } = formData;
+      
+      // Convert publication_year from string to number before saving
+      const saveData = {
+        ...itemData,
+        publication_year: itemData.publication_year ? parseInt(itemData.publication_year) : null
+      };
+      
       let savedItem;
       
       if (editingItem) {
         savedItem = await updateKnowledgeItem.mutateAsync({
           id: editingItem.id,
-          ...itemData
+          ...saveData
         });
       } else {
-        savedItem = await createKnowledgeItem.mutateAsync(itemData);
+        savedItem = await createKnowledgeItem.mutateAsync(saveData);
       }
       
       // Save media items if any
@@ -241,7 +248,7 @@ export const KnowledgeItemEditor = ({
       key_terminology: editingItem.key_terminology || {},
       author: editingItem.author || '',
       reference_url: editingItem.reference_url || '',
-      publication_year: editingItem.publication_year || null
+      publication_year: editingItem.publication_year ? editingItem.publication_year.toString() : ''
     })
   ) : Object.values(formData).some(value => 
     typeof value === 'string' ? value.trim() !== '' : 
