@@ -90,12 +90,13 @@ const AdminKnowledgeItems = () => {
     queryFn: async () => {
       let query = supabase
         .from('knowledge_items')
-        .select(`
-          *,
-          knowledge_categories (id, name, slug, color),
-          planning_layers (id, name, slug, color),
-          activity_domains (id, name, slug, color)
-        `);
+          .select(`
+            *,
+            knowledge_categories (id, name, slug, color),
+            planning_layers (id, name, slug, color),
+            activity_domains (id, name, slug, color),
+            knowledge_use_cases (id, case_type)
+          `);
 
       // Apply search filter
       if (searchTerm.trim()) {
@@ -318,6 +319,8 @@ const AdminKnowledgeItems = () => {
                   {getSortIcon('planning_layer')}
                 </div>
               </TableHead>
+              <TableHead className="w-32">Completeness</TableHead>
+              <TableHead className="w-24">Use Cases</TableHead>
               <TableHead className="w-24">Status</TableHead>
               <TableHead 
                 className="w-20 cursor-pointer hover:bg-muted/50 select-none"
@@ -387,7 +390,48 @@ const AdminKnowledgeItems = () => {
                      </span>
                    )}
                  </TableCell>
-                 <TableCell>
+                  <TableCell>
+                    {/* Completeness Badge */}
+                    {(() => {
+                      const fields = [
+                        item.description,
+                        item.background,
+                        item.learning_value_summary,
+                        item.common_pitfalls?.length > 0,
+                        item.evidence_sources?.length > 0,
+                        item.related_techniques?.length > 0,
+                        Object.keys(item.key_terminology || {}).length > 0,
+                        item.author
+                      ];
+                      const completedFields = fields.filter(Boolean).length;
+                      const totalFields = fields.length;
+                      const percentage = Math.round((completedFields / totalFields) * 100);
+                      
+                      let variant: "default" | "secondary" | "outline" = "secondary";
+                      if (percentage >= 80) variant = "default";
+                      else if (percentage >= 50) variant = "outline";
+                      
+                      return (
+                        <Badge variant={variant} className="text-xs">
+                          {percentage}%
+                        </Badge>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {item.knowledge_use_cases && item.knowledge_use_cases.length > 0 ? (
+                        <>
+                          <Badge variant="outline" className="text-xs">
+                            {item.knowledge_use_cases.length}
+                          </Badge>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                    <div className="flex items-center gap-2">
                      <Badge variant={item.is_published ? "default" : "secondary"}>
                        {item.is_published ? "Published" : "Draft"}
@@ -453,7 +497,7 @@ const AdminKnowledgeItems = () => {
              ))}
              {items?.length === 0 && (
                <TableRow>
-                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                 <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                    {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || domainFilter !== 'all' || planningLayerFilter !== 'all'
                      ? 'No items found matching your filters.' 
                      : 'No knowledge items created yet.'

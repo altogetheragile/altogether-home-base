@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   Info, FolderOpen, FileText, BookOpen, BarChart3, 
-  Save, X, Eye, EyeOff, Star, StarOff 
+  Save, X, Eye, EyeOff, Star, StarOff, Lightbulb
 } from 'lucide-react';
 import {
   Dialog,
@@ -18,6 +18,7 @@ import { KnowledgeItemClassification } from './editor/KnowledgeItemClassificatio
 import { KnowledgeItemContent } from './editor/KnowledgeItemContent';
 import { KnowledgeItemUseCases } from './editor/KnowledgeItemUseCases';
 import { KnowledgeItemAnalytics } from './editor/KnowledgeItemAnalytics';
+import { KnowledgeItemEnhanced } from './editor/KnowledgeItemEnhanced';
 import { UseCaseForm } from './editor/UseCaseForm';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useKnowledgeMediaMutations } from '@/hooks/useKnowledgeMediaMutations';
@@ -50,7 +51,16 @@ export const KnowledgeItemEditor = ({
     domain_id: '',
     is_published: false,
     is_featured: false,
-    mediaItems: []
+    mediaItems: [],
+    // Enhanced fields
+    common_pitfalls: [] as string[],
+    evidence_sources: [] as string[],
+    related_techniques: [] as string[],
+    learning_value_summary: '',
+    key_terminology: {} as Record<string, string>,
+    author: '',
+    reference_url: '',
+    publication_year: null as number | null
   });
 
   const { toast } = useToast();
@@ -83,7 +93,16 @@ export const KnowledgeItemEditor = ({
         domain_id: editingItem.domain_id || '',
         is_published: editingItem.is_published || false,
         is_featured: editingItem.is_featured || false,
-        mediaItems: editingItem.media || []
+        mediaItems: editingItem.media || [],
+        // Enhanced fields
+        common_pitfalls: editingItem.common_pitfalls || [],
+        evidence_sources: editingItem.evidence_sources || [],
+        related_techniques: editingItem.related_techniques || [],
+        learning_value_summary: editingItem.learning_value_summary || '',
+        key_terminology: editingItem.key_terminology || {},
+        author: editingItem.author || '',
+        reference_url: editingItem.reference_url || '',
+        publication_year: editingItem.publication_year || null
       });
     } else {
       setFormData({
@@ -97,7 +116,16 @@ export const KnowledgeItemEditor = ({
         domain_id: '',
         is_published: false,
         is_featured: false,
-        mediaItems: []
+        mediaItems: [],
+        // Enhanced fields
+        common_pitfalls: [],
+        evidence_sources: [],
+        related_techniques: [],
+        learning_value_summary: '',
+        key_terminology: {},
+        author: '',
+        reference_url: '',
+        publication_year: null
       });
     }
 
@@ -204,7 +232,16 @@ export const KnowledgeItemEditor = ({
       domain_id: editingItem.domain_id || '',
       is_published: editingItem.is_published || false,
       is_featured: editingItem.is_featured || false,
-      mediaItems: editingItem.media || []
+      mediaItems: editingItem.media || [],
+      // Enhanced fields
+      common_pitfalls: editingItem.common_pitfalls || [],
+      evidence_sources: editingItem.evidence_sources || [],
+      related_techniques: editingItem.related_techniques || [],
+      learning_value_summary: editingItem.learning_value_summary || '',
+      key_terminology: editingItem.key_terminology || {},
+      author: editingItem.author || '',
+      reference_url: editingItem.reference_url || '',
+      publication_year: editingItem.publication_year || null
     })
   ) : Object.values(formData).some(value => 
     typeof value === 'string' ? value.trim() !== '' : 
@@ -311,6 +348,13 @@ export const KnowledgeItemEditor = ({
                   Rich Content
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="enhanced" 
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+                >
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Enhanced
+                </TabsTrigger>
+                <TabsTrigger 
                   value="usecases" 
                   className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
                 >
@@ -353,6 +397,13 @@ export const KnowledgeItemEditor = ({
 
               <TabsContent value="content" className="h-full overflow-y-auto p-8 mt-0">
                 <KnowledgeItemContent
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                />
+              </TabsContent>
+
+              <TabsContent value="enhanced" className="h-full overflow-y-auto p-8 mt-0">
+                <KnowledgeItemEnhanced
                   formData={formData}
                   onFormChange={handleFormChange}
                 />
