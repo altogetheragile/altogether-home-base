@@ -20,16 +20,6 @@ export interface KnowledgeItem {
   created_by?: string;
   updated_by?: string;
   
-  // Enhanced structured fields
-  common_pitfalls?: string[];
-  evidence_sources?: string[];
-  related_techniques?: string[];
-  learning_value_summary?: string;
-  key_terminology?: Record<string, string>;
-  author?: string;
-  reference_url?: string;
-  publication_year?: number;
-  
   // Relations
   knowledge_categories?: {
     id: string;

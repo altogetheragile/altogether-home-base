@@ -1007,25 +1007,17 @@ export type Database = {
       }
       knowledge_items: {
         Row: {
-          author: string | null
           background: string | null
           category_id: string | null
-          common_pitfalls: string[] | null
           created_at: string
           created_by: string | null
           description: string | null
           domain_id: string | null
-          evidence_sources: string[] | null
           id: string
           is_featured: boolean | null
           is_published: boolean | null
-          key_terminology: Json | null
-          learning_value_summary: string | null
           name: string
           planning_layer_id: string | null
-          publication_year: number | null
-          reference_url: string | null
-          related_techniques: string[] | null
           slug: string
           source: string | null
           updated_at: string
@@ -1033,25 +1025,17 @@ export type Database = {
           view_count: number | null
         }
         Insert: {
-          author?: string | null
           background?: string | null
           category_id?: string | null
-          common_pitfalls?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           domain_id?: string | null
-          evidence_sources?: string[] | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
-          key_terminology?: Json | null
-          learning_value_summary?: string | null
           name: string
           planning_layer_id?: string | null
-          publication_year?: number | null
-          reference_url?: string | null
-          related_techniques?: string[] | null
           slug: string
           source?: string | null
           updated_at?: string
@@ -1059,25 +1043,17 @@ export type Database = {
           view_count?: number | null
         }
         Update: {
-          author?: string | null
           background?: string | null
           category_id?: string | null
-          common_pitfalls?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           domain_id?: string | null
-          evidence_sources?: string[] | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
-          key_terminology?: Json | null
-          learning_value_summary?: string | null
           name?: string
           planning_layer_id?: string | null
-          publication_year?: number | null
-          reference_url?: string | null
-          related_techniques?: string[] | null
           slug?: string
           source?: string | null
           updated_at?: string
