@@ -3,15 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Form } from '@/components/ui/form';
-import { EnhancedFormStepper } from '@/components/admin/knowledge/editor/EnhancedFormStepper';
+import { CompactHeader } from '@/components/admin/knowledge/editor/CompactHeader';
+import { VerticalStepper } from '@/components/admin/knowledge/editor/VerticalStepper';
 import { LivePreviewPanel } from '@/components/admin/knowledge/editor/LivePreviewPanel';
 import { BottomNavigationBar } from '@/components/admin/knowledge/editor/BottomNavigationBar';
+import { ContentSectionWrapper } from '@/components/admin/knowledge/editor/ContentSectionWrapper';
 import { InlineUseCaseManager } from '@/components/admin/knowledge/editor/InlineUseCaseManager';
 import { BasicInfoSection } from '@/components/admin/knowledge/editor/sections/BasicInfoSection';
 import { ClassificationSection } from '@/components/admin/knowledge/editor/sections/ClassificationSection';
@@ -34,6 +35,8 @@ const EditKnowledgeItemRefactored = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [lastSaved, setLastSaved] = useState<Date | undefined>(undefined);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isCompactMode, setIsCompactMode] = useState(false);
+  const [isStepperCollapsed, setIsStepperCollapsed] = useState(false);
 
   const createKnowledgeItem = useCreateKnowledgeItem();
   const updateKnowledgeItem = useUpdateKnowledgeItem();
@@ -259,33 +262,72 @@ const EditKnowledgeItemRefactored = () => {
     }
   }, [debouncedFormValues, performAutoSave, isEditing, form.formState.isDirty]);
 
+  // Calculate overall completion percentage
+  const getOverallCompletion = (): number => {
+    const allRequiredFields = steps.flatMap(step => step.requiredFields || []);
+    if (allRequiredFields.length === 0) return 100;
+    
+    const completedFields = allRequiredFields.filter(field => {
+      const value = formValues[field];
+      if (typeof value === 'string') return value.trim() !== '';
+      return value !== undefined && value !== null;
+    });
+    
+    return Math.round((completedFields.length / allRequiredFields.length) * 100);
+  };
+
+  const errorCount = Object.keys(form.formState.errors).length;
+  const overallCompletion = getOverallCompletion();
+
   // Navigation guard for unsaved changes
   const hasUnsavedChanges = form.formState.isDirty;
 
   const renderStepContent = () => {
-    const stepId = steps[currentStep]?.id;
+    const step = steps[currentStep];
+    if (!step) return null;
+    
+    const stepId = step.id;
+    let content = null;
     
     switch (stepId) {
       case 'basic':
-        return <BasicInfoSection />;
+        content = <BasicInfoSection />;
+        break;
       case 'classification':
-        return <ClassificationSection />;
+        content = <ClassificationSection />;
+        break;
       case 'content':
-        return <ContentSection knowledgeItemId={isEditing ? id : undefined} />;
+        content = <ContentSection knowledgeItemId={isEditing ? id : undefined} />;
+        break;
       case 'enhanced':
-        return <EnhancedSection />;
+        content = <EnhancedSection />;
+        break;
       case 'usecases':
-        return (
+        content = (
           <InlineUseCaseManager
             knowledgeItemId={isEditing ? id : undefined}
             onSaveItem={!isEditing ? form.handleSubmit(onSubmit) : undefined}
           />
         );
+        break;
       case 'analytics':
-        return isEditing ? <KnowledgeItemAnalytics knowledgeItem={knowledgeItem} /> : null;
+        content = isEditing ? <KnowledgeItemAnalytics knowledgeItem={knowledgeItem} /> : null;
+        break;
       default:
-        return null;
+        content = null;
     }
+    
+    return (
+      <ContentSectionWrapper
+        title={step.title}
+        description={step.description}
+        icon={step.icon}
+        isActive={true}
+        className="mb-6"
+      >
+        {content}
+      </ContentSectionWrapper>
+    );
   };
 
   const isLoading_ = createKnowledgeItem.isPending || updateKnowledgeItem.isPending;
@@ -311,58 +353,58 @@ const EditKnowledgeItemRefactored = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-background border-b px-6 py-4">
-        <div className="flex items-center space-x-4 max-w-7xl mx-auto">
-          <Button variant="outline" onClick={() => navigate('/admin/knowledge/items')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Knowledge Items
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">
-              {isEditing ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {isEditing ? 'Update knowledge item details' : 'Add a new knowledge item'}
-            </p>
-          </div>
-        </div>
-      </div>
-
       <FormProvider {...form}>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            {/* Enhanced Sticky Stepper Navigation */}
-            <EnhancedFormStepper
-              steps={steps}
+            {/* Compact Header */}
+            <CompactHeader
+              title={isEditing ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
+              isEditing={isEditing}
               currentStep={currentStep}
-              onStepChange={setCurrentStep}
-              form={form as any}
+              totalSteps={steps.length}
+              completionPercentage={overallCompletion}
+              errorCount={errorCount}
+              onBack={() => navigate('/admin/knowledge/items')}
+              isCompactMode={isCompactMode}
+              onToggleCompactMode={() => setIsCompactMode(!isCompactMode)}
             />
 
-            {/* Main Content Area */}
-            <div className="max-w-7xl mx-auto px-6 py-6">
-              <div className="flex gap-8">
-                {/* Editor Panel - 60% width */}
-                <div className="flex-1 min-w-0">
-                  <div className="min-h-[600px]">
-                    {renderStepContent()}
-                  </div>
+            {/* Main Layout */}
+            <div className="flex min-h-screen">
+              {/* Vertical Stepper Sidebar */}
+              <VerticalStepper
+                steps={steps}
+                currentStep={currentStep}
+                onStepChange={setCurrentStep}
+                form={form as any}
+                isCollapsed={isStepperCollapsed}
+                onToggleCollapsed={() => setIsStepperCollapsed(!isStepperCollapsed)}
+              />
+
+              {/* Content Area */}
+              <div className="flex-1 flex gap-6 p-6 bg-muted/20">
+                {/* Editor Panel */}
+                <div className="flex-1 min-w-0 space-y-6">
+                  {renderStepContent()}
                 </div>
 
-                {/* Live Preview Panel - 40% width */}
-                <div className="w-2/5 min-w-80">
-                  <LivePreviewPanel
-                    form={form}
-                    categories={categories}
-                    planningLayers={planningLayers}
-                    domains={domains}
-                  />
-                </div>
+                {/* Live Preview Panel */}
+                {!isCompactMode && (
+                  <div className="w-80 xl:w-96">
+                    <div className="sticky top-24">
+                      <LivePreviewPanel
+                        form={form}
+                        categories={categories}
+                        planningLayers={planningLayers}
+                        domains={domains}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Bottom Navigation Bar */}
+            {/* Compact Bottom Navigation Bar */}
             <BottomNavigationBar
               currentStep={currentStep}
               totalSteps={steps.length}
@@ -374,6 +416,7 @@ const EditKnowledgeItemRefactored = () => {
               isEditing={isEditing}
               lastSaved={lastSaved}
               autoSaveStatus={autoSaveStatus}
+              className="h-16"
             />
           </form>
         </Form>

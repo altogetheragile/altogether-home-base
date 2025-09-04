@@ -101,7 +101,7 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
       className
     )}>
       <Card className="rounded-none border-x-0 border-b-0">
-        <CardContent className="p-4">
+        <CardContent className="py-3 px-6">
           <div className="flex items-center justify-between">
             {/* Left: Navigation */}
             <div className="flex items-center gap-3">
