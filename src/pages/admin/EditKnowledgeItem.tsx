@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import KnowledgeItemEditor from '@/components/admin/knowledge/KnowledgeItemEditor';
+import { KnowledgeItemEditor } from '@/components/admin/knowledge/KnowledgeItemEditor';
 
 export default function EditKnowledgeItem() {
   const { id } = useParams<{ id: string }>();
