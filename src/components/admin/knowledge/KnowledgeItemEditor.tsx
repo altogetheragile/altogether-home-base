@@ -7,23 +7,23 @@ import { Input } from '@/components/ui/input';
 export type KnowledgeItemEditorProps = {
   open: boolean;
   onOpenChange: Dispatch<SetStateAction<boolean>>;
-  editingItem: any | null;
+  knowledgeItem: any | null;   // ✅ renamed from editingItem → knowledgeItem
   onSuccess: () => void;
 };
 
 export function KnowledgeItemEditor({
   open,
   onOpenChange,
-  editingItem,
+  knowledgeItem,
   onSuccess,
 }: KnowledgeItemEditorProps) {
-  // You can preload item data when editing
+  // preload item data when editing
   useEffect(() => {
-    if (editingItem) {
-      console.log('Editing item:', editingItem);
-      // TODO: populate form state with editingItem values
+    if (knowledgeItem) {
+      console.log('Editing item:', knowledgeItem);
+      // TODO: populate form state with knowledgeItem values
     }
-  }, [editingItem]);
+  }, [knowledgeItem]);
 
   const handleSave = () => {
     // TODO: add save logic (e.g., Supabase update/insert)
@@ -36,15 +36,18 @@ export function KnowledgeItemEditor({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {editingItem ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
+            {knowledgeItem ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Example input — replace with form controls */}
+          {/* Example input — replace with real form controls */}
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
-            <Input placeholder="Enter title" defaultValue={editingItem?.title ?? ''} />
+            <Input
+              placeholder="Enter title"
+              defaultValue={knowledgeItem?.title ?? ''}
+            />
           </div>
 
           <div className="flex justify-end gap-2">
@@ -52,7 +55,7 @@ export function KnowledgeItemEditor({
               Cancel
             </Button>
             <Button onClick={handleSave}>
-              {editingItem ? 'Save Changes' : 'Create'}
+              {knowledgeItem ? 'Save Changes' : 'Create'}
             </Button>
           </div>
         </div>
