@@ -44,7 +44,7 @@ import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
 import EditInstructor from "./pages/admin/EditInstructor";
 import CreateKnowledgeItem from "./pages/admin/CreateKnowledgeItem";
-import EditKnowledgeItemRefactored from "./pages/admin/EditKnowledgeItemRefactored";
+import EditKnowledgeItem from "./pages/admin/EditKnowledgeItem";
 import CreateKnowledgeUseCase from "./pages/admin/CreateKnowledgeUseCase";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
