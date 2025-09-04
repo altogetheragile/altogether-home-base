@@ -212,6 +212,20 @@ const EditKnowledgeItemRefactored = () => {
   const formValues = form.watch();
   const debouncedFormValues = useDebounce(formValues, 3000); // 3-second delay
 
+  // Calculate overall completion percentage
+  const getOverallCompletion = (): number => {
+    const allRequiredFields = steps.flatMap(step => step.requiredFields || []);
+    if (allRequiredFields.length === 0) return 100;
+    
+    const completedFields = allRequiredFields.filter(field => {
+      const value = formValues[field];
+      if (typeof value === 'string') return value.trim() !== '';
+      return value !== undefined && value !== null;
+    });
+    
+    return Math.round((completedFields.length / allRequiredFields.length) * 100);
+  };
+
   const performAutoSave = useCallback(async (data: any) => {
     if (!isEditing || !form.formState.isDirty) return;
     
@@ -261,20 +275,6 @@ const EditKnowledgeItemRefactored = () => {
       performAutoSave(debouncedFormValues);
     }
   }, [debouncedFormValues, performAutoSave, isEditing, form.formState.isDirty]);
-
-  // Calculate overall completion percentage
-  const getOverallCompletion = (): number => {
-    const allRequiredFields = steps.flatMap(step => step.requiredFields || []);
-    if (allRequiredFields.length === 0) return 100;
-    
-    const completedFields = allRequiredFields.filter(field => {
-      const value = formValues[field];
-      if (typeof value === 'string') return value.trim() !== '';
-      return value !== undefined && value !== null;
-    });
-    
-    return Math.round((completedFields.length / allRequiredFields.length) * 100);
-  };
 
   const errorCount = Object.keys(form.formState.errors).length;
   const overallCompletion = getOverallCompletion();
