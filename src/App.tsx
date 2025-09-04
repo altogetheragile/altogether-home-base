@@ -44,7 +44,7 @@ import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
 import EditInstructor from "./pages/admin/EditInstructor";
 import CreateKnowledgeItem from "./pages/admin/CreateKnowledgeItem";
-import EditKnowledgeItem from "./pages/admin/EditKnowledgeItem";
+import EditKnowledgeItemRefactored from "./pages/admin/EditKnowledgeItemRefactored";
 import CreateKnowledgeUseCase from "./pages/admin/CreateKnowledgeUseCase";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
@@ -93,7 +93,7 @@ const App = () => (
                 <Route path="pages/:id/edit" element={<PageEditor />} />
                 <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
                 <Route path="knowledge/items/new" element={<CreateKnowledgeItem />} />
-                <Route path="knowledge/items/:id/edit" element={<EditKnowledgeItem />} />
+                <Route path="knowledge/items/:id/edit" element={<EditKnowledgeItemRefactored />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/categories" element={<AdminKnowledgeCategories />} />
