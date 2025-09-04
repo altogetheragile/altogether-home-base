@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -9,14 +9,20 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Form } from '@/components/ui/form';
-import { FormStepper } from '@/components/admin/knowledge/editor/FormStepper';
+import { EnhancedFormStepper } from '@/components/admin/knowledge/editor/EnhancedFormStepper';
+import { LivePreviewPanel } from '@/components/admin/knowledge/editor/LivePreviewPanel';
+import { BottomNavigationBar } from '@/components/admin/knowledge/editor/BottomNavigationBar';
+import { InlineUseCaseManager } from '@/components/admin/knowledge/editor/InlineUseCaseManager';
 import { BasicInfoSection } from '@/components/admin/knowledge/editor/sections/BasicInfoSection';
 import { ClassificationSection } from '@/components/admin/knowledge/editor/sections/ClassificationSection';
 import { ContentSection } from '@/components/admin/knowledge/editor/sections/ContentSection';
 import { EnhancedSection } from '@/components/admin/knowledge/editor/sections/EnhancedSection';
-import { KnowledgeItemUseCases } from '@/components/admin/knowledge/editor/KnowledgeItemUseCases';
 import { KnowledgeItemAnalytics } from '@/components/admin/knowledge/editor/KnowledgeItemAnalytics';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
+import { usePlanningLayers } from '@/hooks/usePlanningLayers';
+import { useActivityDomains } from '@/hooks/useActivityDomains';
+import { useDebounce } from '@/hooks/useDebounce';
 import { knowledgeItemSchema, knowledgeItemDefaults, KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 import { Info, FolderOpen, BookOpen, Sparkles, FileText, BarChart3 } from 'lucide-react';
 
@@ -26,9 +32,16 @@ const EditKnowledgeItemRefactored = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
+  const [lastSaved, setLastSaved] = useState<Date | undefined>(undefined);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const createKnowledgeItem = useCreateKnowledgeItem();
   const updateKnowledgeItem = useUpdateKnowledgeItem();
+  
+  // Fetch categories, layers, and domains for preview and classification
+  const { data: categories } = useKnowledgeCategories();
+  const { data: planningLayers } = usePlanningLayers();
+  const { data: domains } = useActivityDomains();
 
   const isEditing = !!id && id !== 'new';
 
@@ -193,15 +206,58 @@ const EditKnowledgeItemRefactored = () => {
   };
 
   // Auto-save draft functionality (debounced)
+  const formValues = form.watch();
+  const debouncedFormValues = useDebounce(formValues, 3000); // 3-second delay
+
+  const performAutoSave = useCallback(async (data: any) => {
+    if (!isEditing || !form.formState.isDirty) return;
+    
+    try {
+      setAutoSaveStatus('saving');
+      
+      const sanitizedData = {
+        name: data.name?.trim() || '',
+        slug: data.slug?.trim() || '',
+        description: data.description?.trim() || null,
+        background: data.background?.trim() || null,
+        source: data.source?.trim() || null,
+        author: data.author?.trim() || null,
+        reference_url: data.reference_url?.trim() || null,
+        publication_year: data.publication_year || null,
+        category_id: data.category_id?.trim() || null,
+        planning_layer_id: data.planning_layer_id?.trim() || null,
+        domain_id: data.domain_id?.trim() || null,
+        is_published: data.is_published || false,
+        is_featured: data.is_featured || false,
+        common_pitfalls: data.common_pitfalls || [],
+        evidence_sources: data.evidence_sources || [],
+        related_techniques: data.related_techniques || [],
+        learning_value_summary: data.learning_value_summary?.trim() || null,
+        key_terminology: data.key_terminology || {},
+      };
+
+      await updateKnowledgeItem.mutateAsync({
+        id: id!,
+        ...sanitizedData,
+        updated_by: user?.id
+      });
+
+      setAutoSaveStatus('saved');
+      setLastSaved(new Date());
+      
+      // Reset dirty state after successful auto-save
+      form.reset(data, { keepValues: true });
+    } catch (error) {
+      setAutoSaveStatus('error');
+      console.error('Auto-save failed:', error);
+    }
+  }, [isEditing, form, updateKnowledgeItem, id, user?.id]);
+
   useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      if (type === 'change' && isEditing) {
-        // Auto-save logic could be implemented here
-        // For now, we'll skip this to keep it simple
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, isEditing]);
+    if (isEditing && form.formState.isDirty) {
+      performAutoSave(debouncedFormValues);
+    }
+  }, [debouncedFormValues, performAutoSave, isEditing, form.formState.isDirty]);
 
   // Navigation guard for unsaved changes
   const hasUnsavedChanges = form.formState.isDirty;
@@ -220,23 +276,9 @@ const EditKnowledgeItemRefactored = () => {
         return <EnhancedSection />;
       case 'usecases':
         return (
-          <KnowledgeItemUseCases
+          <InlineUseCaseManager
             knowledgeItemId={isEditing ? id : undefined}
             onSaveItem={!isEditing ? form.handleSubmit(onSubmit) : undefined}
-            onAddUseCase={() => {
-              if (!id || id === "new") {
-                toast({
-                  title: "Please save the knowledge item first",
-                  description: "You need to save the knowledge item before adding use cases.",
-                  variant: "destructive",
-                });
-                return;
-              }
-              // Navigate to inline use case creation
-            }}
-            onEditUseCase={() => {
-              // Handle inline use case editing
-            }}
           />
         );
       case 'analytics':
@@ -268,73 +310,71 @@ const EditKnowledgeItemRefactored = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Button variant="outline" onClick={() => navigate('/admin/knowledge/items')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Knowledge Items
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isEditing ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
-          </h1>
-          <p className="text-gray-600">
-            {isEditing ? 'Update knowledge item details' : 'Add a new knowledge item'}
-          </p>
+      <div className="bg-background border-b px-6 py-4">
+        <div className="flex items-center space-x-4 max-w-7xl mx-auto">
+          <Button variant="outline" onClick={() => navigate('/admin/knowledge/items')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Knowledge Items
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {isEditing ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {isEditing ? 'Update knowledge item details' : 'Add a new knowledge item'}
+            </p>
+          </div>
         </div>
       </div>
 
       <FormProvider {...form}>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-7xl space-y-6">
-            {/* Stepper Navigation */}
-            <FormStepper
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            {/* Enhanced Sticky Stepper Navigation */}
+            <EnhancedFormStepper
               steps={steps}
               currentStep={currentStep}
               onStepChange={setCurrentStep}
               form={form as any}
             />
 
-            {/* Step Content */}
-            <div className="min-h-[400px]">
-              {renderStepContent()}
-            </div>
+            {/* Main Content Area */}
+            <div className="max-w-7xl mx-auto px-6 py-6">
+              <div className="flex gap-8">
+                {/* Editor Panel - 60% width */}
+                <div className="flex-1 min-w-0">
+                  <div className="min-h-[600px]">
+                    {renderStepContent()}
+                  </div>
+                </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between border-t pt-6">
-              <div className="flex space-x-4">
-                <Button type="submit" disabled={isLoading_} className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
-                  {isLoading_ ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Knowledge Item')}
-                </Button>
-                
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => navigate('/admin/knowledge/items')}
-                  className="flex items-center gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-
-              {/* Form Status */}
-              <div className="text-sm text-muted-foreground">
-                {hasUnsavedChanges && (
-                  <span className="text-orange-600">• Unsaved changes</span>
-                )}
-                {form.formState.isValid && (
-                  <span className="text-green-600">• Form is valid</span>
-                )}
-                {Object.keys(form.formState.errors).length > 0 && (
-                  <span className="text-destructive">
-                    • {Object.keys(form.formState.errors).length} validation error(s)
-                  </span>
-                )}
+                {/* Live Preview Panel - 40% width */}
+                <div className="w-2/5 min-w-80">
+                  <LivePreviewPanel
+                    form={form}
+                    categories={categories}
+                    planningLayers={planningLayers}
+                    domains={domains}
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Bottom Navigation Bar */}
+            <BottomNavigationBar
+              currentStep={currentStep}
+              totalSteps={steps.length}
+              onPrevious={() => setCurrentStep(Math.max(0, currentStep - 1))}
+              onNext={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
+              onSave={form.handleSubmit(onSubmit)}
+              form={form}
+              isLoading={isLoading_}
+              isEditing={isEditing}
+              lastSaved={lastSaved}
+              autoSaveStatus={autoSaveStatus}
+            />
           </form>
         </Form>
       </FormProvider>
