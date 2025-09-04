@@ -93,7 +93,7 @@ const App = () => (
                 <Route path="pages/:id/edit" element={<PageEditor />} />
                 <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
                 <Route path="knowledge/items/new" element={<CreateKnowledgeItem />} />
-                <Route path="knowledge/items/:id/edit" element={<EditKnowledgeItemRefactored />} />
+                <Route path="knowledge/items/:id/edit" element={<EditKnowledgeItem />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/categories" element={<AdminKnowledgeCategories />} />
