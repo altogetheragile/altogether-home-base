@@ -76,8 +76,8 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
 
   return (
     <div className={cn(
-      "flex flex-col bg-muted/30 border-r transition-all duration-300",
-      isCollapsed ? "w-16" : "w-64",
+      "flex flex-col bg-muted/30 border-r transition-all duration-300 z-10",
+      isCollapsed ? "w-16" : "w-72",
       className
     )}>
       {/* Header */}
@@ -105,19 +105,31 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
               <div key={step.id} className="relative">
                 <Button
                   variant="ghost"
-                  onClick={() => isClickable && onStepChange(index)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`Clicking step ${index}: ${step.title}`);
+                    if (isClickable) {
+                      try {
+                        onStepChange(index);
+                      } catch (error) {
+                        console.error('Error changing step:', error);
+                      }
+                    }
+                  }}
                   disabled={!isClickable}
                   className={cn(
-                    "w-full justify-start p-3 mb-2 h-auto",
-                    "transition-all duration-200 relative overflow-hidden",
+                    "w-full justify-start p-3 mb-2 h-auto min-h-[4rem]",
+                    "transition-all duration-200 relative overflow-visible",
                     status === 'current' && "bg-primary text-primary-foreground shadow-sm",
-                    status === 'completed' && "bg-green-50 text-green-700 border-green-200",
-                    status === 'error' && "bg-destructive/10 text-destructive border-destructive/20",
+                    status === 'completed' && "bg-green-50 text-green-700 border border-green-200",
+                    status === 'error' && "bg-destructive/10 text-destructive border border-destructive/20",
                     status === 'upcoming' && "hover:bg-muted/50",
                     !isClickable && "cursor-not-allowed opacity-50"
                   )}
                 >
-                  <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-start gap-3 w-full">
                     {/* Step Icon/Number */}
                     <div className={cn(
                       "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
@@ -141,15 +153,15 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
                       )}
                     </div>
 
-                    {/* Step Content */}
+                     {/* Step Content */}
                     <div className={cn(
                       "flex-1 text-left min-w-0 transition-opacity",
                       isCollapsed ? "opacity-0 sr-only" : "opacity-100"
                     )}>
-                      <div className="font-medium text-sm truncate">
+                      <div className="font-medium text-sm leading-tight">
                         {step.title}
                       </div>
-                      <div className="text-xs text-muted-foreground truncate mt-0.5">
+                      <div className="text-xs text-muted-foreground leading-tight mt-0.5 break-words">
                         {step.description}
                       </div>
                       
