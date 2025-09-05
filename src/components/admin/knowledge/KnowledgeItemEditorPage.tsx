@@ -81,6 +81,8 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const [isCompactMode, setIsCompactMode] = useState(false);
   const [stepperCollapsed, setStepperCollapsed] = useState(false);
   const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
+  const [userIsTyping, setUserIsTyping] = useState(false);
+  const [formInitialized, setFormInitialized] = useState(false);
 
   // Mutations
   const createMutation = useCreateKnowledgeItem();
@@ -107,14 +109,15 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const form = useForm<any>({
     resolver: zodResolver(knowledgeItemSchema),
     defaultValues: formDefaults,
-    mode: 'onBlur',
+    mode: 'onChange',
   });
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
-  // Initialize form with existing data - defensive handling
+  // Initialize form with existing data - defensive handling with focus tracking
   useEffect(() => {
-    if (knowledgeItem) {
+    if (knowledgeItem && !formInitialized && !userIsTyping) {
+      console.log('🔧 Initializing form with knowledge item data');
       const safeKnowledgeItem = {
         ...formDefaults,
         ...knowledgeItem,
@@ -137,17 +140,49 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       };
       
       form.reset(safeKnowledgeItem);
+      setFormInitialized(true);
     }
-  }, [knowledgeItem]);
+  }, [knowledgeItem, formInitialized, userIsTyping]);
+
+  // Track when user is actively typing to prevent form resets
+  useEffect(() => {
+    const handleFocusIn = () => {
+      console.log('📝 User started typing');
+      setUserIsTyping(true);
+    };
+    
+    const handleFocusOut = () => {
+      console.log('📝 User stopped typing');
+      setTimeout(() => setUserIsTyping(false), 100); // Small delay to prevent race conditions
+    };
+
+    // Add event listeners for all form inputs
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
 
   // Auto-save functionality
   const formValues = form.watch();
   const debouncedFormValues = useDebounce(formValues, 3000);
 
   const performAutoSave = useCallback(async (data: KnowledgeItemFormData) => {
-    if (!form.formState.isDirty || !isEditing || !knowledgeItem?.id) return;
+    if (!form.formState.isDirty || !isEditing || !knowledgeItem?.id || userIsTyping) {
+      console.log('🚫 Auto-save skipped:', { 
+        isDirty: form.formState.isDirty, 
+        isEditing, 
+        hasId: !!knowledgeItem?.id, 
+        userIsTyping 
+      });
+      return;
+    }
 
     try {
+      console.log('💾 Starting auto-save');
       setAutoSaveStatus('saving');
       await updateMutation.mutateAsync({
         id: knowledgeItem.id,
@@ -155,18 +190,20 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       });
       setLastSaved(new Date());
       setAutoSaveStatus('saved');
-      form.reset(data); // Reset dirty state
+      console.log('✅ Auto-save completed');
+      // Don't reset form - this was causing the uneditable fields issue
     } catch (error) {
       setAutoSaveStatus('error');
-      console.error('Auto-save failed:', error);
+      console.error('❌ Auto-save failed:', error);
     }
-  }, [form, isEditing, knowledgeItem?.id, updateMutation]);
+  }, [form.formState.isDirty, isEditing, knowledgeItem?.id, updateMutation, userIsTyping]);
 
   useEffect(() => {
-    if (debouncedFormValues && form.formState.isDirty) {
+    if (debouncedFormValues && form.formState.isDirty && !userIsTyping) {
+      console.log('🕐 Debounced values changed, attempting auto-save');
       performAutoSave(debouncedFormValues);
     }
-  }, [debouncedFormValues, performAutoSave, form.formState.isDirty]);
+  }, [debouncedFormValues, performAutoSave, form.formState.isDirty, userIsTyping]);
 
   // Navigation handlers
   const handleBack = () => {
