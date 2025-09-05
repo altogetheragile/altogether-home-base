@@ -196,7 +196,7 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
                     className={cn(
                       "w-full justify-start p-3 mb-2 h-auto min-h-[4rem]",
                       "transition-all duration-200 relative overflow-visible",
-                      status === 'current' && "bg-primary text-primary-foreground shadow-sm",
+                      status === 'current' && "bg-primary text-primary-foreground shadow-sm rounded-r-lg rounded-l-none",
                       status === 'completed' && "bg-green-50 text-green-700 border border-green-200",
                       status === 'error' && "bg-destructive/10 text-destructive border border-destructive/20",
                       status === 'upcoming' && "hover:bg-muted/50",
@@ -276,7 +276,7 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
 
                     {/* Active indicator */}
                     {status === 'current' && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full" />
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground" />
                     )}
                   </Button>
 
