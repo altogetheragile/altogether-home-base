@@ -256,7 +256,7 @@ export function KnowledgeItemEditor({
 
             {/* Content Area - Scrollable */}
             <div className="flex-1 overflow-y-auto">
-              <div className="px-6 py-6">
+              <div className="px-6 py-6 pb-24">
                 <div className="max-w-6xl mx-auto">
                   {renderCurrentSection()}
                 </div>
