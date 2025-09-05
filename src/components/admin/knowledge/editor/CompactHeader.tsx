@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Menu, Minimize2, Maximize2 } from 'lucide-react';
+import { ArrowLeft, Menu, Minimize2, Maximize2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CompactHeaderProps {
@@ -14,6 +14,7 @@ interface CompactHeaderProps {
   onBack: () => void;
   isCompactMode?: boolean;
   onToggleCompactMode?: () => void;
+  onOpenPreview?: () => void;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export const CompactHeader: React.FC<CompactHeaderProps> = ({
   onBack,
   isCompactMode = false,
   onToggleCompactMode,
+  onOpenPreview,
   className
 }) => {
   return (
@@ -69,6 +71,16 @@ export const CompactHeader: React.FC<CompactHeaderProps> = ({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          {onOpenPreview && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onOpenPreview}
+              title="Open Preview in New Window"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          )}
           {onToggleCompactMode && (
             <Button
               variant="ghost"
