@@ -162,7 +162,7 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
 
       <CollapsibleContent className={cn(
         "flex flex-col bg-muted/30 border-r transition-all duration-300",
-        isCollapsed ? "w-16" : "w-72"
+        isCollapsed ? "w-16" : "w-80"
       )}>
         {/* Header */}
         <div className="p-4 border-b bg-background/50">
