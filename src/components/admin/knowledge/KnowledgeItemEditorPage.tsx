@@ -83,6 +83,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [userIsTyping, setUserIsTyping] = useState(false);
   const [formInitialized, setFormInitialized] = useState(false);
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Mutations
   const createMutation = useCreateKnowledgeItem();
@@ -144,66 +145,118 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     }
   }, [knowledgeItem, formInitialized, userIsTyping]);
 
-  // Track when user is actively typing to prevent form resets
+  // Track when user is actively typing to prevent form resets - improved version
   useEffect(() => {
-    const handleFocusIn = () => {
-      console.log('📝 User started typing');
-      setUserIsTyping(true);
+    let typingTimeout: ReturnType<typeof setTimeout>;
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.matches('input, textarea, [contenteditable]')) {
+        console.log('📝 User started typing');
+        setUserIsTyping(true);
+        
+        // Clear any existing timeout
+        clearTimeout(typingTimeout);
+      }
     };
     
-    const handleFocusOut = () => {
-      console.log('📝 User stopped typing');
-      setTimeout(() => setUserIsTyping(false), 100); // Small delay to prevent race conditions
+    const handleInput = () => {
+      console.log('📝 User is typing');
+      setUserIsTyping(true);
+      
+      // Clear any existing timeout and set a new one
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        console.log('📝 User stopped typing');
+        setUserIsTyping(false);
+      }, 1000); // User considered "stopped typing" after 1 second of inactivity
+    };
+
+    const handleFocusOut = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.matches('input, textarea, [contenteditable]')) {
+        console.log('📝 User left field');
+        
+        // Set a short timeout to allow for quick field switches
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          setUserIsTyping(false);
+        }, 500);
+      }
     };
 
     // Add event listeners for all form inputs
     document.addEventListener('focusin', handleFocusIn);
     document.addEventListener('focusout', handleFocusOut);
+    document.addEventListener('input', handleInput);
 
     return () => {
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('focusout', handleFocusOut);
+      document.removeEventListener('input', handleInput);
+      clearTimeout(typingTimeout);
     };
   }, []);
 
-  // Auto-save functionality
+  // Auto-save functionality with longer debounce
   const formValues = form.watch();
-  const debouncedFormValues = useDebounce(formValues, 3000);
+  const debouncedFormValues = useDebounce(formValues, 5000); // Increased from 3000 to 5000
 
   const performAutoSave = useCallback(async (data: KnowledgeItemFormData) => {
-    if (!form.formState.isDirty || !isEditing || !knowledgeItem?.id || userIsTyping) {
+    // More strict conditions to prevent infinite loops
+    if (!form.formState.isDirty || !isEditing || !knowledgeItem?.id || userIsTyping || autoSaveStatus === 'saving') {
       console.log('🚫 Auto-save skipped:', { 
         isDirty: form.formState.isDirty, 
         isEditing, 
         hasId: !!knowledgeItem?.id, 
-        userIsTyping 
+        userIsTyping,
+        status: autoSaveStatus
       });
+      return;
+    }
+
+    // Prevent auto-save if we just saved recently (cooldown period)
+    if (lastAutoSave && Date.now() - lastAutoSave.getTime() < 2000) {
+      console.log('🚫 Auto-save skipped: cooldown period active');
       return;
     }
 
     try {
       console.log('💾 Starting auto-save');
       setAutoSaveStatus('saving');
+      setLastAutoSave(new Date());
+      
       await updateMutation.mutateAsync({
         id: knowledgeItem.id,
         ...data,
       });
+      
       setLastSaved(new Date());
       setAutoSaveStatus('saved');
       console.log('✅ Auto-save completed');
-      // Don't reset form - this was causing the uneditable fields issue
+      
+      // Clear saved status after a delay
+      setTimeout(() => {
+        setAutoSaveStatus('idle');
+      }, 2000);
     } catch (error) {
       setAutoSaveStatus('error');
       console.error('❌ Auto-save failed:', error);
+      
+      // Clear error status after a delay
+      setTimeout(() => {
+        setAutoSaveStatus('idle');
+      }, 3000);
     }
-  }, [form.formState.isDirty, isEditing, knowledgeItem?.id, updateMutation, userIsTyping]);
+  }, [form.formState.isDirty, isEditing, knowledgeItem?.id, updateMutation, userIsTyping, autoSaveStatus, lastAutoSave]);
 
   useEffect(() => {
-    if (debouncedFormValues && form.formState.isDirty && !userIsTyping) {
+    // Only auto-save if form is dirty, user has stopped typing, and we're not already saving
+    if (debouncedFormValues && form.formState.isDirty && !userIsTyping && autoSaveStatus !== 'saving') {
       console.log('🕐 Debounced values changed, attempting auto-save');
       performAutoSave(debouncedFormValues);
     }
-  }, [debouncedFormValues, performAutoSave, form.formState.isDirty, userIsTyping]);
+  }, [debouncedFormValues, performAutoSave, form.formState.isDirty, userIsTyping, autoSaveStatus]);
 
   // Navigation handlers
   const handleBack = () => {
