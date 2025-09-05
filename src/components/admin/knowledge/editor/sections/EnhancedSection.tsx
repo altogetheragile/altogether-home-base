@@ -1,15 +1,17 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Plus, X, BookOpen, AlertTriangle, Link, Lightbulb, Hash } from 'lucide-react';
+import { Plus, X, BookOpen, AlertTriangle, Link, Lightbulb, Hash, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
 export const EnhancedSection: React.FC = () => {
   const form = useFormContext<KnowledgeItemFormData>();
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   const addArrayItem = (fieldName: keyof KnowledgeItemFormData) => {
     const currentValue = form.getValues(fieldName) as string[] || [];
@@ -67,40 +69,50 @@ export const EnhancedSection: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Learning Value Summary */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Lightbulb className="h-4 w-4" />
-              Learning Value Summary
-            </CardTitle>
-            <CardDescription>
-              Summarize the key learning value and benefits of this knowledge item
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="learning_value_summary"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe the key learning value, benefits, and outcomes..."
-                      rows={4}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Explain what learners will gain from this knowledge item
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+      {/* Learning Value Summary - Always visible */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Lightbulb className="h-4 w-4" />
+            Learning Value Summary
+          </CardTitle>
+          <CardDescription>
+            Summarize the key learning value and benefits of this knowledge item
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FormField
+            control={form.control}
+            name="learning_value_summary"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Textarea
+                    placeholder="Describe the key learning value, benefits, and outcomes..."
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Explain what learners will gain from this knowledge item
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Collapsible Additional Fields */}
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            Additional Enhanced Fields
+            <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-6 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Common Pitfalls */}
         <Card>
@@ -287,7 +299,9 @@ export const EnhancedSection: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
-      </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };

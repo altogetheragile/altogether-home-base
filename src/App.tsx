@@ -46,6 +46,7 @@ import EditInstructor from "./pages/admin/EditInstructor";
 import CreateKnowledgeItem from "./pages/admin/CreateKnowledgeItem";
 import EditKnowledgeItem from "./pages/admin/EditKnowledgeItem";
 import CreateKnowledgeUseCase from "./pages/admin/CreateKnowledgeUseCase";
+import { PreviewPage } from "./components/admin/knowledge/PreviewPage";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
@@ -120,6 +121,11 @@ const App = () => (
               <Route path="/admin/knowledge/items/:id/edit" element={
                 <ProtectedRoute requiredRole="admin">
                   <EditKnowledgeItem />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/knowledge/preview/:id" element={
+                <ProtectedRoute requiredRole="admin">
+                  <PreviewPage />
                 </ProtectedRoute>
               } />
               
