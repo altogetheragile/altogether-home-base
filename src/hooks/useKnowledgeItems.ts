@@ -314,15 +314,39 @@ export const useUpdateKnowledgeItem = () => {
         return result;
       });
     },
-    onSuccess: () => {
+    onMutate: async ({ id, ...data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['knowledge-item', id] });
+      await queryClient.cancelQueries({ queryKey: ['knowledge-items'] });
+
+      // Snapshot the previous value
+      const previousItem = queryClient.getQueryData(['knowledge-item', id]);
+
+      // Optimistically update the cache
+      if (previousItem) {
+        const optimisticUpdate = { ...(previousItem as KnowledgeItem), ...data, updated_at: new Date().toISOString() };
+        queryClient.setQueryData(['knowledge-item', id], optimisticUpdate);
+      }
+
+      return { previousItem };
+    },
+    onSuccess: (result, { id }) => {
+      // Update cache with actual server response
+      queryClient.setQueryData(['knowledge-item', id], result);
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
+      
       toast({
         title: "Success",
         description: "Knowledge item updated successfully",
       });
     },
-    onError: (error: PostgreSQLError) => {
+    onError: (error: PostgreSQLError, { id }, context) => {
       console.error('❌ Update mutation failed:', error);
+      
+      // Rollback optimistic update
+      if (context?.previousItem) {
+        queryClient.setQueryData(['knowledge-item', id], context.previousItem);
+      }
       
       // Provide specific error messages based on error type
       let errorMessage = "Failed to update knowledge item";

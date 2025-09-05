@@ -115,9 +115,9 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
-  // Initialize form with existing data - defensive handling with focus tracking
+  // Initialize form with existing data - only on first load or significant changes
   useEffect(() => {
-    if (knowledgeItem && !formInitialized && !userIsTyping) {
+    if (knowledgeItem && (!formInitialized || (!isEditing && knowledgeItem.id !== form.getValues('id'))) && !userIsTyping) {
       console.log('🔧 Initializing form with knowledge item data');
       const safeKnowledgeItem = {
         ...formDefaults,
@@ -143,7 +143,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       form.reset(safeKnowledgeItem);
       setFormInitialized(true);
     }
-  }, [knowledgeItem, formInitialized, userIsTyping]);
+  }, [knowledgeItem?.id, formInitialized, userIsTyping, isEditing]);
 
   // Track when user is actively typing to prevent form resets - improved version
   useEffect(() => {
