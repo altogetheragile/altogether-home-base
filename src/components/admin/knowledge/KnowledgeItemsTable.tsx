@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Eye, EyeOff, Edit, Trash2, MoreHorizontal, FileText, Target, 
-  Clock, TrendingUp, Copy, Archive, Star, StarOff 
+  Clock, TrendingUp, Copy, Archive, Star, StarOff, Share, ExternalLink 
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
-import { useDeleteKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useDeleteKnowledgeItem, useUpdateKnowledgeItem, useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 interface KnowledgeItemsTableProps {
@@ -102,6 +103,8 @@ export const KnowledgeItemsTable = ({
 
   const deleteKnowledgeItem = useDeleteKnowledgeItem();
   const updateKnowledgeItem = useUpdateKnowledgeItem();
+  const createKnowledgeItem = useCreateKnowledgeItem();
+  const { toast } = useToast();
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -130,6 +133,82 @@ export const KnowledgeItemsTable = ({
     await updateKnowledgeItem.mutateAsync({
       id: item.id,
       is_published: !item.is_published
+    });
+  };
+
+  const handlePreview = (item: any) => {
+    if (item.is_published) {
+      window.open(`/knowledge/${item.slug}`, '_blank');
+    } else {
+      toast({
+        title: "Preview unavailable",
+        description: "This item needs to be published before it can be previewed.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleShare = async (item: any) => {
+    const url = `${window.location.origin}/knowledge/${item.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied!",
+        description: "The knowledge item link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy link",
+        description: "Please try copying the link manually.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDuplicate = async (item: any) => {
+    try {
+      const duplicatedItem = {
+        ...item,
+        name: `${item.name} (Copy)`,
+        slug: `${item.slug}-copy-${Date.now()}`,
+        is_published: false,
+        is_featured: false,
+        view_count: 0,
+        // Remove ID and timestamps
+        id: undefined,
+        created_at: undefined,
+        updated_at: undefined,
+        created_by: undefined,
+        updated_by: undefined,
+        // Remove relations
+        knowledge_categories: undefined,
+        planning_layers: undefined,
+        activity_domains: undefined,
+        knowledge_use_cases: undefined
+      };
+
+      await createKnowledgeItem.mutateAsync(duplicatedItem);
+      toast({
+        title: "Item duplicated!",
+        description: "A copy of the knowledge item has been created.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to duplicate",
+        description: "There was an error duplicating the knowledge item.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleArchive = async (item: any) => {
+    await updateKnowledgeItem.mutateAsync({
+      id: item.id,
+      is_published: false
+    });
+    toast({
+      title: "Item archived",
+      description: "The knowledge item has been unpublished and archived.",
     });
   };
 
@@ -307,11 +386,25 @@ export const KnowledgeItemsTable = ({
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onClick={() => onEdit(item)}>
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                      Edit Content
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePreview(item)}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Preview in New Tab
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleDuplicate(item)}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare(item)}>
+                      <Share className="h-4 w-4 mr-2" />
+                      Copy Share Link
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => toggleFeatured(item)}>
                       {item.is_featured ? (
                         <>
@@ -328,7 +421,7 @@ export const KnowledgeItemsTable = ({
                     <DropdownMenuItem onClick={() => togglePublished(item)}>
                       {item.is_published ? (
                         <>
-                          <Archive className="h-4 w-4 mr-2" />
+                          <EyeOff className="h-4 w-4 mr-2" />
                           Unpublish
                         </>
                       ) : (
@@ -338,11 +431,11 @@ export const KnowledgeItemsTable = ({
                         </>
                       )}
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Duplicate
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleArchive(item)}>
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archive
+                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-destructive focus:text-destructive"
                       onClick={() => setItemToDelete(item)}
