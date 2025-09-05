@@ -256,8 +256,10 @@ export function KnowledgeItemEditor({
               </div>
 
               {/* Content Area */}
-              <div className="flex-1 overflow-y-auto px-6 py-6">
-                {renderCurrentSection()}
+              <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
+                <div className="max-w-4xl mx-auto">
+                  {renderCurrentSection()}
+                </div>
               </div>
 
               {/* Bottom Navigation */}

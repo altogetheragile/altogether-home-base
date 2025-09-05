@@ -33,14 +33,14 @@ export default function EditKnowledgeItem() {
   const handleClose = () => {
     setOpen(false);
     // Use replace to avoid adding to history stack
-    navigate('/admin/knowledge-items', { replace: true });
+    navigate('/admin/knowledge/items', { replace: true });
   };
 
   useEffect(() => {
     if (!open) {
       // Small delay to ensure smooth dialog closing animation
       const timer = setTimeout(() => {
-        navigate('/admin/knowledge-items', { replace: true });
+        navigate('/admin/knowledge/items', { replace: true });
       }, 100);
       return () => clearTimeout(timer);
     }
