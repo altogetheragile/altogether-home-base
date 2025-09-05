@@ -233,11 +233,17 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
                           <div className="font-medium text-sm leading-tight">
                             {step.title}
                           </div>
-                          <Tooltip>
+                          <Tooltip delayDuration={300}>
                             <TooltipTrigger asChild>
-                              <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                              <button 
+                                type="button"
+                                className="inline-flex items-center justify-center"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                              </button>
                             </TooltipTrigger>
-                            <TooltipContent>
+                            <TooltipContent side="right" className="max-w-xs z-50">
                               <p className="text-sm">{step.description}</p>
                             </TooltipContent>
                           </Tooltip>
