@@ -30,10 +30,19 @@ export default function EditKnowledgeItem() {
     enabled: !!id,
   });
 
+  const handleClose = () => {
+    setOpen(false);
+    // Use replace to avoid adding to history stack
+    navigate('/admin/knowledge-items', { replace: true });
+  };
+
   useEffect(() => {
     if (!open) {
-      // Navigate back to knowledge items list when dialog closes
-      navigate('/admin/knowledge-items');
+      // Small delay to ensure smooth dialog closing animation
+      const timer = setTimeout(() => {
+        navigate('/admin/knowledge-items', { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [open, navigate]);
 
@@ -49,10 +58,10 @@ export default function EditKnowledgeItem() {
     <div className="p-6">
       <KnowledgeItemEditor
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleClose}
         knowledgeItem={knowledgeItem}
         onSuccess={() => {
-          setOpen(false);
+          handleClose();
         }}
       />
     </div>

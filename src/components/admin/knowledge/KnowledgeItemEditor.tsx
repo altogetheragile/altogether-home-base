@@ -234,18 +234,18 @@ export function KnowledgeItemEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0">
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="max-w-7xl max-h-[95vh] p-0 flex flex-col">
+        <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>
             {knowledgeItem ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col">
           <FormProvider {...form}>
             <form onSubmit={(e) => e.preventDefault()} className="h-full flex flex-col">
               {/* Step Navigation */}
-              <div className="px-6 py-4 border-b">
+              <div className="px-6 py-4 border-b shrink-0">
                 <FormStepper
                   steps={stepConfigs}
                   currentStep={currentStep}
