@@ -12,13 +12,28 @@ export const knowledgeItemSchema = z.object({
   
   // Author Information
   author: z.string().optional(),
-  reference_url: z.string().url('Invalid URL').optional().or(z.literal('')),
-  publication_year: z.number().min(1900).max(2030).optional().nullable(),
+  reference_url: z.preprocess(
+    (val) => val === '' ? null : val,
+    z.string().url('Invalid URL').optional().nullable()
+  ),
+  publication_year: z.preprocess(
+    (val) => val === '' || val === 0 ? null : val,
+    z.number().min(1900).max(2030).optional().nullable()
+  ),
   
-  // Classification
-  category_id: z.string().optional(),
-  planning_layer_id: z.string().optional(),
-  domain_id: z.string().optional(),
+  // Classification - preprocess empty strings to undefined for UUID fields
+  category_id: z.preprocess(
+    (val) => val === '' ? undefined : val,
+    z.string().uuid().optional()
+  ),
+  planning_layer_id: z.preprocess(
+    (val) => val === '' ? undefined : val,
+    z.string().uuid().optional()
+  ),
+  domain_id: z.preprocess(
+    (val) => val === '' ? undefined : val,
+    z.string().uuid().optional()
+  ),
   
   // Enhanced Fields - these are now required with defaults
   common_pitfalls: z.array(z.string()).default([]),

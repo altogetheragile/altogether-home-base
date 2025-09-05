@@ -224,14 +224,32 @@ export const useUpdateKnowledgeItem = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<KnowledgeItem> & { id: string }) => {
+      // Transform data to handle empty strings and invalid values
+      const transformedData = {
+        ...data,
+        // Convert empty strings to null for UUID fields
+        category_id: data.category_id === '' ? null : data.category_id,
+        planning_layer_id: data.planning_layer_id === '' ? null : data.planning_layer_id,
+        domain_id: data.domain_id === '' ? null : data.domain_id,
+        // Convert empty string URLs to null, validate URL format
+        reference_url: data.reference_url === '' || data.reference_url === undefined ? null : data.reference_url,
+        // Convert empty publication year to null
+        publication_year: data.publication_year === undefined || data.publication_year === 0 ? null : data.publication_year,
+      };
+
+      console.log('💾 Sending data to Supabase:', transformedData);
+
       const { data: result, error } = await supabase
         .from('knowledge_items')
-        .update(data)
+        .update(transformedData)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase error:', error);
+        throw error;
+      }
       return result;
     },
     onSuccess: () => {
@@ -242,9 +260,10 @@ export const useUpdateKnowledgeItem = () => {
       });
     },
     onError: (error) => {
+      console.error('❌ Update mutation failed:', error);
       toast({
         title: "Error",
-        description: "Failed to update knowledge item",
+        description: `Failed to update knowledge item: ${error.message}`,
         variant: "destructive",
       });
     },

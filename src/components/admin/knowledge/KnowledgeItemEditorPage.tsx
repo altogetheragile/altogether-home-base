@@ -198,11 +198,14 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     };
   }, []);
 
-  // Auto-save functionality with longer debounce
-  const formValues = form.watch();
-  const debouncedFormValues = useDebounce(formValues, 5000); // Increased from 3000 to 5000
+  // TEMPORARILY DISABLE AUTO-SAVE TO FIX DATA VALIDATION ISSUES
+  // const formValues = form.watch();
+  // const debouncedFormValues = useDebounce(formValues, 5000);
 
   const performAutoSave = useCallback(async (data: KnowledgeItemFormData) => {
+    console.log('🚫 Auto-save disabled temporarily for debugging');
+    return;
+
     // More strict conditions to prevent infinite loops
     if (!form.formState.isDirty || !isEditing || !knowledgeItem?.id || userIsTyping || autoSaveStatus === 'saving') {
       console.log('🚫 Auto-save skipped:', { 
@@ -251,12 +254,16 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   }, [form.formState.isDirty, isEditing, knowledgeItem?.id, updateMutation, userIsTyping, autoSaveStatus, lastAutoSave]);
 
   useEffect(() => {
+    // TEMPORARILY DISABLE AUTO-SAVE
+    console.log('🚫 Auto-save useEffect disabled for debugging');
+    return;
+    
     // Only auto-save if form is dirty, user has stopped typing, and we're not already saving
-    if (debouncedFormValues && form.formState.isDirty && !userIsTyping && autoSaveStatus !== 'saving') {
-      console.log('🕐 Debounced values changed, attempting auto-save');
-      performAutoSave(debouncedFormValues);
-    }
-  }, [debouncedFormValues, performAutoSave, form.formState.isDirty, userIsTyping, autoSaveStatus]);
+    // if (debouncedFormValues && form.formState.isDirty && !userIsTyping && autoSaveStatus !== 'saving') {
+    //   console.log('🕐 Debounced values changed, attempting auto-save');
+    //   performAutoSave(debouncedFormValues);
+    // }
+  }, [performAutoSave]); // Simplified dependencies
 
   // Navigation handlers
   const handleBack = () => {
