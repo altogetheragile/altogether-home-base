@@ -276,7 +276,7 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
 
                     {/* Active indicator */}
                     {status === 'current' && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r" />
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full" />
                     )}
                   </Button>
 
