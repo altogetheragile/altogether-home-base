@@ -14,6 +14,8 @@ import { BasicInfoSection } from './editor/sections/BasicInfoSection';
 import { ClassificationSection } from './editor/sections/ClassificationSection';
 import { ContentSection } from './editor/sections/ContentSection';
 import { EnhancedSection } from './editor/sections/EnhancedSection';
+import { UseCasesSection } from './editor/sections/UseCasesSection';
+import { AnalyticsSection } from './editor/sections/AnalyticsSection';
 
 export type KnowledgeItemEditorProps = {
   open: boolean;
@@ -45,6 +47,18 @@ const stepConfigs = [
     id: 'enhanced',
     title: 'Enhanced Details',
     description: 'Add advanced information, pitfalls, and terminology',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'use-cases',
+    title: 'Use Cases',
+    description: 'Define practical applications and examples',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'analytics',
+    title: 'Analytics & Insights',
+    description: 'Review performance metrics and recommendations',
     requiredFields: [] as (keyof KnowledgeItemFormData)[],
   },
 ];
@@ -227,6 +241,10 @@ export function KnowledgeItemEditor({
         return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
       case 3:
         return <EnhancedSection />;
+      case 4:
+        return <UseCasesSection />;
+      case 5:
+        return <AnalyticsSection />;
       default:
         return <BasicInfoSection />;
     }
