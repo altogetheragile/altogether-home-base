@@ -5,7 +5,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Save, ExternalLink, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Save, ExternalLink, Clock, CheckCircle2, AlertCircle, Loader2, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
 interface StepConfig {
@@ -145,7 +146,8 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
   };
 
   return (
-    <Collapsible open={!isCollapsed} onOpenChange={onToggleCollapsed}>
+    <TooltipProvider>
+      <Collapsible open={!isCollapsed} onOpenChange={onToggleCollapsed}>
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
@@ -225,13 +227,20 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
                         )}
                       </div>
 
-                       {/* Step Content */}
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="font-medium text-sm leading-tight">
-                          {step.title}
-                        </div>
-                        <div className="text-xs text-muted-foreground leading-tight mt-0.5 break-words">
-                          {step.description}
+                        {/* Step Content */}
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-sm leading-tight">
+                            {step.title}
+                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">{step.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                         
                         {/* Progress indicator */}
@@ -346,5 +355,6 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
         </div>
       </CollapsibleContent>
     </Collapsible>
+    </TooltipProvider>
   );
 };
