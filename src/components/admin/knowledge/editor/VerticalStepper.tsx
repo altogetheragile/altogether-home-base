@@ -22,6 +22,7 @@ interface VerticalStepperProps {
   canNavigateToStep?: (step: number) => boolean;
   isCollapsed?: boolean;
   onToggleCollapsed?: () => void;
+  onTogglePreview?: () => void;
   className?: string;
 }
 
@@ -32,6 +33,7 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
   form,
   canNavigateToStep = () => true,
   isCollapsed = false,
+  onTogglePreview,
   className
 }) => {
   const { formState: { errors }, watch } = form;
@@ -89,6 +91,16 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
           )}>
             Steps
           </h2>
+          {!isCollapsed && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onTogglePreview}
+              className="text-xs px-2 py-1 h-auto"
+            >
+              Toggle Preview
+            </Button>
+          )}
         </div>
       </div>
 

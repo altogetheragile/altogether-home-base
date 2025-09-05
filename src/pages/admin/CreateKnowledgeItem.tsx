@@ -1,7 +1,12 @@
-import EditKnowledgeItem from './EditKnowledgeItem';
+import { KnowledgeItemEditorPage } from '@/components/admin/knowledge/KnowledgeItemEditorPage';
 
 const CreateKnowledgeItem = () => {
-  return <EditKnowledgeItem />;
+  return (
+    <KnowledgeItemEditorPage 
+      knowledgeItem={null} 
+      isEditing={false} 
+    />
+  );
 };
 
 export default CreateKnowledgeItem;

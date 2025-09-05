@@ -91,9 +91,8 @@ const App = () => (
                 <Route path="formats" element={<AdminFormats />} />
                 <Route path="pages" element={<AdminPages />} />
                 <Route path="pages/:id/edit" element={<PageEditor />} />
+                
                 <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
-                <Route path="knowledge/items/new" element={<CreateKnowledgeItem />} />
-                <Route path="knowledge/items/:id/edit" element={<EditKnowledgeItem />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/categories" element={<AdminKnowledgeCategories />} />
@@ -111,6 +110,18 @@ const App = () => (
                 <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
                 <Route path="logs/auth" element={<AdminLogsAuthRoute />} />
               </Route>
+              
+              {/* Knowledge Item Editor - Protected Full Page Routes Outside Admin Layout */}
+              <Route path="/admin/knowledge/items/new" element={
+                <ProtectedRoute requiredRole="admin">
+                  <CreateKnowledgeItem />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/knowledge/items/:id/edit" element={
+                <ProtectedRoute requiredRole="admin">
+                  <EditKnowledgeItem />
+                </ProtectedRoute>
+              } />
               
               {/* Dynamic Pages Route - handles root and other slugs */}
               <Route path="/" element={<DynamicPageRenderer slug="home" />} />

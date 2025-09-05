@@ -1,16 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { KnowledgeItemEditor } from '@/components/admin/knowledge/KnowledgeItemEditor';
+import { KnowledgeItemEditorPage } from '@/components/admin/knowledge/KnowledgeItemEditorPage';
 import type { KnowledgeItem } from '@/hooks/useKnowledgeItems';
 
 export default function EditKnowledgeItem() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  
-  // State for editor visibility
-  const [open, setOpen] = useState(true);
 
   // Fetch the actual knowledge item if editing
   const { data: knowledgeItem, isLoading, error } = useQuery({
@@ -30,40 +25,31 @@ export default function EditKnowledgeItem() {
     enabled: !!id,
   });
 
-  const handleClose = () => {
-    setOpen(false);
-    // Use replace to avoid adding to history stack
-    navigate('/admin/knowledge/items', { replace: true });
-  };
-
-  useEffect(() => {
-    if (!open) {
-      // Small delay to ensure smooth dialog closing animation
-      const timer = setTimeout(() => {
-        navigate('/admin/knowledge/items', { replace: true });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [open, navigate]);
-
   if (isLoading) {
-    return <div className="p-6">Loading knowledge item...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading knowledge item...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-6">Error loading knowledge item: {(error as Error).message}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive">Error loading knowledge item: {(error as Error).message}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <KnowledgeItemEditor
-        open={open}
-        onOpenChange={handleClose}
-        knowledgeItem={knowledgeItem}
-        onSuccess={() => {
-          handleClose();
-        }}
-      />
-    </div>
+    <KnowledgeItemEditorPage 
+      knowledgeItem={knowledgeItem} 
+      isEditing={true} 
+    />
   );
 }
