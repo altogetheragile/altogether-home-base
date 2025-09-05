@@ -291,7 +291,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   };
 
   // Save handler
-  const handleSave = async () => {
+  const handleSave = async (shouldNavigateAway = false) => {
     const isValid = await form.trigger();
     if (!isValid) {
       toast({
@@ -323,7 +323,11 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       }
       
       setLastSaved(new Date());
-      navigate('/admin/knowledge/items');
+      
+      // Only navigate away if explicitly requested or if creating a new item and shouldNavigateAway is true
+      if (shouldNavigateAway) {
+        navigate('/admin/knowledge/items');
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -331,6 +335,11 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
         variant: "destructive",
       });
     }
+  };
+
+  // Save and close handler
+  const handleSaveAndClose = async () => {
+    await handleSave(true);
   };
 
   const handleOpenPreview = () => {
@@ -438,6 +447,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
               isCollapsed={stepperCollapsed}
               onToggleCollapsed={() => setStepperCollapsed(!stepperCollapsed)}
               onSave={handleSave}
+              onSaveAndClose={handleSaveAndClose}
               onOpenPreview={handleOpenPreview}
               isLoading={createMutation.isPending || updateMutation.isPending}
               isEditing={isEditing}

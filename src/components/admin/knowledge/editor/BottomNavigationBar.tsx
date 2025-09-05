@@ -20,6 +20,7 @@ interface BottomNavigationBarProps {
   onPrevious: () => void;
   onNext: () => void;
   onSave: () => void;
+  onSaveAndClose?: () => void;
   form: UseFormReturn<any>;
   isLoading?: boolean;
   isEditing?: boolean;
@@ -34,6 +35,7 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
   onPrevious,
   onNext,
   onSave,
+  onSaveAndClose,
   form,
   isLoading = false,
   isEditing = false,
@@ -180,19 +182,38 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button
-                  type="button"
-                  onClick={onSave}
-                  disabled={isLoading || (!isDirty && isEditing)}
-                  className="flex items-center gap-2"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onSave}
+                    disabled={isLoading || (!isDirty && isEditing)}
+                    className="flex items-center gap-2"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    {isLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Item')}
+                  </Button>
+                  
+                  {isEditing && onSaveAndClose && (
+                    <Button
+                      type="button"
+                      onClick={onSaveAndClose}
+                      disabled={isLoading}
+                      className="flex items-center gap-2"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      Save & Close
+                    </Button>
                   )}
-                  {isLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Item')}
-                </Button>
+                </div>
               )}
             </div>
           </div>

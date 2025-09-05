@@ -26,6 +26,7 @@ interface VerticalStepperProps {
   isCollapsed: boolean;
   onToggleCollapsed: () => void;
   onSave: () => void;
+  onSaveAndClose?: () => void;
   onOpenPreview: () => void;
   isLoading?: boolean;
   isEditing?: boolean;
@@ -42,6 +43,7 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
   isCollapsed,
   onToggleCollapsed,
   onSave,
+  onSaveAndClose,
   onOpenPreview,
   isLoading = false,
   isEditing = false,
@@ -342,6 +344,24 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
               )}
               {isLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Item')}
             </Button>
+
+            {isEditing && onSaveAndClose && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSaveAndClose}
+                disabled={isLoading}
+                className="w-full flex items-center gap-2"
+                size="sm"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Save & Close
+              </Button>
+            )}
 
             <Button
               type="button"
