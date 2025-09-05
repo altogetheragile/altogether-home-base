@@ -1,34 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import type { Dispatch, SetStateAction } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { knowledgeItemSchema, knowledgeItemDefaults, type KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem, type KnowledgeItem } from '@/hooks/useKnowledgeItems';
-import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningLayers } from '@/hooks/usePlanningLayers';
-import { useActivityDomains } from '@/hooks/useActivityDomains';
 import { useToast } from '@/hooks/use-toast';
 
-interface FormData {
-  name: string;
-  slug: string;
-  description: string;
-  background: string;
-  source: string;
-  author: string;
-  reference_url: string;
-  publication_year: number | undefined;
-  category_id: string;
-  planning_layer_id: string;
-  domain_id: string;
-  learning_value_summary: string;
-  is_published: boolean;
-  is_featured: boolean;
-}
+// Import the step components
+import { FormStepper } from './editor/FormStepper';
+import { BottomNavigationBar } from './editor/BottomNavigationBar';
+import { BasicInfoSection } from './editor/sections/BasicInfoSection';
+import { ClassificationSection } from './editor/sections/ClassificationSection';
+import { ContentSection } from './editor/sections/ContentSection';
+import { EnhancedSection } from './editor/sections/EnhancedSection';
 
 export type KnowledgeItemEditorProps = {
   open: boolean;
@@ -37,6 +22,33 @@ export type KnowledgeItemEditorProps = {
   onSuccess: () => void;
 };
 
+const stepConfigs = [
+  {
+    id: 'basic-info',
+    title: 'Basic Information',
+    description: 'Set the core details and publication settings',
+    requiredFields: ['name', 'slug'] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'classification',
+    title: 'Classification',
+    description: 'Categorize and organize this knowledge item',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'content',
+    title: 'Content',
+    description: 'Add the main content and background information',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'enhanced',
+    title: 'Enhanced Details',
+    description: 'Add advanced information, pitfalls, and terminology',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+];
+
 export function KnowledgeItemEditor({
   open,
   onOpenChange,
@@ -44,36 +56,35 @@ export function KnowledgeItemEditor({
   onSuccess,
 }: KnowledgeItemEditorProps) {
   const { toast } = useToast();
-  const { data: categories } = useKnowledgeCategories();
-  const { data: planningLayers } = usePlanningLayers();
-  const { data: domains } = useActivityDomains();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [lastSaved, setLastSaved] = useState<Date | undefined>();
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   const createMutation = useCreateKnowledgeItem();
   const updateMutation = useUpdateKnowledgeItem();
 
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    slug: '',
-    description: '',
-    background: '',
-    source: '',
-    author: '',
-    reference_url: '',
-    publication_year: undefined,
-    category_id: '',
-    planning_layer_id: '',
-    domain_id: '',
-    learning_value_summary: '',
-    is_published: false,
-    is_featured: false,
+  // Create form with proper defaults to handle schema/component mismatch
+  const formDefaults = {
+    ...knowledgeItemDefaults,
+    // Ensure arrays are initialized properly for the enhanced section
+    common_pitfalls: knowledgeItemDefaults.common_pitfalls || [],
+    evidence_sources: knowledgeItemDefaults.evidence_sources || [],
+    related_techniques: knowledgeItemDefaults.related_techniques || [],
+    key_terminology: knowledgeItemDefaults.key_terminology || {},
+  };
+
+  const form = useForm<any>({
+    resolver: zodResolver(knowledgeItemSchema),
+    defaultValues: formDefaults,
+    mode: 'onBlur',
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
+  // Initialize form with existing data
   useEffect(() => {
     if (knowledgeItem && open) {
-      // Populate form with existing data
-      setFormData({
+      const formData = {
         name: knowledgeItem.name || '',
         slug: knowledgeItem.slug || '',
         description: knowledgeItem.description || '',
@@ -85,84 +96,65 @@ export function KnowledgeItemEditor({
         category_id: knowledgeItem.category_id || '',
         planning_layer_id: knowledgeItem.planning_layer_id || '',
         domain_id: knowledgeItem.domain_id || '',
+        common_pitfalls: knowledgeItem.common_pitfalls || [],
+        evidence_sources: knowledgeItem.evidence_sources || [],
+        related_techniques: knowledgeItem.related_techniques || [],
         learning_value_summary: knowledgeItem.learning_value_summary || '',
+        key_terminology: knowledgeItem.key_terminology || {},
         is_published: knowledgeItem.is_published ?? false,
         is_featured: knowledgeItem.is_featured ?? false,
-      });
+      };
+      form.reset(formData);
     } else if (open && !knowledgeItem) {
-      // Reset form for new item
-      setFormData({
-        name: '',
-        slug: '',
-        description: '',
-        background: '',
-        source: '',
-        author: '',
-        reference_url: '',
-        publication_year: undefined,
-        category_id: '',
-        planning_layer_id: '',
-        domain_id: '',
-        learning_value_summary: '',
-        is_published: false,
-        is_featured: false,
+      form.reset(formDefaults);
+    }
+  }, [knowledgeItem, open, form, formDefaults]);
+
+  // Reset step when dialog opens
+  useEffect(() => {
+    if (open) {
+      setCurrentStep(0);
+      setLastSaved(undefined);
+      setAutoSaveStatus('idle');
+    }
+  }, [open]);
+
+  const handleStepChange = (step: number) => {
+    if (step >= 0 && step < stepConfigs.length) {
+      setCurrentStep(step);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep < stepConfigs.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSave = async () => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before saving",
+        variant: "destructive",
       });
-    }
-    setErrors({});
-  }, [knowledgeItem, open]);
-
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
-
-  const handleNameChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      name: value,
-      slug: prev.slug === generateSlug(prev.name) ? generateSlug(value) : prev.slug
-    }));
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    
-    if (!formData.slug.trim()) {
-      newErrors.slug = 'Slug is required';
-    }
-    
-    if (formData.reference_url && formData.reference_url.trim()) {
-      try {
-        new URL(formData.reference_url);
-      } catch {
-        newErrors.reference_url = 'Invalid URL';
-      }
-    }
-    
-    if (formData.publication_year && (formData.publication_year < 1900 || formData.publication_year > 2030)) {
-      newErrors.publication_year = 'Publication year must be between 1900 and 2030';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
       return;
     }
 
+    setAutoSaveStatus('saving');
+    
     try {
-      // Prepare data for submission - remove empty strings
-      const submitData = {
+      const formData = form.getValues();
+      
+      // Clean up the data - remove empty strings and convert to proper types
+      const cleanData = {
         ...formData,
         description: formData.description || undefined,
         background: formData.background || undefined,
@@ -173,257 +165,120 @@ export function KnowledgeItemEditor({
         planning_layer_id: formData.planning_layer_id || undefined,
         domain_id: formData.domain_id || undefined,
         learning_value_summary: formData.learning_value_summary || undefined,
+        // Filter out empty array items
+        common_pitfalls: (formData.common_pitfalls || []).filter((item: string) => item.trim()),
+        evidence_sources: (formData.evidence_sources || []).filter((item: string) => item.trim()),
+        related_techniques: (formData.related_techniques || []).filter((item: string) => item.trim()),
+        // Filter out empty terminology entries
+        key_terminology: Object.fromEntries(
+          Object.entries(formData.key_terminology || {})
+            .filter(([key, value]) => key.trim() && (value as string).trim())
+        ),
       };
 
       if (knowledgeItem?.id) {
-        // For updates, pass id along with the data
         await updateMutation.mutateAsync({
           id: knowledgeItem.id,
-          ...submitData,
+          ...cleanData,
         });
       } else {
-        // For creates, just pass the data
-        await createMutation.mutateAsync(submitData);
+        await createMutation.mutateAsync(cleanData);
       }
+      
+      setLastSaved(new Date());
+      setAutoSaveStatus('saved');
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      // Error handling is done in the mutations themselves
-      console.error('Form submission error:', error);
+      setAutoSaveStatus('error');
+      // Error handling is done in the mutations
+    }
+  };
+
+  const canNavigateToStep = (step: number) => {
+    // Allow navigation to current step and previous steps
+    // For next steps, check if current step is valid
+    if (step <= currentStep) return true;
+    
+    // For future steps, check if all previous required fields are filled
+    for (let i = 0; i < step; i++) {
+      const stepConfig = stepConfigs[i];
+      if (stepConfig.requiredFields?.length) {
+        const values = form.getValues();
+        const hasErrors = stepConfig.requiredFields.some(field => {
+          const value = values[field];
+          if (typeof value === 'string') return !value.trim();
+          return value === undefined || value === null;
+        });
+        if (hasErrors) return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const renderCurrentSection = () => {
+    switch (currentStep) {
+      case 0:
+        return <BasicInfoSection />;
+      case 1:
+        return <ClassificationSection />;
+      case 2:
+        return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
+      case 3:
+        return <EnhancedSection />;
+      default:
+        return <BasicInfoSection />;
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>
             {knowledgeItem ? 'Edit Knowledge Item' : 'Create Knowledge Item'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Basic Information</h3>
-            
-            <div>
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="Enter knowledge item name"
-                className={errors.name ? 'border-red-500' : ''}
-              />
-              {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="slug">Slug *</Label>
-              <Input
-                id="slug"
-                value={formData.slug}
-                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                placeholder="knowledge-item-slug"
-                className={errors.slug ? 'border-red-500' : ''}
-              />
-              {errors.slug && <p className="text-sm text-red-500 mt-1">{errors.slug}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Brief description of the knowledge item"
-              />
-            </div>
-          </div>
-
-          {/* Classification */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Classification</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>Category</Label>
-                <Select
-                  value={formData.category_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Planning Layer</Label>
-                <Select
-                  value={formData.planning_layer_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, planning_layer_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select layer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {planningLayers?.map((layer) => (
-                      <SelectItem key={layer.id} value={layer.id}>
-                        {layer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Domain</Label>
-                <Select
-                  value={formData.domain_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, domain_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select domain" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {domains?.map((domain) => (
-                      <SelectItem key={domain.id} value={domain.id}>
-                        {domain.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Content</h3>
-            
-            <div>
-              <Label htmlFor="background">Background</Label>
-              <Textarea
-                id="background"
-                value={formData.background}
-                onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
-                placeholder="Background information about this knowledge item"
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="source">Source</Label>
-              <Textarea
-                id="source"
-                value={formData.source}
-                onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value }))}
-                placeholder="Source information"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="learning_value_summary">Learning Value Summary</Label>
-              <Textarea
-                id="learning_value_summary"
-                value={formData.learning_value_summary}
-                onChange={(e) => setFormData(prev => ({ ...prev, learning_value_summary: e.target.value }))}
-                placeholder="Summary of the learning value"
-              />
-            </div>
-          </div>
-
-          {/* Author Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Author Information</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="author">Author</Label>
-                <Input
-                  id="author"
-                  value={formData.author}
-                  onChange={(e) => setFormData(prev => ({ ...prev, author: e.target.value }))}
-                  placeholder="Author name"
+        <div className="flex-1 overflow-hidden">
+          <FormProvider {...form}>
+            <form onSubmit={(e) => e.preventDefault()} className="h-full flex flex-col">
+              {/* Step Navigation */}
+              <div className="px-6 py-4 border-b">
+                <FormStepper
+                  steps={stepConfigs}
+                  currentStep={currentStep}
+                  onStepChange={handleStepChange}
+                  form={form}
+                  canNavigateToStep={canNavigateToStep}
                 />
               </div>
 
-              <div>
-                <Label htmlFor="reference_url">Reference URL</Label>
-                <Input
-                  id="reference_url"
-                  type="url"
-                  value={formData.reference_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, reference_url: e.target.value }))}
-                  placeholder="https://example.com"
-                  className={errors.reference_url ? 'border-red-500' : ''}
-                />
-                {errors.reference_url && <p className="text-sm text-red-500 mt-1">{errors.reference_url}</p>}
+              {/* Content Area */}
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                {renderCurrentSection()}
               </div>
 
-              <div>
-                <Label htmlFor="publication_year">Publication Year</Label>
-                <Input
-                  id="publication_year"
-                  type="number"
-                  value={formData.publication_year || ''}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    publication_year: e.target.value ? parseInt(e.target.value) : undefined 
-                  }))}
-                  placeholder="2024"
-                  className={errors.publication_year ? 'border-red-500' : ''}
+              {/* Bottom Navigation */}
+              <div className="border-t">
+                <BottomNavigationBar
+                  currentStep={currentStep}
+                  totalSteps={stepConfigs.length}
+                  onPrevious={handlePrevious}
+                  onNext={handleNext}
+                  onSave={handleSave}
+                  form={form}
+                  isLoading={isLoading}
+                  isEditing={!!knowledgeItem}
+                  lastSaved={lastSaved}
+                  autoSaveStatus={autoSaveStatus}
+                  className="px-6 py-4"
                 />
-                {errors.publication_year && <p className="text-sm text-red-500 mt-1">{errors.publication_year}</p>}
               </div>
-            </div>
-          </div>
-
-          {/* Publication Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Publication Settings</h3>
-            
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3">
-                <Switch
-                  checked={formData.is_published}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
-                />
-                <Label>Published</Label>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <Switch
-                  checked={formData.is_featured}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_featured: checked }))}
-                />
-                <Label>Featured</Label>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {createMutation.isPending || updateMutation.isPending ? 'Saving...' : 
-               knowledgeItem ? 'Save Changes' : 'Create'}
-            </Button>
-          </div>
-        </form>
+            </form>
+          </FormProvider>
+        </div>
       </DialogContent>
     </Dialog>
   );
