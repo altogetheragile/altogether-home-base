@@ -290,7 +290,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     }
   };
 
-  // Save handler
+  // Save handler with improved error handling
   const handleSave = async (shouldNavigateAway = false) => {
     const isValid = await form.trigger();
     if (!isValid) {
@@ -310,30 +310,19 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
           id: knowledgeItem.id,
           ...data,
         });
-        toast({
-          title: "Success",
-          description: "Knowledge item updated successfully.",
-        });
       } else {
         await createMutation.mutateAsync(data);
-        toast({
-          title: "Success",
-          description: "Knowledge item created successfully.",
-        });
       }
       
       setLastSaved(new Date());
       
-      // Only navigate away if explicitly requested or if creating a new item and shouldNavigateAway is true
+      // Only navigate away if explicitly requested
       if (shouldNavigateAway) {
         navigate('/admin/knowledge/items');
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save knowledge item. Please try again.",
-        variant: "destructive",
-      });
+      // Error handling is now done in the mutation hooks with better messages
+      console.error('❌ Save failed in component:', error);
     }
   };
 

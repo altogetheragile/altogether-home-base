@@ -2,6 +2,48 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// PostgreSQL error type
+interface PostgreSQLError extends Error {
+  code?: string;
+  details?: string;
+  hint?: string;
+}
+
+// Network error detection utility
+const isNetworkError = (error: any): boolean => {
+  return (
+    error.message?.includes('network') ||
+    error.message?.includes('connection') ||
+    error.message?.includes('Failed to fetch') ||
+    error.message?.includes('Load failed') ||
+    error.message?.includes('access control') ||
+    error.code === 'NETWORK_ERROR' ||
+    !navigator.onLine
+  );
+};
+
+// Retry logic utility
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> => {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt === maxRetries || !isNetworkError(error)) {
+        throw error;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`🔄 Retry attempt ${attempt + 1}/${maxRetries + 1} after ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('Max retries exceeded');
+};
+
 export interface KnowledgeItem {
   id: string;
   name: string;
@@ -166,38 +208,38 @@ export const useCreateKnowledgeItem = () => {
     mutationFn: async (data: Partial<KnowledgeItem>) => {
       console.log('🚀 useCreateKnowledgeItem: Starting creation with data:', JSON.stringify(data, null, 2));
       
-      const { data: result, error } = await supabase
-        .from('knowledge_items')
-        .insert([data])
-        .select()
-        .single();
+      // Transform data similarly to update mutation
+      const transformedData = {
+        ...data,
+        category_id: data.category_id === '' ? null : data.category_id,
+        planning_layer_id: data.planning_layer_id === '' ? null : data.planning_layer_id,
+        domain_id: data.domain_id === '' ? null : data.domain_id,
+        reference_url: data.reference_url === '' || data.reference_url === undefined ? null : data.reference_url,
+        publication_year: data.publication_year === undefined || data.publication_year === 0 ? null : data.publication_year,
+      };
+      
+      // Retry the create operation for network errors
+      return retryWithBackoff(async () => {
+        const { data: result, error } = await supabase
+          .from('knowledge_items')
+          .insert([transformedData])
+          .select()
+          .single();
 
-      console.log('📊 useCreateKnowledgeItem: Insert result:', { result, error });
-
-      if (error) {
-        console.error('❌ useCreateKnowledgeItem: Insert failed:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        
-        // Create a more descriptive error message
-        let errorMessage = error.message;
-        if (error.code === '23502') {
-          errorMessage = `Missing required field: ${error.details}`;
-        } else if (error.code === '23503') {
-          errorMessage = `Invalid reference: ${error.details}`;
-        } else if (error.code === '23505') {
-          errorMessage = `Duplicate value: ${error.details}`;
+        if (error) {
+          console.error('❌ useCreateKnowledgeItem: Insert failed:', {
+            error,
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
+          throw error;
         }
         
-        throw new Error(errorMessage);
-      }
-      
-      console.log('✅ useCreateKnowledgeItem: Creation successful:', result);
-      return result;
+        console.log('✅ useCreateKnowledgeItem: Creation successful:', result);
+        return result;
+      });
     },
     onSuccess: (result) => {
       console.log('🎉 useCreateKnowledgeItem: Success callback:', result);
@@ -207,16 +249,33 @@ export const useCreateKnowledgeItem = () => {
         description: "Knowledge item created successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: PostgreSQLError) => {
       console.error('❌ useCreateKnowledgeItem: Error callback:', error);
+      
+      // Provide specific error messages based on error type
+      let errorMessage = "Failed to create knowledge item";
+      
+      if (isNetworkError(error)) {
+        errorMessage = "Network connection lost. Please check your internet connection and try again.";
+      } else if (error.code === '23502') {
+        errorMessage = `Missing required field: ${error.details}`;
+      } else if (error.code === '23503') {
+        errorMessage = `Invalid reference: ${error.details}`;
+      } else if (error.code === '23505') {
+        errorMessage = `Duplicate value: ${error.details}`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error creating knowledge item",
-        description: error.message || "Failed to create knowledge item",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 };
+
 
 export const useUpdateKnowledgeItem = () => {
   const queryClient = useQueryClient();
@@ -239,18 +298,21 @@ export const useUpdateKnowledgeItem = () => {
 
       console.log('💾 Sending data to Supabase:', transformedData);
 
-      const { data: result, error } = await supabase
-        .from('knowledge_items')
-        .update(transformedData)
-        .eq('id', id)
-        .select()
-        .single();
+      // Retry the update operation for network errors
+      return retryWithBackoff(async () => {
+        const { data: result, error } = await supabase
+          .from('knowledge_items')
+          .update(transformedData)
+          .eq('id', id)
+          .select()
+          .single();
 
-      if (error) {
-        console.error('❌ Supabase error:', error);
-        throw error;
-      }
-      return result;
+        if (error) {
+          console.error('❌ Supabase error:', error);
+          throw error;
+        }
+        return result;
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
@@ -259,12 +321,30 @@ export const useUpdateKnowledgeItem = () => {
         description: "Knowledge item updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: PostgreSQLError) => {
       console.error('❌ Update mutation failed:', error);
+      
+      // Provide specific error messages based on error type
+      let errorMessage = "Failed to update knowledge item";
+      let action = undefined;
+      
+      if (isNetworkError(error)) {
+        errorMessage = "Network connection lost. Please check your internet connection and try again.";
+      } else if (error.code === '23502') {
+        errorMessage = `Missing required field: ${error.details}`;
+      } else if (error.code === '23503') {
+        errorMessage = `Invalid reference: ${error.details}`;
+      } else if (error.code === '23505') {
+        errorMessage = `Duplicate value: ${error.details}`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error",
-        description: `Failed to update knowledge item: ${error.message}`,
+        description: errorMessage,
         variant: "destructive",
+        action,
       });
     },
   });

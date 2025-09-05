@@ -21,18 +21,18 @@ export const knowledgeItemSchema = z.object({
     z.number().min(1900).max(2030).optional().nullable()
   ),
   
-  // Classification - preprocess empty strings to undefined for UUID fields
+  // Classification - preprocess empty strings to null for UUID fields
   category_id: z.preprocess(
-    (val) => val === '' ? undefined : val,
-    z.string().uuid().optional()
+    (val) => val === '' ? null : val,
+    z.string().uuid().optional().nullable()
   ),
   planning_layer_id: z.preprocess(
-    (val) => val === '' ? undefined : val,
-    z.string().uuid().optional()
+    (val) => val === '' ? null : val,
+    z.string().uuid().optional().nullable()
   ),
   domain_id: z.preprocess(
-    (val) => val === '' ? undefined : val,
-    z.string().uuid().optional()
+    (val) => val === '' ? null : val,
+    z.string().uuid().optional().nullable()
   ),
   
   // Enhanced Fields - these are now required with defaults
