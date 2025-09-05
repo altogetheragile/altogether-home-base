@@ -13,23 +13,23 @@ export const knowledgeItemSchema = z.object({
   // Author Information
   author: z.string().optional(),
   reference_url: z.string().url('Invalid URL').optional().or(z.literal('')),
-  publication_year: z.number().min(1900).max(2030).optional(),
+  publication_year: z.number().min(1900).max(2030).optional().nullable(),
   
   // Classification
   category_id: z.string().optional(),
   planning_layer_id: z.string().optional(),
   domain_id: z.string().optional(),
   
-  // Enhanced Fields
-  common_pitfalls: z.array(z.string()).optional().default([]),
-  evidence_sources: z.array(z.string()).optional().default([]),
-  related_techniques: z.array(z.string()).optional().default([]),
+  // Enhanced Fields - these are now required with defaults
+  common_pitfalls: z.array(z.string()).default([]),
+  evidence_sources: z.array(z.string()).default([]),
+  related_techniques: z.array(z.string()).default([]),
   learning_value_summary: z.string().optional(),
-  key_terminology: z.record(z.string(), z.string()).optional().default({}),
+  key_terminology: z.record(z.string(), z.string()).default({}),
   
   // Publication Settings
-  is_published: z.boolean().optional().default(false),
-  is_featured: z.boolean().optional().default(false),
+  is_published: z.boolean().default(false),
+  is_featured: z.boolean().default(false),
 });
 
 export type KnowledgeItemFormData = z.infer<typeof knowledgeItemSchema>;

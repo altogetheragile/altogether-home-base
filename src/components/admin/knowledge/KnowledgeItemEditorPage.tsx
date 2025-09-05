@@ -86,12 +86,16 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const createMutation = useCreateKnowledgeItem();
   const updateMutation = useUpdateKnowledgeItem();
 
-  // Data for dropdowns
-  const { data: categories = [] } = useKnowledgeCategories();
-  const { data: planningLayers = [] } = usePlanningLayers();
-  const { data: domains = [] } = useActivityDomains();
+  // Data for dropdowns with error handling and retry
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useKnowledgeCategories();
+  const { data: planningLayers = [], isLoading: layersLoading, error: layersError, refetch: refetchLayers } = usePlanningLayers();
+  const { data: domains = [], isLoading: domainsLoading, error: domainsError, refetch: refetchDomains } = useActivityDomains();
 
-  // Form setup
+  // Network error handling
+  const hasNetworkErrors = categoriesError || layersError || domainsError;
+  const isLoadingDropdownData = categoriesLoading || layersLoading || domainsLoading;
+
+  // Form setup with proper type
   const formDefaults = {
     ...knowledgeItemDefaults,
     common_pitfalls: knowledgeItemDefaults.common_pitfalls || [],
@@ -108,20 +112,33 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
-  // Initialize form with existing data
+  // Initialize form with existing data - defensive handling
   useEffect(() => {
     if (knowledgeItem) {
-      form.reset({
+      const safeKnowledgeItem = {
         ...formDefaults,
         ...knowledgeItem,
-        // Ensure arrays are properly initialized
-        common_pitfalls: knowledgeItem.common_pitfalls || [],
-        evidence_sources: knowledgeItem.evidence_sources || [],
-        related_techniques: knowledgeItem.related_techniques || [],
-        key_terminology: knowledgeItem.key_terminology || {},
-      });
+        // Ensure arrays are properly initialized with fallbacks
+        common_pitfalls: Array.isArray(knowledgeItem.common_pitfalls) ? knowledgeItem.common_pitfalls : [],
+        evidence_sources: Array.isArray(knowledgeItem.evidence_sources) ? knowledgeItem.evidence_sources : [],
+        related_techniques: Array.isArray(knowledgeItem.related_techniques) ? knowledgeItem.related_techniques : [],
+        key_terminology: typeof knowledgeItem.key_terminology === 'object' && knowledgeItem.key_terminology !== null 
+          ? knowledgeItem.key_terminology : {},
+        // Ensure optional fields have proper fallbacks
+        category_id: knowledgeItem.category_id || '',
+        planning_layer_id: knowledgeItem.planning_layer_id || '',
+        domain_id: knowledgeItem.domain_id || '',
+        reference_url: knowledgeItem.reference_url || '',
+        author: knowledgeItem.author || '',
+        source: knowledgeItem.source || '',
+        description: knowledgeItem.description || '',
+        background: knowledgeItem.background || '',
+        learning_value_summary: knowledgeItem.learning_value_summary || '',
+      };
+      
+      form.reset(safeKnowledgeItem);
     }
-  }, [knowledgeItem, form]);
+  }, [knowledgeItem]);
 
   // Auto-save functionality
   const formValues = form.watch();
@@ -221,7 +238,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
 
   const handleOpenPreview = () => {
     const formData = form.getValues();
-    const knowledgeItemId = formData.id || 'new';
+    const knowledgeItemId = (formData as any).id || knowledgeItem?.id || 'new';
     
     // Store preview data in sessionStorage for the preview window to access
     sessionStorage.setItem('preview-knowledge-item', JSON.stringify(formData));
@@ -248,6 +265,32 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   );
 
   const errorCount = Object.keys(form.formState.errors).length;
+
+  // Network retry handler
+  const handleRetryNetworkRequests = () => {
+    if (categoriesError) refetchCategories();
+    if (layersError) refetchLayers();
+    if (domainsError) refetchDomains();
+  };
+
+  // Show network error notification if needed
+  useEffect(() => {
+    if (hasNetworkErrors) {
+      toast({
+        title: "Network Error",
+        description: "Some dropdown data failed to load, but you can still edit the form. Click retry if needed.",
+        variant: "destructive",
+        action: (
+          <button 
+            onClick={handleRetryNetworkRequests}
+            className="px-3 py-1 text-xs bg-destructive-foreground text-destructive rounded hover:bg-opacity-80"
+          >
+            Retry
+          </button>
+        ),
+      });
+    }
+  }, [hasNetworkErrors, toast]);
 
   // Render current section
   const renderCurrentSection = () => {
