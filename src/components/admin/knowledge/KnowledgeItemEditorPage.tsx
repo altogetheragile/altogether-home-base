@@ -23,7 +23,7 @@ import { AnalyticsSection } from './editor/sections/AnalyticsSection';
 
 // Import hooks for dropdown data
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningLayers } from '@/hooks/usePlanningLayers';
+import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 
 interface KnowledgeItemEditorPageProps {
@@ -91,7 +91,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
 
   // Data for dropdowns with error handling and retry
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useKnowledgeCategories();
-  const { data: planningLayers = [], isLoading: layersLoading, error: layersError, refetch: refetchLayers } = usePlanningLayers();
+  const { data: planningFocuses = [], isLoading: focusesLoading, error: focusesError, refetch: refetchFocuses } = usePlanningFocuses();
   const { data: domains = [], isLoading: domainsLoading, error: domainsError, refetch: refetchDomains } = useActivityDomains();
 
   // Network error handling
@@ -130,7 +130,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
           ? knowledgeItem.key_terminology : {},
         // Ensure optional fields have proper fallbacks
         category_id: knowledgeItem.category_id || '',
-        planning_layer_id: knowledgeItem.planning_layer_id || '',
+        planning_focus_id: knowledgeItem.planning_focus_id || '',
         domain_id: knowledgeItem.domain_id || '',
         reference_url: knowledgeItem.reference_url || '',
         author: knowledgeItem.author || '',

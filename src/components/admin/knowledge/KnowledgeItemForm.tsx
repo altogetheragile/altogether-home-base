@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningLayers } from '@/hooks/usePlanningLayers';
+import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 import { useKnowledgeItems, useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +32,7 @@ interface KnowledgeItemFormProps {
 const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: KnowledgeItemFormProps) => {
   const { toast } = useToast();
   const { data: categories } = useKnowledgeCategories();
-  const { data: planningLayers } = usePlanningLayers();
+  const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
   const createKnowledgeItem = useCreateKnowledgeItem();
   const updateKnowledgeItem = useUpdateKnowledgeItem();
@@ -50,7 +50,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
     background: '',
     source: '',
     category_id: undefined as string | undefined,
-    planning_layer_id: undefined as string | undefined,
+    planning_focus_id: undefined as string | undefined,
     domain_id: undefined as string | undefined,
     is_published: true,
     is_featured: false,
@@ -81,7 +81,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
         background: editingItem.background || '',
         source: editingItem.source || '',
         category_id: editingItem.category_id || undefined,
-        planning_layer_id: editingItem.planning_layer_id || undefined,
+        planning_focus_id: editingItem.planning_focus_id || undefined,
         domain_id: editingItem.domain_id || undefined,
         is_published: editingItem.is_published ?? true,
         is_featured: editingItem.is_featured ?? false,
@@ -94,7 +94,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
         background: '',
         source: '',
         category_id: undefined,
-        planning_layer_id: undefined,
+        planning_focus_id: undefined,
         domain_id: undefined,
         is_published: true,
         is_featured: false,
@@ -137,7 +137,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
       const submitData = {
         ...formData,
         category_id: formData.category_id || null,
-        planning_layer_id: formData.planning_layer_id || null,
+        planning_focus_id: formData.planning_focus_id || null,
         domain_id: formData.domain_id || null,
       };
 
@@ -278,15 +278,15 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="planning_layer">Planning Layer</Label>
-              <Select value={formData.planning_layer_id || ""} onValueChange={(value) => setFormData(prev => ({ ...prev, planning_layer_id: value === "" ? undefined : value }))}>
+              <Label htmlFor="planning_focus">Planning Focus</Label>
+              <Select value={formData.planning_focus_id || ""} onValueChange={(value) => setFormData(prev => ({ ...prev, planning_focus_id: value === "" ? undefined : value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select planning layer" />
+                  <SelectValue placeholder="Select planning focus" />
                 </SelectTrigger>
                 <SelectContent>
-                  {planningLayers?.map((layer) => (
-                    <SelectItem key={layer.id} value={layer.id}>
-                      {layer.name}
+                  {planningFocuses?.map((focus) => (
+                    <SelectItem key={focus.id} value={focus.id}>
+                      {focus.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

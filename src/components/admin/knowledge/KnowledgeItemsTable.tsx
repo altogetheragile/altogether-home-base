@@ -67,7 +67,7 @@ export const KnowledgeItemsTable = ({
       }
 
       if (filters.planningLayers.length > 0) {
-        query = query.in('planning_layer_id', filters.planningLayers);
+        query = query.in('planning_focus_id', filters.planningLayers);
       }
 
       if (filters.domains.length > 0) {

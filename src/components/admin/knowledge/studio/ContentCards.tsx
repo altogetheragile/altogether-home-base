@@ -105,7 +105,7 @@ export const ContentCards = ({
     if (item.description) score += 25;
     if (item.knowledge_use_cases?.length > 0) score += 25;
     if (item.category_id) score += 20;
-    if (item.planning_layer_id) score += 15;
+    if (item.planning_focus_id) score += 15;
     if (item.domain_id) score += 15;
     return score;
   };

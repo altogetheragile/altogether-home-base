@@ -122,7 +122,7 @@ const AdminKnowledgeItems = () => {
 
       // Apply planning layer filter
       if (planningLayerFilter !== 'all') {
-        query = query.eq('planning_layer_id', planningLayerFilter);
+        query = query.eq('planning_focus_id', planningLayerFilter);
       }
 
       // Apply sorting

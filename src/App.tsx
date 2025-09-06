@@ -100,7 +100,7 @@ const App = () => (
                 <Route path="knowledge/tags" element={<AdminKnowledgeTags />} />
                 <Route path="knowledge/learning-paths" element={<AdminKnowledgeLearningPaths />} />
                 <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
-                <Route path="knowledge/planning-layers" element={<AdminPlanningLayers />} />
+                <Route path="knowledge/planning-focuses" element={<AdminPlanningFocuses />} />
                 <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
                 <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
                 <Route path="knowledge/imports" element={<AdminKnowledgeImport />} />

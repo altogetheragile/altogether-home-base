@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningLayers } from '@/hooks/usePlanningLayers';
+import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 
 interface KnowledgeItemClassificationProps {
@@ -17,11 +17,11 @@ export const KnowledgeItemClassification = ({
   onFormChange
 }: KnowledgeItemClassificationProps) => {
   const { data: categories } = useKnowledgeCategories();
-  const { data: planningLayers } = usePlanningLayers();
+  const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
 
   const selectedCategory = categories?.find(c => c.id === formData.category_id);
-  const selectedLayer = planningLayers?.find(l => l.id === formData.planning_layer_id);
+  const selectedFocus = planningFocuses?.find(f => f.id === formData.planning_focus_id);
   const selectedDomain = domains?.find(d => d.id === formData.domain_id);
 
   return (
@@ -104,44 +104,44 @@ export const KnowledgeItemClassification = ({
           </CardHeader>
           <CardContent className="space-y-3">
             <Select
-              value={formData.planning_layer_id}
-              onValueChange={(value) => onFormChange('planning_layer_id', value)}
+              value={formData.planning_focus_id}
+              onValueChange={(value) => onFormChange('planning_focus_id', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a planning layer" />
+                <SelectValue placeholder="Select a planning focus" />
               </SelectTrigger>
               <SelectContent>
-                {planningLayers
-                  ?.filter(layer => layer.id && layer.id.trim() !== '')
+                {planningFocuses
+                  ?.filter(focus => focus.id && focus.id.trim() !== '')
                   ?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
-                  ?.map((layer) => (
-                  <SelectItem key={layer.id} value={layer.id}>
+                  ?.map((focus) => (
+                  <SelectItem key={focus.id} value={focus.id}>
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: layer.color }}
+                        style={{ backgroundColor: focus.color }}
                       />
-                      {layer.name}
+                      {focus.name}
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             
-            {selectedLayer && (
+            {selectedFocus && (
               <div className="mt-2">
                 <Badge 
                   variant="outline"
                   style={{ 
-                    borderColor: selectedLayer.color, 
-                    color: selectedLayer.color 
+                    borderColor: selectedFocus.color, 
+                    color: selectedFocus.color
                   }}
                 >
-                  {selectedLayer.name}
+                  {selectedFocus.name}
                 </Badge>
-                {selectedLayer.description && (
+                {selectedFocus.description && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    {selectedLayer.description}
+                    {selectedFocus.description}
                   </p>
                 )}
               </div>
@@ -222,15 +222,15 @@ export const KnowledgeItemClassification = ({
                 {selectedCategory.name}
               </Badge>
             )}
-            {selectedLayer && (
+            {selectedFocus && (
               <Badge 
                 variant="outline"
                 style={{ 
-                  borderColor: selectedLayer.color, 
-                  color: selectedLayer.color 
+                  borderColor: selectedFocus.color, 
+                  color: selectedFocus.color 
                 }}
               >
-                {selectedLayer.name}
+                {selectedFocus.name}
               </Badge>
             )}
             {selectedDomain && (
@@ -244,8 +244,8 @@ export const KnowledgeItemClassification = ({
                 {selectedDomain.name}
               </Badge>
             )}
-            {!selectedCategory && !selectedLayer && !selectedDomain && (
-              <p className="text-sm text-muted-foreground">No classification selected</p>
+            {!selectedCategory && !selectedFocus && !selectedDomain && (
+              <p className="text-sm text-muted-foreground">No planning focus selected</p>
             )}
           </div>
         </CardContent>

@@ -23,7 +23,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningLayers } from '@/hooks/usePlanningLayers';
+import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 
 interface BulkOperationsPanelProps {
@@ -42,7 +42,7 @@ export const BulkOperationsPanel = ({
   const [selectedValue, setSelectedValue] = useState<string>('');
 
   const { data: categories } = useKnowledgeCategories();
-  const { data: planningLayers } = usePlanningLayers();
+  const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
 
   const handleAction = (action: string, value?: string) => {

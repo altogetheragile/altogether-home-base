@@ -99,8 +99,8 @@ export const KnowledgeItemAnalytics = ({ knowledgeItem }: KnowledgeItemAnalytics
               
               <div className="flex items-center justify-between">
                 <span className="text-sm">Classification</span>
-                <Badge variant={knowledgeItem.category_id || knowledgeItem.planning_layer_id || knowledgeItem.domain_id ? 'default' : 'secondary'}>
-                  {knowledgeItem.category_id || knowledgeItem.planning_layer_id || knowledgeItem.domain_id ? 'Classified' : 'Unclassified'}
+                <Badge variant={knowledgeItem.category_id || knowledgeItem.planning_focus_id || knowledgeItem.domain_id ? 'default' : 'secondary'}>
+                  {knowledgeItem.category_id || knowledgeItem.planning_focus_id || knowledgeItem.domain_id ? 'Classified' : 'Unclassified'}
                 </Badge>
               </div>
               

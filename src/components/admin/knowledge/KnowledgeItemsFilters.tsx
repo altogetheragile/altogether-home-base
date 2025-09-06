@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningLayers } from '@/hooks/usePlanningLayers';
+import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 import { format } from 'date-fns';
 
@@ -24,7 +24,7 @@ export const KnowledgeItemsFilters = ({
   onFiltersChange 
 }: KnowledgeItemsFiltersProps) => {
   const { data: categories } = useKnowledgeCategories();
-  const { data: planningLayers } = usePlanningLayers();
+  const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
 
   const updateFilters = (updates: Partial<KnowledgeItemsFiltersType>) => {

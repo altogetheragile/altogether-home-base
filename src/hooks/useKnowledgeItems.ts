@@ -50,7 +50,7 @@ export interface KnowledgeItem {
   slug: string;
   description?: string;
   category_id?: string;
-  planning_layer_id?: string;
+  planning_focus_id?: string;
   domain_id?: string;
   source?: string;
   background?: string;
@@ -140,7 +140,7 @@ export const useKnowledgeItems = (params?: {
       }
 
       if (params?.layerId) {
-        query = query.eq('planning_layer_id', params.layerId);
+        query = query.eq('planning_focus_id', params.layerId);
       }
 
       if (params?.domainId) {
@@ -212,7 +212,7 @@ export const useCreateKnowledgeItem = () => {
       const transformedData = {
         ...data,
         category_id: data.category_id === '' ? null : data.category_id,
-        planning_layer_id: data.planning_layer_id === '' ? null : data.planning_layer_id,
+        planning_focus_id: data.planning_focus_id === '' ? null : data.planning_focus_id,
         domain_id: data.domain_id === '' ? null : data.domain_id,
         reference_url: data.reference_url === '' || data.reference_url === undefined ? null : data.reference_url,
         publication_year: data.publication_year === undefined || data.publication_year === 0 ? null : data.publication_year,
@@ -288,7 +288,7 @@ export const useUpdateKnowledgeItem = () => {
         ...data,
         // Convert empty strings to null for UUID fields
         category_id: data.category_id === '' ? null : data.category_id,
-        planning_layer_id: data.planning_layer_id === '' ? null : data.planning_layer_id,
+        planning_focus_id: data.planning_focus_id === '' ? null : data.planning_focus_id,
         domain_id: data.domain_id === '' ? null : data.domain_id,
         // Convert empty string URLs to null, validate URL format
         reference_url: data.reference_url === '' || data.reference_url === undefined ? null : data.reference_url,

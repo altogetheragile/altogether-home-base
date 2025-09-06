@@ -108,7 +108,7 @@ export function KnowledgeItemEditor({
         reference_url: knowledgeItem.reference_url || '',
         publication_year: knowledgeItem.publication_year || undefined,
         category_id: knowledgeItem.category_id || '',
-        planning_layer_id: knowledgeItem.planning_layer_id || '',
+        planning_focus_id: knowledgeItem.planning_focus_id || '',
         domain_id: knowledgeItem.domain_id || '',
         common_pitfalls: knowledgeItem.common_pitfalls || [],
         evidence_sources: knowledgeItem.evidence_sources || [],
@@ -176,7 +176,7 @@ export function KnowledgeItemEditor({
         author: formData.author || undefined,
         reference_url: formData.reference_url || undefined,
         category_id: formData.category_id || undefined,
-        planning_layer_id: formData.planning_layer_id || undefined,
+        planning_focus_id: formData.planning_focus_id || undefined,
         domain_id: formData.domain_id || undefined,
         learning_value_summary: formData.learning_value_summary || undefined,
         // Filter out empty array items
