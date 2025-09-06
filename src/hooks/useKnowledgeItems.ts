@@ -79,7 +79,7 @@ export interface KnowledgeItem {
     slug: string;
     color: string;
   };
-  planning_layers?: {
+  planning_focuses?: {
     id: string;
     name: string;
     slug: string;
@@ -124,7 +124,7 @@ export const useKnowledgeItems = (params?: {
         .select(`
           *,
           knowledge_categories (id, name, slug, color),
-          planning_layers (id, name, slug, color, display_order),
+          planning_focuses (id, name, slug, color, display_order),
           activity_domains (id, name, slug, color),
           knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
         `)
@@ -185,7 +185,7 @@ export const useKnowledgeItemBySlug = (slug: string) => {
         .select(`
           *,
           knowledge_categories (id, name, slug, color),
-          planning_layers (id, name, slug, color, display_order),
+          planning_focuses (id, name, slug, color, display_order),
           activity_domains (id, name, slug, color),
           knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
         `)

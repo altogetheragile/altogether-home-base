@@ -43,7 +43,7 @@ export const KnowledgeItemsBoard = ({
         .select(`
           *,
           knowledge_categories (id, name, slug, color),
-          planning_layers (id, name, slug, color, display_order),
+          planning_focuses (id, name, slug, color, display_order),
           activity_domains (id, name, slug, color),
           knowledge_use_cases (id, case_type)
         `);

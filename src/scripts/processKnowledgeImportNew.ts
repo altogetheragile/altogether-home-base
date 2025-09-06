@@ -55,9 +55,9 @@ async function findOrCreatePlanningLayer(name: string, description?: string): Pr
   
   const slug = createSlug(name);
   
-  // First try to find existing layer
+  // First try to find existing focus
   const { data: existing } = await supabase
-    .from('planning_layers')
+    .from('planning_focuses')
     .select('id')
     .eq('slug', slug)
     .single();
@@ -66,7 +66,7 @@ async function findOrCreatePlanningLayer(name: string, description?: string): Pr
   
   // Get next display order
   const { data: maxOrder } = await supabase
-    .from('planning_layers')
+    .from('planning_focuses')
     .select('display_order')
     .order('display_order', { ascending: false })
     .limit(1)
@@ -74,9 +74,9 @@ async function findOrCreatePlanningLayer(name: string, description?: string): Pr
   
   const nextOrder = (maxOrder?.display_order || 0) + 1;
   
-  // Create new planning layer
-  const { data: newLayer, error } = await supabase
-    .from('planning_layers')
+  // Create new planning focus
+  const { data: newFocus, error } = await supabase
+    .from('planning_focuses')
     .insert({
       name: name.trim(),
       slug,
@@ -89,7 +89,7 @@ async function findOrCreatePlanningLayer(name: string, description?: string): Pr
     .single();
   
   if (error) throw error;
-  return newLayer.id;
+  return newFocus.id;
 }
 
 // Find or create activity domain
@@ -237,12 +237,12 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           );
         }
         
-        // Handle planning layer (get the mapped column name)
-        let planningLayerId = '';
-        const planningCol = Object.entries(fieldMappings).find(([field]) => field === 'planning_layers')?.[1];
-        const planningDescCol = Object.entries(fieldMappings).find(([field]) => field === 'planning_layer_description')?.[1];
+        // Handle planning focus (get the mapped column name)
+        let planningFocusId = '';
+        const planningCol = Object.entries(fieldMappings).find(([field]) => field === 'planning_focuses')?.[1];
+        const planningDescCol = Object.entries(fieldMappings).find(([field]) => field === 'planning_focus_description')?.[1];
         if (planningCol && rawData[planningCol]) {
-          planningLayerId = await findOrCreatePlanningLayer(
+          planningFocusId = await findOrCreatePlanningLayer(
             rawData[planningCol],
             planningDescCol ? rawData[planningDescCol] : undefined
           );
@@ -259,17 +259,18 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           );
         }
         
-        // Remove category/domain/layer fields from kiData since they're handled separately
+        // Remove category/domain/focus fields from kiData since they're handled separately
         delete kiData.category_name;
         delete kiData.category_description;
-        delete kiData.planning_layer_name;
-        delete kiData.planning_layer_description;
+        delete kiData.planning_focus_name;
+        delete kiData.planning_focus_description;
         delete kiData.domain_name;
         delete kiData.domain_description;
         
         // Set foreign key relationships
         if (categoryId) kiData.category_id = categoryId;
         if (activityDomainId) kiData.activity_domain_id = activityDomainId;
+        if (planningFocusId) kiData.planning_focus_id = planningFocusId;
         
         // Insert knowledge item
         const { data: newKI, error: kiError } = await supabase
@@ -280,16 +281,7 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
         
         if (kiError) throw kiError;
         
-        // Create planning layer relationship if we have both
-        if (newKI && planningLayerId) {
-          await supabase
-            .from('knowledge_item_planning_layers')
-            .insert({
-              knowledge_item_id: newKI.id,
-              planning_layer_id: planningLayerId,
-              is_primary: true
-            });
-        }
+        // No longer need planning focus relationship table - direct FK used
         
         // Update staging data as processed
         await supabase

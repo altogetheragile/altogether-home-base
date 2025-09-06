@@ -44,7 +44,7 @@ export const processKnowledgeImport = async (importId: string) => {
       background: 'Background',
       category_name: 'Category',
       activity_domain_name: 'Domain of Interest',
-      planning_layers: 'Planning Layer'
+      planning_focuses: 'Planning Focus'
     };
 
     let processed = 0;
@@ -145,37 +145,31 @@ export const processKnowledgeImport = async (importId: string) => {
 
         if (error) throw error;
 
-        // Handle planning layers
-        if (stagingRow.raw_data['Planning Layer']) {
-          const layerName = stagingRow.raw_data['Planning Layer'];
-          let { data: layer } = await supabase
-            .from('planning_layers')
+        // Handle planning focuses
+        if (stagingRow.raw_data['Planning Focus']) {
+          const focusName = stagingRow.raw_data['Planning Focus'];
+          let { data: focus } = await supabase
+            .from('planning_focuses')
             .select('id')
-            .eq('name', layerName)
+            .eq('name', focusName)
             .maybeSingle();
           
-          if (!layer) {
-            // Create planning layer
-            const { data: newLayer } = await supabase
-              .from('planning_layers')
+          if (!focus) {
+            // Create planning focus
+            const { data: newFocus } = await supabase
+              .from('planning_focuses')
               .insert([{
-                name: layerName,
-                slug: layerName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                description: stagingRow.raw_data['Planning Layer Description'] || null
+                name: focusName,
+                slug: focusName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                description: stagingRow.raw_data['Planning Focus Description'] || null
               }])
               .select('id')
               .single();
-            layer = newLayer;
+            focus = newFocus;
           }
           
-          if (layer) {
-            await supabase
-              .from('knowledge_item_planning_layers')
-              .insert([{
-                knowledge_item_id: knowledgeItem.id,
-                planning_layer_id: layer.id,
-                is_primary: true
-              }]);
+          if (focus) {
+            mappedData.planning_focus_id = focus.id;
           }
         }
 

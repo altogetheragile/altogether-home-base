@@ -42,7 +42,7 @@ export const ContentCards = ({
         .select(`
           *,
           knowledge_categories (id, name, slug, color),
-          planning_layers (id, name, slug, color, display_order),
+          planning_focuses (id, name, slug, color, display_order),
           activity_domains (id, name, slug, color),
           knowledge_use_cases (id, case_type)
         `);
@@ -285,16 +285,16 @@ export const ContentCards = ({
                         {item.knowledge_categories.name}
                       </Badge>
                     )}
-                    {item.planning_layers && (
+                    {item.planning_focuses && (
                       <Badge 
                         variant="outline" 
                         className="text-xs px-2 py-0.5 font-medium"
                         style={{ 
-                          borderColor: item.planning_layers.color, 
-                          color: item.planning_layers.color 
+                          borderColor: item.planning_focuses.color, 
+                          color: item.planning_focuses.color 
                         }}
                       >
-                        {item.planning_layers.name}
+                        {item.planning_focuses.name}
                       </Badge>
                     )}
                   </div>

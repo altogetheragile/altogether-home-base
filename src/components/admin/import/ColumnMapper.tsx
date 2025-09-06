@@ -27,8 +27,8 @@ const getTargetFields = (targetEntity: string) => {
         // Taxonomy fields
         { key: 'category_name', label: 'Category', required: false },
         { key: 'category_description', label: 'Category Description', required: false },
-        { key: 'planning_layers', label: 'Planning Layer', required: false },
-        { key: 'planning_layer_description', label: 'Planning Layer Description', required: false },
+        { key: 'planning_focuses', label: 'Planning Focus', required: false },
+        { key: 'planning_focus_description', label: 'Planning Focus Description', required: false },
         { key: 'activity_domain_name', label: 'Domain of Interest', required: false },
         { key: 'domain_description', label: 'Domain of Interest Description', required: false },
         
@@ -140,8 +140,8 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
           summary: ['brief', 'overview', 'narrative form'],
           category_name: ['category'],
           category_description: ['category description'],
-          planning_layers: ['planning layer'],
-          planning_layer_description: ['planning layer description'],
+          planning_focuses: ['planning focus'],
+          planning_focus_description: ['planning focus description'],
           activity_domain_name: ['domain of interest'],
           domain_description: ['domain of interest description'],
           generic_who: ['generic use case - who'],
