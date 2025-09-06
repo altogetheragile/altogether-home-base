@@ -1,10 +1,17 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { KnowledgeItemUseCases } from "../KnowledgeItemUseCases";
+import { UseCaseForm } from "../UseCaseForm";
 import { useFormContext } from "react-hook-form";
+import type { KnowledgeUseCase } from "@/hooks/useKnowledgeUseCases";
 
 export const UseCasesSection = () => {
   const form = useFormContext();
   const knowledgeItemId = form.watch('id');
+  
+  // Dialog state management
+  const [editingUseCase, setEditingUseCase] = useState<KnowledgeUseCase | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleSaveItem = async () => {
     // Trigger form submission to save current progress
@@ -20,8 +27,19 @@ export const UseCasesSection = () => {
     console.log('Add use case triggered');
   };
 
-  const handleEditUseCase = (useCaseId: string) => {
-    console.log('Edit use case triggered:', useCaseId);
+  const handleEditUseCase = (useCase: KnowledgeUseCase) => {
+    console.log('Edit use case triggered:', useCase);
+    setEditingUseCase(useCase);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsEditDialogOpen(false);
+    setEditingUseCase(null);
+  };
+
+  const handleEditSuccess = () => {
+    handleDialogClose();
   };
 
   return (
@@ -40,6 +58,15 @@ export const UseCasesSection = () => {
           onEditUseCase={handleEditUseCase}
         />
       </CardContent>
+
+      {/* Use Case Edit Dialog */}
+      <UseCaseForm
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        knowledgeItemId={knowledgeItemId}
+        editingUseCase={editingUseCase}
+        onSuccess={handleEditSuccess}
+      />
     </Card>
   );
 };
