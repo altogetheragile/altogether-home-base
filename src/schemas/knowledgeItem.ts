@@ -10,15 +10,10 @@ export const knowledgeItemSchema = z.object({
   background: z.string().optional(),
   source: z.string().optional(),
   
-  // Author Information
-  author: z.string().optional(),
-  reference_url: z.preprocess(
+  // Publication Reference (normalized)
+  primary_publication_id: z.preprocess(
     (val) => val === '' ? null : val,
-    z.string().url('Invalid URL').optional().nullable()
-  ),
-  publication_year: z.preprocess(
-    (val) => val === '' || val === 0 ? null : val,
-    z.number().min(1900).max(2030).optional().nullable()
+    z.string().uuid().optional().nullable()
   ),
   
   // Classification - preprocess empty strings to null for UUID fields
@@ -55,9 +50,7 @@ export const knowledgeItemDefaults = {
   description: '',
   background: '',
   source: '',
-  author: '',
-  reference_url: '',
-  publication_year: undefined,
+  primary_publication_id: '',
   category_id: '',
   planning_focus_id: '',
   domain_id: '',

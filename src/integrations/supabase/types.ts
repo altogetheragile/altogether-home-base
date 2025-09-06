@@ -98,6 +98,48 @@ export type Database = {
         }
         Relationships: []
       }
+      authors: {
+        Row: {
+          bio: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          expertise_areas: string[] | null
+          id: string
+          name: string
+          profile_image_url: string | null
+          updated_at: string
+          updated_by: string | null
+          website_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          expertise_areas?: string[] | null
+          id?: string
+          name: string
+          profile_image_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          expertise_areas?: string[] | null
+          id?: string
+          name?: string
+          profile_image_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       blog_categories: {
         Row: {
           color: string | null
@@ -975,6 +1017,60 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_item_references: {
+        Row: {
+          created_at: string
+          excerpt: string | null
+          id: string
+          knowledge_item_id: string
+          notes: string | null
+          page_reference: string | null
+          position: number | null
+          publication_id: string
+          reference_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          knowledge_item_id: string
+          notes?: string | null
+          page_reference?: string | null
+          position?: number | null
+          publication_id: string
+          reference_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          knowledge_item_id?: string
+          notes?: string | null
+          page_reference?: string | null
+          position?: number | null
+          publication_id?: string
+          reference_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_references_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_references_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_item_tags: {
         Row: {
           knowledge_item_id: string
@@ -1023,6 +1119,7 @@ export type Database = {
           learning_value_summary: string | null
           name: string
           planning_focus_id: string | null
+          primary_publication_id: string | null
           publication_year: number | null
           reference_url: string | null
           related_techniques: string[] | null
@@ -1049,6 +1146,7 @@ export type Database = {
           learning_value_summary?: string | null
           name: string
           planning_focus_id?: string | null
+          primary_publication_id?: string | null
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
@@ -1075,6 +1173,7 @@ export type Database = {
           learning_value_summary?: string | null
           name?: string
           planning_focus_id?: string | null
+          primary_publication_id?: string | null
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
@@ -1104,6 +1203,13 @@ export type Database = {
             columns: ["planning_focus_id"]
             isOneToOne: false
             referencedRelation: "planning_focuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_items_primary_publication_id_fkey"
+            columns: ["primary_publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
             referencedColumns: ["id"]
           },
         ]
@@ -1529,6 +1635,105 @@ export type Database = {
           is_archived?: boolean | null
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      publication_authors: {
+        Row: {
+          author_id: string
+          author_order: number | null
+          publication_id: string
+          role: string | null
+        }
+        Insert: {
+          author_id: string
+          author_order?: number | null
+          publication_id: string
+          role?: string | null
+        }
+        Update: {
+          author_id?: string
+          author_order?: number | null
+          publication_id?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_authors_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_authors_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publications: {
+        Row: {
+          abstract: string | null
+          created_at: string
+          created_by: string | null
+          doi: string | null
+          id: string
+          isbn: string | null
+          issue: string | null
+          journal: string | null
+          keywords: string[] | null
+          pages: string | null
+          publication_type: string
+          publication_year: number | null
+          publisher: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+          url: string | null
+          volume: string | null
+        }
+        Insert: {
+          abstract?: string | null
+          created_at?: string
+          created_by?: string | null
+          doi?: string | null
+          id?: string
+          isbn?: string | null
+          issue?: string | null
+          journal?: string | null
+          keywords?: string[] | null
+          pages?: string | null
+          publication_type: string
+          publication_year?: number | null
+          publisher?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+          volume?: string | null
+        }
+        Update: {
+          abstract?: string | null
+          created_at?: string
+          created_by?: string | null
+          doi?: string | null
+          id?: string
+          isbn?: string | null
+          issue?: string | null
+          journal?: string | null
+          keywords?: string[] | null
+          pages?: string | null
+          publication_type?: string
+          publication_year?: number | null
+          publisher?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+          volume?: string | null
         }
         Relationships: []
       }

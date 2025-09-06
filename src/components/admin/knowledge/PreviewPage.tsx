@@ -112,25 +112,25 @@ export const PreviewPage: React.FC = () => {
 
             {/* Metadata */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              {knowledgeItem.author && (
+              {knowledgeItem.publications?.publication_authors?.length > 0 && (
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span>By {knowledgeItem.author}</span>
+                  <span>By {knowledgeItem.publications.publication_authors.map(pa => pa.authors.name).join(', ')}</span>
                 </div>
               )}
               
-              {knowledgeItem.publication_year && (
+              {knowledgeItem.publications?.publication_year && (
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>{knowledgeItem.publication_year}</span>
+                  <span>{knowledgeItem.publications.publication_year}</span>
                 </div>
               )}
               
-              {knowledgeItem.reference_url && (
+              {knowledgeItem.publications?.url && (
                 <div className="flex items-center gap-1">
                   <ExternalLink className="h-4 w-4" />
                   <a 
-                    href={knowledgeItem.reference_url} 
+                    href={knowledgeItem.publications.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="hover:underline text-primary"

@@ -102,49 +102,6 @@ export const KnowledgeItemBasicInfo = ({
                 Where this knowledge comes from (optional)
               </p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="author">Author</Label>
-              <Input
-                id="author"
-                value={formData.author}
-                onChange={(e) => onFormChange('author', e.target.value)}
-                placeholder="Author or creator name"
-              />
-              <p className="text-xs text-muted-foreground">
-                The person or organization who created this content
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reference_url">Reference URL</Label>
-              <Input
-                id="reference_url"
-                value={formData.reference_url}
-                onChange={(e) => onFormChange('reference_url', e.target.value)}
-                placeholder="https://example.com"
-                type="url"
-              />
-              <p className="text-xs text-muted-foreground">
-                Link to the original source or reference material
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="publication_year">Publication Year</Label>
-              <Input
-                id="publication_year"
-                value={formData.publication_year}
-                onChange={(e) => onFormChange('publication_year', e.target.value)}
-                placeholder="2024"
-                type="number"
-                min="1900"
-                max="2030"
-              />
-              <p className="text-xs text-muted-foreground">
-                Year this content was published or created
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

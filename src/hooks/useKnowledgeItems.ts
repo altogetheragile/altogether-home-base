@@ -63,14 +63,14 @@ export interface KnowledgeItem {
   updated_by?: string;
   
   // Enhanced fields
-  author?: string;
   common_pitfalls?: string[];
   evidence_sources?: string[];
   key_terminology?: Record<string, any>;
   learning_value_summary?: string;
-  publication_year?: number;
-  reference_url?: string;
   related_techniques?: string[];
+  
+  // Normalized publication reference
+  primary_publication_id?: string;
   
   // Relations
   knowledge_categories?: {
@@ -105,6 +105,38 @@ export interface KnowledgeItem {
     how_much?: string;
     summary?: string;
   }>;
+  publications?: {
+    id: string;
+    title: string;
+    publication_type: string;
+    url?: string;
+    publication_year?: number;
+    publisher?: string;
+    publication_authors?: Array<{
+      authors: {
+        id: string;
+        name: string;
+      };
+    }>;
+  };
+  knowledge_item_references?: Array<{
+    id: string;
+    reference_type: string;
+    page_reference?: string;
+    excerpt?: string;
+    publications: {
+      id: string;
+      title: string;
+      publication_type: string;
+      url?: string;
+      publication_authors?: Array<{
+        authors: {
+          id: string;
+          name: string;
+        };
+      }>;
+    };
+  }>;
 }
 
 export const useKnowledgeItems = (params?: {
@@ -126,7 +158,22 @@ export const useKnowledgeItems = (params?: {
           knowledge_categories (id, name, slug, color),
           planning_focuses (id, name, slug, color, display_order),
           activity_domains (id, name, slug, color),
-          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
+          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary),
+          publications (
+            id, title, publication_type, url, publication_year, publisher,
+            publication_authors (
+              authors (id, name)
+            )
+          ),
+          knowledge_item_references (
+            id, reference_type, page_reference, excerpt,
+            publications (
+              id, title, publication_type, url,
+              publication_authors (
+                authors (id, name)
+              )
+            )
+          )
         `)
         .eq('is_published', true);
 
@@ -191,7 +238,22 @@ export const useKnowledgeItemBySlug = (slug: string) => {
           knowledge_categories (id, name, slug, color),
           planning_focuses (id, name, slug, color, display_order),
           activity_domains (id, name, slug, color),
-          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
+          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary),
+          publications (
+            id, title, publication_type, url, publication_year, publisher,
+            publication_authors (
+              authors (id, name)
+            )
+          ),
+          knowledge_item_references (
+            id, reference_type, page_reference, excerpt,
+            publications (
+              id, title, publication_type, url,
+              publication_authors (
+                authors (id, name)
+              )
+            )
+          )
         `)
         .eq('slug', slug)
         .eq('is_published', true)
@@ -212,15 +274,14 @@ export const useCreateKnowledgeItem = () => {
     mutationFn: async (data: Partial<KnowledgeItem>) => {
       console.log('🚀 useCreateKnowledgeItem: Starting creation with data:', JSON.stringify(data, null, 2));
       
-      // Transform data similarly to update mutation
-      const transformedData = {
-        ...data,
-        category_id: data.category_id === '' ? null : data.category_id,
-        planning_focus_id: data.planning_focus_id === '' ? null : data.planning_focus_id,
-        domain_id: data.domain_id === '' ? null : data.domain_id,
-        reference_url: data.reference_url === '' || data.reference_url === undefined ? null : data.reference_url,
-        publication_year: data.publication_year === undefined || data.publication_year === 0 ? null : data.publication_year,
-      };
+        // Transform data similarly to update mutation
+        const transformedData = {
+          ...data,
+          category_id: data.category_id === '' ? null : data.category_id,
+          planning_focus_id: data.planning_focus_id === '' ? null : data.planning_focus_id,
+          domain_id: data.domain_id === '' ? null : data.domain_id,
+          primary_publication_id: data.primary_publication_id === '' || data.primary_publication_id === undefined ? null : data.primary_publication_id,
+        };
       
       // Retry the create operation for network errors
       return retryWithBackoff(async () => {
@@ -287,18 +348,16 @@ export const useUpdateKnowledgeItem = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<KnowledgeItem> & { id: string }) => {
-      // Transform data to handle empty strings and invalid values
-      const transformedData = {
-        ...data,
-        // Convert empty strings to null for UUID fields
-        category_id: data.category_id === '' ? null : data.category_id,
-        planning_focus_id: data.planning_focus_id === '' ? null : data.planning_focus_id,
-        domain_id: data.domain_id === '' ? null : data.domain_id,
-        // Convert empty string URLs to null, validate URL format
-        reference_url: data.reference_url === '' || data.reference_url === undefined ? null : data.reference_url,
-        // Convert empty publication year to null
-        publication_year: data.publication_year === undefined || data.publication_year === 0 ? null : data.publication_year,
-      };
+        // Transform data to handle empty strings and invalid values
+        const transformedData = {
+          ...data,
+          // Convert empty strings to null for UUID fields
+          category_id: data.category_id === '' ? null : data.category_id,
+          planning_focus_id: data.planning_focus_id === '' ? null : data.planning_focus_id,
+          domain_id: data.domain_id === '' ? null : data.domain_id,
+          // Convert empty string publication reference to null
+          primary_publication_id: data.primary_publication_id === '' || data.primary_publication_id === undefined ? null : data.primary_publication_id,
+        };
 
       console.log('💾 Sending data to Supabase:', transformedData);
 
