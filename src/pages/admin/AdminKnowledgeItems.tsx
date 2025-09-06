@@ -73,11 +73,11 @@ const AdminKnowledgeItems = () => {
   });
 
   // Fetch planning layers for filter dropdown
-  const { data: planningLayers } = useQuery({
-    queryKey: ['planning-layers'],
+  const { data: planningFocuses } = useQuery({
+    queryKey: ['planning-focuses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('planning_layers')
+        .from('planning_focuses')
         .select('id, name')
         .order('name');
       if (error) throw error;
@@ -86,14 +86,14 @@ const AdminKnowledgeItems = () => {
   });
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ['admin-knowledge-items', searchTerm, statusFilter, categoryFilter, domainFilter, planningLayerFilter, sortColumn, sortDirection],
+    queryKey: ['admin-knowledge-items', searchTerm, statusFilter, categoryFilter, domainFilter, planningFocusFilter, sortColumn, sortDirection],
     queryFn: async () => {
       let query = supabase
         .from('knowledge_items')
           .select(`
             *,
             knowledge_categories (id, name, slug, color),
-            planning_layers (id, name, slug, color),
+            planning_focuses (id, name, slug, color),
             activity_domains (id, name, slug, color),
             knowledge_use_cases (id, case_type)
           `);
@@ -120,9 +120,9 @@ const AdminKnowledgeItems = () => {
         query = query.eq('domain_id', domainFilter);
       }
 
-      // Apply planning layer filter
-      if (planningLayerFilter !== 'all') {
-        query = query.eq('planning_focus_id', planningLayerFilter);
+      // Apply planning focus filter
+      if (planningFocusFilter !== 'all') {
+        query = query.eq('planning_focus_id', planningFocusFilter);
       }
 
       // Apply sorting
@@ -135,8 +135,8 @@ const AdminKnowledgeItems = () => {
         query = query.order('knowledge_categories(name)', { ascending });
       } else if (sortColumn === 'domain') {
         query = query.order('activity_domains(name)', { ascending });
-      } else if (sortColumn === 'planning_layer') {
-        query = query.order('planning_layers(name)', { ascending });
+      } else if (sortColumn === 'planning_focus') {
+        query = query.order('planning_focuses(name)', { ascending });
       } else {
         query = query.order('updated_at', { ascending });
       }
@@ -262,15 +262,15 @@ const AdminKnowledgeItems = () => {
           </div>
 
           <div className="w-48">
-            <Select value={planningLayerFilter} onValueChange={setPlanningLayerFilter}>
+            <Select value={planningFocusFilter} onValueChange={setPlanningFocusFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Filter by planning layer" />
+                <SelectValue placeholder="Filter by planning focus" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Planning Layers</SelectItem>
-                {planningLayers?.map((layer) => (
-                  <SelectItem key={layer.id} value={layer.id}>
-                    {layer.name}
+                <SelectItem value="all">All Planning Focuses</SelectItem>
+                {planningFocuses?.map((focus) => (
+                  <SelectItem key={focus.id} value={focus.id}>
+                    {focus.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -312,11 +312,11 @@ const AdminKnowledgeItems = () => {
               </TableHead>
               <TableHead 
                 className="w-40 cursor-pointer hover:bg-muted/50 select-none"
-                onClick={() => handleSort('planning_layer')}
+                onClick={() => handleSort('planning_focus')}
               >
                 <div className="flex items-center gap-2">
-                  Planning Layers
-                  {getSortIcon('planning_layer')}
+                  Planning Focuses
+                  {getSortIcon('planning_focus')}
                 </div>
               </TableHead>
               <TableHead className="w-32">Completeness</TableHead>
@@ -378,18 +378,18 @@ const AdminKnowledgeItems = () => {
                      </span>
                    )}
                  </TableCell>
-                 <TableCell>
-                   {item.planning_layers && (
-                     <span 
-                       className="text-sm font-medium"
-                       style={{ 
-                         color: item.planning_layers.color 
-                       }}
-                     >
-                       {item.planning_layers.name}
-                     </span>
-                   )}
-                 </TableCell>
+                  <TableCell>
+                    {item.planning_focuses && (
+                      <span 
+                        className="text-sm font-medium"
+                        style={{ 
+                          color: item.planning_focuses.color 
+                        }}
+                      >
+                        {item.planning_focuses.name}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {/* Completeness Badge */}
                     {(() => {
@@ -498,7 +498,7 @@ const AdminKnowledgeItems = () => {
              {items?.length === 0 && (
                <TableRow>
                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                   {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || domainFilter !== 'all' || planningLayerFilter !== 'all'
+                   {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || domainFilter !== 'all' || planningFocusFilter !== 'all'
                      ? 'No items found matching your filters.' 
                      : 'No knowledge items created yet.'
                    }

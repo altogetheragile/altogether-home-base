@@ -1023,7 +1023,6 @@ export type Database = {
           learning_value_summary: string | null
           name: string
           planning_focus_id: string | null
-          planning_layer_id: string | null
           publication_year: number | null
           reference_url: string | null
           related_techniques: string[] | null
@@ -1050,7 +1049,6 @@ export type Database = {
           learning_value_summary?: string | null
           name: string
           planning_focus_id?: string | null
-          planning_layer_id?: string | null
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
@@ -1077,7 +1075,6 @@ export type Database = {
           learning_value_summary?: string | null
           name?: string
           planning_focus_id?: string | null
-          planning_layer_id?: string | null
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
@@ -1107,13 +1104,6 @@ export type Database = {
             columns: ["planning_focus_id"]
             isOneToOne: false
             referencedRelation: "planning_focuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "knowledge_items_planning_layer_id_fkey"
-            columns: ["planning_layer_id"]
-            isOneToOne: false
-            referencedRelation: "planning_layers"
             referencedColumns: ["id"]
           },
         ]
@@ -1417,45 +1407,6 @@ export type Database = {
         Relationships: []
       }
       planning_focuses: {
-        Row: {
-          color: string | null
-          created_at: string
-          created_by: string | null
-          description: string | null
-          display_order: number | null
-          id: string
-          name: string
-          slug: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          name: string
-          slug: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          name?: string
-          slug?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
-      planning_layers: {
         Row: {
           color: string | null
           created_at: string

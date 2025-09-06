@@ -31,7 +31,6 @@ import AdminLogsDatabaseRoute from "./pages/admin/AdminLogsDatabaseRoute";
 import AdminLogsAuthRoute from "./pages/admin/AdminLogsAuthRoute";
 import AdminImports from "./pages/admin/AdminImports";
 import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
-import AdminPlanningLayers from "./pages/admin/AdminPlanningLayers";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
 import AdminKnowledgeItems from "./pages/admin/AdminKnowledgeItems";
 import AdminKnowledgeCategories from "./pages/admin/AdminKnowledgeCategories";
