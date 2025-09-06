@@ -418,7 +418,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       case 4:
         return <UseCasesSection />;
       case 5:
-        return <AnalyticsSection />;
+        return <AnalyticsSection onStepChange={handleStepChange} />;
       default:
         return <BasicInfoSection />;
     }

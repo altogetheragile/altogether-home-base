@@ -5,7 +5,11 @@ import { KnowledgeItemAnalytics } from "../KnowledgeItemAnalytics";
 import { useFormContext } from "react-hook-form";
 import { Plus, ArrowRight } from "lucide-react";
 
-export const AnalyticsSection = () => {
+interface AnalyticsSectionProps {
+  onStepChange?: (step: number) => void;
+}
+
+export const AnalyticsSection = ({ onStepChange }: AnalyticsSectionProps) => {
   const form = useFormContext();
   const knowledgeItemData = form.watch();
   
@@ -16,16 +20,17 @@ export const AnalyticsSection = () => {
   const hasLearningValue = !!knowledgeItemData.learning_value_summary;
 
   const handleAddUseCase = () => {
-    // Navigate to use cases section
-    const useCasesStep = 4; // Assuming use cases is step 5 (index 4)
-    // This would be handled by the parent component
-    console.log('Navigate to use cases section');
+    // Navigate to use cases section (step index 4)
+    if (onStepChange) {
+      onStepChange(4);
+    }
   };
 
   const handleGoToEnhanced = () => {
-    // Navigate to enhanced section
-    const enhancedStep = 3; // Assuming enhanced is step 4 (index 3)
-    console.log('Navigate to enhanced section');
+    // Navigate to enhanced section (step index 3)
+    if (onStepChange) {
+      onStepChange(3);
+    }
   };
 
   return (
