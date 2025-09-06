@@ -98,10 +98,10 @@ const AdminLayout = () => {
       description: 'Organize knowledge categories'
     },
     {
-      label: 'Planning Layers',
-      href: '/admin/knowledge/planning-layers',
+      label: 'Planning Focuses',
+      href: '/admin/knowledge/planning-focuses',
       icon: Layers,
-      description: 'Manage planning layers'
+      description: 'Manage planning focuses'
     },
     {
       label: 'Domains of Interest',

@@ -31,7 +31,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-type SortColumn = 'name' | 'views' | 'updated_at' | 'category' | 'domain' | 'planning_layer';
+type SortColumn = 'name' | 'views' | 'updated_at' | 'category' | 'domain' | 'planning_focus';
 type SortDirection = 'asc' | 'desc';
 
 const AdminKnowledgeItems = () => {
@@ -42,7 +42,7 @@ const AdminKnowledgeItems = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [domainFilter, setDomainFilter] = useState<string>('all');
-  const [planningLayerFilter, setPlanningLayerFilter] = useState<string>('all');
+  const [planningFocusFilter, setPlanningFocusFilter] = useState<string>('all');
   const [sortColumn, setSortColumn] = useState<SortColumn>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
