@@ -320,6 +320,10 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       
       setLastSaved(new Date());
       
+      // Reset form dirty state - mark current values as the new clean baseline
+      form.reset(form.getValues());
+      console.log('🧹 Form dirty state reset - isDirty:', form.formState.isDirty);
+      
       // Only navigate away if explicitly requested
       if (shouldNavigateAway) {
         console.log('🚪 Navigating away as requested');
