@@ -331,9 +331,17 @@ export const useUpdateKnowledgeItem = () => {
       return { previousItem };
     },
     onSuccess: (result, { id }) => {
+      console.log('✅ Update mutation success, updating cache...');
       // Update cache with actual server response
       queryClient.setQueryData(['knowledge-item', id], result);
-      queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
+      // Use setQueryData for list cache instead of invalidation to prevent re-renders
+      const listData = queryClient.getQueryData(['knowledge-items']);
+      if (listData && Array.isArray(listData)) {
+        const updatedList = listData.map((item: any) => 
+          item.id === id ? result : item
+        );
+        queryClient.setQueryData(['knowledge-items'], updatedList);
+      }
       
       toast({
         title: "Success",

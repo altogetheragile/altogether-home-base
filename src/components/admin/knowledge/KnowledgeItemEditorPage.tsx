@@ -290,8 +290,10 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     }
   };
 
-  // Save handler with improved error handling
+  // Save handler with improved error handling and debugging
   const handleSave = async (shouldNavigateAway = false) => {
+    console.log('🔍 handleSave called with shouldNavigateAway:', shouldNavigateAway);
+    
     const isValid = await form.trigger();
     if (!isValid) {
       toast({
@@ -306,11 +308,13 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     
     try {
       if (isEditing && knowledgeItem?.id) {
+        console.log('🔄 Updating knowledge item...');
         await updateMutation.mutateAsync({
           id: knowledgeItem.id,
           ...data,
         });
       } else {
+        console.log('➕ Creating new knowledge item...');
         await createMutation.mutateAsync(data);
       }
       
@@ -318,7 +322,10 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       
       // Only navigate away if explicitly requested
       if (shouldNavigateAway) {
+        console.log('🚪 Navigating away as requested');
         navigate('/admin/knowledge/items');
+      } else {
+        console.log('✅ Save completed, staying on page');
       }
     } catch (error) {
       // Error handling is now done in the mutation hooks with better messages
@@ -326,8 +333,14 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     }
   };
 
-  // Save and close handler
+  // Separate handlers for clarity
+  const handleSaveOnly = async () => {
+    console.log('💾 Save Only button clicked');
+    await handleSave(false);
+  };
+
   const handleSaveAndClose = async () => {
+    console.log('💾🚪 Save and Close button clicked');
     await handleSave(true);
   };
 
@@ -435,7 +448,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
               form={form}
               isCollapsed={stepperCollapsed}
               onToggleCollapsed={() => setStepperCollapsed(!stepperCollapsed)}
-              onSave={handleSave}
+              onSave={handleSaveOnly}
               onSaveAndClose={handleSaveAndClose}
               onOpenPreview={handleOpenPreview}
               isLoading={createMutation.isPending || updateMutation.isPending}
