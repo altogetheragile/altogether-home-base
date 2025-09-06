@@ -23,8 +23,11 @@ export const UseCasesSection = () => {
     });
   };
 
-  const handleAddUseCase = () => {
-    console.log('Add use case triggered');
+  const handleAddUseCase = (type: 'generic' | 'example' = 'generic') => {
+    console.log('Add use case triggered with type:', type);
+    // Open the form with the specified type
+    setEditingUseCase({ case_type: type } as any);
+    setIsEditDialogOpen(true);
   };
 
   const handleEditUseCase = (useCase: KnowledgeUseCase) => {

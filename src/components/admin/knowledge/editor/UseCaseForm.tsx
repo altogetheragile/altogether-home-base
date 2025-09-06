@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCreateKnowledgeUseCase, useUpdateKnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
 import { useToast } from '@/hooks/use-toast';
 
@@ -146,6 +147,37 @@ export const UseCaseForm = ({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Case Type Selection */}
+          <div className="space-y-3">
+            <Label>Use Case Type</Label>
+            <RadioGroup
+              value={formData.case_type}
+              onValueChange={(value) => handleFormChange('case_type', value)}
+              className="flex gap-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="generic" id="generic" />
+                <Label htmlFor="generic" className="flex items-center gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4" />
+                  Generic Use Case
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="example" id="example" />
+                <Label htmlFor="example" className="flex items-center gap-2 cursor-pointer">
+                  <Target className="h-4 w-4" />
+                  Example Use Case
+                </Label>
+              </div>
+            </RadioGroup>
+            <p className="text-xs text-muted-foreground">
+              {formData.case_type === 'generic' 
+                ? 'Generic use cases describe broad, reusable scenarios and patterns.'
+                : 'Example use cases provide specific, real-world implementations and case studies.'
+              }
+            </p>
+          </div>
+
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>

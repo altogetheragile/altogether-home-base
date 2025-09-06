@@ -1,9 +1,16 @@
 import { useState } from 'react';
-import { FileText, Target, Plus, Edit, Trash2, Users, Lightbulb } from 'lucide-react';
+import { FileText, Target, Plus, Edit, Trash2, Users, Lightbulb, MoreHorizontal, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -15,7 +22,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-import { useKnowledgeUseCases, useDeleteKnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
+import { useKnowledgeUseCases, useDeleteKnowledgeUseCase, useUpdateKnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
 import { useToast } from '@/hooks/use-toast';
 
 interface KnowledgeItemUseCasesProps {
@@ -38,6 +45,7 @@ export const KnowledgeItemUseCases = ({
   const { toast } = useToast();
   const { data: useCases = [] } = useKnowledgeUseCases(knowledgeItemId || '');
   const deleteUseCase = useDeleteKnowledgeUseCase();
+  const updateUseCase = useUpdateKnowledgeUseCase();
 
   const genericUseCases = useCases.filter(uc => uc.case_type === 'generic');
   const exampleUseCases = useCases.filter(uc => uc.case_type === 'example');
@@ -56,6 +64,49 @@ export const KnowledgeItemUseCases = ({
 
   const handleEditUseCase = (useCase: any) => {
     onEditUseCase(useCase);
+  };
+
+  const handleConvertUseCase = async (useCase: any, newType: 'generic' | 'example') => {
+    if (newType === 'generic' && genericUseCases.length > 0) {
+      toast({
+        title: "Cannot Convert",
+        description: "Only one generic use case is allowed. Convert the existing generic use case to an example first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateUseCase.mutateAsync({
+        id: useCase.id,
+        case_type: newType,
+        knowledge_item_id: useCase.knowledge_item_id,
+        title: useCase.title,
+        who: useCase.who,
+        what: useCase.what,
+        when_used: useCase.when_used,
+        where_used: useCase.where_used,
+        why: useCase.why,
+        how: useCase.how,
+        how_much: useCase.how_much,
+        summary: useCase.summary
+      });
+
+      // Switch to the target tab after conversion
+      setActiveTab(newType === 'generic' ? 'generic' : 'examples');
+      
+      toast({
+        title: "Use Case Converted",
+        description: `Successfully converted to ${newType} use case.`,
+      });
+    } catch (error) {
+      console.error('Error converting use case:', error);
+      toast({
+        title: "Conversion Failed",
+        description: "Failed to convert use case. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteUseCase = async () => {
@@ -128,14 +179,49 @@ export const KnowledgeItemUseCases = ({
             >
               <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setUseCaseToDelete(useCase)}
-              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleEditUseCase(useCase)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Use Case
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {useCase.case_type === 'generic' ? (
+                  <DropdownMenuItem onClick={() => handleConvertUseCase(useCase, 'example')}>
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    Convert to Example
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem 
+                    onClick={() => handleConvertUseCase(useCase, 'generic')}
+                    disabled={genericUseCases.length > 0}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Convert to Generic
+                    {genericUseCases.length > 0 && (
+                      <span className="text-xs text-muted-foreground ml-1">(limit reached)</span>
+                    )}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setUseCaseToDelete(useCase)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Use Case
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
