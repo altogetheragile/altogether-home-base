@@ -26,7 +26,7 @@ export const knowledgeItemSchema = z.object({
     (val) => val === '' ? null : val,
     z.string().uuid().optional().nullable()
   ),
-  planning_layer_id: z.preprocess(
+  planning_focus_id: z.preprocess(
     (val) => val === '' ? null : val,
     z.string().uuid().optional().nullable()
   ),
@@ -59,7 +59,7 @@ export const knowledgeItemDefaults = {
   reference_url: '',
   publication_year: undefined,
   category_id: '',
-  planning_layer_id: '',
+  planning_focus_id: '',
   domain_id: '',
   common_pitfalls: [],
   evidence_sources: [],

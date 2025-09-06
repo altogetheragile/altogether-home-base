@@ -24,7 +24,7 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({
   const formValues = form.watch();
   
   const selectedCategory = categories.find(c => c.id === formValues.category_id);
-  const selectedLayer = planningLayers.find(l => l.id === formValues.planning_layer_id);
+  const selectedFocus = planningLayers.find(l => l.id === formValues.planning_focus_id);
   const selectedDomain = domains.find(d => d.id === formValues.domain_id);
 
   return (
@@ -96,16 +96,16 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({
                   {selectedCategory.name}
                 </Badge>
               )}
-              {selectedLayer && (
+              {selectedFocus && (
                 <Badge
                   variant="outline"
                   style={{ 
-                    borderColor: selectedLayer.color, 
-                    color: selectedLayer.color 
+                    borderColor: selectedFocus.color, 
+                    color: selectedFocus.color 
                   }}
                   className="text-xs"
                 >
-                  {selectedLayer.name}
+                  {selectedFocus.name}
                 </Badge>
               )}
               {selectedDomain && (
@@ -120,7 +120,7 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({
                   {selectedDomain.name}
                 </Badge>
               )}
-              {!selectedCategory && !selectedLayer && !selectedDomain && (
+              {!selectedCategory && !selectedFocus && !selectedDomain && (
                 <span className="text-xs text-muted-foreground italic">No classification</span>
               )}
             </div>

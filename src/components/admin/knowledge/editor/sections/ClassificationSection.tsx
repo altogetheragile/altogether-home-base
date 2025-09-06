@@ -5,21 +5,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningLayers } from '@/hooks/usePlanningLayers';
+import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
 export const ClassificationSection: React.FC = () => {
   const form = useFormContext<KnowledgeItemFormData>();
   const { data: categories } = useKnowledgeCategories();
-  const { data: planningLayers } = usePlanningLayers();
+  const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
 
-  const watchedValues = form.watch(['category_id', 'planning_layer_id', 'domain_id']);
-  const [categoryId, layerId, domainId] = watchedValues;
+  const watchedValues = form.watch(['category_id', 'planning_focus_id', 'domain_id']);
+  const [categoryId, focusId, domainId] = watchedValues;
 
   const selectedCategory = categories?.find(c => c.id === categoryId);
-  const selectedLayer = planningLayers?.find(l => l.id === layerId);
+  const selectedFocus = planningFocuses?.find(l => l.id === focusId);
   const selectedDomain = domains?.find(d => d.id === domainId);
 
   return (
@@ -102,35 +102,35 @@ export const ClassificationSection: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Layers className="h-4 w-4" />
-              Planning Layer
+              Planning Focus
             </CardTitle>
             <CardDescription>
-              Select the planning level this knowledge item belongs to
+              Select the planning focus this knowledge item belongs to
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <FormField
               control={form.control}
-              name="planning_layer_id"
+              name="planning_focus_id"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a planning layer" />
+                        <SelectValue placeholder="Select a planning focus" />
                       </SelectTrigger>
                       <SelectContent>
-                        {planningLayers
-                          ?.filter(layer => layer.id && layer.id.trim() !== '')
+                        {planningFocuses
+                          ?.filter(focus => focus.id && focus.id.trim() !== '')
                           ?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
-                          ?.map((layer) => (
-                          <SelectItem key={layer.id} value={layer.id}>
+                          ?.map((focus) => (
+                          <SelectItem key={focus.id} value={focus.id}>
                             <div className="flex items-center gap-2">
                               <div 
                                 className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: layer.color }}
+                                style={{ backgroundColor: focus.color }}
                               />
-                              {layer.name}
+                              {focus.name}
                             </div>
                           </SelectItem>
                         ))}
@@ -142,20 +142,20 @@ export const ClassificationSection: React.FC = () => {
               )}
             />
             
-            {selectedLayer && (
+            {selectedFocus && (
               <div className="mt-2">
                 <Badge 
                   variant="outline"
                   style={{ 
-                    borderColor: selectedLayer.color, 
-                    color: selectedLayer.color 
+                    borderColor: selectedFocus.color, 
+                    color: selectedFocus.color 
                   }}
                 >
-                  {selectedLayer.name}
+                  {selectedFocus.name}
                 </Badge>
-                {selectedLayer.description && (
+                {selectedFocus.description && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    {selectedLayer.description}
+                    {selectedFocus.description}
                   </p>
                 )}
               </div>
@@ -167,7 +167,7 @@ export const ClassificationSection: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Activity Domain
+              Domains of Interest
             </CardTitle>
             <CardDescription>
               Choose the domain of activity this knowledge applies to
@@ -244,15 +244,15 @@ export const ClassificationSection: React.FC = () => {
                 {selectedCategory.name}
               </Badge>
             )}
-            {selectedLayer && (
+            {selectedFocus && (
               <Badge 
                 variant="outline"
                 style={{ 
-                  borderColor: selectedLayer.color, 
-                  color: selectedLayer.color 
+                  borderColor: selectedFocus.color, 
+                  color: selectedFocus.color 
                 }}
               >
-                {selectedLayer.name}
+                {selectedFocus.name}
               </Badge>
             )}
             {selectedDomain && (
@@ -266,7 +266,7 @@ export const ClassificationSection: React.FC = () => {
                 {selectedDomain.name}
               </Badge>
             )}
-            {!selectedCategory && !selectedLayer && !selectedDomain && (
+            {!selectedCategory && !selectedFocus && !selectedDomain && (
               <p className="text-sm text-muted-foreground">No classification selected</p>
             )}
           </div>

@@ -1007,17 +1007,26 @@ export type Database = {
       }
       knowledge_items: {
         Row: {
+          author: string | null
           background: string | null
           category_id: string | null
+          common_pitfalls: string[] | null
           created_at: string
           created_by: string | null
           description: string | null
           domain_id: string | null
+          evidence_sources: string[] | null
           id: string
           is_featured: boolean | null
           is_published: boolean | null
+          key_terminology: Json | null
+          learning_value_summary: string | null
           name: string
+          planning_focus_id: string | null
           planning_layer_id: string | null
+          publication_year: number | null
+          reference_url: string | null
+          related_techniques: string[] | null
           slug: string
           source: string | null
           updated_at: string
@@ -1025,17 +1034,26 @@ export type Database = {
           view_count: number | null
         }
         Insert: {
+          author?: string | null
           background?: string | null
           category_id?: string | null
+          common_pitfalls?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           domain_id?: string | null
+          evidence_sources?: string[] | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
+          key_terminology?: Json | null
+          learning_value_summary?: string | null
           name: string
+          planning_focus_id?: string | null
           planning_layer_id?: string | null
+          publication_year?: number | null
+          reference_url?: string | null
+          related_techniques?: string[] | null
           slug: string
           source?: string | null
           updated_at?: string
@@ -1043,17 +1061,26 @@ export type Database = {
           view_count?: number | null
         }
         Update: {
+          author?: string | null
           background?: string | null
           category_id?: string | null
+          common_pitfalls?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           domain_id?: string | null
+          evidence_sources?: string[] | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
+          key_terminology?: Json | null
+          learning_value_summary?: string | null
           name?: string
+          planning_focus_id?: string | null
           planning_layer_id?: string | null
+          publication_year?: number | null
+          reference_url?: string | null
+          related_techniques?: string[] | null
           slug?: string
           source?: string | null
           updated_at?: string
@@ -1073,6 +1100,13 @@ export type Database = {
             columns: ["domain_id"]
             isOneToOne: false
             referencedRelation: "activity_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_items_planning_focus_id_fkey"
+            columns: ["planning_focus_id"]
+            isOneToOne: false
+            referencedRelation: "planning_focuses"
             referencedColumns: ["id"]
           },
           {
@@ -1377,6 +1411,45 @@ export type Database = {
           is_published?: boolean | null
           slug?: string
           title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      planning_focuses: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          slug?: string
           updated_at?: string
           updated_by?: string | null
         }
