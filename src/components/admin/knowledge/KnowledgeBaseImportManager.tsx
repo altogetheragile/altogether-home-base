@@ -17,8 +17,8 @@ const KB_COLUMN_MAPPING = {
   'Knowledge Item Description': 'description',
   'Category': 'category_name',
   'Category Description': 'category_description',
-  'Planning Layer': 'planning_layer_name',
-  'Planning Layer Description': 'planning_layer_description', 
+  'Planning Focus': 'planning_layer_name',
+  'Planning Focus Description': 'planning_layer_description',
   'Domain of Interest': 'domain_name',
   'Domain of Interest Description': 'domain_description',
   'Generic Use Case - Who': 'generic_who',
@@ -107,7 +107,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
       setImportProgress(50);
 
       // Validate required columns
-      const requiredColumns = ['Knowledge Item', 'Category', 'Planning Layer', 'Domain of Interest'];
+      const requiredColumns = ['Knowledge Item', 'Category', 'Planning Focus', 'Domain of Interest'];
       const missingColumns = requiredColumns.filter(col => 
         !parseResult.data!.headers.includes(col)
       );
@@ -248,7 +248,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Please ensure your Excel file contains the required columns: Knowledge Item, Category, Planning Layer, and Domain of Interest.
+                  Please ensure your Excel file contains the required columns: Knowledge Item, Category, Planning Focus, and Domain of Interest.
                 </AlertDescription>
               </Alert>
             </div>
