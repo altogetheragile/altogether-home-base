@@ -79,6 +79,10 @@ export const ContentTable = ({
         case 'alphabetical':
           query = query.order('name', { ascending: true });
           break;
+        case 'planning_focus':
+          query = query.order('planning_focuses(display_order)', { ascending: true })
+                       .order('planning_focuses(name)', { ascending: true });
+          break;
         case 'popularity':
         case 'views':
           query = query.order('view_count', { ascending: false });
