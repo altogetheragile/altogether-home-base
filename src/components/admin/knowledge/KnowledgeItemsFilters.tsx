@@ -223,7 +223,7 @@ export const KnowledgeItemsFilters = ({
         </div>
 
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {planningLayers?.map((layer) => (
+          {planningFocuses?.map((layer) => (
             <div key={layer.id} className="flex items-center space-x-3">
               <Checkbox
                 id={`layer-${layer.id}`}

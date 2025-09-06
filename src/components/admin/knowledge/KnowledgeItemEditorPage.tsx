@@ -95,8 +95,8 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const { data: domains = [], isLoading: domainsLoading, error: domainsError, refetch: refetchDomains } = useActivityDomains();
 
   // Network error handling
-  const hasNetworkErrors = categoriesError || layersError || domainsError;
-  const isLoadingDropdownData = categoriesLoading || layersLoading || domainsLoading;
+  const hasNetworkErrors = categoriesError || focusesError || domainsError;
+  const isLoadingDropdownData = categoriesLoading || focusesLoading || domainsLoading;
 
   // Form setup with proper type
   const formDefaults = {
@@ -381,7 +381,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   // Network retry handler
   const handleRetryNetworkRequests = () => {
     if (categoriesError) refetchCategories();
-    if (layersError) refetchLayers();
+    if (focusesError) refetchFocuses();
     if (domainsError) refetchDomains();
   };
 

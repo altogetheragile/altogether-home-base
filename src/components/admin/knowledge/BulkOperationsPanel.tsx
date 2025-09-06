@@ -214,7 +214,7 @@ export const BulkOperationsPanel = ({
                 <SelectValue placeholder="Planning layer..." />
               </SelectTrigger>
               <SelectContent>
-                {planningLayers?.map((layer) => (
+                {planningFocuses?.map((layer) => (
                   <SelectItem key={layer.id} value={layer.id}>
                     <div className="flex items-center gap-2">
                       <div 

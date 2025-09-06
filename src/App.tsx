@@ -38,6 +38,7 @@ import AdminKnowledgeCategories from "./pages/admin/AdminKnowledgeCategories";
 import AdminKnowledgeTags from "./pages/admin/AdminKnowledgeTags";
 import AdminKnowledgeLearningPaths from "./pages/admin/AdminKnowledgeLearningPaths";
 import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsRoute";
+import AdminPlanningFocuses from "./pages/admin/AdminPlanningFocuses";
 import AdminMedia from "./pages/admin/AdminMedia";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
