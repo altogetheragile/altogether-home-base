@@ -46,7 +46,7 @@ export interface ContentFilters {
   categories: string[];
   planningLayers: string[];
   domains: string[];
-  sortBy: 'recent' | 'alphabetical' | 'popularity' | 'views' | 'engagement';
+  sortBy: 'recent' | 'alphabetical' | 'planning_focus' | 'popularity' | 'views' | 'engagement';
   view: 'cards' | 'table' | 'kanban' | 'analytics';
 }
 

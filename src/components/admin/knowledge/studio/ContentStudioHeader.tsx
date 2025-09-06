@@ -65,6 +65,7 @@ export const ContentStudioHeader = ({
             <SelectContent>
               <SelectItem value="recent">Recently Updated</SelectItem>
               <SelectItem value="alphabetical">A-Z</SelectItem>
+              <SelectItem value="planning_focus">Planning Focus</SelectItem>
               <SelectItem value="popularity">Most Popular</SelectItem>
               <SelectItem value="views">Most Viewed</SelectItem>
               <SelectItem value="engagement">High Engagement</SelectItem>
