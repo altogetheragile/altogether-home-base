@@ -127,49 +127,12 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({
           </div>
 
           {/* Metadata */}
-          {formData.publications?.publication_authors?.length > 0 && (
+          {formValues.source && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Source Information</h4>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>{formData.publications.publication_authors.map(pa => pa.authors.name).join(', ')}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {formData.source && (
-            <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="w-4 h-4 flex items-center justify-center text-xs">📚</span>
-                <span>{formData.source}</span>
-              </div>
-            </div>
-          )}
-
-          {formData.publications?.publication_year && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>{formData.publications.publication_year}</span>
-              </div>
-            </div>
-          )}
-
-          {formData.publications?.url && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Link className="h-4 w-4" />
-                <a 
-                  href={formData.publications.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:text-primary underline flex items-center gap-1"
-                >
-                  Reference Link
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+                <span>{formValues.source}</span>
               </div>
             </div>
           )}

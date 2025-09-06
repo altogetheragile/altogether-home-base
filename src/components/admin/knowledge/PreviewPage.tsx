@@ -110,35 +110,12 @@ export const PreviewPage: React.FC = () => {
               </p>
             )}
 
-            {/* Metadata */}
+            {/* Metadata - Remove publication data as it's not part of form data */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              {knowledgeItem.publications?.publication_authors?.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  <span>By {knowledgeItem.publications.publication_authors.map(pa => pa.authors.name).join(', ')}</span>
-                </div>
-              )}
-              
-              {knowledgeItem.publications?.publication_year && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{knowledgeItem.publications.publication_year}</span>
-                </div>
-              )}
-              
-              {knowledgeItem.publications?.url && (
-                <div className="flex items-center gap-1">
-                  <ExternalLink className="h-4 w-4" />
-                  <a 
-                    href={knowledgeItem.publications.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="hover:underline text-primary"
-                  >
-                    Reference
-                  </a>
-                </div>
-              )}
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>Created {new Date().toLocaleDateString()}</span>
+              </div>
             </div>
           </div>
         </div>

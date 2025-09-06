@@ -132,8 +132,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
         category_id: knowledgeItem.category_id || '',
         planning_focus_id: knowledgeItem.planning_focus_id || '',
         domain_id: knowledgeItem.domain_id || '',
-        reference_url: knowledgeItem.reference_url || '',
-        author: knowledgeItem.author || '',
+        primary_publication_id: knowledgeItem.primary_publication_id || '',
         source: knowledgeItem.source || '',
         description: knowledgeItem.description || '',
         background: knowledgeItem.background || '',
@@ -408,7 +407,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const renderCurrentSection = () => {
     switch (currentStep) {
       case 0:
-        return <BasicInfoSection />;
+        return <BasicInfoSection form={form} />;
       case 1:
         return <ClassificationSection />;
       case 2:
@@ -420,7 +419,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       case 5:
         return <AnalyticsSection onStepChange={handleStepChange} />;
       default:
-        return <BasicInfoSection />;
+        return <BasicInfoSection form={form} />;
     }
   };
 
