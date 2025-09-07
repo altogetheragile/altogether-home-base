@@ -1101,6 +1101,48 @@ export type Database = {
           },
         ]
       }
+      knowledge_item_templates: {
+        Row: {
+          created_at: string
+          custom_config: Json | null
+          display_order: number | null
+          id: string
+          knowledge_item_id: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_config?: Json | null
+          display_order?: number | null
+          id?: string
+          knowledge_item_id: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_config?: Json | null
+          display_order?: number | null
+          id?: string
+          knowledge_item_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_templates_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_items: {
         Row: {
           author: string | null
@@ -1320,6 +1362,69 @@ export type Database = {
           usage_count?: number | null
         }
         Relationships: []
+      }
+      knowledge_templates: {
+        Row: {
+          category: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          template_type: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          usage_count: number | null
+          version: string | null
+        }
+        Insert: {
+          category?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          template_type: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          usage_count?: number | null
+          version?: string | null
+        }
+        Update: {
+          category?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          template_type?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          usage_count?: number | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_templates_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledge_use_cases: {
         Row: {
@@ -1868,6 +1973,48 @@ export type Database = {
           },
         ]
       }
+      template_usage: {
+        Row: {
+          created_at: string
+          exported_format: string | null
+          id: string
+          session_data: Json | null
+          template_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          exported_format?: string | null
+          id?: string
+          session_data?: Json | null
+          template_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          exported_format?: string | null
+          id?: string
+          session_data?: Json | null
+          template_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_usage_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_bookmarks: {
         Row: {
           created_at: string
@@ -2183,6 +2330,10 @@ export type Database = {
       }
       increment_knowledge_item_view_count: {
         Args: { item_id: string }
+        Returns: undefined
+      }
+      increment_template_usage_count: {
+        Args: { template_uuid: string }
         Returns: undefined
       }
       is_admin: {
