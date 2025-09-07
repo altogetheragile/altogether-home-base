@@ -12,6 +12,7 @@ import { CompactHeader } from './editor/CompactHeader';
 import { VerticalStepper } from './editor/VerticalStepper';
 import { BottomNavigationBar } from './editor/BottomNavigationBar';
 import { LivePreviewPanel } from './editor/LivePreviewPanel';
+import { KnowledgeBreadcrumb } from './editor/KnowledgeBreadcrumb';
 
 // Import section components
 import { BasicInfoSection } from './editor/sections/BasicInfoSection';
@@ -426,6 +427,13 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   return (
     <FormProvider {...form}>
       <div className="min-h-screen bg-background">
+        {/* Breadcrumb Navigation */}
+        <KnowledgeBreadcrumb
+          isEditing={isEditing}
+          itemName={knowledgeItem?.name}
+          currentStep={stepConfigs[currentStep]?.title}
+        />
+
         {/* Compact Header */}
         <CompactHeader
           title={isEditing ? `Edit: ${knowledgeItem?.name || 'Knowledge Item'}` : 'Create Knowledge Item'}
@@ -441,7 +449,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
         />
 
         {/* Main Layout */}
-        <div className="flex h-[calc(100vh-64px)]">
+        <div className="flex h-[calc(100vh-120px)]">
           {/* Vertical Stepper Sidebar */}
           {!stepperCollapsed && (
             <VerticalStepper
@@ -462,9 +470,9 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
           )}
 
           {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 pb-20">
-              <div className="w-full">
+          <div className="flex-1 overflow-y-auto bg-background">
+            <div className="container mx-auto max-w-5xl p-6 pb-20">
+              <div className="space-y-6">
                 {renderCurrentSection()}
               </div>
             </div>

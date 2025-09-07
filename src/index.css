@@ -118,11 +118,48 @@
     @apply bg-background text-foreground;
   }
 
-  /* Dynamic font size variables for responsive content blocks */
+  /* Enhanced typography system */
   :root {
     --dynamic-title-size: clamp(1.5rem, 4vw, 3rem);
     --dynamic-subtitle-size: clamp(1rem, 2.5vw, 1.5rem);
     --dynamic-content-size: clamp(0.875rem, 1.5vw, 1.125rem);
+    
+    /* Typography scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    
+    /* Line heights */
+    --leading-none: 1;
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+    
+    /* Spacing scale */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    
+    /* Enhanced shadows */
+    --shadow-xs: 0 1px 2px 0 hsl(0deg 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0 hsl(0deg 0% 0% / 0.1), 0 1px 2px -1px hsl(0deg 0% 0% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(0deg 0% 0% / 0.1), 0 2px 4px -2px hsl(0deg 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0deg 0% 0% / 0.1), 0 4px 6px -4px hsl(0deg 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0deg 0% 0% / 0.1), 0 8px 10px -6px hsl(0deg 0% 0% / 0.1);
+    
+    /* Card specific shadows */
+    --card-shadow: var(--shadow-sm);
+    --card-shadow-hover: var(--shadow-md);
+    --card-shadow-focus: var(--shadow-lg);
   }
 
   /* Content block spacing utility */
