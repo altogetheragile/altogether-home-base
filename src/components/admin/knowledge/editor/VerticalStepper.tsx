@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Save, ExternalLink, Clock, CheckCircle2, AlertCircle, Loader2, Info } from 'lucide-react';
+import { Save, Eye, Clock, CheckCircle2, AlertCircle, Loader2, ChevronRight, FileText, Hash, Palette, BookOpen, Lightbulb, BarChart3 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
@@ -34,6 +34,15 @@ interface VerticalStepperProps {
   autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
 }
 
+const stepIcons = [
+  FileText,    // Basic Info
+  Hash,        // Classification
+  BookOpen,    // Content
+  Lightbulb,   // Enhanced
+  Palette,     // Use Cases
+  BarChart3,   // Analytics
+];
+
 export const VerticalStepper: React.FC<VerticalStepperProps> = ({
   steps,
   currentStep,
@@ -52,7 +61,6 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
 }) => {
   const { formState: { errors, isDirty, isValid } } = form;
   const errorCount = Object.keys(errors).length;
-
   const formValues = form.watch();
 
   // Check if a step has errors
@@ -86,13 +94,8 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
 
   const getStepStatus = (stepIndex: number): 'current' | 'completed' | 'error' | 'upcoming' => {
     if (stepIndex === currentStep) return 'current';
-    
     if (hasStepErrors(steps[stepIndex])) return 'error';
-    
-    if (stepIndex < currentStep && isStepCompleted(steps[stepIndex])) {
-      return 'completed';
-    }
-    
+    if (stepIndex < currentStep && isStepCompleted(steps[stepIndex])) return 'completed';
     return 'upcoming';
   };
 
@@ -116,32 +119,30 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
     switch (autoSaveStatus) {
       case 'saving':
         return (
-          <div className="flex items-center gap-1 text-blue-600">
+          <div className="flex items-center gap-1.5 text-primary text-xs">
             <Loader2 className="h-3 w-3 animate-spin" />
-            <span className="text-xs">Saving...</span>
+            <span>Saving...</span>
           </div>
         );
       case 'saved':
         return (
-          <div className="flex items-center gap-1 text-green-600">
+          <div className="flex items-center gap-1.5 text-green-600 text-xs">
             <CheckCircle2 className="h-3 w-3" />
-            <span className="text-xs">
-              Saved {lastSaved ? formatLastSaved(lastSaved) : ''}
-            </span>
+            <span>Saved {lastSaved ? formatLastSaved(lastSaved) : ''}</span>
           </div>
         );
       case 'error':
         return (
-          <div className="flex items-center gap-1 text-red-600">
+          <div className="flex items-center gap-1.5 text-destructive text-xs">
             <AlertCircle className="h-3 w-3" />
-            <span className="text-xs">Save failed</span>
+            <span>Save failed</span>
           </div>
         );
       default:
         return lastSaved ? (
-          <div className="flex items-center gap-1 text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
             <Clock className="h-3 w-3" />
-            <span className="text-xs">Last saved {formatLastSaved(lastSaved)}</span>
+            <span>Last saved {formatLastSaved(lastSaved)}</span>
           </div>
         ) : null;
     }
@@ -149,140 +150,125 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
 
   return (
     <TooltipProvider>
-      <Collapsible open={!isCollapsed} onOpenChange={onToggleCollapsed}>
-      <CollapsibleTrigger asChild>
-        <Button
-          variant="ghost"
-          className="w-full justify-center p-2 h-auto border-b"
-        >
-          <span className={cn(
-            "font-medium text-sm",
-            !isCollapsed ? "sr-only" : ""
-          )}>
-            Steps
-          </span>
-        </Button>
-      </CollapsibleTrigger>
-
-      <CollapsibleContent className={cn(
-        "flex flex-col bg-muted/30 border-r transition-all duration-300",
+      <div className={cn(
+        "flex flex-col h-full bg-card border-r border-border/50 transition-all duration-300",
         isCollapsed ? "w-16" : "w-80"
       )}>
         {/* Header */}
-        <div className="p-4 border-b bg-background/50">
-          <h2 className="font-semibold">Progress & Actions</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border/50 bg-muted/20">
+          {!isCollapsed && (
+            <div>
+              <h2 className="font-semibold text-sm text-foreground">Progress</h2>
+              <p className="text-xs text-muted-foreground">Step {currentStep + 1} of {steps.length}</p>
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapsed}
+            className="h-8 w-8 p-0 hover:bg-accent/50"
+          >
+            <ChevronRight className={cn("h-4 w-4 transition-transform", !isCollapsed && "rotate-180")} />
+          </Button>
         </div>
 
         {/* Steps */}
-        <ScrollArea className="flex-1">
-          <div className="p-2">
+        <ScrollArea className="flex-1 px-2 py-4">
+          <div className="space-y-1">
             {steps.map((step, index) => {
               const status = getStepStatus(index);
               const isClickable = canNavigateToStep(index);
               const completion = getStepCompletionPercentage(step);
-              const hasErrors = hasStepErrors(step);
+              const StepIcon = stepIcons[index] || FileText;
               
               return (
                 <div key={step.id} className="relative">
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (isClickable) {
-                        onStepChange(index);
-                      }
-                    }}
-                    disabled={!isClickable}
-                    className={cn(
-                      "w-full justify-start p-3 mb-2 h-auto min-h-[4rem]",
-                      "transition-all duration-200 relative overflow-visible",
-                      status === 'current' && "bg-primary text-primary-foreground shadow-sm rounded-lg",
-                      status === 'completed' && "bg-green-50 text-green-700 border border-green-200",
-                      status === 'error' && "bg-destructive/10 text-destructive border border-destructive/20",
-                      status === 'upcoming' && "hover:bg-muted/50",
-                      !isClickable && "cursor-not-allowed opacity-50"
-                    )}
-                  >
-                    <div className="flex items-start gap-3 w-full">
-                      {/* Step Icon/Number */}
-                      <div className={cn(
-                        "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
-                        status === 'current' && "bg-primary-foreground text-primary",
-                        status === 'completed' && "bg-green-500 text-white",
-                        status === 'error' && "bg-destructive text-destructive-foreground",
-                        status === 'upcoming' && "bg-muted text-muted-foreground"
-                      )}>
-                        {status === 'completed' ? (
-                          <CheckCircle2 className="w-4 h-4" />
-                        ) : status === 'error' ? (
-                          <AlertCircle className="w-4 h-4" />
-                        ) : (
-                          step.icon ? (
-                            React.cloneElement(step.icon as React.ReactElement, { 
-                              className: "w-4 h-4" 
-                            })
-                          ) : (
-                            <span>{index + 1}</span>
-                          )
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => isClickable && onStepChange(index)}
+                        disabled={!isClickable}
+                        className={cn(
+                          "w-full justify-start p-3 h-auto transition-all duration-200 relative group",
+                          "hover:bg-accent/50 rounded-lg",
+                          status === 'current' && "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+                          status === 'completed' && "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200/50",
+                          status === 'error' && "bg-destructive/10 text-destructive hover:bg-destructive/15 border border-destructive/20",
+                          !isClickable && "cursor-not-allowed opacity-50",
+                          isCollapsed && "justify-center px-2"
                         )}
-                      </div>
-
-                        {/* Step Content */}
-                      <div className="flex-1 text-left">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium text-sm leading-tight">
-                            {step.title}
+                      >
+                        <div className={cn(
+                          "flex items-start gap-3 w-full", 
+                          isCollapsed && "justify-center"
+                        )}>
+                          {/* Step Icon */}
+                          <div className={cn(
+                            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                            status === 'current' && "bg-primary-foreground text-primary",
+                            status === 'completed' && "bg-green-500 text-white",
+                            status === 'error' && "bg-destructive text-destructive-foreground",
+                            status === 'upcoming' && "bg-muted text-muted-foreground group-hover:bg-accent"
+                          )}>
+                            {status === 'completed' ? (
+                              <CheckCircle2 className="w-4 h-4" />
+                            ) : status === 'error' ? (
+                              <AlertCircle className="w-4 h-4" />
+                            ) : (
+                              <StepIcon className="w-4 h-4" />
+                            )}
                           </div>
-                          <Tooltip delayDuration={300}>
-                            <TooltipTrigger asChild>
-                              <button 
-                                type="button"
-                                className="inline-flex items-center justify-center"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs z-50">
-                              <p className="text-sm">{step.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        
-                        {/* Progress indicator */}
-                        {step.requiredFields && step.requiredFields.length > 0 && (
-                          <div className="mt-2">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className={cn(
-                                    "h-full transition-all duration-300",
-                                    status === 'completed' && "bg-green-500",
-                                    status === 'current' && "bg-primary-foreground",
-                                    status === 'error' && "bg-destructive",
-                                    status === 'upcoming' && "bg-primary/30"
-                                  )}
-                                  style={{ width: `${completion}%` }}
-                                />
+
+                          {/* Step Content - Hidden when collapsed */}
+                          {!isCollapsed && (
+                            <div className="flex-1 text-left min-w-0">
+                              <div className="font-medium text-sm leading-tight mb-1">
+                                {step.title}
                               </div>
-                              <span className="text-xs text-muted-foreground">
-                                {completion}%
-                              </span>
+                              
+                              {/* Progress indicator */}
+                              {step.requiredFields && step.requiredFields.length > 0 && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <div className="flex-1 h-1.5 bg-background/20 rounded-full overflow-hidden">
+                                    <div 
+                                      className={cn(
+                                        "h-full transition-all duration-300 rounded-full",
+                                        status === 'completed' && "bg-green-400",
+                                        status === 'current' && "bg-primary-foreground",
+                                        status === 'error' && "bg-destructive",
+                                        status === 'upcoming' && "bg-primary/30"
+                                      )}
+                                      style={{ width: `${completion}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-current/70 font-medium">
+                                    {completion}%
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          )}
+                        </div>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side={isCollapsed ? "right" : "top"} className="max-w-xs">
+                      <div className="space-y-1">
+                        <p className="font-medium">{step.title}</p>
+                        <p className="text-sm text-muted-foreground">{step.description}</p>
+                        {step.requiredFields && step.requiredFields.length > 0 && (
+                          <p className="text-xs">Progress: {getStepCompletionPercentage(step)}%</p>
                         )}
                       </div>
-                    </div>
-
-                  </Button>
+                    </TooltipContent>
+                  </Tooltip>
 
                   {/* Connection line */}
-                  {index < steps.length - 1 && (
+                  {!isCollapsed && index < steps.length - 1 && (
                     <div className={cn(
-                      "absolute left-6 top-14 w-px h-4 transition-colors",
-                      index < currentStep ? "bg-green-500" : "bg-muted"
+                      "absolute left-6 top-12 w-px h-4 transition-colors",
+                      index < currentStep ? "bg-green-400" : "bg-border"
                     )} />
                   )}
                 </div>
@@ -291,50 +277,53 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Action Buttons - Always visible */}
-        <div className="border-t pt-4 p-4 space-y-3">
-          {/* Status Indicators */}
-          <div className="space-y-2">
-            {/* Form Status */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {errorCount > 0 && (
-                  <Badge variant="destructive" className="text-xs">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    {errorCount} error{errorCount > 1 ? 's' : ''}
-                  </Badge>
-                )}
-                
-                {isDirty && (
-                  <Badge variant="outline" className="text-xs">
-                    Unsaved changes
-                  </Badge>
-                )}
-                
-                {isValid && !errorCount && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Valid
-                  </Badge>
-                )}
+        {/* Action Buttons */}
+        <div className="border-t border-border/50 p-4 space-y-3 bg-muted/10">
+          {/* Status Indicators - Hidden when collapsed */}
+          {!isCollapsed && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {errorCount > 0 && (
+                    <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {errorCount} error{errorCount > 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                  
+                  {isDirty && (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 border-amber-200 text-amber-600">
+                      Unsaved
+                    </Badge>
+                  )}
+                  
+                  {isValid && !errorCount && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs px-2 py-0.5">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Valid
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Auto-save Status */}
-            {getAutoSaveIndicator() && (
-              <div className="flex justify-center">
-                {getAutoSaveIndicator()}
-              </div>
-            )}
-          </div>
+              {/* Auto-save Status */}
+              {getAutoSaveIndicator() && (
+                <div className="flex justify-center py-1">
+                  {getAutoSaveIndicator()}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="space-y-2">
             <Button
-              type="button"
               onClick={onSave}
               disabled={isLoading || (!isDirty && isEditing)}
-              className="w-full flex items-center gap-2"
+              className={cn(
+                "w-full flex items-center gap-2 h-9",
+                isCollapsed && "px-2"
+              )}
               size="sm"
             >
               {isLoading ? (
@@ -342,16 +331,15 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {isLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Item')}
+              {!isCollapsed && (isLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Item'))}
             </Button>
 
-            {isEditing && onSaveAndClose && (
+            {!isCollapsed && isEditing && onSaveAndClose && (
               <Button
-                type="button"
                 variant="outline"
                 onClick={onSaveAndClose}
                 disabled={isLoading}
-                className="w-full flex items-center gap-2"
+                className="w-full flex items-center gap-2 h-9"
                 size="sm"
               >
                 {isLoading ? (
@@ -364,19 +352,20 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
             )}
 
             <Button
-              type="button"
               variant="outline"
               onClick={onOpenPreview}
-              className="w-full flex items-center gap-2"
+              className={cn(
+                "w-full flex items-center gap-2 h-9 hover:bg-accent/50",
+                isCollapsed && "px-2"
+              )}
               size="sm"
             >
-              <ExternalLink className="h-4 w-4" />
-              Preview in New Tab
+              <Eye className="h-4 w-4" />
+              {!isCollapsed && "Preview"}
             </Button>
           </div>
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
     </TooltipProvider>
   );
 };
