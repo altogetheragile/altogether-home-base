@@ -50,6 +50,8 @@ import { PreviewPage } from "./components/admin/knowledge/PreviewPage";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
+import Knowledge from "./pages/Knowledge";
+import KnowledgeDetail from "./pages/KnowledgeDetail";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,8 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/knowledge" element={<Knowledge />} />
+              <Route path="/knowledge/:slug" element={<KnowledgeDetail />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
