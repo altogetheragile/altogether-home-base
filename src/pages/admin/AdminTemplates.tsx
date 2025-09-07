@@ -81,12 +81,13 @@ const AdminTemplates = () => {
                 {editingTemplate ? 'Edit Template' : 'Create Template'}
               </DialogTitle>
             </DialogHeader>
-            <TemplateForm 
-              template={editingTemplate}
+            {/* <TemplateForm 
+              template={editingTemplate as any}
               locations={locations}
               instructors={instructors}
               onClose={handleCloseDialog}
-            />
+            /> */}
+            <div>Event Template Form (to be implemented)</div>
           </DialogContent>
         </Dialog>
       </div>
