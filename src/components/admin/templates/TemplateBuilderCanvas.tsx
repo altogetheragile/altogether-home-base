@@ -7,12 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { TemplateFieldToolbar } from './TemplateFieldToolbar';
 import { TemplateFieldEditor } from './TemplateFieldEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateSectionEditor } from './TemplateSectionEditor';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection } from '@/types/template';
-import { Save, Eye, Undo, Redo, Grid, Layout } from 'lucide-react';
+import { Save, Eye, Undo, Redo, Grid, Layout, Settings } from 'lucide-react';
 
 interface TemplateBuilderCanvasProps {
   template?: KnowledgeTemplate;
@@ -44,6 +45,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const [activeTab, setActiveTab] = useState<'design' | 'preview'>('design');
   const [history, setHistory] = useState<TemplateConfig[]>([config]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -363,18 +365,143 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
               </p>
             </div>
             
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-              <TabsList>
-                <TabsTrigger value="design">
-                  <Grid className="h-4 w-4 mr-2" />
-                  Design
-                </TabsTrigger>
-                <TabsTrigger value="preview">
-                  <Eye className="h-4 w-4 mr-2" />
-                  Preview
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center gap-2">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+                <TabsList>
+                  <TabsTrigger value="design">
+                    <Grid className="h-4 w-4 mr-2" />
+                    Design
+                  </TabsTrigger>
+                  <TabsTrigger value="preview">
+                    <Eye className="h-4 w-4 mr-2" />
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              <Sheet open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Properties
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-80">
+                  <SheetHeader>
+                    <SheetTitle>Properties</SheetTitle>
+                  </SheetHeader>
+                  
+                  <div className="mt-6">
+                    {selectedField ? (
+                      <TemplateFieldEditor
+                        field={selectedField}
+                        onUpdate={(updates) => {
+                          const section = config.sections.find(s => 
+                            s.fields.some(f => f.id === selectedField.id)
+                          );
+                          if (section) {
+                            updateField(section.id, selectedField.id, updates);
+                          }
+                        }}
+                      />
+                    ) : selectedSection ? (
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="section-title">Section Title</Label>
+                          <Input
+                            id="section-title"
+                            value={selectedSection.title}
+                            onChange={(e) => updateSection(selectedSection.id, {
+                              title: e.target.value
+                            })}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="section-desc">Description</Label>
+                          <Input
+                            id="section-desc"
+                            value={selectedSection.description || ''}
+                            onChange={(e) => updateSection(selectedSection.id, {
+                              description: e.target.value
+                            })}
+                            placeholder="Optional description"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label htmlFor="section-x">X Position</Label>
+                            <Input
+                              id="section-x"
+                              type="number"
+                              value={selectedSection.x}
+                              onChange={(e) => updateSection(selectedSection.id, {
+                                x: Number(e.target.value)
+                              })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="section-y">Y Position</Label>
+                            <Input
+                              id="section-y"
+                              type="number"
+                              value={selectedSection.y}
+                              onChange={(e) => updateSection(selectedSection.id, {
+                                y: Number(e.target.value)
+                              })}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label htmlFor="section-width">Width</Label>
+                            <Input
+                              id="section-width"
+                              type="number"
+                              value={selectedSection.width}
+                              onChange={(e) => updateSection(selectedSection.id, {
+                                width: Number(e.target.value)
+                              })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="section-height">Height</Label>
+                            <Input
+                              id="section-height"
+                              type="number"
+                              value={selectedSection.height}
+                              onChange={(e) => updateSection(selectedSection.id, {
+                                height: Number(e.target.value)
+                              })}
+                            />
+                          </div>
+                        </div>
+
+                        <Separator />
+                        
+                        <Button
+                          variant="destructive"
+                          className="w-full"
+                          onClick={() => {
+                            deleteSection(selectedSection.id);
+                            setIsPropertiesOpen(false);
+                          }}
+                        >
+                          Delete Section
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8">
+                        <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Select a section or field to edit properties</p>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
 
@@ -405,8 +532,14 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                     section={section}
                     isSelected={selectedSection?.id === section.id}
                     selectedField={selectedField}
-                    onSelect={setSelectedSection}
-                    onSelectField={setSelectedField}
+                    onSelect={(section) => {
+                      setSelectedSection(section);
+                      setIsPropertiesOpen(true);
+                    }}
+                    onSelectField={(field) => {
+                      setSelectedField(field);
+                      setIsPropertiesOpen(true);
+                    }}
                     onUpdate={(updates) => updateSection(section.id, updates)}
                     onUpdateField={(fieldId, updates) => updateField(section.id, fieldId, updates)}
                     onDelete={() => deleteSection(section.id)}
@@ -417,115 +550,6 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
             </div>
           ) : (
             <TemplatePreview config={config} />
-          )}
-        </div>
-      </div>
-
-      {/* Right Sidebar - Properties */}
-      <div className="w-80 border-l bg-card">
-        <div className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Properties</h3>
-          
-          {selectedField ? (
-            <TemplateFieldEditor
-              field={selectedField}
-              onUpdate={(updates) => {
-                const section = config.sections.find(s => 
-                  s.fields.some(f => f.id === selectedField.id)
-                );
-                if (section) {
-                  updateField(section.id, selectedField.id, updates);
-                }
-              }}
-            />
-          ) : selectedSection ? (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="section-title">Section Title</Label>
-                <Input
-                  id="section-title"
-                  value={selectedSection.title}
-                  onChange={(e) => updateSection(selectedSection.id, {
-                    title: e.target.value
-                  })}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="section-desc">Description</Label>
-                <Input
-                  id="section-desc"
-                  value={selectedSection.description || ''}
-                  onChange={(e) => updateSection(selectedSection.id, {
-                    description: e.target.value
-                  })}
-                  placeholder="Optional description"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="section-x">X Position</Label>
-                  <Input
-                    id="section-x"
-                    type="number"
-                    value={selectedSection.x}
-                    onChange={(e) => updateSection(selectedSection.id, {
-                      x: Number(e.target.value)
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="section-y">Y Position</Label>
-                  <Input
-                    id="section-y"
-                    type="number"
-                    value={selectedSection.y}
-                    onChange={(e) => updateSection(selectedSection.id, {
-                      y: Number(e.target.value)
-                    })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="section-width">Width</Label>
-                  <Input
-                    id="section-width"
-                    type="number"
-                    value={selectedSection.width}
-                    onChange={(e) => updateSection(selectedSection.id, {
-                      width: Number(e.target.value)
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="section-height">Height</Label>
-                  <Input
-                    id="section-height"
-                    type="number"
-                    value={selectedSection.height}
-                    onChange={(e) => updateSection(selectedSection.id, {
-                      height: Number(e.target.value)
-                    })}
-                  />
-                </div>
-              </div>
-
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => deleteSection(selectedSection.id)}
-                className="w-full"
-              >
-                Delete Section
-              </Button>
-            </div>
-          ) : (
-            <div className="text-center text-muted-foreground py-8">
-              <p>Select a section or field to edit its properties</p>
-            </div>
           )}
         </div>
       </div>
