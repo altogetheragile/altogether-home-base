@@ -18,6 +18,7 @@ import { KnowledgeBreadcrumb } from './editor/KnowledgeBreadcrumb';
 import { BasicInfoSection } from './editor/sections/BasicInfoSection';
 import { ClassificationSection } from './editor/sections/ClassificationSection';
 import { ContentSection } from './editor/sections/ContentSection';
+import { TemplatesSection } from './editor/sections/TemplatesSection';
 import { EnhancedSection } from './editor/sections/EnhancedSection';
 import { UseCasesSection } from './editor/sections/UseCasesSection';
 import { AnalyticsSection } from './editor/sections/AnalyticsSection';
@@ -49,6 +50,12 @@ const stepConfigs = [
     id: 'content',
     title: 'Content',
     description: 'Add the main content and background information',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'templates',
+    title: 'Templates',
+    description: 'Associate templates and frameworks for practical application',
     requiredFields: [] as (keyof KnowledgeItemFormData)[],
   },
   {
@@ -414,10 +421,12 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       case 2:
         return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
       case 3:
-        return <EnhancedSection />;
+        return <TemplatesSection knowledgeItemId={knowledgeItem?.id} />;
       case 4:
-        return <UseCasesSection />;
+        return <EnhancedSection />;
       case 5:
+        return <UseCasesSection />;
+      case 6:
         return <AnalyticsSection onStepChange={handleStepChange} />;
       default:
         return <BasicInfoSection form={form} />;
