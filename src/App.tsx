@@ -47,6 +47,7 @@ import EditInstructor from "./pages/admin/EditInstructor";
 import CreateKnowledgeItem from "./pages/admin/CreateKnowledgeItem";
 import EditKnowledgeItem from "./pages/admin/EditKnowledgeItem";
 import CreateKnowledgeUseCase from "./pages/admin/CreateKnowledgeUseCase";
+import CreateKnowledgeTemplate from "./pages/admin/CreateKnowledgeTemplate";
 import { PreviewPage } from "./components/admin/knowledge/PreviewPage";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
@@ -107,6 +108,8 @@ const App = () => (
                 <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
                 <Route path="knowledge/planning-focuses" element={<AdminPlanningFocuses />} />
                 <Route path="knowledge/templates" element={<AdminKnowledgeTemplates />} />
+                <Route path="knowledge/templates/new" element={<CreateKnowledgeTemplate />} />
+                <Route path="knowledge/templates/:id/edit" element={<CreateKnowledgeTemplate />} />
                 <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
                 <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
                 <Route path="knowledge/imports" element={<AdminKnowledgeImport />} />
