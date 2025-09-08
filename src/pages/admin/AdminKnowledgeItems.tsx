@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, MoreVertical, ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, MoreVertical, ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useDeleteKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useDeleteKnowledgeItem, useUpdateKnowledgeItem, useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -149,6 +149,7 @@ const AdminKnowledgeItems = () => {
 
   const deleteMutation = useDeleteKnowledgeItem();
   const updateMutation = useUpdateKnowledgeItem();
+  const createMutation = useCreateKnowledgeItem();
 
   const handleCreate = () => {
     navigate('/admin/knowledge/items/new');
@@ -169,6 +170,42 @@ const AdminKnowledgeItems = () => {
       id: item.id,
       is_published: !item.is_published
     });
+  };
+
+  const handleDuplicate = async (item: any) => {
+    try {
+      const duplicatedItem = {
+        ...item,
+        name: `${item.name} (Copy)`,
+        slug: `${item.slug}-copy-${Date.now()}`,
+        is_published: false,
+        is_featured: false,
+        view_count: 0,
+        // Remove ID and timestamps
+        id: undefined,
+        created_at: undefined,
+        updated_at: undefined,
+        created_by: undefined,
+        updated_by: undefined,
+        // Remove relations
+        knowledge_categories: undefined,
+        planning_focuses: undefined,
+        activity_domains: undefined,
+        knowledge_use_cases: undefined
+      };
+
+      createMutation.mutate(duplicatedItem);
+      toast({
+        title: "Item duplicated!",
+        description: "A copy of the knowledge item has been created.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to duplicate",
+        description: "There was an error duplicating the knowledge item.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSort = (column: SortColumn) => {
@@ -459,38 +496,44 @@ const AdminKnowledgeItems = () => {
                          <MoreVertical className="h-4 w-4" />
                        </Button>
                      </DropdownMenuTrigger>
-                     <DropdownMenuContent align="end">
-                       <DropdownMenuItem onClick={() => togglePublished(item)}>
-                         <div className="flex items-center gap-2">
-                           {item.is_published ? (
-                             <>
-                               <EyeOff className="h-4 w-4" />
-                               Unpublish
-                             </>
-                           ) : (
-                             <>
-                               <Eye className="h-4 w-4" />
-                               Publish
-                             </>
-                           )}
-                         </div>
-                       </DropdownMenuItem>
-                       <DropdownMenuItem onClick={() => handleEdit(item)}>
-                         <div className="flex items-center gap-2">
-                           <Edit className="h-4 w-4" />
-                           Edit
-                         </div>
-                       </DropdownMenuItem>
-                       <DropdownMenuItem 
-                         onClick={() => handleDelete(item)}
-                         className="text-destructive focus:text-destructive"
-                       >
-                         <div className="flex items-center gap-2">
-                           <Trash2 className="h-4 w-4" />
-                           Delete
-                         </div>
-                       </DropdownMenuItem>
-                     </DropdownMenuContent>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => togglePublished(item)}>
+                          <div className="flex items-center gap-2">
+                            {item.is_published ? (
+                              <>
+                                <EyeOff className="h-4 w-4" />
+                                Unpublish
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-4 w-4" />
+                                Publish
+                              </>
+                            )}
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(item)}>
+                          <div className="flex items-center gap-2">
+                            <Edit className="h-4 w-4" />
+                            Edit
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(item)}>
+                          <div className="flex items-center gap-2">
+                            <Copy className="h-4 w-4" />
+                            Duplicate
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(item)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
                    </DropdownMenu>
                  </TableCell>
                </TableRow>
