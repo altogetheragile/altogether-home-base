@@ -184,24 +184,29 @@ const AdminKnowledgeItems = () => {
       return;
     }
 
+    // Only include valid database columns
     const duplicatedItem = {
-      ...item,
       name: `${item.name} (Copy)`,
       slug: `${item.slug}-copy-${Date.now()}`,
+      description: item.description,
+      background: item.background,
+      source: item.source,
+      primary_publication_id: item.primary_publication_id,
+      category_id: item.category_id,
+      planning_focus_id: item.planning_focus_id,
+      domain_id: item.domain_id,
+      common_pitfalls: item.common_pitfalls || [],
+      evidence_sources: item.evidence_sources || [],
+      related_techniques: item.related_techniques || [],
+      learning_value_summary: item.learning_value_summary,
+      key_terminology: item.key_terminology || {},
+      author: item.author,
+      reference_url: item.reference_url,
+      publication_year: item.publication_year,
       is_published: false,
       is_featured: false,
       view_count: 0,
       created_by: user.id,
-      // Remove ID and timestamps
-      id: undefined,
-      created_at: undefined,
-      updated_at: undefined,
-      updated_by: undefined,
-      // Remove relations
-      knowledge_categories: undefined,
-      planning_focuses: undefined,
-      activity_domains: undefined,
-      knowledge_use_cases: undefined
     };
 
     createMutation.mutate(duplicatedItem);
