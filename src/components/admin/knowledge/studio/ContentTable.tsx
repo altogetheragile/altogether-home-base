@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { 
   Eye, EyeOff, Edit, MoreHorizontal, FileText, Target, 
-  Clock, TrendingUp, Star, Copy, Archive, Trash2
+  Clock, TrendingUp, Star, Copy, Archive, Trash2, Share, ExternalLink, StarOff
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ContentFilters } from '../ContentStudioDashboard';
+import { useUpdateKnowledgeItem, useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ContentTableProps {
@@ -40,6 +42,9 @@ export const ContentTable = ({
   onSelectionChange,
   onEdit
 }: ContentTableProps) => {
+  const updateKnowledgeItem = useUpdateKnowledgeItem();
+  const createKnowledgeItem = useCreateKnowledgeItem();
+  const { toast } = useToast();
   const { data: items, isLoading } = useQuery({
     queryKey: ['content-studio-table', filters],
     queryFn: async () => {
@@ -132,6 +137,96 @@ export const ContentTable = ({
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const toggleFeatured = async (item: any) => {
+    await updateKnowledgeItem.mutateAsync({
+      id: item.id,
+      is_featured: !item.is_featured
+    });
+  };
+
+  const togglePublished = async (item: any) => {
+    await updateKnowledgeItem.mutateAsync({
+      id: item.id,
+      is_published: !item.is_published
+    });
+  };
+
+  const handlePreview = (item: any) => {
+    if (item.is_published) {
+      window.open(`/knowledge/${item.slug}`, '_blank');
+    } else {
+      toast({
+        title: "Preview unavailable",
+        description: "This item needs to be published before it can be previewed.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleShare = async (item: any) => {
+    const url = `${window.location.origin}/knowledge/${item.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied!",
+        description: "The knowledge item link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy link",
+        description: "Please try copying the link manually.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDuplicate = async (item: any) => {
+    try {
+      const duplicatedItem = {
+        ...item,
+        name: `${item.name} (Copy)`,
+        slug: `${item.slug}-copy-${Date.now()}`,
+        is_published: false,
+        is_featured: false,
+        view_count: 0,
+        // Remove ID and timestamps
+        id: undefined,
+        created_at: undefined,
+        updated_at: undefined,
+        created_by: undefined,
+        updated_by: undefined,
+        // Remove relations
+        knowledge_categories: undefined,
+        planning_focuses: undefined,
+        activity_domains: undefined,
+        knowledge_use_cases: undefined
+      };
+
+      await createKnowledgeItem.mutateAsync(duplicatedItem);
+      toast({
+        title: "Item duplicated!",
+        description: "A copy of the knowledge item has been created.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to duplicate",
+        description: "There was an error duplicating the knowledge item.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleArchive = async (item: any) => {
+    await updateKnowledgeItem.mutateAsync({
+      id: item.id,
+      is_published: false
+    });
+    toast({
+      title: "Item archived",
+      description: "The knowledge item has been unpublished and archived.",
+    });
   };
 
   if (isLoading) {
@@ -305,27 +400,55 @@ export const ContentTable = ({
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onClick={() => onEdit(item)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Content
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview
+                      <DropdownMenuItem onClick={() => handlePreview(item)}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Preview in New Tab
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleDuplicate(item)}>
                         <Copy className="h-4 w-4 mr-2" />
                         Duplicate
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleShare(item)}>
+                        <Share className="h-4 w-4 mr-2" />
+                        Copy Share Link
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => toggleFeatured(item)}>
+                        {item.is_featured ? (
+                          <>
+                            <StarOff className="h-4 w-4 mr-2" />
+                            Remove from Featured
+                          </>
+                        ) : (
+                          <>
+                            <Star className="h-4 w-4 mr-2" />
+                            Add to Featured
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => togglePublished(item)}>
+                        {item.is_published ? (
+                          <>
+                            <EyeOff className="h-4 w-4 mr-2" />
+                            Unpublish
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Publish
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleArchive(item)}>
                         <Archive className="h-4 w-4 mr-2" />
                         Archive
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
