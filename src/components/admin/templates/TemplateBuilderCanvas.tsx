@@ -7,13 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { TemplateFieldToolbar } from './TemplateFieldToolbar';
 import { TemplateFieldEditor } from './TemplateFieldEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateSectionEditor } from './TemplateSectionEditor';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection } from '@/types/template';
-import { Save, Eye, Undo, Redo, Grid, Layout, Settings } from 'lucide-react';
+import { Save, Eye, Undo, Redo, Grid, Layout, Settings, ZoomIn, ZoomOut, RotateCcw, Move3D, Minimize2 } from 'lucide-react';
 
 interface TemplateBuilderCanvasProps {
   template?: KnowledgeTemplate;
@@ -46,6 +46,11 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const [history, setHistory] = useState<TemplateConfig[]>([config]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
+  const [zoom, setZoom] = useState(100);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isPropertiesMinimized, setIsPropertiesMinimized] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -200,6 +205,62 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
     };
     onSave(templateData);
   }, [config, template, onSave]);
+
+  const handleZoomIn = useCallback(() => {
+    setZoom(prevZoom => Math.min(prevZoom + 25, 200));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom(prevZoom => Math.max(prevZoom - 25, 25));
+  }, []);
+
+  const handleZoomReset = useCallback(() => {
+    setZoom(100);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  const handleZoomFit = useCallback(() => {
+    // Calculate zoom to fit canvas in viewport
+    if (canvasRef.current) {
+      const container = canvasRef.current;
+      const containerWidth = container.clientWidth - 64; // Account for margin
+      const containerHeight = container.clientHeight - 64;
+      const scaleX = containerWidth / config.dimensions.width;
+      const scaleY = containerHeight / config.dimensions.height;
+      const scale = Math.min(scaleX, scaleY) * 100;
+      setZoom(Math.max(25, Math.min(200, scale)));
+      setPan({ x: 0, y: 0 });
+    }
+  }, [config.dimensions]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 1 || (e.button === 0 && e.shiftKey)) { // Middle click or Shift+click to pan
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      e.preventDefault();
+    }
+  }, [pan]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isPanning) {
+      setPan({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y
+      });
+    }
+  }, [isPanning, panStart]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+  }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -10 : 10;
+      setZoom(prevZoom => Math.max(25, Math.min(200, prevZoom + delta)));
+    }
+  }, []);
 
   return (
     <div className="flex h-screen bg-background">
@@ -378,129 +439,37 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-              
-              <Sheet open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Properties
+
+              {/* Zoom Controls */}
+              {activeTab === 'design' && (
+                <div className="flex items-center gap-1 border rounded-md p-1">
+                  <Button variant="ghost" size="sm" onClick={handleZoomOut}>
+                    <ZoomOut className="h-4 w-4" />
                   </Button>
-                </SheetTrigger>
-                <SheetContent className="w-80">
-                  <SheetHeader>
-                    <SheetTitle>Properties</SheetTitle>
-                  </SheetHeader>
-                  
-                  <div className="mt-6">
-                    {selectedField ? (
-                      <TemplateFieldEditor
-                        field={selectedField}
-                        onUpdate={(updates) => {
-                          const section = config.sections.find(s => 
-                            s.fields.some(f => f.id === selectedField.id)
-                          );
-                          if (section) {
-                            updateField(section.id, selectedField.id, updates);
-                          }
-                        }}
-                      />
-                    ) : selectedSection ? (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="section-title">Section Title</Label>
-                          <Input
-                            id="section-title"
-                            value={selectedSection.title}
-                            onChange={(e) => updateSection(selectedSection.id, {
-                              title: e.target.value
-                            })}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="section-desc">Description</Label>
-                          <Input
-                            id="section-desc"
-                            value={selectedSection.description || ''}
-                            onChange={(e) => updateSection(selectedSection.id, {
-                              description: e.target.value
-                            })}
-                            placeholder="Optional description"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label htmlFor="section-x">X Position</Label>
-                            <Input
-                              id="section-x"
-                              type="number"
-                              value={selectedSection.x}
-                              onChange={(e) => updateSection(selectedSection.id, {
-                                x: Number(e.target.value)
-                              })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="section-y">Y Position</Label>
-                            <Input
-                              id="section-y"
-                              type="number"
-                              value={selectedSection.y}
-                              onChange={(e) => updateSection(selectedSection.id, {
-                                y: Number(e.target.value)
-                              })}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label htmlFor="section-width">Width</Label>
-                            <Input
-                              id="section-width"
-                              type="number"
-                              value={selectedSection.width}
-                              onChange={(e) => updateSection(selectedSection.id, {
-                                width: Number(e.target.value)
-                              })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="section-height">Height</Label>
-                            <Input
-                              id="section-height"
-                              type="number"
-                              value={selectedSection.height}
-                              onChange={(e) => updateSection(selectedSection.id, {
-                                height: Number(e.target.value)
-                              })}
-                            />
-                          </div>
-                        </div>
-
-                        <Separator />
-                        
-                        <Button
-                          variant="destructive"
-                          className="w-full"
-                          onClick={() => {
-                            deleteSection(selectedSection.id);
-                            setIsPropertiesOpen(false);
-                          }}
-                        >
-                          Delete Section
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="text-center text-muted-foreground py-8">
-                        <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Select a section or field to edit properties</p>
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
+                  <span className="text-sm font-medium min-w-[50px] text-center">
+                    {zoom}%
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={handleZoomIn}>
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  <Separator orientation="vertical" className="h-6" />
+                  <Button variant="ghost" size="sm" onClick={handleZoomFit} title="Fit to screen">
+                    <Minimize2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleZoomReset} title="Reset zoom">
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsPropertiesOpen(true)}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Properties
+              </Button>
             </div>
           </div>
         </div>
@@ -509,21 +478,27 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
           {activeTab === 'design' ? (
             <div
               ref={canvasRef}
-              className="absolute inset-0 bg-muted/20"
+              className="absolute inset-0 bg-muted/20 cursor-grab"
               style={{
                 backgroundImage: `
                   linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
                   linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
                 `,
-                backgroundSize: '20px 20px'
+                backgroundSize: `${20 * (zoom / 100)}px ${20 * (zoom / 100)}px`,
+                backgroundPosition: `${pan.x}px ${pan.y}px`
               }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onWheel={handleWheel}
             >
               <div
-                className="relative bg-background border rounded-lg m-8 shadow-lg"
+                className="relative bg-background border rounded-lg shadow-lg origin-top-left"
                 style={{
                   width: config.dimensions.width,
                   height: config.dimensions.height,
-                  backgroundColor: config.styling.backgroundColor
+                  backgroundColor: config.styling.backgroundColor,
+                  transform: `translate(${32 + pan.x}px, ${32 + pan.y}px) scale(${zoom / 100})`,
                 }}
               >
                 {config.sections.map((section) => (
@@ -534,11 +509,9 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                     selectedField={selectedField}
                     onSelect={(section) => {
                       setSelectedSection(section);
-                      setIsPropertiesOpen(true);
                     }}
                     onSelectField={(field) => {
                       setSelectedField(field);
-                      setIsPropertiesOpen(true);
                     }}
                     onUpdate={(updates) => updateSection(section.id, updates)}
                     onUpdateField={(fieldId, updates) => updateField(section.id, fieldId, updates)}
@@ -547,11 +520,158 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                   />
                 ))}
               </div>
+              
+              {/* Pan instruction */}
+              {zoom > 100 && (
+                <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-sm text-muted-foreground">
+                  <Move3D className="h-4 w-4 inline mr-2" />
+                  Hold Shift + drag or middle-click to pan
+                </div>
+              )}
             </div>
           ) : (
             <TemplatePreview config={config} />
           )}
         </div>
+
+        {/* Floating Properties Panel */}
+        <Dialog open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
+          <DialogContent 
+            className="max-w-sm max-h-[80vh] overflow-y-auto"
+            style={{
+              position: 'fixed',
+              top: '10%',
+              right: '2%',
+              left: 'auto',
+              transform: 'none',
+            }}
+          >
+            <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+              <DialogTitle className="text-base">Properties</DialogTitle>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsPropertiesMinimized(!isPropertiesMinimized)}
+                  className="h-6 w-6 p-0"
+                >
+                  <Minimize2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </DialogHeader>
+            
+            {!isPropertiesMinimized && (
+              <div className="mt-4">
+                {selectedField ? (
+                  <TemplateFieldEditor
+                    field={selectedField}
+                    onUpdate={(updates) => {
+                      const section = config.sections.find(s => 
+                        s.fields.some(f => f.id === selectedField.id)
+                      );
+                      if (section) {
+                        updateField(section.id, selectedField.id, updates);
+                      }
+                    }}
+                  />
+                ) : selectedSection ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="section-title">Section Title</Label>
+                      <Input
+                        id="section-title"
+                        value={selectedSection.title}
+                        onChange={(e) => updateSection(selectedSection.id, {
+                          title: e.target.value
+                        })}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="section-desc">Description</Label>
+                      <Input
+                        id="section-desc"
+                        value={selectedSection.description || ''}
+                        onChange={(e) => updateSection(selectedSection.id, {
+                          description: e.target.value
+                        })}
+                        placeholder="Optional description"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="section-x">X Position</Label>
+                        <Input
+                          id="section-x"
+                          type="number"
+                          value={selectedSection.x}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            x: Number(e.target.value)
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="section-y">Y Position</Label>
+                        <Input
+                          id="section-y"
+                          type="number"
+                          value={selectedSection.y}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            y: Number(e.target.value)
+                          })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="section-width">Width</Label>
+                        <Input
+                          id="section-width"
+                          type="number"
+                          value={selectedSection.width}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            width: Number(e.target.value)
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="section-height">Height</Label>
+                        <Input
+                          id="section-height"
+                          type="number"
+                          value={selectedSection.height}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            height: Number(e.target.value)
+                          })}
+                        />
+                      </div>
+                    </div>
+
+                    <Separator />
+                    
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => {
+                        deleteSection(selectedSection.id);
+                        setIsPropertiesOpen(false);
+                      }}
+                    >
+                      Delete Section
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Select a section or field to edit properties</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
