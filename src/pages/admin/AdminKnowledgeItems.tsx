@@ -173,39 +173,38 @@ const AdminKnowledgeItems = () => {
   };
 
   const handleDuplicate = async (item: any) => {
-    try {
-      const duplicatedItem = {
-        ...item,
-        name: `${item.name} (Copy)`,
-        slug: `${item.slug}-copy-${Date.now()}`,
-        is_published: false,
-        is_featured: false,
-        view_count: 0,
-        // Remove ID and timestamps
-        id: undefined,
-        created_at: undefined,
-        updated_at: undefined,
-        created_by: undefined,
-        updated_by: undefined,
-        // Remove relations
-        knowledge_categories: undefined,
-        planning_focuses: undefined,
-        activity_domains: undefined,
-        knowledge_use_cases: undefined
-      };
-
-      createMutation.mutate(duplicatedItem);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
       toast({
-        title: "Item duplicated!",
-        description: "A copy of the knowledge item has been created.",
-      });
-    } catch (err) {
-      toast({
-        title: "Failed to duplicate",
-        description: "There was an error duplicating the knowledge item.",
+        title: "Authentication required",
+        description: "You must be logged in to duplicate items.",
         variant: "destructive"
       });
+      return;
     }
+
+    const duplicatedItem = {
+      ...item,
+      name: `${item.name} (Copy)`,
+      slug: `${item.slug}-copy-${Date.now()}`,
+      is_published: false,
+      is_featured: false,
+      view_count: 0,
+      created_by: user.id,
+      // Remove ID and timestamps
+      id: undefined,
+      created_at: undefined,
+      updated_at: undefined,
+      updated_by: undefined,
+      // Remove relations
+      knowledge_categories: undefined,
+      planning_focuses: undefined,
+      activity_domains: undefined,
+      knowledge_use_cases: undefined
+    };
+
+    createMutation.mutate(duplicatedItem);
   };
 
   const handleSort = (column: SortColumn) => {
