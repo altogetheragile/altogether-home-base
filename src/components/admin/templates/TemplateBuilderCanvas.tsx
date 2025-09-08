@@ -537,7 +537,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
         {/* Floating Properties Panel */}
         <Dialog open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
           <DialogContent
-            className="max-w-sm max-h-[80vh] overflow-y-auto"
+            className="max-w-sm max-h-[80vh] overflow-y-auto pointer-events-auto"
             style={{
               position: 'fixed',
               top: '10%',
@@ -545,8 +545,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
               left: 'auto',
               transform: 'none',
             }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerMove={(e) => e.stopPropagation()}
+            onInteractOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
           >
             <DialogHeader className="flex flex-row items-center justify-between space-y-0">
               <DialogTitle className="text-base">Properties</DialogTitle>
@@ -563,103 +563,111 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
             </DialogHeader>
             
             {!isPropertiesMinimized && (
-              <div className="mt-4">
+              <div className="mt-4" onClick={(e) => e.stopPropagation()}>
                 {selectedField ? (
-                  <TemplateFieldEditor
-                    field={selectedField}
-                    onUpdate={(updates) => {
-                      const section = config.sections.find(s => 
-                        s.fields.some(f => f.id === selectedField.id)
-                      );
-                      if (section) {
-                        updateField(section.id, selectedField.id, updates);
-                      }
-                    }}
-                  />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <TemplateFieldEditor
+                      field={selectedField}
+                      onUpdate={(updates) => {
+                        const section = config.sections.find(s => 
+                          s.fields.some(f => f.id === selectedField.id)
+                        );
+                        if (section) {
+                          updateField(section.id, selectedField.id, updates);
+                        }
+                      }}
+                    />
+                  </div>
                 ) : selectedSection ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
                     <div>
                       <Label htmlFor="section-title">Section Title</Label>
-                       <Input
-                         id="section-title"
-                         value={selectedSection.title}
-                         onChange={(e) => updateSection(selectedSection.id, {
-                           title: e.target.value
-                         })}
-                         onFocus={(e) => e.stopPropagation()}
-                         onMouseDown={(e) => e.stopPropagation()}
-                       />
+                      <Input
+                        id="section-title"
+                        value={selectedSection.title}
+                        onChange={(e) => updateSection(selectedSection.id, {
+                          title: e.target.value
+                        })}
+                        onClick={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      />
                     </div>
                     
                     <div>
                       <Label htmlFor="section-desc">Description</Label>
-                       <Input
-                         id="section-desc"
-                         value={selectedSection.description || ''}
-                         onChange={(e) => updateSection(selectedSection.id, {
-                           description: e.target.value
-                         })}
-                         placeholder="Optional description"
-                         onFocus={(e) => e.stopPropagation()}
-                         onMouseDown={(e) => e.stopPropagation()}
-                       />
+                      <Input
+                        id="section-desc"
+                        value={selectedSection.description || ''}
+                        onChange={(e) => updateSection(selectedSection.id, {
+                          description: e.target.value
+                        })}
+                        placeholder="Optional description"
+                        onClick={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label htmlFor="section-x">X Position</Label>
-                         <Input
-                           id="section-x"
-                           type="number"
-                           value={selectedSection.x}
-                           onChange={(e) => updateSection(selectedSection.id, {
-                             x: Number(e.target.value)
-                           })}
-                           onFocus={(e) => e.stopPropagation()}
-                           onMouseDown={(e) => e.stopPropagation()}
-                         />
+                        <Input
+                          id="section-x"
+                          type="number"
+                          value={selectedSection.x}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            x: Number(e.target.value)
+                          })}
+                          onClick={(e) => e.stopPropagation()}
+                          onFocus={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        />
                       </div>
                       <div>
                         <Label htmlFor="section-y">Y Position</Label>
-                         <Input
-                           id="section-y"
-                           type="number"
-                           value={selectedSection.y}
-                           onChange={(e) => updateSection(selectedSection.id, {
-                             y: Number(e.target.value)
-                           })}
-                           onFocus={(e) => e.stopPropagation()}
-                           onMouseDown={(e) => e.stopPropagation()}
-                         />
+                        <Input
+                          id="section-y"
+                          type="number"
+                          value={selectedSection.y}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            y: Number(e.target.value)
+                          })}
+                          onClick={(e) => e.stopPropagation()}
+                          onFocus={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label htmlFor="section-width">Width</Label>
-                         <Input
-                           id="section-width"
-                           type="number"
-                           value={selectedSection.width}
-                           onChange={(e) => updateSection(selectedSection.id, {
-                             width: Number(e.target.value)
-                           })}
-                           onFocus={(e) => e.stopPropagation()}
-                           onMouseDown={(e) => e.stopPropagation()}
-                         />
+                        <Input
+                          id="section-width"
+                          type="number"
+                          value={selectedSection.width}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            width: Number(e.target.value)
+                          })}
+                          onClick={(e) => e.stopPropagation()}
+                          onFocus={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        />
                       </div>
                       <div>
                         <Label htmlFor="section-height">Height</Label>
-                         <Input
-                           id="section-height"
-                           type="number"
-                           value={selectedSection.height}
-                           onChange={(e) => updateSection(selectedSection.id, {
-                             height: Number(e.target.value)
-                           })}
-                           onFocus={(e) => e.stopPropagation()}
-                           onMouseDown={(e) => e.stopPropagation()}
-                         />
+                        <Input
+                          id="section-height"
+                          type="number"
+                          value={selectedSection.height}
+                          onChange={(e) => updateSection(selectedSection.id, {
+                            height: Number(e.target.value)
+                          })}
+                          onClick={(e) => e.stopPropagation()}
+                          onFocus={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        />
                       </div>
                     </div>
 
