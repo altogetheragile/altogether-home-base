@@ -536,7 +536,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
 
         {/* Floating Properties Panel */}
         <Dialog open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
-          <DialogContent 
+          <DialogContent
             className="max-w-sm max-h-[80vh] overflow-y-auto"
             style={{
               position: 'fixed',
@@ -545,6 +545,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
               left: 'auto',
               transform: 'none',
             }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
           >
             <DialogHeader className="flex flex-row items-center justify-between space-y-0">
               <DialogTitle className="text-base">Properties</DialogTitle>
@@ -578,74 +580,86 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="section-title">Section Title</Label>
-                      <Input
-                        id="section-title"
-                        value={selectedSection.title}
-                        onChange={(e) => updateSection(selectedSection.id, {
-                          title: e.target.value
-                        })}
-                      />
+                       <Input
+                         id="section-title"
+                         value={selectedSection.title}
+                         onChange={(e) => updateSection(selectedSection.id, {
+                           title: e.target.value
+                         })}
+                         onFocus={(e) => e.stopPropagation()}
+                         onMouseDown={(e) => e.stopPropagation()}
+                       />
                     </div>
                     
                     <div>
                       <Label htmlFor="section-desc">Description</Label>
-                      <Input
-                        id="section-desc"
-                        value={selectedSection.description || ''}
-                        onChange={(e) => updateSection(selectedSection.id, {
-                          description: e.target.value
-                        })}
-                        placeholder="Optional description"
-                      />
+                       <Input
+                         id="section-desc"
+                         value={selectedSection.description || ''}
+                         onChange={(e) => updateSection(selectedSection.id, {
+                           description: e.target.value
+                         })}
+                         placeholder="Optional description"
+                         onFocus={(e) => e.stopPropagation()}
+                         onMouseDown={(e) => e.stopPropagation()}
+                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label htmlFor="section-x">X Position</Label>
-                        <Input
-                          id="section-x"
-                          type="number"
-                          value={selectedSection.x}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            x: Number(e.target.value)
-                          })}
-                        />
+                         <Input
+                           id="section-x"
+                           type="number"
+                           value={selectedSection.x}
+                           onChange={(e) => updateSection(selectedSection.id, {
+                             x: Number(e.target.value)
+                           })}
+                           onFocus={(e) => e.stopPropagation()}
+                           onMouseDown={(e) => e.stopPropagation()}
+                         />
                       </div>
                       <div>
                         <Label htmlFor="section-y">Y Position</Label>
-                        <Input
-                          id="section-y"
-                          type="number"
-                          value={selectedSection.y}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            y: Number(e.target.value)
-                          })}
-                        />
+                         <Input
+                           id="section-y"
+                           type="number"
+                           value={selectedSection.y}
+                           onChange={(e) => updateSection(selectedSection.id, {
+                             y: Number(e.target.value)
+                           })}
+                           onFocus={(e) => e.stopPropagation()}
+                           onMouseDown={(e) => e.stopPropagation()}
+                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label htmlFor="section-width">Width</Label>
-                        <Input
-                          id="section-width"
-                          type="number"
-                          value={selectedSection.width}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            width: Number(e.target.value)
-                          })}
-                        />
+                         <Input
+                           id="section-width"
+                           type="number"
+                           value={selectedSection.width}
+                           onChange={(e) => updateSection(selectedSection.id, {
+                             width: Number(e.target.value)
+                           })}
+                           onFocus={(e) => e.stopPropagation()}
+                           onMouseDown={(e) => e.stopPropagation()}
+                         />
                       </div>
                       <div>
                         <Label htmlFor="section-height">Height</Label>
-                        <Input
-                          id="section-height"
-                          type="number"
-                          value={selectedSection.height}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            height: Number(e.target.value)
-                          })}
-                        />
+                         <Input
+                           id="section-height"
+                           type="number"
+                           value={selectedSection.height}
+                           onChange={(e) => updateSection(selectedSection.id, {
+                             height: Number(e.target.value)
+                           })}
+                           onFocus={(e) => e.stopPropagation()}
+                           onMouseDown={(e) => e.stopPropagation()}
+                         />
                       </div>
                     </div>
 

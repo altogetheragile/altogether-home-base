@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,6 +65,7 @@ const commonCategories = [
 ];
 
 export default function TemplateForm({ template, onSuccess }: TemplateFormProps) {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createTemplate = useCreateKnowledgeTemplate();
   const updateTemplate = useUpdateKnowledgeTemplate();
@@ -85,11 +87,13 @@ export default function TemplateForm({ template, onSuccess }: TemplateFormProps)
       
       if (template) {
         await updateTemplate.mutateAsync({ id: template.id, data });
+        onSuccess?.();
       } else {
-        await createTemplate.mutateAsync(data);
+        const newTemplate = await createTemplate.mutateAsync(data);
+        onSuccess?.();
+        // Navigate to the canvas editor to design the template
+        navigate(`/admin/knowledge/templates/${newTemplate.id}/edit`);
       }
-      
-      onSuccess?.();
     } catch (error) {
       console.error('Error saving template:', error);
     } finally {

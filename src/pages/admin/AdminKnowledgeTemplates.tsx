@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, Copy, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,7 @@ const TemplateTypeColors = {
 };
 
 export default function AdminKnowledgeTemplates() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -41,6 +43,10 @@ export default function AdminKnowledgeTemplates() {
 
   const handleDelete = async (id: string) => {
     await deleteTemplate.mutateAsync(id);
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/admin/knowledge/templates/${id}/edit`);
   };
 
   if (isLoading) {
@@ -140,6 +146,7 @@ export default function AdminKnowledgeTemplates() {
               key={template.id}
               template={template}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))}
         </div>
@@ -151,9 +158,10 @@ export default function AdminKnowledgeTemplates() {
 interface TemplateCardProps {
   template: KnowledgeTemplate;
   onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
-function TemplateCard({ template, onDelete }: TemplateCardProps) {
+function TemplateCard({ template, onDelete, onEdit }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
@@ -185,7 +193,12 @@ function TemplateCard({ template, onDelete }: TemplateCardProps) {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={() => onEdit(template.id)}
+          >
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
