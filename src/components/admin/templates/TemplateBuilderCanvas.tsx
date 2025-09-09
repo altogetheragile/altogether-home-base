@@ -16,6 +16,9 @@ import { TemplatePreview } from './TemplatePreview';
 import { TemplateSectionEditor } from './TemplateSectionEditor';
 import { DebouncedTemplateInput } from './DebouncedTemplateInput';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection, TemplateType } from '@/types/template';
+import { TemplateToolbar } from './TemplateToolbar';
+import { useTemplateAlignment } from '@/hooks/useTemplateAlignment';
+import { useMultiSelection } from '@/hooks/useMultiSelection';
 import { Save, Eye, Undo, Redo, Grid, Layout, Settings, ZoomIn, ZoomOut, RotateCcw, Move3D, Minimize2 } from 'lucide-react';
 
 interface TemplateBuilderCanvasProps {
@@ -61,6 +64,13 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [isPropertiesMinimized, setIsPropertiesMinimized] = useState(false);
+  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [gridSize, setGridSize] = useState(20);
+  const [showSectionTitles, setShowSectionTitles] = useState(true);
+
+  // Multi-selection and alignment hooks
+  const multiSelection = useMultiSelection();
+  const alignment = useTemplateAlignment();
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -139,6 +149,18 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
         return { ...section, ...updates };
       }
       return section;
+    });
+
+    updateConfig({
+      ...config,
+      sections: updatedSections
+    });
+  }, [config, updateConfig]);
+
+  const updateMultipleSections = useCallback((updates: { id: string; updates: Partial<TemplateSection> }[]) => {
+    const updatedSections = config.sections.map(section => {
+      const update = updates.find(u => u.id === section.id);
+      return update ? { ...section, ...update.updates } : section;
     });
 
     updateConfig({
@@ -274,6 +296,64 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       setZoom(prevZoom => Math.max(25, Math.min(200, prevZoom + delta)));
     }
   }, []);
+
+  // Alignment handlers
+  const handleAlignHorizontal = useCallback((alignmentType: 'left' | 'center' | 'right') => {
+    const selectedSections = multiSelection.getSelectedSections(config.sections);
+    const updates = alignment.alignHorizontal(selectedSections, alignmentType);
+    
+    const sectionUpdates = selectedSections.map((section, index) => ({
+      id: section.id,
+      updates: updates[index]
+    }));
+    
+    updateMultipleSections(sectionUpdates);
+  }, [multiSelection, alignment, config.sections, updateMultipleSections]);
+
+  const handleAlignVertical = useCallback((alignmentType: 'top' | 'middle' | 'bottom') => {
+    const selectedSections = multiSelection.getSelectedSections(config.sections);
+    const updates = alignment.alignVertical(selectedSections, alignmentType);
+    
+    const sectionUpdates = selectedSections.map((section, index) => ({
+      id: section.id,
+      updates: updates[index]
+    }));
+    
+    updateMultipleSections(sectionUpdates);
+  }, [multiSelection, alignment, config.sections, updateMultipleSections]);
+
+  const handleDistribute = useCallback((direction: 'horizontal' | 'vertical') => {
+    const selectedSections = multiSelection.getSelectedSections(config.sections);
+    const updates = alignment.distribute(selectedSections, direction);
+    
+    const sectionUpdates = selectedSections.map((section, index) => ({
+      id: section.id,
+      updates: updates[index]
+    }));
+    
+    updateMultipleSections(sectionUpdates);
+  }, [multiSelection, alignment, config.sections, updateMultipleSections]);
+
+  const handleAlignToCanvas = useCallback((alignmentType: 'center' | 'left' | 'right' | 'top' | 'bottom') => {
+    const selectedSections = multiSelection.getSelectedSections(config.sections);
+    const updates = alignment.alignToCanvas(selectedSections, config.dimensions, alignmentType);
+    
+    const sectionUpdates = selectedSections.map((section, index) => ({
+      id: section.id,
+      updates: updates[index]
+    }));
+    
+    updateMultipleSections(sectionUpdates);
+  }, [multiSelection, alignment, config.sections, config.dimensions, updateMultipleSections]);
+
+  // Handle canvas clicks to clear selection
+  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      multiSelection.clearSelection();
+      setSelectedSection(null);
+      setSelectedField(null);
+    }
+  }, [multiSelection]);
 
   return (
     <div className="flex h-screen bg-background">
@@ -552,41 +632,62 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
 
         <div className="flex-1 relative overflow-hidden">
           {activeTab === 'design' ? (
-            <div
-              ref={canvasRef}
-              className="absolute inset-0 bg-muted/20 cursor-grab"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
-                  linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
-                `,
-                backgroundSize: `${20 * (zoom / 100)}px ${20 * (zoom / 100)}px`,
-                backgroundPosition: `${pan.x}px ${pan.y}px`
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onWheel={handleWheel}
-            >
+            <>
+              {/* Enhanced Toolbar */}
+              <TemplateToolbar
+                snapToGrid={snapToGrid}
+                onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
+                gridSize={gridSize}
+                onGridSizeChange={setGridSize}
+                showSectionTitles={showSectionTitles}
+                onToggleSectionTitles={() => setShowSectionTitles(!showSectionTitles)}
+                selectedItemsCount={multiSelection.selectedCount}
+                onAlignHorizontal={handleAlignHorizontal}
+                onAlignVertical={handleAlignVertical}
+                onDistribute={handleDistribute}
+                onAlignToCanvas={handleAlignToCanvas}
+              />
+              
               <div
-                className="relative bg-background border rounded-lg shadow-lg origin-top-left"
+                ref={canvasRef}
+                className="absolute inset-0 bg-muted/20 cursor-grab"
                 style={{
-                  width: config.dimensions.width,
-                  height: config.dimensions.height,
-                  backgroundColor: config.styling.backgroundColor,
-                  transform: `translate(${32 + pan.x}px, ${32 + pan.y}px) scale(${zoom / 100})`,
+                  backgroundImage: snapToGrid ? `
+                    linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+                    linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
+                  ` : undefined,
+                  backgroundSize: snapToGrid ? `${gridSize * (zoom / 100)}px ${gridSize * (zoom / 100)}px` : undefined,
+                  backgroundPosition: snapToGrid ? `${pan.x}px ${pan.y}px` : undefined
                 }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onWheel={handleWheel}
+                onClick={handleCanvasClick}
               >
+                <div
+                  className="relative bg-background border rounded-lg shadow-lg origin-top-left"
+                  style={{
+                    width: config.dimensions.width,
+                    height: config.dimensions.height,
+                    backgroundColor: config.styling.backgroundColor,
+                    transform: `translate(${32 + pan.x}px, ${32 + pan.y}px) scale(${zoom / 100})`,
+                  }}
+                >
                 {config.sections.map((section) => (
                   <TemplateSectionEditor
                     key={section.id}
                     section={section}
-                    isSelected={selectedSection?.id === section.id}
+                    isSelected={multiSelection.isSelected(section.id)}
                     selectedField={selectedField}
                     canvasDimensions={config.dimensions}
                     zoom={zoom}
                     pan={pan}
-                    onSelect={(section) => {
+                    showTitle={showSectionTitles}
+                    snapToGrid={snapToGrid}
+                    gridSize={gridSize}
+                    onSelect={(section, isCtrlPressed) => {
+                      multiSelection.selectSection(section, isCtrlPressed);
                       setSelectedSection(section);
                     }}
                     onSelectField={(field) => {
@@ -598,6 +699,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                     onDeleteField={(fieldId) => deleteField(section.id, fieldId)}
                   />
                 ))}
+                </div>
               </div>
               
               {/* Pan instruction */}
@@ -607,7 +709,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                   Hold Shift + drag or middle-click to pan
                 </div>
               )}
-            </div>
+            </>
           ) : (
             <TemplatePreview config={config} />
           )}

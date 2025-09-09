@@ -20,7 +20,10 @@ interface TemplateSectionEditorProps {
   canvasDimensions: { width: number; height: number };
   zoom: number;
   pan: { x: number; y: number };
-  onSelect: (section: TemplateSection) => void;
+  showTitle: boolean;
+  snapToGrid: boolean;
+  gridSize: number;
+  onSelect: (section: TemplateSection, isCtrlPressed?: boolean) => void;
   onSelectField: (field: TemplateField) => void;
   onUpdate: (updates: Partial<TemplateSection>) => void;
   onUpdateField: (fieldId: string, updates: Partial<TemplateField>) => void;
@@ -35,6 +38,9 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
   canvasDimensions,
   zoom,
   pan,
+  showTitle,
+  snapToGrid,
+  gridSize,
   onSelect,
   onSelectField,
   onUpdate,
@@ -53,7 +59,7 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    onSelect(section);
+    onSelect(section, e.ctrlKey || e.metaKey);
     
     const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
@@ -81,8 +87,14 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     const canvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100) - dragOffset.y / (zoom / 100);
     
     // Constrain to canvas boundaries
-    const newX = Math.max(0, Math.min(canvasX, canvasDimensions.width - section.width));
-    const newY = Math.max(0, Math.min(canvasY, canvasDimensions.height - section.height));
+    let newX = Math.max(0, Math.min(canvasX, canvasDimensions.width - section.width));
+    let newY = Math.max(0, Math.min(canvasY, canvasDimensions.height - section.height));
+    
+    // Apply grid snapping if enabled
+    if (snapToGrid) {
+      newX = Math.round(newX / gridSize) * gridSize;
+      newY = Math.round(newY / gridSize) * gridSize;
+    }
     
     onUpdate({ x: newX, y: newY });
   };
@@ -208,39 +220,64 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Section Header */}
-      <div className="absolute top-0 left-0 right-0 bg-background/90 border-b px-2 py-1 rounded-t-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GripHorizontal className="h-3 w-3 text-muted-foreground" />
-            <span className="text-xs font-medium truncate">
-              {section.title}
-            </span>
-            <Badge variant="secondary" className="text-xs">
-              {section.fields.length}
-            </Badge>
-          </div>
-          
-          {isSelected && (
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+      {/* Section Header - only show if showTitle is true */}
+      {showTitle && (
+        <div className="absolute top-0 left-0 right-0 bg-background/90 border-b px-2 py-1 rounded-t-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GripHorizontal className="h-3 w-3 text-muted-foreground" />
+              <span className="text-xs font-medium truncate">
+                {section.title}
+              </span>
+              <Badge variant="secondary" className="text-xs">
+                {section.fields.length}
+              </Badge>
             </div>
+            
+            {isSelected && (
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Minimal Header - always show for interaction */}
+      {!showTitle && (
+        <div className="absolute top-1 left-1 flex items-center gap-1 bg-background/80 rounded px-1 py-0.5">
+          <GripHorizontal className="h-2 w-2 text-muted-foreground" />
+          <Badge variant="secondary" className="text-xs h-4 px-1">
+            {section.fields.length}
+          </Badge>
+          {isSelected && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-4 w-4 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="h-2 w-2" />
+            </Button>
           )}
         </div>
-      </div>
+      )}
 
       {/* Section Content */}
-      <div className="absolute inset-0 top-8 p-2 overflow-hidden">
+      <div className={`absolute inset-0 p-2 overflow-hidden ${showTitle ? 'top-8' : 'top-0'}`}>
         {section.fields.map(renderField)}
         
         {section.fields.length === 0 && (
