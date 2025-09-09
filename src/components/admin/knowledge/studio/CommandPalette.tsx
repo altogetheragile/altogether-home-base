@@ -32,7 +32,15 @@ export const CommandPalette = ({
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+      // Check if user is typing in an input field - if so, ignore command palette shortcuts
+      const activeElement = document.activeElement;
+      const isTypingInInput = activeElement && (
+        activeElement.tagName === 'INPUT' ||
+        activeElement.tagName === 'TEXTAREA' ||
+        (activeElement as HTMLElement).contentEditable === 'true'
+      );
+
+      if (!isTypingInInput && e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         onOpenChange(!open);
       }

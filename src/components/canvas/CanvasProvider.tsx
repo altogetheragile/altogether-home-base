@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { CanvasData, CanvasElement } from './BaseCanvas';
+import { isTypingInInputField } from '@/utils/inputDetection';
 
 interface CanvasContextType {
   canvasData: CanvasData;
@@ -132,16 +133,8 @@ export const CanvasProvider: React.FC<CanvasProviderProps> = ({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if user is typing in an input field - if so, ignore canvas shortcuts
-      const activeElement = document.activeElement;
-      const isTypingInInput = activeElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        (activeElement as HTMLElement).contentEditable === 'true'
-      );
-
       // Only process canvas shortcuts when NOT typing in input fields
-      if (!isTypingInInput && (e.ctrlKey || e.metaKey)) {
+      if (!isTypingInInputField() && (e.ctrlKey || e.metaKey)) {
         switch (e.key) {
           case 'z':
             e.preventDefault();
