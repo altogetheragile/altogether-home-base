@@ -1,27 +1,21 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { TemplateBuilderCanvas } from '@/components/admin/templates/TemplateBuilderCanvas';
 import { useCreateKnowledgeTemplate, useUpdateKnowledgeTemplate, useKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
 import type { KnowledgeTemplate, TemplateConfig } from '@/types/template';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 export default function CreateKnowledgeTemplate() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditing = !!id;
 
-  const { data: template, isLoading } = useQuery({
-    queryKey: ['knowledge-template', id],
-    queryFn: async () => {
-      if (!id) return null;
-      const result = await useKnowledgeTemplate(id);
-      return result.data;
-    },
-    enabled: isEditing,
-  });
-
+  const { data: template, isLoading } = useKnowledgeTemplate(id);
   const createMutation = useCreateKnowledgeTemplate();
   const updateMutation = useUpdateKnowledgeTemplate();
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const handleSave = async (templateData: Partial<KnowledgeTemplate>) => {
     try {
@@ -114,12 +108,33 @@ export default function CreateKnowledgeTemplate() {
   }
 
   return (
-    <div className="h-screen">
-      <TemplateBuilderCanvas
-        template={template || undefined}
-        onSave={handleSave}
-        onPreview={handlePreview}
-      />
+    <div className="h-screen flex flex-col">
+      {/* Header with navigation */}
+      <div className="flex items-center gap-4 p-4 border-b bg-background">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/admin/knowledge/templates')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Templates
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-xl font-semibold">
+            {isEditing ? 'Edit Template' : 'Create Template'}
+          </h1>
+        </div>
+      </div>
+      
+      <div className="flex-1">
+        <TemplateBuilderCanvas
+          template={template || undefined}
+          onSave={handleSave}
+          onPreview={handlePreview}
+          isSaving={isSaving}
+        />
+      </div>
     </div>
   );
 }

@@ -22,12 +22,14 @@ interface TemplateBuilderCanvasProps {
   template?: KnowledgeTemplate;
   onSave: (template: Partial<KnowledgeTemplate>) => void;
   onPreview: (config: TemplateConfig) => void;
+  isSaving?: boolean;
 }
 
 export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   template,
   onSave,
-  onPreview
+  onPreview,
+  isSaving = false
 }) => {
   const [config, setConfig] = useState<TemplateConfig>(
     template?.config || {
@@ -301,9 +303,22 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
           </div>
 
           <div className="flex gap-2 mb-4">
-            <Button onClick={handleSave} size="sm">
-              <Save className="h-4 w-4 mr-2" />
-              Save
+            <Button 
+              onClick={handleSave} 
+              size="sm"
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </>
+              )}
             </Button>
             <Button
               variant="outline"

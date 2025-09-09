@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Copy, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Copy, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useKnowledgeTemplates, useDeleteKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
 import { KnowledgeTemplate } from '@/types/template';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import TemplateForm from '@/components/admin/templates/TemplateForm';
 
 const TemplateTypeColors = {
   canvas: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -25,7 +23,6 @@ export default function AdminKnowledgeTemplates() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const { data: templates, isLoading } = useKnowledgeTemplates();
   const deleteTemplate = useDeleteKnowledgeTemplate();
@@ -68,20 +65,10 @@ export default function AdminKnowledgeTemplates() {
           </p>
         </div>
         
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Template</DialogTitle>
-            </DialogHeader>
-            <TemplateForm onSuccess={() => setIsCreateDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => navigate('/admin/knowledge/templates/new')}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Template
+        </Button>
       </div>
 
       {/* Filters */}
@@ -127,18 +114,10 @@ export default function AdminKnowledgeTemplates() {
 
       {/* Templates Grid */}
       {filteredTemplates?.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-muted-foreground text-center">
-              <h3 className="text-lg font-medium mb-2">No templates found</h3>
-              <p className="mb-4">Create your first template to get started</p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button onClick={() => navigate('/admin/knowledge/templates/new')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Template
               </Button>
-            </div>
-          </CardContent>
-        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTemplates?.map((template) => (
