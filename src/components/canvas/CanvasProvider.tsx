@@ -132,7 +132,16 @@ export const CanvasProvider: React.FC<CanvasProviderProps> = ({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
+      // Check if user is typing in an input field - if so, ignore canvas shortcuts
+      const activeElement = document.activeElement;
+      const isTypingInInput = activeElement && (
+        activeElement.tagName === 'INPUT' ||
+        activeElement.tagName === 'TEXTAREA' ||
+        (activeElement as HTMLElement).contentEditable === 'true'
+      );
+
+      // Only process canvas shortcuts when NOT typing in input fields
+      if (!isTypingInInput && (e.ctrlKey || e.metaKey)) {
         switch (e.key) {
           case 'z':
             e.preventDefault();
