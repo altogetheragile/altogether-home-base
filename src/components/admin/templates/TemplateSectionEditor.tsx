@@ -63,16 +63,20 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     // Select the section (with multi-select support)
     onSelect(section, e.ctrlKey || e.metaKey);
     
-    // Set up for dragging - use the section's current position as reference
+    // Set up for dragging - calculate offset from mouse position to section's top-left
     const rect = sectionRef.current?.getBoundingClientRect();
     const parent = sectionRef.current?.parentElement;
     if (rect && parent) {
       const parentRect = parent.getBoundingClientRect();
       
-      // Calculate offset from mouse to section origin
+      // Calculate the mouse position relative to the canvas
+      const mouseCanvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100);
+      const mouseCanvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100);
+      
+      // Store offset from mouse to section origin to prevent jumping
       setDragOffset({
-        x: (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100) - section.x,
-        y: (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100) - section.y
+        x: mouseCanvasX - section.x,
+        y: mouseCanvasY - section.y
       });
       setIsDragging(true);
     }

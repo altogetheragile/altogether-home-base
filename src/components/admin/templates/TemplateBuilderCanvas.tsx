@@ -15,6 +15,7 @@ import { TemplateFieldEditor } from './TemplateFieldEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateSectionEditor } from './TemplateSectionEditor';
 import { DebouncedTemplateInput } from './DebouncedTemplateInput';
+import { TemplatePropertiesPanel } from './TemplatePropertiesPanel';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection, TemplateType } from '@/types/template';
 import { TemplateToolbar } from './TemplateToolbar';
 import { useTemplateAlignment } from '@/hooks/useTemplateAlignment';
@@ -653,8 +654,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                 className="absolute inset-0 bg-muted/20 cursor-grab"
                 style={{
                   backgroundImage: snapToGrid ? `
-                    linear-gradient(to right, hsl(var(--muted-foreground) / 0.6) 1px, transparent 1px),
-                    linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.6) 1px, transparent 1px)
+                    linear-gradient(to right, hsl(var(--muted-foreground) / 0.4) 1px, transparent 1px),
+                    linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.4) 1px, transparent 1px)
                   ` : undefined,
                   backgroundSize: snapToGrid ? `${gridSize * (zoom / 100)}px ${gridSize * (zoom / 100)}px` : undefined,
                   backgroundPosition: snapToGrid ? `${pan.x}px ${pan.y}px` : undefined,
@@ -716,137 +717,28 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
           )}
         </div>
 
-        {/* Floating Properties Panel */}
+        {/* Enhanced Properties Panel */}
         <Dialog open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
           <DialogContent 
-            className="max-w-sm max-h-[80vh] overflow-y-auto"
+            className="max-w-sm max-h-[85vh] overflow-y-auto p-0"
             onOpenAutoFocus={(e) => e.preventDefault()}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
           >
-            <DialogHeader className="flex flex-row items-center justify-between space-y-0">
-              <DialogTitle className="text-base">Properties</DialogTitle>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsPropertiesMinimized(!isPropertiesMinimized)}
-                  className="h-6 w-6 p-0"
-                >
-                  <Minimize2 className="h-3 w-3" />
-                </Button>
-              </div>
-            </DialogHeader>
-            
-            {!isPropertiesMinimized && (
-              <div className="mt-4">
-                {selectedField ? (
-                  <div>
-                    <TemplateFieldEditor
-                      field={selectedField}
-                      onUpdate={(updates) => {
-                        const section = config.sections.find(s => 
-                          s.fields.some(f => f.id === selectedField.id)
-                        );
-                        if (section) {
-                          updateField(section.id, selectedField.id, updates);
-                        }
-                      }}
-                    />
-                  </div>
-                ) : selectedSection ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="section-title">Section Title</Label>
-                      <DebouncedTemplateInput
-                        id="section-title"
-                        value={selectedSection.title}
-                        onUpdate={(title) => updateSection(selectedSection.id, { title })}
-                        autoFocus={true}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="section-desc">Description</Label>
-                      <DebouncedTemplateInput
-                        id="section-desc"
-                        value={selectedSection.description || ''}
-                        onUpdate={(description) => updateSection(selectedSection.id, { description })}
-                        placeholder="Optional description"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label htmlFor="section-x">X Position</Label>
-                        <Input
-                          id="section-x"
-                          type="number"
-                          value={selectedSection.x}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            x: Number(e.target.value)
-                          })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="section-y">Y Position</Label>
-                        <Input
-                          id="section-y"
-                          type="number"
-                          value={selectedSection.y}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            y: Number(e.target.value)
-                          })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label htmlFor="section-width">Width</Label>
-                        <Input
-                          id="section-width"
-                          type="number"
-                          value={selectedSection.width}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            width: Number(e.target.value)
-                          })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="section-height">Height</Label>
-                        <Input
-                          id="section-height"
-                          type="number"
-                          value={selectedSection.height}
-                          onChange={(e) => updateSection(selectedSection.id, {
-                            height: Number(e.target.value)
-                          })}
-                        />
-                      </div>
-                    </div>
-
-                    <Separator />
-                    
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => {
-                        deleteSection(selectedSection.id);
-                        setIsPropertiesOpen(false);
-                      }}
-                    >
-                      Delete Section
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground py-8">
-                    <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Select a section or field to edit properties</p>
-                  </div>
-                )}
-              </div>
-            )}
+            <TemplatePropertiesPanel
+              selectedSection={selectedSection}
+              selectedField={selectedField}
+              onUpdateSection={(updates) => selectedSection && updateSection(selectedSection.id, updates)}
+              onUpdateField={(updates) => {
+                if (selectedField) {
+                  const section = config.sections.find(s => 
+                    s.fields.some(f => f.id === selectedField.id)
+                  );
+                  if (section) {
+                    updateField(section.id, selectedField.id, updates);
+                  }
+                }
+              }}
+              onClose={() => setIsPropertiesOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>

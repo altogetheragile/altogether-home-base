@@ -55,30 +55,29 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
 
   return (
     <div className="bg-card border-b">
-      <div className="p-2 space-y-2">
-        {/* Row 1: Grid and View Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Grid Controls */}
-          <div className="flex items-center gap-1">
+      <div className="p-2">
+        {/* Single compact row with responsive design */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Grid Controls - Compact */}
+          <div className="flex items-center">
             <Button
               variant={snapToGrid ? "default" : "outline"}
               size="sm"
               onClick={onToggleSnapToGrid}
-              className="h-8 px-2"
-              title={snapToGrid ? "Hide grid" : "Show grid for precise alignment"}
+              className="h-7 px-2 text-xs"
+              title={snapToGrid ? "Hide grid (currently visible)" : "Show grid for precise alignment"}
             >
-              <Grid3X3 className="h-4 w-4 mr-1" />
-              Grid
+              <Grid3X3 className="h-3.5 w-3.5" />
             </Button>
             
             {snapToGrid && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 px-2">
+                  <Button variant="outline" size="sm" className="h-7 px-2 ml-1 text-xs">
                     {gridSize}px
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="z-50 bg-popover border shadow-md">
+                <DropdownMenuContent className="z-50 bg-popover border shadow-md min-w-[120px]">
                   {gridSizes.map((size) => (
                     <DropdownMenuItem
                       key={size}
@@ -93,111 +92,121 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
             )}
           </div>
 
-          <Separator orientation="vertical" className="h-6" />
+          <Separator orientation="vertical" className="h-5 mx-1" />
 
           {/* View Controls */}
           <Button
             variant={showSectionTitles ? "default" : "outline"}
             size="sm"
             onClick={onToggleSectionTitles}
-            className="h-8 px-2"
+            className="h-7 px-2 text-xs"
             title={showSectionTitles ? "Hide section titles" : "Show section titles"}
           >
-            {showSectionTitles ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
-            Titles
+            {showSectionTitles ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
           </Button>
+
+          {/* Show selection info and alignment controls when items are selected */}
+          {selectedItemsCount > 0 && (
+            <>
+              <Separator orientation="vertical" className="h-5 mx-1" />
+              
+              <Badge variant="secondary" className="flex items-center gap-1 h-6 px-2 text-xs">
+                <Layers className="h-3 w-3" />
+                {selectedItemsCount}
+              </Badge>
+
+              {/* Compact Alignment Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+                    <AlignCenter className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-52 z-50 bg-popover border shadow-md">
+                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">Horizontal Alignment</div>
+                  <DropdownMenuItem onClick={() => onAlignHorizontal('left')} className="py-2">
+                    <AlignLeft className="h-4 w-4 mr-2" />
+                    Align Left
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAlignHorizontal('center')} className="py-2">
+                    <AlignCenter className="h-4 w-4 mr-2" />
+                    Align Center
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAlignHorizontal('right')} className="py-2">
+                    <AlignRight className="h-4 w-4 mr-2" />
+                    Align Right
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">Vertical Alignment</div>
+                  <DropdownMenuItem onClick={() => onAlignVertical('top')} className="py-2">
+                    <AlignStartVertical className="h-4 w-4 mr-2" />
+                    Align Top
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAlignVertical('middle')} className="py-2">
+                    <AlignCenterVertical className="h-4 w-4 mr-2" />
+                    Align Middle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAlignVertical('bottom')} className="py-2">
+                    <AlignEndVertical className="h-4 w-4 mr-2" />
+                    Align Bottom
+                  </DropdownMenuItem>
+                  {selectedItemsCount > 1 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">Distribution</div>
+                      <DropdownMenuItem onClick={() => onDistribute('horizontal')} className="py-2">
+                        <AlignHorizontalSpaceAround className="h-4 w-4 mr-2" />
+                        Distribute Horizontally
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onDistribute('vertical')} className="py-2">
+                        <AlignVerticalSpaceAround className="h-4 w-4 mr-2" />
+                        Distribute Vertically
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Canvas Align to Edges Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs" 
+                    title="Align selected items to canvas edges or center"
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-44 z-50 bg-popover border shadow-md">
+                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">Canvas Alignment</div>
+                  <DropdownMenuItem onClick={() => onAlignToCanvas('center')} className="py-2">
+                    <AlignCenter className="h-4 w-4 mr-2" />
+                    Center in Canvas
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onAlignToCanvas('left')} className="py-2">
+                    <AlignLeft className="h-4 w-4 mr-2" />
+                    Align to Left Edge
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAlignToCanvas('right')} className="py-2">
+                    <AlignRight className="h-4 w-4 mr-2" />
+                    Align to Right Edge
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAlignToCanvas('top')} className="py-2">
+                    <AlignStartVertical className="h-4 w-4 mr-2" />
+                    Align to Top Edge
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAlignToCanvas('bottom')} className="py-2">
+                    <AlignEndVertical className="h-4 w-4 mr-2" />
+                    Align to Bottom Edge
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
         </div>
-
-        {/* Row 2: Alignment Controls (only show when items are selected) */}
-        {selectedItemsCount > 0 && (
-          <div className="flex items-center gap-2 flex-wrap border-t pt-2">
-            <Badge variant="secondary" className="flex items-center gap-1 h-6 px-2">
-              <Layers className="h-3 w-3" />
-              {selectedItemsCount} selected
-            </Badge>
-
-            {/* Alignment Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-2">
-                  <AlignCenter className="h-4 w-4 mr-1" />
-                  Align
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 z-50 bg-popover border shadow-md">
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Horizontal</div>
-                <DropdownMenuItem onClick={() => onAlignHorizontal('left')}>
-                  <AlignLeft className="h-4 w-4 mr-2" />
-                  Align Left
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAlignHorizontal('center')}>
-                  <AlignCenter className="h-4 w-4 mr-2" />
-                  Align Center
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAlignHorizontal('right')}>
-                  <AlignRight className="h-4 w-4 mr-2" />
-                  Align Right
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Vertical</div>
-                <DropdownMenuItem onClick={() => onAlignVertical('top')}>
-                  <AlignStartVertical className="h-4 w-4 mr-2" />
-                  Align Top
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAlignVertical('middle')}>
-                  <AlignCenterVertical className="h-4 w-4 mr-2" />
-                  Align Middle
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAlignVertical('bottom')}>
-                  <AlignEndVertical className="h-4 w-4 mr-2" />
-                  Align Bottom
-                </DropdownMenuItem>
-                {selectedItemsCount > 1 && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Distribute</div>
-                    <DropdownMenuItem onClick={() => onDistribute('horizontal')}>
-                      <AlignHorizontalSpaceAround className="h-4 w-4 mr-2" />
-                      Distribute Horizontally
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDistribute('vertical')}>
-                      <AlignVerticalSpaceAround className="h-4 w-4 mr-2" />
-                      Distribute Vertically
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Align to Canvas */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-2" title="Align items to canvas edges">
-                  <Layers className="h-4 w-4 mr-1" />
-                  Canvas
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="z-50 bg-popover border shadow-md">
-                <DropdownMenuItem onClick={() => onAlignToCanvas('center')}>
-                  Center in Canvas
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onAlignToCanvas('left')}>
-                  Align to Left Edge
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAlignToCanvas('right')}>
-                  Align to Right Edge
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAlignToCanvas('top')}>
-                  Align to Top Edge
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAlignToCanvas('bottom')}>
-                  Align to Bottom Edge
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
       </div>
     </div>
   );
