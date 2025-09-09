@@ -54,73 +54,77 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
   const gridSizes = [10, 20, 25, 50];
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex items-center gap-2 p-2 bg-card border-b min-w-max">
-        {/* Grid Controls */}
-        <div className="flex items-center gap-1 shrink-0">
+    <div className="bg-card border-b">
+      <div className="p-2 space-y-2">
+        {/* Row 1: Grid and View Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Grid Controls */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant={snapToGrid ? "default" : "outline"}
+              size="sm"
+              onClick={onToggleSnapToGrid}
+              className="h-8 px-2"
+              title={snapToGrid ? "Hide grid" : "Show grid for precise alignment"}
+            >
+              <Grid3X3 className="h-4 w-4 mr-1" />
+              Grid
+            </Button>
+            
+            {snapToGrid && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 px-2">
+                    {gridSize}px
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="z-50 bg-popover border shadow-md">
+                  {gridSizes.map((size) => (
+                    <DropdownMenuItem
+                      key={size}
+                      onClick={() => onGridSizeChange(size)}
+                      className={gridSize === size ? "bg-accent" : ""}
+                    >
+                      {size}px Grid
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          {/* View Controls */}
           <Button
-            variant={snapToGrid ? "default" : "outline"}
+            variant={showSectionTitles ? "default" : "outline"}
             size="sm"
-            onClick={onToggleSnapToGrid}
+            onClick={onToggleSectionTitles}
             className="h-8 px-2"
+            title={showSectionTitles ? "Hide section titles" : "Show section titles"}
           >
-            <Grid3X3 className="h-4 w-4 mr-1" />
-            Grid
+            {showSectionTitles ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
+            Titles
           </Button>
-          
-          {snapToGrid && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-2">
-                  {gridSize}px
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {gridSizes.map((size) => (
-                  <DropdownMenuItem
-                    key={size}
-                    onClick={() => onGridSizeChange(size)}
-                    className={gridSize === size ? "bg-accent" : ""}
-                  >
-                    {size}px Grid
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
         </div>
 
-        <Separator orientation="vertical" className="h-6 shrink-0" />
-
-        {/* View Controls */}
-        <Button
-          variant={showSectionTitles ? "default" : "outline"}
-          size="sm"
-          onClick={onToggleSectionTitles}
-          className="h-8 px-2 shrink-0"
-        >
-          {showSectionTitles ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
-          Titles
-        </Button>
-
-        {/* Alignment Controls */}
+        {/* Row 2: Alignment Controls (only show when items are selected) */}
         {selectedItemsCount > 0 && (
-          <>
-            <Separator orientation="vertical" className="h-6 shrink-0" />
-            
-            <Badge variant="secondary" className="flex items-center gap-1 shrink-0 h-6 px-2">
+          <div className="flex items-center gap-2 flex-wrap border-t pt-2">
+            <Badge variant="secondary" className="flex items-center gap-1 h-6 px-2">
               <Layers className="h-3 w-3" />
-              {selectedItemsCount}
+              {selectedItemsCount} selected
             </Badge>
 
             {/* Alignment Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-2 shrink-0">
+                <Button variant="outline" size="sm" className="h-8 px-2">
+                  <AlignCenter className="h-4 w-4 mr-1" />
                   Align
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48">
+              <DropdownMenuContent className="w-48 z-50 bg-popover border shadow-md">
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Horizontal</div>
                 <DropdownMenuItem onClick={() => onAlignHorizontal('left')}>
                   <AlignLeft className="h-4 w-4 mr-2" />
@@ -168,11 +172,12 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
             {/* Align to Canvas */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-2 shrink-0">
+                <Button variant="outline" size="sm" className="h-8 px-2" title="Align items to canvas edges">
+                  <Layers className="h-4 w-4 mr-1" />
                   Canvas
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="z-50 bg-popover border shadow-md">
                 <DropdownMenuItem onClick={() => onAlignToCanvas('center')}>
                   Center in Canvas
                 </DropdownMenuItem>
@@ -191,7 +196,7 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </>
+          </div>
         )}
       </div>
     </div>

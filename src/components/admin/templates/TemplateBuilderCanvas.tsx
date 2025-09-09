@@ -653,8 +653,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                 className="absolute inset-0 bg-muted/20 cursor-grab"
                 style={{
                   backgroundImage: snapToGrid ? `
-                    linear-gradient(to right, hsl(var(--muted-foreground) / 0.3) 1px, transparent 1px),
-                    linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.3) 1px, transparent 1px)
+                    linear-gradient(to right, hsl(var(--muted-foreground) / 0.6) 1px, transparent 1px),
+                    linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.6) 1px, transparent 1px)
                   ` : undefined,
                   backgroundSize: snapToGrid ? `${gridSize * (zoom / 100)}px ${gridSize * (zoom / 100)}px` : undefined,
                   backgroundPosition: snapToGrid ? `${pan.x}px ${pan.y}px` : undefined,
