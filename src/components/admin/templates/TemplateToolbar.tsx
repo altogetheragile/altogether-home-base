@@ -54,23 +54,23 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
   const gridSizes = [10, 20, 25, 50];
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-card border-b">
+    <div className="flex flex-wrap items-center gap-2 p-2 bg-card border-b min-w-0">
       {/* Grid Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <Button
           variant={snapToGrid ? "default" : "outline"}
           size="sm"
           onClick={onToggleSnapToGrid}
-          className="flex items-center gap-2"
+          className="whitespace-nowrap"
         >
-          <Grid3X3 className="h-4 w-4" />
-          Snap to Grid
+          <Grid3X3 className="h-4 w-4 mr-1" />
+          Grid
         </Button>
         
         {snapToGrid && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="whitespace-nowrap">
                 {gridSize}px
               </Button>
             </DropdownMenuTrigger>
@@ -92,35 +92,34 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
       <Separator orientation="vertical" className="h-6" />
 
       {/* View Controls */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant={showSectionTitles ? "default" : "outline"}
-          size="sm"
-          onClick={onToggleSectionTitles}
-          className="flex items-center gap-2"
-        >
-          {showSectionTitles ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-          Section Titles
-        </Button>
-      </div>
-
-      <Separator orientation="vertical" className="h-6" />
+      <Button
+        variant={showSectionTitles ? "default" : "outline"}
+        size="sm"
+        onClick={onToggleSectionTitles}
+        className="whitespace-nowrap"
+      >
+        {showSectionTitles ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
+        Titles
+      </Button>
 
       {/* Alignment Controls */}
       {selectedItemsCount > 0 && (
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="flex items-center gap-1">
+        <>
+          <Separator orientation="vertical" className="h-6" />
+          
+          <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap">
             <Layers className="h-3 w-3" />
-            {selectedItemsCount} selected
+            {selectedItemsCount}
           </Badge>
 
           {/* Horizontal Alignment */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
             <Button
               variant="ghost" 
               size="sm"
               onClick={() => onAlignHorizontal('left')}
               title="Align Left"
+              className="p-1"
             >
               <AlignLeft className="h-4 w-4" />
             </Button>
@@ -129,6 +128,7 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
               size="sm"
               onClick={() => onAlignHorizontal('center')}
               title="Align Center"
+              className="p-1"
             >
               <AlignCenter className="h-4 w-4" />
             </Button>
@@ -137,18 +137,20 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
               size="sm"
               onClick={() => onAlignHorizontal('right')}
               title="Align Right"
+              className="p-1"
             >
               <AlignRight className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Vertical Alignment */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
             <Button
               variant="ghost" 
               size="sm"
               onClick={() => onAlignVertical('top')}
               title="Align Top"
+              className="p-1"
             >
               <AlignStartVertical className="h-4 w-4" />
             </Button>
@@ -157,6 +159,7 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
               size="sm"
               onClick={() => onAlignVertical('middle')}
               title="Align Middle"
+              className="p-1"
             >
               <AlignCenterVertical className="h-4 w-4" />
             </Button>
@@ -165,6 +168,7 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
               size="sm"
               onClick={() => onAlignVertical('bottom')}
               title="Align Bottom"
+              className="p-1"
             >
               <AlignEndVertical className="h-4 w-4" />
             </Button>
@@ -172,15 +176,14 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
 
           {selectedItemsCount > 1 && (
             <>
-              <Separator orientation="vertical" className="h-6" />
-              
               {/* Distribution */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onDistribute('horizontal')}
                   title="Distribute Horizontally"
+                  className="p-1"
                 >
                   <AlignHorizontalSpaceAround className="h-4 w-4" />
                 </Button>
@@ -189,6 +192,7 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
                   size="sm"
                   onClick={() => onDistribute('vertical')}
                   title="Distribute Vertically"
+                  className="p-1"
                 >
                   <AlignVerticalSpaceAround className="h-4 w-4" />
                 </Button>
@@ -196,13 +200,11 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
             </>
           )}
 
-          <Separator orientation="vertical" className="h-6" />
-
           {/* Align to Canvas */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Align to Canvas
+              <Button variant="outline" size="sm" className="whitespace-nowrap">
+                Canvas
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -224,7 +226,7 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </>
       )}
     </div>
   );
