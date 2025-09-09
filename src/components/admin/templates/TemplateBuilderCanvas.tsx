@@ -539,16 +539,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
 
         {/* Floating Properties Panel */}
         <Dialog open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
-          <DialogContent
-            className="max-w-sm max-h-[80vh] overflow-y-auto pointer-events-auto"
-            style={{
-              position: 'fixed',
-              top: '10%',
-              right: '2%',
-              left: 'auto',
-              transform: 'none',
-            }}
-          >
+          <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
             <DialogHeader className="flex flex-row items-center justify-between space-y-0">
               <DialogTitle className="text-base">Properties</DialogTitle>
               <div className="flex items-center gap-1">
@@ -564,9 +555,9 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
             </DialogHeader>
             
             {!isPropertiesMinimized && (
-              <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+              <div className="mt-4">
                 {selectedField ? (
-                  <div onClick={(e) => e.stopPropagation()}>
+                  <div>
                     <TemplateFieldEditor
                       field={selectedField}
                       onUpdate={(updates) => {
@@ -580,7 +571,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                     />
                   </div>
                 ) : selectedSection ? (
-                  <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                  <div className="space-y-4">
                     <div>
                       <Label htmlFor="section-title">Section Title</Label>
                       <Input
@@ -589,9 +580,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                         onChange={(e) => updateSection(selectedSection.id, {
                           title: e.target.value
                         })}
-                        onClick={(e) => e.stopPropagation()}
-                        onFocus={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
                       />
                     </div>
                     
@@ -604,9 +593,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           description: e.target.value
                         })}
                         placeholder="Optional description"
-                        onClick={(e) => e.stopPropagation()}
-                        onFocus={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
                       />
                     </div>
 
@@ -620,9 +607,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             x: Number(e.target.value)
                           })}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                         />
                       </div>
                       <div>
@@ -634,9 +619,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             y: Number(e.target.value)
                           })}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
@@ -651,9 +634,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             width: Number(e.target.value)
                           })}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                         />
                       </div>
                       <div>
@@ -665,9 +646,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             height: Number(e.target.value)
                           })}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
