@@ -1,4 +1,3 @@
-
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage } from 'lucide-react';
 import Navigation from '@/components/Navigation';
@@ -86,28 +85,22 @@ const AdminLayout = () => {
       description: 'Manage knowledge items'
     },
     {
+      label: 'Templates',
+      href: '/admin/knowledge/templates',
+      icon: Layout,
+      description: 'Manage knowledge item templates'
+    },
+    {
       label: 'Analytics',
       href: '/admin/knowledge/analytics',
       icon: BarChart3,
       description: 'View content analytics'
     },
     {
-      label: 'Categories',
-      href: '/admin/knowledge/categories',
+      label: 'Classifications',
+      href: '/admin/knowledge/classifications',
       icon: FolderOpen,
-      description: 'Organize knowledge categories'
-    },
-    {
-      label: 'Planning Focuses',
-      href: '/admin/knowledge/planning-focuses',
-      icon: Layers,
-      description: 'Manage planning focuses'
-    },
-    {
-      label: 'Domains of Interest',
-      href: '/admin/knowledge/activity-domains',
-      icon: Target,
-      description: 'Manage domains of interest'
+      description: 'Manage categories, focuses, and domains'
     },
     {
       label: 'Tags',

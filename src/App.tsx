@@ -33,12 +33,11 @@ import AdminImports from "./pages/admin/AdminImports";
 import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
 import AdminKnowledgeItems from "./pages/admin/AdminKnowledgeItems";
-import AdminKnowledgeCategories from "./pages/admin/AdminKnowledgeCategories";
 import AdminKnowledgeTags from "./pages/admin/AdminKnowledgeTags";
 import AdminKnowledgeLearningPaths from "./pages/admin/AdminKnowledgeLearningPaths";
 import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsRoute";
-import AdminPlanningFocuses from "./pages/admin/AdminPlanningFocuses";
 import AdminKnowledgeTemplates from "./pages/admin/AdminKnowledgeTemplates";
+import AdminClassifications from "./pages/admin/AdminClassifications";
 import AdminMedia from "./pages/admin/AdminMedia";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
@@ -102,15 +101,13 @@ const App = () => (
                 <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
                 <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
-                <Route path="knowledge/categories" element={<AdminKnowledgeCategories />} />
-                <Route path="knowledge/tags" element={<AdminKnowledgeTags />} />
-                <Route path="knowledge/learning-paths" element={<AdminKnowledgeLearningPaths />} />
-                <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
-                <Route path="knowledge/planning-focuses" element={<AdminPlanningFocuses />} />
                 <Route path="knowledge/templates" element={<AdminKnowledgeTemplates />} />
                 <Route path="knowledge/templates/new" element={<CreateKnowledgeTemplate />} />
                 <Route path="knowledge/templates/:id/edit" element={<CreateKnowledgeTemplate />} />
-                <Route path="knowledge/activity-domains" element={<AdminActivityDomains />} />
+                <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
+                <Route path="knowledge/classifications" element={<AdminClassifications />} />
+                <Route path="knowledge/tags" element={<AdminKnowledgeTags />} />
+                <Route path="knowledge/learning-paths" element={<AdminKnowledgeLearningPaths />} />
                 <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
                 <Route path="knowledge/imports" element={<AdminKnowledgeImport />} />
                 <Route path="imports" element={<AdminImports />} />
