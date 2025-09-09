@@ -12,6 +12,7 @@ import { TemplateFieldToolbar } from './TemplateFieldToolbar';
 import { TemplateFieldEditor } from './TemplateFieldEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateSectionEditor } from './TemplateSectionEditor';
+import { DebouncedTemplateInput } from './DebouncedTemplateInput';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection } from '@/types/template';
 import { Save, Eye, Undo, Redo, Grid, Layout, Settings, ZoomIn, ZoomOut, RotateCcw, Move3D, Minimize2 } from 'lucide-react';
 
@@ -539,7 +540,12 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
 
         {/* Floating Properties Panel */}
         <Dialog open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
-          <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
+          <DialogContent 
+            className="max-w-sm max-h-[80vh] overflow-y-auto"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <DialogHeader className="flex flex-row items-center justify-between space-y-0">
               <DialogTitle className="text-base">Properties</DialogTitle>
               <div className="flex items-center gap-1">
@@ -574,26 +580,21 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="section-title">Section Title</Label>
-                      <Input
+                      <DebouncedTemplateInput
                         id="section-title"
                         value={selectedSection.title}
-                        onChange={(e) => updateSection(selectedSection.id, {
-                          title: e.target.value
-                        })}
-                        onKeyDown={(e) => e.stopPropagation()}
+                        onUpdate={(title) => updateSection(selectedSection.id, { title })}
+                        autoFocus={true}
                       />
                     </div>
                     
                     <div>
                       <Label htmlFor="section-desc">Description</Label>
-                      <Input
+                      <DebouncedTemplateInput
                         id="section-desc"
                         value={selectedSection.description || ''}
-                        onChange={(e) => updateSection(selectedSection.id, {
-                          description: e.target.value
-                        })}
+                        onUpdate={(description) => updateSection(selectedSection.id, { description })}
                         placeholder="Optional description"
-                        onKeyDown={(e) => e.stopPropagation()}
                       />
                     </div>
 
