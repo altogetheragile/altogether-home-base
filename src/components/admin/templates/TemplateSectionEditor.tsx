@@ -17,6 +17,9 @@ interface TemplateSectionEditorProps {
   section: TemplateSection;
   isSelected: boolean;
   selectedField: TemplateField | null;
+  canvasDimensions: { width: number; height: number };
+  zoom: number;
+  pan: { x: number; y: number };
   onSelect: (section: TemplateSection) => void;
   onSelectField: (field: TemplateField) => void;
   onUpdate: (updates: Partial<TemplateSection>) => void;
@@ -29,6 +32,9 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
   section,
   isSelected,
   selectedField,
+  canvasDimensions,
+  zoom,
+  pan,
   onSelect,
   onSelectField,
   onUpdate,
@@ -66,14 +72,17 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     if (!parent) return;
     
     const parentRect = parent.getBoundingClientRect();
-    const newX = Math.max(0, Math.min(
-      e.clientX - parentRect.left - dragOffset.x,
-      parentRect.width - section.width
-    ));
-    const newY = Math.max(0, Math.min(
-      e.clientY - parentRect.top - dragOffset.y,
-      parentRect.height - section.height
-    ));
+    
+    // Convert screen coordinates to canvas coordinates accounting for zoom and pan
+    const scaleX = canvasDimensions.width / (parentRect.width / (zoom / 100));
+    const scaleY = canvasDimensions.height / (parentRect.height / (zoom / 100));
+    
+    const canvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100) - dragOffset.x / (zoom / 100);
+    const canvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100) - dragOffset.y / (zoom / 100);
+    
+    // Constrain to canvas boundaries
+    const newX = Math.max(0, Math.min(canvasX, canvasDimensions.width - section.width));
+    const newY = Math.max(0, Math.min(canvasY, canvasDimensions.height - section.height));
     
     onUpdate({ x: newX, y: newY });
   };

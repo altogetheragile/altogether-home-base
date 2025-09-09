@@ -507,6 +507,9 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                     section={section}
                     isSelected={selectedSection?.id === section.id}
                     selectedField={selectedField}
+                    canvasDimensions={config.dimensions}
+                    zoom={zoom}
+                    pan={pan}
                     onSelect={(section) => {
                       setSelectedSection(section);
                     }}
@@ -545,8 +548,6 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
               left: 'auto',
               transform: 'none',
             }}
-            onInteractOutside={(e) => e.preventDefault()}
-            onEscapeKeyDown={(e) => e.preventDefault()}
           >
             <DialogHeader className="flex flex-row items-center justify-between space-y-0">
               <DialogTitle className="text-base">Properties</DialogTitle>
