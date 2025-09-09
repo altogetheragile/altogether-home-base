@@ -5,11 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Palette, Users, Clock, Filter } from 'lucide-react';
-import { useKnowledgeTemplates, useKnowledgeTemplatesByType } from '@/hooks/useKnowledgeTemplates';
+import { Search, Plus, Palette, Users, Clock, Filter, Eye, Edit, Copy, Trash2, ExternalLink } from 'lucide-react';
+import { useKnowledgeTemplates, useKnowledgeTemplatesByType, useDeleteKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
 import { useAssociateTemplate } from '@/hooks/useKnowledgeItemTemplates';
 import { toast } from 'sonner';
 import type { KnowledgeTemplate, TemplateType } from '@/types/template';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useNavigate } from 'react-router-dom';
 
 interface TemplateSelectionDialogProps {
   open: boolean;
@@ -42,9 +44,11 @@ export const TemplateSelectionDialog = ({
 }: TemplateSelectionDialogProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<TemplateType | 'all'>('all');
+  const navigate = useNavigate();
   
   const { data: allTemplates = [] } = useKnowledgeTemplates();
   const associateTemplate = useAssociateTemplate();
+  const deleteTemplate = useDeleteKnowledgeTemplate();
 
   // Filter templates based on search and type
   const filteredTemplates = allTemplates.filter((template) => {
@@ -76,8 +80,37 @@ export const TemplateSelectionDialog = ({
     }
   };
 
+  const handleViewTemplate = (template: KnowledgeTemplate) => {
+    // Open template preview in a new tab
+    window.open(`/admin/knowledge/templates/${template.id}`, '_blank');
+  };
+
+  const handleEditTemplate = (template: KnowledgeTemplate) => {
+    // Open template editor in a new tab
+    window.open(`/admin/knowledge/templates/${template.id}/edit`, '_blank');
+  };
+
+  const handleCopyTemplate = async (template: KnowledgeTemplate) => {
+    try {
+      // For now, just copy to clipboard. TODO: Implement actual template duplication
+      navigator.clipboard.writeText(JSON.stringify(template.config, null, 2));
+      toast.success('Template configuration copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy template');
+    }
+  };
+
+  const handleDeleteTemplate = async (template: KnowledgeTemplate) => {
+    try {
+      await deleteTemplate.mutateAsync(template.id);
+      toast.success(`Template "${template.title}" deleted successfully`);
+    } catch (error) {
+      toast.error('Failed to delete template');
+    }
+  };
+
   const TemplateCard = ({ template }: { template: KnowledgeTemplate }) => (
-    <Card className="cursor-pointer hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -103,8 +136,63 @@ export const TemplateSelectionDialog = ({
         </div>
       </CardHeader>
       {template.description && (
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-3">
           <CardDescription>{template.description}</CardDescription>
+          
+          {/* Management Actions */}
+          <div className="flex items-center gap-2 pt-2 border-t">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleViewTemplate(template)}
+              className="flex-1"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              View
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditTemplate(template)}
+              className="flex-1"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleCopyTemplate(template)}
+              className="flex-1"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Copy
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Template</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{template.title}"? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDeleteTemplate(template)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </CardContent>
       )}
     </Card>
@@ -192,20 +280,31 @@ export const TemplateSelectionDialog = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
+        <div className="flex justify-between items-center pt-4 border-t">
           <Button 
-            onClick={() => {
-              // Navigate to create template page
-              window.open('/admin/knowledge/templates/new', '_blank');
-            }}
-            variant="outline"
+            variant="ghost" 
+            onClick={() => window.open('/admin/knowledge/templates', '_blank')}
+            className="text-sm"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Template
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Manage All Templates
           </Button>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                // Navigate to create template page
+                window.open('/admin/knowledge/templates/new', '_blank');
+              }}
+              variant="outline"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Template
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

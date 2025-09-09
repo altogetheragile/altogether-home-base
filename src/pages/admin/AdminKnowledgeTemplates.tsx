@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useKnowledgeTemplates, useDeleteKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
+import { useKnowledgeTemplates, useDeleteKnowledgeTemplate, useCreateKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
 import { KnowledgeTemplate } from '@/types/template';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 const TemplateTypeColors = {
   canvas: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -23,9 +25,11 @@ export default function AdminKnowledgeTemplates() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [viewingTemplate, setViewingTemplate] = useState<KnowledgeTemplate | null>(null);
   
   const { data: templates, isLoading } = useKnowledgeTemplates();
   const deleteTemplate = useDeleteKnowledgeTemplate();
+  const createTemplate = useCreateKnowledgeTemplate();
 
   const filteredTemplates = templates?.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,6 +48,28 @@ export default function AdminKnowledgeTemplates() {
 
   const handleEdit = (id: string) => {
     navigate(`/admin/knowledge/templates/${id}/edit`);
+  };
+
+  const handleView = (template: KnowledgeTemplate) => {
+    setViewingTemplate(template);
+  };
+
+  const handleCopy = async (template: KnowledgeTemplate) => {
+    try {
+      const copiedTemplate = {
+        title: `${template.title} (Copy)`,
+        description: template.description,
+        template_type: template.template_type,
+        category: template.category,
+        configuration: template.config,
+        is_public: false
+      };
+      
+      await createTemplate.mutateAsync(copiedTemplate as any);
+      toast.success(`Template "${template.title}" copied successfully`);
+    } catch (error) {
+      toast.error('Failed to copy template');
+    }
   };
 
   if (isLoading) {
@@ -126,10 +152,66 @@ export default function AdminKnowledgeTemplates() {
               template={template}
               onDelete={handleDelete}
               onEdit={handleEdit}
+              onView={handleView}
+              onCopy={handleCopy}
             />
           ))}
         </div>
       )}
+      
+      {/* Template Preview Dialog */}
+      <Dialog open={!!viewingTemplate} onOpenChange={() => setViewingTemplate(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Template Preview: {viewingTemplate?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Template configuration and details
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingTemplate && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Basic Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Title:</strong> {viewingTemplate.title}</div>
+                    <div><strong>Type:</strong> {viewingTemplate.template_type}</div>
+                    <div><strong>Category:</strong> {viewingTemplate.category || 'None'}</div>
+                    <div><strong>Version:</strong> {viewingTemplate.version}</div>
+                    <div><strong>Usage Count:</strong> {viewingTemplate.usage_count}</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Status</h4>
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Public:</strong> {viewingTemplate.is_public ? 'Yes' : 'No'}</div>
+                    <div><strong>Created:</strong> {new Date(viewingTemplate.created_at).toLocaleDateString()}</div>
+                    <div><strong>Updated:</strong> {new Date(viewingTemplate.updated_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {viewingTemplate.description && (
+                <div>
+                  <h4 className="font-medium mb-2">Description</h4>
+                  <p className="text-sm text-muted-foreground">{viewingTemplate.description}</p>
+                </div>
+              )}
+              
+              <div>
+                <h4 className="font-medium mb-2">Configuration</h4>
+                <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
+                  {JSON.stringify(viewingTemplate.config, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -138,9 +220,11 @@ interface TemplateCardProps {
   template: KnowledgeTemplate;
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
+  onView: (template: KnowledgeTemplate) => void;
+  onCopy: (template: KnowledgeTemplate) => void;
 }
 
-function TemplateCard({ template, onDelete, onEdit }: TemplateCardProps) {
+function TemplateCard({ template, onDelete, onEdit, onView, onCopy }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
@@ -182,11 +266,19 @@ function TemplateCard({ template, onDelete, onEdit }: TemplateCardProps) {
             Edit
           </Button>
           
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onView(template)}
+          >
             <Eye className="w-4 h-4" />
           </Button>
           
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onCopy(template)}
+          >
             <Copy className="w-4 h-4" />
           </Button>
           
