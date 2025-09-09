@@ -8,12 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { TemplateFieldToolbar } from './TemplateFieldToolbar';
 import { TemplateFieldEditor } from './TemplateFieldEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateSectionEditor } from './TemplateSectionEditor';
 import { DebouncedTemplateInput } from './DebouncedTemplateInput';
-import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection } from '@/types/template';
+import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection, TemplateType } from '@/types/template';
 import { Save, Eye, Undo, Redo, Grid, Layout, Settings, ZoomIn, ZoomOut, RotateCcw, Move3D, Minimize2 } from 'lucide-react';
 
 interface TemplateBuilderCanvasProps {
@@ -40,6 +42,11 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       }
     }
   );
+
+  // Template metadata state
+  const [templateTitle, setTemplateTitle] = useState(template?.title || '');
+  const [templateType, setTemplateType] = useState<TemplateType>(template?.template_type || 'canvas');
+  const [templateDescription, setTemplateDescription] = useState(template?.description || '');
 
   const [selectedField, setSelectedField] = useState<TemplateField | null>(null);
   const [selectedSection, setSelectedSection] = useState<TemplateSection | null>(null);
@@ -200,12 +207,15 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const handleSave = useCallback(() => {
     const templateData: Partial<KnowledgeTemplate> = {
       ...template,
+      title: templateTitle,
+      template_type: templateType,
+      description: templateDescription,
       config,
       version: template?.version ? String(Number(template.version) + 1) : '1.0',
       updated_at: new Date().toISOString()
     };
     onSave(templateData);
-  }, [config, template, onSave]);
+  }, [config, template, templateTitle, templateType, templateDescription, onSave]);
 
   const handleZoomIn = useCallback(() => {
     setZoom(prevZoom => Math.min(prevZoom + 25, 200));
@@ -360,53 +370,103 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
 
           <TabsContent value="settings" className="p-4">
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="layout">Layout Type</Label>
-                <select
-                  id="layout"
-                  value={config.layout}
-                  onChange={(e) => updateConfig({
-                    ...config,
-                    layout: e.target.value as any
-                  })}
-                  className="w-full mt-1 p-2 border rounded-md"
-                >
-                  <option value="canvas">Canvas</option>
-                  <option value="grid">Grid</option>
-                  <option value="form">Form</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
+              {/* Template Metadata */}
+              <div className="space-y-4 pb-4 border-b">
+                <h4 className="font-medium text-sm">Template Information</h4>
+                
                 <div>
-                  <Label htmlFor="width">Width</Label>
-                  <Input
-                    id="width"
-                    type="number"
-                    value={config.dimensions.width}
-                    onChange={(e) => updateConfig({
-                      ...config,
-                      dimensions: {
-                        ...config.dimensions,
-                        width: Number(e.target.value)
-                      }
-                    })}
+                  <Label htmlFor="template-title">Template Title *</Label>
+                  <DebouncedTemplateInput
+                    id="template-title"
+                    value={templateTitle}
+                    onUpdate={setTemplateTitle}
+                    placeholder="Enter template title"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="height">Height</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={config.dimensions.height}
-                    onChange={(e) => updateConfig({
-                      ...config,
-                      dimensions: {
-                        ...config.dimensions,
-                        height: Number(e.target.value)
-                      }
-                    })}
+                  <Label htmlFor="template-type">Template Type *</Label>
+                  <Select value={templateType} onValueChange={(value) => setTemplateType(value as TemplateType)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select template type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="canvas">Canvas</SelectItem>
+                      <SelectItem value="matrix">Matrix</SelectItem>
+                      <SelectItem value="worksheet">Worksheet</SelectItem>
+                      <SelectItem value="process">Process</SelectItem>
+                      <SelectItem value="form">Form</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="template-description">Description</Label>
+                  <Textarea
+                    id="template-description"
+                    value={templateDescription}
+                    onChange={(e) => setTemplateDescription(e.target.value)}
+                    placeholder="Optional description"
+                    className="min-h-[80px]"
                   />
+                </div>
+              </div>
+
+              {/* Canvas Settings */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm">Canvas Settings</h4>
+                
+                <div>
+                  <Label htmlFor="layout">Layout Type</Label>
+                  <Select 
+                    value={config.layout} 
+                    onValueChange={(value) => updateConfig({
+                      ...config,
+                      layout: value as any
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="canvas">Canvas</SelectItem>
+                      <SelectItem value="grid">Grid</SelectItem>
+                      <SelectItem value="form">Form</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="width">Width</Label>
+                    <Input
+                      id="width"
+                      type="number"
+                      value={config.dimensions.width}
+                      onChange={(e) => updateConfig({
+                        ...config,
+                        dimensions: {
+                          ...config.dimensions,
+                          width: Number(e.target.value)
+                        }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="height">Height</Label>
+                    <Input
+                      id="height"
+                      type="number"
+                      value={config.dimensions.height}
+                      onChange={(e) => updateConfig({
+                        ...config,
+                        dimensions: {
+                          ...config.dimensions,
+                          height: Number(e.target.value)
+                        }
+                      })}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -420,10 +480,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">
-                {template?.title || 'New Template'}
+                {templateTitle || 'New Template'}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {config.sections.length} sections • {config.layout} layout
+                {config.sections.length} sections • {templateType} • {config.layout} layout
               </p>
             </div>
             
