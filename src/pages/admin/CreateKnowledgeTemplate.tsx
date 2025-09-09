@@ -24,7 +24,6 @@ export default function CreateKnowledgeTemplate() {
           id,
           data: templateData
         });
-        toast.success('Template updated successfully');
       } else {
         if (!templateData.title || !templateData.template_type) {
           toast.error('Template title and type are required');
@@ -38,11 +37,9 @@ export default function CreateKnowledgeTemplate() {
           is_public: templateData.is_public || false
         });
         
-        toast.success('Template created successfully');
         navigate(`/admin/knowledge/templates/${newTemplate.id}/edit`);
       }
     } catch (error) {
-      toast.error(isEditing ? 'Failed to update template' : 'Failed to create template');
       console.error('Template save error:', error);
     }
   };
