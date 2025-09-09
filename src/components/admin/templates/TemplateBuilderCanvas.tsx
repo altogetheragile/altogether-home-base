@@ -580,7 +580,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                         onChange={(e) => updateSection(selectedSection.id, {
                           title: e.target.value
                         })}
-                        onKeyDown={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
                       />
                     </div>
                     
@@ -593,7 +596,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           description: e.target.value
                         })}
                         placeholder="Optional description"
-                        onKeyDown={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
                       />
                     </div>
 
@@ -607,7 +613,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             x: Number(e.target.value)
                           })}
-                          onKeyDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
                         />
                       </div>
                       <div>
@@ -619,7 +628,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             y: Number(e.target.value)
                           })}
-                          onKeyDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
                         />
                       </div>
                     </div>
@@ -634,7 +646,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             width: Number(e.target.value)
                           })}
-                          onKeyDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
                         />
                       </div>
                       <div>
@@ -646,7 +661,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                           onChange={(e) => updateSection(selectedSection.id, {
                             height: Number(e.target.value)
                           })}
-                          onKeyDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
                         />
                       </div>
                     </div>
