@@ -232,15 +232,13 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
         }}
       >
         <div className="p-2 h-full">
-          <div className="flex items-start justify-between mb-2">
-            <div className="text-xs font-medium truncate pr-2">
-              {field.label}
-            </div>
-            <div className="flex items-center gap-1">
-              <Badge variant="outline" className="text-xs">
-                {field.type}
-              </Badge>
-              {isFieldSelected && (
+          {/* Show field label and type only when selected or in property panel */}
+          {isFieldSelected && (
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-xs font-medium truncate pr-2">
+                {field.label}
+              </div>
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -252,19 +250,27 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
                 >
                   <Trash2 className="h-2 w-2" />
                 </Button>
-              )}
+              </div>
             </div>
-          </div>
+          )}
           
-          {/* Editable field content */}
-          <div className="flex-1">
-            <RichTextFieldEditor
-              value={field.content || ''}
-              onChange={(content) => onUpdateField(field.id, { content })}
-              placeholder={field.placeholder || `Enter ${field.type} content...`}
-              className="text-xs"
-              isSelected={isFieldSelected}
-            />
+          {/* Direct editable content */}
+          <div 
+            className="flex-1 w-full h-full min-h-[1.5rem] p-1 text-xs leading-relaxed cursor-text focus:outline-none focus:ring-1 focus:ring-primary rounded border-0"
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => {
+              const content = e.currentTarget.textContent || '';
+              onUpdateField(field.id, { content });
+            }}
+            onFocus={() => onSelectField(field)}
+            style={{ 
+              minHeight: field.type === 'textarea' ? '3rem' : '1.5rem',
+              whiteSpace: field.type === 'textarea' ? 'pre-wrap' : 'nowrap',
+              overflow: field.type === 'textarea' ? 'auto' : 'hidden'
+            }}
+          >
+            {field.content || field.placeholder || `Enter ${field.type} content...`}
           </div>
         </div>
       </div>
@@ -298,9 +304,6 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
               <span className="text-xs font-medium truncate">
                 {section.title}
               </span>
-              <Badge variant="secondary" className="text-xs">
-                {section.fields.length}
-              </Badge>
             </div>
             
             {isSelected && (
@@ -323,25 +326,20 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       )}
 
       {/* Minimal Header - always show for interaction */}
-      {!showTitle && (
+      {!showTitle && isSelected && (
         <div className="absolute top-1 left-1 flex items-center gap-1 bg-background/80 rounded px-1 py-0.5">
           <GripHorizontal className="h-2 w-2 text-muted-foreground" />
-          <Badge variant="secondary" className="text-xs h-4 px-1">
-            {section.fields.length}
-          </Badge>
-          {isSelected && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-            >
-              <Trash2 className="h-2 w-2" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-4 w-4 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          >
+            <Trash2 className="h-2 w-2" />
+          </Button>
         </div>
       )}
 

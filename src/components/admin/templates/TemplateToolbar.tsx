@@ -66,9 +66,9 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
 
   return (
     <div className="bg-card border-b">
-      <div className="p-2">
+      <div className="p-2 overflow-x-auto">
         {/* Single compact row with responsive design */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 min-w-max">
           {/* Grid Controls - Compact */}
           <div className="flex items-center">
             <Button

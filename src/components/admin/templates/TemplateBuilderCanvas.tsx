@@ -301,15 +301,25 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
     }
   }, []);
 
-  // Handle section updates with improved properties integration
+  // Handle section updates with improved properties integration and snap-to-grid
   const handleSectionUpdate = useCallback((sectionId: string, updates: Partial<TemplateSection>) => {
+    // Apply snap-to-grid if enabled
+    if (snapToGrid && (updates.x !== undefined || updates.y !== undefined)) {
+      if (updates.x !== undefined) {
+        updates.x = Math.round(updates.x / gridSize) * gridSize;
+      }
+      if (updates.y !== undefined) {
+        updates.y = Math.round(updates.y / gridSize) * gridSize;
+      }
+    }
+    
     updateSection(sectionId, updates);
     
     // Update selected section if it's the one being edited
     if (selectedSection?.id === sectionId) {
       setSelectedSection({ ...selectedSection, ...updates });
     }
-  }, [selectedSection, updateSection]);
+  }, [selectedSection, updateSection, snapToGrid, gridSize]);
 
   // Handle field updates with improved properties integration
   const handleFieldUpdate = useCallback((sectionId: string, fieldId: string, updates: Partial<TemplateField>) => {

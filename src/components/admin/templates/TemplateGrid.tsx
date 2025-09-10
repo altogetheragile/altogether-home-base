@@ -23,18 +23,24 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const gridPattern = `
     <defs>
       <pattern id="grid" width="${scaledSize}" height="${scaledSize}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="#d1d5db" stroke-width="1" opacity="0.6"/>
+        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="#9ca3af" stroke-width="1" opacity="0.8"/>
       </pattern>
     </defs>
     <rect width="100%" height="100%" fill="url(#grid)" />
   `;
 
+  // Make grid infinite by extending beyond canvas
+  const extendedWidth = Math.max(canvasWidth * 2, 2000);
+  const extendedHeight = Math.max(canvasHeight * 2, 2000);
+  
   return (
     <div 
-      className="absolute inset-0 pointer-events-none z-10"
+      className="absolute pointer-events-none z-10"
       style={{
-        width: (canvasWidth * zoom) / 100,
-        height: (canvasHeight * zoom) / 100,
+        top: -canvasHeight / 2,
+        left: -canvasWidth / 2,
+        width: (extendedWidth * zoom) / 100,
+        height: (extendedHeight * zoom) / 100,
       }}
     >
       <svg 
