@@ -19,6 +19,8 @@ import { ImprovedPropertiesPanel } from './ImprovedPropertiesPanel';
 import { InlineTextEditor } from './InlineTextEditor';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection, TemplateType } from '@/types/template';
 import { TemplateToolbar } from './TemplateToolbar';
+import { CollapsedSidebar } from './CollapsedSidebar';
+import { RichTextFieldEditor } from './RichTextFieldEditor';
 import { useTemplateAlignment } from '@/hooks/useTemplateAlignment';
 import { useMultiSelection } from '@/hooks/useMultiSelection';
 import { Save, Eye, Undo, Redo, Layout, ZoomIn, ZoomOut, RotateCcw, Move3D } from 'lucide-react';
@@ -378,7 +380,25 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   }, [multiSelection]);
 
   // Render left sidebar content
-  const renderLeftSidebar = () => (
+  const renderLeftSidebar = () => {
+    if (!leftSidebarOpen) {
+      return (
+        <CollapsedSidebar
+          onAddSection={addSection}
+          onAddField={(field) => {
+            if (selectedSection) {
+              addField(selectedSection.id, field);
+            } else if (config.sections.length > 0) {
+              addField(config.sections[0].id, field);
+            }
+          }}
+          onExpand={() => setLeftSidebarOpen(true)}
+          canAddField={config.sections.length > 0}
+        />
+      );
+    }
+
+    return (
     <>
       <div className="flex gap-2 p-4 border-b">
         <Button
@@ -417,21 +437,30 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
             </>
           )}
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPreview(config)}
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          Preview
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            variant={activeTab === 'design' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setActiveTab('design')}
+          >
+            Design
+          </Button>
+          <Button
+            variant={activeTab === 'preview' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setActiveTab('preview')}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Preview
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="fields" className="flex-1">
+      <Tabs defaultValue="settings" className="flex-1">
         <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
-          <TabsTrigger value="fields">Fields</TabsTrigger>
-          <TabsTrigger value="sections">Sections</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="sections">Sections</TabsTrigger>
+          <TabsTrigger value="fields">Fields</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fields" className="p-4">
@@ -589,7 +618,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
         </TabsContent>
       </Tabs>
     </>
-  );
+    );
+  };
 
   const renderRightSidebar = () => (
     <ImprovedPropertiesPanel

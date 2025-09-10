@@ -19,11 +19,11 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   const scaledSize = (size * zoom) / 100;
   
-  // Create grid pattern
+  // Create grid pattern with better visibility
   const gridPattern = `
     <defs>
       <pattern id="grid" width="${scaledSize}" height="${scaledSize}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--border))" stroke-width="1" opacity="0.3"/>
+        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--foreground))" stroke-width="1" opacity="0.8"/>
       </pattern>
     </defs>
     <rect width="100%" height="100%" fill="url(#grid)" />
@@ -55,9 +55,9 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
             <path 
               d={`M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}`} 
               fill="none" 
-              stroke="hsl(var(--border))" 
-              strokeWidth="1.5" 
-              opacity="0.5"
+              stroke="hsl(var(--foreground))" 
+              strokeWidth="2" 
+              opacity="0.9"
             />
           </pattern>
         </defs>

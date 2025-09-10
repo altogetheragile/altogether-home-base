@@ -35,10 +35,10 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
       {/* Left Sidebar */}
       <div 
         className={`${
-          leftSidebarOpen ? 'w-80' : 'w-0'
+          leftSidebarOpen ? 'w-80' : 'w-12'
         } transition-all duration-300 border-r bg-card flex flex-col overflow-hidden`}
       >
-        {leftSidebarOpen && (
+        {leftSidebarOpen ? (
           <>
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-semibold">Template Builder</h3>
@@ -57,22 +57,27 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
               {leftSidebar}
             </div>
           </>
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="p-2 border-b">
+              {onToggleLeftSidebar && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleLeftSidebar}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="flex-1 p-1">
+              {/* Collapsed sidebar content will be rendered here */}
+              {leftSidebar}
+            </div>
+          </div>
         )}
       </div>
-
-      {/* Left Sidebar Toggle (when closed) */}
-      {!leftSidebarOpen && onToggleLeftSidebar && (
-        <div className="flex flex-col justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToggleLeftSidebar}
-            className="h-16 w-8 rounded-l-none border-l-0"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -85,27 +90,13 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
         </div>
       </div>
 
-      {/* Right Sidebar Toggle (when closed) */}
-      {!rightSidebarOpen && onToggleRightSidebar && (
-        <div className="flex flex-col justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToggleRightSidebar}
-            className="h-16 w-8 rounded-r-none border-r-0"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
       {/* Right Sidebar */}
       <div 
         className={`${
-          rightSidebarOpen ? 'w-80' : 'w-0'
+          rightSidebarOpen ? 'w-80' : 'w-12'
         } transition-all duration-300 border-l bg-card flex flex-col overflow-hidden`}
       >
-        {rightSidebarOpen && (
+        {rightSidebarOpen ? (
           <>
             <div className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center gap-2">
@@ -127,6 +118,24 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
               {rightSidebar}
             </div>
           </>
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="p-2 border-b">
+              {onToggleRightSidebar && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleRightSidebar}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="flex-1 p-1 flex items-center justify-center">
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
         )}
       </div>
     </div>

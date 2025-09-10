@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { RichTextFieldEditor } from './RichTextFieldEditor';
 import type { TemplateSection, TemplateField } from '@/types/template';
 import { 
   Move, 
@@ -230,31 +231,41 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
           onSelectField(field);
         }}
       >
-        <div className="p-2 h-full flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium truncate">
+        <div className="p-2 h-full">
+          <div className="flex items-start justify-between mb-2">
+            <div className="text-xs font-medium truncate pr-2">
               {field.label}
             </div>
-            <Badge variant="outline" className="text-xs mt-1">
-              {field.type}
-            </Badge>
+            <div className="flex items-center gap-1">
+              <Badge variant="outline" className="text-xs">
+                {field.type}
+              </Badge>
+              {isFieldSelected && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteField(field.id);
+                  }}
+                >
+                  <Trash2 className="h-2 w-2" />
+                </Button>
+              )}
+            </div>
           </div>
           
-          {isFieldSelected && (
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteField(field.id);
-                }}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
+          {/* Editable field content */}
+          <div className="flex-1">
+            <RichTextFieldEditor
+              value={field.content || ''}
+              onChange={(content) => onUpdateField(field.id, { content })}
+              placeholder={field.placeholder || `Enter ${field.type} content...`}
+              className="text-xs"
+              isSelected={isFieldSelected}
+            />
+          </div>
         </div>
       </div>
     );

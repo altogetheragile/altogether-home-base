@@ -40,6 +40,7 @@ export interface TemplateField {
   min?: number; // For number, slider
   max?: number; // For number, slider
   defaultValue?: any;
+  content?: string; // Rich text content for the field
   validation?: {
     pattern?: string;
     message?: string;
