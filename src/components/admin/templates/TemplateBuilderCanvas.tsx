@@ -469,10 +469,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       </div>
 
       <Tabs defaultValue="settings" className="flex-1">
-        <TabsList className="flex w-full mx-4 mt-4 bg-muted">
-          <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
-          <TabsTrigger value="sections" className="flex-1 text-xs">Sections</TabsTrigger>
-          <TabsTrigger value="fields" className="flex-1 text-xs">Fields</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 bg-muted overflow-hidden">
+          <TabsTrigger value="settings" className="text-xs truncate">Settings</TabsTrigger>
+          <TabsTrigger value="sections" className="text-xs truncate">Sections</TabsTrigger>
+          <TabsTrigger value="fields" className="text-xs truncate">Fields</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fields" className="p-4">
@@ -663,22 +663,84 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const renderToolbar = () => (
     <BottomToolbar
       snapToGrid={snapToGrid}
-      onToggleSnapToGrid={(enabled) => setSnapToGrid(enabled)}
+      onToggleSnapToGrid={setSnapToGrid}
       gridSize={gridSize}
       showGrid={showGrid}
-      onToggleShowGrid={(show) => setShowGrid(show)}
+      onToggleShowGrid={setShowGrid}
       onGridSizeChange={setGridSize}
       showSectionTitles={showSectionTitles}
-      onToggleSectionTitles={(show) => setShowSectionTitles(show)}
+      onToggleSectionTitles={setShowSectionTitles}
       selectedItemsCount={multiSelection.selectedSectionIds.length}
       selectedField={selectedField}
-      onAlignHorizontal={handleAlignHorizontal}
-      onAlignVertical={handleAlignVertical}
-      onDistribute={handleDistribute}
-      onAlignToCanvas={handleAlignToCanvas}
-      onTextFormat={() => {}}
-      onTextAlign={() => {}}
-      onInsertList={() => {}}
+      onAlignHorizontal={(alignmentType) => {
+        const updates = alignment.alignHorizontal(
+          multiSelection.selectedSectionIds.map(id => 
+            config.sections.find(s => s.id === id)!
+          ).filter(Boolean),
+          alignmentType
+        );
+        updates.forEach((update, index) => {
+          const sectionId = multiSelection.selectedSectionIds[index];
+          if (sectionId && update) {
+            handleSectionUpdate(sectionId, update);
+          }
+        });
+      }}
+      onAlignVertical={(alignmentType) => {
+        const updates = alignment.alignVertical(
+          multiSelection.selectedSectionIds.map(id => 
+            config.sections.find(s => s.id === id)!
+          ).filter(Boolean),
+          alignmentType
+        );
+        updates.forEach((update, index) => {
+          const sectionId = multiSelection.selectedSectionIds[index];
+          if (sectionId && update) {
+            handleSectionUpdate(sectionId, update);
+          }
+        });
+      }}
+      onDistribute={(direction) => {
+        const updates = alignment.distribute(
+          multiSelection.selectedSectionIds.map(id => 
+            config.sections.find(s => s.id === id)!
+          ).filter(Boolean),
+          direction
+        );
+        updates.forEach((update, index) => {
+          const sectionId = multiSelection.selectedSectionIds[index];
+          if (sectionId && update) {
+            handleSectionUpdate(sectionId, update);
+          }
+        });
+      }}
+      onAlignToCanvas={(alignmentType) => {
+        const updates = alignment.alignToCanvas(
+          multiSelection.selectedSectionIds.map(id => 
+            config.sections.find(s => s.id === id)!
+          ).filter(Boolean),
+          config.dimensions,
+          alignmentType
+        );
+        updates.forEach((update, index) => {
+          const sectionId = multiSelection.selectedSectionIds[index];
+          if (sectionId && update) {
+            handleSectionUpdate(sectionId, update);
+          }
+        });
+      }}
+      onTextFormat={(format) => {
+        // Text formatting logic
+        console.log('Text format:', format);
+      }}
+      onTextAlign={(alignment) => {
+        // Text alignment logic
+        console.log('Text align:', alignment);
+      }}
+      onInsertList={(type) => {
+        // List insertion logic
+        console.log('Insert list:', type);
+      }}
       zoom={zoom}
       onZoomIn={handleZoomIn}
       onZoomOut={handleZoomOut}

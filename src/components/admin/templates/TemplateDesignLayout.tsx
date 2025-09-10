@@ -31,12 +31,14 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
   onToggleRightSidebar,
 }) => {
   return (
-    <div className="grid h-screen bg-muted/20 overflow-hidden" 
-         style={{ 
-           gridTemplateColumns: `${leftSidebarOpen ? '18rem' : '3rem'} 1fr ${rightSidebarOpen ? '20rem' : '0'}`,
-           gridTemplateRows: '1fr auto',
-           transition: 'grid-template-columns 300ms ease-in-out'
-         }}>
+    <div 
+      className="grid h-screen bg-muted/20 overflow-hidden"
+      style={{
+        gridTemplateColumns: `${leftSidebarOpen ? '18rem' : '3rem'} minmax(0, 1fr) ${rightSidebarOpen ? '20rem' : '0'}`,
+        gridTemplateRows: '1fr auto',
+        transition: 'grid-template-columns 300ms ease-in-out'
+      }}
+    >
       {/* Left Sidebar */}
       <div className="border-r bg-card flex flex-col overflow-hidden">
         {leftSidebarOpen ? (
@@ -80,9 +82,9 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
       </div>
 
       {/* Main Content - Fixed canvas area */}
-      <div className="flex flex-col overflow-hidden">
+      <div className="flex flex-col overflow-hidden min-w-0">
         {/* Canvas Area */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-w-0 min-h-0">
           {children}
         </div>
       </div>
