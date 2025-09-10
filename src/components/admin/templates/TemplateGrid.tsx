@@ -23,7 +23,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const gridPattern = `
     <defs>
       <pattern id="grid" width="${scaledSize}" height="${scaledSize}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--foreground))" stroke-width="1" opacity="0.8"/>
+        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="#d1d5db" stroke-width="1" opacity="0.6"/>
       </pattern>
     </defs>
     <rect width="100%" height="100%" fill="url(#grid)" />
@@ -31,7 +31,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   return (
     <div 
-      className="absolute inset-0 pointer-events-none"
+      className="absolute inset-0 pointer-events-none z-10"
       style={{
         width: (canvasWidth * zoom) / 100,
         height: (canvasHeight * zoom) / 100,
@@ -55,9 +55,9 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
             <path 
               d={`M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}`} 
               fill="none" 
-              stroke="hsl(var(--foreground))" 
+              stroke="#9ca3af" 
               strokeWidth="2" 
-              opacity="0.9"
+              opacity="0.4"
             />
           </pattern>
         </defs>

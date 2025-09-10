@@ -23,6 +23,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { TextEditingToolbar } from './TextEditingToolbar';
+import { TemplateField } from '@/types/template';
 
 interface TemplateToolbarProps {
   snapToGrid: boolean;
@@ -32,10 +34,14 @@ interface TemplateToolbarProps {
   showSectionTitles: boolean;
   onToggleSectionTitles: () => void;
   selectedItemsCount: number;
+  selectedField?: TemplateField | null;
   onAlignHorizontal: (alignment: 'left' | 'center' | 'right') => void;
   onAlignVertical: (alignment: 'top' | 'middle' | 'bottom') => void;
   onDistribute: (direction: 'horizontal' | 'vertical') => void;
   onAlignToCanvas: (alignment: 'center' | 'left' | 'right' | 'top' | 'bottom') => void;
+  onTextFormat?: (format: string) => void;
+  onTextAlign?: (alignment: 'left' | 'center' | 'right') => void;
+  onInsertList?: (type: 'bullet' | 'numbered') => void;
 }
 
 export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
@@ -46,12 +52,17 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
   showSectionTitles,
   onToggleSectionTitles,
   selectedItemsCount,
+  selectedField,
   onAlignHorizontal,
   onAlignVertical,
   onDistribute,
   onAlignToCanvas,
+  onTextFormat,
+  onTextAlign,
+  onInsertList,
 }) => {
   const gridSizes = [10, 20, 25, 50];
+  const isTextFieldSelected = selectedField && (selectedField.type === 'text' || selectedField.type === 'textarea');
 
   return (
     <div className="bg-card border-b">
@@ -104,6 +115,18 @@ export const TemplateToolbar: React.FC<TemplateToolbarProps> = ({
           >
             {showSectionTitles ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
           </Button>
+
+          {/* Text editing toolbar for selected text fields */}
+          {isTextFieldSelected && onTextFormat && onTextAlign && onInsertList && (
+            <>
+              <Separator orientation="vertical" className="h-5 mx-1" />
+              <TextEditingToolbar
+                onFormatText={onTextFormat}
+                onAlign={onTextAlign}
+                onInsertList={onInsertList}
+              />
+            </>
+          )}
 
           {/* Show selection info and alignment controls when items are selected */}
           {selectedItemsCount > 0 && (

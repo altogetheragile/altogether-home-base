@@ -274,7 +274,7 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
   return (
     <div
       ref={sectionRef}
-      className={`absolute border-2 rounded-lg transition-all cursor-move ${
+      className={`absolute border-2 rounded-lg transition-all cursor-move z-20 ${
         isSelected 
           ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
           : 'border-muted-foreground/30 hover:border-primary/50 bg-card/80'
@@ -364,37 +364,37 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
         <>
           {/* Corner handles */}
           <div
-            className="resize-handle absolute -top-1 -left-1 w-3 h-3 bg-primary cursor-nw-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -top-1 -left-1 w-3 h-3 bg-primary cursor-nw-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 'nw')}
           />
           <div
-            className="resize-handle absolute -top-1 -right-1 w-3 h-3 bg-primary cursor-ne-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -top-1 -right-1 w-3 h-3 bg-primary cursor-ne-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 'ne')}
           />
           <div
-            className="resize-handle absolute -bottom-1 -left-1 w-3 h-3 bg-primary cursor-sw-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -bottom-1 -left-1 w-3 h-3 bg-primary cursor-sw-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 'sw')}
           />
           <div
-            className="resize-handle absolute -bottom-1 -right-1 w-3 h-3 bg-primary cursor-se-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -bottom-1 -right-1 w-3 h-3 bg-primary cursor-se-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
           />
           
           {/* Edge handles */}
           <div
-            className="resize-handle absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary cursor-n-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary cursor-n-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 'n')}
           />
           <div
-            className="resize-handle absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary cursor-s-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary cursor-s-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 's')}
           />
           <div
-            className="resize-handle absolute -left-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-primary cursor-w-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -left-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-primary cursor-w-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 'w')}
           />
           <div
-            className="resize-handle absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-primary cursor-e-resize rounded-full border-2 border-background"
+            className="resize-handle absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-primary cursor-e-resize rounded-full border-2 border-background z-30"
             onMouseDown={(e) => handleResizeMouseDown(e, 'e')}
           />
         </>
