@@ -684,6 +684,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       onZoomOut={handleZoomOut}
       onZoomReset={handleZoomReset}
       onZoomFit={handleZoomFit}
+      rightSidebarOpen={rightSidebarOpen}
+      onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
     />
   );
 

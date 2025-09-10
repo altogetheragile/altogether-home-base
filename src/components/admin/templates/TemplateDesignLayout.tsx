@@ -53,7 +53,7 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
                 </Button>
               )}
             </div>
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-y-auto">
               {leftSidebar}
             </div>
           </>
