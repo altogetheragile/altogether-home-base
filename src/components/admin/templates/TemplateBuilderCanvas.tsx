@@ -7,20 +7,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TemplateFieldToolbar } from './TemplateFieldToolbar';
-import { TemplateFieldEditor } from './TemplateFieldEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateSectionEditor } from './TemplateSectionEditor';
 import { DebouncedTemplateInput } from './DebouncedTemplateInput';
-import { TemplatePropertiesPanel } from './TemplatePropertiesPanel';
+import { TemplateDesignLayout } from './TemplateDesignLayout';
+import { TemplateGrid } from './TemplateGrid';
+import { ImprovedPropertiesPanel } from './ImprovedPropertiesPanel';
+import { InlineTextEditor } from './InlineTextEditor';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection, TemplateType } from '@/types/template';
 import { TemplateToolbar } from './TemplateToolbar';
 import { useTemplateAlignment } from '@/hooks/useTemplateAlignment';
 import { useMultiSelection } from '@/hooks/useMultiSelection';
-import { Save, Eye, Undo, Redo, Grid, Layout, Settings, ZoomIn, ZoomOut, RotateCcw, Move3D, Minimize2 } from 'lucide-react';
+import { Save, Eye, Undo, Redo, Layout, ZoomIn, ZoomOut, RotateCcw, Move3D } from 'lucide-react';
 
 interface TemplateBuilderCanvasProps {
   template?: KnowledgeTemplate;
@@ -59,15 +60,15 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const [activeTab, setActiveTab] = useState<'design' | 'preview'>('design');
   const [history, setHistory] = useState<TemplateConfig[]>([config]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [isPropertiesMinimized, setIsPropertiesMinimized] = useState(false);
-  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [snapToGrid, setSnapToGrid] = useState(true);
   const [gridSize, setGridSize] = useState(20);
   const [showSectionTitles, setShowSectionTitles] = useState(true);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
 
   // Multi-selection and alignment hooks
   const multiSelection = useMultiSelection();
@@ -298,6 +299,26 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
     }
   }, []);
 
+  // Handle section updates with improved properties integration
+  const handleSectionUpdate = useCallback((sectionId: string, updates: Partial<TemplateSection>) => {
+    updateSection(sectionId, updates);
+    
+    // Update selected section if it's the one being edited
+    if (selectedSection?.id === sectionId) {
+      setSelectedSection({ ...selectedSection, ...updates });
+    }
+  }, [selectedSection, updateSection]);
+
+  // Handle field updates with improved properties integration
+  const handleFieldUpdate = useCallback((sectionId: string, fieldId: string, updates: Partial<TemplateField>) => {
+    updateField(sectionId, fieldId, updates);
+    
+    // Update selected field if it's the one being edited
+    if (selectedField?.id === fieldId) {
+      setSelectedField({ ...selectedField, ...updates });
+    }
+  }, [selectedField, updateField]);
+
   // Alignment handlers
   const handleAlignHorizontal = useCallback((alignmentType: 'left' | 'center' | 'right') => {
     const selectedSections = multiSelection.getSelectedSections(config.sections);
@@ -356,392 +377,369 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
     }
   }, [multiSelection]);
 
-  return (
-    <div className="flex h-screen bg-background">
-      {/* Left Sidebar - Tools */}
-      <div className="w-80 border-r bg-card">
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Template Builder</h3>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={undo}
-                disabled={historyIndex === 0}
-              >
-                <Undo className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={redo}
-                disabled={historyIndex === history.length - 1}
-              >
-                <Redo className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex gap-2 mb-4">
-            <Button 
-              onClick={handleSave} 
-              size="sm"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPreview(config)}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-          </div>
-        </div>
-
-        <Tabs defaultValue="fields" className="flex-1">
-          <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
-            <TabsTrigger value="fields">Fields</TabsTrigger>
-            <TabsTrigger value="sections">Sections</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="fields" className="p-4">
-            <TemplateFieldToolbar
-              onAddField={(field) => {
-                if (selectedSection) {
-                  addField(selectedSection.id, field);
-                } else if (config.sections.length > 0) {
-                  addField(config.sections[0].id, field);
-                }
-              }}
-              disabled={config.sections.length === 0}
-            />
-          </TabsContent>
-
-          <TabsContent value="sections" className="p-4">
-            <div className="space-y-4">
-              <Button onClick={addSection} className="w-full">
-                <Layout className="h-4 w-4 mr-2" />
-                Add Section
-              </Button>
-              
-              <ScrollArea className="h-64">
-                <div className="space-y-2">
-                  {config.sections.map((section) => (
-                    <Card
-                      key={section.id}
-                      className={`p-3 cursor-pointer transition-colors ${
-                        selectedSection?.id === section.id 
-                          ? 'ring-2 ring-primary' 
-                          : 'hover:bg-accent'
-                      }`}
-                      onClick={() => setSelectedSection(section)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{section.title}</span>
-                        <Badge variant="secondary">
-                          {section.fields.length} fields
-                        </Badge>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="settings" className="p-4">
-            <div className="space-y-4">
-              {/* Template Metadata */}
-              <div className="space-y-4 pb-4 border-b">
-                <h4 className="font-medium text-sm">Template Information</h4>
-                
-                <div>
-                  <Label htmlFor="template-title">Template Title *</Label>
-                  <DebouncedTemplateInput
-                    id="template-title"
-                    value={templateTitle}
-                    onUpdate={setTemplateTitle}
-                    placeholder="Enter template title"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="template-type">Template Type *</Label>
-                  <Select value={templateType} onValueChange={(value) => setTemplateType(value as TemplateType)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select template type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="canvas">Canvas</SelectItem>
-                      <SelectItem value="matrix">Matrix</SelectItem>
-                      <SelectItem value="worksheet">Worksheet</SelectItem>
-                      <SelectItem value="process">Process</SelectItem>
-                      <SelectItem value="form">Form</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="template-description">Description</Label>
-                  <Textarea
-                    id="template-description"
-                    value={templateDescription}
-                    onChange={(e) => setTemplateDescription(e.target.value)}
-                    placeholder="Optional description"
-                    className="min-h-[80px]"
-                  />
-                </div>
-              </div>
-
-              {/* Canvas Settings */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-sm">Canvas Settings</h4>
-                
-                <div>
-                  <Label htmlFor="layout">Layout Type</Label>
-                  <Select 
-                    value={config.layout} 
-                    onValueChange={(value) => updateConfig({
-                      ...config,
-                      layout: value as any
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="canvas">Canvas</SelectItem>
-                      <SelectItem value="grid">Grid</SelectItem>
-                      <SelectItem value="form">Form</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label htmlFor="width">Width</Label>
-                    <Input
-                      id="width"
-                      type="number"
-                      value={config.dimensions.width}
-                      onChange={(e) => updateConfig({
-                        ...config,
-                        dimensions: {
-                          ...config.dimensions,
-                          width: Number(e.target.value)
-                        }
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="height">Height</Label>
-                    <Input
-                      id="height"
-                      type="number"
-                      value={config.dimensions.height}
-                      onChange={(e) => updateConfig({
-                        ...config,
-                        dimensions: {
-                          ...config.dimensions,
-                          height: Number(e.target.value)
-                        }
-                      })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Main Canvas Area */}
-      <div className="flex-1 flex flex-col">
-        <div className="border-b p-4 bg-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">
-                {templateTitle || 'New Template'}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {config.sections.length} sections • {templateType} • {config.layout} layout
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-                <TabsList>
-                  <TabsTrigger value="design">
-                    <Grid className="h-4 w-4 mr-2" />
-                    Design
-                  </TabsTrigger>
-                  <TabsTrigger value="preview">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              {/* Zoom Controls */}
-              {activeTab === 'design' && (
-                <div className="flex items-center gap-1 border rounded-md p-1">
-                  <Button variant="ghost" size="sm" onClick={handleZoomOut}>
-                    <ZoomOut className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-medium min-w-[50px] text-center">
-                    {zoom}%
-                  </span>
-                  <Button variant="ghost" size="sm" onClick={handleZoomIn}>
-                    <ZoomIn className="h-4 w-4" />
-                  </Button>
-                  <Separator orientation="vertical" className="h-6" />
-                  <Button variant="ghost" size="sm" onClick={handleZoomFit} title="Fit to screen">
-                    <Minimize2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={handleZoomReset} title="Reset zoom">
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setIsPropertiesOpen(true)}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Properties
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 relative overflow-hidden">
-          {activeTab === 'design' ? (
+  // Render left sidebar content
+  const renderLeftSidebar = () => (
+    <>
+      <div className="flex gap-2 p-4 border-b">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={undo}
+          disabled={historyIndex === 0}
+          title="Undo"
+        >
+          <Undo className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={redo}
+          disabled={historyIndex === history.length - 1}
+          title="Redo"
+        >
+          <Redo className="h-4 w-4" />
+        </Button>
+        <div className="flex-1" />
+        <Button 
+          onClick={handleSave} 
+          size="sm"
+          disabled={isSaving}
+        >
+          {isSaving ? (
             <>
-              {/* Enhanced Toolbar */}
-              <TemplateToolbar
-                snapToGrid={snapToGrid}
-                onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
-                gridSize={gridSize}
-                onGridSizeChange={setGridSize}
-                showSectionTitles={showSectionTitles}
-                onToggleSectionTitles={() => setShowSectionTitles(!showSectionTitles)}
-                selectedItemsCount={multiSelection.selectedCount}
-                onAlignHorizontal={handleAlignHorizontal}
-                onAlignVertical={handleAlignVertical}
-                onDistribute={handleDistribute}
-                onAlignToCanvas={handleAlignToCanvas}
-              />
-              
-              <div
-                ref={canvasRef}
-                className="absolute inset-0 bg-muted/20 cursor-grab"
-                style={{
-                  backgroundImage: snapToGrid ? `
-                    linear-gradient(to right, hsl(var(--muted-foreground) / 0.4) 1px, transparent 1px),
-                    linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.4) 1px, transparent 1px)
-                  ` : undefined,
-                  backgroundSize: snapToGrid ? `${gridSize * (zoom / 100)}px ${gridSize * (zoom / 100)}px` : undefined,
-                  backgroundPosition: snapToGrid ? `${pan.x}px ${pan.y}px` : undefined,
-                  backgroundRepeat: 'repeat'
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onWheel={handleWheel}
-                onClick={handleCanvasClick}
-              >
-                <div
-                  className="relative bg-background border rounded-lg shadow-lg origin-top-left"
-                  style={{
-                    width: config.dimensions.width,
-                    height: config.dimensions.height,
-                    backgroundColor: config.styling.backgroundColor,
-                    transform: `translate(${32 + pan.x}px, ${32 + pan.y}px) scale(${zoom / 100})`,
-                  }}
-                >
-                {config.sections.map((section) => (
-                  <TemplateSectionEditor
-                    key={section.id}
-                    section={section}
-                    isSelected={multiSelection.isSelected(section.id)}
-                    selectedField={selectedField}
-                    canvasDimensions={config.dimensions}
-                    zoom={zoom}
-                    pan={pan}
-                    showTitle={showSectionTitles}
-                    snapToGrid={snapToGrid}
-                    gridSize={gridSize}
-                    onSelect={(section, isCtrlPressed) => {
-                      multiSelection.selectSection(section, isCtrlPressed);
-                      setSelectedSection(section);
-                    }}
-                    onSelectField={(field) => {
-                      setSelectedField(field);
-                    }}
-                    onUpdate={(updates) => updateSection(section.id, updates)}
-                    onUpdateField={(fieldId, updates) => updateField(section.id, fieldId, updates)}
-                    onDelete={() => deleteSection(section.id)}
-                    onDeleteField={(fieldId) => deleteField(section.id, fieldId)}
-                  />
-                ))}
-                </div>
-              </div>
-              
-              {/* Pan instruction */}
-              {zoom > 100 && (
-                <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-sm text-muted-foreground">
-                  <Move3D className="h-4 w-4 inline mr-2" />
-                  Hold Shift + drag or middle-click to pan
-                </div>
-              )}
+              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-background border-t-transparent" />
+              Saving...
             </>
           ) : (
-            <TemplatePreview config={config} />
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Save
+            </>
           )}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPreview(config)}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Preview
+        </Button>
+      </div>
+
+      <Tabs defaultValue="fields" className="flex-1">
+        <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
+          <TabsTrigger value="fields">Fields</TabsTrigger>
+          <TabsTrigger value="sections">Sections</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="fields" className="p-4">
+          <TemplateFieldToolbar
+            onAddField={(field) => {
+              if (selectedSection) {
+                addField(selectedSection.id, field);
+              } else if (config.sections.length > 0) {
+                addField(config.sections[0].id, field);
+              }
+            }}
+            disabled={config.sections.length === 0}
+          />
+        </TabsContent>
+
+        <TabsContent value="sections" className="p-4">
+          <div className="space-y-4">
+            <Button onClick={addSection} className="w-full">
+              <Layout className="h-4 w-4 mr-2" />
+              Add Section
+            </Button>
+            
+            <ScrollArea className="h-64">
+              <div className="space-y-2">
+                {config.sections.map((section) => (
+                  <Card
+                    key={section.id}
+                    className={`p-3 cursor-pointer transition-colors ${
+                      selectedSection?.id === section.id 
+                        ? 'ring-2 ring-primary' 
+                        : 'hover:bg-accent'
+                    }`}
+                    onClick={() => setSelectedSection(section)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <InlineTextEditor
+                        value={section.title}
+                        onChange={(value) => handleSectionUpdate(section.id, { title: value })}
+                        className="font-medium flex-1"
+                        placeholder="Section title"
+                      />
+                      <Badge variant="secondary">
+                        {section.fields.length} fields
+                      </Badge>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="p-4">
+          <div className="space-y-4">
+            {/* Template Metadata */}
+            <div className="space-y-4 pb-4 border-b">
+              <h4 className="font-medium text-sm">Template Information</h4>
+              
+              <div>
+                <Label htmlFor="template-title">Template Title *</Label>
+                <DebouncedTemplateInput
+                  id="template-title"
+                  value={templateTitle}
+                  onUpdate={setTemplateTitle}
+                  placeholder="Enter template title"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="template-type">Template Type *</Label>
+                <Select value={templateType} onValueChange={(value) => setTemplateType(value as TemplateType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select template type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="canvas">Canvas</SelectItem>
+                    <SelectItem value="matrix">Matrix</SelectItem>
+                    <SelectItem value="worksheet">Worksheet</SelectItem>
+                    <SelectItem value="process">Process</SelectItem>
+                    <SelectItem value="form">Form</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="template-description">Description</Label>
+                <Textarea
+                  id="template-description"
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  placeholder="Optional description"
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+
+            {/* Canvas Settings */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm">Canvas Settings</h4>
+              
+              <div>
+                <Label htmlFor="layout">Layout Type</Label>
+                <Select 
+                  value={config.layout} 
+                  onValueChange={(value) => updateConfig({
+                    ...config,
+                    layout: value as any
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="canvas">Canvas</SelectItem>
+                    <SelectItem value="grid">Grid</SelectItem>
+                    <SelectItem value="form">Form</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="width">Width</Label>
+                  <Input
+                    id="width"
+                    type="number"
+                    value={config.dimensions.width}
+                    onChange={(e) => updateConfig({
+                      ...config,
+                      dimensions: {
+                        ...config.dimensions,
+                        width: Number(e.target.value)
+                      }
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="height">Height</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    value={config.dimensions.height}
+                    onChange={(e) => updateConfig({
+                      ...config,
+                      dimensions: {
+                        ...config.dimensions,
+                        height: Number(e.target.value)
+                      }
+                    })}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </>
+  );
+
+  const renderRightSidebar = () => (
+    <ImprovedPropertiesPanel
+      selectedSection={selectedSection}
+      selectedField={selectedField}
+      onUpdateSection={(updates) => {
+        if (selectedSection) {
+          handleSectionUpdate(selectedSection.id, updates);
+        }
+      }}
+      onUpdateField={(updates) => {
+        if (selectedField && selectedSection) {
+          handleFieldUpdate(selectedSection.id, selectedField.id, updates);
+        }
+      }}
+      onDeleteSection={() => {
+        if (selectedSection) {
+          deleteSection(selectedSection.id);
+        }
+      }}
+      onDeleteField={() => {
+        if (selectedField && selectedSection) {
+          deleteField(selectedSection.id, selectedField.id);
+        }
+      }}
+    />
+  );
+
+  const renderToolbar = () => (
+    <TemplateToolbar
+      snapToGrid={snapToGrid}
+      onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
+      gridSize={gridSize}
+      onGridSizeChange={setGridSize}
+      showSectionTitles={showSectionTitles}
+      onToggleSectionTitles={() => setShowSectionTitles(!showSectionTitles)}
+      selectedItemsCount={multiSelection.selectedCount}
+      onAlignHorizontal={handleAlignHorizontal}
+      onAlignVertical={handleAlignVertical}
+      onDistribute={handleDistribute}
+      onAlignToCanvas={handleAlignToCanvas}
+    />
+  );
+
+  const renderCanvas = () => {
+    if (activeTab === 'preview') {
+      return <TemplatePreview config={config} />;
+    }
+
+    return (
+      <div className="relative w-full h-full overflow-auto bg-muted/20">
+        {/* Grid Background */}
+        <TemplateGrid
+          show={snapToGrid}
+          size={gridSize}
+          canvasWidth={config.dimensions.width}
+          canvasHeight={config.dimensions.height}
+          zoom={zoom}
+        />
+
+        <div
+          ref={canvasRef}
+          className="relative p-8 cursor-grab"
+          style={{ minHeight: '100%', minWidth: '100%' }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onWheel={handleWheel}
+          onClick={handleCanvasClick}
+        >
+          <div
+            className="relative bg-background border rounded-lg shadow-lg mx-auto"
+            style={{
+              width: config.dimensions.width,
+              height: config.dimensions.height,
+              backgroundColor: config.styling?.backgroundColor || 'hsl(var(--background))',
+              transform: `scale(${zoom / 100}) translate(${pan.x}px, ${pan.y}px)`,
+              transformOrigin: '0 0',
+            }}
+          >
+            {config.sections.map((section) => (
+              <TemplateSectionEditor
+                key={section.id}
+                section={section}
+                isSelected={multiSelection.isSelected(section.id)}
+                selectedField={selectedField}
+                canvasDimensions={config.dimensions}
+                zoom={zoom}
+                pan={pan}
+                showTitle={showSectionTitles}
+                snapToGrid={snapToGrid}
+                gridSize={gridSize}
+                onSelect={(section, isCtrlPressed) => {
+                  multiSelection.selectSection(section, isCtrlPressed);
+                  setSelectedSection(section);
+                }}
+                onSelectField={(field) => {
+                  setSelectedField(field);
+                }}
+                onUpdate={(updates) => handleSectionUpdate(section.id, updates)}
+                onUpdateField={(fieldId, updates) => handleFieldUpdate(section.id, fieldId, updates)}
+                onDelete={() => deleteSection(section.id)}
+                onDeleteField={(fieldId) => deleteField(section.id, fieldId)}
+              />
+            ))}
+
+            {config.sections.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <Layout className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Empty Canvas</p>
+                  <p className="text-sm">Add sections from the left sidebar to get started</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Enhanced Properties Panel */}
-        <Dialog open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
-          <DialogContent 
-            className="max-w-sm max-h-[85vh] overflow-y-auto p-0"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-          >
-            <TemplatePropertiesPanel
-              selectedSection={selectedSection}
-              selectedField={selectedField}
-              onUpdateSection={(updates) => selectedSection && updateSection(selectedSection.id, updates)}
-              onUpdateField={(updates) => {
-                if (selectedField) {
-                  const section = config.sections.find(s => 
-                    s.fields.some(f => f.id === selectedField.id)
-                  );
-                  if (section) {
-                    updateField(section.id, selectedField.id, updates);
-                  }
-                }
-              }}
-              onClose={() => setIsPropertiesOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        {/* Zoom indicator */}
+        {zoom !== 100 && (
+          <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm border rounded px-3 py-2 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Zoom:</span>
+              <span className="font-medium">{zoom}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* Pan instruction */}
+        {zoom > 100 && (
+          <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm border rounded px-3 py-2 text-sm text-muted-foreground">
+            <Move3D className="h-4 w-4 inline mr-2" />
+            Hold Shift + drag or middle-click to pan
+          </div>
+        )}
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <TemplateDesignLayout
+      leftSidebar={renderLeftSidebar()}
+      rightSidebar={renderRightSidebar()}
+      toolbar={renderToolbar()}
+      leftSidebarOpen={leftSidebarOpen}
+      rightSidebarOpen={rightSidebarOpen}
+      onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
+      onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
+    >
+      {renderCanvas()}
+    </TemplateDesignLayout>
   );
 };
