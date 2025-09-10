@@ -68,6 +68,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [gridSize, setGridSize] = useState(20);
+  const [showGrid, setShowGrid] = useState(true);
   const [showSectionTitles, setShowSectionTitles] = useState(true);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
@@ -662,11 +663,29 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const renderToolbar = () => (
     <BottomToolbar
       snapToGrid={snapToGrid}
-      onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
+      onToggleSnapToGrid={(enabled) => setSnapToGrid(enabled)}
       gridSize={gridSize}
+      showGrid={showGrid}
+      onToggleShowGrid={(show) => setShowGrid(show)}
       onGridSizeChange={setGridSize}
       showSectionTitles={showSectionTitles}
-      onToggleSectionTitles={() => setShowSectionTitles(!showSectionTitles)}
+      onToggleSectionTitles={(show) => setShowSectionTitles(show)}
+      selectedItemsCount={multiSelection.getSelectedIds().length}
+      selectedField={selectedField}
+      onAlignHorizontal={handleAlignHorizontal}
+      onAlignVertical={handleAlignVertical}
+      onDistribute={handleDistribute}
+      onAlignToCanvas={handleAlignToCanvas}
+      onTextFormat={() => {}}
+      onTextAlign={() => {}}
+      onInsertList={() => {}}
+      zoom={zoom}
+      onZoomIn={handleZoomIn}
+      onZoomOut={handleZoomOut}
+      onZoomReset={handleZoomReset}
+      onZoomFit={handleZoomFit}
+    />
+  );
       selectedItemsCount={multiSelection.selectedCount}
       selectedField={selectedField}
       onAlignHorizontal={handleAlignHorizontal}
@@ -728,7 +747,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       <div className="relative w-full h-full overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
         {/* Infinite Grid Background */}
         <TemplateGrid
-          show={snapToGrid}
+          show={showGrid}
           size={gridSize}
           canvasWidth={config.dimensions.width}
           canvasHeight={config.dimensions.height}
@@ -770,11 +789,9 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                 onSelect={(section, isCtrlPressed) => {
                   multiSelection.selectSection(section, isCtrlPressed);
                   setSelectedSection(section);
-                  setRightSidebarOpen(true); // Open right sidebar when section selected
                 }}
                 onSelectField={(field) => {
                   setSelectedField(field);
-                  setRightSidebarOpen(true); // Open right sidebar when field selected
                 }}
                 onUpdate={(updates) => handleSectionUpdate(section.id, updates)}
                 onUpdateField={(fieldId, updates) => handleFieldUpdate(section.id, fieldId, updates)}

@@ -78,8 +78,8 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
         )}
       </div>
 
-      {/* Main Content - Full width when no right sidebar */}
-      <div className="flex-1 flex flex-col overflow-hidden pb-16">
+      {/* Main Content - Fixed width to prevent resizing */}
+      <div className="flex-1 flex flex-col overflow-hidden pb-16" style={{ minWidth: 0 }}>
         {/* Canvas Area - No top toolbar, using bottom toolbar */}
         <div className="flex-1 overflow-hidden">
           {children}

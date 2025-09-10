@@ -18,7 +18,8 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Move3D
+  Move3D,
+  Magnet
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,11 +33,13 @@ import { TemplateField } from '@/types/template';
 
 interface BottomToolbarProps {
   snapToGrid: boolean;
-  onToggleSnapToGrid: () => void;
+  onToggleSnapToGrid: (enabled: boolean) => void;
   gridSize: number;
+  showGrid: boolean;
+  onToggleShowGrid: (show: boolean) => void;
   onGridSizeChange: (size: number) => void;
   showSectionTitles: boolean;
-  onToggleSectionTitles: () => void;
+  onToggleSectionTitles: (show: boolean) => void;
   selectedItemsCount: number;
   selectedField?: TemplateField | null;
   onAlignHorizontal: (alignment: 'left' | 'center' | 'right') => void;
@@ -57,6 +60,8 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   snapToGrid,
   onToggleSnapToGrid,
   gridSize,
+  showGrid,
+  onToggleShowGrid,
   onGridSizeChange,
   showSectionTitles,
   onToggleSectionTitles,
@@ -87,16 +92,26 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
             {/* Grid Controls */}
             <div className="flex items-center bg-background rounded-lg p-1">
               <Button
-                variant={snapToGrid ? "default" : "ghost"}
+                variant={showGrid ? "default" : "ghost"}
                 size="sm"
-                onClick={onToggleSnapToGrid}
+                onClick={() => onToggleShowGrid(!showGrid)}
                 className="h-8 px-3"
-                title={snapToGrid ? "Hide grid" : "Show grid"}
+                title={showGrid ? "Hide grid" : "Show grid"}
               >
                 <Grid3X3 className="h-4 w-4" />
               </Button>
               
-              {snapToGrid && (
+              <Button
+                variant={snapToGrid ? "default" : "ghost"}
+                size="sm"
+                onClick={() => onToggleSnapToGrid(!snapToGrid)}
+                className="h-8 px-3"
+                title={snapToGrid ? "Disable snap" : "Enable snap"}
+              >
+                <Magnet className="h-4 w-4" />
+              </Button>
+              
+              {(showGrid || snapToGrid) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
@@ -228,29 +243,29 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                       <Layers className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-40">
-                    <div className="px-3 py-2 text-xs font-medium text-muted-foreground">
-                      Canvas
+                  <DropdownMenuContent align="center" className="w-48 p-1">
+                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b mb-1">
+                      Canvas Alignment
                     </div>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('center')}>
-                      <AlignCenter className="h-4 w-4 mr-2" />
-                      Center
+                    <DropdownMenuItem onClick={() => onAlignToCanvas('center')} className="py-2 px-3 rounded-sm hover:bg-accent">
+                      <AlignCenter className="h-4 w-4 mr-3 text-muted-foreground" />
+                      <span className="font-medium">Center Canvas</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('left')}>
-                      <AlignLeft className="h-4 w-4 mr-2" />
-                      Left Edge
+                    <DropdownMenuItem onClick={() => onAlignToCanvas('left')} className="py-2 px-3 rounded-sm hover:bg-accent">
+                      <AlignLeft className="h-4 w-4 mr-3 text-muted-foreground" />
+                      <span className="font-medium">Left Edge</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('right')}>
-                      <AlignRight className="h-4 w-4 mr-2" />
-                      Right Edge
+                    <DropdownMenuItem onClick={() => onAlignToCanvas('right')} className="py-2 px-3 rounded-sm hover:bg-accent">
+                      <AlignRight className="h-4 w-4 mr-3 text-muted-foreground" />
+                      <span className="font-medium">Right Edge</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('top')}>
-                      <AlignStartVertical className="h-4 w-4 mr-2" />
-                      Top Edge
+                    <DropdownMenuItem onClick={() => onAlignToCanvas('top')} className="py-2 px-3 rounded-sm hover:bg-accent">
+                      <AlignStartVertical className="h-4 w-4 mr-3 text-muted-foreground" />
+                      <span className="font-medium">Top Edge</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('bottom')}>
-                      <AlignEndVertical className="h-4 w-4 mr-2" />
-                      Bottom Edge
+                    <DropdownMenuItem onClick={() => onAlignToCanvas('bottom')} className="py-2 px-3 rounded-sm hover:bg-accent">
+                      <AlignEndVertical className="h-4 w-4 mr-3 text-muted-foreground" />
+                      <span className="font-medium">Bottom Edge</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
