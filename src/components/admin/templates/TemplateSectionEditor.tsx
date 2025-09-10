@@ -232,25 +232,23 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
         }}
       >
         <div className="p-2 h-full">
-          {/* Show field label and type only when selected or in property panel */}
+          {/* Clean field - only show controls when selected */}
           {isFieldSelected && (
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-xs font-medium truncate pr-2">
+            <div className="absolute -top-6 left-0 flex items-center gap-1 bg-background/95 border rounded px-1 py-0.5 shadow-sm z-30">
+              <span className="text-xs text-muted-foreground">
                 {field.label}
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteField(field.id);
-                  }}
-                >
-                  <Trash2 className="h-2 w-2" />
-                </Button>
-              </div>
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteField(field.id);
+                }}
+              >
+                <Trash2 className="h-2 w-2" />
+              </Button>
             </div>
           )}
           
@@ -295,56 +293,31 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Section Header - only show if showTitle is true */}
-      {showTitle && (
-        <div className="absolute top-0 left-0 right-0 bg-background/90 border-b px-2 py-1 rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <GripHorizontal className="h-3 w-3 text-muted-foreground" />
-              <span className="text-xs font-medium truncate">
-                {section.title}
-              </span>
-            </div>
-            
-            {isSelected && (
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete();
-                  }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Minimal Header - always show for interaction */}
-      {!showTitle && isSelected && (
-        <div className="absolute top-1 left-1 flex items-center gap-1 bg-background/80 rounded px-1 py-0.5">
-          <GripHorizontal className="h-2 w-2 text-muted-foreground" />
+      {/* Clean section - no visible metadata unless selected */}
+      {isSelected && (
+        <div className="absolute -top-8 left-0 flex items-center gap-1 bg-background/95 border rounded px-2 py-1 shadow-sm z-40">
+          <GripHorizontal className="h-3 w-3 text-muted-foreground" />
+          {showTitle && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {section.title}
+            </span>
+          )}
           <Button
             variant="ghost"
             size="sm"
-            className="h-4 w-4 p-0"
+            className="h-5 w-5 p-0 ml-1"
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
             }}
           >
-            <Trash2 className="h-2 w-2" />
+            <Trash2 className="h-3 w-3" />
           </Button>
         </div>
       )}
 
       {/* Section Content */}
-      <div className={`absolute inset-0 p-2 overflow-hidden ${showTitle ? 'top-8' : 'top-0'}`}>
+      <div className="absolute inset-0 p-2 overflow-hidden">
         {section.fields.map(renderField)}
         
         {section.fields.length === 0 && (

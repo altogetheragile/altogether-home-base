@@ -18,7 +18,7 @@ import { TemplateGrid } from './TemplateGrid';
 import { ImprovedPropertiesPanel } from './ImprovedPropertiesPanel';
 import { InlineTextEditor } from './InlineTextEditor';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection, TemplateType } from '@/types/template';
-import { TemplateToolbar } from './TemplateToolbar';
+import { BottomToolbar } from './BottomToolbar';
 import { CollapsedSidebar } from './CollapsedSidebar';
 import { RichTextFieldEditor } from './RichTextFieldEditor';
 import { useTemplateAlignment } from '@/hooks/useTemplateAlignment';
@@ -70,7 +70,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   const [gridSize, setGridSize] = useState(20);
   const [showSectionTitles, setShowSectionTitles] = useState(true);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
   // Multi-selection and alignment hooks
   const multiSelection = useMultiSelection();
@@ -386,6 +386,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       multiSelection.clearSelection();
       setSelectedSection(null);
       setSelectedField(null);
+      setRightSidebarOpen(false); // Auto-close right sidebar when nothing selected
     }
   }, [multiSelection]);
 
@@ -659,7 +660,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   );
 
   const renderToolbar = () => (
-    <TemplateToolbar
+    <BottomToolbar
       snapToGrid={snapToGrid}
       onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
       gridSize={gridSize}
@@ -672,13 +673,16 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       onAlignVertical={handleAlignVertical}
       onDistribute={handleDistribute}
       onAlignToCanvas={handleAlignToCanvas}
+      zoom={zoom}
+      onZoomIn={handleZoomIn}
+      onZoomOut={handleZoomOut}
+      onZoomReset={handleZoomReset}
+      onZoomFit={handleZoomFit}
       onTextFormat={(format) => {
         if (selectedField && selectedSection) {
-          // Apply text formatting to the selected field
           const currentContent = selectedField.content || '';
           let updatedContent = currentContent;
           
-          // Basic text formatting logic - this would integrate with a rich text editor
           if (format === 'bold') {
             updatedContent = `<strong>${currentContent}</strong>`;
           } else if (format === 'italic') {
@@ -692,7 +696,6 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       }}
       onTextAlign={(alignment) => {
         if (selectedField && selectedSection) {
-          // Store text alignment in the content as HTML style
           const currentContent = selectedField.content || '';
           const alignedContent = `<div style="text-align: ${alignment}">${currentContent}</div>`;
           handleFieldUpdate(selectedSection.id, selectedField.id, { content: alignedContent });
@@ -722,8 +725,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
     }
 
     return (
-      <div className="relative w-full h-full overflow-auto bg-muted/20">
-        {/* Grid Background */}
+      <div className="relative w-full h-full overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+        {/* Infinite Grid Background */}
         <TemplateGrid
           show={snapToGrid}
           size={gridSize}
@@ -734,8 +737,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
 
         <div
           ref={canvasRef}
-          className="relative p-8 cursor-grab"
-          style={{ minHeight: '100%', minWidth: '100%' }}
+          className="relative flex items-center justify-center min-h-full min-w-full p-16"
+          style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -743,13 +746,13 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
           onClick={handleCanvasClick}
         >
           <div
-            className="relative bg-background border rounded-lg shadow-lg mx-auto"
+            className="relative bg-background rounded-xl shadow-2xl ring-1 ring-border/20"
             style={{
               width: config.dimensions.width,
               height: config.dimensions.height,
               backgroundColor: config.styling?.backgroundColor || 'hsl(var(--background))',
               transform: `scale(${zoom / 100}) translate(${pan.x}px, ${pan.y}px)`,
-              transformOrigin: '0 0',
+              transformOrigin: 'center center',
             }}
           >
             {config.sections.map((section) => (
@@ -767,9 +770,11 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
                 onSelect={(section, isCtrlPressed) => {
                   multiSelection.selectSection(section, isCtrlPressed);
                   setSelectedSection(section);
+                  setRightSidebarOpen(true); // Open right sidebar when section selected
                 }}
                 onSelectField={(field) => {
                   setSelectedField(field);
+                  setRightSidebarOpen(true); // Open right sidebar when field selected
                 }}
                 onUpdate={(updates) => handleSectionUpdate(section.id, updates)}
                 onUpdateField={(fieldId, updates) => handleFieldUpdate(section.id, fieldId, updates)}

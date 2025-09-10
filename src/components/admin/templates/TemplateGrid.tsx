@@ -19,55 +19,46 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   const scaledSize = (size * zoom) / 100;
   
-  // Create grid pattern with better visibility
+  // Create subtle, infinite grid pattern
   const gridPattern = `
     <defs>
       <pattern id="grid" width="${scaledSize}" height="${scaledSize}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="#9ca3af" stroke-width="1" opacity="0.8"/>
+        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--border))" stroke-width="0.5" opacity="0.3"/>
+      </pattern>
+      <pattern id="majorGrid" width="${scaledSize * 5}" height="${scaledSize * 5}" patternUnits="userSpaceOnUse">
+        <path d="M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}" fill="none" stroke="hsl(var(--border))" stroke-width="1" opacity="0.5"/>
       </pattern>
     </defs>
-    <rect width="100%" height="100%" fill="url(#grid)" />
   `;
-
-  // Make grid infinite by extending beyond canvas
-  const extendedWidth = Math.max(canvasWidth * 2, 2000);
-  const extendedHeight = Math.max(canvasHeight * 2, 2000);
   
   return (
-    <div 
-      className="absolute pointer-events-none z-10"
-      style={{
-        top: -canvasHeight / 2,
-        left: -canvasWidth / 2,
-        width: (extendedWidth * zoom) / 100,
-        height: (extendedHeight * zoom) / 100,
-      }}
-    >
+    <div className="absolute inset-0 pointer-events-none z-0">
       <svg 
         width="100%" 
         height="100%" 
         className="absolute inset-0"
-        dangerouslySetInnerHTML={{ __html: gridPattern }}
-      />
-      
-      {/* Major grid lines every 5 units */}
-      <svg 
-        width="100%" 
-        height="100%" 
-        className="absolute inset-0"
+        style={{ 
+          transform: `scale(${zoom / 100})`,
+          transformOrigin: 'center center'
+        }}
       >
-        <defs>
-          <pattern id="majorGrid" width={scaledSize * 5} height={scaledSize * 5} patternUnits="userSpaceOnUse">
-            <path 
-              d={`M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}`} 
-              fill="none" 
-              stroke="#9ca3af" 
-              strokeWidth="2" 
-              opacity="0.4"
-            />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#majorGrid)" />
+        <defs dangerouslySetInnerHTML={{ __html: gridPattern.replace('<defs>', '').replace('</defs>', '') }} />
+        
+        {/* Infinite grid background */}
+        <rect 
+          x="-50%" 
+          y="-50%" 
+          width="200%" 
+          height="200%" 
+          fill="url(#grid)" 
+        />
+        <rect 
+          x="-50%" 
+          y="-50%" 
+          width="200%" 
+          height="200%" 
+          fill="url(#majorGrid)" 
+        />
       </svg>
     </div>
   );
