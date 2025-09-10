@@ -34,7 +34,7 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
     <div 
       className="grid h-screen bg-muted/20 overflow-hidden"
       style={{
-        gridTemplateColumns: `${leftSidebarOpen ? '18rem' : '3rem'} minmax(0, 1fr) ${rightSidebarOpen ? '20rem' : '0'}`,
+        gridTemplateColumns: `${leftSidebarOpen ? '18rem' : '3rem'} 1fr ${rightSidebarOpen ? '20rem' : '0'}`,
         gridTemplateRows: '1fr auto',
         transition: 'grid-template-columns 300ms ease-in-out'
       }}
@@ -82,10 +82,12 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
       </div>
 
       {/* Main Content - Fixed canvas area */}
-      <div className="flex flex-col overflow-hidden min-w-0">
+      <div className="flex flex-col overflow-hidden w-full">
         {/* Canvas Area */}
-        <div className="flex-1 overflow-hidden min-w-0 min-h-0">
-          {children}
+        <div className="flex-1 overflow-hidden w-full h-full relative">
+          <div className="absolute inset-0 w-full h-full">
+            {children}
+          </div>
         </div>
       </div>
 

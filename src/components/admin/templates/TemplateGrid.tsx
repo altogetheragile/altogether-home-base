@@ -23,10 +23,10 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const gridPattern = `
     <defs>
       <pattern id="grid" width="${scaledSize}" height="${scaledSize}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--border))" stroke-width="0.5" opacity="0.3"/>
+        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--border))" stroke-width="0.5" opacity="0.8"/>
       </pattern>
       <pattern id="majorGrid" width="${scaledSize * 5}" height="${scaledSize * 5}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}" fill="none" stroke="hsl(var(--border))" stroke-width="1" opacity="0.5"/>
+        <path d="M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}" fill="none" stroke="hsl(var(--border))" stroke-width="1.5" opacity="0.9"/>
       </pattern>
     </defs>
   `;
