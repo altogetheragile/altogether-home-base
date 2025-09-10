@@ -187,55 +187,93 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                       <AlignCenter className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-52 bg-background/95 backdrop-blur-sm border shadow-lg">
-                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Horizontal Alignment
+                  <DropdownMenuContent align="center" className="w-56 bg-card border shadow-xl">
+                    <div className="px-3 py-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">HORIZONTAL</div>
+                      <div className="grid grid-cols-3 gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignHorizontal('left')}
+                          className="h-8 w-full justify-center"
+                        >
+                          <AlignLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignHorizontal('center')}
+                          className="h-8 w-full justify-center"
+                        >
+                          <AlignCenter className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignHorizontal('right')}
+                          className="h-8 w-full justify-center"
+                        >
+                          <AlignRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <DropdownMenuItem onClick={() => onAlignHorizontal('left')} className="px-3 py-2">
-                      <AlignLeft className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Align Left</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignHorizontal('center')} className="px-3 py-2">
-                      <AlignCenter className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Align Center</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignHorizontal('right')} className="px-3 py-2">
-                      <AlignRight className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Align Right</span>
-                    </DropdownMenuItem>
                     
-                    <DropdownMenuSeparator className="my-2" />
+                    <Separator className="my-2" />
                     
-                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Vertical Alignment
+                    <div className="px-3 py-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">VERTICAL</div>
+                      <div className="grid grid-cols-3 gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignVertical('top')}
+                          className="h-8 w-full justify-center"
+                        >
+                          <AlignStartVertical className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignVertical('middle')}
+                          className="h-8 w-full justify-center"
+                        >
+                          <AlignCenterVertical className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignVertical('bottom')}
+                          className="h-8 w-full justify-center"
+                        >
+                          <AlignEndVertical className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <DropdownMenuItem onClick={() => onAlignVertical('top')} className="px-3 py-2">
-                      <AlignStartVertical className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Align Top</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignVertical('middle')} className="px-3 py-2">
-                      <AlignCenterVertical className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Align Middle</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignVertical('bottom')} className="px-3 py-2">
-                      <AlignEndVertical className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Align Bottom</span>
-                    </DropdownMenuItem>
                     
                     {selectedItemsCount > 2 && (
                       <>
-                        <DropdownMenuSeparator className="my-2" />
-                        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Distribution
+                        <Separator className="my-2" />
+                        <div className="px-3 py-2">
+                          <div className="text-xs font-medium text-muted-foreground mb-2">DISTRIBUTE</div>
+                          <div className="grid grid-cols-2 gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onDistribute('horizontal')}
+                              className="h-8 justify-center"
+                            >
+                              <AlignHorizontalSpaceAround className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onDistribute('vertical')}
+                              className="h-8 justify-center"
+                            >
+                              <AlignVerticalSpaceAround className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <DropdownMenuItem onClick={() => onDistribute('horizontal')} className="px-3 py-2">
-                          <AlignHorizontalSpaceAround className="h-4 w-4 mr-3" />
-                          <span className="text-sm">Distribute Horizontally</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onDistribute('vertical')} className="px-3 py-2">
-                          <AlignVerticalSpaceAround className="h-4 w-4 mr-3" />
-                          <span className="text-sm">Distribute Vertically</span>
-                        </DropdownMenuItem>
                       </>
                     )}
                   </DropdownMenuContent>
@@ -248,30 +286,57 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                       <Layers className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-52 bg-background/95 backdrop-blur-sm border shadow-lg">
-                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Canvas Alignment
+                  <DropdownMenuContent align="center" className="w-48 bg-card border shadow-xl">
+                    <div className="px-3 py-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">CANVAS</div>
+                      <div className="space-y-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignToCanvas('center')}
+                          className="w-full justify-start h-8"
+                        >
+                          <AlignCenter className="h-4 w-4 mr-2" />
+                          Center
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignToCanvas('left')}
+                          className="w-full justify-start h-8"
+                        >
+                          <AlignLeft className="h-4 w-4 mr-2" />
+                          Left Edge
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignToCanvas('right')}
+                          className="w-full justify-start h-8"
+                        >
+                          <AlignRight className="h-4 w-4 mr-2" />
+                          Right Edge
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignToCanvas('top')}
+                          className="w-full justify-start h-8"
+                        >
+                          <AlignStartVertical className="h-4 w-4 mr-2" />
+                          Top Edge
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAlignToCanvas('bottom')}
+                          className="w-full justify-start h-8"
+                        >
+                          <AlignEndVertical className="h-4 w-4 mr-2" />
+                          Bottom Edge
+                        </Button>
+                      </div>
                     </div>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('center')} className="px-3 py-2">
-                      <AlignCenter className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Center Canvas</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('left')} className="px-3 py-2">
-                      <AlignLeft className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Left Edge</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('right')} className="px-3 py-2">
-                      <AlignRight className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Right Edge</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('top')} className="px-3 py-2">
-                      <AlignStartVertical className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Top Edge</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAlignToCanvas('bottom')} className="px-3 py-2">
-                      <AlignEndVertical className="h-4 w-4 mr-3" />
-                      <span className="text-sm">Bottom Edge</span>
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 

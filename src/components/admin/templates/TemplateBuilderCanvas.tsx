@@ -469,10 +469,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       </div>
 
       <Tabs defaultValue="settings" className="flex-1">
-        <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="sections">Sections</TabsTrigger>
-          <TabsTrigger value="fields">Fields</TabsTrigger>
+        <TabsList className="flex w-full mx-4 mt-4 bg-muted">
+          <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
+          <TabsTrigger value="sections" className="flex-1 text-xs">Sections</TabsTrigger>
+          <TabsTrigger value="fields" className="flex-1 text-xs">Fields</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fields" className="p-4">

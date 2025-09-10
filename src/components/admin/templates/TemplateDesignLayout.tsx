@@ -31,13 +31,14 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
   onToggleRightSidebar,
 }) => {
   return (
-    <div className="flex h-screen bg-muted/20 overflow-hidden">
+    <div className="grid h-screen bg-muted/20 overflow-hidden" 
+         style={{ 
+           gridTemplateColumns: `${leftSidebarOpen ? '18rem' : '3rem'} 1fr ${rightSidebarOpen ? '20rem' : '0'}`,
+           gridTemplateRows: '1fr auto',
+           transition: 'grid-template-columns 300ms ease-in-out'
+         }}>
       {/* Left Sidebar */}
-      <div 
-        className={`${
-          leftSidebarOpen ? 'w-72' : 'w-12'
-        } transition-all duration-300 border-r bg-card flex flex-col overflow-hidden`}
-      >
+      <div className="border-r bg-card flex flex-col overflow-hidden">
         {leftSidebarOpen ? (
           <>
             <div className="flex items-center justify-between p-4 border-b bg-card">
@@ -78,20 +79,17 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
         )}
       </div>
 
-      {/* Main Content - Fixed width to prevent resizing */}
-      <div className="flex-1 flex flex-col overflow-hidden pb-16" style={{ minWidth: 0 }}>
-        {/* Canvas Area - No top toolbar, using bottom toolbar */}
+      {/* Main Content - Fixed canvas area */}
+      <div className="flex flex-col overflow-hidden">
+        {/* Canvas Area */}
         <div className="flex-1 overflow-hidden">
           {children}
         </div>
-        
-        {/* Bottom Toolbar */}
-        {toolbar}
       </div>
 
       {/* Right Sidebar - Only show when open */}
       {rightSidebarOpen && (
-        <div className="w-80 transition-all duration-300 border-l bg-card flex flex-col overflow-hidden">
+        <div className="border-l bg-card flex flex-col overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b bg-card">
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -113,6 +111,11 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
           </div>
         </div>
       )}
+
+      {/* Bottom Toolbar - Spans full width */}
+      <div className="col-span-full">
+        {toolbar}
+      </div>
     </div>
   );
 };
