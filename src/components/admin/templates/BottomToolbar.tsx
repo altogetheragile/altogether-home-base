@@ -99,7 +99,10 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               <Button
                 variant={showGrid ? "default" : "ghost"}
                 size="sm"
-                onClick={() => onToggleShowGrid(!showGrid)}
+                onClick={() => {
+                  console.log('🔵 Grid toggle clicked:', { current: showGrid, new: !showGrid });
+                  onToggleShowGrid(!showGrid);
+                }}
                 className="h-8 px-3"
                 title={showGrid ? "Hide grid" : "Show grid"}
               >

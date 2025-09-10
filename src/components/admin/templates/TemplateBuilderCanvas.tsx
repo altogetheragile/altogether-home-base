@@ -332,10 +332,13 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
     }
   }, [selectedField, updateField]);
 
-  // Alignment handlers
+  // Alignment handlers with debugging
   const handleAlignHorizontal = useCallback((alignmentType: 'left' | 'center' | 'right') => {
+    console.log('🔵 Align horizontal:', alignmentType, 'Selected:', multiSelection.selectedSectionIds);
     const selectedSections = multiSelection.getSelectedSections(config.sections);
+    console.log('🔵 Selected sections:', selectedSections);
     const updates = alignment.alignHorizontal(selectedSections, alignmentType);
+    console.log('🔵 Alignment updates:', updates);
     
     const sectionUpdates = selectedSections.map((section, index) => ({
       id: section.id,
@@ -346,8 +349,11 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   }, [multiSelection, alignment, config.sections, updateMultipleSections]);
 
   const handleAlignVertical = useCallback((alignmentType: 'top' | 'middle' | 'bottom') => {
+    console.log('🔵 Align vertical:', alignmentType, 'Selected:', multiSelection.selectedSectionIds);
     const selectedSections = multiSelection.getSelectedSections(config.sections);
+    console.log('🔵 Selected sections:', selectedSections);
     const updates = alignment.alignVertical(selectedSections, alignmentType);
+    console.log('🔵 Alignment updates:', updates);
     
     const sectionUpdates = selectedSections.map((section, index) => ({
       id: section.id,
@@ -469,10 +475,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       </div>
 
       <Tabs defaultValue="settings" className="flex-1">
-        <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 bg-muted h-9">
-          <TabsTrigger value="settings" className="text-xs px-2">Setup</TabsTrigger>
-          <TabsTrigger value="sections" className="text-xs px-2">Items</TabsTrigger>
-          <TabsTrigger value="fields" className="text-xs px-2">Fields</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 bg-muted h-9 min-w-0">
+          <TabsTrigger value="settings" className="text-xs px-1 min-w-0 truncate">Setup</TabsTrigger>
+          <TabsTrigger value="sections" className="text-xs px-1 min-w-0 truncate">Items</TabsTrigger>
+          <TabsTrigger value="fields" className="text-xs px-1 min-w-0 truncate">Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fields" className="p-4">

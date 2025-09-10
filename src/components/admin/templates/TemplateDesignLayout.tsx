@@ -81,11 +81,11 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
         )}
       </div>
 
-      {/* Main Content - Fixed canvas area */}
-      <div className="flex flex-col overflow-hidden w-full">
-        {/* Canvas Area */}
-        <div className="flex-1 overflow-hidden w-full h-full relative">
-          <div className="absolute inset-0 w-full h-full">
+      {/* Main Content - Fixed canvas area with absolute positioning */}
+      <div className="relative overflow-hidden" style={{ minWidth: '600px', minHeight: '400px' }}>
+        {/* Canvas Area with fixed dimensions to prevent resizing */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          <div className="w-full h-full">
             {children}
           </div>
         </div>
