@@ -140,7 +140,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               <Button
                 variant={showSectionTitles ? "default" : "ghost"}
                 size="sm"
-                onClick={onToggleSectionTitles}
+                onClick={() => onToggleSectionTitles(!showSectionTitles)}
                 className="h-8 px-3"
                 title={showSectionTitles ? "Hide titles" : "Show titles"}
               >

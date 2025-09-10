@@ -670,7 +670,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       onGridSizeChange={setGridSize}
       showSectionTitles={showSectionTitles}
       onToggleSectionTitles={(show) => setShowSectionTitles(show)}
-      selectedItemsCount={multiSelection.getSelectedIds().length}
+      selectedItemsCount={multiSelection.selectedSectionIds.length}
       selectedField={selectedField}
       onAlignHorizontal={handleAlignHorizontal}
       onAlignVertical={handleAlignVertical}
@@ -684,57 +684,6 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       onZoomOut={handleZoomOut}
       onZoomReset={handleZoomReset}
       onZoomFit={handleZoomFit}
-    />
-  );
-      selectedItemsCount={multiSelection.selectedCount}
-      selectedField={selectedField}
-      onAlignHorizontal={handleAlignHorizontal}
-      onAlignVertical={handleAlignVertical}
-      onDistribute={handleDistribute}
-      onAlignToCanvas={handleAlignToCanvas}
-      zoom={zoom}
-      onZoomIn={handleZoomIn}
-      onZoomOut={handleZoomOut}
-      onZoomReset={handleZoomReset}
-      onZoomFit={handleZoomFit}
-      onTextFormat={(format) => {
-        if (selectedField && selectedSection) {
-          const currentContent = selectedField.content || '';
-          let updatedContent = currentContent;
-          
-          if (format === 'bold') {
-            updatedContent = `<strong>${currentContent}</strong>`;
-          } else if (format === 'italic') {
-            updatedContent = `<em>${currentContent}</em>`;
-          } else if (format === 'underline') {
-            updatedContent = `<u>${currentContent}</u>`;
-          }
-          
-          handleFieldUpdate(selectedSection.id, selectedField.id, { content: updatedContent });
-        }
-      }}
-      onTextAlign={(alignment) => {
-        if (selectedField && selectedSection) {
-          const currentContent = selectedField.content || '';
-          const alignedContent = `<div style="text-align: ${alignment}">${currentContent}</div>`;
-          handleFieldUpdate(selectedSection.id, selectedField.id, { content: alignedContent });
-        }
-      }}
-      onInsertList={(type) => {
-        if (selectedField && selectedSection) {
-          const currentContent = selectedField.content || '';
-          let listContent = '';
-          
-          if (type === 'bullet') {
-            listContent = `<ul><li>Item 1</li><li>Item 2</li></ul>`;
-          } else {
-            listContent = `<ol><li>Item 1</li><li>Item 2</li></ol>`;
-          }
-          
-          const updatedContent = currentContent + listContent;
-          handleFieldUpdate(selectedSection.id, selectedField.id, { content: updatedContent });
-        }
-      }}
     />
   );
 
