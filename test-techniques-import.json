@@ -1,4 +1,5 @@
 {
+<<<<<<< Updated upstream
   "exported_at": "2024-01-15T10:30:00.000Z",
   "count": 3,
   "techniques": [
@@ -134,11 +135,44 @@
           "industry": "Software",
           "company_size": "enterprise",
           "position": 0
+=======
+  "exported_at": "2025-01-15T10:00:00Z",
+  "count": 5,
+  "techniques": [
+    {
+      "name": "Daily Scrum",
+      "slug": "daily-scrum",
+      "difficulty_level": "Beginner",
+      "content_type": "technique",
+      "summary": "A 15-minute event for Developers to synchronize activities and create a plan for the next 24 hours.",
+      "description": "The Daily Scrum is a 15-minute event for the Developers of the Scrum Team. To reduce complexity, it is held at the same time and place every working day of the Sprint. If the Product Owner or Scrum Master are actively working on items in the Sprint Backlog, they participate as Developers. The Developers can select whatever structure and techniques they want, as long as their Daily Scrum focuses on progress toward the Sprint Goal and produces an actionable plan for the next day of work. This creates focus and improves self-management.",
+      "purpose": "To inspect progress toward the Sprint Goal and adapt the Sprint Backlog as necessary, adjusting the upcoming planned work.",
+      "originator": "Scrum Framework",
+      "seo_title": "Daily Scrum - 15-Minute Developer Synchronization Event",
+      "seo_description": "Learn about the Daily Scrum event in Scrum framework - a 15-minute synchronization meeting for Developers to plan their work toward the Sprint Goal.",
+      "seo_keywords": ["daily scrum", "scrum events", "sprint synchronization", "developer meeting", "agile"],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Scrum Framework",
+        "slug": "scrum-framework",
+        "color": "#10B981"
+      },
+      "knowledge_technique_tags": [],
+      "knowledge_examples": [
+        {
+          "title": "Software Development Team Daily Scrum",
+          "description": "A development team of 6 developers holds their Daily Scrum every morning at 9:00 AM. Each developer briefly shares what they accomplished yesterday, what they plan to work on today, and any impediments they're facing. The meeting focuses on progress toward their Sprint Goal of delivering the user authentication feature.",
+          "context": "Mid-sprint in a 2-week Sprint working on user authentication features",
+          "outcome": "Team identified a dependency issue early and adjusted their plan to avoid Sprint Goal risk",
+          "industry": "Software Development",
+          "company_size": "Medium"
+>>>>>>> Stashed changes
         }
       ],
       "knowledge_media": []
     },
     {
+<<<<<<< Updated upstream
       "name": "User Story Mapping",
       "slug": "user-story-mapping",
       "description": "A collaborative technique for organizing user stories into a useful model that helps understand the functionality of the system, identify holes and omissions in your backlog, and effectively plan releases.",
@@ -204,3 +238,130 @@
     }
   ]
 }
+=======
+      "name": "Sprint Retrospective",
+      "slug": "sprint-retrospective",
+      "difficulty_level": "Intermediate",
+      "content_type": "technique",
+      "summary": "The Sprint Retrospective concludes the Sprint and provides an opportunity for the Scrum Team to inspect itself and create a plan for improvements.",
+      "description": "The Sprint Retrospective concludes the Sprint. It is timeboxed to a maximum of three hours for a one-month Sprint. For shorter Sprints, the event is usually shorter. The purpose of the Sprint Retrospective is to plan ways to increase quality and effectiveness. The Scrum Team inspects how the last Sprint went with regards to individuals, interactions, processes, tools, and their Definition of Done. The Scrum Team discusses what went well during the Sprint, what problems it encountered, and how those problems were (or were not) solved.",
+      "purpose": "To plan ways to increase quality and effectiveness by inspecting how the last Sprint went and identifying improvements.",
+      "originator": "Scrum Framework",
+      "seo_title": "Sprint Retrospective - Scrum Team Improvement Event",
+      "seo_description": "Master the Sprint Retrospective event in Scrum - learn how teams inspect their process and plan improvements for increased quality and effectiveness.",
+      "seo_keywords": ["sprint retrospective", "scrum events", "team improvement", "process inspection", "agile retrospective"],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Scrum Framework",
+        "slug": "scrum-framework",
+        "color": "#10B981"
+      },
+      "knowledge_technique_tags": [],
+      "knowledge_examples": [
+        {
+          "title": "E-commerce Team Sprint Retrospective",
+          "description": "An e-commerce development team conducts their Sprint Retrospective after completing a 2-week Sprint. They use the 'What went well, What didn't go well, What can we improve' format. The team identified that their Definition of Done needed updating to include performance testing, and they committed to implementing automated performance tests in the next Sprint.",
+          "context": "End of 2-week Sprint for e-commerce platform development",
+          "outcome": "Team updated their Definition of Done and implemented automated performance testing, reducing production issues by 40%",
+          "industry": "E-commerce",
+          "company_size": "Large"
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "Product Backlog Management",
+      "slug": "product-backlog-management",
+      "difficulty_level": "Advanced",
+      "content_type": "technique",
+      "summary": "The Product Backlog is an emergent, ordered list of what is needed to improve the product and is the single source of work undertaken by the Scrum Team.",
+      "description": "The Product Backlog is an emergent, ordered list of what is needed to improve the product. It is the single source of work undertaken by the Scrum Team. Product Backlog items that can be Done by the Scrum Team within one Sprint are deemed ready for selection in a Sprint Planning event. They usually acquire this degree of transparency after refining activities. Product Backlog refinement is the act of breaking down and further defining Product Backlog items into smaller more precise items. The Product Owner is accountable for the Product Backlog, including its content, availability, and ordering.",
+      "purpose": "To maintain a single source of requirements that enables the Scrum Team to deliver value incrementally toward the Product Goal.",
+      "originator": "Scrum Framework",
+      "seo_title": "Product Backlog Management - Scrum Artifact and Techniques",
+      "seo_description": "Learn effective Product Backlog management in Scrum - from ordering items to refinement activities for delivering value toward the Product Goal.",
+      "seo_keywords": ["product backlog", "backlog management", "product owner", "scrum artifacts", "backlog refinement"],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Scrum Framework",
+        "slug": "scrum-framework",
+        "color": "#10B981"
+      },
+      "knowledge_technique_tags": [],
+      "knowledge_examples": [
+        {
+          "title": "SaaS Platform Product Backlog",
+          "description": "A Product Owner for a SaaS analytics platform maintains a Product Backlog with 150+ items ordered by value and risk. They conduct weekly refinement sessions with the Developers to break down upcoming items. The Product Goal is to become the leading analytics platform for small businesses, and all backlog items are aligned with this goal.",
+          "context": "Ongoing product development for a competitive SaaS market",
+          "outcome": "Clear prioritization led to 25% increase in customer satisfaction and 40% faster feature delivery",
+          "industry": "Software as a Service",
+          "company_size": "Medium"
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "Definition of Done",
+      "slug": "definition-of-done",
+      "difficulty_level": "Intermediate",
+      "content_type": "technique",
+      "summary": "The Definition of Done is a formal description of the state of the Increment when it meets the quality measures required for the product.",
+      "description": "The Definition of Done is a formal description of the state of the Increment when it meets the quality measures required for the product. The moment a Product Backlog item meets the Definition of Done, an Increment is born. The Definition of Done creates transparency by providing everyone a shared understanding of what work was completed as part of the Increment. If a Product Backlog item does not meet the Definition of Done, it cannot be released or even presented at the Sprint Review. Instead, it returns to the Product Backlog for future consideration.",
+      "purpose": "To create transparency and ensure consistent quality by providing a shared understanding of what constitutes completed work.",
+      "originator": "Scrum Framework",
+      "seo_title": "Definition of Done - Scrum Quality Commitment",
+      "seo_description": "Understand the Definition of Done in Scrum - the quality commitment that ensures transparency and consistency in delivering Increments.",
+      "seo_keywords": ["definition of done", "scrum artifacts", "quality assurance", "increment", "transparency"],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Scrum Framework",
+        "slug": "scrum-framework",
+        "color": "#10B981"
+      },
+      "knowledge_technique_tags": [],
+      "knowledge_examples": [
+        {
+          "title": "Mobile App Definition of Done",
+          "description": "A mobile app development team defines their Definition of Done to include: code reviewed, unit tests written and passing, integration tests passing, accessibility guidelines met, performance benchmarks achieved, and Product Owner acceptance. This ensures every Increment meets their quality standards before release.",
+          "context": "Mobile application development with strict quality requirements",
+          "outcome": "Reduced post-release defects by 60% and improved team confidence in releases",
+          "industry": "Mobile Development",
+          "company_size": "Small"
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "Sprint Goal",
+      "slug": "sprint-goal",
+      "difficulty_level": "Intermediate",
+      "content_type": "technique",
+      "summary": "The Sprint Goal is the single objective for the Sprint that provides guidance to the Scrum Team on why it is building the Increment.",
+      "description": "The Sprint Goal is the single objective for the Sprint. Although the Sprint Goal is a commitment by the Developers, it provides flexibility in terms of the exact work needed to achieve it. The Sprint Goal also creates coherence and focus, encouraging the Scrum Team to work together rather than on separate initiatives. The Sprint Goal is created during the Sprint Planning event and then added to the Sprint Backlog. As the Developers work during the Sprint, they keep the Sprint Goal in mind. If the work turns out to be different than they expected, they collaborate with the Product Owner to negotiate the scope of the Sprint Backlog within the Sprint without affecting the Sprint Goal.",
+      "purpose": "To provide focus and coherence for the Sprint by establishing a single objective that guides the team's work.",
+      "originator": "Scrum Framework",
+      "seo_title": "Sprint Goal - Scrum Sprint Objective and Commitment",
+      "seo_description": "Learn about Sprint Goals in Scrum - how to create focused objectives that guide team collaboration and provide flexibility in Sprint execution.",
+      "seo_keywords": ["sprint goal", "sprint commitment", "scrum planning", "team focus", "sprint objective"],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Scrum Framework",
+        "slug": "scrum-framework",
+        "color": "#10B981"
+      },
+      "knowledge_technique_tags": [],
+      "knowledge_examples": [
+        {
+          "title": "Healthcare App Sprint Goal",
+          "description": "A healthcare application team sets their Sprint Goal as 'Enable patients to securely book appointments with their preferred doctors.' This goal guides all their work during the Sprint, including user authentication, doctor availability API, booking interface, and confirmation system. When technical challenges arise, the team collaborates to adjust the scope while maintaining focus on the goal.",
+          "context": "Healthcare application development with strict security and usability requirements",
+          "outcome": "Team delivered a cohesive booking feature that increased patient engagement by 35%",
+          "industry": "Healthcare Technology",
+          "company_size": "Medium"
+        }
+      ],
+      "knowledge_media": []
+    }
+  ]
+}
+>>>>>>> Stashed changes
