@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { RichTextFieldEditor } from './RichTextFieldEditor';
 import type { TemplateSection, TemplateField } from '@/types/template';
 import { 
@@ -57,6 +59,10 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
   const handleMouseDown = (e: React.MouseEvent) => {
     // Prevent selection of resize handles or other interactive elements
     if ((e.target as HTMLElement).classList.contains('resize-handle')) return;
+    
+    // Don't drag when clicking on field content or controls
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-field-content]') || target.closest('[data-field-controls]')) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -211,30 +217,120 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
 
   const renderField = (field: TemplateField) => {
     const isFieldSelected = selectedField?.id === field.id;
+    const [isEditing, setIsEditing] = useState(false);
+    const [isDraggingField, setIsDraggingField] = useState(false);
+    const [fieldDragOffset, setFieldDragOffset] = useState({ x: 0, y: 0 });
+    
+    const handleFieldMouseDown = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onSelectField(field);
+    };
+
+    const handleFieldDoubleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsEditing(true);
+    };
+
+    const handleDragHandleMouseDown = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      setIsDraggingField(true);
+      
+      const parent = sectionRef.current?.parentElement;
+      if (parent) {
+        const parentRect = parent.getBoundingClientRect();
+        const mouseCanvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100);
+        const mouseCanvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100);
+        
+        setFieldDragOffset({
+          x: mouseCanvasX - section.x - (field.x || 0),
+          y: mouseCanvasY - section.y - (field.y || 0)
+        });
+      }
+    };
+
+    const handleFieldDragMove = (e: MouseEvent) => {
+      if (!isDraggingField || !sectionRef.current) return;
+      
+      const parent = sectionRef.current.parentElement;
+      if (!parent) return;
+      
+      const parentRect = parent.getBoundingClientRect();
+      const canvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100) - section.x - fieldDragOffset.x;
+      const canvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100) - section.y - fieldDragOffset.y;
+      
+      // Constrain field movement within section boundaries
+      const newX = Math.max(0, Math.min(canvasX, section.width - (field.width || 200)));
+      const newY = Math.max(0, Math.min(canvasY, section.height - (field.height || 40)));
+      
+      onUpdateField(field.id, { x: newX, y: newY });
+    };
+
+    const handleFieldDragEnd = () => {
+      setIsDraggingField(false);
+    };
+
+    React.useEffect(() => {
+      if (isDraggingField) {
+        document.addEventListener('mousemove', handleFieldDragMove);
+        document.addEventListener('mouseup', handleFieldDragEnd);
+        
+        return () => {
+          document.removeEventListener('mousemove', handleFieldDragMove);
+          document.removeEventListener('mouseup', handleFieldDragEnd);
+        };
+      }
+    }, [isDraggingField, fieldDragOffset]);
+
+    const handleTextChange = (value: string) => {
+      onUpdateField(field.id, { content: value });
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && field.type !== 'textarea') {
+        e.preventDefault();
+        setIsEditing(false);
+      } else if (e.key === 'Enter' && e.ctrlKey && field.type === 'textarea') {
+        e.preventDefault();
+        setIsEditing(false);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsEditing(false);
+      }
+      // Stop propagation to prevent canvas shortcuts
+      e.stopPropagation();
+    };
     
     return (
       <div
         key={field.id}
-        className={`absolute border rounded cursor-pointer transition-all ${
+        className={`absolute border rounded transition-all ${
           isFieldSelected 
             ? 'border-primary bg-primary/10 ring-2 ring-primary/20' 
             : 'border-muted-foreground/30 hover:border-primary/50 bg-background/80'
-        }`}
+        } ${isDraggingField ? 'shadow-lg z-50' : ''}`}
         style={{
           left: field.x || 0,
           top: field.y || 0,
           width: field.width || 200,
           height: field.height || 40
         }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectField(field);
-        }}
+        onMouseDown={handleFieldMouseDown}
+        onDoubleClick={handleFieldDoubleClick}
+        data-field-content="true"
       >
-        <div className="p-2 h-full">
-          {/* Clean field - only show controls when selected */}
-          {isFieldSelected && (
-            <div className="absolute -top-6 left-0 flex items-center gap-1 bg-background/95 border rounded px-1 py-0.5 shadow-sm z-30">
+        {/* Drag handle - only visible when selected */}
+        {isFieldSelected && (
+          <>
+            <div className="absolute -top-6 left-0 flex items-center gap-1 bg-background/95 border rounded px-1 py-0.5 shadow-sm z-30" data-field-controls="true">
+              <div
+                className="cursor-move p-1 hover:bg-accent rounded"
+                onMouseDown={handleDragHandleMouseDown}
+                title="Drag to reposition"
+              >
+                <GripHorizontal className="h-3 w-3 text-muted-foreground" />
+              </div>
               <span className="text-xs text-muted-foreground">
                 {field.label}
               </span>
@@ -250,26 +346,44 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
                 <Trash2 className="h-2 w-2" />
               </Button>
             </div>
+          </>
+        )}
+        
+        <div className="p-2 h-full" data-field-content="true">
+          {isEditing ? (
+            field.type === 'textarea' ? (
+              <Textarea
+                value={field.content || ''}
+                onChange={(e) => handleTextChange(e.target.value)}
+                onBlur={() => setIsEditing(false)}
+                onKeyDown={handleKeyDown}
+                placeholder={field.placeholder || `Enter ${field.type} content...`}
+                className="w-full h-full resize-none border-0 bg-transparent p-0 text-xs focus:ring-1 focus:ring-primary/30"
+                autoFocus
+              />
+            ) : (
+              <Input
+                value={field.content || ''}
+                onChange={(e) => handleTextChange(e.target.value)}
+                onBlur={() => setIsEditing(false)}
+                onKeyDown={handleKeyDown}
+                placeholder={field.placeholder || `Enter ${field.type} content...`}
+                className="w-full h-full border-0 bg-transparent p-0 text-xs focus:ring-1 focus:ring-primary/30"
+                autoFocus
+              />
+            )
+          ) : (
+            <div 
+              className="w-full h-full p-1 text-xs leading-relaxed cursor-text rounded hover:bg-accent/20 min-h-[1.5rem] flex items-center"
+              title="Double-click to edit"
+            >
+              {field.content || (
+                <span className="text-muted-foreground italic">
+                  {field.placeholder || `Enter ${field.type} content...`}
+                </span>
+              )}
+            </div>
           )}
-          
-          {/* Direct editable content */}
-          <div 
-            className="flex-1 w-full h-full min-h-[1.5rem] p-1 text-xs leading-relaxed cursor-text focus:outline-none focus:ring-1 focus:ring-primary rounded border-0"
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={(e) => {
-              const content = e.currentTarget.textContent || '';
-              onUpdateField(field.id, { content });
-            }}
-            onFocus={() => onSelectField(field)}
-            style={{ 
-              minHeight: field.type === 'textarea' ? '3rem' : '1.5rem',
-              whiteSpace: field.type === 'textarea' ? 'pre-wrap' : 'nowrap',
-              overflow: field.type === 'textarea' ? 'auto' : 'hidden'
-            }}
-          >
-            {field.content || field.placeholder || `Enter ${field.type} content...`}
-          </div>
         </div>
       </div>
     );
