@@ -1,13 +1,9 @@
 import { ContentBlock } from '@/types/page';
-
-// ⬇️ These paths must match your actual repo tree.
-// From your logs, blocks live in src/components/blocks/…
 import { HeroBlock } from '@/components/blocks/HeroBlock';
 import { SectionBlock } from '@/components/blocks/SectionBlock';
 import { TextBlock } from '@/components/blocks/TextBlock';
 import { ImageBlock } from '@/components/blocks/ImageBlock';
 import { VideoBlock } from '@/components/blocks/VideoBlock';
-
 import PublicEvents from '@/components/blocks/PublicEvents';
 
 export interface ContentBlockRendererProps {
@@ -19,7 +15,9 @@ export interface ContentBlockRendererProps {
   isEditing?: boolean;
 }
 
-export const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
+export const ContentBlockRenderer = ({
+  block,
+}: ContentBlockRendererProps) => {
   if (!block?.is_visible) return null;
 
   switch (block.type) {
@@ -34,7 +32,6 @@ export const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
     case 'video':
       return <VideoBlock block={block} />;
     case 'events':
-      // Public, read-only list (no admin auth)
       return <PublicEvents />;
     default:
       return (
