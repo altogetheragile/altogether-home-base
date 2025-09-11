@@ -332,60 +332,88 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
     }
   }, [selectedField, updateField]);
 
-  // Alignment handlers with debugging
+  // Alignment handlers with snap-to-grid
   const handleAlignHorizontal = useCallback((alignmentType: 'left' | 'center' | 'right') => {
-    console.log('🔵 Align horizontal:', alignmentType, 'Selected:', multiSelection.selectedSectionIds);
     const selectedSections = multiSelection.getSelectedSections(config.sections);
-    console.log('🔵 Selected sections:', selectedSections);
     const updates = alignment.alignHorizontal(selectedSections, alignmentType);
-    console.log('🔵 Alignment updates:', updates);
+    
+    // Apply snap-to-grid if enabled
+    const snappedUpdates = snapToGrid && gridSize > 0 
+      ? updates.map(update => ({
+          ...update,
+          x: update.x !== undefined ? Math.round(update.x / gridSize) * gridSize : undefined
+        }))
+      : updates;
     
     const sectionUpdates = selectedSections.map((section, index) => ({
       id: section.id,
-      updates: updates[index]
+      updates: snappedUpdates[index]
     }));
     
     updateMultipleSections(sectionUpdates);
-  }, [multiSelection, alignment, config.sections, updateMultipleSections]);
+  }, [multiSelection, alignment, config.sections, updateMultipleSections, snapToGrid, gridSize]);
 
   const handleAlignVertical = useCallback((alignmentType: 'top' | 'middle' | 'bottom') => {
-    console.log('🔵 Align vertical:', alignmentType, 'Selected:', multiSelection.selectedSectionIds);
     const selectedSections = multiSelection.getSelectedSections(config.sections);
-    console.log('🔵 Selected sections:', selectedSections);
     const updates = alignment.alignVertical(selectedSections, alignmentType);
-    console.log('🔵 Alignment updates:', updates);
+    
+    // Apply snap-to-grid if enabled
+    const snappedUpdates = snapToGrid && gridSize > 0 
+      ? updates.map(update => ({
+          ...update,
+          y: update.y !== undefined ? Math.round(update.y / gridSize) * gridSize : undefined
+        }))
+      : updates;
     
     const sectionUpdates = selectedSections.map((section, index) => ({
       id: section.id,
-      updates: updates[index]
+      updates: snappedUpdates[index]
     }));
     
     updateMultipleSections(sectionUpdates);
-  }, [multiSelection, alignment, config.sections, updateMultipleSections]);
+  }, [multiSelection, alignment, config.sections, updateMultipleSections, snapToGrid, gridSize]);
 
   const handleDistribute = useCallback((direction: 'horizontal' | 'vertical') => {
     const selectedSections = multiSelection.getSelectedSections(config.sections);
     const updates = alignment.distribute(selectedSections, direction);
     
+    // Apply snap-to-grid if enabled
+    const snappedUpdates = snapToGrid && gridSize > 0 
+      ? updates.map(update => ({
+          ...update,
+          x: update.x !== undefined ? Math.round(update.x / gridSize) * gridSize : undefined,
+          y: update.y !== undefined ? Math.round(update.y / gridSize) * gridSize : undefined
+        }))
+      : updates;
+    
     const sectionUpdates = selectedSections.map((section, index) => ({
       id: section.id,
-      updates: updates[index]
+      updates: snappedUpdates[index]
     }));
     
     updateMultipleSections(sectionUpdates);
-  }, [multiSelection, alignment, config.sections, updateMultipleSections]);
+  }, [multiSelection, alignment, config.sections, updateMultipleSections, snapToGrid, gridSize]);
 
   const handleAlignToCanvas = useCallback((alignmentType: 'center' | 'left' | 'right' | 'top' | 'bottom') => {
     const selectedSections = multiSelection.getSelectedSections(config.sections);
     const updates = alignment.alignToCanvas(selectedSections, config.dimensions, alignmentType);
     
+    // Apply snap-to-grid if enabled
+    const snappedUpdates = snapToGrid && gridSize > 0 
+      ? updates.map(update => ({
+          ...update,
+          x: update.x !== undefined ? Math.round(update.x / gridSize) * gridSize : undefined,
+          y: update.y !== undefined ? Math.round(update.y / gridSize) * gridSize : undefined
+        }))
+      : updates;
+    
     const sectionUpdates = selectedSections.map((section, index) => ({
       id: section.id,
-      updates: updates[index]
+      updates: snappedUpdates[index]
     }));
     
     updateMultipleSections(sectionUpdates);
-  }, [multiSelection, alignment, config.sections, config.dimensions, updateMultipleSections]);
+  }, [multiSelection, alignment, config.sections, config.dimensions, updateMultipleSections, snapToGrid, gridSize]);
 
   // Handle canvas clicks to clear selection
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
@@ -475,10 +503,10 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       </div>
 
       <Tabs defaultValue="settings" className="flex-1">
-        <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 bg-muted h-9 min-w-0">
-          <TabsTrigger value="settings" className="text-xs px-1 min-w-0 truncate">Setup</TabsTrigger>
-          <TabsTrigger value="sections" className="text-xs px-1 min-w-0 truncate">Items</TabsTrigger>
-          <TabsTrigger value="fields" className="text-xs px-1 min-w-0 truncate">Tools</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 bg-muted h-9 min-w-0 overflow-x-hidden">
+          <TabsTrigger value="settings" className="text-xs px-2 min-w-0 truncate">Setup</TabsTrigger>
+          <TabsTrigger value="sections" className="text-xs px-2 min-w-0 truncate">Items</TabsTrigger>
+          <TabsTrigger value="fields" className="text-xs px-2 min-w-0 truncate">Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fields" className="p-4">

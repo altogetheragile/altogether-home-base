@@ -15,31 +15,26 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   canvasHeight,
   zoom,
 }) => {
-  // Debug logging for grid state
-  console.log('🔵 TemplateGrid render:', { show, size, zoom, canvasWidth, canvasHeight });
-  
   if (!show) {
-    console.log('🔵 Grid hidden - show:', show);
     return null;
   }
 
   const scaledSize = (size * zoom) / 100;
-  console.log('🔵 Grid scaledSize:', scaledSize);
   
-  // Create highly visible grid pattern with strong contrast
+  // Create visible grid pattern
   const gridPattern = `
     <defs>
       <pattern id="grid-${size}-${zoom}" width="${scaledSize}" height="${scaledSize}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--muted-foreground))" stroke-width="1" opacity="0.6"/>
+        <path d="M ${scaledSize} 0 L 0 0 0 ${scaledSize}" fill="none" stroke="hsl(var(--border))" stroke-width="1" opacity="1"/>
       </pattern>
       <pattern id="majorGrid-${size}-${zoom}" width="${scaledSize * 5}" height="${scaledSize * 5}" patternUnits="userSpaceOnUse">
-        <path d="M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}" fill="none" stroke="hsl(var(--muted-foreground))" stroke-width="2" opacity="0.8"/>
+        <path d="M ${scaledSize * 5} 0 L 0 0 0 ${scaledSize * 5}" fill="none" stroke="hsl(var(--border))" stroke-width="2" opacity="1"/>
       </pattern>
     </defs>
   `;
   
   return (
-    <div className="absolute inset-0 pointer-events-none z-0">
+    <div className="absolute inset-0 pointer-events-none z-10">
       <svg 
         width="100%" 
         height="100%" 
@@ -51,7 +46,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       >
         <defs dangerouslySetInnerHTML={{ __html: gridPattern.replace('<defs>', '').replace('</defs>', '') }} />
         
-        {/* Infinite grid background */}
+        {/* Grid background */}
         <rect 
           x="-200%" 
           y="-200%" 

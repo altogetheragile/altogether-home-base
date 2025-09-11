@@ -31,93 +31,91 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
   onToggleRightSidebar,
 }) => {
   return (
-    <div 
-      className="grid h-screen bg-muted/20 overflow-hidden"
-      style={{
-        gridTemplateColumns: `${leftSidebarOpen ? '18rem' : '3rem'} 1fr ${rightSidebarOpen ? '20rem' : '0'}`,
-        gridTemplateRows: '1fr auto',
-        transition: 'grid-template-columns 300ms ease-in-out'
-      }}
-    >
-      {/* Left Sidebar */}
-      <div className="border-r bg-card flex flex-col overflow-hidden">
-        {leftSidebarOpen ? (
-          <>
+    <div className="flex flex-col h-screen bg-muted/20 overflow-hidden">
+      {/* Main content area with flexbox layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <div 
+          className="border-r bg-card flex flex-col overflow-hidden transition-all duration-300"
+          style={{ width: leftSidebarOpen ? '20rem' : '3rem' }}
+        >
+          {leftSidebarOpen ? (
+            <>
+              <div className="flex items-center justify-between p-4 border-b bg-card">
+                <h3 className="text-sm font-semibold">Template Builder</h3>
+                {onToggleLeftSidebar && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onToggleLeftSidebar}
+                    className="h-8 w-8 p-0"
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                {leftSidebar}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col h-full">
+              <div className="p-2 border-b">
+                {onToggleLeftSidebar && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onToggleLeftSidebar}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex-1 p-1">
+                {leftSidebar}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Main Content - Flexbox canvas area that won't resize */}
+        <div className="flex-1 min-w-0 relative overflow-hidden">
+          <div className="absolute inset-0 w-full h-full overflow-hidden">
+            <div className="w-full h-full">
+              {children}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar - Only show when open */}
+        {rightSidebarOpen && (
+          <div className="border-l bg-card flex flex-col overflow-hidden w-80">
             <div className="flex items-center justify-between p-4 border-b bg-card">
-              <h3 className="text-sm font-semibold">Template Builder</h3>
-              {onToggleLeftSidebar && (
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <h3 className="text-sm font-semibold">Properties</h3>
+              </div>
+              {onToggleRightSidebar && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onToggleLeftSidebar}
+                  onClick={onToggleRightSidebar}
                   className="h-8 w-8 p-0"
                 >
-                  <PanelLeft className="h-4 w-4" />
+                  <PanelRight className="h-4 w-4" />
                 </Button>
               )}
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {leftSidebar}
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col h-full">
-            <div className="p-2 border-b">
-              {onToggleLeftSidebar && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onToggleLeftSidebar}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            <div className="flex-1 p-1">
-              {leftSidebar}
+            <div className="flex-1 overflow-auto p-4">
+              {rightSidebar}
             </div>
           </div>
         )}
       </div>
 
-      {/* Main Content - Fixed canvas area with absolute positioning */}
-      <div className="relative overflow-hidden" style={{ minWidth: '600px', minHeight: '400px' }}>
-        {/* Canvas Area with fixed dimensions to prevent resizing */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div className="w-full h-full">
-            {children}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Sidebar - Only show when open */}
-      {rightSidebarOpen && (
-        <div className="border-l bg-card flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b bg-card">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <h3 className="text-sm font-semibold">Properties</h3>
-            </div>
-            {onToggleRightSidebar && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleRightSidebar}
-                className="h-8 w-8 p-0"
-              >
-                <PanelRight className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <div className="flex-1 overflow-auto p-4">
-            {rightSidebar}
-          </div>
-        </div>
-      )}
-
       {/* Bottom Toolbar - Spans full width */}
-      <div className="col-span-full">
+      <div>
         {toolbar}
       </div>
     </div>
