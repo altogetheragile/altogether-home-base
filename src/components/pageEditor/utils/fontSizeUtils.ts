@@ -1,42 +1,10 @@
-// Font size utilities using CSS custom properties for responsive font scaling
-
-const updateDynamicFontSize = (variable: string, size: string | number) => {
-  const pixelSize = typeof size === 'string' ? parseInt(size.replace('px', '')) : size;
-  if (pixelSize && pixelSize > 0) {
-    // More aggressive mobile scaling: mobile (35%), tablet (65%), desktop (100%)
-    const mobileSize = Math.max(14, Math.round(pixelSize * 0.35));
-    const tabletSize = Math.max(18, Math.round(pixelSize * 0.65));
-    const clampValue = `clamp(${mobileSize}px, ${Math.round(pixelSize / 24)}rem + 1vw, ${pixelSize}px)`;
-    document.documentElement.style.setProperty(variable, clampValue);
-    console.log(`Updated ${variable} to ${clampValue}`);
-  }
-};
+// DEPRECATED: This file is replaced by useDynamicFontSize hook
+// These functions are kept for backward compatibility but should not be used
+// Use useDynamicFontSize hook instead
 
 export const getTitleFontSize = (styles: any) => {
-  console.log('Getting title font size with styles:', styles);
-  
-  // Handle custom pixel values first - check for actual pixel values
-  if (styles.customTitleFontSize && typeof styles.customTitleFontSize === 'string') {
-    const pixelValue = parseInt(styles.customTitleFontSize.replace('px', ''));
-    if (pixelValue && pixelValue > 0) {
-      updateDynamicFontSize('--lovable-title-size', pixelValue);
-      return 'text-[length:var(--lovable-title-size)]';
-    }
-  }
-  
-  // Handle predefined sizes from titleFontSize that might have custom pixel values
+  // Legacy function - use useDynamicFontSize hook instead
   const fontSize = styles.titleFontSize;
-  if (fontSize && fontSize.includes('[') && fontSize.includes('px]')) {
-    // Extract pixel value from text-[80px] format
-    const match = fontSize.match(/text-\[(\d+)px\]/);
-    if (match) {
-      const pixelValue = parseInt(match[1]);
-      updateDynamicFontSize('--lovable-title-size', pixelValue);
-      return 'text-[length:var(--lovable-title-size)]';
-    }
-  }
-  
-  // Handle predefined responsive sizes
   if (fontSize) {
     switch (fontSize) {
       case 'text-6xl': return 'text-2xl sm:text-3xl md:text-5xl lg:text-6xl';
@@ -47,36 +15,12 @@ export const getTitleFontSize = (styles: any) => {
       default: return fontSize;
     }
   }
-  
-  // Default responsive title size
   return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl';
 };
 
 export const getSubtitleFontSize = (styles: any) => {
-  console.log('Getting subtitle font size with styles:', styles);
-  
-  // Handle custom pixel values first
-  if (styles.customSubtitleFontSize && typeof styles.customSubtitleFontSize === 'string') {
-    const pixelValue = parseInt(styles.customSubtitleFontSize.replace('px', ''));
-    if (pixelValue && pixelValue > 0) {
-      updateDynamicFontSize('--lovable-subtitle-size', pixelValue);
-      return 'text-[length:var(--lovable-subtitle-size)]';
-    }
-  }
-  
-  // Handle predefined sizes from subtitleFontSize that might have custom pixel values
+  // Legacy function - use useDynamicFontSize hook instead
   const fontSize = styles.subtitleFontSize;
-  if (fontSize && fontSize.includes('[') && fontSize.includes('px]')) {
-    // Extract pixel value from text-[36px] format
-    const match = fontSize.match(/text-\[(\d+)px\]/);
-    if (match) {
-      const pixelValue = parseInt(match[1]);
-      updateDynamicFontSize('--lovable-subtitle-size', pixelValue);
-      return 'text-[length:var(--lovable-subtitle-size)]';
-    }
-  }
-  
-  // Handle predefined responsive sizes
   if (fontSize) {
     switch (fontSize) {
       case 'text-3xl': return 'text-lg sm:text-xl md:text-2xl lg:text-3xl';
@@ -86,35 +30,12 @@ export const getSubtitleFontSize = (styles: any) => {
       default: return fontSize;
     }
   }
-  
-  // Default responsive subtitle size
   return 'text-base sm:text-lg md:text-xl';
 };
 
 export const getContentFontSize = (styles: any) => {
-  console.log('Getting content font size with styles:', styles);
-  
-  // Handle custom content font sizes
-  if (styles.customContentFontSize && typeof styles.customContentFontSize === 'string') {
-    const pixelValue = parseInt(styles.customContentFontSize.replace('px', ''));
-    if (pixelValue && pixelValue > 0) {
-      updateDynamicFontSize('--lovable-content-size', pixelValue);
-      return 'text-[length:var(--lovable-content-size)]';
-    }
-  }
-  
-  // Use fontSize or subtitleFontSize with responsive scaling
+  // Legacy function - use useDynamicFontSize hook instead
   const fontSize = styles.fontSize || styles.subtitleFontSize;
-  if (fontSize && fontSize.includes('[') && fontSize.includes('px]')) {
-    // Extract pixel value from text-[18px] format
-    const match = fontSize.match(/text-\[(\d+)px\]/);
-    if (match) {
-      const pixelValue = parseInt(match[1]);
-      updateDynamicFontSize('--lovable-content-size', pixelValue);
-      return 'text-[length:var(--lovable-content-size)]';
-    }
-  }
-  
   if (fontSize) {
     switch (fontSize) {
       case 'text-2xl': return 'text-sm sm:text-base md:text-lg lg:text-xl';
@@ -124,8 +45,6 @@ export const getContentFontSize = (styles: any) => {
       default: return fontSize;
     }
   }
-  
-  // Default responsive content size
   return 'text-sm sm:text-base';
 };
 

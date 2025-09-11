@@ -1,7 +1,7 @@
 import React from 'react';
 import { ContentBlock } from '@/types/page';
 import { ButtonRenderer } from './ButtonRenderer';
-import { getTitleFontSize, getSubtitleFontSize, getTitleSpacing } from '../utils/fontSizeUtils';
+import { useDynamicFontSize, getTitleSpacing } from '../../../hooks/useDynamicFontSize';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
 interface HeroBlockProps {
@@ -10,6 +10,7 @@ interface HeroBlockProps {
 
 export const HeroBlock: React.FC<HeroBlockProps> = ({ block }) => {
   const styles = block.content?.styles || {};
+  const { titleSize, subtitleSize } = useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
   
@@ -35,10 +36,10 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({ block }) => {
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
       <div className="relative z-10 max-w-4xl mx-auto px-2 sm:px-4 py-6 sm:py-8 md:py-16 space-y-3 sm:space-y-4 md:space-y-6 w-full">
-        <h1 className={`${getTitleFontSize(styles)} font-bold leading-tight text-center`}>
+        <h1 className={`${titleSize} font-bold leading-tight text-center`}>
           {block.content.title || 'Hero Title'}
         </h1>
-        <p className={`${getSubtitleFontSize(styles)} opacity-90 leading-relaxed text-center max-w-3xl mx-auto`}>
+        <p className={`${subtitleSize} opacity-90 leading-relaxed text-center max-w-3xl mx-auto`}>
           {block.content.subtitle || 'Hero subtitle'}
         </p>
         <div className="text-center pt-2">
