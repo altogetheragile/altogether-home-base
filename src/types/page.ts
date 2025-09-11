@@ -13,7 +13,7 @@ export interface Page {
 export interface ContentBlock {
   id: string;
   page_id: string;
-  type: 'text' | 'image' | 'video' | 'hero' | 'section';
+  type: 'text' | 'image' | 'video' | 'hero' | 'section' | 'events'; // ✅ added "events"
   content: Record<string, any>;
   position: number;
   is_visible: boolean;
