@@ -1,47 +1,52 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { formatPrice } from "@/utils/currency";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { formatPrice } from '@/utils/currency';
 
-const PublicEvents = ({ block }: { block: any }) => {
+const PublicEvents = () => {
   const { data: events, isLoading, error } = useQuery({
-    queryKey: ["public-events"],
+    queryKey: ['public-events'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("events")
+        .from('events')
         .select(`
-          *,
+          id,
+          title,
+          start_date,
+          price_cents,
+          currency,
           instructor:instructors(name),
           location:locations(name)
         `)
-        .eq("is_published", true)
-        .order("start_date", { ascending: true });
+        .eq('is_published', true)
+        .order('start_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ PublicEvents: Error fetching events:', error);
+        throw error;
+      }
       return data || [];
     },
   });
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading events...</div>;
+    return <p className="text-center text-gray-500">Loading events…</p>;
   }
 
   if (error) {
-    return <div className="text-center text-red-500 py-8">Failed to load events.</div>;
+    return <p className="text-center text-red-500">Failed to load events.</p>;
   }
 
   if (!events?.length) {
-    return <div className="text-center text-gray-500 py-8">No upcoming events.</div>;
+    return <p className="text-center text-gray-500">No upcoming events.</p>;
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900">
-        {block?.content?.title || "Upcoming Events"}
-      </h2>
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+    <Card>
+      <CardContent>
+        <h3 className="text-xl font-semibold mb-4">Upcoming Events</h3>
         <Table>
           <TableHeader>
             <TableRow>
@@ -55,21 +60,21 @@ const PublicEvents = ({ block }: { block: any }) => {
           <TableBody>
             {events.map((event: any) => (
               <TableRow key={event.id}>
-                <TableCell className="font-medium">
-                  {String(event.title || "Untitled")}
-                </TableCell>
-                <TableCell>{format(new Date(event.start_date), "MMM dd, yyyy")}</TableCell>
-                <TableCell>{event.instructor?.name || "TBA"}</TableCell>
-                <TableCell>{event.location?.name || "TBA"}</TableCell>
+                <TableCell>{String(event.title || 'Untitled')}</TableCell>
                 <TableCell>
-                  {formatPrice(event.price_cents || 0, event.currency || "usd")}
+                  {event.start_date ? format(new Date(event.start_date), 'MMM dd, yyyy') : 'TBA'}
+                </TableCell>
+                <TableCell>{event.instructor?.name || 'TBA'}</TableCell>
+                <TableCell>{event.location?.name || 'TBA'}</TableCell>
+                <TableCell>
+                  {formatPrice(event.price_cents || 0, event.currency || 'usd')}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
