@@ -8,30 +8,32 @@ interface VideoBlockProps {
 }
 
 export const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ block }) => {
-  const styles = useMemo(() => block.content?.styles || {}, [block.content?.styles]);
+  // Ensure block.content exists with safe defaults
+  const content = block.content || {};
+  const styles = useMemo(() => content.styles || {}, [content.styles]);
   // Use useDynamicFontSize for consistent hook patterns across all block types
   useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
-  const videoBackgroundStyles = getBackgroundStyles(block.content);
+  const videoBackgroundStyles = getBackgroundStyles(content);
 
   return (
     <div 
-      className={`relative ${getHeightClass(block.content.height, 'video')} ${styleClasses}`} 
+      className={`relative ${getHeightClass(content.height, 'video')} ${styleClasses}`} 
       style={{...inlineStyles, ...videoBackgroundStyles}}
     >
       {/* Dark overlay for background images */}
-      {block.content.backgroundImage && (
+      {content.backgroundImage && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
       <div className="relative z-10">
-        {block.content.url ? (
+        {content.url ? (
           <div className="aspect-video">
             <iframe
-              src={block.content.url}
+              src={content.url}
               className="w-full h-full rounded-lg"
               allowFullScreen
-              title={block.content.title || 'Video'}
+              title={content.title || 'Video'}
             />
           </div>
         ) : (

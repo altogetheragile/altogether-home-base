@@ -8,33 +8,35 @@ interface ImageBlockProps {
 }
 
 export const ImageBlock: React.FC<ImageBlockProps> = React.memo(({ block }) => {
-  const styles = useMemo(() => block.content?.styles || {}, [block.content?.styles]);
+  // Ensure block.content exists with safe defaults
+  const content = block.content || {};
+  const styles = useMemo(() => content.styles || {}, [content.styles]);
   // Use useDynamicFontSize for consistent hook patterns across all block types
   useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
-  const imageBackgroundStyles = getBackgroundStyles(block.content);
+  const imageBackgroundStyles = getBackgroundStyles(content);
 
   return (
     <div 
-      className={`relative ${getHeightClass(block.content.height, 'image')} ${styleClasses}`} 
+      className={`relative ${getHeightClass(content.height, 'image')} ${styleClasses}`} 
       style={{...inlineStyles, ...imageBackgroundStyles}}
     >
       {/* Dark overlay for background images */}
-      {block.content.backgroundImage && (
+      {content.backgroundImage && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
       <div className="relative z-10">
-        {block.content.src ? (
+        {content.src ? (
           <div className="text-center">
             <img
-              src={block.content.src}
-              alt={block.content.alt || ''}
+              src={content.src}
+              alt={content.alt || ''}
               className="max-w-full h-auto mx-auto rounded-lg shadow-md"
             />
-            {block.content.caption && (
-              <p className={`text-sm mt-2 ${block.content.backgroundImage ? 'text-white' : 'text-muted-foreground'}`}>
-                {block.content.caption}
+            {content.caption && (
+              <p className={`text-sm mt-2 ${content.backgroundImage ? 'text-white' : 'text-muted-foreground'}`}>
+                {content.caption}
               </p>
             )}
           </div>
