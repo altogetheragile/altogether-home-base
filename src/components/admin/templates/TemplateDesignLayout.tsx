@@ -32,12 +32,13 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
 }) => {
   return (
     <div className="flex flex-col h-screen bg-muted/20 overflow-hidden">
-      {/* Main content area with flexbox layout */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Main content area with CSS Grid layout */}
+      <div className="grid flex-1 overflow-hidden" style={{ 
+        gridTemplateColumns: leftSidebarOpen ? '20rem 1fr' + (rightSidebarOpen ? ' 20rem' : '') : '3rem 1fr' + (rightSidebarOpen ? ' 20rem' : '')
+      }}>
         {/* Left Sidebar */}
         <div 
           className="border-r bg-card flex flex-col overflow-hidden transition-all duration-300"
-          style={{ width: leftSidebarOpen ? '20rem' : '3rem' }}
         >
           {leftSidebarOpen ? (
             <>
@@ -79,8 +80,8 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
           )}
         </div>
 
-        {/* Main Content - Flexbox canvas area that won't resize */}
-        <div className="flex-1 min-w-0 relative overflow-hidden">
+        {/* Main Content - Grid canvas area with fixed dimensions */}
+        <div className="relative overflow-hidden">
           <div className="absolute inset-0 w-full h-full overflow-hidden">
             <div className="w-full h-full">
               {children}
@@ -90,7 +91,7 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
 
         {/* Right Sidebar - Only show when open */}
         {rightSidebarOpen && (
-          <div className="border-l bg-card flex flex-col overflow-hidden w-80">
+          <div className="border-l bg-card flex flex-col overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b bg-card">
               <div className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
