@@ -80,67 +80,8 @@ export const useRecommendations = (
   return useQuery({
     queryKey: ['recommendations', user?.id, contentType, limit, excludeIds],
     queryFn: async () => {
-      try {
-        // First try to get cached recommendations
-        const { data: cached, error } = await supabase
-          .from('recommendation_cache')
-          .select('*')
-          .gt('expires_at', new Date().toISOString())
-          .eq('content_type', contentType || 'technique')
-          .eq('user_id', user?.id || null)
-          .not('content_id', 'in', excludeIds.length > 0 ? `(${excludeIds.join(',')})` : '()')
-          .order('score', { ascending: false })
-          .limit(limit);
-
-        // If table doesn't exist (42P01 error), skip to fresh recommendations
-        if (error && error.code === '42P01') {
-          console.log('Recommendation cache table does not exist, generating fresh recommendations');
-          return await generateFreshRecommendations(contentType, limit, excludeIds, user?.id);
-        }
-
-        if (cached && cached.length >= limit) {
-          // Fetch actual content for each cached recommendation
-          const enrichedRecommendations = await Promise.all(
-            cached.map(async (item: any) => {
-              let content = null;
-              
-              if (item.content_type === 'technique') {
-                const { data } = await supabase
-                  .from('knowledge_items')
-                  .select('id, name, slug, description, view_count')
-                  .eq('id', item.content_id)
-                  .eq('is_published', true)
-                  .single();
-                content = data;
-              } else if (item.content_type === 'event') {
-                const { data } = await supabase
-                  .from('events')
-                  .select('id, title, description, start_date, end_date, price_cents')
-                  .eq('id', item.content_id)
-                  .eq('is_published', true)
-                  .single();
-                content = data;
-              } else if (item.content_type === 'blog') {
-                const { data } = await supabase
-                  .from('blog_posts')
-                  .select('id, title, excerpt, slug, featured_image_url')
-                  .eq('id', item.content_id)
-                  .eq('is_published', true)
-                  .single();
-                content = data;
-              }
-              
-              return { ...item, content };
-            })
-          );
-          
-          return enrichedRecommendations.filter(item => item.content);
-        }
-      } catch (error) {
-        console.log('Error fetching cached recommendations, falling back to fresh:', error);
-      }
-
-      // Fall back to generating fresh recommendations
+      // Always generate fresh recommendations since recommendation_cache table doesn't exist
+      console.log('Recommendation cache table does not exist, generating fresh recommendations');
       return await generateFreshRecommendations(contentType, limit, excludeIds, user?.id);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes

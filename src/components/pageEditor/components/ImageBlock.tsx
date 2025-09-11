@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
+import { useDynamicFontSize } from '../../../hooks/useDynamicFontSize';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
 interface ImageBlockProps {
@@ -8,6 +9,8 @@ interface ImageBlockProps {
 
 export const ImageBlock: React.FC<ImageBlockProps> = React.memo(({ block }) => {
   const styles = useMemo(() => block.content?.styles || {}, [block.content?.styles]);
+  // Use useDynamicFontSize for consistent hook patterns across all block types
+  useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
   const imageBackgroundStyles = getBackgroundStyles(block.content);
