@@ -1,82 +1,74 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { formatPrice } from "@/utils/currency";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-interface PublicEventsProps {
-  block: any;
-}
-
-const PublicEvents = ({ block }: PublicEventsProps) => {
+const PublicEvents = ({ block }: { block: any }) => {
   const { data: events, isLoading, error } = useQuery({
     queryKey: ["public-events"],
     queryFn: async () => {
-      console.log("🌐 PublicEvents: fetching visible events...");
       const { data, error } = await supabase
         .from("events")
-        .select(
-          `
-          id,
-          title,
-          start_date,
-          price_cents,
-          currency,
+        .select(`
+          *,
           instructor:instructors(name),
           location:locations(name)
-        `
-        )
+        `)
         .eq("is_published", true)
         .order("start_date", { ascending: true });
 
-      if (error) {
-        console.error("❌ PublicEvents query error", error);
-        throw error;
-      }
+      if (error) throw error;
       return data || [];
     },
   });
 
   if (isLoading) {
-    return <p>Loading events...</p>;
+    return <div className="text-center py-8">Loading events...</div>;
   }
 
   if (error) {
-    return <p className="text-red-500">Failed to load events.</p>;
+    return <div className="text-center text-red-500 py-8">Failed to load events.</div>;
   }
 
-  if (!events || events.length === 0) {
-    return <p>No upcoming events found.</p>;
+  if (!events?.length) {
+    return <div className="text-center text-gray-500 py-8">No upcoming events.</div>;
   }
 
   return (
-    <div className="grid md:grid-cols-3 gap-6">
-      {events.map((event) => (
-        <Card key={event.id} className="flex flex-col">
-          <CardHeader>
-            <CardTitle>{String(event.title || "Untitled Event")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 space-y-2">
-            <p className="text-gray-600">
-              📅 {event.start_date ? format(new Date(event.start_date), "PPP") : "TBA"}
-            </p>
-            <p className="text-gray-600">
-              👤 {event.instructor?.name || "TBA"}
-            </p>
-            <p className="text-gray-600">
-              📍 {event.location?.name || "TBA"}
-            </p>
-            <p className="font-semibold">
-              💰 {formatPrice(event.price_cents || 0, event.currency || "usd")}
-            </p>
-            <Link to={`/events/${event.id}`}>
-              <Button className="mt-3 w-full">View Details</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">
+        {block?.content?.title || "Upcoming Events"}
+      </h2>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Instructor</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Price</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {events.map((event: any) => (
+              <TableRow key={event.id}>
+                <TableCell className="font-medium">
+                  {String(event.title || "Untitled")}
+                </TableCell>
+                <TableCell>{format(new Date(event.start_date), "MMM dd, yyyy")}</TableCell>
+                <TableCell>{event.instructor?.name || "TBA"}</TableCell>
+                <TableCell>{event.location?.name || "TBA"}</TableCell>
+                <TableCell>
+                  {formatPrice(event.price_cents || 0, event.currency || "usd")}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
