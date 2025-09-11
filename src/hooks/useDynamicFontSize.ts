@@ -12,14 +12,17 @@ const calculateResponsiveFontSize = (pixelSize: number): string => {
 
 export const useDynamicFontSize = (styles: any) => {
   return useMemo(() => {
-    const titleSize = getTitleFontSizeValue(styles);
-    const subtitleSize = getSubtitleFontSizeValue(styles);
-    const contentSize = getContentFontSizeValue(styles);
+    // Ensure styles is always an object to prevent undefined access
+    const safeStyles = styles || {};
+    
+    const titleSize = getTitleFontSizeValue(safeStyles);
+    const subtitleSize = getSubtitleFontSizeValue(safeStyles);
+    const contentSize = getContentFontSizeValue(safeStyles);
     
     // Calculate inline styles for custom font sizes
-    const titleStyle = getTitleInlineStyle(styles);
-    const subtitleStyle = getSubtitleInlineStyle(styles);
-    const contentStyle = getContentInlineStyle(styles);
+    const titleStyle = getTitleInlineStyle(safeStyles);
+    const subtitleStyle = getSubtitleInlineStyle(safeStyles);
+    const contentStyle = getContentInlineStyle(safeStyles);
     
     return { 
       titleSize, 
@@ -29,7 +32,7 @@ export const useDynamicFontSize = (styles: any) => {
       subtitleStyle,
       contentStyle
     };
-  }, [styles.customTitleFontSize, styles.titleFontSize, styles.customSubtitleFontSize, styles.subtitleFontSize, styles.customContentFontSize, styles.fontSize]);
+  }, [styles]); // Use entire styles object as dependency
 };
 
 const getTitleInlineStyle = (styles: any): React.CSSProperties => {

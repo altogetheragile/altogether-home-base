@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
@@ -6,8 +6,8 @@ interface ImageBlockProps {
   block: ContentBlock;
 }
 
-export const ImageBlock: React.FC<ImageBlockProps> = ({ block }) => {
-  const styles = block.content?.styles || {};
+export const ImageBlock: React.FC<ImageBlockProps> = React.memo(({ block }) => {
+  const styles = useMemo(() => block.content?.styles || {}, [block.content?.styles]);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
   const imageBackgroundStyles = getBackgroundStyles(block.content);
@@ -43,4 +43,4 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ block }) => {
       </div>
     </div>
   );
-};
+});

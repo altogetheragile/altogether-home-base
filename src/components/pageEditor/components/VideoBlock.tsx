@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
@@ -6,8 +6,8 @@ interface VideoBlockProps {
   block: ContentBlock;
 }
 
-export const VideoBlock: React.FC<VideoBlockProps> = ({ block }) => {
-  const styles = block.content?.styles || {};
+export const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ block }) => {
+  const styles = useMemo(() => block.content?.styles || {}, [block.content?.styles]);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
   const videoBackgroundStyles = getBackgroundStyles(block.content);
@@ -39,4 +39,4 @@ export const VideoBlock: React.FC<VideoBlockProps> = ({ block }) => {
       </div>
     </div>
   );
-};
+});
