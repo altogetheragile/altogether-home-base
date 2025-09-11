@@ -777,7 +777,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
 
         <div
           ref={canvasRef}
-          className="relative flex items-center justify-center min-h-full min-w-full p-16"
+          className="relative w-full h-full overflow-auto p-16"
           style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
