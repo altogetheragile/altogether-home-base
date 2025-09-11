@@ -34,7 +34,7 @@ export const TemplateDesignLayout: React.FC<TemplateDesignLayoutProps> = ({
     <div className="flex flex-col h-screen bg-muted/20 overflow-hidden">
       {/* Main content area with CSS Grid layout */}
       <div className="grid flex-1 overflow-hidden" style={{ 
-        gridTemplateColumns: leftSidebarOpen ? '20rem 1fr' + (rightSidebarOpen ? ' 20rem' : '') : '3rem 1fr' + (rightSidebarOpen ? ' 20rem' : '')
+        gridTemplateColumns: leftSidebarOpen ? '20rem 1fr' + (rightSidebarOpen ? ' 15rem' : '') : '3rem 1fr' + (rightSidebarOpen ? ' 15rem' : '')
       }}>
         {/* Left Sidebar */}
         <div 

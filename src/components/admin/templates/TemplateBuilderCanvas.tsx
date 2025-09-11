@@ -15,7 +15,8 @@ import { TemplateSectionEditor } from './TemplateSectionEditor';
 import { DebouncedTemplateInput } from './DebouncedTemplateInput';
 import { TemplateDesignLayout } from './TemplateDesignLayout';
 import { TemplateGrid } from './TemplateGrid';
-import { ImprovedPropertiesPanel } from './ImprovedPropertiesPanel';
+import { CompactPropertiesPanel } from './CompactPropertiesPanel';
+import { FloatingPropertiesControls } from './FloatingPropertiesControls';
 import { InlineTextEditor } from './InlineTextEditor';
 import type { KnowledgeTemplate, TemplateConfig, TemplateField, TemplateSection, TemplateType } from '@/types/template';
 import { BottomToolbar } from './BottomToolbar';
@@ -668,7 +669,7 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
   };
 
   const renderRightSidebar = () => (
-    <ImprovedPropertiesPanel
+    <CompactPropertiesPanel
       selectedSection={selectedSection}
       selectedField={selectedField}
       onUpdateSection={(updates) => {
@@ -865,6 +866,25 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
     >
       {renderCanvas()}
+      
+      {/* Floating controls when properties panel is closed */}
+      {!rightSidebarOpen && (selectedSection || selectedField) && (
+        <FloatingPropertiesControls
+          selectedSection={selectedSection}
+          selectedField={selectedField}
+          onUpdateSection={(updates) => {
+            if (selectedSection) {
+              handleSectionUpdate(selectedSection.id, updates);
+            }
+          }}
+          onUpdateField={(updates) => {
+            if (selectedField && selectedSection) {
+              handleFieldUpdate(selectedSection.id, selectedField.id, updates);
+            }
+          }}
+          onOpenPanel={() => setRightSidebarOpen(true)}
+        />
+      )}
     </TemplateDesignLayout>
   );
 };
