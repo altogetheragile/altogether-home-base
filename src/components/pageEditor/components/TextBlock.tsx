@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
 import { ButtonRenderer } from './ButtonRenderer';
 import { useDynamicFontSize, getTitleSpacing } from '../../../hooks/useDynamicFontSize';
@@ -8,9 +8,9 @@ interface TextBlockProps {
   block: ContentBlock;
 }
 
-export const TextBlock: React.FC<TextBlockProps> = ({ block }) => {
-  const styles = block.content?.styles || {};
-  const { titleSize, contentSize } = useDynamicFontSize(styles);
+export const TextBlock: React.FC<TextBlockProps> = React.memo(({ block }) => {
+  const styles = useMemo(() => block.content?.styles || {}, [block.content?.styles]);
+  const { titleSize, contentSize, titleStyle, contentStyle } = useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
   const textBackgroundStyles = getBackgroundStyles(block.content);
@@ -26,13 +26,21 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block }) => {
       )}
       <div className="relative z-10 px-2 sm:px-4 md:px-6 py-4 sm:py-6 md:py-12 space-y-3 sm:space-y-4 md:space-y-6 w-full max-w-4xl mx-auto">
         {block.content.title && (
-          <h3 className={`${titleSize} font-semibold`}>
+          <h3 
+            className={`${titleSize} font-semibold`}
+            style={titleStyle}
+          >
             {block.content.title}
           </h3>
         )}
         {block.content.content && (
           <div className="max-w-none px-2 sm:px-0">
-            <p className={`${contentSize} leading-relaxed`}>{block.content.content}</p>
+            <p 
+              className={`${contentSize} leading-relaxed`}
+              style={contentStyle}
+            >
+              {block.content.content}
+            </p>
           </div>
         )}
         <div>
@@ -41,4 +49,4 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block }) => {
       </div>
     </div>
   );
-};
+});

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
 import { ButtonRenderer } from './ButtonRenderer';
 import { useDynamicFontSize, getTitleSpacing } from '../../../hooks/useDynamicFontSize';
@@ -8,9 +8,9 @@ interface SectionBlockProps {
   block: ContentBlock;
 }
 
-export const SectionBlock: React.FC<SectionBlockProps> = ({ block }) => {
-  const styles = block.content?.styles || {};
-  const { titleSize, contentSize } = useDynamicFontSize(styles);
+export const SectionBlock: React.FC<SectionBlockProps> = React.memo(({ block }) => {
+  const styles = useMemo(() => block.content?.styles || {}, [block.content?.styles]);
+  const { titleSize, contentSize, titleStyle, contentStyle } = useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
   const sectionBackgroundStyles = getBackgroundStyles(block.content);
@@ -26,13 +26,21 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({ block }) => {
       )}
       <div className="relative z-10 px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-16 space-y-3 sm:space-y-4 md:space-y-8 w-full max-w-6xl mx-auto">
         {block.content.title && (
-          <h2 className={`${titleSize} font-bold text-center`}>
+          <h2 
+            className={`${titleSize} font-bold text-center`}
+            style={titleStyle}
+          >
             {block.content.title}
           </h2>
         )}
         {block.content.content && (
           <div className="mx-auto max-w-4xl px-2 sm:px-4">
-            <p className={`${contentSize} leading-relaxed text-center`}>{block.content.content}</p>
+            <p 
+              className={`${contentSize} leading-relaxed text-center`}
+              style={contentStyle}
+            >
+              {block.content.content}
+            </p>
           </div>
         )}
         <div className="text-center">
@@ -41,4 +49,4 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({ block }) => {
       </div>
     </div>
   );
-};
+});
