@@ -1,10 +1,10 @@
-import HeroBlock from "@/components/pageEditor/blocks/HeroBlock";
-import SectionBlock from "@/components/pageEditor/blocks/SectionBlock";
-import TextBlock from "@/components/pageEditor/blocks/TextBlock";
-import ImageBlock from "@/components/pageEditor/blocks/ImageBlock";
-import VideoBlock from "@/components/pageEditor/blocks/VideoBlock";
+import HeroBlock from "@/components/blocks/HeroBlock";
+import SectionBlock from "@/components/blocks/SectionBlock";
+import TextBlock from "@/components/blocks/TextBlock";
+import ImageBlock from "@/components/blocks/ImageBlock";
+import VideoBlock from "@/components/blocks/VideoBlock";
 import PublicEvents from "@/components/blocks/PublicEvents";
-import { ContentBlock } from "@/types";
+import type { ContentBlock } from "@/types/index";
 
 export interface ContentBlockRendererProps {
   block: ContentBlock;
