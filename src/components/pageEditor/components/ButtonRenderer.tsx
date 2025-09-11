@@ -7,61 +7,71 @@ interface ButtonRendererProps {
 }
 
 export const ButtonRenderer: React.FC<ButtonRendererProps> = ({ content, styles }) => {
-  const buttons = content?.buttons || [];
-  const hasLegacyCTA = content?.ctaText && content?.ctaLink;
+  // Ensure content and styles are safely accessed
+  const safeContent = content || {};
+  const safeStyles = styles || {};
+  
+  const buttons = Array.isArray(safeContent.buttons) ? safeContent.buttons : [];
+  const hasLegacyCTA = typeof safeContent.ctaText === 'string' && typeof safeContent.ctaLink === 'string' && safeContent.ctaText && safeContent.ctaLink;
   
   if (buttons.length === 0 && !hasLegacyCTA) return null;
   
-  const buttonSpacing = styles.buttonsSpacing || 'gap-4';
+  // Ensure buttonSpacing is a string
+  const buttonSpacing = typeof safeStyles.buttonsSpacing === 'string' ? safeStyles.buttonsSpacing : 'gap-4';
   
   return (
     <div className={`flex flex-wrap ${buttonSpacing} justify-center`}>
       {/* Legacy CTA button for hero sections */}
       {hasLegacyCTA && (
         <Button 
-          variant={styles.buttonsVariant || 'default'} 
-          size={styles.buttonsSize || 'lg'} 
+          variant={typeof safeStyles.buttonsVariant === 'string' ? safeStyles.buttonsVariant : 'default'} 
+          size={typeof safeStyles.buttonsSize === 'string' ? safeStyles.buttonsSize : 'lg'} 
           asChild
-          className={`${styles.ctaFontWeight || ''} w-[200px]`}
+          className={`${typeof safeStyles.ctaFontWeight === 'string' ? safeStyles.ctaFontWeight : ''} w-[200px]`}
           style={{
-            ...(styles.ctaBackgroundColor && styles.ctaBackgroundColor !== 'default' && {
-              backgroundColor: styles.ctaBackgroundColor
+            ...(safeStyles.ctaBackgroundColor && typeof safeStyles.ctaBackgroundColor === 'string' && safeStyles.ctaBackgroundColor !== 'default' && {
+              backgroundColor: safeStyles.ctaBackgroundColor
             }),
-            ...(styles.ctaTextColor && styles.ctaTextColor !== 'default' && {
-              color: styles.ctaTextColor
+            ...(safeStyles.ctaTextColor && typeof safeStyles.ctaTextColor === 'string' && safeStyles.ctaTextColor !== 'default' && {
+              color: safeStyles.ctaTextColor
             })
           }}
         >
-          <a href={content.ctaLink}>
-            {content.ctaText}
+          <a href={String(safeContent.ctaLink)}>
+            {String(safeContent.ctaText)}
           </a>
         </Button>
       )}
       
       {/* New multi-button system */}
-      {buttons.map((button: any, index: number) => (
-        button.text && button.link ? (
+      {buttons.map((button: any, index: number) => {
+        // Ensure button is an object with required string properties
+        if (!button || typeof button !== 'object' || typeof button.text !== 'string' || typeof button.link !== 'string' || !button.text || !button.link) {
+          return null;
+        }
+        
+        return (
           <Button 
             key={index}
-            variant={button.variant === 'default' ? (styles.buttonsVariant || 'default') : button.variant} 
-            size={styles.buttonsSize || 'lg'} 
+            variant={button.variant === 'default' ? (typeof safeStyles.buttonsVariant === 'string' ? safeStyles.buttonsVariant : 'default') : (typeof button.variant === 'string' ? button.variant : 'default')} 
+            size={typeof safeStyles.buttonsSize === 'string' ? safeStyles.buttonsSize : 'lg'} 
             asChild
-            className={`${styles.buttonsFontWeight || ''} w-[200px]`}
+            className={`${typeof safeStyles.buttonsFontWeight === 'string' ? safeStyles.buttonsFontWeight : ''} w-[200px]`}
             style={{
-              ...(styles.buttonsBackgroundColor && styles.buttonsBackgroundColor !== 'default' && {
-                backgroundColor: styles.buttonsBackgroundColor
+              ...(safeStyles.buttonsBackgroundColor && typeof safeStyles.buttonsBackgroundColor === 'string' && safeStyles.buttonsBackgroundColor !== 'default' && {
+                backgroundColor: safeStyles.buttonsBackgroundColor
               }),
-              ...(styles.buttonsTextColor && styles.buttonsTextColor !== 'default' && {
-                color: styles.buttonsTextColor
+              ...(safeStyles.buttonsTextColor && typeof safeStyles.buttonsTextColor === 'string' && safeStyles.buttonsTextColor !== 'default' && {
+                color: safeStyles.buttonsTextColor
               })
             }}
           >
-            <a href={button.link}>
-              {button.text}
+            <a href={String(button.link)}>
+              {String(button.text)}
             </a>
           </Button>
-        ) : null
-      ))}
+        );
+      })}
     </div>
   );
 };

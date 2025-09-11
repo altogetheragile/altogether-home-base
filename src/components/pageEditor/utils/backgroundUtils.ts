@@ -60,13 +60,16 @@ export const getInlineStyles = (styles: any) => {
 };
 
 export const getStyleClasses = (styles: any) => {
+  // Ensure styles is an object and all values are strings
+  const safeStyles = styles || {};
+  
   return [
-    styles.backgroundColor || '',
-    styles.textColor || '',
-    styles.borderColor || '',
-    styles.padding || '',
-    styles.textAlign || '',
-    styles.fontSize || '',
-    styles.fontWeight || '',
+    typeof safeStyles.backgroundColor === 'string' ? safeStyles.backgroundColor : '',
+    typeof safeStyles.textColor === 'string' ? safeStyles.textColor : '',
+    typeof safeStyles.borderColor === 'string' ? safeStyles.borderColor : '',
+    typeof safeStyles.padding === 'string' ? safeStyles.padding : '',
+    typeof safeStyles.textAlign === 'string' ? safeStyles.textAlign : '',
+    typeof safeStyles.fontSize === 'string' ? safeStyles.fontSize : '',
+    typeof safeStyles.fontWeight === 'string' ? safeStyles.fontWeight : '',
   ].filter(Boolean).join(' ');
 };
