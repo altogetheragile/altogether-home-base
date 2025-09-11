@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+node_modules_old/
+📄 Download lovable_techniques_full_5.json
+📄 Download lovable_techniques_with_tags.json
