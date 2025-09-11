@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
+import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
 import { useDynamicFontSize } from '../../../hooks/useDynamicFontSize';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
@@ -8,9 +9,9 @@ interface ImageBlockProps {
 }
 
 export const ImageBlock: React.FC<ImageBlockProps> = React.memo(({ block }) => {
-  // Ensure block.content exists with safe defaults
-  const content = block.content || {};
-  const styles = useMemo(() => content.styles || {}, [content.styles]);
+  // Ensure block.content exists with safe defaults - normalize to prevent object-in-JSX issues
+  const content = (block.content && typeof block.content === 'object') ? block.content : {};
+  const styles = useMemo(() => (content.styles && typeof content.styles === 'object') ? content.styles : {}, [content.styles]);
   // Use useDynamicFontSize for consistent hook patterns across all block types
   useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
@@ -23,22 +24,22 @@ export const ImageBlock: React.FC<ImageBlockProps> = React.memo(({ block }) => {
       style={{...inlineStyles, ...imageBackgroundStyles}}
     >
       {/* Dark overlay for background images */}
-      {content.backgroundImage && (
+      {isNonEmptyString(content.backgroundImage) && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
       <div className="relative z-10">
-        {content.src ? (
+        {isNonEmptyString(content.src) ? (
           <div className="text-center">
             <img
-              src={content.src}
-              alt={content.alt || ''}
+              src={String(content.src)}
+              alt={textOrEmpty(content.alt)}
               className="max-w-full h-auto mx-auto rounded-lg shadow-md"
             />
-            {content.caption && (
-              <p className={`text-sm mt-2 ${content.backgroundImage ? 'text-white' : 'text-muted-foreground'}`}>
-                {content.caption}
-              </p>
-            )}
+            <SafeText
+              as="p"
+              value={content.caption}
+              className={`text-sm mt-2 ${isNonEmptyString(content.backgroundImage) ? 'text-white' : 'text-muted-foreground'}`}
+            />
           </div>
         ) : (
           <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
+import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
 import { useDynamicFontSize } from '../../../hooks/useDynamicFontSize';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
@@ -8,9 +9,9 @@ interface VideoBlockProps {
 }
 
 export const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ block }) => {
-  // Ensure block.content exists with safe defaults
-  const content = block.content || {};
-  const styles = useMemo(() => content.styles || {}, [content.styles]);
+  // Ensure block.content exists with safe defaults - normalize to prevent object-in-JSX issues
+  const content = (block.content && typeof block.content === 'object') ? block.content : {};
+  const styles = useMemo(() => (content.styles && typeof content.styles === 'object') ? content.styles : {}, [content.styles]);
   // Use useDynamicFontSize for consistent hook patterns across all block types
   useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
@@ -23,17 +24,17 @@ export const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ block }) => {
       style={{...inlineStyles, ...videoBackgroundStyles}}
     >
       {/* Dark overlay for background images */}
-      {content.backgroundImage && (
+      {isNonEmptyString(content.backgroundImage) && (
         <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
       )}
       <div className="relative z-10">
-        {content.url ? (
+        {isNonEmptyString(content.url) ? (
           <div className="aspect-video">
             <iframe
-              src={content.url}
+              src={String(content.url)}
               className="w-full h-full rounded-lg"
               allowFullScreen
-              title={content.title || 'Video'}
+              title={textOrEmpty(content.title) || 'Video'}
             />
           </div>
         ) : (

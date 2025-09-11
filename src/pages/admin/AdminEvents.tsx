@@ -42,8 +42,8 @@ const AdminEvents = () => {
       console.log('🔐 AdminEvents: Current session:', {
         hasSession: !!sessionData.session,
         hasAccessToken: !!sessionData.session?.access_token,
-        userEmail: sessionData.session?.user?.email,
-        uid: sessionData.session?.user?.id
+        userEmail: sessionData.session?.user?.email || 'none',
+        hasUserId: !!sessionData.session?.user?.id
       });
 
       const { data, error } = await supabase
@@ -61,9 +61,10 @@ const AdminEvents = () => {
 
       console.log('📊 AdminEvents: Query result:', {
         dataCount: data?.length || 0,
-        error: error?.message,
+        hasError: !!error,
+        errorMessage: error?.message || null,
         hasData: !!data,
-        firstEvent: data?.[0]?.title
+        firstEventTitle: data?.[0]?.title || 'none'
       });
 
       if (error) {

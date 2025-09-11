@@ -2,6 +2,7 @@ import React from 'react';
 import { ContentBlock } from '@/types/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { BlockErrorBoundary } from '@/components/blocks/BlockErrorBoundary';
 import { HeroBlock } from './components/HeroBlock';
 import { SectionBlock } from './components/SectionBlock';
 import { TextBlock } from './components/TextBlock';
@@ -25,37 +26,53 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
   onMoveUp,
   onMoveDown,
 }) => {
+  // Normalize content to prevent object-in-JSX issues
+  const normalizedBlock = {
+    ...block,
+    content: (block.content && typeof block.content === 'object') ? block.content : {},
+  };
+  
   const renderContent = () => {
-    console.log('Styles for block:', block.id, block.content?.styles); // Debug log
+    // Safe logging - no objects in console.log that might leak to JSX
+    console.log('Styles for block:', String(block.id), 'hasStyles:', !!(normalizedBlock.content?.styles));
     
     switch (block.type) {
       case 'hero':
-        return <HeroBlock block={block} />;
+        return <HeroBlock block={normalizedBlock} />;
       case 'section':
-        return <SectionBlock block={block} />;
+        return <SectionBlock block={normalizedBlock} />;
       case 'text':
-        return <TextBlock block={block} />;
+        return <TextBlock block={normalizedBlock} />;
       case 'image':
-        return <ImageBlock block={block} />;
+        return <ImageBlock block={normalizedBlock} />;
       case 'video':
-        return <VideoBlock block={block} />;
+        return <VideoBlock block={normalizedBlock} />;
       default:
+        console.warn('Unknown block type:', String(block.type));
         return (
           <div className="py-4 px-6 bg-muted rounded-lg">
-            <p className="text-muted-foreground">Unknown content type: {block.type}</p>
+            <p className="text-muted-foreground">Unknown content type: {String(block.type)}</p>
           </div>
         );
     }
   };
 
   if (!isEditing) {
-    return <div className={!block.is_visible ? 'opacity-50' : ''}>{renderContent()}</div>;
+    return (
+      <div className={!block.is_visible ? 'opacity-50' : ''}>
+        <BlockErrorBoundary blockId={String(block.id)}>
+          {renderContent()}
+        </BlockErrorBoundary>
+      </div>
+    );
   }
 
   return (
     <Card className={`relative group ${!block.is_visible ? 'opacity-50' : ''}`}>
       <CardContent className="p-4">
-        {renderContent()}
+        <BlockErrorBoundary blockId={String(block.id)}>
+          {renderContent()}
+        </BlockErrorBoundary>
         
         {/* Edit Controls */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
