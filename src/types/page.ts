@@ -4,7 +4,7 @@ export type ContentBlockType =
   | 'video'
   | 'hero'
   | 'section'
-  | 'events';
+  | 'events'; // ✅ allow events
 
 export interface Page {
   id: string;
