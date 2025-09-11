@@ -1,3 +1,11 @@
+export type ContentBlockType =
+  | 'text'
+  | 'image'
+  | 'video'
+  | 'hero'
+  | 'section'
+  | 'events';
+
 export interface Page {
   id: string;
   slug: string;
@@ -13,7 +21,7 @@ export interface Page {
 export interface ContentBlock {
   id: string;
   page_id: string;
-  type: 'text' | 'image' | 'video' | 'hero' | 'section' | 'events'; // ✅ added "events"
+  type: ContentBlockType;
   content: Record<string, any>;
   position: number;
   is_visible: boolean;
@@ -27,7 +35,7 @@ export interface PageWithBlocks extends Page {
 
 export interface ContentBlockCreate {
   page_id: string;
-  type: ContentBlock['type'];
+  type: ContentBlockType;
   content: Record<string, any>;
   position: number;
   is_visible?: boolean;
@@ -35,7 +43,7 @@ export interface ContentBlockCreate {
 
 export interface ContentBlockUpdate {
   id: string;
-  type?: ContentBlock['type'];
+  type?: ContentBlockType;
   content?: Record<string, any>;
   position?: number;
   is_visible?: boolean;
