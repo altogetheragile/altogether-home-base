@@ -1,24 +1,20 @@
 import { ContentBlock } from '@/types/page';
-import { HeroBlock } from '@/components/blocks/HeroBlock';
-import { SectionBlock } from '@/components/blocks/SectionBlock';
-import { TextBlock } from '@/components/blocks/TextBlock';
-import { ImageBlock } from '@/components/blocks/ImageBlock';
-import { VideoBlock } from '@/components/blocks/VideoBlock';
+import { HeroBlock } from '@/components/pageEditor/blocks/HeroBlock';
+import { SectionBlock } from '@/components/pageEditor/blocks/SectionBlock';
+import { TextBlock } from '@/components/pageEditor/blocks/TextBlock';
+import { ImageBlock } from '@/components/pageEditor/blocks/ImageBlock';
+import { VideoBlock } from '@/components/pageEditor/blocks/VideoBlock';
 import PublicEvents from '@/components/blocks/PublicEvents';
 
 export interface ContentBlockRendererProps {
   block: ContentBlock;
-  onEdit?: (block: ContentBlock) => void;
-  onDelete?: (blockId: string) => void;
-  onMoveUp?: (blockId: string) => void;
-  onMoveDown?: (blockId: string) => void;
-  isEditing?: boolean;
 }
 
-export const ContentBlockRenderer = ({
-  block,
-}: ContentBlockRendererProps) => {
-  if (!block?.is_visible) return null;
+export const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
+  if (!block || !block.type) {
+    console.warn('⚠️ Invalid content block provided:', block);
+    return null;
+  }
 
   switch (block.type) {
     case 'hero':
@@ -32,12 +28,9 @@ export const ContentBlockRenderer = ({
     case 'video':
       return <VideoBlock block={block} />;
     case 'events':
-      return <PublicEvents />;
+      return <PublicEvents block={block} />;
     default:
-      return (
-        <div className="p-4 bg-red-100 text-red-700">
-          Unknown block type: {String(block.type)}
-        </div>
-      );
+      console.warn(`⚠️ Unknown block type: ${block.type}`);
+      return null;
   }
 };
