@@ -1,48 +1,53 @@
-import React, { useMemo } from 'react';
-import { ContentBlock } from '@/types/page';
-import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
-import { useDynamicFontSize } from '../../../hooks/useDynamicFontSize';
-import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
+import React from "react";
+import {
+  getHeightClass,
+  getBackgroundStyles,
+  getInlineStyles,
+  getStyleClasses,
+} from "@/utils/backgroundUtils";
+import type { ContentBlock } from "@/types/page";
+import { ButtonRenderer } from "@/components/blocks/ButtonRenderer";
 
 interface VideoBlockProps {
   block: ContentBlock;
 }
 
-export const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ block }) => {
-  // Ensure block.content exists with safe defaults - normalize to prevent object-in-JSX issues
-  const content = (block.content && typeof block.content === 'object') ? block.content : {};
-  const styles = useMemo(() => (content.styles && typeof content.styles === 'object') ? content.styles : {}, [content.styles]);
-  // Use useDynamicFontSize for consistent hook patterns across all block types
-  useDynamicFontSize(styles);
-  const inlineStyles = getInlineStyles(styles);
-  const styleClasses = getStyleClasses(styles);
-  const videoBackgroundStyles = getBackgroundStyles(content);
-
+export const VideoBlock: React.FC<VideoBlockProps> = ({ block }) => {
   return (
-    <div 
-      className={`relative ${getHeightClass(content.height, 'video')} ${styleClasses}`} 
-      style={{...inlineStyles, ...videoBackgroundStyles}}
+    <section
+      className={`relative ${getHeightClass(
+        block.styles?.height,
+        "video"
+      )} ${getStyleClasses(block.styles)}`}
+      style={getInlineStyles(block.styles)}
     >
-      {/* Dark overlay for background images */}
-      {isNonEmptyString(content.backgroundImage) && (
-        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
-      )}
-      <div className="relative z-10">
-        {isNonEmptyString(content.url) ? (
-          <div className="aspect-video">
+      <div
+        className="absolute inset-0"
+        style={getBackgroundStyles(block.styles)}
+      />
+      <div className="relative z-10 flex flex-col items-center text-center px-4 py-12">
+        {block.content?.title && (
+          <h2 className="text-2xl font-semibold mb-4" style={block.styles?.titleStyle}>
+            {block.content.title}
+          </h2>
+        )}
+        {block.content?.subtitle && (
+          <h3 className="text-lg mb-4" style={block.styles?.subtitleStyle}>
+            {block.content.subtitle}
+          </h3>
+        )}
+        {block.content?.videoUrl && (
+          <div className="w-full max-w-3xl aspect-video mb-6">
             <iframe
-              src={String(content.url)}
-              className="w-full h-full rounded-lg"
+              src={block.content.videoUrl}
+              title="Video"
+              className="w-full h-full"
               allowFullScreen
-              title={textOrEmpty(content.title) || 'Video'}
             />
           </div>
-        ) : (
-          <div className="aspect-video border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground">No video URL provided</p>
-          </div>
         )}
+        <ButtonRenderer content={block.content} styles={block.styles} />
       </div>
-    </div>
+    </section>
   );
-});
+};

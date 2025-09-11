@@ -1,62 +1,48 @@
-import React, { useMemo } from 'react';
-import { ContentBlock } from '@/types/page';
-import { ButtonRenderer } from './ButtonRenderer';
-import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
-import { useDynamicFontSize, getTitleSpacing } from '../../../hooks/useDynamicFontSize';
-import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
+import React from "react";
+import {
+  getHeightClass,
+  getBackgroundStyles,
+  getInlineStyles,
+  getStyleClasses,
+} from "@/utils/backgroundUtils";
+import type { ContentBlock } from "@/types/page";
+import { ButtonRenderer } from "@/components/blocks/ButtonRenderer";
 
 interface HeroBlockProps {
   block: ContentBlock;
 }
 
-export const HeroBlock: React.FC<HeroBlockProps> = React.memo(({ block }) => {
-  // Ensure block.content exists with safe defaults - normalize to prevent object-in-JSX issues
-  const content = (block.content && typeof block.content === 'object') ? block.content : {};
-  const styles = useMemo(() => (content.styles && typeof content.styles === 'object') ? content.styles : {}, [content.styles]);
-  const { titleSize, subtitleSize, titleStyle, subtitleStyle } = useDynamicFontSize(styles);
-  const inlineStyles = getInlineStyles(styles);
-  const styleClasses = getStyleClasses(styles);
-  
-  // Safe string extraction
-  const safeTitle = textOrEmpty(content.title) || 'Hero Title';
-  const safeSubtitle = textOrEmpty(content.subtitle) || 'Hero subtitle';
-  
-  // Determine background styles
-  let heroBackgroundClasses = '';
-  let heroBackgroundStyles: React.CSSProperties = {};
-  const backgroundType = styles.backgroundType || 'default';
-  
-  if (isNonEmptyString(content.backgroundImage)) {
-    heroBackgroundStyles = getBackgroundStyles(content);
-    heroBackgroundClasses = 'relative';
-  } else if (backgroundType === 'default' || backgroundType === 'gradient') {
-    heroBackgroundClasses = 'bg-gradient-to-r from-primary to-primary-glow';
-  }
-  
+export const HeroBlock: React.FC<HeroBlockProps> = ({ block }) => {
   return (
-    <div 
-      className={`relative ${heroBackgroundClasses} text-white px-4 sm:px-6 md:px-8 text-center rounded-lg ${getHeightClass(content.height, 'hero')} flex items-center justify-center ${styleClasses} w-full max-w-full overflow-hidden`}
-      style={{...inlineStyles, ...heroBackgroundStyles}}
+    <section
+      className={`relative ${getHeightClass(
+        block.styles?.height,
+        "hero"
+      )} ${getStyleClasses(block.styles)}`}
+      style={getInlineStyles(block.styles)}
     >
-      {/* Dark overlay for background images to ensure text readability */}
-      {isNonEmptyString(content.backgroundImage) && (
-        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
-      )}
-      <div className="relative z-10 max-w-4xl mx-auto px-2 sm:px-4 py-6 sm:py-8 md:py-16 space-y-3 sm:space-y-4 md:space-y-6 w-full">
-        <SafeText
-          as="h1"
-          value={safeTitle}
-          className={`${titleSize} font-bold leading-tight text-center`}
-        />
-        <SafeText
-          as="p"
-          value={safeSubtitle}
-          className={`${subtitleSize} opacity-90 leading-relaxed text-center max-w-3xl mx-auto`}
-        />
-        <div className="text-center pt-2">
-          <ButtonRenderer content={content} styles={styles} />
-        </div>
+      <div
+        className="absolute inset-0"
+        style={getBackgroundStyles(block.styles)}
+      />
+      <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-16">
+        {block.content?.title && (
+          <h1 className="text-4xl font-bold mb-4" style={block.styles?.titleStyle}>
+            {block.content.title}
+          </h1>
+        )}
+        {block.content?.subtitle && (
+          <h2 className="text-xl mb-4" style={block.styles?.subtitleStyle}>
+            {block.content.subtitle}
+          </h2>
+        )}
+        {block.content?.content && (
+          <p className="max-w-2xl mb-6" style={block.styles?.contentStyle}>
+            {block.content.content}
+          </p>
+        )}
+        <ButtonRenderer content={block.content} styles={block.styles} />
       </div>
-    </div>
+    </section>
   );
-});
+};

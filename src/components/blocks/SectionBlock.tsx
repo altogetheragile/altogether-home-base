@@ -1,47 +1,48 @@
-import React, { useMemo } from 'react';
-import { ContentBlock } from '@/types/page';
-import { ButtonRenderer } from './ButtonRenderer';
-import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
-import { useDynamicFontSize, getTitleSpacing } from '../../../hooks/useDynamicFontSize';
-import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
+import React from "react";
+import {
+  getHeightClass,
+  getBackgroundStyles,
+  getInlineStyles,
+  getStyleClasses,
+} from "@/utils/backgroundUtils";
+import type { ContentBlock } from "@/types/page";
+import { ButtonRenderer } from "@/components/blocks/ButtonRenderer";
 
 interface SectionBlockProps {
   block: ContentBlock;
 }
 
-export const SectionBlock: React.FC<SectionBlockProps> = React.memo(({ block }) => {
-  // Ensure block.content exists with safe defaults - normalize to prevent object-in-JSX issues
-  const content = (block.content && typeof block.content === 'object') ? block.content : {};
-  const styles = useMemo(() => (content.styles && typeof content.styles === 'object') ? content.styles : {}, [content.styles]);
-  const { titleSize, contentSize, titleStyle, contentStyle } = useDynamicFontSize(styles);
-  const inlineStyles = getInlineStyles(styles);
-  const styleClasses = getStyleClasses(styles);
-  const sectionBackgroundStyles = getBackgroundStyles(content);
-
+export const SectionBlock: React.FC<SectionBlockProps> = ({ block }) => {
   return (
-    <div 
-      className={`relative px-4 sm:px-6 md:px-8 ${getHeightClass(content.height, 'section')} ${styleClasses} ${content.backgroundImage ? 'text-white' : ''} w-full max-w-full overflow-hidden`}
-      style={{...inlineStyles, ...sectionBackgroundStyles}}
+    <section
+      className={`relative ${getHeightClass(
+        block.styles?.height,
+        "section"
+      )} ${getStyleClasses(block.styles)}`}
+      style={getInlineStyles(block.styles)}
     >
-      {/* Dark overlay for background images to ensure text readability */}
-      {isNonEmptyString(content.backgroundImage) && (
-        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
-      )}
-      <div className="relative z-10 px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-16 space-y-3 sm:space-y-4 md:space-y-8 w-full max-w-6xl mx-auto">
-        <SafeText
-          as="h2"
-          value={content.title}
-          className={`${titleSize} font-bold text-center`}
-        />
-        <SafeText
-          as="p"
-          value={content.content}
-          className={`${contentSize} leading-relaxed text-center mx-auto max-w-4xl px-2 sm:px-4`}
-        />
-        <div className="text-center">
-          <ButtonRenderer content={content} styles={styles} />
-        </div>
+      <div
+        className="absolute inset-0"
+        style={getBackgroundStyles(block.styles)}
+      />
+      <div className="relative z-10 flex flex-col items-center text-center px-4 py-12">
+        {block.content?.title && (
+          <h2 className="text-3xl font-semibold mb-4" style={block.styles?.titleStyle}>
+            {block.content.title}
+          </h2>
+        )}
+        {block.content?.subtitle && (
+          <h3 className="text-lg mb-4" style={block.styles?.subtitleStyle}>
+            {block.content.subtitle}
+          </h3>
+        )}
+        {block.content?.content && (
+          <p className="max-w-2xl mb-6" style={block.styles?.contentStyle}>
+            {block.content.content}
+          </p>
+        )}
+        <ButtonRenderer content={block.content} styles={block.styles} />
       </div>
-    </div>
+    </section>
   );
-});
+};

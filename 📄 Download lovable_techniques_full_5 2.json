@@ -1,0 +1,206 @@
+{
+  "exported_at": "2025-07-15T10:17:10.407423Z",
+  "count": 5,
+  "techniques": [
+    {
+      "name": "Assumption Mapping",
+      "slug": "assumption-mapping",
+      "difficulty_level": "Intermediate",
+      "content_type": "technique",
+      "summary": "Visual tool to surface and prioritize risky or uncertain assumptions.",
+      "description": "Assumption Mapping helps teams identify and prioritize assumptions that could affect product success. Teams plot assumptions against uncertainty and risk axes to decide which to test first.",
+      "purpose": "To reduce product risk by surfacing and validating critical assumptions.",
+      "originator": "Jeff Gothelf",
+      "seo_title": "Assumption Mapping \u2013 Validate Product Risks",
+      "seo_description": "Use Assumption Mapping to uncover and prioritize the assumptions that could derail your product development efforts.",
+      "seo_keywords": [
+        "assumption mapping",
+        "product discovery",
+        "lean UX",
+        "risk reduction"
+      ],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Discovery & Problem Framing",
+        "slug": "discovery-problem-framing",
+        "color": "#F59E0B"
+      },
+      "knowledge_technique_tags": [
+        "risk",
+        "uncertainty",
+        "validation"
+      ],
+      "knowledge_examples": [
+        {
+          "title": "SmartCart team prioritizes basket automation assumptions",
+          "description": "SmartCart mapped key assumptions like 'users want auto-filled baskets' and flagged it as high-risk and high-uncertainty. This led them to run fake door tests before building.",
+          "context": "Online grocery platform planning a smart basket feature",
+          "outcome": "They avoided building a costly feature by validating the need first.",
+          "industry": "E-commerce",
+          "company_size": "Medium"
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "Story Mapping",
+      "slug": "story-mapping",
+      "difficulty_level": "Intermediate",
+      "content_type": "technique",
+      "summary": "Visual breakdown of user journeys to prioritize features and slices.",
+      "description": "Story Mapping is used to visually organize user activities and break them into smaller tasks or slices that help teams prioritize and release iteratively.",
+      "purpose": "To structure product development around user needs and deliver value in slices.",
+      "originator": "Jeff Patton",
+      "seo_title": "Story Mapping \u2013 Organize Work Around User Journeys",
+      "seo_description": "Use Story Mapping to visually plan product functionality around end-to-end user activities.",
+      "seo_keywords": [
+        "story mapping",
+        "user journey",
+        "product roadmap",
+        "MVP planning"
+      ],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Design & Solution Ideation",
+        "slug": "design-solution-ideation",
+        "color": "#3B82F6"
+      },
+      "knowledge_technique_tags": [
+        "user journey",
+        "prioritization",
+        "MVP"
+      ],
+      "knowledge_examples": [
+        {
+          "title": "SmartCart meal planning workflow",
+          "description": "Mapped user goals like selecting meals, reviewing ingredients, and confirming delivery. Used to prioritize MVP features.",
+          "context": "Initial release planning for SmartCart\u2019s meal planner",
+          "outcome": "Improved alignment and enabled early release with core flow complete.",
+          "industry": "Grocery Tech",
+          "company_size": "Medium"
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "Fake Door Testing",
+      "slug": "fake-door-testing",
+      "difficulty_level": "Intermediate",
+      "content_type": "technique",
+      "summary": "Test feature demand by simulating it before building.",
+      "description": "Fake Door Testing helps assess interest in a proposed feature by simulating its presence (e.g., a button or prompt) before development. It provides behavioral validation of user intent.",
+      "purpose": "To validate demand for a new feature before investing in development.",
+      "originator": "Lean Startup Movement",
+      "seo_title": "Fake Door Testing \u2013 Validate Feature Demand",
+      "seo_description": "Use Fake Door Testing to assess interest in features before building. Gauge user demand via simulated UI prompts.",
+      "seo_keywords": [
+        "fake door test",
+        "lean startup",
+        "MVP validation",
+        "experiment design"
+      ],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Validation & Feedback",
+        "slug": "validation-feedback",
+        "color": "#6366F1"
+      },
+      "knowledge_technique_tags": [
+        "validation",
+        "experimentation",
+        "MVP"
+      ],
+      "knowledge_examples": [
+        {
+          "title": "SmartCart auto-replenish test",
+          "description": "The team added a toggle labeled 'Auto-fill my cart weekly' with a 'Coming soon' message behind it. Clicks were tracked to measure demand.",
+          "context": "Validating automation ideas before full build",
+          "outcome": "High click-through rate led to a limited-feature pilot for auto-fill.",
+          "industry": "E-commerce",
+          "company_size": "Medium"
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "Walking Skeleton",
+      "slug": "walking-skeleton",
+      "difficulty_level": "Intermediate",
+      "content_type": "technique",
+      "summary": "Thin end-to-end implementation of a system to validate integration and architecture.",
+      "description": "A Walking Skeleton delivers a minimal, end-to-end implementation of a system to validate integration points and system architecture before expanding features.",
+      "purpose": "To reduce architectural risk and validate integration early.",
+      "originator": "Alistair Cockburn",
+      "seo_title": "Walking Skeleton \u2013 End-to-End Early Architecture",
+      "seo_description": "Build a Walking Skeleton to validate architecture and system integrations early with minimal functionality.",
+      "seo_keywords": [
+        "walking skeleton",
+        "architecture validation",
+        "agile delivery",
+        "system integration"
+      ],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Delivery & Prototyping",
+        "slug": "delivery-prototyping",
+        "color": "#10B981"
+      },
+      "knowledge_technique_tags": [
+        "architecture",
+        "MVP",
+        "integration"
+      ],
+      "knowledge_examples": [
+        {
+          "title": "SmartCart login-to-checkout skeleton",
+          "description": "Created a minimal experience from login to scheduling a delivery with one item. No styling, but tested authentication, item DB, and order queue.",
+          "context": "Establishing integration and backend structure",
+          "outcome": "Exposed missing API constraints early and accelerated future delivery.",
+          "industry": "E-commerce",
+          "company_size": "Medium"
+        }
+      ],
+      "knowledge_media": []
+    },
+    {
+      "name": "Sunsetting Framework",
+      "slug": "sunsetting-framework",
+      "difficulty_level": "Advanced",
+      "content_type": "technique",
+      "summary": "Planned removal of underused or harmful features with minimal disruption.",
+      "description": "A Sunsetting Framework defines how to identify, communicate, and remove features that no longer serve users or introduce risk, while supporting smooth transitions.",
+      "purpose": "To retire features responsibly and maintain a healthy, focused product.",
+      "originator": "Intercom / Google Product Ops",
+      "seo_title": "Sunsetting Framework \u2013 Responsible Feature Retirement",
+      "seo_description": "Learn how to sunset underused or risky features using structured communication and transition plans.",
+      "seo_keywords": [
+        "feature sunsetting",
+        "feature retirement",
+        "product management",
+        "technical debt"
+      ],
+      "is_published": true,
+      "knowledge_categories": {
+        "name": "Iteration & Scaling",
+        "slug": "iteration-scaling",
+        "color": "#8B5CF6"
+      },
+      "knowledge_technique_tags": [
+        "feature lifecycle",
+        "risk reduction",
+        "product ops"
+      ],
+      "knowledge_examples": [
+        {
+          "title": "SmartCart retires SMS ordering",
+          "description": "Discovered only 2% usage and high support cost. Notified users, offered voice assistant as an alternative, and removed SMS feature after 30 days.",
+          "context": "Post-launch feature usage audit",
+          "outcome": "Reduced support load and improved system focus.",
+          "industry": "E-commerce",
+          "company_size": "Medium"
+        }
+      ],
+      "knowledge_media": []
+    }
+  ]
+}
