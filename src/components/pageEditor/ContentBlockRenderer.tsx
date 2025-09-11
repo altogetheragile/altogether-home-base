@@ -1,20 +1,28 @@
-import HeroBlock from "@/components/blocks/HeroBlock";
-import SectionBlock from "@/components/blocks/SectionBlock";
-import TextBlock from "@/components/blocks/TextBlock";
-import ImageBlock from "@/components/blocks/ImageBlock";
-import VideoBlock from "@/components/blocks/VideoBlock";
-import PublicEvents from "@/components/blocks/PublicEvents"; // ✅ new import
+import HeroBlock from "@/components/pageEditor/blocks/HeroBlock";
+import SectionBlock from "@/components/pageEditor/blocks/SectionBlock";
+import TextBlock from "@/components/pageEditor/blocks/TextBlock";
+import ImageBlock from "@/components/pageEditor/blocks/ImageBlock";
+import VideoBlock from "@/components/pageEditor/blocks/VideoBlock";
+import PublicEvents from "@/components/blocks/PublicEvents";
+import { ContentBlock } from "@/types";
 
-interface ContentBlockRendererProps {
-  block: any;
+export interface ContentBlockRendererProps {
+  block: ContentBlock;
+  isEditing?: boolean;
+  onEdit?: (block: ContentBlock) => void;
+  onDelete?: (blockId: string) => void;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
 }
 
-export const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
-  if (!block || !block.type) {
-    console.warn("⚠️ ContentBlockRenderer: invalid block", block);
-    return null;
-  }
-
+export const ContentBlockRenderer = ({
+  block,
+  isEditing,
+  onEdit,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+}: ContentBlockRendererProps) => {
   switch (block.type) {
     case "hero":
       return <HeroBlock block={block} />;
@@ -27,9 +35,12 @@ export const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
     case "video":
       return <VideoBlock block={block} />;
     case "events":
-      return <PublicEvents block={block} />; // ✅ use public events
+      return <PublicEvents block={block} />;
     default:
-      console.warn(`⚠️ Unknown block type: ${block.type}`);
-      return null;
+      return (
+        <div className="p-4 border border-dashed border-gray-300 rounded text-gray-500">
+          Unknown block type: {block.type}
+        </div>
+      );
   }
 };
