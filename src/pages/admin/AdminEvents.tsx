@@ -159,10 +159,10 @@ const AdminEvents = () => {
           <TableBody>
             {events?.map((event) => (
               <TableRow key={event.id}>
-                <TableCell className="font-medium">{event.title}</TableCell>
+                <TableCell className="font-medium">{String(event.title || 'Untitled')}</TableCell>
                 <TableCell>{formatDate(event.start_date)}</TableCell>
-                <TableCell>{event.instructor?.name || 'TBA'}</TableCell>
-                <TableCell>{event.location?.name || 'TBA'}</TableCell>
+                <TableCell>{String(event.instructor?.name || 'TBA')}</TableCell>
+                <TableCell>{String(event.location?.name || 'TBA')}</TableCell>
                 <TableCell>
                   {formatPrice(event.price_cents || 0, event.currency || 'usd')}
                 </TableCell>
@@ -240,7 +240,7 @@ const AdminEvents = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Event</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{eventToDelete?.title}"? This action cannot be undone.
+              Are you sure you want to delete "{String(eventToDelete?.title || 'this event')}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -265,8 +265,8 @@ const AdminEvents = () => {
       <EventRegistrationsDialog
         open={!!registrationsEvent}
         onOpenChange={(open) => !open && setRegistrationsEvent(null)}
-        eventId={registrationsEvent?.id}
-        eventTitle={registrationsEvent?.title}
+        eventId={String(registrationsEvent?.id || '')}
+        eventTitle={String(registrationsEvent?.title || 'Event')}
       />
     </div>
   );
