@@ -1,4 +1,4 @@
-// src/components/recommendations/RecommendationCard.tsx - Complete Safe Version
+// src/components/recommendations/RecommendationCard.tsx - Complete safe version
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -260,14 +260,12 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     </Card>
   );
 
-  switch (content_type as string) {
+  switch (content_type) {
     case 'knowledge_item':
-    case 'technique':
       return renderKnowledgeCard();
     case 'event':
       return renderEventCard();
     case 'blog_post':
-    case 'blog':
       return renderBlogCard();
     case 'video':
       return renderVideoCard();
