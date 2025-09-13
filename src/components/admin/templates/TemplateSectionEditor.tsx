@@ -216,12 +216,31 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     document.addEventListener('mouseup', handleResizeUp);
   };
 
-  const renderField = (field: TemplateField) => {
-    const isFieldSelected = selectedField?.id === field.id;
+  const FieldItem: React.FC<{
+    field: TemplateField;
+    isFieldSelected: boolean;
+    sectionRef: React.RefObject<HTMLDivElement>;
+    section: TemplateSection;
+    pan: { x: number; y: number };
+    zoom: number;
+    onSelectField: (field: TemplateField) => void;
+    onUpdateField: (fieldId: string, updates: Partial<TemplateField>) => void;
+    onDeleteField: (fieldId: string) => void;
+  }> = ({
+    field,
+    isFieldSelected,
+    sectionRef,
+    section,
+    pan,
+    zoom,
+    onSelectField,
+    onUpdateField,
+    onDeleteField,
+  }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isDraggingField, setIsDraggingField] = useState(false);
     const [fieldDragOffset, setFieldDragOffset] = useState({ x: 0, y: 0 });
-    
+
     const handleFieldMouseDown = (e: React.MouseEvent) => {
       e.stopPropagation();
       onSelectField(field);
@@ -235,36 +254,37 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     const handleDragHandleMouseDown = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       setIsDraggingField(true);
-      
+
       const parent = sectionRef.current?.parentElement;
       if (parent) {
         const parentRect = parent.getBoundingClientRect();
         const mouseCanvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100);
         const mouseCanvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100);
-        
+
         setFieldDragOffset({
           x: mouseCanvasX - section.x - (field.x || 0),
-          y: mouseCanvasY - section.y - (field.y || 0)
+          y: mouseCanvasY - section.y - (field.y || 0),
         });
       }
     };
 
     const handleFieldDragMove = (e: MouseEvent) => {
       if (!isDraggingField || !sectionRef.current) return;
-      
+
       const parent = sectionRef.current.parentElement;
       if (!parent) return;
-      
+
       const parentRect = parent.getBoundingClientRect();
-      const canvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100) - section.x - fieldDragOffset.x;
-      const canvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100) - section.y - fieldDragOffset.y;
-      
-      // Constrain field movement within section boundaries
+      const canvasX =
+        (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100) - section.x - fieldDragOffset.x;
+      const canvasY =
+        (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100) - section.y - fieldDragOffset.y;
+
       const newX = Math.max(0, Math.min(canvasX, section.width - (field.width || 200)));
       const newY = Math.max(0, Math.min(canvasY, section.height - (field.height || 40)));
-      
+
       onUpdateField(field.id, { x: newX, y: newY });
     };
 
@@ -276,7 +296,7 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       if (isDraggingField) {
         document.addEventListener('mousemove', handleFieldDragMove);
         document.addEventListener('mouseup', handleFieldDragEnd);
-        
+
         return () => {
           document.removeEventListener('mousemove', handleFieldDragMove);
           document.removeEventListener('mouseup', handleFieldDragEnd);
@@ -285,7 +305,6 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     }, [isDraggingField, fieldDragOffset]);
 
     const handleTextChange = (value: string) => {
-      // Ensure content is always a string to prevent object-in-JSX errors
       onUpdateField(field.id, { content: String(value ?? '') });
     };
 
@@ -300,57 +319,51 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
         e.preventDefault();
         setIsEditing(false);
       }
-      // Stop propagation to prevent canvas shortcuts
       e.stopPropagation();
     };
-    
+
     return (
       <div
         key={field.id}
         className={`absolute border rounded transition-all ${
-          isFieldSelected 
-            ? 'border-primary bg-primary/10 ring-2 ring-primary/20' 
+          isFieldSelected
+            ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
             : 'border-muted-foreground/30 hover:border-primary/50 bg-background/80'
         } ${isDraggingField ? 'shadow-lg z-50' : ''}`}
         style={{
           left: field.x || 0,
           top: field.y || 0,
           width: field.width || 200,
-          height: field.height || 40
+          height: field.height || 40,
         }}
         onMouseDown={handleFieldMouseDown}
         onDoubleClick={handleFieldDoubleClick}
         data-field-content="true"
       >
-        {/* Drag handle - only visible when selected */}
         {isFieldSelected && (
-          <>
-            <div className="absolute -top-6 left-0 flex items-center gap-1 bg-background/95 border rounded px-1 py-0.5 shadow-sm z-30" data-field-controls="true">
-              <div
-                className="cursor-move p-1 hover:bg-accent rounded"
-                onMouseDown={handleDragHandleMouseDown}
-                title="Drag to reposition"
-              >
-                <GripHorizontal className="h-3 w-3 text-muted-foreground" />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {field.label}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteField(field.id);
-                }}
-              >
-                <Trash2 className="h-2 w-2" />
-              </Button>
+          <div className="absolute -top-6 left-0 flex items-center gap-1 bg-background/95 border rounded px-1 py-0.5 shadow-sm z-30" data-field-controls="true">
+            <div
+              className="cursor-move p-1 hover:bg-accent rounded"
+              onMouseDown={handleDragHandleMouseDown}
+              title="Drag to reposition"
+            >
+              <GripHorizontal className="h-3 w-3 text-muted-foreground" />
             </div>
-          </>
+            <span className="text-xs text-muted-foreground">{field.label}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-4 w-4 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteField(field.id);
+              }}
+            >
+              <Trash2 className="h-2 w-2" />
+            </Button>
+          </div>
         )}
-        
+
         <div className="p-2 h-full" data-field-content="true">
           {isEditing ? (
             field.type === 'textarea' ? (
@@ -375,12 +388,11 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
               />
             )
           ) : (
-            <div 
+            <div
               className="w-full h-full p-1 text-xs leading-relaxed cursor-text rounded hover:bg-accent/20 min-h-[1.5rem] flex items-center"
               title="Double-click to edit"
             >
               {(() => {
-                // Safely handle field content to prevent object-in-JSX errors
                 const displayText = typeof field.content === 'string' ? field.content : '';
                 return displayText ? (
                   <SafeText value={displayText} />
@@ -396,6 +408,7 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       </div>
     );
   };
+
 
   return (
     <div
@@ -440,7 +453,20 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
 
       {/* Section Content */}
       <div className="absolute inset-0 p-2 overflow-hidden">
-        {section.fields.map(renderField)}
+        {section.fields.map((field) => (
+          <FieldItem
+            key={field.id}
+            field={field}
+            isFieldSelected={selectedField?.id === field.id}
+            sectionRef={sectionRef}
+            section={section}
+            pan={pan}
+            zoom={zoom}
+            onSelectField={onSelectField}
+            onUpdateField={onUpdateField}
+            onDeleteField={onDeleteField}
+          />
+        ))}
         
         {section.fields.length === 0 && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
