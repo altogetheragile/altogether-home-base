@@ -59,7 +59,7 @@ import Knowledge from "./pages/Knowledge";
 import KnowledgeDetail from "./pages/KnowledgeDetail";
 
 // Feature flags for gradual restoration
-const ENABLE_ADMIN_ROUTES = false;
+const ENABLE_ADMIN_ROUTES = true; // ✅ Re-enabling admin routes  
 const ENABLE_PROTECTED_PROJECTS = false;
 const ENABLE_DYNAMIC_PAGES = true; // ✅ Re-enabling CMS pages
 
