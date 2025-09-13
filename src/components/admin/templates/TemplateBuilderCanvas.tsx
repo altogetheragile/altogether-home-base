@@ -130,7 +130,8 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       x: 10,
       y: 10,
       width: 200,
-      height: field.type === 'textarea' ? 80 : 40
+      height: field.type === 'textarea' ? 80 : 40,
+      content: '' // Initialize with empty string to prevent undefined content
     };
 
     const updatedSections = config.sections.map(section => {

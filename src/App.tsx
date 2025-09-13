@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,7 +17,8 @@ import ResetPassword from "./pages/ResetPassword";
 import AIToolsCanvas from "./pages/AIToolsCanvas";
 import AccountSecurity from "./pages/AccountSecurity";
 import NotFound from "./pages/NotFound";
-import AdminEvents from "./pages/admin/AdminEvents";
+// Lazy load AdminEvents to prevent it from running on unrelated routes
+const AdminEvents = React.lazy(() => import("./pages/admin/AdminEvents"));
 import AdminInstructors from "./pages/admin/AdminInstructors";
 import AdminLocations from "./pages/admin/AdminLocations";
 import AdminTemplates from "./pages/admin/AdminTemplates";
@@ -83,7 +85,11 @@ const App = () => (
                   <AdminLayout />
                 </ProtectedRoute>
               }>
-                <Route path="events" element={<AdminEvents />} />
+                <Route path="events" element={
+                  <Suspense fallback={<div className="flex items-center justify-center h-64">Loading events...</div>}>
+                    <AdminEvents />
+                  </Suspense>
+                } />
                 <Route path="events/new" element={<CreateEvent />} />
                 <Route path="events/:id/edit" element={<EditEvent />} />
                 <Route path="instructors" element={<AdminInstructors />} />

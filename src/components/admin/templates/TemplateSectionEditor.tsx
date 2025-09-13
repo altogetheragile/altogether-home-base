@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextFieldEditor } from './RichTextFieldEditor';
+import { SafeText } from '@/lib/safe';
 import type { TemplateSection, TemplateField } from '@/types/template';
 import { 
   Move, 
@@ -284,7 +285,8 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     }, [isDraggingField, fieldDragOffset]);
 
     const handleTextChange = (value: string) => {
-      onUpdateField(field.id, { content: value });
+      // Ensure content is always a string to prevent object-in-JSX errors
+      onUpdateField(field.id, { content: String(value ?? '') });
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -377,11 +379,17 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
               className="w-full h-full p-1 text-xs leading-relaxed cursor-text rounded hover:bg-accent/20 min-h-[1.5rem] flex items-center"
               title="Double-click to edit"
             >
-              {field.content || (
-                <span className="text-muted-foreground italic">
-                  {field.placeholder || `Enter ${field.type} content...`}
-                </span>
-              )}
+              {(() => {
+                // Safely handle field content to prevent object-in-JSX errors
+                const displayText = typeof field.content === 'string' ? field.content : '';
+                return displayText ? (
+                  <SafeText value={displayText} />
+                ) : (
+                  <span className="text-muted-foreground italic">
+                    {field.placeholder || `Enter ${field.type} content...`}
+                  </span>
+                );
+              })()}
             </div>
           )}
         </div>

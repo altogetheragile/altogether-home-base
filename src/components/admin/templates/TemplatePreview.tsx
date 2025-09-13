@@ -30,7 +30,24 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ config }) => {
   };
 
   const renderField = (field: TemplateField) => {
-    const value = formData[field.id] || field.defaultValue;
+    // Ensure value has correct type for each field to prevent errors
+    const rawValue = formData[field.id] || field.defaultValue;
+    
+    // Type-specific value handling
+    let value;
+    switch (field.type) {
+      case 'checkbox':
+        value = typeof rawValue === 'boolean' ? rawValue : false;
+        break;
+      case 'number':
+      case 'slider':
+        value = typeof rawValue === 'number' ? rawValue : (typeof rawValue === 'string' ? Number(rawValue) || 0 : 0);
+        break;
+      case 'text':
+      case 'textarea':
+      default:
+        value = typeof rawValue === 'string' ? rawValue : typeof rawValue === 'number' ? String(rawValue) : '';
+    }
 
     switch (field.type) {
       case 'text':

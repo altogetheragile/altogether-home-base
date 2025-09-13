@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -32,19 +32,20 @@ import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
 
 const AdminEvents = () => {
+  const location = useLocation();
+  
+  // Only run queries when actually on the events route
+  const shouldFetch = location.pathname.startsWith('/admin/events');
+
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['admin-events'],
+    enabled: shouldFetch, // Only run when on the correct route
     queryFn: async () => {
       console.log('🔍 AdminEvents: Starting fetch...');
       
       // Check current session first
       const { data: sessionData } = await supabase.auth.getSession();
-      console.log('🔐 AdminEvents: Current session:', {
-        hasSession: !!sessionData.session,
-        hasAccessToken: !!sessionData.session?.access_token,
-        userEmail: sessionData.session?.user?.email || 'none',
-        hasUserId: !!sessionData.session?.user?.id
-      });
+      console.log('🔐 AdminEvents: Current session:', 'Session status: ' + (!!sessionData.session ? 'Active' : 'None'));
 
       const { data, error } = await supabase
         .from('events')
@@ -59,13 +60,7 @@ const AdminEvents = () => {
         `)
         .order('start_date', { ascending: false });
 
-      console.log('📊 AdminEvents: Query result:', {
-        dataCount: data?.length || 0,
-        hasError: !!error,
-        errorMessage: error?.message || null,
-        hasData: !!data,
-        firstEventTitle: data?.[0]?.title || 'none'
-      });
+      console.log('📊 AdminEvents: Query result:', 'Found ' + (data?.length || 0) + ' events, Error: ' + (error?.message || 'None'));
 
       if (error) {
         console.error('❌ AdminEvents: Database error:', error);
