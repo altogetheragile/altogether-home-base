@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, Calendar, BookOpen, Star, Zap, TrendingUp } from 'lucide-react';
 import { Recommendation } from '@/hooks/useRecommendations';
 import { format } from 'date-fns';
+import { formatPrice } from '@/utils/currency';
 
 interface RecommendationCardProps {
   recommendation: Recommendation;
@@ -12,12 +13,31 @@ interface RecommendationCardProps {
   className?: string;
 }
 
+// Safe helper functions
+const safeText = (v: any, fallback = ''): string => {
+  if (typeof v === 'string' || typeof v === 'number') {
+    return String(v);
+  }
+  return fallback;
+};
+
+const safeFormatDate = (v: any): string => {
+  try {
+    if (!v) return '—';
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return '—';
+    return format(d, 'MMM dd, yyyy');
+  } catch {
+    return '—';
+  }
+};
+
 export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   recommendation,
   onView,
   className = '',
 }) => {
-  const { content_type, content, recommendation_type, score } = recommendation;
+  const { content_type, content, recommendation_type } = recommendation;
 
   const getRecommendationIcon = () => {
     switch (recommendation_type) {
@@ -50,7 +70,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {content?.name}
+            {safeText(content?.name, 'Untitled')}
           </CardTitle>
           <div className="flex items-center gap-1 ml-2">
             {getRecommendationIcon()}
@@ -63,29 +83,29 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <CardContent className="pt-0">
         {content?.image_url && (
           <img
-            src={content.image_url}
-            alt={content.name}
+            src={String(content.image_url)}
+            alt={safeText(content.name, '')}
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {content?.description}
+          {safeText(content?.description, '')}
         </p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {content?.difficulty_level && (
               <Badge variant="secondary" className="text-xs">
-                {content.difficulty_level}
+                {safeText(content.difficulty_level, '')}
               </Badge>
             )}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Eye className="h-3 w-3" />
-              {content?.view_count || 0}
+              {safeText(content?.view_count ?? 0, '0')}
             </div>
           </div>
           <Button
             size="sm"
-            onClick={() => onView(content?.slug || content?.id)}
+            onClick={() => onView(String(content?.slug || content?.id || ''))}
             className="shrink-0"
           >
             <BookOpen className="h-4 w-4 mr-1" />
@@ -101,7 +121,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {content?.title}
+            {safeText(content?.title, 'Untitled Event')}
           </CardTitle>
           <div className="flex items-center gap-1 ml-2">
             {getRecommendationIcon()}
@@ -113,29 +133,29 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       </CardHeader>
       <CardContent className="pt-0">
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {content?.description}
+          {safeText(content?.description, '')}
         </p>
         <div className="space-y-2 mb-4">
           {content?.start_date && (
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-primary" />
               <span>
-                {format(new Date(content.start_date), 'MMM dd, yyyy')}
+                {safeFormatDate(content.start_date)}
                 {content?.end_date && content.end_date !== content.start_date && 
-                  ` - ${format(new Date(content.end_date), 'MMM dd, yyyy')}`
+                  ` - ${safeFormatDate(content.end_date)}`
                 }
               </span>
             </div>
           )}
           {content?.price_cents && (
             <div className="text-sm font-semibold">
-              ${(content.price_cents / 100).toFixed(2)}
+              {formatPrice(Number(content.price_cents) || 0, 'usd')}
             </div>
           )}
         </div>
         <Button
           size="sm"
-          onClick={() => onView(content?.id)}
+          onClick={() => onView(String(content?.id || ''))}
           className="w-full"
         >
           View Event
@@ -149,7 +169,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {content?.title}
+            {safeText(content?.title, 'Untitled Post')}
           </CardTitle>
           <div className="flex items-center gap-1 ml-2">
             {getRecommendationIcon()}
@@ -162,17 +182,17 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <CardContent className="pt-0">
         {content?.featured_image_url && (
           <img
-            src={content.featured_image_url}
-            alt={content.title}
+            src={String(content.featured_image_url)}
+            alt={safeText(content.title, '')}
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}
         <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-          {content?.excerpt}
+          {safeText(content?.excerpt, '')}
         </p>
         <Button
           size="sm"
-          onClick={() => onView(content?.slug || content?.id)}
+          onClick={() => onView(String(content?.slug || content?.id || ''))}
           className="w-full"
         >
           <BookOpen className="h-4 w-4 mr-1" />
