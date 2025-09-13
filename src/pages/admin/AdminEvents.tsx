@@ -1,10 +1,10 @@
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
 import { useEventMutations } from '@/hooks/useEventMutations';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -27,24 +27,34 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import EventRegistrationsDialog from '@/components/admin/events/EventRegistrationsDialog';
-
 import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
+
+// Helper functions for safe rendering
+const normalizeBool = (v: any): boolean => {
+  if (typeof v === 'boolean') return v;
+  if (v === 1 || v === '1') return true;
+  if (v === 0 || v === '0') return false;
+  return Boolean((v as any)?.value ?? v);
+};
+
+const formatDateSafe = (value: any): string => {
+  if (typeof value === 'string' || typeof value === 'number') {
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) return format(d, 'MMM dd, yyyy');
+  }
+  return '—';
+};
 
 const AdminEvents = () => {
   const location = useLocation();
   
-  // Early return if not on admin/events route to prevent unnecessary rendering
-  if (!location.pathname.startsWith('/admin/events')) {
-    return null;
-  }
-  
-  // Only run queries when actually on the events route
-  const shouldFetch = location.pathname.startsWith('/admin/events');
+  // Compute route check at the top
+  const isEventsRoute = location.pathname.startsWith('/admin/events');
 
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['admin-events'],
-    enabled: shouldFetch, // Only run when on the correct route
+    enabled: isEventsRoute, // Only run when on the correct route
     queryFn: async () => {
       console.log('🔍 AdminEvents: Starting fetch...');
       
@@ -76,14 +86,11 @@ const AdminEvents = () => {
   });
 
   const { deleteEvent } = useEventMutations();
-  const [eventToDelete, setEventToDelete] = useState<any | null>(null);
-  const [registrationsEvent, setRegistrationsEvent] = useState<any | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [registrationsEvent, setRegistrationsEvent] = useState<{ id: string; title: string } | null>(null);
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM dd, yyyy');
-  };
-  const getRegistrationBadge = (registrations: any[]) => {
-    if (!registrations) return null;
+  const getRegistrationBadge = (registrations: unknown) => {
+    if (!Array.isArray(registrations)) return null;
     
     const totalCount = registrations.length;
     const paidCount = registrations.filter(r => r.payment_status === 'paid').length;
@@ -108,16 +115,19 @@ const AdminEvents = () => {
     return (
       <div className="flex flex-col items-center space-y-1">
         <Badge variant={variant} className={className}>
-          {totalCount} registered
+          {String(totalCount)} registered
         </Badge>
         {totalCount > 0 && (
           <span className="text-xs text-gray-500">
-            {paidCount} paid
+            {String(paidCount)} paid
           </span>
         )}
       </div>
     );
   };
+
+  // Early return after all hooks to prevent fetches on non-events routes
+  if (!isEventsRoute) return null;
 
   if (isLoading) {
     return (
@@ -157,80 +167,90 @@ const AdminEvents = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {events?.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium">{String(event.title || 'Untitled')}</TableCell>
-                <TableCell>{formatDate(event.start_date)}</TableCell>
-                <TableCell>{String(event.instructor?.name || 'TBA')}</TableCell>
-                <TableCell>{String(event.location?.name || 'TBA')}</TableCell>
-                <TableCell>
-                  {formatPrice(event.price_cents || 0, event.currency || 'usd')}
-                </TableCell>
-                <TableCell>
-                  {getRegistrationBadge(event.event_registrations)}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={Boolean(event.is_published) ? 'default' : 'secondary'}>
-                    {Boolean(event.is_published) ? (
-                      <><Eye className="h-3 w-3 mr-1" />Published</>
-                    ) : (
-                      <><EyeOff className="h-3 w-3 mr-1" />Draft</>
-                    )}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Link to={`/admin/events/${event.id}/edit`}>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </Link>
+            {Array.isArray(events) ? events.map((event) => {
+              // Safely normalize all values
+              const published = normalizeBool(event.is_published);
+              const title = String(event.title ?? 'Untitled');
+              const instructorName = String(event.instructor?.name ?? 'TBA');
+              const locationName = String(event.location?.name ?? 'TBA');
+              const priceCents = Number(event.price_cents) || 0;
+              const currency = String(event.currency || 'usd');
+              const registrations = event.event_registrations ?? [];
+              const eventId = String(event.id);
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRegistrationsEvent(event)}
-                    >
-                      Manage Registrations
-                    </Button>
+              return (
+                <TableRow key={eventId}>
+                  <TableCell className="font-medium">{title}</TableCell>
+                  <TableCell>{formatDateSafe(event.start_date)}</TableCell>
+                  <TableCell>{instructorName}</TableCell>
+                  <TableCell>{locationName}</TableCell>
+                  <TableCell>
+                    {formatPrice(priceCents, currency)}
+                  </TableCell>
+                  <TableCell>
+                    {getRegistrationBadge(registrations)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={published ? 'default' : 'secondary'}>
+                      {published ? (
+                        <><Eye className="h-3 w-3 mr-1" />Published</>
+                      ) : (
+                        <><EyeOff className="h-3 w-3 mr-1" />Draft</>
+                      )}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Link to={`/admin/events/${eventId}/edit`}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
 
-                    {event?.event_registrations?.length > 0 ? (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              <Button variant="destructive" size="sm" disabled aria-disabled="true">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Cannot delete event with registrations</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setEventToDelete(event);
-                        }}
+                        onClick={() => setRegistrationsEvent({ id: eventId, title })}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        Manage Registrations
                       </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!events?.length && (
+
+                      {Array.isArray(registrations) && registrations.length > 0 ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <Button variant="destructive" size="sm" disabled aria-disabled="true">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Cannot delete event with registrations</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setEventToDelete({ id: eventId, title })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            }) : null}
+            {!Array.isArray(events) || events.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   No events found. <Link to="/admin/events/new" className="text-primary hover:underline">Create your first event</Link>
                 </TableCell>
               </TableRow>
-            )}
+            ) : null}
           </TableBody>
         </Table>
       </div>
