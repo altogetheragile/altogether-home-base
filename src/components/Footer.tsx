@@ -1,4 +1,7 @@
 
+import React from 'react';
+import { Link } from 'react-router-dom';
+
 const Footer = () => {
   return (
     <footer className="bg-muted mt-auto">
@@ -13,9 +16,9 @@ const Footer = () => {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li><a href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</a></li>
-              <li><a href="/events" className="text-muted-foreground hover:text-primary transition-colors">Events</a></li>
-              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors">Blog</a></li>
+              <li><Link to="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link></li>
+              <li><Link to="/events" className="text-muted-foreground hover:text-primary transition-colors">Events</Link></li>
+              <li><Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">Blog</Link></li>
             </ul>
           </div>
           <div>

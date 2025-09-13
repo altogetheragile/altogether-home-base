@@ -1,5 +1,3 @@
-// src/components/recommendations/RecommendationCard.tsx - Complete safe version
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +11,18 @@ interface RecommendationCardProps {
   recommendation: Recommendation;
   onView: (id: string) => void;
   className?: string;
+}
+
+// Normalized content type for safe rendering
+interface NormalizedContent {
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  primaryDate: string;
+  price: string;
+  viewCount: string;
+  navTarget: string;
+  difficultyLevel: string;
 }
 
 // Safe helper functions
@@ -34,12 +44,60 @@ const safeFormatDate = (v: any): string => {
   }
 };
 
+// Normalize recommendation content into safe, typed shape
+const normalizeRecommendation = (recommendation: Recommendation): NormalizedContent => {
+  const { content_type, content } = recommendation;
+  
+  let title = 'Untitled';
+  let subtitle = '';
+  let imageUrl = '';
+  let primaryDate = '—';
+  let price = '';
+  let viewCount = '0';
+  let navTarget = '';
+  let difficultyLevel = '';
+
+  if (content) {
+    // Common fields
+    title = safeText(content.name || content.title, 'Untitled');
+    subtitle = safeText(content.description || content.excerpt, '');
+    imageUrl = safeText(content.image_url || content.featured_image_url, '');
+    viewCount = safeText(content.view_count ?? 0, '0');
+    navTarget = safeText(content.slug || content.id, '');
+    difficultyLevel = safeText(content.difficulty_level, '');
+
+    // Type-specific fields
+    if (content_type === 'event') {
+      primaryDate = safeFormatDate(content.start_date);
+      if (content.price_cents) {
+        price = formatPrice(Number(content.price_cents) || 0, 'usd');
+      }
+    } else if (content_type === 'blog') {
+      primaryDate = safeFormatDate(content.published_at || content.created_at);
+    } else if (content_type === 'technique') {
+      primaryDate = safeFormatDate(content.created_at);
+    }
+  }
+
+  return {
+    title,
+    subtitle,
+    imageUrl,
+    primaryDate,
+    price,
+    viewCount,
+    navTarget,
+    difficultyLevel,
+  };
+};
+
 export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   recommendation,
   onView,
   className = '',
 }) => {
-  const { content_type, content, recommendation_type, score } = recommendation;
+  const { content_type, recommendation_type } = recommendation;
+  const normalized = normalizeRecommendation(recommendation);
 
   const getRecommendationIcon = () => {
     switch (recommendation_type) {
@@ -67,12 +125,12 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   };
 
-  const renderKnowledgeCard = () => (
+  const renderTechniqueCard = () => (
     <Card className={`hover:shadow-lg transition-all duration-200 cursor-pointer ${className}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {safeText(content?.name || content?.title, 'Untitled')}
+            {normalized.title}
           </CardTitle>
           <div className="flex items-center gap-1 ml-2">
             {getRecommendationIcon()}
@@ -83,31 +141,31 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {content?.image_url && (
+        {normalized.imageUrl && (
           <img
-            src={String(content.image_url)}
-            alt={safeText(content?.name || content?.title, '')}
+            src={normalized.imageUrl}
+            alt={normalized.title}
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {safeText(content?.description || content?.excerpt, '')}
+          {normalized.subtitle}
         </p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {content?.difficulty_level && (
+            {normalized.difficultyLevel && (
               <Badge variant="secondary" className="text-xs">
-                {safeText(content.difficulty_level, '')}
+                {normalized.difficultyLevel}
               </Badge>
             )}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Eye className="h-3 w-3" />
-              {safeText(content?.view_count ?? 0, '0')}
+              {normalized.viewCount}
             </div>
           </div>
           <Button
             size="sm"
-            onClick={() => onView(String(content?.slug || content?.id || ''))}
+            onClick={() => onView(normalized.navTarget)}
             className="shrink-0"
           >
             <BookOpen className="h-4 w-4 mr-1" />
@@ -123,7 +181,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {safeText(content?.title, 'Untitled Event')}
+            {normalized.title}
           </CardTitle>
           <div className="flex items-center gap-1 ml-2">
             {getRecommendationIcon()}
@@ -135,29 +193,24 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       </CardHeader>
       <CardContent className="pt-0">
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {safeText(content?.description, '')}
+          {normalized.subtitle}
         </p>
         <div className="space-y-2 mb-4">
-          {content?.start_date && (
+          {normalized.primaryDate !== '—' && (
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-primary" />
-              <span>
-                {safeFormatDate(content.start_date)}
-                {content?.end_date && content.end_date !== content.start_date && 
-                  ` - ${safeFormatDate(content.end_date)}`
-                }
-              </span>
+              <span>{normalized.primaryDate}</span>
             </div>
           )}
-          {content?.price_cents && (
+          {normalized.price && (
             <div className="text-sm font-semibold">
-              {formatPrice(Number(content.price_cents) || 0, 'usd')}
+              {normalized.price}
             </div>
           )}
         </div>
         <Button
           size="sm"
-          onClick={() => onView(String(content?.id || ''))}
+          onClick={() => onView(normalized.navTarget)}
           className="w-full"
         >
           View Event
@@ -171,7 +224,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {safeText(content?.title, 'Untitled Post')}
+            {normalized.title}
           </CardTitle>
           <div className="flex items-center gap-1 ml-2">
             {getRecommendationIcon()}
@@ -182,26 +235,26 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {content?.image_url && (
+        {normalized.imageUrl && (
           <img
-            src={String(content.image_url)}
-            alt={safeText(content?.title, '')}
+            src={normalized.imageUrl}
+            alt={normalized.title}
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {safeText(content?.excerpt || content?.description, '')}
+          {normalized.subtitle}
         </p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Eye className="h-3 w-3" />
-              {safeText(content?.view_count ?? 0, '0')}
+              {normalized.viewCount}
             </div>
           </div>
           <Button
             size="sm"
-            onClick={() => onView(String(content?.slug || content?.id || ''))}
+            onClick={() => onView(normalized.navTarget)}
             className="shrink-0"
           >
             <BookOpen className="h-4 w-4 mr-1" />
@@ -212,62 +265,14 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     </Card>
   );
 
-  const renderVideoCard = () => (
-    <Card className={`hover:shadow-lg transition-all duration-200 cursor-pointer ${className}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {safeText(content?.title, 'Untitled Video')}
-          </CardTitle>
-          <div className="flex items-center gap-1 ml-2">
-            {getRecommendationIcon()}
-            <Badge variant="outline" className="text-xs">
-              {getRecommendationLabel()}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {content?.video_url && (
-          <iframe
-            src={String(content.video_url)}
-            title={safeText(content?.title, '')}
-            className="w-full h-32 rounded-md mb-3"
-            frameBorder="0"
-            allowFullScreen
-          />
-        )}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {safeText(content?.description, '')}
-        </p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Eye className="h-3 w-3" />
-              {safeText(content?.view_count ?? 0, '0')}
-            </div>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => onView(String(content?.id || ''))}
-            className="shrink-0"
-          >
-            <BookOpen className="h-4 w-4 mr-1" />
-            Watch
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   switch (content_type) {
     case 'technique':
-      return renderKnowledgeCard();
+      return renderTechniqueCard();
     case 'event':
       return renderEventCard();
     case 'blog':
       return renderBlogCard();
     default:
-      return renderKnowledgeCard();
+      return renderTechniqueCard();
   }
 };

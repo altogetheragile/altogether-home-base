@@ -52,6 +52,7 @@ import CreateKnowledgeTemplate from "./pages/admin/CreateKnowledgeTemplate";
 import { PreviewPage } from "./components/admin/knowledge/PreviewPage";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
+import Home from "./pages/Home";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
 import Knowledge from "./pages/Knowledge";
 import KnowledgeDetail from "./pages/KnowledgeDetail";
@@ -147,9 +148,32 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Dynamic Pages Route - handles root and other slugs */}
-              <Route path="/" element={<DynamicPageRenderer slug="home" />} />
-              <Route path="/:slug" element={<DynamicPageRenderer slug={window.location.pathname.slice(1)} />} />
+              {/* Static Home Page - Safe from CMS crashes */}
+              <Route path="/" element={<Home />} />
+              
+              {/* Dynamic CMS Pages - Handles other slugs */}
+              <Route path="/:slug" element={
+                <ErrorBoundary fallback={
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-lg text-red-600">Failed to load page</div>
+                  </div>
+                }>
+                  <DynamicPageRenderer slug={window.location.pathname.slice(1)} />
+                </ErrorBoundary>
+              } />
+              
+              {/* Optional: Test route for dynamic home */}
+              <Route path="/home-dynamic" element={
+                <ErrorBoundary fallback={
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-lg text-red-600">Failed to load dynamic home page</div>
+                  </div>
+                }>
+                  <Suspense fallback={<div className="flex items-center justify-center h-64">Loading...</div>}>
+                    <DynamicPageRenderer slug="home" />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

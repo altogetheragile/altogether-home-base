@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 interface ButtonRendererProps {
@@ -37,9 +38,9 @@ export const ButtonRenderer: React.FC<ButtonRendererProps> = ({ content, styles 
             })
           }}
         >
-          <a href={String(safeContent.ctaLink)}>
+          <Link to={String(safeContent.ctaLink)}>
             {String(safeContent.ctaText)}
-          </a>
+          </Link>
         </Button>
       )}
       
@@ -66,9 +67,9 @@ export const ButtonRenderer: React.FC<ButtonRendererProps> = ({ content, styles 
               })
             }}
           >
-            <a href={String(button.link)}>
+            <Link to={String(button.link)}>
               {String(button.text)}
-            </a>
+            </Link>
           </Button>
         );
       })}

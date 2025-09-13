@@ -1,11 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRecommendations, useTrackInteraction } from '@/hooks/useRecommendations';
 import { RecommendationCard } from './RecommendationCard';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowRight } from 'lucide-react';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface RecommendationsSectionProps {
   title?: string;
@@ -17,7 +17,7 @@ interface RecommendationsSectionProps {
 }
 
 export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
-  title = 'Recommended for You',
+  title = "Recommended for You",
   contentType,
   limit = 6,
   excludeIds = [],
@@ -25,34 +25,37 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   className = '',
 }) => {
   const navigate = useNavigate();
-  const { data: recommendations = [], isLoading } = useRecommendations(
-    contentType,
-    limit,
-    excludeIds
-  );
+  const { data: recommendations, isLoading, error } = useRecommendations(contentType, limit, excludeIds);
   const trackInteraction = useTrackInteraction();
 
-  const handleViewContent = (id: string) => {
-    if (!contentType) return;
+  const handleView = (id: string) => {
+    if (!id) return;
+    
+    // Find the recommendation to get its content type
+    const recommendation = recommendations?.find(r => r.content_id === id || r.content?.slug === id);
+    
+    if (recommendation) {
+      // Track the interaction
+      trackInteraction.mutate({
+        contentType: recommendation.content_type,
+        contentId: recommendation.content_id,
+        interactionType: 'view',
+      });
 
-    // Track the interaction
-    trackInteraction.mutate({
-      contentType,
-      contentId: id,
-      interactionType: 'view',
-    });
-
-    // Navigate to the content
-    switch (contentType) {
-      case 'technique':
-        navigate(`/knowledge/${id}`);
-        break;
-      case 'event':
-        navigate(`/events/${id}`);
-        break;
-      case 'blog':
-        navigate(`/blog/${id}`);
-        break;
+      // Navigate based on content type
+      switch (recommendation.content_type) {
+        case 'technique':
+          navigate(`/knowledge/${recommendation.content?.slug || id}`);
+          break;
+        case 'event':
+          navigate(`/events/${id}`);
+          break;
+        case 'blog':
+          navigate(`/blog/${recommendation.content?.slug || id}`);
+          break;
+        default:
+          console.warn('Unknown content type:', recommendation.content_type);
+      }
     }
   };
 
@@ -74,70 +77,95 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            {String(title || 'Recommended')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: limit }).map((_, index) => (
-              <Card key={index} className="animate-pulse">
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-32 w-full mb-3" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3 mb-3" />
-                  <Skeleton className="h-8 w-20" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className={className}>
+        <div className="flex items-center justify-between mb-6">
+          <Skeleton className="h-8 w-64" />
+          {showViewAll && <Skeleton className="h-10 w-24" />}
+        </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: limit }).map((_, i) => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-48 w-full rounded-lg" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
-  if (!recommendations.length) {
-    return null;
+  if (error) {
+    return (
+      <div className={`py-8 ${className}`}>
+        <div className="text-center">
+          <p className="text-muted-foreground">Unable to load recommendations</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            {String(title || 'Recommended')}
-          </CardTitle>
+  if (!recommendations || recommendations.length === 0) {
+    return (
+      <div className={`py-8 ${className}`}>
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+          <p className="text-muted-foreground">No recommendations available at the moment</p>
           {showViewAll && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
+              className="mt-4"
               onClick={handleViewAll}
-              className="text-primary hover:text-primary/80"
             >
-              View All
-              <ArrowRight className="h-4 w-4 ml-1" />
+              Browse All Content
             </Button>
           )}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recommendations.map((recommendation) => (
+      </div>
+    );
+  }
+
+  return (
+    <div className={className}>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+        {showViewAll && (
+          <Button
+            variant="outline"
+            onClick={handleViewAll}
+            className="flex items-center gap-1"
+          >
+            View All
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {recommendations.map((recommendation) => (
+          <ErrorBoundary
+            key={`${recommendation.content_type}-${recommendation.content_id}`}
+            fallback={
+              <div className="p-4 border rounded-lg bg-muted/50">
+                <p className="text-sm text-muted-foreground">Unable to load this recommendation</p>
+              </div>
+            }
+          >
             <RecommendationCard
-              key={`${recommendation.content_type}-${recommendation.content_id}`}
               recommendation={recommendation}
-              onView={handleViewContent}
+              onView={handleView}
             />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </ErrorBoundary>
+        ))}
+      </div>
+    </div>
   );
 };
