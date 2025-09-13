@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -253,11 +253,21 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
           const mouseCanvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100);
           const mouseCanvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100);
 
-          setIsDraggingField(true);
-          setFieldDragOffset({
+          const dragOffset = {
             x: mouseCanvasX - section.x - (field.x || 0),
             y: mouseCanvasY - section.y - (field.y || 0),
+          };
+
+          console.log('🚀 Field drag start:', { 
+            fieldId: field.id,
+            mouse: { x: e.clientX, y: e.clientY },
+            canvas: { x: mouseCanvasX, y: mouseCanvasY },
+            offset: dragOffset,
+            field: { x: field.x, y: field.y }
           });
+
+          setFieldDragOffset(dragOffset);
+          setIsDraggingField(true);
         }
       }
     };
@@ -286,8 +296,11 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       }
     };
 
-    const handleFieldDragMove = (e: MouseEvent) => {
-      if (!isDraggingField || !sectionRef.current) return;
+    const handleFieldDragMove = useCallback((e: MouseEvent) => {
+      if (!isDraggingField || !sectionRef.current) {
+        console.log('🚫 Field drag move blocked:', { isDraggingField, hasRef: !!sectionRef.current });
+        return;
+      }
 
       const parent = sectionRef.current.parentElement;
       if (!parent) return;
@@ -301,24 +314,35 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       const newX = Math.max(0, Math.min(canvasX, section.width - (field.width || 200)));
       const newY = Math.max(0, Math.min(canvasY, section.height - (field.height || 40)));
 
-      onUpdateField(field.id, { x: newX, y: newY });
-    };
+      console.log('🎯 Field drag move:', { 
+        fieldId: field.id, 
+        mouse: { x: e.clientX, y: e.clientY },
+        canvas: { x: canvasX, y: canvasY },
+        new: { x: newX, y: newY },
+        current: { x: field.x, y: field.y }
+      });
 
-    const handleFieldDragEnd = () => {
+      onUpdateField(field.id, { x: newX, y: newY });
+    }, [isDraggingField, sectionRef, pan, zoom, section, fieldDragOffset, field, onUpdateField]);
+
+    const handleFieldDragEnd = useCallback(() => {
+      console.log('🏁 Field drag end:', field.id);
       setIsDraggingField(false);
-    };
+    }, [field.id]);
 
     React.useEffect(() => {
       if (isDraggingField) {
+        console.log('📌 Adding field drag listeners for:', field.id);
         document.addEventListener('mousemove', handleFieldDragMove);
         document.addEventListener('mouseup', handleFieldDragEnd);
 
         return () => {
+          console.log('🗑️ Removing field drag listeners for:', field.id);
           document.removeEventListener('mousemove', handleFieldDragMove);
           document.removeEventListener('mouseup', handleFieldDragEnd);
         };
       }
-    }, [isDraggingField, fieldDragOffset]);
+    }, [isDraggingField, handleFieldDragMove, handleFieldDragEnd, field.id]);
 
     const handleTextChange = (value: string) => {
       onUpdateField(field.id, { content: String(value ?? '') });
