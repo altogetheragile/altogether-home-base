@@ -243,6 +243,7 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
   }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isDraggingField, setIsDraggingField] = useState(false);
+    const fieldElementRef = useRef<HTMLDivElement>(null);
     
     // Use refs to capture latest values without triggering effect re-runs
     const panRef = useRef(pan);
@@ -250,6 +251,8 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     const sectionRef2 = useRef(section);
     const fieldRef = useRef(field);
     const dragOffsetRef = useRef({ x: 0, y: 0 });
+    const dragStartPosRef = useRef({ x: 0, y: 0 });
+    const animationRef = useRef<number>();
     
     // Update refs on each render
     panRef.current = pan;
@@ -273,14 +276,17 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
         y: mouseCanvasY - sectionRef2.current.y - (fieldRef.current.y || 0),
       };
 
-      console.log('🚀 Field drag start:', { 
-        fieldId: fieldRef.current.id,
-        mouse: { x: e.clientX, y: e.clientY },
-        canvas: { x: mouseCanvasX, y: mouseCanvasY },
-        offset: dragOffsetRef.current,
-        field: { x: fieldRef.current.x, y: fieldRef.current.y },
-        section: { x: sectionRef2.current.x, y: sectionRef2.current.y }
-      });
+      // Store initial position for smooth dragging
+      dragStartPosRef.current = {
+        x: fieldRef.current.x || 0,
+        y: fieldRef.current.y || 0
+      };
+
+      // Change cursor for all elements during drag
+      document.body.style.cursor = 'grabbing';
+      if (fieldElementRef.current) {
+        fieldElementRef.current.style.zIndex = '100';
+      }
 
       setIsDraggingField(true);
     }, []);
@@ -304,10 +310,10 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       startFieldDrag(e);
     }, [startFieldDrag]);
 
-    // Stable drag handlers that don't depend on state
+    // Stable drag handlers using refs - smooth visual feedback
     const handleFieldDragMove = useCallback((e: MouseEvent) => {
       const parent = sectionRef.current?.parentElement;
-      if (!parent) return;
+      if (!parent || !fieldElementRef.current) return;
 
       const parentRect = parent.getBoundingClientRect();
       const canvasX = (e.clientX - parentRect.left - 32 - panRef.current.x) / (zoomRef.current / 100) 
@@ -319,31 +325,62 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
       let newX = Math.max(0, Math.min(canvasX, sectionRef2.current.width - (fieldRef.current.width || 200)));
       let newY = Math.max(0, Math.min(canvasY, sectionRef2.current.height - (fieldRef.current.height || 40)));
 
-      // Apply grid snapping if enabled
-      if (snapToGrid && gridSize > 0) {
-        newX = Math.round(newX / gridSize) * gridSize;
-        newY = Math.round(newY / gridSize) * gridSize;
-      }
+      // Use smooth CSS transform for visual feedback (no snapping during drag)
+      const smoothUpdate = () => {
+        if (fieldElementRef.current) {
+          fieldElementRef.current.style.transform = `translate(${newX - dragStartPosRef.current.x}px, ${newY - dragStartPosRef.current.y}px)`;
+          fieldElementRef.current.style.transition = 'none';
+        }
+      };
 
-      console.log('🎯 Field drag move:', { 
-        fieldId: fieldRef.current.id, 
-        mouse: { x: e.clientX, y: e.clientY },
-        canvas: { x: canvasX, y: canvasY },
-        new: { x: newX, y: newY },
-        current: { x: fieldRef.current.x, y: fieldRef.current.y },
-        calling_update: newX !== fieldRef.current.x || newY !== fieldRef.current.y
-      });
-
-      // Only update if position actually changed
-      if (newX !== fieldRef.current.x || newY !== fieldRef.current.y) {
-        onUpdateField(fieldRef.current.id, { x: newX, y: newY });
+      // Use requestAnimationFrame for smooth 60fps updates
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
-    }, [onUpdateField, snapToGrid, gridSize]);
+      animationRef.current = requestAnimationFrame(smoothUpdate);
+    }, []);
 
     const handleFieldDragEnd = useCallback(() => {
-      console.log('🏁 Field drag end:', fieldRef.current.id);
+      if (!fieldElementRef.current) return;
+
+      // Calculate final position with snapping if enabled
+      const parent = sectionRef.current?.parentElement;
+      if (parent) {
+        const transform = fieldElementRef.current.style.transform;
+        const matches = transform.match(/translate\(([^)]+)\)/);
+        
+        if (matches) {
+          const [translateX, translateY] = matches[1].split(',').map(v => parseFloat(v.trim()));
+          let finalX = dragStartPosRef.current.x + translateX;
+          let finalY = dragStartPosRef.current.y + translateY;
+
+          // Constrain to section boundaries
+          finalX = Math.max(0, Math.min(finalX, sectionRef2.current.width - (fieldRef.current.width || 200)));
+          finalY = Math.max(0, Math.min(finalY, sectionRef2.current.height - (fieldRef.current.height || 40)));
+
+          // Apply grid snapping only at the end
+          if (snapToGrid && gridSize > 0) {
+            finalX = Math.round(finalX / gridSize) * gridSize;
+            finalY = Math.round(finalY / gridSize) * gridSize;
+          }
+
+          // Commit the final position
+          onUpdateField(fieldRef.current.id, { x: finalX, y: finalY });
+        }
+      }
+
+      // Reset visual state
+      fieldElementRef.current.style.transform = '';
+      fieldElementRef.current.style.transition = '';
+      fieldElementRef.current.style.zIndex = '';
+      document.body.style.cursor = '';
+      
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+
       setIsDraggingField(false);
-    }, []);
+    }, [onUpdateField, snapToGrid, gridSize]);
 
     // Simplified effect with minimal dependencies
     React.useEffect(() => {
@@ -380,12 +417,13 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
 
     return (
       <div
+        ref={fieldElementRef}
         key={field.id}
         className={`absolute border rounded transition-all ${
           isFieldSelected
             ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
             : 'border-muted-foreground/30 hover:border-primary/50 bg-background/80'
-        } ${isDraggingField ? 'shadow-lg z-50' : ''}`}
+        } ${isDraggingField ? 'shadow-lg cursor-grabbing' : 'cursor-grab hover:cursor-grab'} ${isFieldSelected && !isEditing ? 'cursor-grab hover:cursor-grab' : ''}`}
         style={{
           left: field.x || 0,
           top: field.y || 0,
@@ -445,7 +483,7 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
             )
           ) : (
             <div
-              className={`w-full h-full p-1 text-xs leading-relaxed ${isFieldSelected && !isEditing ? 'cursor-move' : 'cursor-text'} rounded hover:bg-accent/20 min-h-[1.5rem] flex items-center`}
+              className={`w-full h-full p-1 text-xs leading-relaxed ${isDraggingField ? 'cursor-grabbing' : isFieldSelected && !isEditing ? 'cursor-grab' : 'cursor-text'} rounded hover:bg-accent/20 min-h-[1.5rem] flex items-center`}
               title="Double-click to edit"
             >
               {(() => {
