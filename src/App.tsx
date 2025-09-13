@@ -61,7 +61,7 @@ import KnowledgeDetail from "./pages/KnowledgeDetail";
 // Feature flags for gradual restoration
 const ENABLE_ADMIN_ROUTES = false;
 const ENABLE_PROTECTED_PROJECTS = false;
-const ENABLE_DYNAMIC_PAGES = false;
+const ENABLE_DYNAMIC_PAGES = true; // ✅ Re-enabling CMS pages
 
 const queryClient = new QueryClient();
 
