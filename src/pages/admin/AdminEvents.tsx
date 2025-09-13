@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useMatch } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -30,37 +30,16 @@ import EventRegistrationsDialog from '@/components/admin/events/EventRegistratio
 
 import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
-import { useLocation } from 'react-router-dom';
 
 const AdminEvents = () => {
-  const location = useLocation();
-  
-  // Only run queries when actually on the events route
-  const shouldFetch = location.pathname.startsWith('/admin/events');
-  
-  // Debug logging
-  console.log('🔍 AdminEvents: Component render', {
-    pathname: location.pathname,
-    shouldFetch,
-    timestamp: new Date().toISOString()
-  });
+  // Use exact route matching instead of startsWith to prevent rendering on other routes
+  const match = useMatch('/admin/events');
+  const shouldRender = !!match;
   
   const { data: events, isLoading, error } = useQuery({
-    queryKey: ['admin-events'],
+    queryKey: ['admin-events', shouldRender],
     queryFn: async () => {
-      console.log('🚀 AdminEvents: Starting fetch...', {
-        pathname: location.pathname,
-        shouldFetch,
-        timestamp: new Date().toISOString()
-      });
-      
       const { data: sessionData } = await supabase.auth.getSession();
-      console.log('🔐 AdminEvents: Current session:', {
-        hasSession: !!sessionData.session,
-        hasAccessToken: !!sessionData.session?.access_token,
-        userEmail: sessionData.session?.user?.email || 'none',
-        hasUserId: !!sessionData.session?.user?.id
-      });
 
       const { data, error } = await supabase
         .from('events')
@@ -75,29 +54,20 @@ const AdminEvents = () => {
         `)
         .order('start_date', { ascending: false });
 
-      console.log('📊 AdminEvents: Query result:', {
-        dataCount: data?.length || 0,
-        hasError: !!error,
-        errorMessage: error?.message || null,
-        hasData: !!data,
-        firstEventTitle: data?.[0]?.title || 'none'
-      });
-
       if (error) {
-        console.error('❌ AdminEvents: Database error:', error);
         throw error;
       }
       return data || [];
     },
-    enabled: shouldFetch, // Only run when on the correct route
+    enabled: shouldRender, // Only run when on exact route match
   });
 
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const [registrationsEvent, setRegistrationsEvent] = useState<{ id: string; title: string } | null>(null);
   const { deleteEvent } = useEventMutations();
 
-  // Add early return after all hooks to prevent rendering on non-events routes
-  if (!shouldFetch) {
+  // Early return if not on exact /admin/events route
+  if (!shouldRender) {
     return null;
   }
 

@@ -86,9 +86,15 @@ const App = () => (
                 </ProtectedRoute>
               }>
                 <Route path="events" element={
-                  <Suspense fallback={<div className="flex items-center justify-center h-64">Loading events...</div>}>
-                    <AdminEvents />
-                  </Suspense>
+                  <ErrorBoundary fallback={
+                    <div className="flex items-center justify-center h-64">
+                      <div className="text-lg text-red-600">Failed to load Events module</div>
+                    </div>
+                  }>
+                    <Suspense fallback={<div className="flex items-center justify-center h-64">Loading events...</div>}>
+                      <AdminEvents />
+                    </Suspense>
+                  </ErrorBoundary>
                 } />
                 <Route path="events/new" element={<CreateEvent />} />
                 <Route path="events/:id/edit" element={<EditEvent />} />
