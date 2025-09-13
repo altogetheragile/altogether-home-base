@@ -15,7 +15,7 @@ const Home: React.FC = () => {
   }
 
   // Feature flags for safe reintroduction of dynamic content
-  const ENABLE_RECOMMENDATIONS = true; // Can be toggled to false for testing
+  const ENABLE_RECOMMENDATIONS = false; // Can be toggled to false for testing
 
   return (
     <div className="min-h-screen bg-background">
