@@ -485,23 +485,20 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
             </>
           )}
         </Button>
-        <div className="flex gap-1">
-          <Button
-            variant={activeTab === 'design' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveTab('design')}
-          >
-            Design
-          </Button>
-          <Button
-            variant={activeTab === 'preview' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveTab('preview')}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            Preview
-          </Button>
-        </div>
+        <Button
+          variant={activeTab === 'design' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setActiveTab(activeTab === 'design' ? 'preview' : 'design')}
+        >
+          {activeTab === 'design' ? (
+            <>
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </>
+          ) : (
+            'Design'
+          )}
+        </Button>
       </div>
 
       <Tabs defaultValue="settings" className="flex-1">
@@ -855,6 +852,26 @@ export const TemplateBuilderCanvas: React.FC<TemplateBuilderCanvasProps> = ({
       </div>
     );
   };
+
+  // Clean preview mode without any editing UI
+  if (activeTab === 'preview') {
+    return (
+      <div className="relative w-full h-full">
+        {/* Clean preview mode toggle button */}
+        <div className="absolute top-4 right-4 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveTab('design')}
+            className="bg-background/90 backdrop-blur-sm shadow-lg"
+          >
+            Design Mode
+          </Button>
+        </div>
+        {renderCanvas()}
+      </div>
+    );
+  }
 
   return (
     <TemplateDesignLayout
