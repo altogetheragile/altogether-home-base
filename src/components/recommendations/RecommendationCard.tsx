@@ -1,3 +1,5 @@
+// src/components/recommendations/RecommendationCard.tsx - Complete Safe Version
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +39,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   onView,
   className = '',
 }) => {
-  const { content_type, content, recommendation_type } = recommendation;
+  const { content_type, content, recommendation_type, score } = recommendation;
 
   const getRecommendationIcon = () => {
     switch (recommendation_type) {
@@ -48,7 +50,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       case 'popular':
         return <TrendingUp className="h-4 w-4 text-accent" />;
       default:
-        return <Eye className="h-4 w-4 text-muted-foreground" />;
+        return <Star className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -65,12 +67,12 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   };
 
-  const renderTechniqueCard = () => (
+  const renderKnowledgeCard = () => (
     <Card className={`hover:shadow-lg transition-all duration-200 cursor-pointer ${className}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2 leading-tight">
-            {safeText(content?.name, 'Untitled')}
+            {safeText(content?.name || content?.title, 'Untitled')}
           </CardTitle>
           <div className="flex items-center gap-1 ml-2">
             {getRecommendationIcon()}
@@ -84,12 +86,12 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         {content?.image_url && (
           <img
             src={String(content.image_url)}
-            alt={safeText(content.name, '')}
+            alt={safeText(content?.name || content?.title, '')}
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {safeText(content?.description, '')}
+          {safeText(content?.description || content?.excerpt, '')}
         </p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -180,38 +182,94 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {content?.featured_image_url && (
+        {content?.image_url && (
           <img
-            src={String(content.featured_image_url)}
-            alt={safeText(content.title, '')}
+            src={String(content.image_url)}
+            alt={safeText(content?.title, '')}
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}
-        <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-          {safeText(content?.excerpt, '')}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          {safeText(content?.excerpt || content?.description, '')}
         </p>
-        <Button
-          size="sm"
-          onClick={() => onView(String(content?.slug || content?.id || ''))}
-          className="w-full"
-        >
-          <BookOpen className="h-4 w-4 mr-1" />
-          Read Article
-        </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              {safeText(content?.view_count ?? 0, '0')}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => onView(String(content?.slug || content?.id || ''))}
+            className="shrink-0"
+          >
+            <BookOpen className="h-4 w-4 mr-1" />
+            Read
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
 
-  if (!content) return null;
+  const renderVideoCard = () => (
+    <Card className={`hover:shadow-lg transition-all duration-200 cursor-pointer ${className}`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-lg line-clamp-2 leading-tight">
+            {safeText(content?.title, 'Untitled Video')}
+          </CardTitle>
+          <div className="flex items-center gap-1 ml-2">
+            {getRecommendationIcon()}
+            <Badge variant="outline" className="text-xs">
+              {getRecommendationLabel()}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {content?.video_url && (
+          <iframe
+            src={String(content.video_url)}
+            title={safeText(content?.title, '')}
+            className="w-full h-32 rounded-md mb-3"
+            frameBorder="0"
+            allowFullScreen
+          />
+        )}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          {safeText(content?.description, '')}
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              {safeText(content?.view_count ?? 0, '0')}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => onView(String(content?.id || ''))}
+            className="shrink-0"
+          >
+            <BookOpen className="h-4 w-4 mr-1" />
+            Watch
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   switch (content_type) {
-    case 'technique':
-      return renderTechniqueCard();
+    case 'knowledge_item':
+      return renderKnowledgeCard();
     case 'event':
       return renderEventCard();
-    case 'blog':
+    case 'blog_post':
       return renderBlogCard();
+    case 'video':
+      return renderVideoCard();
     default:
-      return null;
+      return renderKnowledgeCard();
   }
 };
