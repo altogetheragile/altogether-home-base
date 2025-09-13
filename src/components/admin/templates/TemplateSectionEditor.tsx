@@ -223,6 +223,8 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     section: TemplateSection;
     pan: { x: number; y: number };
     zoom: number;
+    snapToGrid: boolean;
+    gridSize: number;
     onSelectField: (field: TemplateField) => void;
     onUpdateField: (fieldId: string, updates: Partial<TemplateField>) => void;
     onDeleteField: (fieldId: string) => void;
@@ -233,103 +235,117 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     section,
     pan,
     zoom,
+    snapToGrid,
+    gridSize,
     onSelectField,
     onUpdateField,
     onDeleteField,
   }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isDraggingField, setIsDraggingField] = useState(false);
-    const [fieldDragOffset, setFieldDragOffset] = useState({ x: 0, y: 0 });
+    
+    // Use refs to capture latest values without triggering effect re-runs
+    const panRef = useRef(pan);
+    const zoomRef = useRef(zoom);
+    const sectionRef2 = useRef(section);
+    const fieldRef = useRef(field);
+    const dragOffsetRef = useRef({ x: 0, y: 0 });
+    
+    // Update refs on each render
+    panRef.current = pan;
+    zoomRef.current = zoom;
+    sectionRef2.current = section;
+    fieldRef.current = field;
 
-    const handleFieldMouseDown = (e: React.MouseEvent) => {
+    const startFieldDrag = useCallback((e: React.MouseEvent | MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const parent = sectionRef.current?.parentElement;
+      if (!parent) return;
+
+      const parentRect = parent.getBoundingClientRect();
+      const mouseCanvasX = (e.clientX - parentRect.left - 32 - panRef.current.x) / (zoomRef.current / 100);
+      const mouseCanvasY = (e.clientY - parentRect.top - 32 - panRef.current.y) / (zoomRef.current / 100);
+
+      dragOffsetRef.current = {
+        x: mouseCanvasX - sectionRef2.current.x - (fieldRef.current.x || 0),
+        y: mouseCanvasY - sectionRef2.current.y - (fieldRef.current.y || 0),
+      };
+
+      console.log('🚀 Field drag start:', { 
+        fieldId: fieldRef.current.id,
+        mouse: { x: e.clientX, y: e.clientY },
+        canvas: { x: mouseCanvasX, y: mouseCanvasY },
+        offset: dragOffsetRef.current,
+        field: { x: fieldRef.current.x, y: fieldRef.current.y },
+        section: { x: sectionRef2.current.x, y: sectionRef2.current.y }
+      });
+
+      setIsDraggingField(true);
+    }, []);
+
+    const handleFieldMouseDown = useCallback((e: React.MouseEvent) => {
       e.stopPropagation();
       onSelectField(field);
 
       // Enable drag from anywhere on the field when not editing
       if (e.button === 0 && !isEditing) {
-        const parent = sectionRef.current?.parentElement;
-        if (parent) {
-          const parentRect = parent.getBoundingClientRect();
-          const mouseCanvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100);
-          const mouseCanvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100);
-
-          const dragOffset = {
-            x: mouseCanvasX - section.x - (field.x || 0),
-            y: mouseCanvasY - section.y - (field.y || 0),
-          };
-
-          console.log('🚀 Field drag start:', { 
-            fieldId: field.id,
-            mouse: { x: e.clientX, y: e.clientY },
-            canvas: { x: mouseCanvasX, y: mouseCanvasY },
-            offset: dragOffset,
-            field: { x: field.x, y: field.y }
-          });
-
-          setFieldDragOffset(dragOffset);
-          setIsDraggingField(true);
-        }
+        startFieldDrag(e);
       }
-    };
+    }, [isEditing, onSelectField, field, startFieldDrag]);
 
-    const handleFieldDoubleClick = (e: React.MouseEvent) => {
+    const handleFieldDoubleClick = useCallback((e: React.MouseEvent) => {
       e.stopPropagation();
       setIsEditing(true);
-    };
+    }, []);
 
-    const handleDragHandleMouseDown = (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const handleDragHandleMouseDown = useCallback((e: React.MouseEvent) => {
+      startFieldDrag(e);
+    }, [startFieldDrag]);
 
-      setIsDraggingField(true);
-
-      const parent = sectionRef.current?.parentElement;
-      if (parent) {
-        const parentRect = parent.getBoundingClientRect();
-        const mouseCanvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100);
-        const mouseCanvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100);
-
-        setFieldDragOffset({
-          x: mouseCanvasX - section.x - (field.x || 0),
-          y: mouseCanvasY - section.y - (field.y || 0),
-        });
-      }
-    };
-
+    // Stable drag handlers that don't depend on state
     const handleFieldDragMove = useCallback((e: MouseEvent) => {
-      if (!isDraggingField || !sectionRef.current) {
-        console.log('🚫 Field drag move blocked:', { isDraggingField, hasRef: !!sectionRef.current });
-        return;
-      }
-
-      const parent = sectionRef.current.parentElement;
+      const parent = sectionRef.current?.parentElement;
       if (!parent) return;
 
       const parentRect = parent.getBoundingClientRect();
-      const canvasX =
-        (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100) - section.x - fieldDragOffset.x;
-      const canvasY =
-        (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100) - section.y - fieldDragOffset.y;
+      const canvasX = (e.clientX - parentRect.left - 32 - panRef.current.x) / (zoomRef.current / 100) 
+                    - sectionRef2.current.x - dragOffsetRef.current.x;
+      const canvasY = (e.clientY - parentRect.top - 32 - panRef.current.y) / (zoomRef.current / 100) 
+                    - sectionRef2.current.y - dragOffsetRef.current.y;
 
-      const newX = Math.max(0, Math.min(canvasX, section.width - (field.width || 200)));
-      const newY = Math.max(0, Math.min(canvasY, section.height - (field.height || 40)));
+      // Constrain to section boundaries
+      let newX = Math.max(0, Math.min(canvasX, sectionRef2.current.width - (fieldRef.current.width || 200)));
+      let newY = Math.max(0, Math.min(canvasY, sectionRef2.current.height - (fieldRef.current.height || 40)));
+
+      // Apply grid snapping if enabled
+      if (snapToGrid && gridSize > 0) {
+        newX = Math.round(newX / gridSize) * gridSize;
+        newY = Math.round(newY / gridSize) * gridSize;
+      }
 
       console.log('🎯 Field drag move:', { 
-        fieldId: field.id, 
+        fieldId: fieldRef.current.id, 
         mouse: { x: e.clientX, y: e.clientY },
         canvas: { x: canvasX, y: canvasY },
         new: { x: newX, y: newY },
-        current: { x: field.x, y: field.y }
+        current: { x: fieldRef.current.x, y: fieldRef.current.y },
+        calling_update: newX !== fieldRef.current.x || newY !== fieldRef.current.y
       });
 
-      onUpdateField(field.id, { x: newX, y: newY });
-    }, [isDraggingField, sectionRef, pan, zoom, section, fieldDragOffset, field, onUpdateField]);
+      // Only update if position actually changed
+      if (newX !== fieldRef.current.x || newY !== fieldRef.current.y) {
+        onUpdateField(fieldRef.current.id, { x: newX, y: newY });
+      }
+    }, [onUpdateField, snapToGrid, gridSize]);
 
     const handleFieldDragEnd = useCallback(() => {
-      console.log('🏁 Field drag end:', field.id);
+      console.log('🏁 Field drag end:', fieldRef.current.id);
       setIsDraggingField(false);
-    }, [field.id]);
+    }, []);
 
+    // Simplified effect with minimal dependencies
     React.useEffect(() => {
       if (isDraggingField) {
         console.log('📌 Adding field drag listeners for:', field.id);
@@ -502,6 +518,8 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
             section={section}
             pan={pan}
             zoom={zoom}
+            snapToGrid={snapToGrid}
+            gridSize={gridSize}
             onSelectField={onSelectField}
             onUpdateField={onUpdateField}
             onDeleteField={onDeleteField}
