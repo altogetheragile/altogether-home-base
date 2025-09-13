@@ -236,36 +236,90 @@ const AdminLayout = () => {
           </div>
         </div>
 
-        {/* Admin Navigation - simplified to avoid hook mismatch issues */}
+        {/* Admin Navigation - Tabbed Interface */}
         <div className="bg-white border-b">
-          <div className="px-6 py-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-              {[...eventsItems, { label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }, ...knowledgeItems, { label: 'Media', href: '/admin/media', icon: FileImage, description: 'Manage media' }, ...logsItems].map((item) => {
-                const IconComponent = item.icon as any;
+          {/* Tab Bar */}
+          <div className="px-6 py-3 border-b border-gray-100">
+            <div className="flex space-x-6">
+              {tabs.map((tab) => {
+                const IconComponent = tab.icon;
+                const isTabActive = activeTab === tab.id;
                 return (
-                  <TooltipProvider key={item.href}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          to={item.href}
-                          className={`group flex items-center justify-center p-1.5 bg-white rounded-lg border ${isActive(item.href) ? 'border-primary/40' : 'border-gray-200'} hover:border-primary/30 hover:shadow-md transition-all duration-200`}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
-                              <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
-                            </div>
-                            <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                          </div>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="font-medium">{item.label}</p>
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Link
+                    key={tab.id}
+                    to={tab.href}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                      isTabActive
+                        ? 'bg-primary/10 text-primary border border-primary/20'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <IconComponent className="h-4 w-4" />
+                    <span>{tab.label}</span>
+                  </Link>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Items Grid - Only show items for active tab */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+              {(() => {
+                // Get items for active tab
+                let itemsToRender = [];
+                
+                if (activeTab === 'events') {
+                  itemsToRender = eventsItems;
+                } else if (activeTab === 'knowledge') {
+                  itemsToRender = knowledgeItems;
+                } else if (activeTab === 'logs') {
+                  itemsToRender = logsItems;
+                } else if (activeTab === 'pages') {
+                  itemsToRender = [{ label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }];
+                } else if (activeTab === 'media') {
+                  itemsToRender = [{ label: 'Media Library', href: '/admin/media', icon: FileImage, description: 'Manage media assets' }];
+                }
+
+                return itemsToRender.map((item) => {
+                  const IconComponent = item.icon as any;
+                  return (
+                    <TooltipProvider key={item.href}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link
+                            to={item.href}
+                            className={`group flex items-center justify-center p-3 bg-white rounded-lg border ${
+                              isActive(item.href) 
+                                ? 'border-primary/40 bg-primary/5' 
+                                : 'border-gray-200'
+                            } hover:border-primary/30 hover:shadow-md transition-all duration-200`}
+                          >
+                            <div className="flex flex-col items-center space-y-2">
+                              <div className={`p-2 rounded-full group-hover:bg-primary/10 transition-colors ${
+                                isActive(item.href) ? 'bg-primary/10' : 'bg-gray-50'
+                              }`}>
+                                <IconComponent className={`h-5 w-5 group-hover:text-primary transition-colors ${
+                                  isActive(item.href) ? 'text-primary' : 'text-gray-600'
+                                }`} />
+                              </div>
+                              <span className={`text-sm font-medium text-center ${
+                                isActive(item.href) ? 'text-primary' : 'text-gray-700'
+                              }`}>
+                                {item.label}
+                              </span>
+                            </div>
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="font-medium">{item.label}</p>
+                          <p className="text-xs text-muted-foreground">{item.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
