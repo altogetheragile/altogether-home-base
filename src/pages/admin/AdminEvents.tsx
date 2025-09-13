@@ -1,4 +1,4 @@
-// src/pages/admin/AdminEvents.tsx - Corrected Version
+// src/pages/admin/AdminEvents.tsx - Minimal Safe Version
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,31 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, EyeOff, Edit, Trash2, Users, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { Eye, EyeOff, Edit, Trash2, Users, Calendar } from 'lucide-react';
 import EventRegistrationsDialog from '@/components/admin/events/EventRegistrationsDialog';
 import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
 
-// Helper functions for safe rendering
-const normalizeBool = (v: any): boolean => {
-  if (typeof v === 'boolean') return v;
-  if (v === 1 || v === '1') return true;
-  if (v === 0 || v === '0') return false;
-  return Boolean((v as any)?.value ?? v);
-};
-
-const formatDateSafe = (value: any): string => {
-  if (typeof value === 'string' || typeof value === 'number') {
-    const d = new Date(value);
-    if (!isNaN(d.getTime())) return format(d, 'MMM dd, yyyy');
-  }
-  return '—';
-};
-
 const AdminEvents = () => {
   const location = useLocation();
-  
-  // Compute route check at the top
   const isEventsRoute = location.pathname.startsWith('/admin/events');
   
   const { data: events, isLoading, error } = useQuery({
@@ -42,14 +24,6 @@ const AdminEvents = () => {
     queryFn: async () => {
       console.log('�� AdminEvents: Starting fetch...');
       
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log('🔐 AdminEvents: Current session:', {
-        hasSession: !!sessionData.session,
-        hasAccessToken: !!sessionData.session?.access_token,
-        userEmail: sessionData.session?.user?.email || 'none',
-        hasUserId: !!sessionData.session?.user?.id
-      });
-
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -63,21 +37,15 @@ const AdminEvents = () => {
         `)
         .order('start_date', { ascending: false });
 
-      console.log('📊 AdminEvents: Query result:', {
-        dataCount: data?.length || 0,
-        hasError: !!error,
-        errorMessage: error?.message || null,
-        hasData: !!data,
-        firstEventTitle: data?.[0]?.title || 'none'
-      });
+      console.log('📊 AdminEvents: Query completed');
 
       if (error) {
-        console.error('❌ AdminEvents: Database error:', error);
+        console.error('❌ AdminEvents: Database error');
         throw error;
       }
       return data || [];
     },
-    enabled: isEventsRoute, // Only run when on the correct route
+    enabled: isEventsRoute,
   });
 
   const { deleteEvent } = useEventMutations();
@@ -121,7 +89,6 @@ const AdminEvents = () => {
     );
   };
 
-  // Early return after all hooks to prevent fetches on non-events routes
   if (!isEventsRoute) return null;
 
   if (isLoading) {
@@ -188,19 +155,33 @@ const AdminEvents = () => {
           </TableHeader>
           <TableBody>
             {Array.isArray(events) ? events.map((event) => {
-              // Safely normalize all values
-              const published = normalizeBool(event.is_published);
-              const title = String(event.title ?? 'Untitled');
-              const instructorName = String(event.instructor?.name ?? 'TBA');
-              const locationName = String(event.location?.name ?? 'TBA');
+              // Safely extract and normalize all values
+              const eventId = String(event.id || '');
+              const title = String(event.title || 'Untitled');
+              const instructorName = String(event.instructor?.name || 'TBA');
+              const locationName = String(event.location?.name || 'TBA');
               const priceCents = Number(event.price_cents) || 0;
               const currency = String(event.currency || 'usd');
-              const registrations = event.event_registrations ?? [];
+              const registrations = Array.isArray(event.event_registrations) ? event.event_registrations : [];
+              const isPublished = Boolean(event.is_published);
+              
+              // Safe date formatting
+              let formattedDate = '—';
+              if (event.start_date) {
+                try {
+                  const date = new Date(event.start_date);
+                  if (!isNaN(date.getTime())) {
+                    formattedDate = format(date, 'MMM dd, yyyy');
+                  }
+                } catch (e) {
+                  // Keep default '—'
+                }
+              }
 
               return (
-                <TableRow key={String(event.id)}>
+                <TableRow key={eventId}>
                   <TableCell className="font-medium">{title}</TableCell>
-                  <TableCell>{formatDateSafe(event.start_date)}</TableCell>
+                  <TableCell>{formattedDate}</TableCell>
                   <TableCell>{instructorName}</TableCell>
                   <TableCell>{locationName}</TableCell>
                   <TableCell>
@@ -210,8 +191,8 @@ const AdminEvents = () => {
                     {getRegistrationBadge(registrations)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={published ? 'default' : 'secondary'}>
-                      {published ? (
+                    <Badge variant={isPublished ? 'default' : 'secondary'}>
+                      {isPublished ? (
                         <><Eye className="h-3 w-3 mr-1" />Published</>
                       ) : (
                         <><EyeOff className="h-3 w-3 mr-1" />Draft</>
@@ -220,7 +201,7 @@ const AdminEvents = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Link to={`/admin/events/${String(event.id)}/edit`}>
+                      <Link to={`/admin/events/${eventId}/edit`}>
                         <Button variant="outline" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -230,7 +211,7 @@ const AdminEvents = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setRegistrationsEvent({ 
-                          id: String(event.id), 
+                          id: eventId, 
                           title: title 
                         })}
                       >
@@ -241,12 +222,12 @@ const AdminEvents = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setEventToDelete({ 
-                          id: String(event.id), 
+                          id: eventId, 
                           title: title 
                         })}
-                        disabled={Array.isArray(event.event_registrations) && event.event_registrations.length > 0}
+                        disabled={registrations.length > 0}
                         title={
-                          Array.isArray(event.event_registrations) && event.event_registrations.length > 0
+                          registrations.length > 0
                             ? "Cannot delete events with registrations"
                             : "Delete event"
                         }
@@ -262,7 +243,7 @@ const AdminEvents = () => {
         </Table>
       </div>
 
-      {/* Event Registrations Dialog - Fixed props */}
+      {/* Event Registrations Dialog */}
       <EventRegistrationsDialog
         open={!!registrationsEvent}
         onOpenChange={(open) => {
@@ -294,7 +275,7 @@ const AdminEvents = () => {
                     await deleteEvent.mutateAsync(eventToDelete.id);
                     setEventToDelete(null);
                   } catch (error) {
-                    console.error('Failed to delete event:', error);
+                    console.error('Failed to delete event');
                   }
                 }}
                 disabled={deleteEvent.isPending}
