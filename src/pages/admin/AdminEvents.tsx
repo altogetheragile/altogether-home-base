@@ -1,4 +1,4 @@
-// src/pages/admin/AdminEvents.tsx - Complete Fix
+// src/pages/admin/AdminEvents.tsx - Corrected Version
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -262,14 +262,15 @@ const AdminEvents = () => {
         </Table>
       </div>
 
-      {/* Event Registrations Dialog */}
-      {registrationsEvent && (
-        <EventRegistrationsDialog
-          eventId={registrationsEvent.id}
-          eventTitle={registrationsEvent.title}
-          onClose={() => setRegistrationsEvent(null)}
-        />
-      )}
+      {/* Event Registrations Dialog - Fixed props */}
+      <EventRegistrationsDialog
+        open={!!registrationsEvent}
+        onOpenChange={(open) => {
+          if (!open) setRegistrationsEvent(null);
+        }}
+        eventId={registrationsEvent?.id}
+        eventTitle={registrationsEvent?.title}
+      />
 
       {/* Delete Confirmation Dialog */}
       {eventToDelete && (
