@@ -244,6 +244,22 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
     const handleFieldMouseDown = (e: React.MouseEvent) => {
       e.stopPropagation();
       onSelectField(field);
+
+      // Enable drag from anywhere on the field when not editing
+      if (e.button === 0 && !isEditing) {
+        const parent = sectionRef.current?.parentElement;
+        if (parent) {
+          const parentRect = parent.getBoundingClientRect();
+          const mouseCanvasX = (e.clientX - parentRect.left - 32 - pan.x) / (zoom / 100);
+          const mouseCanvasY = (e.clientY - parentRect.top - 32 - pan.y) / (zoom / 100);
+
+          setIsDraggingField(true);
+          setFieldDragOffset({
+            x: mouseCanvasX - section.x - (field.x || 0),
+            y: mouseCanvasY - section.y - (field.y || 0),
+          });
+        }
+      }
     };
 
     const handleFieldDoubleClick = (e: React.MouseEvent) => {
@@ -389,7 +405,7 @@ export const TemplateSectionEditor: React.FC<TemplateSectionEditorProps> = ({
             )
           ) : (
             <div
-              className="w-full h-full p-1 text-xs leading-relaxed cursor-text rounded hover:bg-accent/20 min-h-[1.5rem] flex items-center"
+              className={`w-full h-full p-1 text-xs leading-relaxed ${isFieldSelected && !isEditing ? 'cursor-move' : 'cursor-text'} rounded hover:bg-accent/20 min-h-[1.5rem] flex items-center`}
               title="Double-click to edit"
             >
               {(() => {
