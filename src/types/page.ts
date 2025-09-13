@@ -13,9 +13,8 @@ export interface Page {
 export interface ContentBlock {
   id: string;
   page_id: string;
-  type: 'text' | 'image' | 'video' | 'hero' | 'section' | 'events'; // ✅ added "events"
+  type: 'text' | 'image' | 'video' | 'hero' | 'section';
   content: Record<string, any>;
-  styles?: Record<string, any>; // ✅ added styles field to match usage
   position: number;
   is_visible: boolean;
   created_at: string;
@@ -30,7 +29,6 @@ export interface ContentBlockCreate {
   page_id: string;
   type: ContentBlock['type'];
   content: Record<string, any>;
-  styles?: Record<string, any>; // ✅ keep consistency
   position: number;
   is_visible?: boolean;
 }
@@ -39,7 +37,6 @@ export interface ContentBlockUpdate {
   id: string;
   type?: ContentBlock['type'];
   content?: Record<string, any>;
-  styles?: Record<string, any>; // ✅ keep consistency
   position?: number;
   is_visible?: boolean;
 }

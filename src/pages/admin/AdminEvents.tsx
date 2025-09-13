@@ -37,6 +37,7 @@ const AdminEvents = () => {
     queryFn: async () => {
       console.log('🔍 AdminEvents: Starting fetch...');
       
+      // Check current session first
       const { data: sessionData } = await supabase.auth.getSession();
       console.log('🔐 AdminEvents: Current session:', {
         hasSession: !!sessionData.session,
@@ -75,15 +76,14 @@ const AdminEvents = () => {
   });
 
   const { deleteEvent } = useEventMutations();
-  const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
-  const [registrationsEvent, setRegistrationsEvent] = useState<{ id: string; title: string } | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<any | null>(null);
+  const [registrationsEvent, setRegistrationsEvent] = useState<any | null>(null);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy');
   };
-
-  const getRegistrationBadge = (registrations: unknown) => {
-    if (!Array.isArray(registrations)) return null;
+  const getRegistrationBadge = (registrations: any[]) => {
+    if (!registrations) return null;
     
     const totalCount = registrations.length;
     const paidCount = registrations.filter(r => r.payment_status === 'paid').length;
@@ -167,7 +167,7 @@ const AdminEvents = () => {
                   {formatPrice(event.price_cents || 0, event.currency || 'usd')}
                 </TableCell>
                 <TableCell>
-                  {Array.isArray(event.event_registrations) ? getRegistrationBadge(event.event_registrations) : null}
+                  {getRegistrationBadge(event.event_registrations)}
                 </TableCell>
                 <TableCell>
                   <Badge variant={event.is_published ? 'default' : 'secondary'}>
@@ -189,12 +189,12 @@ const AdminEvents = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setRegistrationsEvent({ id: String(event.id), title: String(event.title || 'Event') })}
+                      onClick={() => setRegistrationsEvent(event)}
                     >
                       Manage Registrations
                     </Button>
 
-                    {Array.isArray(event.event_registrations) && event.event_registrations.length > 0 ? (
+                    {event?.event_registrations?.length > 0 ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -214,7 +214,7 @@ const AdminEvents = () => {
                         variant="destructive"
                         size="sm"
                         onClick={() => {
-                          setEventToDelete({ id: String(event.id), title: String(event.title || 'Event') });
+                          setEventToDelete(event);
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -265,8 +265,8 @@ const AdminEvents = () => {
       <EventRegistrationsDialog
         open={!!registrationsEvent}
         onOpenChange={(open) => !open && setRegistrationsEvent(null)}
-        eventId={registrationsEvent?.id || ''}
-        eventTitle={registrationsEvent?.title || 'Event'}
+        eventId={String(registrationsEvent?.id || '')}
+        eventTitle={String(registrationsEvent?.title || 'Event')}
       />
     </div>
   );

@@ -1,45 +1,52 @@
+import React from 'react';
 import { ContentBlock } from '@/types/page';
 import { ContentBlockRenderer } from './ContentBlockRenderer';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
-export interface ContentBlocksListProps {
+interface ContentBlocksListProps {
   contentBlocks: ContentBlock[];
+  isPreview: boolean;
   onEditBlock: (block: ContentBlock) => void;
   onDeleteBlock: (blockId: string) => void;
   onMoveBlock: (blockId: string, direction: 'up' | 'down') => void;
-  onAddBlock?: () => void; // ✅ PageEditor passes this
-  isPreview?: boolean;
+  onAddBlock: () => void;
 }
 
-export const ContentBlocksList = ({
+export const ContentBlocksList: React.FC<ContentBlocksListProps> = ({
   contentBlocks,
+  isPreview,
   onEditBlock,
   onDeleteBlock,
   onMoveBlock,
   onAddBlock,
-  isPreview = false,
-}: ContentBlocksListProps) => {
+}) => {
+  const visibleBlocks = contentBlocks
+    .filter(block => block.is_visible || !isPreview)
+    .sort((a, b) => a.position - b.position);
+
   return (
     <div className="space-y-4">
-      {contentBlocks.map((block) => (
+      {visibleBlocks.map((block) => (
         <ContentBlockRenderer
           key={block.id}
           block={block}
+          isEditing={!isPreview}
           onEdit={onEditBlock}
           onDelete={onDeleteBlock}
-          onMoveUp={(id) => onMoveBlock(block.id, 'up')}
-          onMoveDown={(id) => onMoveBlock(block.id, 'down')}
-          isEditing={!isPreview}
+          onMoveUp={(id) => onMoveBlock(id, 'up')}
+          onMoveDown={(id) => onMoveBlock(id, 'down')}
         />
       ))}
-
-      {onAddBlock && (
-        <button
-          type="button"
-          onClick={onAddBlock}
-          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + Add Block
-        </button>
+      
+      {contentBlocks.length === 0 && (
+        <div className="text-center py-12 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+          <p className="text-muted-foreground mb-4">No content blocks yet</p>
+          <Button onClick={onAddBlock} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Your First Block
+          </Button>
+        </div>
       )}
     </div>
   );
