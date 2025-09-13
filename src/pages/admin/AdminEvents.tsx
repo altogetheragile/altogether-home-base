@@ -1,29 +1,56 @@
-// src/pages/admin/AdminEvents.tsx - Minimal Safe Version
-
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useEventMutations } from '@/hooks/useEventMutations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, EyeOff, Edit, Trash2, Users, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { useEventMutations } from '@/hooks/useEventMutations';
+import { toast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import EventRegistrationsDialog from '@/components/admin/events/EventRegistrationsDialog';
+
 import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
+import { useLocation } from 'react-router-dom';
 
 const AdminEvents = () => {
   const location = useLocation();
-  const isEventsRoute = location.pathname.startsWith('/admin/events');
+  
+  // Only run queries when actually on the events route
+  const shouldFetch = location.pathname.startsWith('/admin/events');
   
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['admin-events'],
     queryFn: async () => {
       console.log('�� AdminEvents: Starting fetch...');
       
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('🔐 AdminEvents: Current session:', {
+        hasSession: !!sessionData.session,
+        hasAccessToken: !!sessionData.session?.access_token,
+        userEmail: sessionData.session?.user?.email || 'none',
+        hasUserId: !!sessionData.session?.user?.id
+      });
+
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -37,109 +64,97 @@ const AdminEvents = () => {
         `)
         .order('start_date', { ascending: false });
 
-      console.log('📊 AdminEvents: Query completed');
+      console.log('📊 AdminEvents: Query result:', {
+        dataCount: data?.length || 0,
+        hasError: !!error,
+        errorMessage: error?.message || null,
+        hasData: !!data,
+        firstEventTitle: data?.[0]?.title || 'none'
+      });
 
       if (error) {
-        console.error('❌ AdminEvents: Database error');
+        console.error('❌ AdminEvents: Database error:', error);
         throw error;
       }
       return data || [];
     },
-    enabled: isEventsRoute,
+    enabled: shouldFetch, // Only run when on the correct route
   });
 
-  const { deleteEvent } = useEventMutations();
-  const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const [registrationsEvent, setRegistrationsEvent] = useState<{ id: string; title: string } | null>(null);
+  const { deleteEvent } = useEventMutations();
 
-  const getRegistrationBadge = (registrations: unknown) => {
+  // Add early return after all hooks to prevent rendering on non-events routes
+  if (!shouldFetch) {
+    return null;
+  }
+
+  const handleDelete = async () => {
+    if (!deleteEventId) return;
+
+    try {
+      await deleteEvent(deleteEventId);
+      toast({
+        title: 'Success',
+        description: 'Event deleted successfully',
+      });
+      setDeleteEventId(null);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete event',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getRegistrationBadge = (registrations: any[]) => {
     if (!Array.isArray(registrations)) return null;
     
-    const totalCount = registrations.length;
     const paidCount = registrations.filter(r => r.payment_status === 'paid').length;
-    
-    let variant: "default" | "secondary" | "destructive" = "secondary";
-    let className = "";
+    const totalCount = registrations.length;
     
     if (totalCount === 0) {
-      variant = "secondary";
-      className = "bg-gray-100 text-gray-600";
-    } else if (totalCount >= 16) {
-      variant = "default";
-      className = "bg-green-100 text-green-700";
-    } else if (totalCount >= 6) {
-      variant = "default";
-      className = "bg-blue-100 text-blue-700";
-    } else {
-      variant = "default";
-      className = "bg-yellow-100 text-yellow-700";
+      return <Badge variant="secondary">No registrations</Badge>;
     }
-
+    
     return (
-      <div className="flex flex-col items-center space-y-1">
-        <Badge variant={variant} className={className}>
-          {String(totalCount)} registered
-        </Badge>
-        {totalCount > 0 && (
-          <span className="text-xs text-gray-500">
-            {String(paidCount)} paid
-          </span>
-        )}
-      </div>
+      <Badge variant={paidCount > 0 ? 'default' : 'secondary'}>
+        {paidCount}/{totalCount} paid
+      </Badge>
     );
   };
 
-  if (!isEventsRoute) return null;
-
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mr-4"></div>
-          <div className="text-muted-foreground">Loading events...</div>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading events...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-destructive">Error Loading Events</CardTitle>
-            <CardDescription>
-              There was a problem loading the events. Please try again.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {String(error)}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">Error loading events</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Events Management</h1>
-          <p className="text-muted-foreground">
-            Manage your events, registrations, and schedules
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Events</h1>
         <Link to="/admin/events/new">
           <Button>
-            <Calendar className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Create Event
           </Button>
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -155,7 +170,6 @@ const AdminEvents = () => {
           </TableHeader>
           <TableBody>
             {Array.isArray(events) ? events.map((event) => {
-              // Safely extract and normalize all values
               const eventId = String(event.id || '');
               const title = String(event.title || 'Untitled');
               const instructorName = String(event.instructor?.name || 'TBA');
@@ -165,7 +179,6 @@ const AdminEvents = () => {
               const registrations = Array.isArray(event.event_registrations) ? event.event_registrations : [];
               const isPublished = Boolean(event.is_published);
               
-              // Safe date formatting
               let formattedDate = '—';
               if (event.start_date) {
                 try {
@@ -185,10 +198,26 @@ const AdminEvents = () => {
                   <TableCell>{instructorName}</TableCell>
                   <TableCell>{locationName}</TableCell>
                   <TableCell>
-                    {formatPrice(priceCents, currency)}
+                    {priceCents > 0 ? formatPrice(priceCents, currency) : 'Free'}
                   </TableCell>
                   <TableCell>
-                    {getRegistrationBadge(registrations)}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            {getRegistrationBadge(registrations)}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            {registrations.length > 0 
+                              ? 'Cannot delete events with registrations'
+                              : 'No registrations - safe to delete'
+                            }
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                   <TableCell>
                     <Badge variant={isPublished ? 'default' : 'secondary'}>
@@ -206,31 +235,18 @@ const AdminEvents = () => {
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Link>
-
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setRegistrationsEvent({ 
-                          id: eventId, 
-                          title: title 
-                        })}
+                        onClick={() => setRegistrationsEvent({ id: eventId, title })}
                       >
-                        <Users className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
-
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEventToDelete({ 
-                          id: eventId, 
-                          title: title 
-                        })}
+                        onClick={() => setDeleteEventId(eventId)}
                         disabled={registrations.length > 0}
-                        title={
-                          registrations.length > 0
-                            ? "Cannot delete events with registrations"
-                            : "Delete event"
-                        }
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -243,7 +259,25 @@ const AdminEvents = () => {
         </Table>
       </div>
 
-      {/* Event Registrations Dialog */}
+      <AlertDialog open={!!deleteEventId} onOpenChange={(open) => {
+        if (!open) setDeleteEventId(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <EventRegistrationsDialog
         open={!!registrationsEvent}
         onOpenChange={(open) => {
@@ -252,40 +286,6 @@ const AdminEvents = () => {
         eventId={registrationsEvent?.id}
         eventTitle={registrationsEvent?.title}
       />
-
-      {/* Delete Confirmation Dialog */}
-      {eventToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Delete Event</h3>
-            <p className="text-muted-foreground mb-6">
-              Are you sure you want to delete "{eventToDelete.title}"? This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setEventToDelete(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={async () => {
-                  try {
-                    await deleteEvent.mutateAsync(eventToDelete.id);
-                    setEventToDelete(null);
-                  } catch (error) {
-                    console.error('Failed to delete event');
-                  }
-                }}
-                disabled={deleteEvent.isPending}
-              >
-                {deleteEvent.isPending ? 'Deleting...' : 'Delete'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
