@@ -53,9 +53,15 @@ import { PreviewPage } from "./components/admin/knowledge/PreviewPage";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
 import Home from "./pages/Home";
+import HomeSafe from "./pages/HomeSafe";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
 import Knowledge from "./pages/Knowledge";
 import KnowledgeDetail from "./pages/KnowledgeDetail";
+
+// Feature flags for gradual restoration
+const ENABLE_ADMIN_ROUTES = false;
+const ENABLE_PROTECTED_PROJECTS = false;
+const ENABLE_DYNAMIC_PAGES = false;
 
 const queryClient = new QueryClient();
 
@@ -76,104 +82,116 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
-              <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
+              
+              {/* Protected Project Routes (gated) */}
+              {ENABLE_PROTECTED_PROJECTS && (
+                <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
+              )}
               
               <Route path="/account/security" element={<AccountSecurity />} />
               
-              {/* Protected Admin Routes */}
-              <Route path="/admin" element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminLayout />
-                </ProtectedRoute>
-              }>
-                <Route path="events" element={
-                  <ErrorBoundary fallback={
-                    <div className="flex items-center justify-center h-64">
-                      <div className="text-lg text-red-600">Failed to load Events module</div>
-                    </div>
+              {/* Protected Admin Routes (gated) */}
+              {ENABLE_ADMIN_ROUTES && (
+                <>
+                  <Route path="/admin" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminLayout />
+                    </ProtectedRoute>
                   }>
-                    <Suspense fallback={<div className="flex items-center justify-center h-64">Loading events...</div>}>
-                      <AdminEvents />
-                    </Suspense>
-                  </ErrorBoundary>
-                } />
-                <Route path="events/new" element={<CreateEvent />} />
-                <Route path="events/:id/edit" element={<EditEvent />} />
-                <Route path="instructors" element={<AdminInstructors />} />
-                <Route path="instructors/new" element={<CreateInstructor />} />
-                <Route path="instructors/:id/edit" element={<EditInstructor />} />
-                <Route path="locations" element={<AdminLocations />} />
-                <Route path="templates" element={<AdminTemplates />} />
-                <Route path="event-types" element={<AdminEventTypes />} />
-                <Route path="event-categories" element={<AdminEventCategories />} />
-                <Route path="levels" element={<AdminLevels />} />
-                <Route path="formats" element={<AdminFormats />} />
-                <Route path="pages" element={<AdminPages />} />
-                <Route path="pages/:id/edit" element={<PageEditor />} />
-                
-                <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
-                <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
-                <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
-                <Route path="knowledge/templates" element={<AdminKnowledgeTemplates />} />
-                <Route path="knowledge/templates/new" element={<CreateKnowledgeTemplate />} />
-                <Route path="knowledge/templates/:id/edit" element={<CreateKnowledgeTemplate />} />
-                <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
-                <Route path="knowledge/classifications" element={<AdminClassifications />} />
-                <Route path="knowledge/tags" element={<AdminKnowledgeTags />} />
-                <Route path="knowledge/learning-paths" element={<AdminKnowledgeLearningPaths />} />
-                <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
-                <Route path="knowledge/imports" element={<AdminKnowledgeImport />} />
-                <Route path="imports" element={<AdminImports />} />
-                <Route path="media" element={<AdminMedia />} />
-                <Route path="logs" element={<AdminLogs />} />
-                <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
-                <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
-                <Route path="logs/auth" element={<AdminLogsAuthRoute />} />
-              </Route>
+                    <Route path="events" element={
+                      <ErrorBoundary fallback={
+                        <div className="flex items-center justify-center h-64">
+                          <div className="text-lg text-red-600">Failed to load Events module</div>
+                        </div>
+                      }>
+                        <Suspense fallback={<div className="flex items-center justify-center h-64">Loading events...</div>}>
+                          <AdminEvents />
+                        </Suspense>
+                      </ErrorBoundary>
+                    } />
+                    <Route path="events/new" element={<CreateEvent />} />
+                    <Route path="events/:id/edit" element={<EditEvent />} />
+                    <Route path="instructors" element={<AdminInstructors />} />
+                    <Route path="instructors/new" element={<CreateInstructor />} />
+                    <Route path="instructors/:id/edit" element={<EditInstructor />} />
+                    <Route path="locations" element={<AdminLocations />} />
+                    <Route path="templates" element={<AdminTemplates />} />
+                    <Route path="event-types" element={<AdminEventTypes />} />
+                    <Route path="event-categories" element={<AdminEventCategories />} />
+                    <Route path="levels" element={<AdminLevels />} />
+                    <Route path="formats" element={<AdminFormats />} />
+                    <Route path="pages" element={<AdminPages />} />
+                    <Route path="pages/:id/edit" element={<PageEditor />} />
+                    
+                    <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
+                    <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
+                    <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
+                    <Route path="knowledge/templates" element={<AdminKnowledgeTemplates />} />
+                    <Route path="knowledge/templates/new" element={<CreateKnowledgeTemplate />} />
+                    <Route path="knowledge/templates/:id/edit" element={<CreateKnowledgeTemplate />} />
+                    <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />
+                    <Route path="knowledge/classifications" element={<AdminClassifications />} />
+                    <Route path="knowledge/tags" element={<AdminKnowledgeTags />} />
+                    <Route path="knowledge/learning-paths" element={<AdminKnowledgeLearningPaths />} />
+                    <Route path="knowledge/import" element={<AdminKnowledgeImport />} />
+                    <Route path="knowledge/imports" element={<AdminKnowledgeImport />} />
+                    <Route path="imports" element={<AdminImports />} />
+                    <Route path="media" element={<AdminMedia />} />
+                    <Route path="logs" element={<AdminLogs />} />
+                    <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
+                    <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
+                    <Route path="logs/auth" element={<AdminLogsAuthRoute />} />
+                  </Route>
+                  
+                  {/* Knowledge Item Editor - Protected Full Page Routes Outside Admin Layout */}
+                  <Route path="/admin/knowledge/items/new" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <CreateKnowledgeItem />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/knowledge/items/:id/edit" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <EditKnowledgeItem />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/knowledge/preview/:id" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <PreviewPage />
+                    </ProtectedRoute>
+                  } />
+                </>
+              )}
               
-              {/* Knowledge Item Editor - Protected Full Page Routes Outside Admin Layout */}
-              <Route path="/admin/knowledge/items/new" element={
-                <ProtectedRoute requiredRole="admin">
-                  <CreateKnowledgeItem />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/knowledge/items/:id/edit" element={
-                <ProtectedRoute requiredRole="admin">
-                  <EditKnowledgeItem />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/knowledge/preview/:id" element={
-                <ProtectedRoute requiredRole="admin">
-                  <PreviewPage />
-                </ProtectedRoute>
-              } />
+              {/* Static Home Page - Hard Isolated */}
+              <Route path="/" element={<HomeSafe />} />
               
-              {/* Static Home Page - Safe from CMS crashes */}
-              <Route path="/" element={<Home />} />
-              
-              {/* Dynamic CMS Pages - Handles other slugs */}
-              <Route path="/:slug" element={
-                <ErrorBoundary fallback={
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-lg text-red-600">Failed to load page</div>
-                  </div>
-                }>
-                  <DynamicPageRenderer slug={window.location.pathname.slice(1)} />
-                </ErrorBoundary>
-              } />
-              
-              {/* Optional: Test route for dynamic home */}
-              <Route path="/home-dynamic" element={
-                <ErrorBoundary fallback={
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-lg text-red-600">Failed to load dynamic home page</div>
-                  </div>
-                }>
-                  <Suspense fallback={<div className="flex items-center justify-center h-64">Loading...</div>}>
-                    <DynamicPageRenderer slug="home" />
-                  </Suspense>
-                </ErrorBoundary>
-              } />
+              {/* Dynamic CMS Pages - Handles other slugs (gated) */}
+              {ENABLE_DYNAMIC_PAGES && (
+                <>
+                  <Route path="/:slug" element={
+                    <ErrorBoundary fallback={
+                      <div className="flex items-center justify-center h-64">
+                        <div className="text-lg text-red-600">Failed to load page</div>
+                      </div>
+                    }>
+                      <DynamicPageRenderer slug={window.location.pathname.slice(1)} />
+                    </ErrorBoundary>
+                  } />
+                  
+                  {/* Optional: Test route for dynamic home */}
+                  <Route path="/home-dynamic" element={
+                    <ErrorBoundary fallback={
+                      <div className="flex items-center justify-center h-64">
+                        <div className="text-lg text-red-600">Failed to load dynamic home page</div>
+                      </div>
+                    }>
+                      <Suspense fallback={<div className="flex items-center justify-center h-64">Loading...</div>}>
+                        <DynamicPageRenderer slug="home" />
+                      </Suspense>
+                    </ErrorBoundary>
+                  } />
+                </>
+              )}
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
