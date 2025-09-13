@@ -38,10 +38,21 @@ const AdminEvents = () => {
   // Only run queries when actually on the events route
   const shouldFetch = location.pathname.startsWith('/admin/events');
   
+  // Debug logging
+  console.log('🔍 AdminEvents: Component render', {
+    pathname: location.pathname,
+    shouldFetch,
+    timestamp: new Date().toISOString()
+  });
+  
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['admin-events'],
     queryFn: async () => {
-      console.log('�� AdminEvents: Starting fetch...');
+      console.log('🚀 AdminEvents: Starting fetch...', {
+        pathname: location.pathname,
+        shouldFetch,
+        timestamp: new Date().toISOString()
+      });
       
       const { data: sessionData } = await supabase.auth.getSession();
       console.log('🔐 AdminEvents: Current session:', {
@@ -94,7 +105,7 @@ const AdminEvents = () => {
     if (!deleteEventId) return;
 
     try {
-      await deleteEvent(deleteEventId);
+      await deleteEvent.mutateAsync(deleteEventId);
       toast({
         title: 'Success',
         description: 'Event deleted successfully',
