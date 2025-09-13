@@ -265,14 +265,6 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ config }) => {
                   <div className="space-y-4">
                     {section.fields.map((field) => (
                       <div key={field.id}>
-                        {field.type !== 'checkbox' && (
-                          <Label htmlFor={field.id} className="block mb-1">
-                            {field.label}
-                            {field.required && (
-                              <span className="text-destructive ml-1">*</span>
-                            )}
-                          </Label>
-                        )}
                         {renderField(field)}
                       </div>
                     ))}
