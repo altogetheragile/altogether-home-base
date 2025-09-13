@@ -236,120 +236,37 @@ const AdminLayout = () => {
           </div>
         </div>
 
-        {/* Admin Navigation */}
+        {/* Admin Navigation - simplified to avoid hook mismatch issues */}
         <div className="bg-white border-b">
           <div className="px-6 py-4">
-            <Tabs value={activeTab} className="w-full">
-              {/* Tab Headers */}
-              <TabsList className="grid w-full grid-cols-5 mb-6">
-                {tabs.map((tab) => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className="flex items-center space-x-2"
-                    asChild
-                  >
-                    {tab.href ? (
-                      <Link to={tab.href}>
-                        <tab.icon className="h-4 w-4" />
-                        <span>{tab.label}</span>
-                      </Link>
-                    ) : (
-                      <div>
-                        <tab.icon className="h-4 w-4" />
-                        <span>{tab.label}</span>
-                      </div>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {/* Tab Content */}
-              <TabsContent value="events" className="mt-0">
-                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-                  <TooltipProvider>
-                    {eventsItems.map((item) => {
-                      const IconComponent = item.icon;
-                      return (
-                        <Tooltip key={item.label}>
-                          <TooltipTrigger asChild>
-                            <Link
-                              to={item.href}
-                              className="group flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
-                            >
-                              <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
-                                <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
-                              </div>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="font-medium">{item.label}</p>
-                            <p className="text-xs text-muted-foreground">{item.description}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              {[...eventsItems, { label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }, ...knowledgeItems, { label: 'Media', href: '/admin/media', icon: FileImage, description: 'Manage media' }, ...logsItems].map((item) => {
+                const IconComponent = item.icon as any;
+                return (
+                  <TooltipProvider key={item.href}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={item.href}
+                          className={`group flex items-center justify-center p-1.5 bg-white rounded-lg border ${isActive(item.href) ? 'border-primary/40' : 'border-gray-200'} hover:border-primary/30 hover:shadow-md transition-all duration-200`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
+                              <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                          </div>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="font-medium">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </TooltipProvider>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="knowledge" className="mt-0">
-                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-                  <TooltipProvider>
-                    {knowledgeItems.map((item) => {
-                      const IconComponent = item.icon;
-                      return (
-                        <Tooltip key={item.label}>
-                          <TooltipTrigger asChild>
-                            <Link
-                              to={item.href}
-                              className="group flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
-                            >
-                              <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
-                                <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
-                              </div>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="font-medium">{item.label}</p>
-                            <p className="text-xs text-muted-foreground">{item.description}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })}
-                  </TooltipProvider>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="logs" className="mt-0">
-                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-                  <TooltipProvider>
-                    {logsItems.map((item) => {
-                      const IconComponent = item.icon;
-                      return (
-                        <Tooltip key={item.label}>
-                          <TooltipTrigger asChild>
-                            <Link
-                              to={item.href}
-                              className="group flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all duration-200"
-                            >
-                              <div className="p-1.5 bg-gray-50 rounded-full group-hover:bg-primary/10 transition-colors">
-                                <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-primary" />
-                              </div>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="font-medium">{item.label}</p>
-                            <p className="text-xs text-muted-foreground">{item.description}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })}
-                  </TooltipProvider>
-                </div>
-              </TabsContent>
-
-            </Tabs>
+                );
+              })}
+            </div>
           </div>
         </div>
 

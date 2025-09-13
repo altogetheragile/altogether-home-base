@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import AdminLayout from "@/components/admin/AdminLayout";
+const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout"));
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 import EventDetail from "./pages/EventDetail";
@@ -95,7 +95,9 @@ const App = () => (
                 <>
                   <Route path="/admin" element={
                     <ProtectedRoute requiredRole="admin">
-                      <AdminLayout />
+                      <Suspense fallback={<div className="flex items-center justify-center h-64">Loading admin...</div>}>
+                        <AdminLayout />
+                      </Suspense>
                     </ProtectedRoute>
                   }>
                     <Route path="events" element={
