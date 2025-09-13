@@ -34,6 +34,11 @@ import { formatPrice } from '@/utils/currency';
 const AdminEvents = () => {
   const location = useLocation();
   
+  // Early return if not on admin/events route to prevent unnecessary rendering
+  if (!location.pathname.startsWith('/admin/events')) {
+    return null;
+  }
+  
   // Only run queries when actually on the events route
   const shouldFetch = location.pathname.startsWith('/admin/events');
 
@@ -165,8 +170,8 @@ const AdminEvents = () => {
                   {getRegistrationBadge(event.event_registrations)}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={event.is_published ? 'default' : 'secondary'}>
-                    {event.is_published ? (
+                  <Badge variant={Boolean(event.is_published) ? 'default' : 'secondary'}>
+                    {Boolean(event.is_published) ? (
                       <><Eye className="h-3 w-3 mr-1" />Published</>
                     ) : (
                       <><EyeOff className="h-3 w-3 mr-1" />Draft</>
