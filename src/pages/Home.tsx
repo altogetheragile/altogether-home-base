@@ -19,7 +19,20 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      {/* Navigation - Safely Wrapped */}
+      <ErrorBoundary fallback={
+        <nav className="bg-white shadow-sm border-b border-border sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link to="/" className="flex-shrink-0">
+                <h1 className="text-2xl font-bold text-primary">AltogetherAgile</h1>
+              </Link>
+            </div>
+          </div>
+        </nav>
+      }>
+        <Navigation />
+      </ErrorBoundary>
       
       {/* Hero Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8">
@@ -142,7 +155,20 @@ const Home: React.FC = () => {
         </section>
       )}
 
-      <Footer />
+      {/* Footer - Safely Wrapped */}
+      <ErrorBoundary fallback={
+        <footer className="bg-muted mt-auto">
+          <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                © 2024 AltogetherAgile. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </footer>
+      }>
+        <Footer />
+      </ErrorBoundary>
     </div>
   );
 };

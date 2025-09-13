@@ -162,8 +162,8 @@ const App = () => (
                 </>
               )}
               
-              {/* Static Home Page - Hard Isolated */}
-              <Route path="/" element={<HomeSafe />} />
+              {/* Static Home Page - Restored Safely */}
+              <Route path="/" element={<Home />} />
               
               {/* Dynamic CMS Pages - Handles other slugs (gated) */}
               {ENABLE_DYNAMIC_PAGES && (
