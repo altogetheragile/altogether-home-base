@@ -37,6 +37,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
     search: knowledgeItemSearch.length >= 2 ? knowledgeItemSearch : undefined,
     sortBy: 'alphabetical',
     limit: 1000,
+    showUnpublished: true, // Show all items for admin use
   });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,6 +101,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
     try {
       // Upload PDF to storage
       const fileName = `${Date.now()}-${file.name}`;
+      console.log('🚀 Starting PDF upload for:', fileName);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('pdf-templates')
         .upload(fileName, file);
@@ -112,6 +114,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
         .getPublicUrl(fileName);
 
       // Create template record
+      console.log('📝 Creating template with PDF URL:', publicUrl);
       const template = await createTemplate.mutateAsync({
         title: formData.title,
         description: formData.description,

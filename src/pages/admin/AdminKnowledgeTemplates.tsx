@@ -46,7 +46,7 @@ export default function AdminKnowledgeTemplates() {
   } = usePDFTemplateOperations();
 
   const filteredTemplates = templates
-    ?.filter((t) => t.template_type === 'pdf')
+    ?.filter((t) => t.pdf_url) // Filter by PDF URL instead of template_type
     ?.filter(template => {
       const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            template.description?.toLowerCase().includes(searchTerm.toLowerCase());

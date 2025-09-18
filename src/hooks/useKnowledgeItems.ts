@@ -147,6 +147,7 @@ export const useKnowledgeItems = (params?: {
   featured?: boolean;
   limit?: number;
   sortBy?: string;
+  showUnpublished?: boolean;
 }) => {
   return useQuery({
     queryKey: ['knowledge-items', params],
@@ -174,8 +175,12 @@ export const useKnowledgeItems = (params?: {
               )
             )
           )
-        `)
-        .eq('is_published', true);
+        `);
+
+      // Only filter by published status if not explicitly requesting unpublished items
+      if (!params?.showUnpublished) {
+        query = query.eq('is_published', true);
+      }
 
       if (params?.search && params.search.length >= 2) {
         const searchTerm = params.search.trim();
