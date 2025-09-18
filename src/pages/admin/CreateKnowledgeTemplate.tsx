@@ -188,6 +188,18 @@ export default function CreateKnowledgeTemplate() {
   </div>
 )}
 
+{existingTemplate?.pdf_url && (
+  <div className="space-y-2">
+    <Label>Linked Knowledge Item</Label>
+    <div className="p-3 bg-muted rounded-md">
+      <p className="text-sm text-muted-foreground">
+        This PDF template is associated with a Knowledge Item via the Knowledge Item Templates relationship.
+        To change the association, manage it from the Knowledge Items admin section.
+      </p>
+    </div>
+  </div>
+)}
+
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_public"

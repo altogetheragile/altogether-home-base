@@ -35,6 +35,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
 const { data: knowledgeItems = [] } = useQuery({
     queryKey: ['knowledge-items-for-upload', knowledgeItemSearch],
     queryFn: async () => {
+      console.log('🔍 Fetching Knowledge Items for upload dialog...');
       let q = supabase
         .from('knowledge_items')
         .select('id, name, is_published')
@@ -46,7 +47,12 @@ const { data: knowledgeItems = [] } = useQuery({
       }
 
       const { data, error } = await q;
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching Knowledge Items:', error);
+        throw error;
+      }
+      
+      console.log(`✅ Fetched ${data?.length || 0} Knowledge Items for dropdown`);
       return data || [];
     },
   });
@@ -89,7 +95,7 @@ const { data: knowledgeItems = [] } = useQuery({
     }));
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
     if (!file) {
@@ -113,39 +119,64 @@ const { data: knowledgeItems = [] } = useQuery({
       // Upload PDF to storage
       const fileName = `${Date.now()}-${file.name}`;
       console.log('🚀 Starting PDF upload for:', fileName);
+      console.log('📄 File details:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('pdf-templates')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ Storage upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      console.log('✅ File uploaded successfully:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('pdf-templates')
         .getPublicUrl(fileName);
 
-      // Create template record
-      console.log('📝 Creating template with PDF URL:', publicUrl);
-      const template = await createTemplate.mutateAsync({
+      console.log('🔗 Public URL generated:', publicUrl);
+
+      // Create template record with detailed logging
+      const templateData = {
         title: formData.title,
         description: formData.description,
         category: 'general',
-        template_type: 'pdf',
+        template_type: 'pdf' as const,
         pdf_url: publicUrl,
         pdf_filename: file.name,
         pdf_file_size: file.size,
         tags: formData.tags,
         is_public: true
-      });
+      };
+      
+      console.log('📝 Creating template with data:', templateData);
+      const template = await createTemplate.mutateAsync(templateData);
+
+      console.log('✅ Template created successfully:', template);
 
       // Immediately associate with knowledge item
-      await associateTemplate.mutateAsync({
+      const associationData = {
         knowledgeItemId: formData.knowledgeItemId,
         templateId: template.id,
         displayOrder: 0
-      });
+      };
+      
+      console.log('🔗 Associating template with knowledge item:', associationData);
+      await associateTemplate.mutateAsync(associationData);
 
-      toast.success('PDF template uploaded successfully');
+      console.log('✅ Template associated successfully');
+
+      toast.success('PDF template uploaded and linked successfully!');
       
       // Reset form
       setFile(null);
@@ -158,8 +189,20 @@ const { data: knowledgeItems = [] } = useQuery({
       
       onSuccess?.();
     } catch (error) {
-      console.error('Error uploading template:', error);
-      toast.error('Failed to upload template');
+      console.error('❌ Error uploading template:', error);
+      
+      // Enhanced error reporting
+      if (error instanceof Error) {
+        console.error('❌ Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        toast.error(`Failed to upload template: ${error.message}`);
+      } else {
+        console.error('❌ Unknown error type:', error);
+        toast.error('Failed to upload template. Check console for details.');
+      }
     } finally {
       setUploading(false);
     }
@@ -244,23 +287,26 @@ const { data: knowledgeItems = [] } = useQuery({
                   <CommandList>
                     <CommandEmpty>No knowledge item found.</CommandEmpty>
                     <CommandGroup>
-                      {knowledgeItems
-                        ?.filter((item) => 
-                          item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
-                        )
-                        ?.map((item) => (
-                        <CommandItem
-                          key={item.id}
-                          value={item.name}
-                          onSelect={() => {
-                            setFormData(prev => ({ ...prev, knowledgeItemId: item.id }));
-                            setKnowledgeItemOpen(false);
-                            setKnowledgeItemSearch('');
-                          }}
-                        >
-                          {item.name}
-                        </CommandItem>
-                      ))}
+                      {(() => {
+                        const filteredItems = knowledgeItems
+                          ?.filter((item) => 
+                            item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
+                          );
+                        console.log(`📋 Displaying ${filteredItems?.length || 0} filtered Knowledge Items in dropdown`);
+                        return filteredItems?.map((item) => (
+                          <CommandItem
+                            key={item.id}
+                            value={item.name}
+                            onSelect={() => {
+                              setFormData(prev => ({ ...prev, knowledgeItemId: item.id }));
+                              setKnowledgeItemOpen(false);
+                              setKnowledgeItemSearch('');
+                            }}
+                          >
+                            {item.name}
+                          </CommandItem>
+                        ));
+                      })()}
                     </CommandGroup>
                   </CommandList>
                 </Command>
