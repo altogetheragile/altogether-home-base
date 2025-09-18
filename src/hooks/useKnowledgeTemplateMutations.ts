@@ -13,19 +13,19 @@ export const useKnowledgeTemplateMutations = () => {
     mutationFn: async (data: KnowledgeTemplateFormData) => {
       if (!user) throw new Error('User not authenticated');
       
-      const { data: template, error } = await supabase
+      const newId = crypto.randomUUID();
+      const { error } = await supabase
         .from('knowledge_templates')
         .insert({
+          id: newId,
           ...data,
           created_by: user.id,
           updated_by: user.id,
           version: '1.0'
-        })
-        .select()
-        .single();
+        });
 
       if (error) throw error;
-      return template;
+      return { id: newId } as { id: string };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-templates'] });

@@ -39,19 +39,17 @@ export const useAssociateTemplate = () => {
       displayOrder?: number;
       customConfig?: Record<string, any>;
     }) => {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('knowledge_item_templates')
-        .insert([{
+        .insert({
           knowledge_item_id: knowledgeItemId,
           template_id: templateId,
           display_order: displayOrder,
           custom_config: customConfig
-        }])
-        .select()
-        .single();
+        });
 
       if (error) throw error;
-      return data;
+      return { success: true };
     },
     onSuccess: (_, { knowledgeItemId }) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-item-templates', knowledgeItemId] });
