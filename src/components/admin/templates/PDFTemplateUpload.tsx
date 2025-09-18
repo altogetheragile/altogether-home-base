@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Upload, FileText, X, CheckCircle } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,11 +24,12 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
     tags: [] as string[],
     knowledgeItemId: ''
   });
   const [tagInput, setTagInput] = useState('');
+  const [knowledgeItemOpen, setKnowledgeItemOpen] = useState(false);
+  const [knowledgeItemSearch, setKnowledgeItemSearch] = useState('');
 
   const { createTemplate } = useKnowledgeTemplateMutations();
   const associateTemplate = useAssociateTemplate();
@@ -109,8 +111,8 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
       const template = await createTemplate.mutateAsync({
         title: formData.title,
         description: formData.description,
-        category: formData.category || 'general',
-        template_type: 'pdf',
+        category: 'general',
+        template_type: 'canvas',
         pdf_url: publicUrl,
         pdf_filename: file.name,
         pdf_file_size: file.size,
@@ -132,7 +134,6 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
       setFormData({
         title: '',
         description: '',
-        category: '',
         tags: [],
         knowledgeItemId: ''
       });
@@ -200,51 +201,65 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
 
           {/* Knowledge Item Selection */}
           <div className="space-y-2">
-            <Label htmlFor="knowledge-item">Knowledge Item *</Label>
-            <Select value={formData.knowledgeItemId} onValueChange={(value) => setFormData(prev => ({ ...prev, knowledgeItemId: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select knowledge item to link template to" />
-              </SelectTrigger>
-              <SelectContent>
-                {knowledgeItems?.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Knowledge Item *</Label>
+            <Popover open={knowledgeItemOpen} onOpenChange={setKnowledgeItemOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={knowledgeItemOpen}
+                  className="w-full justify-between"
+                >
+                  {formData.knowledgeItemId
+                    ? knowledgeItems?.find((item) => item.id === formData.knowledgeItemId)?.name
+                    : "Select knowledge item to link template to"}
+                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput
+                    placeholder="Search knowledge items..."
+                    value={knowledgeItemSearch}
+                    onValueChange={setKnowledgeItemSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>No knowledge item found.</CommandEmpty>
+                    <CommandGroup>
+                      {knowledgeItems
+                        ?.filter((item) => 
+                          item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
+                        )
+                        ?.map((item) => (
+                        <CommandItem
+                          key={item.id}
+                          value={item.id}
+                          onSelect={() => {
+                            setFormData(prev => ({ ...prev, knowledgeItemId: item.id }));
+                            setKnowledgeItemOpen(false);
+                            setKnowledgeItemSearch('');
+                          }}
+                        >
+                          {item.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Template Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Template Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Enter template title"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="business-model">Business Model</SelectItem>
-                  <SelectItem value="strategy">Strategy</SelectItem>
-                  <SelectItem value="planning">Planning</SelectItem>
-                  <SelectItem value="analysis">Analysis</SelectItem>
-                  <SelectItem value="workshop">Workshop</SelectItem>
-                  <SelectItem value="framework">Framework</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="title">Template Title *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Enter template title"
+              required
+            />
           </div>
 
           <div className="space-y-2">
