@@ -131,6 +131,12 @@ const Navigation = () => {
                       AI Tools Canvas
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/foundation" className="w-full">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Foundation Phase
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -286,16 +292,26 @@ const Navigation = () => {
                        <span>AI Tools</span>
                      </div>
                    </div>
-                   <Link
-                     to="/ai-tools"
-                     onClick={() => setIsMenuOpen(false)}
-                     className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
-                   >
-                     <div className="flex items-center space-x-2">
-                       <Sparkles className="h-4 w-4" />
-                       <span>AI Tools Canvas</span>
-                     </div>
-                   </Link>
+                    <Link
+                      to="/ai-tools"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="h-4 w-4" />
+                        <span>AI Tools Canvas</span>
+                      </div>
+                    </Link>
+                    <Link
+                      to="/foundation"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Foundation Phase</span>
+                      </div>
+                    </Link>
                  </div>
                
                {/* Mobile Auth Section */}
