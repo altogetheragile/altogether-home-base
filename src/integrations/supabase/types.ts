@@ -1365,7 +1365,10 @@ export type Database = {
       }
       knowledge_templates: {
         Row: {
+          assets: Json | null
+          canvas_config: Json | null
           category: string | null
+          collaboration: Json | null
           config: Json
           created_at: string
           created_by: string | null
@@ -1380,7 +1383,10 @@ export type Database = {
           version: string | null
         }
         Insert: {
+          assets?: Json | null
+          canvas_config?: Json | null
           category?: string | null
+          collaboration?: Json | null
           config?: Json
           created_at?: string
           created_by?: string | null
@@ -1395,7 +1401,10 @@ export type Database = {
           version?: string | null
         }
         Update: {
+          assets?: Json | null
+          canvas_config?: Json | null
           category?: string | null
+          collaboration?: Json | null
           config?: Json
           created_at?: string
           created_by?: string | null
@@ -1973,6 +1982,53 @@ export type Database = {
           },
         ]
       }
+      template_assets: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          file_size: number | null
+          id: string
+          metadata: Json | null
+          original_filename: string | null
+          storage_path: string
+          template_id: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          original_filename?: string | null
+          storage_path: string
+          template_id?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          original_filename?: string | null
+          storage_path?: string
+          template_id?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_assets_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       template_usage: {
         Row: {
           created_at: string
@@ -2011,6 +2067,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_versions: {
+        Row: {
+          canvas_config: Json | null
+          change_summary: string | null
+          config: Json
+          created_at: string | null
+          created_by: string | null
+          id: string
+          template_id: string | null
+          version_number: number
+        }
+        Insert: {
+          canvas_config?: Json | null
+          change_summary?: string | null
+          config: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          template_id?: string | null
+          version_number: number
+        }
+        Update: {
+          canvas_config?: Json | null
+          change_summary?: string | null
+          config?: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          template_id?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_templates"
             referencedColumns: ["id"]
           },
         ]
