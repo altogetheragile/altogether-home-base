@@ -53,36 +53,6 @@ const AdminTemplates = () => {
       }
     });
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this template?')) {
-      try {
-        await deleteTemplate.mutateAsync(id);
-        toast.success('Template deleted successfully');
-      } catch (error) {
-        console.error('Error deleting template:', error);
-        toast.error('Failed to delete template');
-      }
-    }
-  };
-
-  const handleBulkDelete = async (ids: string[]) => {
-    if (window.confirm(`Are you sure you want to delete ${ids.length} templates?`)) {
-      try {
-        for (const id of ids) {
-          const template = templates.find(t => t.id === id);
-          if (template) {
-            await deleteTemplateWithConfirm(template);
-          }
-        }
-        setSelectedItems([]);
-        toast.success(`${ids.length} templates deleted successfully`);
-      } catch (error) {
-        console.error('Error deleting templates:', error);
-        toast.error('Failed to delete templates');
-      }
-    }
-  };
-
   const handleUploadSuccess = () => {
     setShowUploadDialog(false);
   };
