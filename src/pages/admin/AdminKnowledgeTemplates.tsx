@@ -45,14 +45,13 @@ export default function AdminKnowledgeTemplates() {
     deleteTemplateWithConfirm
   } = usePDFTemplateOperations();
 
-  const filteredTemplates = templates?.filter(template => {
-    const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         template.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === 'all' || template.template_type === selectedType;
-    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-    
-    return matchesSearch && matchesType && matchesCategory;
-  });
+  const filteredTemplates = templates
+    ?.filter((t) => t.template_type === 'pdf')
+    ?.filter(template => {
+      const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           template.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
 
   const categories = templates ? [...new Set(templates.map(t => t.category).filter(Boolean) as string[])] : [];
 
@@ -125,35 +124,6 @@ export default function AdminKnowledgeTemplates() {
             className="pl-10"
           />
         </div>
-        
-        <Select value={selectedType} onValueChange={setSelectedType}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="pdf">PDF Templates</SelectItem>
-            <SelectItem value="canvas">Canvas</SelectItem>
-            <SelectItem value="matrix">Matrix</SelectItem>
-            <SelectItem value="worksheet">Worksheet</SelectItem>
-            <SelectItem value="process">Process</SelectItem>
-            <SelectItem value="form">Form</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        {categories.length > 0 && (
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
       </div>
 
       {/* Templates Grid */}
@@ -196,61 +166,6 @@ export default function AdminKnowledgeTemplates() {
         onClose={closeViewer}
       />
       
-      {/* Template Preview Dialog for canvas templates */}
-      <Dialog open={!!viewingTemplate} onOpenChange={() => setViewingTemplate(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              Template Preview: {viewingTemplate?.title}
-            </DialogTitle>
-            <DialogDescription>
-              Template configuration and details
-            </DialogDescription>
-          </DialogHeader>
-          
-          {viewingTemplate && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium mb-2">Basic Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <div><strong>Title:</strong> {viewingTemplate.title}</div>
-                    <div><strong>Type:</strong> {viewingTemplate.template_type}</div>
-                    <div><strong>Category:</strong> {viewingTemplate.category || 'None'}</div>
-                    <div><strong>Version:</strong> {viewingTemplate.version}</div>
-                    <div><strong>Usage Count:</strong> {viewingTemplate.usage_count}</div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Status</h4>
-                  <div className="space-y-2 text-sm">
-                    <div><strong>Public:</strong> {viewingTemplate.is_public ? 'Yes' : 'No'}</div>
-                    <div><strong>Created:</strong> {new Date(viewingTemplate.created_at).toLocaleDateString()}</div>
-                    <div><strong>Updated:</strong> {new Date(viewingTemplate.updated_at).toLocaleDateString()}</div>
-                  </div>
-                </div>
-              </div>
-              
-              {viewingTemplate.description && (
-                <div>
-                  <h4 className="font-medium mb-2">Description</h4>
-                  <p className="text-sm text-muted-foreground">{viewingTemplate.description}</p>
-                </div>
-              )}
-              
-              {viewingTemplate.config && (
-                <div>
-                  <h4 className="font-medium mb-2">Configuration</h4>
-                  <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
-                    {JSON.stringify(viewingTemplate.config, null, 2)}
-                  </pre>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

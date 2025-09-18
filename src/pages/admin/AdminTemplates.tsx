@@ -113,13 +113,8 @@ const AdminTemplates = () => {
             label: 'Type',
             value: filter,
             options: [
-              { value: 'all', label: 'All Templates' },
-              { value: 'pdf', label: 'PDF Templates' },
-              { value: 'canvas', label: 'Canvas' },
-              { value: 'matrix', label: 'Matrix' },
-              { value: 'worksheet', label: 'Worksheet' },
-              { value: 'process', label: 'Process' },
-              { value: 'form', label: 'Form' }
+               { value: 'all', label: 'All Templates' },
+               { value: 'pdf', label: 'PDF Templates' }
             ],
             onChange: (value: string) => setFilter(value as typeof filter)
           },

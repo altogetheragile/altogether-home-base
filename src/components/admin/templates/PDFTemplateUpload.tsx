@@ -33,7 +33,11 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
 
   const { createTemplate } = useKnowledgeTemplateMutations();
   const associateTemplate = useAssociateTemplate();
-  const { data: knowledgeItems } = useKnowledgeItems();
+  const { data: knowledgeItems } = useKnowledgeItems({
+    search: knowledgeItemSearch.length >= 2 ? knowledgeItemSearch : undefined,
+    sortBy: 'alphabetical',
+    limit: 1000,
+  });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -216,7 +220,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
+              <PopoverContent className="z-50 w-full p-0">
                 <Command>
                   <CommandInput
                     placeholder="Search knowledge items..."
@@ -233,7 +237,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
                         ?.map((item) => (
                         <CommandItem
                           key={item.id}
-                          value={item.id}
+                          value={item.name}
                           onSelect={() => {
                             setFormData(prev => ({ ...prev, knowledgeItemId: item.id }));
                             setKnowledgeItemOpen(false);
