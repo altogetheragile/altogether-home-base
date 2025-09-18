@@ -1,60 +1,116 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
-import { useLocations } from '@/hooks/useLocations';
-import { useInstructors } from '@/hooks/useInstructors';
-import { useTemplates, EventTemplate } from '@/hooks/useTemplates';
+import { Plus, FileText, Download, Trash2, Edit } from 'lucide-react';
+import { useKnowledgeTemplates } from '@/hooks/useKnowledgeTemplates';
 import SearchAndFilter from '@/components/admin/SearchAndFilter';
 import BulkOperations from '@/components/admin/BulkOperations';
-import TemplatesList from '@/components/admin/templates/TemplatesList';
-import TemplateForm from '@/components/admin/templates/TemplateForm';
+import { PDFTemplateUpload } from '@/components/admin/templates/PDFTemplateUpload';
+import { PDFViewer } from '@/components/admin/templates/PDFViewer';
+import { usePDFTemplateOperations } from '@/hooks/usePDFTemplateOperations';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutations';
+import { toast } from 'sonner';
 
 const AdminTemplates = () => {
-  const navigate = useNavigate();
-  const { data: locations = [] } = useLocations();
-  const { data: instructors = [] } = useInstructors();
-  const { data: templates = [], isLoading, error } = useTemplates();
-  
-  const [searchTerm, setSearchTerm] = useState('');
+  const { data: templates = [], isLoading, error } = useKnowledgeTemplates();
+  const {
+    selectedTemplate,
+    viewerOpen,
+    openViewer,
+    closeViewer,
+    downloadTemplate,
+    deleteTemplateWithConfirm
+  } = usePDFTemplateOperations();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<EventTemplate | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'pdf' | 'canvas' | 'matrix' | 'worksheet' | 'process' | 'form'>('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'alphabetical'>('newest');
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
 
-  const filteredTemplates = templates.filter(template =>
-    template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter and sort templates
+  const filteredTemplates = templates
+    .filter(template => {
+      if (filter === 'all') return true;
+      return template.template_type === filter;
+    })
+    .filter(template => 
+      template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      template.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'alphabetical':
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
 
-  const handleCreateEvent = (template: EventTemplate) => {
-    navigate(`/admin/events/new?template=${template.id}`);
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this template?')) {
+      try {
+        await deleteTemplate.mutateAsync(id);
+        toast.success('Template deleted successfully');
+      } catch (error) {
+        console.error('Error deleting template:', error);
+        toast.error('Failed to delete template');
+      }
+    }
   };
 
-  const handleEditTemplate = (template: EventTemplate) => {
-    setEditingTemplate(template);
-    setIsDialogOpen(true);
+  const handleBulkDelete = async (ids: string[]) => {
+    if (window.confirm(`Are you sure you want to delete ${ids.length} templates?`)) {
+      try {
+        for (const id of ids) {
+          const template = templates.find(t => t.id === id);
+          if (template) {
+            await deleteTemplateWithConfirm(template);
+          }
+        }
+        setSelectedItems([]);
+        toast.success(`${ids.length} templates deleted successfully`);
+      } catch (error) {
+        console.error('Error deleting templates:', error);
+        toast.error('Failed to delete templates');
+      }
+    }
   };
 
-  const handleClearFilters = () => {
-    setSearchTerm('');
+  const handleUploadSuccess = () => {
+    setShowUploadDialog(false);
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    setSelectedItems(checked ? templates.map(t => t.id) : []);
+  const formatFileSize = (bytes: number) => {
+    const mb = bytes / (1024 * 1024);
+    return `${mb.toFixed(1)} MB`;
   };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingTemplate(null);
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">PDF Templates</h1>
+        </div>
+        <div className="text-center py-8">Loading templates...</div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="text-center py-12">
-          <p className="text-red-600">Error loading templates: {error.message}</p>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">PDF Templates</h1>
+        </div>
+        <div className="text-center py-8 text-red-500">
+          Error loading templates. Please try again.
         </div>
       </div>
     );
@@ -63,31 +119,19 @@ const AdminTemplates = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Event Templates</h1>
-          <p className="text-gray-600">Manage reusable event templates</p>
-        </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <h1 className="text-3xl font-bold">PDF Templates</h1>
+        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingTemplate(null)}>
+            <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Template
+              Upload PDF Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>
-                {editingTemplate ? 'Edit Template' : 'Create Template'}
-              </DialogTitle>
+              <DialogTitle>Upload New PDF Template</DialogTitle>
             </DialogHeader>
-            {/* <TemplateForm 
-              template={editingTemplate as any}
-              locations={locations}
-              instructors={instructors}
-              onClose={handleCloseDialog}
-            /> */}
-            <div>Event Template Form (to be implemented)</div>
+            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
           </DialogContent>
         </Dialog>
       </div>
@@ -95,29 +139,182 @@ const AdminTemplates = () => {
       <SearchAndFilter
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onClearFilters={handleClearFilters}
+        onClearFilters={() => {
+          setSearchTerm('');
+          setFilter('all');
+          setSortBy('newest');
+        }}
+        filters={[
+          {
+            label: 'Type',
+            value: filter,
+            options: [
+              { value: 'all', label: 'All Templates' },
+              { value: 'pdf', label: 'PDF Templates' },
+              { value: 'canvas', label: 'Canvas' },
+              { value: 'matrix', label: 'Matrix' },
+              { value: 'worksheet', label: 'Worksheet' },
+              { value: 'process', label: 'Process' },
+              { value: 'form', label: 'Form' }
+            ],
+            onChange: (value: string) => setFilter(value as typeof filter)
+          },
+          {
+            label: 'Sort',
+            value: sortBy,
+            options: [
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'alphabetical', label: 'A-Z' }
+            ],
+            onChange: (value: string) => setSortBy(value as typeof sortBy)
+          }
+        ]}
       />
 
-      <BulkOperations
-        selectedItems={selectedItems}
-        allItems={templates}
-        onSelectAll={handleSelectAll}
-        type="templates"
-      />
-
-      {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Loading templates...</p>
-        </div>
-      ) : (
-        <TemplatesList
-          templates={filteredTemplates}
-          locations={locations}
-          instructors={instructors}
-          onEditTemplate={handleEditTemplate}
-          onCreateEvent={handleCreateEvent}
+      {selectedItems.length > 0 && (
+        <BulkOperations
+          selectedItems={selectedItems}
+          allItems={filteredTemplates}
+          onSelectAll={(checked: boolean) => {
+            if (checked) {
+              setSelectedItems(filteredTemplates.map(t => t.id));
+            } else {
+              setSelectedItems([]);
+            }
+          }}
+          type="templates"
         />
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredTemplates.map((template) => (
+          <Card key={template.id} className="hover:shadow-md transition-shadow">
+            <CardHeader className="space-y-2">
+              <div className="flex items-start justify-between">
+                <CardTitle className="text-lg line-clamp-2">{template.title}</CardTitle>
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(template.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedItems([...selectedItems, template.id]);
+                    } else {
+                      setSelectedItems(selectedItems.filter(id => id !== template.id));
+                    }
+                  }}
+                  className="ml-2"
+                />
+              </div>
+              
+              <div className="flex gap-2 flex-wrap">
+                <Badge 
+                  variant={template.template_type === 'pdf' ? 'destructive' : 'secondary'}
+                >
+                  {template.template_type?.toUpperCase()}
+                </Badge>
+                {template.category && (
+                  <Badge variant="outline">{template.category}</Badge>
+                )}
+                {template.usage_count > 0 && (
+                  <Badge variant="secondary">{template.usage_count} uses</Badge>
+                )}
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {template.description && (
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {template.description}
+                </p>
+              )}
+
+              {template.pdf_filename && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileText className="h-4 w-4" />
+                  <span className="truncate">{template.pdf_filename}</span>
+                  {template.pdf_file_size && (
+                    <span>({formatFileSize(template.pdf_file_size)})</span>
+                  )}
+                </div>
+              )}
+
+              {template.tags && template.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {template.tags.slice(0, 3).map(tag => (
+                    <Badge key={tag} variant="outline" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {template.tags.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{template.tags.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-4">
+                <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openViewer(template)}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => downloadTemplate(template)}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => deleteTemplateWithConfirm(template)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <span className="text-xs text-muted-foreground">
+                  {new Date(template.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {filteredTemplates.length === 0 && (
+        <div className="text-center py-12">
+          <FileText className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+          <h3 className="text-lg font-medium mb-2">No templates found</h3>
+          <p className="text-muted-foreground mb-4">
+            {searchTerm || filter !== 'all' 
+              ? 'Try adjusting your search or filters'
+              : 'Get started by uploading your first PDF template'
+            }
+          </p>
+          {!searchTerm && filter === 'all' && (
+            <Button onClick={() => setShowUploadDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Upload Template
+            </Button>
+          )}
+        </div>
+      )}
+
+      <PDFViewer
+        template={selectedTemplate}
+        isOpen={viewerOpen}
+        onClose={closeViewer}
+      />
     </div>
   );
 };

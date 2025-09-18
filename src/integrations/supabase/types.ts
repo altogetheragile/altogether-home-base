@@ -1365,17 +1365,19 @@ export type Database = {
       }
       knowledge_templates: {
         Row: {
-          assets: Json | null
-          canvas_config: Json | null
           category: string | null
-          collaboration: Json | null
-          config: Json
           created_at: string
           created_by: string | null
           description: string | null
           id: string
           is_public: boolean | null
+          pdf_file_size: number | null
+          pdf_filename: string | null
+          pdf_page_count: number | null
+          pdf_url: string | null
+          tags: string[] | null
           template_type: string
+          thumbnail_url: string | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -1383,17 +1385,19 @@ export type Database = {
           version: string | null
         }
         Insert: {
-          assets?: Json | null
-          canvas_config?: Json | null
           category?: string | null
-          collaboration?: Json | null
-          config?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
-          template_type: string
+          pdf_file_size?: number | null
+          pdf_filename?: string | null
+          pdf_page_count?: number | null
+          pdf_url?: string | null
+          tags?: string[] | null
+          template_type?: string
+          thumbnail_url?: string | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -1401,17 +1405,19 @@ export type Database = {
           version?: string | null
         }
         Update: {
-          assets?: Json | null
-          canvas_config?: Json | null
           category?: string | null
-          collaboration?: Json | null
-          config?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
+          pdf_file_size?: number | null
+          pdf_filename?: string | null
+          pdf_page_count?: number | null
+          pdf_url?: string | null
+          tags?: string[] | null
           template_type?: string
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -2427,6 +2433,10 @@ export type Database = {
       }
       increment_knowledge_item_view_count: {
         Args: { item_id: string }
+        Returns: undefined
+      }
+      increment_pdf_template_usage: {
+        Args: { template_uuid: string }
         Returns: undefined
       }
       increment_template_usage_count: {

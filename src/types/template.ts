@@ -26,7 +26,7 @@ export interface EventTemplate {
 }
 
 // Knowledge Template Types
-export type TemplateType = 'canvas' | 'matrix' | 'worksheet' | 'process' | 'form';
+export type TemplateType = 'canvas' | 'matrix' | 'worksheet' | 'process' | 'form' | 'pdf';
 
 export type TemplateFieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'radio' | 'date' | 'slider';
 
@@ -93,8 +93,8 @@ export interface KnowledgeTemplate {
   id: string;
   title: string;
   description?: string;
-  template_type: TemplateType;
-  config: TemplateConfig;
+  template_type: TemplateType | 'pdf';
+  config?: TemplateConfig;
   category?: string;
   version: string;
   is_public: boolean;
@@ -103,6 +103,13 @@ export interface KnowledgeTemplate {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+  // PDF-specific fields
+  pdf_url?: string;
+  pdf_filename?: string;
+  pdf_file_size?: number;
+  pdf_page_count?: number;
+  thumbnail_url?: string;
+  tags?: string[];
 }
 
 export interface KnowledgeItemTemplate {
@@ -154,7 +161,14 @@ export interface EventTemplateFormData {
 export interface KnowledgeTemplateFormData {
   title: string;
   description?: string;
-  template_type: TemplateType;
+  template_type: TemplateType | 'pdf';
   category?: string;
   is_public: boolean;
+  // PDF-specific fields
+  pdf_url?: string;
+  pdf_filename?: string;
+  pdf_file_size?: number;
+  pdf_page_count?: number;
+  thumbnail_url?: string;
+  tags?: string[];
 }
