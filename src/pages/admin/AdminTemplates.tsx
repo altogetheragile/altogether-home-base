@@ -89,21 +89,15 @@ const AdminTemplates = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">PDF Templates</h1>
-        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Upload PDF Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Upload New PDF Template</DialogTitle>
-            </DialogHeader>
-            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
-          </DialogContent>
-        </Dialog>
+        <div>
+          <h1 className="text-3xl font-bold">PDF Templates</h1>
+          <p className="text-muted-foreground mt-2">
+            Templates are now managed directly within Knowledge Items. Visit a specific knowledge item to upload and manage its templates.
+          </p>
+        </div>
+        <Button onClick={() => window.location.href = '/admin/knowledge/items'}>
+          Go to Knowledge Items
+        </Button>
       </div>
 
       <SearchAndFilter
@@ -272,9 +266,9 @@ const AdminTemplates = () => {
             }
           </p>
           {!searchTerm && filter === 'all' && (
-            <Button onClick={() => setShowUploadDialog(true)}>
+            <Button onClick={() => window.location.href = '/admin/knowledge/items'}>
               <Plus className="h-4 w-4 mr-2" />
-              Upload Template
+              Go to Knowledge Items
             </Button>
           )}
         </div>

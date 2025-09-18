@@ -95,29 +95,8 @@ export default function AdminKnowledgeTemplates() {
           </p>
         </div>
         
-        <div className="flex gap-2">
-          <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload PDF Template
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <DialogHeader>
-                <DialogTitle>Upload PDF Template</DialogTitle>
-                <DialogDescription>
-                  Upload a PDF file to create a new template for knowledge items
-                </DialogDescription>
-              </DialogHeader>
-              <PDFTemplateUpload onSuccess={handleUploadSuccess} />
-            </DialogContent>
-          </Dialog>
-          
-          <Button variant="outline" onClick={() => navigate('/admin/knowledge/templates/new')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Canvas Template
-          </Button>
+        <div className="text-muted-foreground">
+          Templates are now managed directly within Knowledge Items. Visit the Knowledge Items section to upload and manage templates.
         </div>
       </div>
 
@@ -175,16 +154,9 @@ export default function AdminKnowledgeTemplates() {
             }
           </p>
           {!searchTerm && selectedType === 'all' && selectedCategory === 'all' && (
-            <div className="flex gap-2 justify-center">
-              <Button onClick={() => setShowUploadDialog(true)}>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload PDF Template
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/admin/knowledge/templates/new')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Canvas Template
-              </Button>
-            </div>
+            <Button onClick={() => navigate('/admin/knowledge/items')}>
+              Go to Knowledge Items
+            </Button>
           )}
         </div>
       ) : (

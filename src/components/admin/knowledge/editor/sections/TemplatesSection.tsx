@@ -1,11 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useFormContext } from 'react-hook-form';
-import { Plus, Palette, Eye, X, GripVertical } from 'lucide-react';
+import { Plus, Palette, Eye, X, GripVertical, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { TemplateSelectionDialog } from '../TemplateSelectionDialog';
 import { TemplateUsageDialog } from '../TemplateUsageDialog';
+import { PDFTemplateUpload } from '@/components/admin/templates/PDFTemplateUpload';
 import { useKnowledgeItemTemplates, useRemoveTemplateAssociation } from '@/hooks/useKnowledgeItemTemplates';
 import { toast } from 'sonner';
 import type { KnowledgeTemplate } from '@/types/template';
@@ -17,6 +19,7 @@ interface TemplatesSectionProps {
 export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => {
   const form = useFormContext();
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<KnowledgeTemplate | null>(null);
   const [showUsageDialog, setShowUsageDialog] = useState(false);
 
@@ -44,6 +47,12 @@ export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => 
     setShowTemplateSelector(false);
   };
 
+  const handleUploadSuccess = () => {
+    refetch();
+    setShowUploadDialog(false);
+    toast.success('Template uploaded and linked successfully');
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -65,13 +74,23 @@ export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => 
               <p className="text-sm mb-4">
                 Add templates to provide structured frameworks and tools for users
               </p>
-              <Button 
-                onClick={() => setShowTemplateSelector(true)}
-                disabled={!knowledgeItemId}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add First Template
-              </Button>
+              <div className="flex gap-2 justify-center">
+                <Button 
+                  onClick={() => setShowTemplateSelector(true)}
+                  disabled={!knowledgeItemId}
+                  variant="outline"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Existing Template
+                </Button>
+                <Button 
+                  onClick={() => setShowUploadDialog(true)}
+                  disabled={!knowledgeItemId}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload New Template
+                </Button>
+              </div>
             </div>
           ) : (
             <>
@@ -116,15 +135,23 @@ export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => 
                   </div>
                 ))}
               </div>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowTemplateSelector(true)}
-                disabled={!knowledgeItemId}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Another Template
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowTemplateSelector(true)}
+                  disabled={!knowledgeItemId}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Existing
+                </Button>
+                <Button 
+                  onClick={() => setShowUploadDialog(true)}
+                  disabled={!knowledgeItemId}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload New
+                </Button>
+              </div>
             </>
           )}
         </CardContent>
@@ -161,6 +188,24 @@ export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => 
           </div>
         </CardContent>
       </Card>
+
+      {/* PDF Template Upload Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Upload PDF Template</DialogTitle>
+            <DialogDescription>
+              Upload a PDF template that will be linked to this knowledge item
+            </DialogDescription>
+          </DialogHeader>
+          {knowledgeItemId && (
+            <PDFTemplateUpload 
+              knowledgeItemId={knowledgeItemId}
+              onSuccess={handleUploadSuccess} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Template Selection Dialog */}
       <TemplateSelectionDialog

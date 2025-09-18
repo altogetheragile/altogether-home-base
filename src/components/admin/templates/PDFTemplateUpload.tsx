@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutations';
+import { useAssociateTemplate } from '@/hooks/useKnowledgeItemTemplates';
 
 interface PDFTemplateUploadProps {
+  knowledgeItemId: string;
   onSuccess?: () => void;
 }
 
-export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
+export const PDFTemplateUpload = ({ knowledgeItemId, onSuccess }: PDFTemplateUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -27,6 +29,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
   const [tagInput, setTagInput] = useState('');
 
   const { createTemplate } = useKnowledgeTemplateMutations();
+  const associateTemplate = useAssociateTemplate();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -96,7 +99,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
         .getPublicUrl(fileName);
 
       // Create template record
-      await createTemplate.mutateAsync({
+      const template = await createTemplate.mutateAsync({
         title: formData.title,
         description: formData.description,
         category: formData.category || 'general',
@@ -106,6 +109,13 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
         pdf_file_size: file.size,
         tags: formData.tags,
         is_public: true
+      });
+
+      // Immediately associate with knowledge item
+      await associateTemplate.mutateAsync({
+        knowledgeItemId,
+        templateId: template.id,
+        displayOrder: 0
       });
 
       toast.success('PDF template uploaded successfully');
