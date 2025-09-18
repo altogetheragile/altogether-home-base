@@ -1,7 +1,49 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Canvas as FabricCanvas, Rect, Textbox, IText } from 'fabric';
 import { toast } from 'sonner';
-import { resolveFabricColors, useFabricColors, type FabricColors } from '../../utils/fabricColors';
+
+// Simple color interface for Fabric.js
+interface FabricColors {
+  background: string;
+  foreground: string;
+  card: string;
+  accent: string;
+  accentForeground: string;
+  border: string;
+}
+
+// Simple color resolver without external dependency
+const getSimpleFabricColors = (): FabricColors => {
+  // Get computed styles from document root
+  const computedStyle = getComputedStyle(document.documentElement);
+  
+  // Helper to convert HSL values to a proper color string
+  const resolveHSL = (variableName: string): string => {
+    const hslValues = computedStyle.getPropertyValue(variableName).trim();
+    if (hslValues) {
+      return `hsl(${hslValues})`;
+    }
+    // Fallback colors
+    const fallbacks: Record<string, string> = {
+      '--background': 'hsl(0, 0%, 100%)',
+      '--foreground': 'hsl(0, 0%, 3.9%)',
+      '--card': 'hsl(0, 0%, 100%)',
+      '--accent': 'hsl(210, 40%, 98%)',
+      '--accent-foreground': 'hsl(0, 0%, 9%)',
+      '--border': 'hsl(214.3, 31.8%, 91.4%)',
+    };
+    return fallbacks[variableName] || 'hsl(0, 0%, 50%)';
+  };
+
+  return {
+    background: resolveHSL('--background'),
+    foreground: resolveHSL('--foreground'),
+    card: resolveHSL('--card'),
+    accent: resolveHSL('--accent'),
+    accentForeground: resolveHSL('--accent-foreground'),
+    border: resolveHSL('--border'),
+  };
+};
 
 interface BMCData {
   keyPartners: string;
@@ -90,7 +132,7 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [sections, setSections] = useState<Record<string, { rect: Rect; title: IText; content: Textbox }>>({});
-  const [colors, setColors] = useState<FabricColors>(resolveFabricColors());
+  const [colors, setColors] = useState<FabricColors>(getSimpleFabricColors());
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -202,13 +244,14 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
   }, [fabricCanvas, data, isEditable, onDataChange, width, height, colors]);
 
   // Handle theme changes
-  useFabricColors((newColors) => {
+  useEffect(() => {
+    const newColors = getSimpleFabricColors();
     setColors(newColors);
     if (fabricCanvas) {
       fabricCanvas.backgroundColor = newColors.background;
       fabricCanvas.renderAll();
     }
-  });
+  }, [fabricCanvas]);
 
   // Export functionality
   const exportCanvas = (format: 'png' | 'jpeg' | 'pdf' = 'png', quality: number = 1.0): string | null => {

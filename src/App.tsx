@@ -57,7 +57,7 @@ import HomeSafe from "./pages/HomeSafe";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
 import Knowledge from "./pages/Knowledge";
 import KnowledgeDetail from "./pages/KnowledgeDetail";
-import TemplateFoundation from "./pages/TemplateFoundation";
+
 
 // Feature flags for gradual restoration
 const ENABLE_ADMIN_ROUTES = true; // ✅ Re-enabling admin routes  
@@ -83,7 +83,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
-              <Route path="/foundation" element={<TemplateFoundation />} />
+              
               
               {/* Protected Project Routes (gated) */}
               {ENABLE_PROTECTED_PROJECTS && (
