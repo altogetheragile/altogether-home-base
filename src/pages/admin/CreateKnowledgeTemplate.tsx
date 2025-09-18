@@ -132,7 +132,7 @@ export default function CreateKnowledgeTemplate() {
             <CardHeader>
               <CardTitle>Template Details</CardTitle>
               <CardDescription>
-                Configure the basic properties of your template. Templates will be PDF-based for user download and completion.
+                Configure the basic properties of your template. PDF templates are linked to Knowledge Items via associations and don't require a category.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -177,14 +177,16 @@ export default function CreateKnowledgeTemplate() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  {...register('category')}
-                  placeholder="e.g., Business Planning, Strategy, Assessment"
-                />
-              </div>
+{!existingTemplate?.pdf_url && (
+  <div className="space-y-2">
+    <Label htmlFor="category">Category</Label>
+    <Input
+      id="category"
+      {...register('category')}
+      placeholder="e.g., Business Planning, Strategy, Assessment"
+    />
+  </div>
+)}
 
               <div className="flex items-center space-x-2">
                 <Switch

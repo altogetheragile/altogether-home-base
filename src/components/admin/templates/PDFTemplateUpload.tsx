@@ -12,8 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutations';
 import { useAssociateTemplate } from '@/hooks/useKnowledgeItemTemplates';
-import { useKnowledgeItems } from '@/hooks/useKnowledgeItems';
-
+import { useQuery } from '@tanstack/react-query';
 interface PDFTemplateUploadProps {
   onSuccess?: () => void;
 }
@@ -33,11 +32,23 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
 
   const { createTemplate } = useKnowledgeTemplateMutations();
   const associateTemplate = useAssociateTemplate();
-  const { data: knowledgeItems } = useKnowledgeItems({
-    search: knowledgeItemSearch.length >= 2 ? knowledgeItemSearch : undefined,
-    sortBy: 'alphabetical',
-    limit: 1000,
-    showUnpublished: true, // Show all items for admin use
+const { data: knowledgeItems = [] } = useQuery({
+    queryKey: ['knowledge-items-for-upload', knowledgeItemSearch],
+    queryFn: async () => {
+      let q = supabase
+        .from('knowledge_items')
+        .select('id, name, is_published')
+        .order('name', { ascending: true })
+        .limit(5000);
+
+      if (knowledgeItemSearch && knowledgeItemSearch.length >= 2) {
+        q = q.or(`name.ilike.%${knowledgeItemSearch}%`);
+      }
+
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +130,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
         title: formData.title,
         description: formData.description,
         category: 'general',
-        template_type: 'canvas',
+        template_type: 'pdf',
         pdf_url: publicUrl,
         pdf_filename: file.name,
         pdf_file_size: file.size,
@@ -218,7 +229,7 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
                   className="w-full justify-between"
                 >
                   {formData.knowledgeItemId
-                    ? knowledgeItems?.find((item) => item.id === formData.knowledgeItemId)?.name
+                    ? knowledgeItems.find((item) => item.id === formData.knowledgeItemId)?.name
                     : "Select knowledge item to link template to"}
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>

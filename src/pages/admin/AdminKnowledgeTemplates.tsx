@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Copy, Eye, FileText, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ const TemplateTypeColors = {
 
 export default function AdminKnowledgeTemplates() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -71,9 +73,10 @@ export default function AdminKnowledgeTemplates() {
     }
   };
 
-  const handleUploadSuccess = () => {
-    setShowUploadDialog(false);
-  };
+const handleUploadSuccess = async () => {
+  await queryClient.invalidateQueries({ queryKey: ['knowledge-templates'] });
+  setShowUploadDialog(false);
+};
 
   if (isLoading) {
     return (
