@@ -154,6 +154,13 @@ const FabricTemplateCanvas = React.forwardRef<FabricTemplateCanvasRef, FabricTem
 
   const createFabricObjectFromElement = (element: TemplateElement) => {
     const { x, y, width, height, style, content } = element;
+    
+    // Safety check for content
+    if (!content || !content.type) {
+      console.warn('Element missing content or content.type:', element);
+      return null;
+    }
+    
     const commonProps = {
       left: x,
       top: y,
