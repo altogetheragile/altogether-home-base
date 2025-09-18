@@ -199,10 +199,7 @@ export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => 
             </DialogDescription>
           </DialogHeader>
           {knowledgeItemId && (
-            <PDFTemplateUpload 
-              knowledgeItemId={knowledgeItemId}
-              onSuccess={handleUploadSuccess} 
-            />
+            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
           )}
         </DialogContent>
       </Dialog>

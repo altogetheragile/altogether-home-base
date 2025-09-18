@@ -91,13 +91,27 @@ export default function AdminKnowledgeTemplates() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Knowledge Templates</h1>
           <p className="text-muted-foreground">
-            Create and manage templates for knowledge items
+            Upload and manage PDF templates for knowledge items
           </p>
         </div>
         
-        <div className="text-muted-foreground">
-          Templates are now managed directly within Knowledge Items. Visit the Knowledge Items section to upload and manage templates.
-        </div>
+        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+          <DialogTrigger asChild>
+            <Button>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Template
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Upload PDF Template</DialogTitle>
+              <DialogDescription>
+                Upload a PDF template and link it to a knowledge item
+              </DialogDescription>
+            </DialogHeader>
+            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}

@@ -68,10 +68,7 @@ export const TemplateManager = ({ knowledgeItemId }: TemplateManagerProps) => {
                 Upload a PDF template that will be linked to this knowledge item
               </DialogDescription>
             </DialogHeader>
-            <PDFTemplateUpload 
-              knowledgeItemId={knowledgeItemId}
-              onSuccess={handleUploadSuccess} 
-            />
+            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
           </DialogContent>
         </Dialog>
       </div>

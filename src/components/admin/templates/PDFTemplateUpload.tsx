@@ -11,25 +11,27 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutations';
 import { useAssociateTemplate } from '@/hooks/useKnowledgeItemTemplates';
+import { useKnowledgeItems } from '@/hooks/useKnowledgeItems';
 
 interface PDFTemplateUploadProps {
-  knowledgeItemId: string;
   onSuccess?: () => void;
 }
 
-export const PDFTemplateUpload = ({ knowledgeItemId, onSuccess }: PDFTemplateUploadProps) => {
+export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: '',
-    tags: [] as string[]
+    tags: [] as string[],
+    knowledgeItemId: ''
   });
   const [tagInput, setTagInput] = useState('');
 
   const { createTemplate } = useKnowledgeTemplateMutations();
   const associateTemplate = useAssociateTemplate();
+  const { data: knowledgeItems } = useKnowledgeItems();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -82,6 +84,11 @@ export const PDFTemplateUpload = ({ knowledgeItemId, onSuccess }: PDFTemplateUpl
       return;
     }
 
+    if (!formData.knowledgeItemId) {
+      toast.error('Please select a knowledge item');
+      return;
+    }
+
     setUploading(true);
     
     try {
@@ -113,7 +120,7 @@ export const PDFTemplateUpload = ({ knowledgeItemId, onSuccess }: PDFTemplateUpl
 
       // Immediately associate with knowledge item
       await associateTemplate.mutateAsync({
-        knowledgeItemId,
+        knowledgeItemId: formData.knowledgeItemId,
         templateId: template.id,
         displayOrder: 0
       });
@@ -126,7 +133,8 @@ export const PDFTemplateUpload = ({ knowledgeItemId, onSuccess }: PDFTemplateUpl
         title: '',
         description: '',
         category: '',
-        tags: []
+        tags: [],
+        knowledgeItemId: ''
       });
       
       onSuccess?.();
@@ -188,6 +196,23 @@ export const PDFTemplateUpload = ({ knowledgeItemId, onSuccess }: PDFTemplateUpl
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Knowledge Item Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="knowledge-item">Knowledge Item *</Label>
+            <Select value={formData.knowledgeItemId} onValueChange={(value) => setFormData(prev => ({ ...prev, knowledgeItemId: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select knowledge item to link template to" />
+              </SelectTrigger>
+              <SelectContent>
+                {knowledgeItems?.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Template Details */}
