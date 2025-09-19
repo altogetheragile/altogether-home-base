@@ -127,43 +127,11 @@ const handleSubmit = async (event: React.FormEvent) => {
       return;
     }
 
-    // Check for existing template with same title
+    // Check for existing template with same title BEFORE uploading
     if (existingTemplate) {
-      // Set suggested version and show conflict dialog
+      console.log('⚠️ Version conflict detected:', existingTemplate);
       setCustomVersion(suggestedVersion || '1.1');
-      
-      // Store upload details for later
-      setUploading(true);
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `templates/${fileName}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('pdf-templates')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) throw new Error(`Failed to upload file: ${uploadError.message}`);
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('pdf-templates')
-          .getPublicUrl(uploadData.path);
-
-        setPendingUpload({
-          file,
-          uploadedUrl: uploadData.path,
-          publicUrl
-        });
-        
-        setVersionConflictOpen(true);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to upload file");
-      } finally {
-        setUploading(false);
-      }
+      setVersionConflictOpen(true);
       return;
     }
 
@@ -176,6 +144,7 @@ const handleSubmit = async (event: React.FormEvent) => {
 
     try {
       console.log('🚀 Starting PDF template upload process...');
+      console.log('📋 Upload parameters:', { version, replaceExisting, title: formData.title });
       
       let publicUrl: string;
       let uploadedPath: string;
@@ -184,6 +153,7 @@ const handleSubmit = async (event: React.FormEvent) => {
         // Use already uploaded file
         publicUrl = pendingUpload.publicUrl;
         uploadedPath = pendingUpload.uploadedUrl;
+        console.log('📁 Using pre-uploaded file:', uploadedPath);
       } else {
         // Upload new file
         const fileExt = file!.name.split('.').pop();
@@ -200,6 +170,7 @@ const handleSubmit = async (event: React.FormEvent) => {
           });
 
         if (uploadError) {
+          console.error('❌ File upload error:', uploadError);
           throw new Error(`Failed to upload file: ${uploadError.message}`);
         }
 
@@ -213,44 +184,65 @@ const handleSubmit = async (event: React.FormEvent) => {
 
       console.log('✅ File ready:', publicUrl);
 
-      // Create template record
+      // Validate and prepare template data
       const templateData = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description?.trim() || null,
         template_type: 'pdf' as const,
         is_public: true,
         pdf_url: publicUrl,
         pdf_filename: file!.name,
-        pdf_file_size: file!.size,
-        tags: formData.tags,
-        version,
+        pdf_file_size: Math.round(file!.size), // Ensure integer
+        tags: formData.tags.length > 0 ? formData.tags : [],
+        version: version.trim(),
         replaceExisting,
         existingId: replaceExisting ? existingTemplate?.id : undefined,
       };
 
-      console.log('📝 Creating template record with data:', templateData);
+      console.log('📝 Creating template record with data:', {
+        ...templateData,
+        pdf_file_size: `${templateData.pdf_file_size} bytes`,
+        tags_count: templateData.tags.length
+      });
 
       const template = await createTemplate.mutateAsync(templateData);
       console.log('✅ Template created successfully:', template);
       
       // Associate with knowledge item (only for new templates)
-      if (!replaceExisting) {
+      if (!replaceExisting && formData.knowledgeItemId) {
         console.log(`🔗 Associating template ${template.id} with knowledge item ${formData.knowledgeItemId}`);
         
-        await associateTemplate.mutateAsync({
-          knowledgeItemId: formData.knowledgeItemId,
-          templateId: template.id,
-          displayOrder: 0
-        });
-        
-        console.log('✅ Template associated with knowledge item successfully');
+        try {
+          await associateTemplate.mutateAsync({
+            knowledgeItemId: formData.knowledgeItemId,
+            templateId: template.id,
+            displayOrder: 0
+          });
+          
+          console.log('✅ Template associated with knowledge item successfully');
+        } catch (associationError) {
+          console.warn('⚠️ Failed to associate template with knowledge item:', associationError);
+          // Don't fail the entire upload for association errors
+        }
       }
 
       completeUpload();
 
     } catch (error) {
       console.error('❌ Upload process error:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to upload PDF template");
+      
+      // Clean up uploaded file if template creation failed
+      if (pendingUpload) {
+        console.log('🗑️ Cleaning up uploaded file due to error...');
+        supabase.storage
+          .from('pdf-templates')
+          .remove([pendingUpload.uploadedUrl])
+          .catch(console.error);
+      }
+      
+      // Show user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload PDF template";
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -258,6 +250,7 @@ const handleSubmit = async (event: React.FormEvent) => {
 
   const completeUpload = () => {
     toast.success("PDF template uploaded successfully!");
+    console.log('🎉 Upload process completed successfully');
     
     // Reset form
     setFile(null);
@@ -269,17 +262,26 @@ const handleSubmit = async (event: React.FormEvent) => {
     });
     setTagInput('');
     setKnowledgeItemSearch('');
+    setCustomVersion('');
     setPendingUpload(null);
     setVersionConflictOpen(false);
     onSuccess?.();
   };
 
-  const handleVersionConflictReplace = () => {
-    performUpload(customVersion, true);
+  const handleVersionConflictReplace = async () => {
+    if (!customVersion.trim()) {
+      toast.error('Please enter a version number');
+      return;
+    }
+    await performUpload(customVersion.trim(), true);
   };
 
-  const handleVersionConflictNewVersion = () => {
-    performUpload(customVersion, false);
+  const handleVersionConflictNewVersion = async () => {
+    if (!customVersion.trim()) {
+      toast.error('Please enter a version number');
+      return;
+    }
+    await performUpload(customVersion.trim(), false);
   };
 
   const handleVersionConflictCancel = () => {
