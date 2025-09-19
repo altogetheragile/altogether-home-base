@@ -18,6 +18,7 @@ interface TemplateFormData {
   title: string;
   description: string;
   category: string;
+  version: string;
   is_public: boolean;
 }
 
@@ -36,6 +37,7 @@ export default function CreateKnowledgeTemplate() {
       title: existingTemplate?.title || '',
       description: existingTemplate?.description || '',
       category: existingTemplate?.category || '',
+      version: existingTemplate?.version || '1.0',
       is_public: existingTemplate?.is_public || false,
     }
   });
@@ -46,6 +48,7 @@ export default function CreateKnowledgeTemplate() {
       setValue('title', existingTemplate.title);
       setValue('description', existingTemplate.description || '');
       setValue('category', existingTemplate.category || '');
+      setValue('version', existingTemplate.version || '1.0');
       setValue('is_public', existingTemplate.is_public);
     }
   }, [existingTemplate, setValue]);
@@ -58,6 +61,7 @@ export default function CreateKnowledgeTemplate() {
       description: data.description,
       template_type: 'canvas' as const, // Default template type
       category: data.category,
+      version: data.version,
       is_public: data.is_public,
       config: {
         layout: 'canvas' as const,
@@ -78,10 +82,10 @@ export default function CreateKnowledgeTemplate() {
           data: templateData 
         },
         {
-          onSuccess: () => {
-            toast.success('Template updated successfully');
-            navigate('/admin/knowledge-templates');
-          },
+        onSuccess: () => {
+          toast.success('Template updated successfully');
+          navigate('/admin/knowledge/templates');
+        },
           onError: (error) => {
             toast.error('Failed to update template');
             console.error('Update error:', error);
@@ -92,7 +96,7 @@ export default function CreateKnowledgeTemplate() {
       createMutation.mutate(templateData, {
         onSuccess: () => {
           toast.success('Template created successfully');
-          navigate('/admin/knowledge-templates');
+          navigate('/admin/knowledge/templates');
         },
         onError: (error) => {
           toast.error('Failed to create template');
@@ -112,7 +116,7 @@ export default function CreateKnowledgeTemplate() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/admin/knowledge-templates')}
+          onClick={() => navigate('/admin/knowledge/templates')}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -159,14 +163,28 @@ export default function CreateKnowledgeTemplate() {
 
 
 {!existingTemplate?.pdf_url && (
-  <div className="space-y-2">
-    <Label htmlFor="category">Category</Label>
-    <Input
-      id="category"
-      {...register('category')}
-      placeholder="e.g., Business Planning, Strategy, Assessment"
-    />
-  </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    {...register('category')}
+                    placeholder="e.g., Business Planning, Strategy, Assessment"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="version">Version</Label>
+                  <Input
+                    id="version"
+                    {...register('version', { required: 'Version is required' })}
+                    placeholder="e.g., 1.0, 2.1, etc."
+                  />
+                  {errors.version && (
+                    <p className="text-sm text-destructive">{errors.version.message}</p>
+                  )}
+                </div>
+              </>
 )}
 
 {isEditing && (
@@ -223,7 +241,7 @@ export default function CreateKnowledgeTemplate() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate('/admin/knowledge-templates')}
+              onClick={() => navigate('/admin/knowledge/templates')}
             >
               Cancel
             </Button>
