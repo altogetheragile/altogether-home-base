@@ -175,6 +175,7 @@ export default function CreateKnowledgeTemplate() {
                     <SelectItem value="worksheet">Worksheet</SelectItem>
                     <SelectItem value="process">Process</SelectItem>
                     <SelectItem value="form">Form</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

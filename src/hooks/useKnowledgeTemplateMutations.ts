@@ -101,17 +101,37 @@ export const useKnowledgeTemplateMutations = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<KnowledgeTemplateFormData> }) => {
       if (!user) throw new Error('User not authenticated');
       
+      // Clean data similar to create mutation
+      const cleanData = {
+        ...data,
+        pdf_file_size: data.pdf_file_size ? Math.round(Number(data.pdf_file_size)) : data.pdf_file_size
+      };
+
       const { data: template, error } = await supabase
         .from('knowledge_templates')
         .update({
-          ...data,
+          ...cleanData,
           updated_by: user.id
         })
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database update error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        // Provide user-friendly error messages
+        if (error.code === '23505' && error.message.includes('unique_template_title_version')) {
+          throw new Error(`A template with title "${data.title}" and this version already exists. Please choose a different version number.`);
+        }
+        
+        throw new Error(`Failed to update template: ${error.message}${error.hint ? ` (${error.hint})` : ''}`);
+      }
       return template;
     },
     onSuccess: () => {
