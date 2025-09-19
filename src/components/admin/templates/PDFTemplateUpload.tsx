@@ -277,14 +277,15 @@ const handleSubmit = async (event: React.FormEvent) => {
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="z-50 w-full p-0">
-                <Command>
+              <PopoverContent className="z-50 w-full p-0 bg-popover border shadow-lg max-h-72 overflow-auto">
+                <Command className="max-h-72">
                   <CommandInput
                     placeholder="Search knowledge items..."
                     value={knowledgeItemSearch}
                     onValueChange={setKnowledgeItemSearch}
+                    autoFocus
                   />
-                  <CommandList>
+                  <CommandList className="max-h-64 overflow-y-auto">
                     <CommandEmpty>No knowledge item found.</CommandEmpty>
                     <CommandGroup>
                       {(() => {
