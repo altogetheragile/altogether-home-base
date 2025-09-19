@@ -146,3 +146,30 @@ export const useUpdateTemplateAssociation = () => {
     },
   });
 };
+
+export const useTemplateKnowledgeItems = (templateId: string) => {
+  return useQuery({
+    queryKey: ['template-knowledge-items', templateId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('knowledge_item_templates')
+        .select(`
+          id,
+          display_order,
+          created_at,
+          knowledge_item:knowledge_items(
+            id,
+            name,
+            slug,
+            is_published
+          )
+        `)
+        .eq('template_id', templateId)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!templateId,
+  });
+};

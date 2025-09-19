@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateKnowledgeTemplate, useUpdateKnowledgeTemplate, useKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
+import { useTemplateKnowledgeItems } from '@/hooks/useKnowledgeItemTemplates';
 import type { KnowledgeTemplate, TemplateType } from '@/types/template';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, ExternalLink } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 interface TemplateFormData {
@@ -27,6 +28,7 @@ export default function CreateKnowledgeTemplate() {
   const isEditing = Boolean(id);
 
   const { data: existingTemplate, isLoading } = useKnowledgeTemplate(id || '');
+  const { data: linkedKnowledgeItems, isLoading: isLoadingLinkedItems } = useTemplateKnowledgeItems(id || '');
   const createMutation = useCreateKnowledgeTemplate();
   const updateMutation = useUpdateKnowledgeTemplate();
 
@@ -188,14 +190,41 @@ export default function CreateKnowledgeTemplate() {
   </div>
 )}
 
-{existingTemplate?.pdf_url && (
+{isEditing && (
   <div className="space-y-2">
-    <Label>Linked Knowledge Item</Label>
-    <div className="p-3 bg-muted rounded-md">
-      <p className="text-sm text-muted-foreground">
-        This PDF template is associated with a Knowledge Item via the Knowledge Item Templates relationship.
-        To change the association, manage it from the Knowledge Items admin section.
-      </p>
+    <Label>Linked Knowledge Items</Label>
+    <div className="p-3 bg-muted rounded-md space-y-2">
+      {isLoadingLinkedItems ? (
+        <p className="text-sm text-muted-foreground">Loading linked items...</p>
+      ) : linkedKnowledgeItems && linkedKnowledgeItems.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">
+            This template is linked to {linkedKnowledgeItems.length} Knowledge Item{linkedKnowledgeItems.length !== 1 ? 's' : ''}:
+          </p>
+          {linkedKnowledgeItems.map((association: any) => (
+            <div key={association.id} className="flex items-center justify-between p-2 bg-background rounded border">
+              <div className="flex-1">
+                <p className="text-sm font-medium">{association.knowledge_item?.name}</p>
+                <p className="text-xs text-muted-foreground">/{association.knowledge_item?.slug}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/admin/knowledge-items/edit/${association.knowledge_item?.id}`)}
+                className="flex items-center gap-1"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Edit
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          This template is not currently linked to any Knowledge Items. 
+          You can associate it with Knowledge Items from the Knowledge Items admin section.
+        </p>
+      )}
     </div>
   </div>
 )}
