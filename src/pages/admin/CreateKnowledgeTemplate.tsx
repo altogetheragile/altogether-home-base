@@ -17,7 +17,6 @@ import { useForm } from 'react-hook-form';
 interface TemplateFormData {
   title: string;
   description: string;
-  template_type: TemplateType;
   category: string;
   is_public: boolean;
 }
@@ -36,7 +35,6 @@ export default function CreateKnowledgeTemplate() {
     defaultValues: {
       title: existingTemplate?.title || '',
       description: existingTemplate?.description || '',
-      template_type: existingTemplate?.template_type || 'canvas',
       category: existingTemplate?.category || '',
       is_public: existingTemplate?.is_public || false,
     }
@@ -47,7 +45,6 @@ export default function CreateKnowledgeTemplate() {
     if (existingTemplate) {
       setValue('title', existingTemplate.title);
       setValue('description', existingTemplate.description || '');
-      setValue('template_type', existingTemplate.template_type);
       setValue('category', existingTemplate.category || '');
       setValue('is_public', existingTemplate.is_public);
     }
@@ -59,7 +56,7 @@ export default function CreateKnowledgeTemplate() {
     const templateData = {
       title: data.title,
       description: data.description,
-      template_type: data.template_type,
+      template_type: 'canvas' as const, // Default template type
       category: data.category,
       is_public: data.is_public,
       config: {
@@ -160,25 +157,6 @@ export default function CreateKnowledgeTemplate() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="template_type">Template Type</Label>
-                <Select
-                  value={watch('template_type')}
-                  onValueChange={(value: TemplateType) => setValue('template_type', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select template type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="canvas">Canvas</SelectItem>
-                    <SelectItem value="matrix">Matrix</SelectItem>
-                    <SelectItem value="worksheet">Worksheet</SelectItem>
-                    <SelectItem value="process">Process</SelectItem>
-                    <SelectItem value="form">Form</SelectItem>
-                    <SelectItem value="pdf">PDF</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
 {!existingTemplate?.pdf_url && (
   <div className="space-y-2">
