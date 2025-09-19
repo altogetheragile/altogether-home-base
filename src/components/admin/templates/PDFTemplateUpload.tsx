@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutations';
 import { useAssociateTemplate } from '@/hooks/useKnowledgeItemTemplates';
 import { useQuery } from '@tanstack/react-query';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 interface PDFTemplateUploadProps {
   onSuccess?: () => void;
 }
@@ -286,33 +286,35 @@ const handleSubmit = async (event: React.FormEvent) => {
                     onValueChange={setKnowledgeItemSearch}
                     autoFocus
                   />
-                  <ScrollArea className="h-64">
-                    <CommandList className="max-h-none">
-                      <CommandEmpty>No knowledge item found.</CommandEmpty>
-                      <CommandGroup>
-                        {(() => {
-                          const filteredItems = knowledgeItems
-                            ?.filter((item) => 
-                              item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
-                            );
-                          console.log(`📋 Displaying ${filteredItems?.length || 0} filtered Knowledge Items in dropdown`);
-                          return filteredItems?.map((item) => (
-                            <CommandItem
-                              key={item.id}
-                              value={item.name}
-                              onSelect={() => {
-                                setFormData(prev => ({ ...prev, knowledgeItemId: item.id }));
-                                setKnowledgeItemOpen(false);
-                                setKnowledgeItemSearch('');
-                              }}
-                            >
-                              {item.name}
-                            </CommandItem>
-                          ));
-                        })()}
-                      </CommandGroup>
-                    </CommandList>
-                  </ScrollArea>
+                  <CommandList
+                    className="max-h-64 overflow-y-auto"
+                    onWheel={(e) => e.stopPropagation()}
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                  >
+                    <CommandEmpty>No knowledge item found.</CommandEmpty>
+                    <CommandGroup>
+                      {(() => {
+                        const filteredItems = knowledgeItems
+                          ?.filter((item) => 
+                            item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
+                          );
+                        console.log(`📋 Displaying ${filteredItems?.length || 0} filtered Knowledge Items in dropdown`);
+                        return filteredItems?.map((item) => (
+                          <CommandItem
+                            key={item.id}
+                            value={item.name}
+                            onSelect={() => {
+                              setFormData(prev => ({ ...prev, knowledgeItemId: item.id }));
+                              setKnowledgeItemOpen(false);
+                              setKnowledgeItemSearch('');
+                            }}
+                          >
+                            {item.name}
+                          </CommandItem>
+                        ));
+                      })()}
+                    </CommandGroup>
+                  </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>
