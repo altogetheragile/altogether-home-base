@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, ExternalLink, X } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import { KnowledgeTemplate } from '@/types/template';
 
 interface PDFViewerProps {
@@ -35,9 +35,6 @@ export const PDFViewer = ({ template, isOpen, onClose }: PDFViewerProps) => {
               <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
                 <ExternalLink className="h-4 w-4 mr-1" />
                 Open in New Tab
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
