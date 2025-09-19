@@ -59,20 +59,10 @@ export default function CreateKnowledgeTemplate() {
     const templateData = {
       title: data.title,
       description: data.description,
-      template_type: 'canvas' as const, // Default template type
+      template_type: existingTemplate?.template_type || 'canvas',
       category: data.category,
       version: data.version,
-      is_public: data.is_public,
-      config: {
-        layout: 'canvas' as const,
-        dimensions: { width: 800, height: 600 },
-        sections: [],
-        styling: {
-          backgroundColor: '#ffffff',
-          fontFamily: 'Inter',
-          primaryColor: '#3b82f6',
-        }
-      }
+      is_public: data.is_public
     };
 
     if (isEditing && id) {
@@ -86,10 +76,11 @@ export default function CreateKnowledgeTemplate() {
           toast.success('Template updated successfully');
           navigate('/admin/knowledge/templates');
         },
-          onError: (error) => {
-            toast.error('Failed to update template');
-            console.error('Update error:', error);
-          }
+        onError: (error) => {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to update template';
+          toast.error(errorMessage);
+          console.error('Update error:', error);
+        }
         }
       );
     } else {
@@ -99,7 +90,8 @@ export default function CreateKnowledgeTemplate() {
           navigate('/admin/knowledge/templates');
         },
         onError: (error) => {
-          toast.error('Failed to create template');
+          const errorMessage = error instanceof Error ? error.message : 'Failed to create template';
+          toast.error(errorMessage);
           console.error('Create error:', error);
         }
       });
