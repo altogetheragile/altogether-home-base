@@ -237,7 +237,15 @@ function TemplateCard({ template, onDelete, onEdit, onView, onDownload, onDelete
         
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Used {template.usage_count} times</span>
-          <span>v{template.version}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto p-1 text-xs font-mono hover:bg-muted"
+            onClick={() => onEdit(template.id)}
+          >
+            v{template.version}
+            <Edit className="h-3 w-3 ml-1" />
+          </Button>
         </div>
         
         <div className="flex items-center gap-2">

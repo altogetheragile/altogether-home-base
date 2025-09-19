@@ -164,6 +164,7 @@ export interface KnowledgeTemplateFormData {
   template_type: TemplateType | 'pdf';
   category?: string;
   is_public: boolean;
+  version?: string;
   // PDF-specific fields
   pdf_url?: string;
   pdf_filename?: string;

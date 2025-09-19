@@ -2413,6 +2413,10 @@ export type Database = {
         Args: { input_text: string }
         Returns: string
       }
+      get_next_template_version: {
+        Args: { template_title: string }
+        Returns: string
+      }
       get_popular_searches: {
         Args: { p_days?: number; p_limit?: number }
         Returns: {

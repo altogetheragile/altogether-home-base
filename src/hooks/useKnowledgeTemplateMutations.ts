@@ -10,9 +10,25 @@ export const useKnowledgeTemplateMutations = () => {
   const { toast } = useToast();
 
   const createTemplate = useMutation({
-    mutationFn: async (data: KnowledgeTemplateFormData) => {
+    mutationFn: async (data: KnowledgeTemplateFormData & { version?: string; replaceExisting?: boolean; existingId?: string }) => {
       if (!user) throw new Error('User not authenticated');
       
+      // If replacing existing template
+      if (data.replaceExisting && data.existingId) {
+        const { error } = await supabase
+          .from('knowledge_templates')
+          .update({
+            ...data,
+            updated_by: user.id,
+            version: data.version || '1.0'
+          })
+          .eq('id', data.existingId);
+
+        if (error) throw error;
+        return { id: data.existingId };
+      }
+      
+      // Creating new template
       const newId = crypto.randomUUID();
       const { error } = await supabase
         .from('knowledge_templates')
@@ -21,7 +37,7 @@ export const useKnowledgeTemplateMutations = () => {
           ...data,
           created_by: user.id,
           updated_by: user.id,
-          version: '1.0'
+          version: data.version || '1.0'
         });
 
       if (error) throw error;
