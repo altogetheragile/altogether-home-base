@@ -13,19 +13,22 @@ export const useKnowledgeTemplateMutations = () => {
     mutationFn: async (data: KnowledgeTemplateFormData & { version?: string; replaceExisting?: boolean; existingId?: string }) => {
       if (!user) throw new Error('User not authenticated');
       
+      // Extract control fields
+      const { replaceExisting, existingId, version, ...templateData } = data;
+      
       // If replacing existing template
-      if (data.replaceExisting && data.existingId) {
+      if (replaceExisting && existingId) {
         const { error } = await supabase
           .from('knowledge_templates')
           .update({
-            ...data,
+            ...templateData,
             updated_by: user.id,
-            version: data.version || '1.0'
+            version: version || '1.0'
           })
-          .eq('id', data.existingId);
+          .eq('id', existingId);
 
         if (error) throw error;
-        return { id: data.existingId };
+        return { id: existingId };
       }
       
       // Creating new template
@@ -34,10 +37,10 @@ export const useKnowledgeTemplateMutations = () => {
         .from('knowledge_templates')
         .insert({
           id: newId,
-          ...data,
+          ...templateData,
           created_by: user.id,
           updated_by: user.id,
-          version: data.version || '1.0'
+          version: version || '1.0'
         });
 
       if (error) throw error;
