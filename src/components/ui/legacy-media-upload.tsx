@@ -2,10 +2,10 @@ import React from 'react';
 import { MediaUpload } from './media-upload';
 
 // Legacy wrapper for backward compatibility
-// This component provides a bridge between the old MediaItem interface and the new MediaAsset system
+// This component provides a bridge between the old MediaItem interface and the new AssetManager system
 export interface LegacyMediaItem {
   id?: string;
-  type: 'image' | 'video' | 'document' | 'embed';
+  type: 'image' | 'video' | 'document' | 'embed' | 'template' | 'text' | 'archive';
   title?: string;
   description?: string;
   url: string;
@@ -21,11 +21,11 @@ interface LegacyMediaUploadProps {
 }
 
 /**
- * @deprecated Use MediaLibrary component instead for new implementations
+ * @deprecated Use AssetLibrary component instead for new implementations
  * This component is maintained for backward compatibility only
  */
 export const LegacyMediaUpload: React.FC<LegacyMediaUploadProps> = (props) => {
-  console.warn('LegacyMediaUpload is deprecated. Please migrate to MediaLibrary component for better media management.');
+  console.warn('LegacyMediaUpload is deprecated. Please migrate to AssetLibrary component for better asset management.');
   
   return <MediaUpload {...props} />;
 };

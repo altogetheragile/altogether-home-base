@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
-export interface MediaAsset {
+export interface Asset {
   id: string;
   type: 'image' | 'video' | 'document' | 'embed' | 'template' | 'text' | 'archive';
   title?: string;
@@ -18,7 +18,7 @@ export interface MediaAsset {
   updated_by?: string;
 }
 
-export interface MediaAssetInsert {
+export interface AssetInsert {
   type: 'image' | 'video' | 'document' | 'embed' | 'template' | 'text' | 'archive';
   title?: string;
   description?: string;
@@ -29,9 +29,9 @@ export interface MediaAssetInsert {
   original_filename?: string;
 }
 
-export const useMediaAssets = () => {
+export const useAssets = () => {
   return useQuery({
-    queryKey: ['media-assets'],
+    queryKey: ['assets'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('media_assets')
@@ -39,47 +39,47 @@ export const useMediaAssets = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as MediaAsset[];
+      return data as Asset[];
     }
   });
 };
 
-export const useMediaAssetMutations = () => {
+export const useAssetMutations = () => {
   const queryClient = useQueryClient();
 
-  const createMediaAsset = useMutation({
-    mutationFn: async (mediaAsset: MediaAssetInsert) => {
+  const createAsset = useMutation({
+    mutationFn: async (asset: AssetInsert) => {
       const { data, error } = await supabase
         .from('media_assets')
         .insert({
-          ...mediaAsset,
+          ...asset,
           created_by: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
         .single();
       
       if (error) throw error;
-      return data as MediaAsset;
+      return data as Asset;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['media-assets'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast({
         title: "Success",
-        description: "Media asset created successfully"
+        description: "Asset created successfully"
       });
     },
     onError: (error) => {
-      console.error('Error creating media asset:', error);
+      console.error('Error creating asset:', error);
       toast({
         title: "Error",
-        description: "Failed to create media asset",
+        description: "Failed to create asset",
         variant: "destructive"
       });
     }
   });
 
-  const updateMediaAsset = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<MediaAssetInsert> }) => {
+  const updateAsset = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<AssetInsert> }) => {
       const { data, error } = await supabase
         .from('media_assets')
         .update({
@@ -91,26 +91,26 @@ export const useMediaAssetMutations = () => {
         .single();
       
       if (error) throw error;
-      return data as MediaAsset;
+      return data as Asset;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['media-assets'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast({
         title: "Success",
-        description: "Media asset updated successfully"
+        description: "Asset updated successfully"
       });
     },
     onError: (error) => {
-      console.error('Error updating media asset:', error);
+      console.error('Error updating asset:', error);
       toast({
         title: "Error",
-        description: "Failed to update media asset",
+        description: "Failed to update asset",
         variant: "destructive"
       });
     }
   });
 
-  const deleteMediaAsset = useMutation({
+  const deleteAsset = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('media_assets')
@@ -120,33 +120,33 @@ export const useMediaAssetMutations = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['media-assets'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast({
         title: "Success",
-        description: "Media asset deleted successfully"
+        description: "Asset deleted successfully"
       });
     },
     onError: (error) => {
-      console.error('Error deleting media asset:', error);
+      console.error('Error deleting asset:', error);
       toast({
         title: "Error",
-        description: "Failed to delete media asset",
+        description: "Failed to delete asset",
         variant: "destructive"
       });
     }
   });
 
   return {
-    createMediaAsset,
-    updateMediaAsset,
-    deleteMediaAsset
+    createAsset,
+    updateAsset,
+    deleteAsset
   };
 };
 
-// Hook for managing knowledge item media associations
-export const useKnowledgeItemMedia = (knowledgeItemId?: string) => {
+// Hook for managing knowledge item asset associations
+export const useKnowledgeItemAssets = (knowledgeItemId?: string) => {
   return useQuery({
-    queryKey: ['knowledge-item-media', knowledgeItemId],
+    queryKey: ['knowledge-item-assets', knowledgeItemId],
     queryFn: async () => {
       if (!knowledgeItemId) return [];
       
@@ -195,23 +195,23 @@ export const useKnowledgeItemMedia = (knowledgeItemId?: string) => {
             created_by: asset.created_by,
             updated_by: asset.updated_by,
             position: item.position
-          } as MediaAsset & { position: number };
+          } as Asset & { position: number };
         });
     },
     enabled: !!knowledgeItemId
   });
 };
 
-export const useKnowledgeItemMediaMutations = () => {
+export const useKnowledgeItemAssetMutations = () => {
   const queryClient = useQueryClient();
 
-  const updateKnowledgeItemMedia = useMutation({
+  const updateKnowledgeItemAssets = useMutation({
     mutationFn: async ({ 
       knowledgeItemId, 
-      mediaAssetIds 
+      assetIds 
     }: { 
       knowledgeItemId: string; 
-      mediaAssetIds: string[] 
+      assetIds: string[] 
     }) => {
       // First, delete existing associations
       await supabase
@@ -220,10 +220,10 @@ export const useKnowledgeItemMediaMutations = () => {
         .eq('knowledge_item_id', knowledgeItemId);
 
       // Then insert new associations
-      if (mediaAssetIds.length > 0) {
-        const associations = mediaAssetIds.map((mediaAssetId, index) => ({
+      if (assetIds.length > 0) {
+        const associations = assetIds.map((assetId, index) => ({
           knowledge_item_id: knowledgeItemId,
-          media_asset_id: mediaAssetId,
+          media_asset_id: assetId,
           position: index
         }));
 
@@ -234,28 +234,28 @@ export const useKnowledgeItemMediaMutations = () => {
         if (error) throw error;
       }
 
-      return { knowledgeItemId, mediaAssetIds };
+      return { knowledgeItemId, assetIds };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ 
-        queryKey: ['knowledge-item-media', data.knowledgeItemId] 
+        queryKey: ['knowledge-item-assets', data.knowledgeItemId] 
       });
       toast({
         title: "Success",
-        description: "Knowledge item media updated successfully"
+        description: "Knowledge item assets updated successfully"
       });
     },
     onError: (error) => {
-      console.error('Error updating knowledge item media:', error);
+      console.error('Error updating knowledge item assets:', error);
       toast({
         title: "Error",
-        description: "Failed to update knowledge item media",
+        description: "Failed to update knowledge item assets",
         variant: "destructive"
       });
     }
   });
 
   return {
-    updateKnowledgeItemMedia
+    updateKnowledgeItemAssets
   };
 };

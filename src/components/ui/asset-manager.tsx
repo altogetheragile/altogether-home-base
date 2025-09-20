@@ -6,11 +6,11 @@ import { Textarea } from './textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
-import { Trash2, Upload, Image, Video, FileText, ExternalLink, Plus } from 'lucide-react';
+import { Trash2, Upload, Image, Video, FileText, ExternalLink, Plus, File, Archive } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from './use-toast';
 
-export interface MediaItem {
+export interface AssetItem {
   id?: string;
   type: 'image' | 'video' | 'document' | 'embed' | 'template' | 'text' | 'archive';
   title?: string;
@@ -18,38 +18,44 @@ export interface MediaItem {
   url: string;
   thumbnail_url?: string;
   position: number;
+  file_size?: number;
+  file_type?: string;
+  original_filename?: string;
 }
 
-interface MediaUploadProps {
-  value: MediaItem[];
-  onChange: (media: MediaItem[]) => void;
+interface AssetManagerProps {
+  value: AssetItem[];
+  onChange: (assets: AssetItem[]) => void;
   bucketName?: string;
+  supportedTypes?: AssetItem['type'][];
+  maxFileSize?: number; // in MB
 }
 
-export const MediaUpload: React.FC<MediaUploadProps> = ({
+export const AssetManager: React.FC<AssetManagerProps> = ({
   value = [],
   onChange,
-  bucketName = 'knowledge-base'
+  bucketName = 'knowledge-base',
+  supportedTypes = ['image', 'video', 'document', 'embed', 'template'],
+  maxFileSize = 50
 }) => {
   const [uploadingItems, setUploadingItems] = useState<Set<number>>(new Set());
-  const [newMediaType, setNewMediaType] = useState<MediaItem['type']>('image');
+  const [newAssetType, setNewAssetType] = useState<AssetItem['type']>(supportedTypes[0]);
 
   const handleFileUpload = async (file: File, index: number) => {
     try {
       setUploadingItems(prev => new Set([...prev, index]));
 
-      // Validate file size (10MB limit for media files)
-      const maxSizeMB = 10;
-      if (file.size > maxSizeMB * 1024 * 1024) {
-        throw new Error(`File size exceeds ${maxSizeMB}MB limit`);
+      // Validate file size
+      if (file.size > maxFileSize * 1024 * 1024) {
+        throw new Error(`File size exceeds ${maxFileSize}MB limit`);
       }
 
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = fileName;
-      const mediaType = value[index]?.type || 'unknown';
+      const assetType = value[index]?.type || 'document';
 
-      console.log(`Starting ${mediaType} upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucketName}/${filePath}`);
+      console.log(`Starting ${assetType} upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucketName}/${filePath}`);
 
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
@@ -69,51 +75,48 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         throw new Error('Failed to get public URL for uploaded file');
       }
 
-      const updatedMedia = [...value];
-      updatedMedia[index] = {
-        ...updatedMedia[index],
-        url: publicUrl
+      const updatedAssets = [...value];
+      updatedAssets[index] = {
+        ...updatedAssets[index],
+        url: publicUrl,
+        file_size: file.size,
+        file_type: file.type,
+        original_filename: file.name
       };
 
-      console.log(`${mediaType} upload successful: ${publicUrl}`);
-      onChange(updatedMedia);
+      console.log(`${assetType} upload successful: ${publicUrl}`);
+      onChange(updatedAssets);
       toast({
         title: "Upload Successful",
-        description: `${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} "${file.name}" uploaded successfully`
+        description: `${assetType.charAt(0).toUpperCase() + assetType.slice(1)} "${file.name}" uploaded successfully`
       });
     } catch (error: any) {
       const errorMessage = error?.message || 'Unknown error occurred';
-      const errorCode = error?.error || error?.code || 'UNKNOWN';
-      const mediaType = value[index]?.type || 'file';
+      const assetType = value[index]?.type || 'file';
       
-      console.error('Media upload error details:', {
+      console.error('Asset upload error details:', {
         message: errorMessage,
-        code: errorCode,
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        mediaType,
+        assetType,
         bucketName,
         index,
         error
       });
 
-      let userFriendlyMessage = `Failed to upload ${mediaType}.`;
+      let userFriendlyMessage = `Failed to upload ${assetType}.`;
       
       if (errorMessage.includes('The resource already exists')) {
         userFriendlyMessage = "A file with this name already exists. Please rename your file and try again.";
       } else if (errorMessage.includes('exceeded') || errorMessage.includes('limit')) {
-        userFriendlyMessage = "File size exceeds the allowed limit (10MB max).";
+        userFriendlyMessage = `File size exceeds the allowed limit (${maxFileSize}MB max).`;
       } else if (errorMessage.includes('Invalid') || errorMessage.includes('format')) {
         userFriendlyMessage = "Invalid file format or corrupted file.";
       } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
         userFriendlyMessage = "Network error. Please check your connection and try again.";
       } else if (errorMessage.includes('permission') || errorMessage.includes('unauthorized')) {
         userFriendlyMessage = "Permission denied. Please contact support.";
-      } else if (errorCode === 'STORAGE_OBJECT_NOT_FOUND') {
-        userFriendlyMessage = "Storage bucket not found. Please contact support.";
-      } else if (errorMessage.includes('timeout')) {
-        userFriendlyMessage = "Upload timeout. File may be too large or connection too slow.";
       }
 
       toast({
@@ -130,9 +133,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     }
   };
 
-  const addMediaItem = () => {
-    const newItem: MediaItem = {
-      type: newMediaType,
+  const addAssetItem = () => {
+    const newItem: AssetItem = {
+      type: newAssetType,
       title: '',
       description: '',
       url: '',
@@ -142,20 +145,20 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     onChange([...value, newItem]);
   };
 
-  const updateMediaItem = (index: number, updates: Partial<MediaItem>) => {
-    const updatedMedia = [...value];
-    updatedMedia[index] = { ...updatedMedia[index], ...updates };
-    onChange(updatedMedia);
+  const updateAssetItem = (index: number, updates: Partial<AssetItem>) => {
+    const updatedAssets = [...value];
+    updatedAssets[index] = { ...updatedAssets[index], ...updates };
+    onChange(updatedAssets);
   };
 
-  const removeMediaItem = (index: number) => {
-    const updatedMedia = value.filter((_, i) => i !== index);
+  const removeAssetItem = (index: number) => {
+    const updatedAssets = value.filter((_, i) => i !== index);
     // Update positions
-    const reindexedMedia = updatedMedia.map((item, i) => ({ ...item, position: i }));
-    onChange(reindexedMedia);
+    const reindexedAssets = updatedAssets.map((item, i) => ({ ...item, position: i }));
+    onChange(reindexedAssets);
   };
 
-  const moveMediaItem = (index: number, direction: 'up' | 'down') => {
+  const moveAssetItem = (index: number, direction: 'up' | 'down') => {
     if (
       (direction === 'up' && index === 0) ||
       (direction === 'down' && index === value.length - 1)
@@ -163,16 +166,16 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       return;
     }
 
-    const updatedMedia = [...value];
+    const updatedAssets = [...value];
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     
-    [updatedMedia[index], updatedMedia[swapIndex]] = [updatedMedia[swapIndex], updatedMedia[index]];
+    [updatedAssets[index], updatedAssets[swapIndex]] = [updatedAssets[swapIndex], updatedAssets[index]];
     
     // Update positions
-    updatedMedia[index].position = index;
-    updatedMedia[swapIndex].position = swapIndex;
+    updatedAssets[index].position = index;
+    updatedAssets[swapIndex].position = swapIndex;
     
-    onChange(updatedMedia);
+    onChange(updatedAssets);
   };
 
   const getTypeIcon = (type: string) => {
@@ -180,30 +183,47 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       case 'image': return <Image className="h-4 w-4" />;
       case 'video': return <Video className="h-4 w-4" />;
       case 'embed': return <ExternalLink className="h-4 w-4" />;
+      case 'template': return <FileText className="h-4 w-4" />;
+      case 'document': return <File className="h-4 w-4" />;
+      case 'text': return <FileText className="h-4 w-4" />;
+      case 'archive': return <Archive className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
+    }
+  };
+
+  const getAcceptedFileTypes = (type: AssetItem['type']) => {
+    switch (type) {
+      case 'image': return 'image/*';
+      case 'video': return 'video/*';
+      case 'document': return '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx';
+      case 'template': return '.pdf,.png,.pptx,.xlsx,.docx';
+      case 'text': return '.txt,.md';
+      case 'archive': return '.zip,.rar,.7z';
+      default: return '*/*';
     }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <Select value={newMediaType} onValueChange={(value: MediaItem['type']) => setNewMediaType(value)}>
+        <Select 
+          value={newAssetType} 
+          onValueChange={(value: AssetItem['type']) => setNewAssetType(value)}
+        >
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="image">Image</SelectItem>
-            <SelectItem value="video">Video</SelectItem>
-            <SelectItem value="document">Document</SelectItem>
-            <SelectItem value="template">Template</SelectItem>
-            <SelectItem value="embed">Embed</SelectItem>
-            <SelectItem value="text">Text</SelectItem>
-            <SelectItem value="archive">Archive</SelectItem>
+            {supportedTypes.map(type => (
+              <SelectItem key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <Button type="button" onClick={addMediaItem} variant="outline" size="sm">
+        <Button type="button" onClick={addAssetItem} variant="outline" size="sm">
           <Plus className="h-4 w-4 mr-2" />
-          Add {newMediaType}
+          Add {newAssetType}
         </Button>
       </div>
 
@@ -221,7 +241,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => moveMediaItem(index, 'up')}
+                  onClick={() => moveAssetItem(index, 'up')}
                   disabled={index === 0}
                 >
                   ↑
@@ -230,7 +250,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => moveMediaItem(index, 'down')}
+                  onClick={() => moveAssetItem(index, 'down')}
                   disabled={index === value.length - 1}
                 >
                   ↓
@@ -239,7 +259,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                   type="button"
                   variant="destructive"
                   size="sm"
-                  onClick={() => removeMediaItem(index)}
+                  onClick={() => removeAssetItem(index)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -253,8 +273,8 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 <Input
                   id={`title-${index}`}
                   value={item.title || ''}
-                  onChange={(e) => updateMediaItem(index, { title: e.target.value })}
-                  placeholder="Media title"
+                  onChange={(e) => updateAssetItem(index, { title: e.target.value })}
+                  placeholder="Asset title"
                 />
               </div>
               <div>
@@ -262,8 +282,8 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 <Input
                   id={`description-${index}`}
                   value={item.description || ''}
-                  onChange={(e) => updateMediaItem(index, { description: e.target.value })}
-                  placeholder="Media description"
+                  onChange={(e) => updateAssetItem(index, { description: e.target.value })}
+                  placeholder="Asset description"
                 />
               </div>
             </div>
@@ -274,12 +294,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 <div className="flex items-center gap-4">
                   <Input
                     type="file"
-                    accept={item.type === 'image' ? 'image/*' : 
-                           item.type === 'video' ? 'video/*' :
-                           item.type === 'document' ? '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx' :
-                           item.type === 'template' ? '.pdf,.png,.pptx,.xlsx,.docx' :
-                           item.type === 'text' ? '.txt,.md' :
-                           item.type === 'archive' ? '.zip,.rar,.7z' : '*/*'}
+                    accept={getAcceptedFileTypes(item.type)}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) handleFileUpload(file, index);
@@ -293,6 +308,12 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 {item.url && item.type === 'image' && (
                   <img src={item.url} alt="Preview" className="mt-2 max-w-xs h-32 object-cover rounded" />
                 )}
+                {item.original_filename && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {item.original_filename} 
+                    {item.file_size && ` (${(item.file_size / 1024 / 1024).toFixed(2)} MB)`}
+                  </div>
+                )}
               </div>
             )}
 
@@ -301,14 +322,14 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 <Label>Embed URL</Label>
                 <Input
                   value={item.url}
-                  onChange={(e) => updateMediaItem(index, { url: e.target.value })}
+                  onChange={(e) => updateAssetItem(index, { url: e.target.value })}
                   placeholder="https://..."
                 />
               </div>
             )}
 
             {uploadingItems.has(index) && (
-              <div className="text-sm text-blue-600">Uploading...</div>
+              <div className="text-sm text-primary">Uploading...</div>
             )}
           </CardContent>
         </Card>
@@ -316,7 +337,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
       {value.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          No assets yet. Click "Add {newMediaType}" to get started.
+          No assets yet. Click "Add {supportedTypes[0]}" to get started.
         </div>
       )}
     </div>
