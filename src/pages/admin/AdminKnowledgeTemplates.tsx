@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { PDFTemplateUpload } from '@/components/admin/templates/PDFTemplateUpload';
+import { TemplateAssetUpload } from '@/components/admin/templates/TemplateAssetUpload';
 import { PDFViewer } from '@/components/admin/templates/PDFViewer';
 import { usePDFTemplateOperations } from '@/hooks/usePDFTemplateOperations';
 
@@ -111,7 +111,7 @@ const handleUploadSuccess = async () => {
                 Upload a PDF template and link it to a knowledge item
               </DialogDescription>
             </DialogHeader>
-            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
+            <TemplateAssetUpload onSuccess={handleUploadSuccess} />
           </DialogContent>
         </Dialog>
       </div>

@@ -5,7 +5,7 @@ import { Plus, FileText, Download, Trash2, Edit } from 'lucide-react';
 import { useKnowledgeTemplates } from '@/hooks/useKnowledgeTemplates';
 import SearchAndFilter from '@/components/admin/SearchAndFilter';
 import BulkOperations from '@/components/admin/BulkOperations';
-import { PDFTemplateUpload } from '@/components/admin/templates/PDFTemplateUpload';
+import { TemplateAssetUpload } from '@/components/admin/templates/TemplateAssetUpload';
 import { PDFViewer } from '@/components/admin/templates/PDFViewer';
 import { usePDFTemplateOperations } from '@/hooks/usePDFTemplateOperations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

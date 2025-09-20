@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useKnowledgeItemTemplates, useRemoveTemplateAssociation } from '@/hooks/useKnowledgeItemTemplates';
-import { PDFTemplateUpload } from '@/components/admin/templates/PDFTemplateUpload';
+import { TemplateAssetUpload } from '@/components/admin/templates/TemplateAssetUpload';
 import { PDFViewer } from '@/components/admin/templates/PDFViewer';
 import { usePDFTemplateOperations } from '@/hooks/usePDFTemplateOperations';
 import { toast } from 'sonner';
@@ -68,7 +68,7 @@ export const TemplateManager = ({ knowledgeItemId }: TemplateManagerProps) => {
                 Upload a PDF template that will be linked to this knowledge item
               </DialogDescription>
             </DialogHeader>
-            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
+            <TemplateAssetUpload onSuccess={handleUploadSuccess} />
           </DialogContent>
         </Dialog>
       </div>

@@ -7,7 +7,7 @@ import { Plus, Palette, Eye, X, GripVertical, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { TemplateSelectionDialog } from '../TemplateSelectionDialog';
 import { TemplateUsageDialog } from '../TemplateUsageDialog';
-import { PDFTemplateUpload } from '@/components/admin/templates/PDFTemplateUpload';
+import { TemplateAssetUpload } from '@/components/admin/templates/TemplateAssetUpload';
 import { useKnowledgeItemTemplates, useRemoveTemplateAssociation } from '@/hooks/useKnowledgeItemTemplates';
 import { toast } from 'sonner';
 import type { KnowledgeTemplate } from '@/types/template';
@@ -199,7 +199,7 @@ export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => 
             </DialogDescription>
           </DialogHeader>
           {knowledgeItemId && (
-            <PDFTemplateUpload onSuccess={handleUploadSuccess} />
+            <TemplateAssetUpload onSuccess={handleUploadSuccess} />
           )}
         </DialogContent>
       </Dialog>
