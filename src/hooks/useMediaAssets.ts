@@ -16,6 +16,11 @@ export interface MediaAsset {
   updated_at: string;
   created_by: string;
   updated_by?: string;
+  is_template?: boolean;
+  template_category?: string;
+  template_version?: string;
+  usage_count?: number;
+  is_public?: boolean;
 }
 
 export interface MediaAssetInsert {
@@ -27,6 +32,11 @@ export interface MediaAssetInsert {
   file_size?: number;
   file_type?: string;
   original_filename?: string;
+  is_template?: boolean;
+  template_category?: string;
+  template_version?: string;
+  usage_count?: number;
+  is_public?: boolean;
 }
 
 export const useMediaAssets = () => {
@@ -168,7 +178,12 @@ export const useKnowledgeItemMedia = (knowledgeItemId?: string) => {
             created_at,
             updated_at,
             created_by,
-            updated_by
+            updated_by,
+            is_template,
+            template_category,
+            template_version,
+            usage_count,
+            is_public
           )
         `)
         .eq('knowledge_item_id', knowledgeItemId)
@@ -194,6 +209,11 @@ export const useKnowledgeItemMedia = (knowledgeItemId?: string) => {
             updated_at: asset.updated_at,
             created_by: asset.created_by,
             updated_by: asset.updated_by,
+            is_template: asset.is_template,
+            template_category: asset.template_category,
+            template_version: asset.template_version,
+            usage_count: asset.usage_count,
+            is_public: asset.is_public,
             position: item.position
           } as MediaAsset & { position: number };
         });

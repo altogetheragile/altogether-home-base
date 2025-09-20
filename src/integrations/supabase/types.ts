@@ -1556,13 +1556,18 @@ export type Database = {
           file_size: number | null
           file_type: string | null
           id: string
+          is_public: boolean | null
+          is_template: boolean | null
           original_filename: string | null
+          template_category: string | null
+          template_version: string | null
           thumbnail_url: string | null
           title: string | null
           type: string
           updated_at: string
           updated_by: string | null
           url: string
+          usage_count: number | null
         }
         Insert: {
           created_at?: string
@@ -1571,13 +1576,18 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          is_public?: boolean | null
+          is_template?: boolean | null
           original_filename?: string | null
+          template_category?: string | null
+          template_version?: string | null
           thumbnail_url?: string | null
           title?: string | null
           type: string
           updated_at?: string
           updated_by?: string | null
           url: string
+          usage_count?: number | null
         }
         Update: {
           created_at?: string
@@ -1586,13 +1596,18 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          is_public?: boolean | null
+          is_template?: boolean | null
           original_filename?: string | null
+          template_category?: string | null
+          template_version?: string | null
           thumbnail_url?: string | null
           title?: string | null
           type?: string
           updated_at?: string
           updated_by?: string | null
           url?: string
+          usage_count?: number | null
         }
         Relationships: []
       }
