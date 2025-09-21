@@ -29,7 +29,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
     title: '',
     description: '',
     tags: [] as string[],
-    knowledgeItemId: ''
+    knowledgeItemIds: [] as string[]
   });
   const [tagInput, setTagInput] = useState('');
   const [knowledgeItemOpen, setKnowledgeItemOpen] = useState(false);
@@ -134,8 +134,8 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       return;
     }
 
-    if (!formData.knowledgeItemId) {
-      toast.error('Please select a knowledge item');
+    if (formData.knowledgeItemIds.length === 0) {
+      toast.error('Please select at least one knowledge item');
       return;
     }
 
@@ -238,20 +238,24 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       const template = await createTemplate.mutateAsync(templateData);
       console.log('✅ Template created successfully:', template);
       
-      // Associate with knowledge item (only for new templates)
-      if (!replaceExisting && formData.knowledgeItemId) {
-        console.log(`🔗 Associating template ${template.id} with knowledge item ${formData.knowledgeItemId}`);
+      // Associate with knowledge items (only for new templates)
+      if (!replaceExisting && formData.knowledgeItemIds.length > 0) {
+        console.log(`🔗 Associating template ${template.id} with ${formData.knowledgeItemIds.length} knowledge items`);
         
         try {
-          await associateTemplate.mutateAsync({
-            knowledgeItemId: formData.knowledgeItemId,
-            templateId: template.id,
-            displayOrder: 0
-          });
+          // Create associations for all selected knowledge items
+          const associationPromises = formData.knowledgeItemIds.map((knowledgeItemId, index) =>
+            associateTemplate.mutateAsync({
+              knowledgeItemId,
+              templateId: template.id,
+              displayOrder: index
+            })
+          );
           
-          console.log('✅ Template associated with knowledge item successfully');
+          await Promise.all(associationPromises);
+          console.log('✅ Template associated with all knowledge items successfully');
         } catch (associationError) {
-          console.warn('⚠️ Failed to associate template with knowledge item:', associationError);
+          console.warn('⚠️ Failed to associate template with some knowledge items:', associationError);
           // Don't fail the entire upload for association errors
         }
       }
@@ -289,7 +293,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       title: '',
       description: '',
       tags: [],
-      knowledgeItemId: '',
+      knowledgeItemIds: [],
     });
     setTagInput('');
     setKnowledgeItemSearch('');
@@ -418,8 +422,39 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           </div>
 
           {/* Knowledge Item Selection */}
-          <div className="space-y-2">
-            <Label>Knowledge Item *</Label>
+          <div className="space-y-3">
+            <Label>Knowledge Items * ({formData.knowledgeItemIds.length} selected)</Label>
+            
+            {/* Selected Items Display */}
+            {formData.knowledgeItemIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-md">
+                {formData.knowledgeItemIds.map((id) => {
+                  const item = knowledgeItems.find(ki => ki.id === id);
+                  return (
+                    <Badge key={id} variant="secondary" className="flex items-center gap-1">
+                      {item?.name || 'Unknown'}
+                      <X 
+                        className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          knowledgeItemIds: prev.knowledgeItemIds.filter(kiId => kiId !== id)
+                        }))}
+                      />
+                    </Badge>
+                  );
+                })}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, knowledgeItemIds: [] }))}
+                  className="h-6 px-2 text-xs"
+                >
+                  Clear All
+                </Button>
+              </div>
+            )}
+            
             <Popover open={knowledgeItemOpen} onOpenChange={setKnowledgeItemOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -428,40 +463,60 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
                   aria-expanded={knowledgeItemOpen}
                   className="w-full justify-between"
                 >
-                  {formData.knowledgeItemId
-                    ? knowledgeItems.find((item) => item.id === formData.knowledgeItemId)?.name
-                    : "Select knowledge item to link template to"}
+                  {formData.knowledgeItemIds.length === 0 
+                    ? "Select knowledge items to link template to"
+                    : `${formData.knowledgeItemIds.length} knowledge item${formData.knowledgeItemIds.length === 1 ? '' : 's'} selected`
+                  }
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="z-[70] w-[var(--radix-popover-trigger-width)] p-0 bg-popover border shadow-lg">
-                <Command className="max-h-80">
+              <PopoverContent 
+                className="z-[70] w-[var(--radix-popover-trigger-width)] p-0 bg-popover border shadow-lg" 
+                side="bottom" 
+                align="start"
+              >
+                <Command className="max-h-[50vh]">
                   <CommandInput
                     placeholder="Search knowledge items..."
                     value={knowledgeItemSearch}
                     onValueChange={setKnowledgeItemSearch}
                     autoFocus
                   />
-                  <CommandList className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
+                  <CommandList className="max-h-[40vh] overflow-y-auto scroll-smooth scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
                     <CommandEmpty>No knowledge item found.</CommandEmpty>
                     <CommandGroup>
                       {knowledgeItems
                         ?.filter((item) => 
                           item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
                         )
-                        ?.map((item) => (
-                          <CommandItem
-                            key={item.id}
-                            value={item.name}
-                            onSelect={() => {
-                              setFormData(prev => ({ ...prev, knowledgeItemId: item.id }));
-                              setKnowledgeItemOpen(false);
-                              setKnowledgeItemSearch('');
-                            }}
-                          >
-                            {item.name}
-                          </CommandItem>
-                        ))}
+                        ?.map((item) => {
+                          const isSelected = formData.knowledgeItemIds.includes(item.id);
+                          return (
+                            <CommandItem
+                              key={item.id}
+                              value={item.name}
+                              onSelect={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  knowledgeItemIds: isSelected
+                                    ? prev.knowledgeItemIds.filter(id => id !== item.id)
+                                    : [...prev.knowledgeItemIds, item.id]
+                                }));
+                                // Don't close dropdown for multi-select
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2 w-full">
+                                <div className={`w-4 h-4 border rounded flex items-center justify-center ${
+                                  isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'
+                                }`}>
+                                  {isSelected && <CheckCircle className="w-3 h-3 text-primary-foreground" />}
+                                </div>
+                                <span className="flex-1">{item.name}</span>
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
                     </CommandGroup>
                   </CommandList>
                 </Command>
