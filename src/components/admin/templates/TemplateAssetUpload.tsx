@@ -471,7 +471,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="z-[70] w-[var(--radix-popover-trigger-width)] p-0 bg-popover border shadow-lg" 
+                className="z-[70] w-[var(--radix-popover-trigger-width)] p-0 bg-popover border shadow-lg max-h-[60vh] overflow-y-auto overscroll-contain"
                 side="bottom" 
                 align="start"
               >
