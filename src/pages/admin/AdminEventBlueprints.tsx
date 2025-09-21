@@ -48,7 +48,7 @@ const AdminEventBlueprints: React.FC = () => {
     description: '',
     duration_days: 1,
     target_audience: '',
-    difficulty_rating: 'intermediate' as const
+    difficulty_rating: 'intermediate' as 'beginner' | 'intermediate' | 'advanced'
   });
 
   const queryClient = useQueryClient();
@@ -168,7 +168,7 @@ const AdminEventBlueprints: React.FC = () => {
       description: '',
       duration_days: 1,
       target_audience: '',
-      difficulty_rating: 'intermediate'
+    difficulty_rating: 'intermediate' as 'beginner' | 'intermediate' | 'advanced'
     });
   };
 

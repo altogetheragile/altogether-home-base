@@ -270,6 +270,7 @@ const AdminLayout = () => {
                   itemsToRender = logsItems;
                 } else if (activeTab === 'pages') {
                   itemsToRender = [{ label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }];
+                }
 
                 return itemsToRender.map((item) => {
                   const IconComponent = item.icon as any;
@@ -307,11 +308,12 @@ const AdminLayout = () => {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  });
-                })()}
-              </div>
+                  );
+                });
+              })()}
             </div>
           </div>
+        </div>
 
         {/* Main Content */}
         <div className="p-6">

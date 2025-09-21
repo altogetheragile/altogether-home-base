@@ -2464,12 +2464,8 @@ export type Database = {
         Args: { item_id: string }
         Returns: undefined
       }
-      increment_pdf_template_usage: {
-        Args: { template_uuid: string }
-        Returns: undefined
-      }
       increment_template_usage_count: {
-        Args: { template_uuid: string }
+        Args: { asset_uuid: string }
         Returns: undefined
       }
       is_admin: {
