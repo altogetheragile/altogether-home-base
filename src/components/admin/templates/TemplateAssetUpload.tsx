@@ -198,10 +198,21 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       console.log('✅ File ready:', publicUrl);
 
       // Prepare template data based on type
+      // Map file type to logical template type
+      const getTemplateType = (fileType: string) => {
+        switch (fileType) {
+          case 'pdf': return 'worksheet';
+          case 'document': return 'form';
+          case 'image': return 'canvas';
+          default: return 'worksheet';
+        }
+      };
+      
       const baseTemplateData = {
         title: formData.title.trim(),
         description: formData.description?.trim() || null,
-        template_type: templateType,
+        template_type: getTemplateType(templateType),
+        file_format: templateType === 'pdf' ? 'pdf' : templateType === 'document' ? 'docx' : 'png',
         is_public: true,
         tags: formData.tags.length > 0 ? formData.tags : [],
         version: version.trim(),

@@ -168,7 +168,7 @@ const AdminTemplates = () => {
               
               <div className="flex gap-2 flex-wrap">
                 <Badge 
-                  variant={template.template_type === 'pdf' ? 'destructive' : 'secondary'}
+                  variant={(template.pdf_url || template.file_url) ? 'destructive' : 'secondary'}
                 >
                   {template.template_type?.toUpperCase()}
                 </Badge>

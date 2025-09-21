@@ -23,10 +23,9 @@ interface TemplateSelectionDialogProps {
 const templateTypeLabels: Record<TemplateType, string> = {
   canvas: 'Canvas',
   matrix: 'Matrix',
-  worksheet: 'Worksheet',
+  worksheet: 'Worksheet', 
   process: 'Process',
-  form: 'Form',
-  pdf: 'PDF Template'
+  form: 'Form'
 };
 
 const templateTypeColors: Record<TemplateType, string> = {
@@ -34,8 +33,7 @@ const templateTypeColors: Record<TemplateType, string> = {
   matrix: 'bg-green-100 text-green-800',
   worksheet: 'bg-purple-100 text-purple-800',
   process: 'bg-orange-100 text-orange-800',
-  form: 'bg-pink-100 text-pink-800',
-  pdf: 'bg-red-100 text-red-800'
+  form: 'bg-pink-100 text-pink-800'
 };
 
 export const TemplateSelectionDialog = ({ 

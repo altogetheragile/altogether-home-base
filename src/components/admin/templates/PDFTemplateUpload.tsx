@@ -184,11 +184,12 @@ const handleSubmit = async (event: React.FormEvent) => {
 
       console.log('✅ File ready:', publicUrl);
 
-      // Validate and prepare template data
+      // Validate and prepare template data  
       const templateData = {
         title: formData.title.trim(),
         description: formData.description?.trim() || null,
-        template_type: 'pdf' as const,
+        template_type: 'worksheet' as const, // Default to worksheet for PDF uploads
+        file_format: 'pdf' as const,
         is_public: true,
         pdf_url: publicUrl,
         pdf_filename: file!.name,

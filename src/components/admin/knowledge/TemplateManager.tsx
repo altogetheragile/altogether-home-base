@@ -116,12 +116,12 @@ export const TemplateManager = ({ knowledgeItemId }: TemplateManagerProps) => {
                     </p>
                   )}
                   
-                  {template.template_type === 'pdf' && template.pdf_filename && (
+                  {(template.pdf_filename || template.file_filename) && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <FileText className="h-4 w-4" />
-                      <span className="truncate">{template.pdf_filename}</span>
-                      {template.pdf_file_size && (
-                        <span>({(template.pdf_file_size / 1024 / 1024).toFixed(1)} MB)</span>
+                      <span className="truncate">{template.pdf_filename || template.file_filename}</span>
+                      {(template.pdf_file_size || template.file_size) && (
+                        <span>({((template.pdf_file_size || template.file_size || 0) / 1024 / 1024).toFixed(1)} MB)</span>
                       )}
                     </div>
                   )}

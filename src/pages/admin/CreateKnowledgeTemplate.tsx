@@ -116,7 +116,7 @@ export default function CreateKnowledgeTemplate() {
         </Button>
         <div className="flex-1">
           <h1 className="text-xl font-semibold">
-            {isEditing ? 'Edit Template' : 'Create Template'}
+            {isEditing ? 'Edit Learning Resource' : 'Create Learning Resource'}
           </h1>
         </div>
       </div>
@@ -125,18 +125,18 @@ export default function CreateKnowledgeTemplate() {
         <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Template Details</CardTitle>
+              <CardTitle>Resource Details</CardTitle>
               <CardDescription>
-                Configure the basic properties of your template. PDF templates are linked to Knowledge Items via associations and don't require a category.
+                Configure the basic properties of your learning resource. Resources are linked to Knowledge Items and can be any file format.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Template Title *</Label>
+                <Label htmlFor="title">Resource Title *</Label>
                 <Input
                   id="title"
                   {...register('title', { required: 'Title is required' })}
-                  placeholder="Enter template title"
+                  placeholder="Enter resource title"
                 />
                 {errors.title && (
                   <p className="text-sm text-destructive">{errors.title.message}</p>
@@ -148,7 +148,7 @@ export default function CreateKnowledgeTemplate() {
                 <Textarea
                   id="description"
                   {...register('description')}
-                  placeholder="Describe what this template is for and how it should be used"
+                  placeholder="Describe what this resource is for and how it should be used"
                   rows={3}
                 />
               </div>
@@ -224,7 +224,7 @@ export default function CreateKnowledgeTemplate() {
                   checked={watch('is_public')}
                   onCheckedChange={(checked) => setValue('is_public', checked)}
                 />
-                <Label htmlFor="is_public">Make template publicly available</Label>
+                <Label htmlFor="is_public">Make resource publicly available</Label>
               </div>
             </CardContent>
           </Card>
@@ -239,7 +239,7 @@ export default function CreateKnowledgeTemplate() {
             </Button>
             <Button type="submit" disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : isEditing ? 'Update Template' : 'Create Template'}
+              {isSaving ? 'Saving...' : isEditing ? 'Update Resource' : 'Create Resource'}
             </Button>
           </div>
         </form>

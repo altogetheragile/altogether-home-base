@@ -25,8 +25,10 @@ export interface EventTemplate {
   popularity_score?: number;
 }
 
-// Knowledge Template Types
-export type TemplateType = 'canvas' | 'matrix' | 'worksheet' | 'process' | 'form' | 'pdf';
+// Learning Resource Types - separated from file formats
+export type TemplateType = 'canvas' | 'matrix' | 'worksheet' | 'process' | 'form';
+
+export type FileFormat = 'pdf' | 'docx' | 'pptx' | 'xlsx' | 'png' | 'jpg' | 'svg';
 
 export type TemplateFieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'radio' | 'date' | 'slider';
 
@@ -89,11 +91,13 @@ export interface TemplateConfig {
   };
 }
 
-export interface KnowledgeTemplate {
+// Renamed from KnowledgeTemplate to LearningResource for clarity
+export interface LearningResource {
   id: string;
   title: string;
   description?: string;
-  template_type: TemplateType | 'pdf';
+  template_type: TemplateType;
+  file_format?: FileFormat;
   config?: TemplateConfig;
   category?: string;
   version: string;
@@ -103,14 +107,22 @@ export interface KnowledgeTemplate {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
-  // PDF-specific fields
+  // File-specific fields (works for any format)
+  file_url?: string;
+  file_filename?: string;
+  file_size?: number;
+  file_page_count?: number; // For PDFs, slide count for PPTX, etc.
+  thumbnail_url?: string;
+  tags?: string[];
+  // Legacy PDF fields for backward compatibility
   pdf_url?: string;
   pdf_filename?: string;
   pdf_file_size?: number;
   pdf_page_count?: number;
-  thumbnail_url?: string;
-  tags?: string[];
 }
+
+// Keep KnowledgeTemplate as alias for backward compatibility during migration
+export type KnowledgeTemplate = LearningResource;
 
 export interface KnowledgeItemTemplate {
   id: string;
@@ -158,18 +170,27 @@ export interface EventTemplateFormData {
   format_id: string;
 }
 
-export interface KnowledgeTemplateFormData {
+export interface LearningResourceFormData {
   title: string;
   description?: string;
-  template_type: TemplateType | 'pdf';
+  template_type: TemplateType;
+  file_format?: FileFormat;
   category?: string;
   is_public: boolean;
   version?: string;
-  // PDF-specific fields
+  // File fields (works for any format)
+  file_url?: string;
+  file_filename?: string;
+  file_size?: number;
+  file_page_count?: number;
+  thumbnail_url?: string;
+  tags?: string[];
+  // Legacy PDF fields for backward compatibility
   pdf_url?: string;
   pdf_filename?: string;
   pdf_file_size?: number;
   pdf_page_count?: number;
-  thumbnail_url?: string;
-  tags?: string[];
 }
+
+// Keep KnowledgeTemplateFormData as alias for backward compatibility
+export type KnowledgeTemplateFormData = LearningResourceFormData;

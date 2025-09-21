@@ -18,11 +18,10 @@ import { usePDFTemplateOperations } from '@/hooks/usePDFTemplateOperations';
 
 const TemplateTypeColors = {
   canvas: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  matrix: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+  matrix: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', 
   worksheet: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
   process: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
   form: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',
-  pdf: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
 };
 
 export default function AdminKnowledgeTemplates() {
@@ -48,11 +47,12 @@ export default function AdminKnowledgeTemplates() {
   } = usePDFTemplateOperations();
 
   const filteredTemplates = templates
-    ?.filter((t) => t.pdf_url) // Filter by PDF URL instead of template_type
+    ?.filter((t) => t.pdf_url || t.file_url) // Filter by any file URL
     ?.filter(template => {
       const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            template.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
+      const matchesType = selectedType === 'all' || template.template_type === selectedType;
+      return matchesSearch && matchesType;
     });
 
   const categories = templates ? [...new Set(templates.map(t => t.category).filter(Boolean) as string[])] : [];
@@ -66,7 +66,8 @@ export default function AdminKnowledgeTemplates() {
   };
 
   const handleView = (template: KnowledgeTemplate) => {
-    if (template.template_type === 'pdf' && template.pdf_url) {
+    const fileUrl = template.pdf_url || template.file_url;
+    if (fileUrl && (template.file_format === 'pdf' || template.pdf_url)) {
       openViewer(template);
     } else {
       setViewingTemplate(template);
@@ -91,31 +92,38 @@ const handleUploadSuccess = async () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Knowledge Templates</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Learning Resources</h1>
           <p className="text-muted-foreground">
-            Upload and manage PDF templates for knowledge items
+            Upload and manage templates and resources for knowledge items
           </p>
         </div>
         
-        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Upload PDF Template</DialogTitle>
-              <DialogDescription>
-                Upload a PDF template and link it to a knowledge item
-              </DialogDescription>
-            </DialogHeader>
-            <div className="overflow-y-auto">
-              <TemplateAssetUpload onSuccess={handleUploadSuccess} />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/admin/knowledge/templates/create')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Resource
+          </Button>
+          
+          <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Resource
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Upload Learning Resource</DialogTitle>
+                <DialogDescription>
+                  Upload a template or resource file and link it to knowledge items
+                </DialogDescription>
+              </DialogHeader>
+              <div className="overflow-y-auto">
+                <TemplateAssetUpload onSuccess={handleUploadSuccess} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -123,28 +131,42 @@ const handleUploadSuccess = async () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search templates..."
+            placeholder="Search resources..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
+        
+        <Select value={selectedType} onValueChange={setSelectedType}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="canvas">Canvas</SelectItem>
+            <SelectItem value="matrix">Matrix</SelectItem>
+            <SelectItem value="worksheet">Worksheet</SelectItem>
+            <SelectItem value="process">Process</SelectItem>
+            <SelectItem value="form">Form</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Templates Grid */}
       {filteredTemplates?.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No templates found</h3>
+          <h3 className="text-lg font-medium mb-2">No resources found</h3>
           <p className="text-muted-foreground mb-4">
             {searchTerm || selectedType !== 'all' || selectedCategory !== 'all' 
               ? 'Try adjusting your search or filters'
-              : 'Get started by creating your first template'
+              : 'Get started by creating your first learning resource'
             }
           </p>
           {!searchTerm && selectedType === 'all' && selectedCategory === 'all' && (
-            <Button onClick={() => navigate('/admin/knowledge/items')}>
-              Go to Knowledge Items
+            <Button onClick={() => navigate('/admin/knowledge/templates/create')}>
+              Create First Resource
             </Button>
           )}
         </div>
@@ -210,18 +232,18 @@ function TemplateCard({ template, onDelete, onEdit, onView, onDownload, onDelete
           </p>
         )}
         
-        {/* PDF specific info */}
-        {template.template_type === 'pdf' && template.pdf_filename && (
+        {/* File info */}
+        {(template.pdf_filename || template.file_filename) && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <FileText className="h-4 w-4" />
-            <span className="truncate">{template.pdf_filename}</span>
-            {template.pdf_file_size && (
-              <span>({(template.pdf_file_size / 1024 / 1024).toFixed(1)} MB)</span>
+            <span className="truncate">{template.pdf_filename || template.file_filename}</span>
+            {(template.pdf_file_size || template.file_size) && (
+              <span>({((template.pdf_file_size || template.file_size || 0) / 1024 / 1024).toFixed(1)} MB)</span>
             )}
           </div>
         )}
         
-        {/* Tags for PDF templates */}
+        {/* Tags */}
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {template.tags.slice(0, 3).map(tag => (
@@ -251,97 +273,56 @@ function TemplateCard({ template, onDelete, onEdit, onView, onDownload, onDelete
         </div>
         
         <div className="flex items-center gap-2">
-          {template.template_type === 'pdf' ? (
-            <>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => onView(template)}
-              >
-                <Eye className="w-4 h-4" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onView(template)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={() => onDownload(template)}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Download
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onEdit(template.id)}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Trash2 className="w-4 h-4 text-destructive" />
               </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1"
-                onClick={() => onDownload(template)}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{template.title}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => onDeletePDF(template)}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          ) : (
-            <>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1"
-                onClick={() => onEdit(template.id)}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => onView(template)}
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{template.title}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => onDelete(template.id)}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          )}
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Resource</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{template.title}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDeletePDF(template)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>
