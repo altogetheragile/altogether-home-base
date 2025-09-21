@@ -104,14 +104,16 @@ const handleUploadSuccess = async () => {
               Upload Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Upload PDF Template</DialogTitle>
               <DialogDescription>
                 Upload a PDF template and link it to a knowledge item
               </DialogDescription>
             </DialogHeader>
-            <TemplateAssetUpload onSuccess={handleUploadSuccess} />
+            <div className="overflow-y-auto">
+              <TemplateAssetUpload onSuccess={handleUploadSuccess} />
+            </div>
           </DialogContent>
         </Dialog>
       </div>

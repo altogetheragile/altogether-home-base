@@ -355,7 +355,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           Upload Template
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="max-h-[70vh] overflow-y-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Template Type Selection */}
           <div className="space-y-2">
@@ -434,7 +434,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="z-50 w-[var(--radix-popover-trigger-width)] p-0 bg-popover border shadow-lg">
+              <PopoverContent className="z-[70] w-[var(--radix-popover-trigger-width)] p-0 bg-popover border shadow-lg">
                 <Command className="max-h-80">
                   <CommandInput
                     placeholder="Search knowledge items..."
@@ -442,7 +442,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
                     onValueChange={setKnowledgeItemSearch}
                     autoFocus
                   />
-                  <CommandList className="max-h-64 overflow-y-auto">
+                  <CommandList className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
                     <CommandEmpty>No knowledge item found.</CommandEmpty>
                     <CommandGroup>
                       {knowledgeItems
