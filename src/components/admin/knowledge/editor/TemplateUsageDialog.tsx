@@ -101,13 +101,23 @@ export const TemplateUsageDialog = ({ template, open, onOpenChange }: TemplateUs
 
              <div className="flex-1 overflow-hidden mt-4">
               <TabsContent value="preview" className="h-full overflow-auto">
-                <div className="h-full flex items-center justify-center p-8 text-muted-foreground">
-                  <div className="text-center">
-                    <Eye className="w-12 h-12 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Template Preview</h3>
-                    <p>Template preview functionality will be available when PDF templates are uploaded.</p>
+                {template.pdf_url ? (
+                  <div className="h-full">
+                    <iframe 
+                      src={template.pdf_url}
+                      className="w-full h-full border-0 rounded-lg"
+                      title={`${template.title} - PDF Preview`}
+                    />
                   </div>
-                </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center p-8 text-muted-foreground">
+                    <div className="text-center">
+                      <Eye className="w-12 h-12 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Template Preview</h3>
+                      <p>Template preview functionality will be available when PDF templates are uploaded.</p>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="structure" className="h-full overflow-auto space-y-4">
