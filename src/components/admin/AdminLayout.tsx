@@ -307,12 +307,11 @@ const AdminLayout = () => {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  );
-                });
-              })()}
+                  });
+                })()}
+              </div>
             </div>
           </div>
-        </div>
 
         {/* Main Content */}
         <div className="p-6">
