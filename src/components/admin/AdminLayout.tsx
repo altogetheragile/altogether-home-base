@@ -34,6 +34,12 @@ const AdminLayout = () => {
       description: 'Manage events and registrations'
     },
     {
+      label: 'Event Blueprints',
+      href: '/admin/event-blueprints',
+      icon: Layout,
+      description: 'Create reusable event blueprints'
+    },
+    {
       label: 'Instructors',
       href: '/admin/instructors',
       icon: Users,
@@ -44,12 +50,6 @@ const AdminLayout = () => {
       href: '/admin/locations',
       icon: MapPin,
       description: 'Configure event venues'
-    },
-    {
-      label: 'Templates',
-      href: '/admin/templates',
-      icon: Layout,
-      description: 'Create reusable event templates'
     },
     {
       label: 'Categories',
@@ -85,10 +85,10 @@ const AdminLayout = () => {
       description: 'Manage knowledge items'
     },
     {
-      label: 'Templates',
-      href: '/admin/knowledge/templates',
-      icon: Layout,
-      description: 'Manage knowledge item templates'
+      label: 'Assets',
+      href: '/admin/assets',
+      icon: Layers,
+      description: 'Manage templates, PDFs, and media assets'
     },
     {
       label: 'Analytics',
@@ -148,7 +148,7 @@ const AdminLayout = () => {
       id: 'events',
       label: 'Events',
       icon: Calendar,
-      paths: ['/admin/events', '/admin/instructors', '/admin/locations', '/admin/templates', '/admin/event-categories', '/admin/event-types', '/admin/levels', '/admin/formats'],
+      paths: ['/admin/events', '/admin/event-blueprints', '/admin/instructors', '/admin/locations', '/admin/event-categories', '/admin/event-types', '/admin/levels', '/admin/formats'],
       href: '/admin/events',
       items: eventsItems
     },
@@ -163,16 +163,9 @@ const AdminLayout = () => {
       id: 'knowledge',
       label: 'Knowledge Base',
       icon: BookOpen,
-      paths: ['/admin/knowledge'],
+      paths: ['/admin/knowledge', '/admin/assets'],
       href: '/admin/knowledge/items',
       items: knowledgeItems
-    },
-    {
-      id: 'media',
-      label: 'Media Library',
-      icon: FileImage,
-      paths: ['/admin/media'],
-      href: '/admin/media'
     },
     {
       id: 'logs',
@@ -277,9 +270,6 @@ const AdminLayout = () => {
                   itemsToRender = logsItems;
                 } else if (activeTab === 'pages') {
                   itemsToRender = [{ label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }];
-                } else if (activeTab === 'media') {
-                  itemsToRender = [{ label: 'Media Library', href: '/admin/media', icon: FileImage, description: 'Manage media assets' }];
-                }
 
                 return itemsToRender.map((item) => {
                   const IconComponent = item.icon as any;

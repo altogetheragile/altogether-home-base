@@ -21,7 +21,8 @@ import NotFound from "./pages/NotFound";
 const AdminEvents = React.lazy(() => import("./pages/admin/AdminEvents"));
 import AdminInstructors from "./pages/admin/AdminInstructors";
 import AdminLocations from "./pages/admin/AdminLocations";
-import AdminTemplates from "./pages/admin/AdminTemplates";
+import AdminEventBlueprints from "./pages/admin/AdminEventBlueprints";
+import AdminAssets from "./pages/admin/AdminAssets";
 import AdminEventTypes from "./pages/admin/AdminEventTypes";
 import AdminEventCategories from "./pages/admin/AdminEventCategories";
 import AdminLevels from "./pages/admin/AdminLevels";
@@ -119,7 +120,8 @@ const App = () => (
                     <Route path="instructors/new" element={<CreateInstructor />} />
                     <Route path="instructors/:id/edit" element={<EditInstructor />} />
                     <Route path="locations" element={<AdminLocations />} />
-                    <Route path="templates" element={<AdminTemplates />} />
+    <Route path="event-blueprints" element={<AdminEventBlueprints />} />
+    <Route path="assets" element={<AdminAssets />} />
                     <Route path="event-types" element={<AdminEventTypes />} />
                     <Route path="event-categories" element={<AdminEventCategories />} />
                     <Route path="levels" element={<AdminLevels />} />
@@ -130,7 +132,7 @@ const App = () => (
                     <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
                     <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />
                     <Route path="knowledge/items/:knowledgeItemId/use-cases/:useCaseId/edit" element={<CreateKnowledgeUseCase />} />
-                    <Route path="knowledge/templates" element={<AdminKnowledgeTemplates />} />
+                    <Route path="knowledge/templates" element={<AdminAssets />} />
                     <Route path="knowledge/templates/new" element={<CreateKnowledgeTemplate />} />
                     <Route path="knowledge/templates/:id/edit" element={<CreateKnowledgeTemplate />} />
                     <Route path="knowledge/analytics" element={<AdminKnowledgeAnalyticsRoute />} />

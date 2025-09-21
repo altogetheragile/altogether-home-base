@@ -1108,6 +1108,7 @@ export type Database = {
           display_order: number | null
           id: string
           knowledge_item_id: string
+          media_asset_id: string | null
           template_id: string
         }
         Insert: {
@@ -1116,6 +1117,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           knowledge_item_id: string
+          media_asset_id?: string | null
           template_id: string
         }
         Update: {
@@ -1124,9 +1126,17 @@ export type Database = {
           display_order?: number | null
           id?: string
           knowledge_item_id?: string
+          media_asset_id?: string | null
           template_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_knowledge_item_templates_media_asset"
+            columns: ["media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "knowledge_item_templates_knowledge_item_id_fkey"
             columns: ["knowledge_item_id"]
