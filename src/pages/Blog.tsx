@@ -3,9 +3,11 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import BlogFilter from "@/components/blog/BlogFilter";
 import { BlogCard } from "@/components/blog/BlogCard";
+import { UnifiedContentCard } from "@/components/content/UnifiedContentCard";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useBlogCategories } from "@/hooks/useBlogCategories";
 import { useBlogTags } from "@/hooks/useBlogTags";
+import { adaptBlogPostToUnifiedContent } from "@/utils/contentAdapters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,7 +118,10 @@ const Blog = () => {
               </h3>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {featuredPosts.map((post) => (
-                  <BlogCard key={post.id} post={post} />
+                  <UnifiedContentCard 
+                    key={post.id} 
+                    content={adaptBlogPostToUnifiedContent(post)} 
+                  />
                 ))}
               </div>
             </div>
@@ -139,7 +144,10 @@ const Blog = () => {
             ) : filteredPosts && filteredPosts.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredPosts.map((post) => (
-                  <BlogCard key={post.id} post={post} />
+                  <UnifiedContentCard 
+                    key={post.id} 
+                    content={adaptBlogPostToUnifiedContent(post)} 
+                  />
                 ))}
               </div>
             ) : (
