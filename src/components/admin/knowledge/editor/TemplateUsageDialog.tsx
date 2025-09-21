@@ -111,61 +111,115 @@ export const TemplateUsageDialog = ({ template, open, onOpenChange }: TemplateUs
               </TabsContent>
 
               <TabsContent value="structure" className="h-full overflow-auto space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Template Configuration</CardTitle>
-                    <CardDescription>
-                      Technical details about this template's structure
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-medium mb-2">Layout</h4>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <p>Type: {template.config.layout}</p>
-                          <p>Dimensions: {template.config.dimensions.width} × {template.config.dimensions.height}</p>
-                          {template.config.dimensions.grid && (
-                            <p>Grid: {template.config.dimensions.grid}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-medium mb-2">Sections</h4>
-                        <div className="text-sm text-muted-foreground">
-                          <p>{template.config.sections.length} sections defined</p>
-                          <p>{template.config.sections.reduce((acc, section) => acc + section.fields.length, 0)} total fields</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Sections & Fields</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {template.config.sections.map((section) => (
-                        <div key={section.id} className="border rounded-lg p-4">
-                          <h4 className="font-medium mb-2">{section.title}</h4>
-                          {section.description && (
-                            <p className="text-sm text-muted-foreground mb-3">{section.description}</p>
-                          )}
-                          <div className="grid grid-cols-2 gap-2">
-                            {section.fields.map((field) => (
-                              <div key={field.id} className="text-sm p-2 bg-muted rounded">
-                                <span className="font-medium">{field.label}</span>
-                                <span className="text-muted-foreground ml-2">({field.type})</span>
-                              </div>
-                            ))}
+                {template.config ? (
+                  <>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Template Configuration</CardTitle>
+                        <CardDescription>
+                          Technical details about this template's structure
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="font-medium mb-2">Layout</h4>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <p>Type: {template.config.layout}</p>
+                              <p>Dimensions: {template.config.dimensions.width} × {template.config.dimensions.height}</p>
+                              {template.config.dimensions.grid && (
+                                <p>Grid: {template.config.dimensions.grid}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-medium mb-2">Sections</h4>
+                            <div className="text-sm text-muted-foreground">
+                              <p>{template.config.sections.length} sections defined</p>
+                              <p>{template.config.sections.reduce((acc, section) => acc + section.fields.length, 0)} total fields</p>
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Sections & Fields</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {template.config.sections.map((section) => (
+                            <div key={section.id} className="border rounded-lg p-4">
+                              <h4 className="font-medium mb-2">{section.title}</h4>
+                              {section.description && (
+                                <p className="text-sm text-muted-foreground mb-3">{section.description}</p>
+                              )}
+                              <div className="grid grid-cols-2 gap-2">
+                                {section.fields.map((field) => (
+                                  <div key={field.id} className="text-sm p-2 bg-muted rounded">
+                                    <span className="font-medium">{field.label}</span>
+                                    <span className="text-muted-foreground ml-2">({field.type})</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>PDF Template</CardTitle>
+                      <CardDescription>
+                        This is a static PDF template without interactive configuration
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="font-medium mb-2">File Information</h4>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <p>Type: PDF Document</p>
+                              {template.pdf_filename && <p>Filename: {template.pdf_filename}</p>}
+                              {template.pdf_file_size && (
+                                <p>Size: {(template.pdf_file_size / 1024 / 1024).toFixed(1)} MB</p>
+                              )}
+                              {template.pdf_page_count && (
+                                <p>Pages: {template.pdf_page_count}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-medium mb-2">Template Details</h4>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <p>Category: {template.category || 'General'}</p>
+                              <p>Version: {template.version}</p>
+                              <p>Public: {template.is_public ? 'Yes' : 'No'}</p>
+                              <p>Usage Count: {template.usage_count}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {template.tags && template.tags.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">Tags</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {template.tags.map((tag) => (
+                                <Badge key={tag} variant="secondary">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="instructions" className="h-full overflow-auto space-y-4">
