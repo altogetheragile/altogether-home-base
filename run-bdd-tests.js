@@ -71,6 +71,28 @@ Examples:
 `);
 }
 
+function checkDependencies() {
+  console.log('🔍 Checking project dependencies...');
+  
+  try {
+    const fs = require('fs');
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    const hasCucumber = packageJson.dependencies?.['@cucumber/cucumber'] || packageJson.devDependencies?.['@cucumber/cucumber'];
+    const hasPlaywright = packageJson.dependencies?.['playwright'] || packageJson.devDependencies?.['@playwright/test'];
+    
+    if (!hasCucumber || !hasPlaywright) {
+      console.log('❌ Missing required dependencies. Please run:');
+      console.log('   npm install');
+      console.log('   npx playwright install chromium');
+      process.exit(1);
+    }
+    
+    console.log('✅ Dependencies check passed');
+  } catch (error) {
+    console.log('⚠️  Could not verify dependencies, but continuing...');
+  }
+}
+
 function runBDDTests() {
   console.log('🥒 Starting BDD Tests for Knowledge Base Admin');
   console.log(`📊 Configuration: ${JSON.stringify(options, null, 2)}`);
@@ -143,6 +165,9 @@ const requiredDirs = ['features', 'steps', 'support', 'reports'];
 
 console.log('🔍 Checking BDD test environment...');
 
+// Check dependencies first
+checkDependencies();
+
 for (const dir of requiredDirs) {
   if (!fs.existsSync(dir)) {
     console.log(`📁 Creating missing directory: ${dir}/`);
@@ -154,6 +179,8 @@ for (const dir of requiredDirs) {
 if (!fs.existsSync('reports')) {
   fs.mkdirSync('reports', { recursive: true });
 }
+
+console.log('✅ Environment setup complete');
 
 // Start the tests
 runBDDTests();

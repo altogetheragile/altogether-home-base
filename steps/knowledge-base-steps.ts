@@ -1,14 +1,17 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { expect } from '@playwright/test';
+import { expect } from 'playwright/test';
 import { World } from '../support/world';
 
+// Helper to get base URL
+const getBaseUrl = () => process.env.BASE_URL || 'http://localhost:5173';
+
 Given('I am on the Knowledge Base admin dashboard', async function (this: World) {
-  await this.page.goto('/admin/knowledge-items');
+  await this.page.goto(`${getBaseUrl()}/admin/knowledge-items`);
   await expect(this.page.locator('h1')).toHaveText(/knowledge items/i);
 });
 
 Given('I am on the Content Studio Dashboard', async function (this: World) {
-  await this.page.goto('/admin/knowledge-items');
+  await this.page.goto(`${getBaseUrl()}/admin/knowledge-items`);
   await expect(this.page.locator('[data-testid="content-studio-header"]')).toBeVisible();
 });
 
@@ -41,7 +44,7 @@ When('I publish the knowledge item', async function (this: World) {
 });
 
 Then('the item should appear in the knowledge base list', async function (this: World) {
-  await this.page.goto('/admin/knowledge-items');
+  await this.page.goto(`${getBaseUrl()}/admin/knowledge-items`);
   await expect(this.page.locator('text=Test Knowledge Item')).toBeVisible();
 });
 
@@ -69,7 +72,7 @@ Then('the updated title should be displayed', async function (this: World) {
 });
 
 Given('I have multiple knowledge items selected', async function (this: World) {
-  await this.page.goto('/admin/knowledge-items');
+  await this.page.goto(`${getBaseUrl()}/admin/knowledge-items`);
   
   // Select multiple checkboxes
   const checkboxes = this.page.locator('[data-testid="item-checkbox"]');
@@ -98,7 +101,7 @@ Then('the selected items should no longer appear in the list', async function (t
 
 Given('there are knowledge items with different categories', async function (this: World) {
   // This assumes test data exists with various categories
-  await this.page.goto('/admin/knowledge-items');
+  await this.page.goto(`${getBaseUrl()}/admin/knowledge-items`);
 });
 
 When('I search for {string}', async function (this: World, searchTerm: string) {
