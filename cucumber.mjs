@@ -1,11 +1,11 @@
 // cucumber.mjs
 export default {
   default: {
-    require: [
+    import: [
       'steps/**/*.ts',        // step definitions
       'support/**/*.ts'       // hooks, if you have them
     ],
-    requireModule: ['tsx/esm'], // run TS directly in ESM mode
+    paths: ['features/**/*.feature'], // feature files
     format: [
       'progress',
       'summary',
