@@ -2,6 +2,7 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../features/support/world';
 import { KnowledgeBasePage } from '../pages/knowledge-base-page';
+import { KnowledgeItemEditorPage } from '../pages/knowledge-item-editor-page';
 
 // Dashboard and Layout Steps
 Then('I should see the content studio dashboard', async function (this: CustomWorld) {

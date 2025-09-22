@@ -41,6 +41,7 @@ export const ContentStudioHeader = ({
               value={filters.search}
               onChange={(e) => onFiltersChange({ search: e.target.value })}
               className="pl-10 pr-10"
+              data-testid="search-input"
             />
             {filters.search && (
               <Button
@@ -59,7 +60,7 @@ export const ContentStudioHeader = ({
             value={filters.sortBy} 
             onValueChange={(value: any) => onFiltersChange({ sortBy: value })}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-40" data-testid="sort-dropdown">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -79,19 +80,19 @@ export const ContentStudioHeader = ({
             className="w-auto"
           >
             <TabsList className="grid grid-cols-4">
-              <TabsTrigger value="cards" className="flex items-center gap-1.5">
+              <TabsTrigger value="cards" className="flex items-center gap-1.5" data-testid="view-cards">
                 <Grid className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Cards</span>
               </TabsTrigger>
-              <TabsTrigger value="table" className="flex items-center gap-1.5">
+              <TabsTrigger value="table" className="flex items-center gap-1.5" data-testid="view-table">
                 <Table2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Table</span>
               </TabsTrigger>
-              <TabsTrigger value="kanban" className="flex items-center gap-1.5">
+              <TabsTrigger value="kanban" className="flex items-center gap-1.5" data-testid="view-kanban">
                 <Kanban className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Board</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-1.5">
+              <TabsTrigger value="analytics" className="flex items-center gap-1.5" data-testid="view-analytics">
                 <BarChart3 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Analytics</span>
               </TabsTrigger>

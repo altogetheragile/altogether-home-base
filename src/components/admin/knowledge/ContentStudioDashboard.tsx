@@ -109,9 +109,9 @@ export const ContentStudioDashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background" data-testid="content-studio-dashboard">
         {/* Content Workflow Sidebar */}
-        <Sidebar className="w-72 border-r bg-card">
+        <Sidebar className="w-72 border-r bg-card" data-testid="content-studio-sidebar">
           <SidebarContent className="p-4">
             <div className="space-y-6">
               {/* Studio Header */}
@@ -133,6 +133,7 @@ export const ContentStudioDashboard = () => {
                   onClick={handleCreateNew} 
                   className="w-full justify-start bg-primary hover:bg-primary/90"
                   size="sm"
+                  data-testid="create-content-button"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Content
@@ -142,6 +143,7 @@ export const ContentStudioDashboard = () => {
                   size="sm" 
                   className="w-full justify-start"
                   onClick={() => setCommandPaletteOpen(true)}
+                  data-testid="command-palette-button"
                 >
                   <Command className="h-4 w-4 mr-2" />
                   Command Palette
@@ -161,6 +163,7 @@ export const ContentStudioDashboard = () => {
                           onClick={() => handleFiltersChange({ workflow: item.id as any })}
                           isActive={filters.workflow === item.id}
                           className="w-full justify-between group"
+                          data-testid={`sidebar-workflow-${item.id}`}
                         >
                           <div className="flex items-center gap-2">
                             <item.icon className="h-4 w-4" />
@@ -184,19 +187,19 @@ export const ContentStudioDashboard = () => {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     <SidebarMenuItem>
-                      <SidebarMenuButton onClick={() => handleFiltersChange({ view: 'analytics' })}>
+                      <SidebarMenuButton onClick={() => handleFiltersChange({ view: 'analytics' })} data-testid="sidebar-analytics">
                         <BarChart3 className="h-4 w-4 mr-2" />
                         Analytics
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                      <SidebarMenuButton>
+                      <SidebarMenuButton data-testid="sidebar-categories">
                         <FolderOpen className="h-4 w-4 mr-2" />
                         Categories
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                      <SidebarMenuButton>
+                      <SidebarMenuButton data-testid="sidebar-settings">
                         <Settings className="h-4 w-4 mr-2" />
                         Settings
                       </SidebarMenuButton>
