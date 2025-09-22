@@ -5,11 +5,11 @@ setDefaultTimeout(30 * 1000);
 
 module.exports = {
   default: {
-    import: [
+    require: [
       'steps/**/*.ts',
       'support/**/*.ts'
     ],
-    loader: ['tsx/esm'],
+    requireModule: ['tsx/cjs'],
     format: [
       'progress-bar',
       'json:reports/cucumber-report.json',
