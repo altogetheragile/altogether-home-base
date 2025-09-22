@@ -54,6 +54,23 @@ jobs:
     - name: Run E2E tests (Playwright)
       run: npx playwright test
 
+    - name: Run BDD tests (Cucumber)
+      run: npx cucumber-js --tags='not @skip' --parallel 2 --format html:cucumber-report.html
+      env:
+        CI: true
+        HEADLESS: true
+
+    - name: Upload BDD test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: bdd-test-results
+        path: |
+          cucumber-report.html
+          cucumber-report.json
+          screenshots/
+        retention-days: 30
+
     - name: Upload Vitest test results
       uses: actions/upload-artifact@v4
       if: always() && hashFiles('coverage/**') != ''

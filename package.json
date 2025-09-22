@@ -19,6 +19,9 @@
     "test:verify-msw": "node src/test/verify-msw-v2.mjs"
   },
   "dependencies": {
+    "@cucumber/cucumber": "^12.2.0",
+    "@cucumber/html-formatter": "^21.15.1",
+    "@cucumber/pretty-formatter": "^2.3.0",
     "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -55,6 +58,7 @@
     "@tiptap/extension-link": "^3.0.1",
     "@tiptap/react": "^3.0.1",
     "@tiptap/starter-kit": "^3.0.1",
+    "@types/cucumber": "^7.0.3",
     "@vitejs/plugin-react-swc": "^3.10.2",
     "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.4.21",
