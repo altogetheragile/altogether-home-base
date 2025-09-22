@@ -98,7 +98,7 @@ function runBDDTests() {
   console.log(`📊 Configuration: ${JSON.stringify(options, null, 2)}`);
 
   // Build cucumber command
-  const cucumberCmd = ['npx', '@cucumber/cucumber'];
+  const cucumberCmd = ['npx', 'cucumber-js'];
   const cucumberArgs = ['--config', 'cucumber.config.cjs'];
 
   // Add options

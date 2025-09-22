@@ -1,16 +1,15 @@
 const { setDefaultTimeout } = require('@cucumber/cucumber');
-const { BeforeAll, AfterAll, Before, After } = require('@cucumber/cucumber');
 
 // Set default timeout for all steps
 setDefaultTimeout(30 * 1000);
 
 module.exports = {
   default: {
-    require: [
+    import: [
       'steps/**/*.ts',
       'support/**/*.ts'
     ],
-    requireModule: ['tsx'],
+    loader: ['tsx/esm'],
     format: [
       'progress-bar',
       'json:reports/cucumber-report.json',
