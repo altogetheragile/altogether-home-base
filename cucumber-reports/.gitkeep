@@ -1,0 +1,2 @@
+# This file ensures the cucumber-reports directory is tracked in git
+# HTML and JSON test reports will be generated here

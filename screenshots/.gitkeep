@@ -1,0 +1,2 @@
+# This file ensures the screenshots directory is tracked in git
+# Test screenshots will be saved here during BDD test execution
