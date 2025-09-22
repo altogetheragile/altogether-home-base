@@ -17,12 +17,13 @@
     "test:clean": "rm -rf .vitest dist coverage && vitest run",
     "test:nuclear": "node src/test/clear-cache.js && npm install && npx vitest run --no-cache",
     "test:verify-msw": "node src/test/verify-msw-v2.mjs",
-    "test:bdd": "npx cucumber-js",
-    "test:bdd:dev": "npx cucumber-js --tags=\"not @skip\" --parallel 1",
-    "test:bdd:smoke": "npx cucumber-js --tags=\"@smoke\"",
-    "test:bdd:debug": "npx cucumber-js --tags=\"not @skip\" --parallel 1 --world-parameters '{\"headless\": false, \"slowMo\": 500}'",
-    "test:bdd:report": "npx cucumber-js --format html:cucumber-report.html",
-    "test:bdd:ci": "npx cucumber-js --tags=\"not @skip\" --parallel 2 --format pretty --format html:cucumber-report.html"
+
+    "bdd": "cucumber-js --config cucumber.mjs",
+    "bdd:dev": "cucumber-js --config cucumber.mjs --tags \"not @skip\" --parallel 1",
+    "bdd:smoke": "cucumber-js --config cucumber.mjs --tags \"@smoke\"",
+    "bdd:debug": "cucumber-js --config cucumber.mjs --tags \"not @skip\" --parallel 1 --world-parameters '{\"headless\": false, \"slowMo\": 500}'",
+    "bdd:report": "cucumber-js --config cucumber.mjs --format html:cucumber-report.html",
+    "bdd:ci": "cucumber-js --config cucumber.mjs --tags \"not @skip\" --parallel 2 --format pretty --format html:cucumber-report.html"
   },
   "dependencies": {
     "@cucumber/cucumber": "^12.2.0",
