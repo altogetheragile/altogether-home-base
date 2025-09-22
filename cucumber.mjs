@@ -1,34 +1,21 @@
 // cucumber.mjs
 export default {
   default: {
-    // Load step definitions (recursive glob)
     require: [
-      'steps/**/*.ts',        // your step defs
-      'support/**/*.ts'       // hooks like Before/After
+      'steps/**/*.ts',        // step definitions
+      'support/**/*.ts'       // hooks, if you have them
     ],
-
-    // Use tsx in ESM mode to run TS directly
-    requireModule: ['tsx/esm'],
-
-    // Formatters: progress (short), summary, and HTML report
+    requireModule: ['tsx/esm'], // run TS directly in ESM mode
     format: [
       'progress',
       'summary',
-      'html:reports/cucumber-report.html'
+      'html:cucumber-reports/cucumber-report.html'
     ],
-
-    // Fail fast on first error (optional)
-    failFast: false,
-
-    // Don't spam the publish banner
     publishQuiet: true,
-
-    // Retry flaky steps (optional, Playwright-friendly)
+    failFast: false,
     retry: 0,
-
-    // Timeouts (adjust as needed)
     worldParameters: {
       defaultTimeout: 60 * 1000
     }
   }
-};
+}
