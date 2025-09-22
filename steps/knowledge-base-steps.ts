@@ -50,7 +50,7 @@ Then('the item should appear in the knowledge base list', async function (this: 
 
 Given('there is an existing knowledge item {string}', async function (this: World, itemName: string) {
   // This step assumes test data exists or we create it programmatically
-  await this.page.goto('/admin/knowledge-items');
+  await this.page.goto(`${getBaseUrl()}/admin/knowledge-items`);
   await expect(this.page.locator(`text=${itemName}`)).toBeVisible();
 });
 
