@@ -25,6 +25,8 @@
     "test:bdd:ci": "npx cucumber-js --tags=\"not @skip\" --parallel 2 --format pretty --format html:cucumber-report.html"
   },
   "dependencies": {
+    "@cucumber/cucumber": "^12.2.0",
+    "@cucumber/pretty-formatter": "^1.0.1",
     "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
