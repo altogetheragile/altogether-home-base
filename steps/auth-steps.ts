@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { expect } from 'playwright/test';
+import { expect } from '@playwright/test';
 import { World } from '../support/world';
 
 // Helper to get base URL

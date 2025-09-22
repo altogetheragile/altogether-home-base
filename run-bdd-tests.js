@@ -128,7 +128,8 @@ function runBDDTests() {
   // Set environment variables
   const env = { 
     ...process.env,
-    HEADLESS: options.headless.toString()
+    HEADLESS: options.headless.toString(),
+    NODE_OPTIONS: '--loader=tsx'
   };
 
   console.log(`🚀 Running: ${cucumberCmd.join(' ')} ${cucumberArgs.join(' ')}`);
