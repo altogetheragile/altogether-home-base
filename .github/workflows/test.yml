@@ -54,6 +54,10 @@ jobs:
     - name: Run E2E tests (Playwright)
       run: npx playwright test
 
+    - name: Run BDD smoke tests
+      run: npm run test:bdd:smoke
+      continue-on-error: true
+
     - name: Upload Vitest test results
       uses: actions/upload-artifact@v4
       if: always() && hashFiles('coverage/**') != ''
@@ -71,6 +75,16 @@ jobs:
         path: |
           test-results/
           playwright-report/
+        retention-days: 30
+
+    - name: Upload BDD test results
+      uses: actions/upload-artifact@v4
+      if: always() && hashFiles('reports/**') != ''
+      with:
+        name: bdd-cucumber-results
+        path: |
+          reports/
+          screenshots/
         retention-days: 30
 
     - name: Debug info on failure
