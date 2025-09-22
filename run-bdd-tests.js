@@ -99,7 +99,7 @@ function runBDDTests() {
 
   // Build cucumber command
   const cucumberCmd = ['npx', 'cucumber-js'];
-  const cucumberArgs = ['--config', 'cucumber.config.cjs'];
+  const cucumberArgs = ['--config', 'cucumber.mjs'];
 
   // Add options
   if (options.tags) {
