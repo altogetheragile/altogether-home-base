@@ -16,14 +16,19 @@
     "test:verbose": "vitest run --reporter=verbose",
     "test:clean": "rm -rf .vitest dist coverage && vitest run",
     "test:nuclear": "node src/test/clear-cache.js && npm install && npx vitest run --no-cache",
-    "test:verify-msw": "node src/test/verify-msw-v2.mjs"
+    "test:verify-msw": "node src/test/verify-msw-v2.mjs",
+    "test:bdd": "cucumber-js",
+    "test:bdd:dev": "cucumber-js --tags='not @skip' --parallel 1",
+    "test:bdd:smoke": "cucumber-js --tags='@smoke'",
+    "test:bdd:debug": "cucumber-js --tags='not @skip' --parallel 1 --world-parameters '{\"headless\": false, \"slowMo\": 500}'",
+    "test:bdd:report": "cucumber-js --format html:cucumber-report.html",
+    "test:bdd:ci": "cucumber-js --tags='not @skip' --parallel 2 --format pretty --format html:cucumber-report.html"
   },
   "dependencies": {
     "@cucumber/cucumber": "^12.2.0",
     "@cucumber/html-formatter": "^21.15.1",
     "@cucumber/pretty-formatter": "^2.3.0",
     "@hookform/resolvers": "^5.1.1",
-    "@playwright/test": "^1.55.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -96,6 +101,7 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^20.10.5",
