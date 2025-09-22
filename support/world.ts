@@ -1,19 +1,24 @@
 import { setWorldConstructor, IWorldOptions } from '@cucumber/cucumber';
-import { Browser, BrowserContext, Page, chromium } from '@playwright/test';
+import { Browser, BrowserContext, Page, chromium } from 'playwright';
 
 export interface ICustomWorld {
   browser?: Browser;
   context?: BrowserContext;
   page?: Page;
+  pickle?: any;
+  attach?: (buffer: Buffer, mediaType: string) => void;
 }
 
 export class World implements ICustomWorld {
   browser?: Browser;
   context?: BrowserContext;
   page?: Page;
+  pickle?: any;
+  attach?: (buffer: Buffer, mediaType: string) => void;
 
   constructor(options: IWorldOptions) {
-    // Initialize the world
+    this.pickle = options.pickle;
+    this.attach = options.attach;
   }
 
   async init() {
