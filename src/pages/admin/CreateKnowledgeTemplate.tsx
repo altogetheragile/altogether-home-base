@@ -199,7 +199,7 @@ export default function CreateKnowledgeTemplate() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/admin/knowledge-items/edit/${association.knowledge_item?.id}`)}
+                onClick={() => navigate(`/admin/knowledge/items/${association.knowledge_item?.id}/edit`)}
                 className="flex items-center gap-1"
               >
                 <ExternalLink className="h-3 w-3" />

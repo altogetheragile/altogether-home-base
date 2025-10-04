@@ -26,7 +26,7 @@ export const AdminKnowledgeItemsPage = () => {
   });
 
   const handleEdit = (item: KnowledgeItem) => {
-    navigate(`/admin/knowledge-items/${item.id}/edit`);
+    navigate(`/admin/knowledge/items/${item.id}/edit`);
   };
 
   const handleBulkAction = (action: string, itemIds: string[]) => {
@@ -114,7 +114,7 @@ export const AdminKnowledgeItemsPage = () => {
               </Select>
             </div>
 
-            <Button onClick={() => navigate('/admin/knowledge-items/new')} size="sm" className="h-7 text-xs">
+            <Button onClick={() => navigate('/admin/knowledge/items/new')} size="sm" className="h-7 text-xs">
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               New
             </Button>
