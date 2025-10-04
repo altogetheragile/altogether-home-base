@@ -256,8 +256,8 @@ const AdminLayout = () => {
           </div>
 
           {/* Items Grid - Only show items for active tab */}
-          <div className="px-6 py-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+          <div className="px-6 py-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1">
               {(() => {
                 // Get items for active tab
                 let itemsToRender = [];
@@ -280,21 +280,21 @@ const AdminLayout = () => {
                         <TooltipTrigger asChild>
                           <Link
                             to={item.href}
-                            className={`group flex items-center justify-center p-2 bg-white rounded-lg border ${
+                            className={`group flex items-center justify-center p-1.5 bg-white rounded-md border ${
                               isActive(item.href) 
                                 ? 'border-primary/40 bg-primary/5' 
                                 : 'border-gray-200'
-                            } hover:border-primary/30 hover:shadow-md transition-all duration-200`}
+                            } hover:border-primary/30 hover:shadow-sm transition-all duration-200`}
                           >
-                            <div className="flex flex-col items-center space-y-1">
-                              <div className={`p-1 rounded-full group-hover:bg-primary/10 transition-colors ${
+                            <div className="flex flex-col items-center space-y-0.5">
+                              <div className={`p-0.5 rounded-full group-hover:bg-primary/10 transition-colors ${
                                 isActive(item.href) ? 'bg-primary/10' : 'bg-gray-50'
                               }`}>
-                                <IconComponent className={`h-4 w-4 group-hover:text-primary transition-colors ${
+                                <IconComponent className={`h-3.5 w-3.5 group-hover:text-primary transition-colors ${
                                   isActive(item.href) ? 'text-primary' : 'text-gray-600'
                                 }`} />
                               </div>
-                              <span className={`text-xs font-medium text-center ${
+                              <span className={`text-[10px] font-medium text-center leading-tight ${
                                 isActive(item.href) ? 'text-primary' : 'text-gray-700'
                               }`}>
                                 {item.label}
