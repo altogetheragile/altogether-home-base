@@ -257,7 +257,7 @@ const AdminLayout = () => {
 
           {/* Items Grid - Only show items for active tab */}
           <div className="px-6 py-3 overflow-x-auto">
-            <div className="flex gap-1">
+            <div className="flex gap-3">
               {(() => {
                 // Get items for active tab
                 let itemsToRender = [];
