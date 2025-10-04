@@ -1,6 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useKnowledgeItemBySlug } from "@/hooks/useKnowledgeItems";
 import { useKnowledgeUseCases } from "@/hooks/useKnowledgeUseCases";
+import { useKnowledgeItemTemplates } from "@/hooks/useKnowledgeItemTemplates";
+import { useKnowledgeItemUnifiedAssets } from "@/hooks/useUnifiedAssetManager";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ArrowLeft, Eye, Calendar, Target, Lightbulb, AlertTriangle, ExternalLink, BookOpen } from "lucide-react";
+import { ArrowLeft, Eye, Calendar, Target, Lightbulb, AlertTriangle, ExternalLink, BookOpen, FileText, Image as ImageIcon, Video, Download } from "lucide-react";
 import { format } from "date-fns";
 import FormattedTextDisplay from "@/components/common/FormattedTextDisplay";
 
@@ -17,6 +19,18 @@ const KnowledgeDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: item, isLoading, error } = useKnowledgeItemBySlug(slug!);
   const { data: useCases } = useKnowledgeUseCases(item?.id);
+  const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
+  const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
+
+  const clarificationDescriptions = {
+    what: "What is the core activity or technique being used?",
+    why: "Why is this approach used? What problem does it solve?",
+    when: "When should this be applied? At what stage or timing?",
+    where: "Where is this used? In what context or environment?",
+    who: "Who is involved? What roles or stakeholders?",
+    how: "How is this executed? What are the steps or process?",
+    how_much: "How much effort, time, or resources are needed?"
+  };
 
   if (isLoading) {
     return (
@@ -159,6 +173,91 @@ const KnowledgeDetail = () => {
                 </Card>
               )}
 
+              {/* Media Assets */}
+              {mediaAssets && mediaAssets.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ImageIcon className="h-5 w-5" />
+                      Resources & Media
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {mediaAssets.map((asset: any) => (
+                      <div key={asset.id} className="border rounded-lg p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              {asset.type === 'image' && <ImageIcon className="h-4 w-4 text-primary" />}
+                              {asset.type === 'video' && <Video className="h-4 w-4 text-primary" />}
+                              {asset.type === 'document' && <FileText className="h-4 w-4 text-primary" />}
+                              <h5 className="font-medium text-sm">{asset.title || asset.original_filename}</h5>
+                            </div>
+                            {asset.description && (
+                              <p className="text-sm text-muted-foreground mb-2">{asset.description}</p>
+                            )}
+                            {asset.type === 'image' && asset.url && (
+                              <img 
+                                src={asset.url} 
+                                alt={asset.title || 'Knowledge item image'} 
+                                className="w-full rounded-md mt-2"
+                              />
+                            )}
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(asset.url, '_blank')}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Templates */}
+              {templates && templates.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Templates & Tools
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {templates.map((assoc: any) => (
+                      <div key={assoc.id} className="border rounded-lg p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <h5 className="font-medium text-sm">{assoc.template?.title}</h5>
+                            {assoc.template?.description && (
+                              <p className="text-sm text-muted-foreground mt-1">{assoc.template.description}</p>
+                            )}
+                            {assoc.template?.category && (
+                              <Badge variant="outline" className="mt-2 text-xs">
+                                {assoc.template.category}
+                              </Badge>
+                            )}
+                          </div>
+                          {assoc.template?.pdf_url && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => window.open(assoc.template.pdf_url, '_blank')}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Use Cases */}
               {useCases && useCases.length > 0 && (
                 <Card>
@@ -186,37 +285,50 @@ const KnowledgeDetail = () => {
                             {useCase.what && (
                               <div>
                                 <h5 className="font-medium text-sm text-foreground mb-1">What</h5>
+                                <p className="text-xs text-muted-foreground/70 italic mb-1">{clarificationDescriptions.what}</p>
                                 <p className="text-sm text-muted-foreground">{useCase.what}</p>
                               </div>
                             )}
                             {useCase.why && (
                               <div>
                                 <h5 className="font-medium text-sm text-foreground mb-1">Why</h5>
+                                <p className="text-xs text-muted-foreground/70 italic mb-1">{clarificationDescriptions.why}</p>
                                 <p className="text-sm text-muted-foreground">{useCase.why}</p>
                               </div>
                             )}
                             {useCase.when_used && (
                               <div>
                                 <h5 className="font-medium text-sm text-foreground mb-1">When</h5>
+                                <p className="text-xs text-muted-foreground/70 italic mb-1">{clarificationDescriptions.when}</p>
                                 <p className="text-sm text-muted-foreground">{useCase.when_used}</p>
                               </div>
                             )}
                             {useCase.where_used && (
                               <div>
                                 <h5 className="font-medium text-sm text-foreground mb-1">Where</h5>
+                                <p className="text-xs text-muted-foreground/70 italic mb-1">{clarificationDescriptions.where}</p>
                                 <p className="text-sm text-muted-foreground">{useCase.where_used}</p>
                               </div>
                             )}
                             {useCase.who && (
                               <div>
                                 <h5 className="font-medium text-sm text-foreground mb-1">Who</h5>
+                                <p className="text-xs text-muted-foreground/70 italic mb-1">{clarificationDescriptions.who}</p>
                                 <p className="text-sm text-muted-foreground">{useCase.who}</p>
                               </div>
                             )}
                             {useCase.how && (
                               <div>
                                 <h5 className="font-medium text-sm text-foreground mb-1">How</h5>
+                                <p className="text-xs text-muted-foreground/70 italic mb-1">{clarificationDescriptions.how}</p>
                                 <p className="text-sm text-muted-foreground">{useCase.how}</p>
+                              </div>
+                            )}
+                            {useCase.how_much && (
+                              <div>
+                                <h5 className="font-medium text-sm text-foreground mb-1">How Much</h5>
+                                <p className="text-xs text-muted-foreground/70 italic mb-1">{clarificationDescriptions.how_much}</p>
+                                <p className="text-sm text-muted-foreground">{useCase.how_much}</p>
                               </div>
                             )}
                           </div>
