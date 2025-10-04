@@ -1,4 +1,4 @@
-import { ContentStudioDashboard } from './ContentStudioDashboard';
+import { AdminKnowledgeItemsPage } from './AdminKnowledgeItemsPage';
 
 // Legacy filters type for backward compatibility
 export interface KnowledgeItemsFiltersType {
@@ -13,5 +13,5 @@ export interface KnowledgeItemsFiltersType {
 }
 
 export const KnowledgeItemsDashboard = () => {
-  return <ContentStudioDashboard />;
+  return <AdminKnowledgeItemsPage />;
 };

@@ -1,7 +1,7 @@
-import { ContentStudioDashboard } from '@/components/admin/knowledge/ContentStudioDashboard';
+import { AdminKnowledgeItemsPage } from '@/components/admin/knowledge/AdminKnowledgeItemsPage';
 
 const AdminKnowledgeItems = () => {
-  return <ContentStudioDashboard />;
+  return <AdminKnowledgeItemsPage />;
 };
 
 export default AdminKnowledgeItems;
