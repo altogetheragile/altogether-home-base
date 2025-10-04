@@ -8,10 +8,12 @@ import { BulkOperationsPanel } from './BulkOperationsPanel';
 import type { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
 import type { KnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useNavigate } from 'react-router-dom';
+import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 
 export const AdminKnowledgeItemsPage = () => {
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const { data: categories } = useKnowledgeCategories();
   const [filters, setFilters] = useState<KnowledgeItemsFiltersType>({
     search: '',
     categories: [],
@@ -49,26 +51,44 @@ export const AdminKnowledgeItemsPage = () => {
                   placeholder="Search..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="pl-8 h-8 text-sm"
+                  className="pl-8 h-7 text-sm"
                 />
                 {filters.search && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setFilters({ ...filters, search: '' })}
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
                   >
                     <X className="h-3 w-3" />
                   </Button>
                 )}
               </div>
 
+              {/* Category Filter */}
+              <Select 
+                value={filters.categories.length > 0 ? filters.categories[0] : 'all'} 
+                onValueChange={(value: any) => setFilters({ ...filters, categories: value === 'all' ? [] : [value] })}
+              >
+                <SelectTrigger className="w-[140px] h-7 text-xs">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {/* Status */}
               <Select 
                 value={filters.status} 
                 onValueChange={(value: any) => setFilters({ ...filters, status: value })}
               >
-                <SelectTrigger className="w-[100px] h-8 text-sm">
+                <SelectTrigger className="w-[90px] h-7 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -83,7 +103,7 @@ export const AdminKnowledgeItemsPage = () => {
                 value={filters.sortBy} 
                 onValueChange={(value: any) => setFilters({ ...filters, sortBy: value })}
               >
-                <SelectTrigger className="w-[120px] h-8 text-sm">
+                <SelectTrigger className="w-[100px] h-7 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -94,7 +114,7 @@ export const AdminKnowledgeItemsPage = () => {
               </Select>
             </div>
 
-            <Button onClick={() => navigate('/admin/knowledge-items/new')} size="sm">
+            <Button onClick={() => navigate('/admin/knowledge-items/new')} size="sm" className="h-7 text-xs">
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               New
             </Button>

@@ -235,7 +235,6 @@ export const KnowledgeItemsTable = ({
               />
             </TableHead>
             <TableHead className="py-2">Title</TableHead>
-            <TableHead className="py-2">Category</TableHead>
             <TableHead className="py-2 text-right">Cases</TableHead>
             <TableHead className="py-2 text-right">Views</TableHead>
             <TableHead className="py-2">Status</TableHead>
@@ -259,35 +258,6 @@ export const KnowledgeItemsTable = ({
                   <span className="font-medium text-sm">{item.name}</span>
                   {item.is_featured && (
                     <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                  )}
-                </div>
-              </TableCell>
-
-              <TableCell className="py-2">
-                <div className="flex items-center gap-1 flex-wrap">
-                  {item.knowledge_categories && (
-                    <Badge 
-                      variant="secondary" 
-                      className="text-[10px] h-5 px-1.5"
-                      style={{ 
-                        backgroundColor: `${item.knowledge_categories.color}15`, 
-                        color: item.knowledge_categories.color
-                      }}
-                    >
-                      {item.knowledge_categories.name}
-                    </Badge>
-                  )}
-                  {item.planning_focuses && (
-                    <Badge 
-                      variant="outline" 
-                      className="text-[10px] h-5 px-1.5"
-                      style={{ 
-                        borderColor: item.planning_focuses.color, 
-                        color: item.planning_focuses.color 
-                      }}
-                    >
-                      {item.planning_focuses.name}
-                    </Badge>
                   )}
                 </div>
               </TableCell>
@@ -400,7 +370,7 @@ export const KnowledgeItemsTable = ({
           
           {!items?.length && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8">
+              <TableCell colSpan={7} className="text-center py-8">
                 <p className="text-sm text-muted-foreground">No items found</p>
               </TableCell>
             </TableRow>
