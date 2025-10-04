@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Eye, EyeOff, Edit, Trash2, MoreHorizontal, FileText, Target, 
-  Clock, TrendingUp, Copy, Archive, Star, StarOff, Share, ExternalLink 
+  Eye, EyeOff, Edit, Trash2, MoreHorizontal, 
+  Clock, Copy, Archive, Star, StarOff, Share, ExternalLink 
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
 import { useDeleteKnowledgeItem, useUpdateKnowledgeItem, useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
@@ -224,38 +223,30 @@ export const KnowledgeItemsTable = ({
   const someSelected = selectedItems.length > 0 && selectedItems.length < (items?.length || 0);
 
   return (
-    <div className="bg-card rounded-lg border shadow-sm">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {items?.length || 0} items total
-          </p>
-        </div>
-      </div>
-
+    <div className="bg-card rounded border">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-12">
+            <TableHead className="w-8 py-2">
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={handleSelectAll}
                 aria-label="Select all"
               />
             </TableHead>
-            <TableHead className="min-w-[300px]">Item</TableHead>
-            <TableHead>Classification</TableHead>
-            <TableHead>Use Cases</TableHead>
-            <TableHead>Performance</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Updated</TableHead>
-            <TableHead className="w-12"></TableHead>
+            <TableHead className="py-2">Title</TableHead>
+            <TableHead className="py-2">Category</TableHead>
+            <TableHead className="py-2 text-right">Cases</TableHead>
+            <TableHead className="py-2 text-right">Views</TableHead>
+            <TableHead className="py-2">Status</TableHead>
+            <TableHead className="py-2">Updated</TableHead>
+            <TableHead className="w-16 py-2"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items?.map((item) => (
             <TableRow key={item.id} className="group">
-              <TableCell>
+              <TableCell className="py-2">
                 <Checkbox
                   checked={selectedItems.includes(item.id)}
                   onCheckedChange={(checked) => handleSelectItem(item.id, !!checked)}
@@ -263,45 +254,24 @@ export const KnowledgeItemsTable = ({
                 />
               </TableCell>
               
-              <TableCell>
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10 rounded-lg">
-                    <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-sm font-medium">
-                      {item.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-foreground truncate">
-                        {item.name}
-                      </h4>
-                      {item.is_featured && (
-                        <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                      )}
-                    </div>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {item.description}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      /{item.slug}
-                    </p>
-                  </div>
+              <TableCell className="py-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{item.name}</span>
+                  {item.is_featured && (
+                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                  )}
                 </div>
               </TableCell>
 
-              <TableCell>
-                <div className="space-y-1.5">
+              <TableCell className="py-2">
+                <div className="flex items-center gap-1 flex-wrap">
                   {item.knowledge_categories && (
                     <Badge 
                       variant="secondary" 
-                      className="text-xs"
+                      className="text-[10px] h-5 px-1.5"
                       style={{ 
                         backgroundColor: `${item.knowledge_categories.color}15`, 
-                        color: item.knowledge_categories.color,
-                        borderColor: `${item.knowledge_categories.color}30`
+                        color: item.knowledge_categories.color
                       }}
                     >
                       {item.knowledge_categories.name}
@@ -310,7 +280,7 @@ export const KnowledgeItemsTable = ({
                   {item.planning_focuses && (
                     <Badge 
                       variant="outline" 
-                      className="text-xs"
+                      className="text-[10px] h-5 px-1.5"
                       style={{ 
                         borderColor: item.planning_focuses.color, 
                         color: item.planning_focuses.color 
@@ -319,144 +289,119 @@ export const KnowledgeItemsTable = ({
                       {item.planning_focuses.name}
                     </Badge>
                   )}
-                  {item.activity_domains && (
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs"
-                      style={{ 
-                        borderColor: item.activity_domains.color, 
-                        color: item.activity_domains.color 
-                      }}
-                    >
-                      {item.activity_domains.name}
-                    </Badge>
-                  )}
                 </div>
               </TableCell>
 
-              <TableCell>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <FileText className="h-3.5 w-3.5" />
-                    <span>{item.knowledge_use_cases?.filter(uc => uc.case_type === 'generic').length || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Target className="h-3.5 w-3.5" />
-                    <span>{item.knowledge_use_cases?.filter(uc => uc.case_type === 'example').length || 0}</span>
-                  </div>
-                </div>
+              <TableCell className="py-2 text-right">
+                <span className="text-xs text-muted-foreground">
+                  {item.knowledge_use_cases?.filter(uc => uc.case_type === 'generic').length || 0}/
+                  {item.knowledge_use_cases?.filter(uc => uc.case_type === 'example').length || 0}
+                </span>
               </TableCell>
 
-              <TableCell>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <TrendingUp className="h-3.5 w-3.5" />
-                  <span>{item.view_count || 0} views</span>
-                </div>
+              <TableCell className="py-2 text-right">
+                <span className="text-xs text-muted-foreground">{item.view_count || 0}</span>
               </TableCell>
 
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Badge variant={item.is_published ? 'default' : 'secondary'}>
-                    {item.is_published ? (
-                      <>
-                        <Eye className="h-3 w-3 mr-1" />
-                        Published
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="h-3 w-3 mr-1" />
-                        Draft
-                      </>
-                    )}
-                  </Badge>
-                </div>
+              <TableCell className="py-2">
+                <Badge 
+                  variant={item.is_published ? 'default' : 'secondary'}
+                  className="text-[10px] h-5 px-1.5"
+                >
+                  {item.is_published ? 'Published' : 'Draft'}
+                </Badge>
               </TableCell>
 
-              <TableCell>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
-                </div>
+              <TableCell className="py-2">
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(item.updated_at), { addSuffix: false }).replace('about ', '')}
+                </span>
               </TableCell>
 
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52">
+              <TableCell className="py-2">
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 w-7 p-0"
+                    onClick={() => onEdit(item)}
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem onClick={() => onEdit(item)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Content
+                      <Edit className="h-3.5 w-3.5 mr-1.5" />
+                      Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handlePreview(item)}>
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Preview in New Tab
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                      Preview
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleDuplicate(item)}>
-                      <Copy className="h-4 w-4 mr-2" />
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />
                       Duplicate
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleShare(item)}>
-                      <Share className="h-4 w-4 mr-2" />
-                      Copy Share Link
+                      <Share className="h-3.5 w-3.5 mr-1.5" />
+                      Share
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => toggleFeatured(item)}>
                       {item.is_featured ? (
                         <>
-                          <StarOff className="h-4 w-4 mr-2" />
-                          Remove from Featured
+                          <StarOff className="h-3.5 w-3.5 mr-1.5" />
+                          Unfeature
                         </>
                       ) : (
                         <>
-                          <Star className="h-4 w-4 mr-2" />
-                          Add to Featured
+                          <Star className="h-3.5 w-3.5 mr-1.5" />
+                          Feature
                         </>
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => togglePublished(item)}>
                       {item.is_published ? (
                         <>
-                          <EyeOff className="h-4 w-4 mr-2" />
+                          <EyeOff className="h-3.5 w-3.5 mr-1.5" />
                           Unpublish
                         </>
                       ) : (
                         <>
-                          <Eye className="h-4 w-4 mr-2" />
+                          <Eye className="h-3.5 w-3.5 mr-1.5" />
                           Publish
                         </>
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleArchive(item)}>
-                      <Archive className="h-4 w-4 mr-2" />
+                      <Archive className="h-3.5 w-3.5 mr-1.5" />
                       Archive
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-destructive focus:text-destructive"
                       onClick={() => setItemToDelete(item)}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              </div>
               </TableCell>
             </TableRow>
           ))}
           
           {!items?.length && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-12">
-                <div className="text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">No knowledge items found</h3>
-                  <p className="text-sm">Try adjusting your filters or create a new item</p>
-                </div>
+              <TableCell colSpan={8} className="text-center py-8">
+                <p className="text-sm text-muted-foreground">No items found</p>
               </TableCell>
             </TableRow>
           )}
