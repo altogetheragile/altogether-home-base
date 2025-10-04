@@ -167,7 +167,7 @@ const KnowledgeDetail = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content Area - Takes 2 columns */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-8">
               <Tabs defaultValue="background" className="w-full">
                 <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
                   <TabsTrigger 
@@ -177,15 +177,6 @@ const KnowledgeDetail = () => {
                     <FileText className="mr-2 h-4 w-4" />
                     Background
                   </TabsTrigger>
-                  {useCases && useCases.length > 0 && (
-                    <TabsTrigger 
-                      value="usecases"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-                    >
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      Use Cases & Applications
-                    </TabsTrigger>
-                  )}
                   {mediaAssets && mediaAssets.length > 0 && (
                     <TabsTrigger 
                       value="examples"
@@ -206,13 +197,62 @@ const KnowledgeDetail = () => {
                   )}
                 </TabsContent>
 
-                {/* Use Cases Tab */}
-                {useCases && useCases.length > 0 && (
-                  <TabsContent value="usecases" className="mt-6 space-y-8">
-                    <p className="text-sm text-muted-foreground">
+                {/* Examples Tab */}
+                {mediaAssets && mediaAssets.length > 0 && (
+                  <TabsContent value="examples" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {mediaAssets.map((asset: any) => (
+                        <Card key={asset.id} className="overflow-hidden">
+                          {asset.type === 'image' && asset.url && (
+                            <div className="aspect-video w-full overflow-hidden bg-muted">
+                              <img 
+                                src={asset.url} 
+                                alt={asset.title || 'Example image'}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <CardContent className="p-4">
+                            {asset.title && (
+                              <h4 className="font-semibold mb-2">{asset.title}</h4>
+                            )}
+                            {asset.description && (
+                              <p className="text-sm text-muted-foreground mb-3">{asset.description}</p>
+                            )}
+                            {asset.url && asset.type !== 'image' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                asChild
+                              >
+                                <a href={asset.url} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="mr-2 h-3 w-3" />
+                                  View {asset.type}
+                                </a>
+                              </Button>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </TabsContent>
+                )}
+              </Tabs>
+
+              {/* Use Cases Section - Always visible below tabs */}
+              {useCases && useCases.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5" />
+                      Use Cases & Applications
+                    </CardTitle>
+                    <CardDescription>
                       Real-world applications and practical examples
-                    </p>
-                    
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     {useCases.map((useCase) => (
                       <div key={useCase.id} className="border rounded-lg p-6 space-y-4 bg-muted/20">
                         {useCase.title && (
@@ -310,69 +350,27 @@ const KnowledgeDetail = () => {
                         </div>
                       </div>
                     ))}
-                  </TabsContent>
-                )}
-
-                {/* Examples Tab */}
-                {mediaAssets && mediaAssets.length > 0 && (
-                  <TabsContent value="examples" className="mt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {mediaAssets.map((asset: any) => (
-                        <Card key={asset.id} className="overflow-hidden">
-                          {asset.type === 'image' && asset.url && (
-                            <div className="aspect-video w-full overflow-hidden bg-muted">
-                              <img 
-                                src={asset.url} 
-                                alt={asset.title || 'Example image'}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          <CardContent className="p-4">
-                            {asset.title && (
-                              <h4 className="font-semibold mb-2">{asset.title}</h4>
-                            )}
-                            {asset.description && (
-                              <p className="text-sm text-muted-foreground mb-3">{asset.description}</p>
-                            )}
-                            {asset.url && asset.type !== 'image' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                                asChild
-                              >
-                                <a href={asset.url} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="mr-2 h-3 w-3" />
-                                  View {asset.type}
-                                </a>
-                              </Button>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </TabsContent>
-                )}
-              </Tabs>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Sidebar - Takes 1 column */}
             <div className="space-y-6">
-              {/* Templates & Tools */}
-              {templates && templates.length > 0 && (
-                <Card className="bg-orange-50/30 border-orange-200">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2 text-orange-900">
-                      <FileText className="h-4 w-4 text-orange-600" />
-                      Templates & Tools
-                    </CardTitle>
-                    <CardDescription className="text-xs text-orange-700">
-                      Ready-to-use templates and practical tools
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {templates.map((assoc: any) => (
+              {/* Templates & Tools - Always visible */}
+              <Card className="bg-orange-50/30 border-orange-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2 text-orange-900">
+                    <FileText className="h-4 w-4 text-orange-600" />
+                    Templates & Tools
+                  </CardTitle>
+                  <CardDescription className="text-xs text-orange-700">
+                    Ready-to-use templates and practical tools
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {templates && templates.length > 0 ? (
+                    templates.map((assoc: any) => (
                       <div key={assoc.id} className="space-y-3 pb-4 border-b border-orange-200 last:border-0 last:pb-0">
                         <div className="flex items-start gap-2">
                           <FileText className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
@@ -405,10 +403,14 @@ const KnowledgeDetail = () => {
                           </Button>
                         )}
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
+                    ))
+                  ) : (
+                    <p className="text-sm text-orange-700/70 italic">
+                      No templates available yet for this knowledge item.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
