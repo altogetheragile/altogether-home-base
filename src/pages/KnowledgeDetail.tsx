@@ -318,22 +318,22 @@ const KnowledgeDetail = () => {
                                 <FileText className="w-5 h-5 text-secondary-foreground" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold mb-1 line-clamp-2">{assoc.knowledge_templates.title}</h4>
-                                {assoc.knowledge_templates.category && (
+                                <h4 className="font-semibold mb-1 line-clamp-2">{assoc.template.title}</h4>
+                                {assoc.template.category && (
                                   <Badge variant="secondary" className="text-xs mb-2">
-                                    {assoc.knowledge_templates.category}
+                                    {assoc.template.category}
                                   </Badge>
                                 )}
                               </div>
                             </div>
-                            {assoc.knowledge_templates.description && (
+                            {assoc.template.description && (
                               <p className="text-xs text-muted-foreground line-clamp-3">
-                                {assoc.knowledge_templates.description}
+                                {assoc.template.description}
                               </p>
                             )}
-                            {assoc.knowledge_templates.pdf_url && (
+                            {assoc.template.pdf_url && (
                               <Button variant="default" size="sm" className="w-full" asChild>
-                                <a href={assoc.knowledge_templates.pdf_url} target="_blank" rel="noopener noreferrer">
+                                <a href={assoc.template.pdf_url} target="_blank" rel="noopener noreferrer">
                                   <Download className="w-3 h-3 mr-2" />
                                   Download Template
                                 </a>
