@@ -256,8 +256,8 @@ const AdminLayout = () => {
           </div>
 
           {/* Items Grid - Only show items for active tab */}
-          <div className="px-6 py-3 overflow-x-auto">
-            <div className="flex gap-3">
+          <div className="px-6 py-3">
+            <div className="flex gap-2">
               {(() => {
                 // Get items for active tab
                 let itemsToRender = [];
@@ -280,7 +280,7 @@ const AdminLayout = () => {
                         <TooltipTrigger asChild>
                           <Link
                             to={item.href}
-                            className={`group flex items-center justify-center p-1.5 bg-white rounded-md border w-[72px] ${
+                            className={`group flex flex-1 items-center justify-center p-1.5 bg-white rounded-md border ${
                               isActive(item.href) 
                                 ? 'border-primary/40 bg-primary/5' 
                                 : 'border-gray-200'
