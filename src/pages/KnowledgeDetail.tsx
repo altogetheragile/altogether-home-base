@@ -177,15 +177,20 @@ const KnowledgeDetail = () => {
                     <FileText className="mr-2 h-4 w-4" />
                     Background
                   </TabsTrigger>
-                  {mediaAssets && mediaAssets.length > 0 && (
-                    <TabsTrigger 
-                      value="examples"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-                    >
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      Examples
-                    </TabsTrigger>
-                  )}
+                  <TabsTrigger 
+                    value="use-cases"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Use Cases
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="images"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                  >
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Images
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Background Tab */}
@@ -197,9 +202,120 @@ const KnowledgeDetail = () => {
                   )}
                 </TabsContent>
 
-                {/* Examples Tab */}
-                {mediaAssets && mediaAssets.length > 0 && (
-                  <TabsContent value="examples" className="mt-6">
+                {/* Use Cases Tab */}
+                <TabsContent value="use-cases" className="mt-6">
+                  {useCases && useCases.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold mb-1">Use Cases & Applications</h3>
+                        <p className="text-sm text-muted-foreground">Real-world applications and practical examples</p>
+                      </div>
+                      {useCases.map((useCase) => (
+                        <div key={useCase.id} className="border rounded-lg p-6 space-y-4 bg-muted/20">
+                          {useCase.title && (
+                            <h4 className="text-base font-semibold">{useCase.title}</h4>
+                          )}
+                          
+                          {useCase.summary && (
+                            <p className="text-muted-foreground">{useCase.summary}</p>
+                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            {useCase.what && (
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                  What
+                                </div>
+                                <div className="text-xs text-muted-foreground italic mb-1">
+                                  {useCase.case_type === 'example' 
+                                    ? 'What is it about?' 
+                                    : 'Is the core activity or technique being used?'}
+                                </div>
+                                <p className="text-sm">{useCase.what}</p>
+                              </div>
+                            )}
+
+                            {useCase.why && (
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                  Why
+                                </div>
+                                <div className="text-xs text-muted-foreground italic mb-1">
+                                  {useCase.case_type === 'example'
+                                    ? 'Why is this approach used?'
+                                    : 'Is this approach used? What problem does it solve?'}
+                                </div>
+                                <p className="text-sm">{useCase.why}</p>
+                              </div>
+                            )}
+
+                            {useCase.where_used && (
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                  Where
+                                </div>
+                                <div className="text-xs text-muted-foreground italic mb-1">
+                                  {useCase.case_type === 'example'
+                                    ? 'Is this located or in what context?'
+                                    : 'Should this be applied? In what context or environment?'}
+                                </div>
+                                <p className="text-sm">{useCase.where_used}</p>
+                              </div>
+                            )}
+
+                            {useCase.when_used && (
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                  When
+                                </div>
+                                <div className="text-xs text-muted-foreground italic mb-1">
+                                  {useCase.case_type === 'example'
+                                    ? 'Did this occur or at what stage?'
+                                    : 'Should this be used? At what stage or timing?'}
+                                </div>
+                                <p className="text-sm">{useCase.when_used}</p>
+                              </div>
+                            )}
+
+                            {useCase.who && (
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                  Who
+                                </div>
+                                <div className="text-xs text-muted-foreground italic mb-1">
+                                  {useCase.case_type === 'example'
+                                    ? 'Is involved or affected?'
+                                    : 'Should be involved? What roles or stakeholders?'}
+                                </div>
+                                <p className="text-sm">{useCase.who}</p>
+                              </div>
+                            )}
+
+                            {useCase.how && (
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                  How
+                                </div>
+                                <div className="text-xs text-muted-foreground italic mb-1">
+                                  {useCase.case_type === 'example'
+                                    ? 'Was this implemented or executed?'
+                                    : 'Should this be implemented? What are the key steps or processes?'}
+                                </div>
+                                <p className="text-sm">{useCase.how}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No use cases available yet.</p>
+                  )}
+                </TabsContent>
+
+                {/* Images Tab */}
+                <TabsContent value="images" className="mt-6">
+                  {mediaAssets && mediaAssets.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {mediaAssets.map((asset: any) => (
                         <Card key={asset.id} className="overflow-hidden">
@@ -236,123 +352,11 @@ const KnowledgeDetail = () => {
                         </Card>
                       ))}
                     </div>
-                  </TabsContent>
-                )}
+                  ) : (
+                    <p className="text-muted-foreground">No example images available yet.</p>
+                  )}
+                </TabsContent>
               </Tabs>
-
-              {/* Use Cases Section - Always visible below tabs */}
-              {useCases && useCases.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5" />
-                      Use Cases & Applications
-                    </CardTitle>
-                    <CardDescription>
-                      Real-world applications and practical examples
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {useCases.map((useCase) => (
-                      <div key={useCase.id} className="border rounded-lg p-6 space-y-4 bg-muted/20">
-                        {useCase.title && (
-                          <h3 className="text-lg font-semibold">{useCase.title}</h3>
-                        )}
-                        
-                        {useCase.summary && (
-                          <p className="text-muted-foreground">{useCase.summary}</p>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                          {useCase.what && (
-                            <div className="space-y-1">
-                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                                What
-                              </div>
-                              <div className="text-xs text-muted-foreground italic mb-1">
-                                {useCase.case_type === 'example' 
-                                  ? 'What is it about?' 
-                                  : 'Is the core activity or technique being used?'}
-                              </div>
-                              <p className="text-sm">{useCase.what}</p>
-                            </div>
-                          )}
-
-                          {useCase.why && (
-                            <div className="space-y-1">
-                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                                Why
-                              </div>
-                              <div className="text-xs text-muted-foreground italic mb-1">
-                                {useCase.case_type === 'example'
-                                  ? 'Why is this approach used?'
-                                  : 'Is this approach used? What problem does it solve?'}
-                              </div>
-                              <p className="text-sm">{useCase.why}</p>
-                            </div>
-                          )}
-
-                          {useCase.where_used && (
-                            <div className="space-y-1">
-                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                                Where
-                              </div>
-                              <div className="text-xs text-muted-foreground italic mb-1">
-                                {useCase.case_type === 'example'
-                                  ? 'Is this located or in what context?'
-                                  : 'Should this be applied? In what context or environment?'}
-                              </div>
-                              <p className="text-sm">{useCase.where_used}</p>
-                            </div>
-                          )}
-
-                          {useCase.when_used && (
-                            <div className="space-y-1">
-                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                                When
-                              </div>
-                              <div className="text-xs text-muted-foreground italic mb-1">
-                                {useCase.case_type === 'example'
-                                  ? 'Did this occur or at what stage?'
-                                  : 'Should this be used? At what stage or timing?'}
-                              </div>
-                              <p className="text-sm">{useCase.when_used}</p>
-                            </div>
-                          )}
-
-                          {useCase.who && (
-                            <div className="space-y-1">
-                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                                Who
-                              </div>
-                              <div className="text-xs text-muted-foreground italic mb-1">
-                                {useCase.case_type === 'example'
-                                  ? 'Is involved or affected?'
-                                  : 'Should be involved? What roles or stakeholders?'}
-                              </div>
-                              <p className="text-sm">{useCase.who}</p>
-                            </div>
-                          )}
-
-                          {useCase.how && (
-                            <div className="space-y-1">
-                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                                How
-                              </div>
-                              <div className="text-xs text-muted-foreground italic mb-1">
-                                {useCase.case_type === 'example'
-                                  ? 'Was this implemented or executed?'
-                                  : 'Should this be implemented? What are the key steps or processes?'}
-                              </div>
-                              <p className="text-sm">{useCase.how}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
             </div>
 
             {/* Sidebar - Takes 1 column */}
