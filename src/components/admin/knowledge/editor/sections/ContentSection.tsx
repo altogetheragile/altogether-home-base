@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { BookOpen, FileText, Image } from 'lucide-react';
+import { BookOpen, FileText, Image, GripVertical, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { MediaLibrary } from '@/components/ui/media-library';
 import { useKnowledgeItemMedia, useKnowledgeItemMediaMutations } from '@/hooks/useMediaAssets';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 interface ContentSectionProps {
   knowledgeItemId?: string;
@@ -14,14 +16,19 @@ interface ContentSectionProps {
 
 export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId }) => {
   const form = useFormContext<KnowledgeItemFormData>();
-  const { data: knowledgeItemMedia = [] } = useKnowledgeItemMedia(knowledgeItemId);
+  const { data: knowledgeItemMedia = [], refetch } = useKnowledgeItemMedia(knowledgeItemId);
   const { updateKnowledgeItemMedia } = useKnowledgeItemMediaMutations();
+  const [orderedMedia, setOrderedMedia] = useState(knowledgeItemMedia);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  const selectedMediaIds = knowledgeItemMedia.map(media => media.id);
+  React.useEffect(() => {
+    setOrderedMedia(knowledgeItemMedia);
+  }, [knowledgeItemMedia]);
+
+  const selectedMediaIds = orderedMedia.map(media => media.id);
 
   const handleMediaSelectionChange = async (mediaIds: string[]) => {
     if (!knowledgeItemId) {
-      // If Knowledge Item isn't saved yet, show a message
       return;
     }
 
@@ -30,9 +37,40 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId 
         knowledgeItemId,
         mediaAssetIds: mediaIds
       });
+      refetch();
     } catch (error) {
       console.error('Failed to update media:', error);
     }
+  };
+
+  const handleRemoveMedia = async (mediaId: string) => {
+    const newMediaIds = orderedMedia.filter(m => m.id !== mediaId).map(m => m.id);
+    await handleMediaSelectionChange(newMediaIds);
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newOrder = [...orderedMedia];
+    const draggedItem = newOrder[draggedIndex];
+    newOrder.splice(draggedIndex, 1);
+    newOrder.splice(index, 0, draggedItem);
+    
+    setOrderedMedia(newOrder);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = async () => {
+    if (draggedIndex === null) return;
+    
+    const newMediaIds = orderedMedia.map(m => m.id);
+    await handleMediaSelectionChange(newMediaIds);
+    setDraggedIndex(null);
   };
 
   return (
@@ -124,12 +162,62 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId 
             Browse and select media from the shared library
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {!knowledgeItemId && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
               ⚠️ Please save this Knowledge Item first before selecting media to associate with it.
             </div>
           )}
+
+          {knowledgeItemId && orderedMedia.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Selected Media (Drag to reorder)</h4>
+              <div className="space-y-2">
+                {orderedMedia.map((media, index) => (
+                  <div
+                    key={media.id}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className="flex items-center gap-3 p-2 border rounded-lg bg-card hover:bg-accent/50 cursor-move"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    {media.thumbnail_url || media.type === 'image' ? (
+                      <img 
+                        src={media.thumbnail_url || media.url} 
+                        alt={media.title || 'Media'}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                        <Image className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {media.title || media.original_filename || 'Untitled'}
+                      </p>
+                      {media.description && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {media.description}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveMedia(media.id)}
+                      className="shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <MediaLibrary
             selectedMediaIds={selectedMediaIds}
             onSelectionChange={handleMediaSelectionChange}

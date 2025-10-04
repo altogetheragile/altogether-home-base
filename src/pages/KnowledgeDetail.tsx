@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -21,6 +22,7 @@ import {
 import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import FormattedTextDisplay from "@/components/common/FormattedTextDisplay";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 
 const KnowledgeDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -28,6 +30,15 @@ const KnowledgeDetail = () => {
   const { data: useCases } = useKnowledgeUseCases(item?.id);
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const imageAssets = (mediaAssets || []).filter((asset: any) => asset.type === 'image');
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -316,46 +327,70 @@ const KnowledgeDetail = () => {
                 {/* Images Tab */}
                 <TabsContent value="images" className="mt-6">
                   {mediaAssets && mediaAssets.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {mediaAssets.map((asset: any) => (
-                        <Card key={asset.id} className="overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {mediaAssets.map((asset: any, index: number) => (
+                        <div key={asset.id} className="space-y-2">
                           {asset.type === 'image' && asset.url && (
-                            <div className="aspect-video w-full overflow-hidden bg-muted">
-                              <img 
-                                src={asset.url} 
-                                alt={asset.title || 'Example image'}
-                                className="w-full h-full object-cover"
+                            <div 
+                              className="relative group cursor-pointer"
+                              onClick={() => {
+                                const imgIndex = imageAssets.findIndex((img: any) => img.id === asset.id);
+                                if (imgIndex !== -1) openLightbox(imgIndex);
+                              }}
+                            >
+                              <img
+                                src={asset.url}
+                                alt={asset.title || 'Knowledge item image'}
+                                className="w-full h-48 object-cover rounded-lg transition-transform group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                <ImageIcon className="h-8 w-8 text-white" />
+                              </div>
+                            </div>
+                          )}
+                          {asset.type === 'video' && asset.url && (
+                            <video
+                              src={asset.url}
+                              controls
+                              className="w-full rounded-lg"
+                            />
+                          )}
+                          {asset.type === 'embed' && asset.url && (
+                            <div className="aspect-video">
+                              <iframe
+                                src={asset.url}
+                                className="w-full h-full rounded-lg"
+                                allowFullScreen
                               />
                             </div>
                           )}
-                          <CardContent className="p-4">
-                            {asset.title && (
-                              <h4 className="font-semibold mb-2">{asset.title}</h4>
-                            )}
-                            {asset.description && (
-                              <p className="text-sm text-muted-foreground mb-3">{asset.description}</p>
-                            )}
-                            {asset.url && asset.type !== 'image' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                                asChild
-                              >
-                                <a href={asset.url} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="mr-2 h-3 w-3" />
-                                  View {asset.type}
-                                </a>
-                              </Button>
-                            )}
-                          </CardContent>
-                        </Card>
+                          {asset.title && (
+                            <h4 className="font-medium">{asset.title}</h4>
+                          )}
+                          {asset.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {asset.description}
+                            </p>
+                          )}
+                        </div>
                       ))}
                     </div>
                   ) : (
                     <p className="text-muted-foreground">No example images available yet.</p>
                   )}
                 </TabsContent>
+
+                <ImageLightbox
+                  images={imageAssets.map((asset: any) => ({
+                    url: asset.url,
+                    title: asset.title,
+                    description: asset.description,
+                  }))}
+                  currentIndex={lightboxIndex}
+                  open={lightboxOpen}
+                  onOpenChange={setLightboxOpen}
+                  onNavigate={setLightboxIndex}
+                />
               </Tabs>
             </div>
 
