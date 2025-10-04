@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Breadcrumb, 
   BreadcrumbItem, 
@@ -18,7 +18,7 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, Lightbulb, Target, Layers, BookOpen, AlertTriangle, ExternalLink, Info } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import FormattedTextDisplay from "@/components/common/FormattedTextDisplay";
 
@@ -28,16 +28,6 @@ const KnowledgeDetail = () => {
   const { data: useCases } = useKnowledgeUseCases(item?.id);
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
-
-  const clarificationDescriptions = {
-    what: "What is the core activity or technique being used?",
-    why: "Why is this approach used? What problem does it solve?",
-    when: "When should this be applied? At what stage or timing?",
-    where: "Where is this used? In what context or environment?",
-    who: "Who is involved? What roles or stakeholders?",
-    how: "How is this executed? What are the steps or process?",
-    howMuch: "How much effort, time, or resources are needed?"
-  };
 
   if (isLoading) {
     return (
@@ -84,460 +74,353 @@ const KnowledgeDetail = () => {
     <div className="min-h-screen flex flex-col">
       <Navigation />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <Breadcrumb className="mb-6">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/knowledge">Knowledge Base</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{item.name}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
-        {/* Hero Section */}
-        <div className="mb-8 rounded-lg bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-8 border">
-          <h1 className="text-4xl font-bold mb-4 text-foreground">{item.name}</h1>
-          {item.description && (
-            <p className="text-xl text-muted-foreground mb-6 leading-relaxed">{item.description}</p>
-          )}
-          
-          <div className="flex flex-wrap gap-3 mb-4">
-            {item.knowledge_categories && (
-              <HoverCard openDelay={200}>
-                <HoverCardTrigger asChild>
-                  <Badge 
-                    variant="secondary" 
-                    className="text-base py-2 px-4 cursor-pointer hover:scale-105 transition-transform border-2"
-                    style={{ 
-                      backgroundColor: item.knowledge_categories.color + '20', 
-                      color: item.knowledge_categories.color,
-                      borderColor: item.knowledge_categories.color
-                    }}
-                  >
-                    <Layers className="w-4 h-4 mr-2" />
-                    {item.knowledge_categories.name}
-                    {item.knowledge_categories.description && (
-                      <Info className="w-3 h-3 ml-2 opacity-60" />
-                    )}
-                  </Badge>
-                </HoverCardTrigger>
-                {item.knowledge_categories.description && (
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold flex items-center gap-2">
-                        <Layers className="w-4 h-4" style={{ color: item.knowledge_categories.color }} />
-                        {item.knowledge_categories.name}
-                      </h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {item.knowledge_categories.description}
-                      </p>
-                    </div>
-                  </HoverCardContent>
-                )}
-              </HoverCard>
-            )}
-            {item.planning_focuses && (
-              <HoverCard openDelay={200}>
-                <HoverCardTrigger asChild>
-                  <Badge 
-                    variant="secondary" 
-                    className="text-base py-2 px-4 cursor-pointer hover:scale-105 transition-transform border-2"
-                    style={{ 
-                      backgroundColor: item.planning_focuses.color + '20', 
-                      color: item.planning_focuses.color,
-                      borderColor: item.planning_focuses.color
-                    }}
-                  >
-                    <Target className="w-4 h-4 mr-2" />
-                    {item.planning_focuses.name}
-                    {item.planning_focuses.description && (
-                      <Info className="w-3 h-3 ml-2 opacity-60" />
-                    )}
-                  </Badge>
-                </HoverCardTrigger>
-                {item.planning_focuses.description && (
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold flex items-center gap-2">
-                        <Target className="w-4 h-4" style={{ color: item.planning_focuses.color }} />
-                        {item.planning_focuses.name}
-                      </h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {item.planning_focuses.description}
-                      </p>
-                    </div>
-                  </HoverCardContent>
-                )}
-              </HoverCard>
-            )}
-            {item.activity_domains && (
-              <HoverCard openDelay={200}>
-                <HoverCardTrigger asChild>
-                  <Badge 
-                    variant="secondary" 
-                    className="text-base py-2 px-4 cursor-pointer hover:scale-105 transition-transform border-2"
-                    style={{ 
-                      backgroundColor: item.activity_domains.color + '20', 
-                      color: item.activity_domains.color,
-                      borderColor: item.activity_domains.color
-                    }}
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {item.activity_domains.name}
-                    {item.activity_domains.description && (
-                      <Info className="w-3 h-3 ml-2 opacity-60" />
-                    )}
-                  </Badge>
-                </HoverCardTrigger>
-                {item.activity_domains.description && (
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold flex items-center gap-2">
-                        <BookOpen className="w-4 h-4" style={{ color: item.activity_domains.color }} />
-                        {item.activity_domains.name}
-                      </h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {item.activity_domains.description}
-                      </p>
-                    </div>
-                  </HoverCardContent>
-                )}
-              </HoverCard>
-            )}
-          </div>
-
-          <div className="text-sm text-muted-foreground flex items-center gap-4">
-            <span>Last updated: {format(new Date(item.updated_at), 'MMMM d, yyyy')}</span>
-            {item.source && (
-              <span className="flex items-center gap-1">
-                <ExternalLink className="w-3 h-3" />
-                Source: {item.source}
-              </span>
-            )}
+      <main className="flex-1">
+        {/* Breadcrumb */}
+        <div className="border-b bg-muted/20">
+          <div className="container mx-auto px-4 py-4">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/knowledge">Knowledge Base</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{item.name}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
         </div>
 
-        <div className="grid xl:grid-cols-4 lg:grid-cols-3 gap-6">
-          <div className="xl:col-span-3 lg:col-span-2 space-y-6">
-            {/* Background Section */}
-            {item.background && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-primary" />
+        {/* Header */}
+        <div className="border-b bg-background">
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-4">{item.name}</h1>
+            
+            {item.description && (
+              <p className="text-muted-foreground mb-6 max-w-4xl leading-relaxed">
+                {item.description}
+              </p>
+            )}
+
+            {/* Classification Badges */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {item.knowledge_categories && (
+                <Badge 
+                  variant="outline" 
+                  className="py-1.5 px-3"
+                  style={{ 
+                    backgroundColor: item.knowledge_categories.color + '15',
+                    borderColor: item.knowledge_categories.color + '40',
+                    color: item.knowledge_categories.color
+                  }}
+                >
+                  Strategy & Direction
+                </Badge>
+              )}
+              {item.planning_focuses && (
+                <Badge 
+                  variant="outline"
+                  className="py-1.5 px-3"
+                  style={{ 
+                    backgroundColor: item.planning_focuses.color + '15',
+                    borderColor: item.planning_focuses.color + '40',
+                    color: item.planning_focuses.color
+                  }}
+                >
+                  Strategy & Vision
+                </Badge>
+              )}
+              {item.activity_domains && (
+                <Badge 
+                  variant="outline"
+                  className="py-1.5 px-3"
+                  style={{ 
+                    backgroundColor: item.activity_domains.color + '15',
+                    borderColor: item.activity_domains.color + '40',
+                    color: item.activity_domains.color
+                  }}
+                >
+                  Value Ownership
+                </Badge>
+              )}
+            </div>
+
+            {/* Metadata */}
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                Last updated: {format(new Date(item.updated_at), 'MMMM d, yyyy')}
+              </span>
+              {item.source && (
+                <span className="flex items-center gap-1">
+                  <ExternalLink className="w-3 h-3" />
+                  Source: {item.source}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content Area - Takes 2 columns */}
+            <div className="lg:col-span-2">
+              <Tabs defaultValue="background" className="w-full">
+                <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+                  <TabsTrigger 
+                    value="background" 
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
                     Background
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormattedTextDisplay text={item.background} />
-                </CardContent>
-              </Card>
-            )}
+                  </TabsTrigger>
+                  {useCases && useCases.length > 0 && (
+                    <TabsTrigger 
+                      value="usecases"
+                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                    >
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Use Cases & Applications
+                    </TabsTrigger>
+                  )}
+                  {mediaAssets && mediaAssets.length > 0 && (
+                    <TabsTrigger 
+                      value="examples"
+                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                    >
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      Examples
+                    </TabsTrigger>
+                  )}
+                </TabsList>
 
-            {/* Resources & Media Section */}
-            {(mediaAssets && mediaAssets.length > 0) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5 text-primary" />
-                    Resources & Media
-                  </CardTitle>
-                  <CardDescription>Visual materials and supporting documents</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {mediaAssets.map((asset: any) => (
-                      <Card key={asset.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 p-2 rounded-lg bg-primary/10">
-                              {asset.type === 'image' && <ImageIcon className="w-5 h-5 text-primary" />}
-                              {asset.type === 'video' && <Video className="w-5 h-5 text-primary" />}
-                              {asset.type === 'document' && <FileText className="w-5 h-5 text-primary" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              {asset.title && <h4 className="font-semibold mb-1 truncate">{asset.title}</h4>}
-                              {asset.description && (
-                                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{asset.description}</p>
-                              )}
-                              {asset.url && (
-                                <Button variant="outline" size="sm" className="w-full" asChild>
-                                  <a href={asset.url} target="_blank" rel="noopener noreferrer">
-                                    <Download className="w-3 h-3 mr-2" />
-                                    View/Download
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                {/* Background Tab */}
+                <TabsContent value="background" className="mt-6">
+                  {item.background ? (
+                    <FormattedTextDisplay text={item.background} />
+                  ) : (
+                    <p className="text-muted-foreground">No background information available.</p>
+                  )}
+                </TabsContent>
 
-            {/* Templates & Tools Section */}
-            {(templates && templates.length > 0) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-primary" />
-                    Templates & Tools
-                  </CardTitle>
-                  <CardDescription>Ready-to-use templates and practical tools</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {templates.map((assoc: any) => (
-                      <Card key={assoc.id} className="overflow-hidden hover:shadow-md transition-shadow border-2">
-                        <CardContent className="p-4">
-                          <div className="flex flex-col gap-3">
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 p-2 rounded-lg bg-secondary/50">
-                                <FileText className="w-5 h-5 text-secondary-foreground" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold mb-1 line-clamp-2">{assoc.template.title}</h4>
-                                {assoc.template.category && (
-                                  <Badge variant="secondary" className="text-xs mb-2">
-                                    {assoc.template.category}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            {assoc.template.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-3">
-                                {assoc.template.description}
-                              </p>
-                            )}
-                            {assoc.template.pdf_url && (
-                              <Button variant="default" size="sm" className="w-full" asChild>
-                                <a href={assoc.template.pdf_url} target="_blank" rel="noopener noreferrer">
-                                  <Download className="w-3 h-3 mr-2" />
-                                  Download Template
-                                </a>
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Use Cases Section */}
-            {useCases && useCases.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" />
-                    Use Cases & Applications
-                  </CardTitle>
-                  <CardDescription>Real-world applications and practical examples</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {useCases.map((useCase, index) => (
-                    <div key={useCase.id} className="relative">
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-secondary rounded-full" />
-                      <div className="pl-6 space-y-4">
-                        <div>
-                          {useCase.title && (
-                            <h3 className="text-lg font-semibold mb-2">{useCase.title}</h3>
-                          )}
-                          {useCase.summary && (
-                            <p className="text-muted-foreground leading-relaxed">{useCase.summary}</p>
-                          )}
-                        </div>
+                {/* Use Cases Tab */}
+                {useCases && useCases.length > 0 && (
+                  <TabsContent value="usecases" className="mt-6 space-y-8">
+                    <p className="text-sm text-muted-foreground">
+                      Real-world applications and practical examples
+                    </p>
+                    
+                    {useCases.map((useCase) => (
+                      <div key={useCase.id} className="border rounded-lg p-6 space-y-4 bg-muted/20">
+                        {useCase.title && (
+                          <h3 className="text-lg font-semibold">{useCase.title}</h3>
+                        )}
                         
-                        <div className="grid sm:grid-cols-2 gap-4">
+                        {useCase.summary && (
+                          <p className="text-muted-foreground">{useCase.summary}</p>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           {useCase.what && (
-                            <div className="bg-muted/30 rounded-lg p-3 border">
-                              <p className="text-xs font-medium text-primary mb-1">WHAT</p>
-                              <p className="text-xs italic text-muted-foreground mb-2">
-                                {clarificationDescriptions.what}
-                              </p>
+                            <div className="space-y-1">
+                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                What
+                              </div>
+                              <div className="text-xs text-muted-foreground italic mb-1">
+                                {useCase.case_type === 'example' 
+                                  ? 'What is it about?' 
+                                  : 'Is the core activity or technique being used?'}
+                              </div>
                               <p className="text-sm">{useCase.what}</p>
                             </div>
                           )}
+
                           {useCase.why && (
-                            <div className="bg-muted/30 rounded-lg p-3 border">
-                              <p className="text-xs font-medium text-primary mb-1">WHY</p>
-                              <p className="text-xs italic text-muted-foreground mb-2">
-                                {clarificationDescriptions.why}
-                              </p>
+                            <div className="space-y-1">
+                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                Why
+                              </div>
+                              <div className="text-xs text-muted-foreground italic mb-1">
+                                {useCase.case_type === 'example'
+                                  ? 'Why is this approach used?'
+                                  : 'Is this approach used? What problem does it solve?'}
+                              </div>
                               <p className="text-sm">{useCase.why}</p>
                             </div>
                           )}
-                          {useCase.when_used && (
-                            <div className="bg-muted/30 rounded-lg p-3 border">
-                              <p className="text-xs font-medium text-primary mb-1">WHEN</p>
-                              <p className="text-xs italic text-muted-foreground mb-2">
-                                {clarificationDescriptions.when}
-                              </p>
-                              <p className="text-sm">{useCase.when_used}</p>
-                            </div>
-                          )}
+
                           {useCase.where_used && (
-                            <div className="bg-muted/30 rounded-lg p-3 border">
-                              <p className="text-xs font-medium text-primary mb-1">WHERE</p>
-                              <p className="text-xs italic text-muted-foreground mb-2">
-                                {clarificationDescriptions.where}
-                              </p>
+                            <div className="space-y-1">
+                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                Where
+                              </div>
+                              <div className="text-xs text-muted-foreground italic mb-1">
+                                {useCase.case_type === 'example'
+                                  ? 'Is this located or in what context?'
+                                  : 'Should this be applied? In what context or environment?'}
+                              </div>
                               <p className="text-sm">{useCase.where_used}</p>
                             </div>
                           )}
+
+                          {useCase.when_used && (
+                            <div className="space-y-1">
+                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                When
+                              </div>
+                              <div className="text-xs text-muted-foreground italic mb-1">
+                                {useCase.case_type === 'example'
+                                  ? 'Did this occur or at what stage?'
+                                  : 'Should this be used? At what stage or timing?'}
+                              </div>
+                              <p className="text-sm">{useCase.when_used}</p>
+                            </div>
+                          )}
+
                           {useCase.who && (
-                            <div className="bg-muted/30 rounded-lg p-3 border">
-                              <p className="text-xs font-medium text-primary mb-1">WHO</p>
-                              <p className="text-xs italic text-muted-foreground mb-2">
-                                {clarificationDescriptions.who}
-                              </p>
+                            <div className="space-y-1">
+                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                Who
+                              </div>
+                              <div className="text-xs text-muted-foreground italic mb-1">
+                                {useCase.case_type === 'example'
+                                  ? 'Is involved or affected?'
+                                  : 'Should be involved? What roles or stakeholders?'}
+                              </div>
                               <p className="text-sm">{useCase.who}</p>
                             </div>
                           )}
+
                           {useCase.how && (
-                            <div className="bg-muted/30 rounded-lg p-3 border">
-                              <p className="text-xs font-medium text-primary mb-1">HOW</p>
-                              <p className="text-xs italic text-muted-foreground mb-2">
-                                {clarificationDescriptions.how}
-                              </p>
+                            <div className="space-y-1">
+                              <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+                                How
+                              </div>
+                              <div className="text-xs text-muted-foreground italic mb-1">
+                                {useCase.case_type === 'example'
+                                  ? 'Was this implemented or executed?'
+                                  : 'Should this be implemented? What are the key steps or processes?'}
+                              </div>
                               <p className="text-sm">{useCase.how}</p>
-                            </div>
-                          )}
-                          {useCase.how_much && (
-                            <div className="bg-muted/30 rounded-lg p-3 border">
-                              <p className="text-xs font-medium text-primary mb-1">HOW MUCH</p>
-                              <p className="text-xs italic text-muted-foreground mb-2">
-                                {clarificationDescriptions.howMuch}
-                              </p>
-                              <p className="text-sm">{useCase.how_much}</p>
                             </div>
                           )}
                         </div>
                       </div>
-                      
-                      {index < useCases.length - 1 && <div className="mt-6 border-b" />}
+                    ))}
+                  </TabsContent>
+                )}
+
+                {/* Examples Tab */}
+                {mediaAssets && mediaAssets.length > 0 && (
+                  <TabsContent value="examples" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {mediaAssets.map((asset: any) => (
+                        <Card key={asset.id} className="overflow-hidden">
+                          {asset.type === 'image' && asset.url && (
+                            <div className="aspect-video w-full overflow-hidden bg-muted">
+                              <img 
+                                src={asset.url} 
+                                alt={asset.title || 'Example image'}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <CardContent className="p-4">
+                            {asset.title && (
+                              <h4 className="font-semibold mb-2">{asset.title}</h4>
+                            )}
+                            {asset.description && (
+                              <p className="text-sm text-muted-foreground mb-3">{asset.description}</p>
+                            )}
+                            {asset.url && asset.type !== 'image' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                asChild
+                              >
+                                <a href={asset.url} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="mr-2 h-3 w-3" />
+                                  View {asset.type}
+                                </a>
+                              </Button>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                  </TabsContent>
+                )}
+              </Tabs>
+            </div>
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {/* Learning Value */}
-            {item.learning_value_summary && (
-              <Card className="border-l-4 border-l-primary">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4 text-primary" />
-                    Learning Value
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.learning_value_summary}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Common Pitfalls */}
-            {item.common_pitfalls && item.common_pitfalls.length > 0 && (
-              <Card className="border-l-4 border-l-destructive">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-destructive" />
-                    Common Pitfalls
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {item.common_pitfalls.map((pitfall, index) => (
-                      <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                        <AlertTriangle className="w-3 h-3 text-destructive flex-shrink-0 mt-0.5" />
-                        <span>{pitfall}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Evidence Sources */}
-            {item.evidence_sources && item.evidence_sources.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-primary" />
-                    Evidence Sources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {item.evidence_sources.map((source, index) => (
-                      <li key={index} className="text-sm text-muted-foreground leading-relaxed">
-                        • {source}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Related Techniques */}
-            {item.related_techniques && item.related_techniques.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Related Techniques</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {item.related_techniques.map((technique, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {technique}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Key Terminology */}
-            {item.key_terminology && Object.keys(item.key_terminology).length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Key Terminology</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <dl className="space-y-3">
-                    {Object.entries(item.key_terminology).map(([term, definition]) => (
-                      <div key={term} className="pb-2 border-b last:border-0 last:pb-0">
-                        <dt className="font-semibold text-sm mb-1">{term}</dt>
-                        <dd className="text-xs text-muted-foreground leading-relaxed">{definition as string}</dd>
+            {/* Sidebar - Takes 1 column */}
+            <div className="space-y-6">
+              {/* Templates & Tools */}
+              {templates && templates.length > 0 && (
+                <Card className="bg-orange-50/30 border-orange-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2 text-orange-900">
+                      <FileText className="h-4 w-4 text-orange-600" />
+                      Templates & Tools
+                    </CardTitle>
+                    <CardDescription className="text-xs text-orange-700">
+                      Ready-to-use templates and practical tools
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {templates.map((assoc: any) => (
+                      <div key={assoc.id} className="space-y-3 pb-4 border-b border-orange-200 last:border-0 last:pb-0">
+                        <div className="flex items-start gap-2">
+                          <FileText className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm text-orange-900 mb-1">
+                              {assoc.template?.title || 'Untitled Template'}
+                            </h4>
+                            {assoc.template?.description && (
+                              <p className="text-xs text-orange-700 line-clamp-2">
+                                {assoc.template.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {assoc.template?.pdf_url && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="w-full bg-orange-600 hover:bg-orange-700"
+                            asChild
+                          >
+                            <a 
+                              href={assoc.template.pdf_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="mr-2 h-3 w-3" />
+                              Download Template
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     ))}
-                  </dl>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t">
-          <Button variant="ghost" asChild>
-            <Link to="/knowledge">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Knowledge Base
-            </Link>
+        {/* Back Button */}
+        <div className="container mx-auto px-4 pb-8">
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Knowledge Base
           </Button>
         </div>
       </main>
