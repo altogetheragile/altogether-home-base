@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { 
   Breadcrumb, 
   BreadcrumbItem, 
@@ -18,7 +18,7 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, Lightbulb, Target, Layers, BookOpen, AlertTriangle, ExternalLink } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, Lightbulb, Target, Layers, BookOpen, AlertTriangle, ExternalLink, Info } from "lucide-react";
 import { format } from "date-fns";
 import FormattedTextDisplay from "@/components/common/FormattedTextDisplay";
 
@@ -106,79 +106,110 @@ const KnowledgeDetail = () => {
             <p className="text-xl text-muted-foreground mb-6 leading-relaxed">{item.description}</p>
           )}
           
-          <TooltipProvider>
-            <div className="flex flex-wrap gap-3 mb-4">
-              {item.knowledge_categories && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge 
-                      variant="secondary" 
-                      className="text-base py-2 px-4 cursor-help"
-                      style={{ 
-                        backgroundColor: item.knowledge_categories.color + '20', 
-                        color: item.knowledge_categories.color,
-                        borderColor: item.knowledge_categories.color + '40'
-                      }}
-                    >
-                      <Layers className="w-4 h-4 mr-2" />
-                      {item.knowledge_categories.name}
-                    </Badge>
-                  </TooltipTrigger>
-                  {item.knowledge_categories.description && (
-                    <TooltipContent className="max-w-xs">
-                      <p>{item.knowledge_categories.description}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              )}
-              {item.planning_focuses && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge 
-                      variant="secondary" 
-                      className="text-base py-2 px-4 cursor-help"
-                      style={{ 
-                        backgroundColor: item.planning_focuses.color + '20', 
-                        color: item.planning_focuses.color,
-                        borderColor: item.planning_focuses.color + '40'
-                      }}
-                    >
-                      <Target className="w-4 h-4 mr-2" />
-                      {item.planning_focuses.name}
-                    </Badge>
-                  </TooltipTrigger>
-                  {item.planning_focuses.description && (
-                    <TooltipContent className="max-w-xs">
-                      <p>{item.planning_focuses.description}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              )}
-              {item.activity_domains && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge 
-                      variant="secondary" 
-                      className="text-base py-2 px-4 cursor-help"
-                      style={{ 
-                        backgroundColor: item.activity_domains.color + '20', 
-                        color: item.activity_domains.color,
-                        borderColor: item.activity_domains.color + '40'
-                      }}
-                    >
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      {item.activity_domains.name}
-                    </Badge>
-                  </TooltipTrigger>
-                  {item.activity_domains.description && (
-                    <TooltipContent className="max-w-xs">
-                      <p>{item.activity_domains.description}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              )}
-            </div>
-          </TooltipProvider>
+          <div className="flex flex-wrap gap-3 mb-4">
+            {item.knowledge_categories && (
+              <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                  <Badge 
+                    variant="secondary" 
+                    className="text-base py-2 px-4 cursor-pointer hover:scale-105 transition-transform border-2"
+                    style={{ 
+                      backgroundColor: item.knowledge_categories.color + '20', 
+                      color: item.knowledge_categories.color,
+                      borderColor: item.knowledge_categories.color
+                    }}
+                  >
+                    <Layers className="w-4 h-4 mr-2" />
+                    {item.knowledge_categories.name}
+                    {item.knowledge_categories.description && (
+                      <Info className="w-3 h-3 ml-2 opacity-60" />
+                    )}
+                  </Badge>
+                </HoverCardTrigger>
+                {item.knowledge_categories.description && (
+                  <HoverCardContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        <Layers className="w-4 h-4" style={{ color: item.knowledge_categories.color }} />
+                        {item.knowledge_categories.name}
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {item.knowledge_categories.description}
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                )}
+              </HoverCard>
+            )}
+            {item.planning_focuses && (
+              <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                  <Badge 
+                    variant="secondary" 
+                    className="text-base py-2 px-4 cursor-pointer hover:scale-105 transition-transform border-2"
+                    style={{ 
+                      backgroundColor: item.planning_focuses.color + '20', 
+                      color: item.planning_focuses.color,
+                      borderColor: item.planning_focuses.color
+                    }}
+                  >
+                    <Target className="w-4 h-4 mr-2" />
+                    {item.planning_focuses.name}
+                    {item.planning_focuses.description && (
+                      <Info className="w-3 h-3 ml-2 opacity-60" />
+                    )}
+                  </Badge>
+                </HoverCardTrigger>
+                {item.planning_focuses.description && (
+                  <HoverCardContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        <Target className="w-4 h-4" style={{ color: item.planning_focuses.color }} />
+                        {item.planning_focuses.name}
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {item.planning_focuses.description}
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                )}
+              </HoverCard>
+            )}
+            {item.activity_domains && (
+              <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                  <Badge 
+                    variant="secondary" 
+                    className="text-base py-2 px-4 cursor-pointer hover:scale-105 transition-transform border-2"
+                    style={{ 
+                      backgroundColor: item.activity_domains.color + '20', 
+                      color: item.activity_domains.color,
+                      borderColor: item.activity_domains.color
+                    }}
+                  >
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    {item.activity_domains.name}
+                    {item.activity_domains.description && (
+                      <Info className="w-3 h-3 ml-2 opacity-60" />
+                    )}
+                  </Badge>
+                </HoverCardTrigger>
+                {item.activity_domains.description && (
+                  <HoverCardContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" style={{ color: item.activity_domains.color }} />
+                        {item.activity_domains.name}
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {item.activity_domains.description}
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                )}
+              </HoverCard>
+            )}
+          </div>
 
           <div className="text-sm text-muted-foreground flex items-center gap-4">
             <span>Last updated: {format(new Date(item.updated_at), 'MMMM d, yyyy')}</span>
@@ -191,53 +222,8 @@ const KnowledgeDetail = () => {
           </div>
         </div>
 
-        {/* Classification Details Section */}
-        {(item.knowledge_categories?.description || item.planning_focuses?.description || item.activity_domains?.description) && (
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            {item.knowledge_categories?.description && (
-              <Card className="border-l-4" style={{ borderLeftColor: item.knowledge_categories.color }}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Layers className="w-5 h-5" style={{ color: item.knowledge_categories.color }} />
-                    {item.knowledge_categories.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{item.knowledge_categories.description}</p>
-                </CardContent>
-              </Card>
-            )}
-            {item.planning_focuses?.description && (
-              <Card className="border-l-4" style={{ borderLeftColor: item.planning_focuses.color }}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Target className="w-5 h-5" style={{ color: item.planning_focuses.color }} />
-                    {item.planning_focuses.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{item.planning_focuses.description}</p>
-                </CardContent>
-              </Card>
-            )}
-            {item.activity_domains?.description && (
-              <Card className="border-l-4" style={{ borderLeftColor: item.activity_domains.color }}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <BookOpen className="w-5 h-5" style={{ color: item.activity_domains.color }} />
-                    {item.activity_domains.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{item.activity_domains.description}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid xl:grid-cols-4 lg:grid-cols-3 gap-6">
+          <div className="xl:col-span-3 lg:col-span-2 space-y-6">
             {/* Background Section */}
             {item.background && (
               <Card>
