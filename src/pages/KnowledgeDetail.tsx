@@ -109,96 +109,155 @@ const KnowledgeDetail = () => {
           </div>
         </div>
 
-        {/* Header */}
+        {/* Header with Sidebar */}
         <div className="border-b bg-background">
           <div className="container mx-auto px-4 py-8">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-3xl font-bold flex-1">{item.name}</h1>
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="flex items-center gap-2"
-                >
-                  <Link to={`/admin/knowledge/items/edit/${item.id}`}>
-                    <Settings className="h-4 w-4" />
-                    Manage Images
-                  </Link>
-                </Button>
-              )}
-            </div>
-            
-            {item.description && (
-              <p className="text-muted-foreground mb-6 max-w-4xl leading-relaxed">
-                {item.description}
-              </p>
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column - Main Header Content */}
+              <div className="lg:col-span-2">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <h1 className="text-3xl font-bold flex-1">{item.name}</h1>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="flex items-center gap-2"
+                    >
+                      <Link to={`/admin/knowledge/items/edit/${item.id}`}>
+                        <Settings className="h-4 w-4" />
+                        Manage Images
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+                
+                {item.description && (
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    {item.description}
+                  </p>
+                )}
 
-            {/* Classification Badges */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {item.knowledge_categories && (
-                <Badge 
-                  variant="outline" 
-                  className="py-1.5 px-3"
-                  style={{ 
-                    backgroundColor: item.knowledge_categories.color + '15',
-                    borderColor: item.knowledge_categories.color + '40',
-                    color: item.knowledge_categories.color
-                  }}
-                >
-                  Strategy & Direction
-                </Badge>
-              )}
-              {item.planning_focuses && (
-                <Badge 
-                  variant="outline"
-                  className="py-1.5 px-3"
-                  style={{ 
-                    backgroundColor: item.planning_focuses.color + '15',
-                    borderColor: item.planning_focuses.color + '40',
-                    color: item.planning_focuses.color
-                  }}
-                >
-                  Strategy & Vision
-                </Badge>
-              )}
-              {item.activity_domains && (
-                <Badge 
-                  variant="outline"
-                  className="py-1.5 px-3"
-                  style={{ 
-                    backgroundColor: item.activity_domains.color + '15',
-                    borderColor: item.activity_domains.color + '40',
-                    color: item.activity_domains.color
-                  }}
-                >
-                  Value Ownership
-                </Badge>
-              )}
-            </div>
+                {/* Classification Badges */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {item.knowledge_categories && (
+                    <Badge 
+                      variant="outline" 
+                      className="py-1.5 px-3"
+                      style={{ 
+                        backgroundColor: item.knowledge_categories.color + '15',
+                        borderColor: item.knowledge_categories.color + '40',
+                        color: item.knowledge_categories.color
+                      }}
+                    >
+                      Strategy & Direction
+                    </Badge>
+                  )}
+                  {item.planning_focuses && (
+                    <Badge 
+                      variant="outline"
+                      className="py-1.5 px-3"
+                      style={{ 
+                        backgroundColor: item.planning_focuses.color + '15',
+                        borderColor: item.planning_focuses.color + '40',
+                        color: item.planning_focuses.color
+                      }}
+                    >
+                      Strategy & Vision
+                    </Badge>
+                  )}
+                  {item.activity_domains && (
+                    <Badge 
+                      variant="outline"
+                      className="py-1.5 px-3"
+                      style={{ 
+                        backgroundColor: item.activity_domains.color + '15',
+                        borderColor: item.activity_domains.color + '40',
+                        color: item.activity_domains.color
+                      }}
+                    >
+                      Value Ownership
+                    </Badge>
+                  )}
+                </div>
 
-            {/* Metadata */}
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                Last updated: {format(new Date(item.updated_at), 'MMMM d, yyyy')}
-              </span>
-              {item.source && (
-                <span className="flex items-center gap-1">
-                  <ExternalLink className="w-3 h-3" />
-                  Source: {item.source}
-                </span>
-              )}
+                {/* Metadata */}
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    Last updated: {format(new Date(item.updated_at), 'MMMM d, yyyy')}
+                  </span>
+                  {item.source && (
+                    <span className="flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" />
+                      Source: {item.source}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column - Templates & Tools Card */}
+              <div className="lg:col-span-1">
+                <Card className="bg-orange-50/30 border-orange-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2 text-orange-900">
+                      <FileText className="h-4 w-4 text-orange-600" />
+                      Templates & Tools
+                    </CardTitle>
+                    <CardDescription className="text-xs text-orange-700">
+                      Ready-to-use templates and practical tools
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {templates && templates.length > 0 ? (
+                      templates.map((assoc: any) => (
+                        <div key={assoc.id} className="space-y-3 pb-4 border-b border-orange-200 last:border-0 last:pb-0">
+                          <div className="flex items-start gap-2">
+                            <FileText className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-orange-900 mb-1">
+                                {assoc.template?.title || 'Untitled Template'}
+                              </h4>
+                              {assoc.template?.description && (
+                                <p className="text-xs text-orange-700 line-clamp-2">
+                                  {assoc.template.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {assoc.template?.pdf_url && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="w-full bg-orange-600 hover:bg-orange-700"
+                              asChild
+                            >
+                              <a 
+                                href={assoc.template.pdf_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                              >
+                                <Download className="mr-2 h-3 w-3" />
+                                Download Template
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-orange-700/70 italic">
+                        No templates available yet for this knowledge item.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - Tabs Full Width */}
         <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content Area - Takes 2 columns */}
-            <div className="lg:col-span-2 space-y-8">
-              <Tabs defaultValue="background" className="w-full">
+          <Tabs defaultValue="background" className="w-full">
                 <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
                   <TabsTrigger 
                     value="background" 
@@ -448,66 +507,6 @@ const KnowledgeDetail = () => {
                   onNavigate={setLightboxIndex}
                 />
               </Tabs>
-            </div>
-
-            {/* Sidebar - Takes 1 column */}
-            <div className="space-y-6">
-              {/* Templates & Tools - Always visible */}
-              <Card className="bg-orange-50/30 border-orange-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2 text-orange-900">
-                    <FileText className="h-4 w-4 text-orange-600" />
-                    Templates & Tools
-                  </CardTitle>
-                  <CardDescription className="text-xs text-orange-700">
-                    Ready-to-use templates and practical tools
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {templates && templates.length > 0 ? (
-                    templates.map((assoc: any) => (
-                      <div key={assoc.id} className="space-y-3 pb-4 border-b border-orange-200 last:border-0 last:pb-0">
-                        <div className="flex items-start gap-2">
-                          <FileText className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm text-orange-900 mb-1">
-                              {assoc.template?.title || 'Untitled Template'}
-                            </h4>
-                            {assoc.template?.description && (
-                              <p className="text-xs text-orange-700 line-clamp-2">
-                                {assoc.template.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {assoc.template?.pdf_url && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="w-full bg-orange-600 hover:bg-orange-700"
-                            asChild
-                          >
-                            <a 
-                              href={assoc.template.pdf_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                            >
-                              <Download className="mr-2 h-3 w-3" />
-                              Download Template
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-orange-700/70 italic">
-                      No templates available yet for this knowledge item.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
         </div>
 
         {/* Back Button */}
