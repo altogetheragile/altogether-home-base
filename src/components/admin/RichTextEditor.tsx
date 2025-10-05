@@ -2,6 +2,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
 import { 
   Bold, 
   Italic, 
@@ -97,6 +98,10 @@ const MenuBar = ({ editor }: { editor: any }) => {
     }
   };
 
+  const setTextAlignment = (alignment: 'left' | 'center' | 'right' | 'justify') => {
+    editor.chain().focus().setTextAlign(alignment).run();
+  };
+
   return (
     <div className="border-b border-border p-2 flex flex-wrap gap-1">
       <Button
@@ -190,31 +195,33 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <div className="w-px h-6 bg-border mx-1" />
       
       <Button
-        variant="ghost"
+        variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => setImageAlignment('left')}
-        title="Align Left"
+        onClick={() => setTextAlignment('left')}
+        title="Align Text Left"
       >
         <AlignLeft className="h-4 w-4" />
       </Button>
       
       <Button
-        variant="ghost"
+        variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => setImageAlignment('center')}
-        title="Align Center"
+        onClick={() => setTextAlignment('center')}
+        title="Align Text Center"
       >
         <AlignCenter className="h-4 w-4" />
       </Button>
       
       <Button
-        variant="ghost"
+        variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
         size="sm"
-        onClick={() => setImageAlignment('right')}
-        title="Align Right"
+        onClick={() => setTextAlignment('right')}
+        title="Align Text Right"
       >
         <AlignRight className="h-4 w-4" />
       </Button>
+      
+      <div className="w-px h-6 bg-border mx-1" />
       
       <Button
         variant="ghost"
@@ -313,6 +320,10 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         HTMLAttributes: {
           class: 'editor-image',
         },
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
       }),
     ],
     content,
