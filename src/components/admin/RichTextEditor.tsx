@@ -45,6 +45,12 @@ const MenuBar = ({ editor }: { editor: any }) => {
   const addLink = () => {
     if (!linkUrl) return;
 
+    // Ensure the URL has a protocol to prevent relative URL issues
+    let normalizedUrl = linkUrl.trim();
+    if (!normalizedUrl.match(/^https?:\/\//i)) {
+      normalizedUrl = 'https://' + normalizedUrl;
+    }
+
     const { from, to } = editor.state.selection;
     if (from === to) {
       // No selection: insert the URL text as a link
@@ -55,13 +61,13 @@ const MenuBar = ({ editor }: { editor: any }) => {
           {
             type: 'text',
             text: linkUrl,
-            marks: [{ type: 'link', attrs: { href: linkUrl } }],
+            marks: [{ type: 'link', attrs: { href: normalizedUrl } }],
           },
         ])
         .run();
     } else {
       // Selection exists: apply link to the selection
-      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
+      editor.chain().focus().extendMarkRange('link').setLink({ href: normalizedUrl }).run();
     }
 
     setLinkUrl('');
