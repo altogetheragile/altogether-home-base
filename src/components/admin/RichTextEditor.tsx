@@ -103,16 +103,19 @@ const MenuBar = ({ editor }: { editor: any }) => {
   };
 
   const setImageAlignment = (alignment: 'left' | 'center' | 'right') => {
-    const alignmentStyles = {
-      left: 'float: left; margin: 0 1rem 1rem 0;',
-      center: 'display: block; margin: 1rem auto;',
-      right: 'float: right; margin: 0 0 1rem 1rem;'
-    };
+    const { state } = editor;
+    const { selection } = state;
+    const node = state.doc.nodeAt(selection.from);
     
-    const currentImage = editor.getAttributes('image');
-    if (currentImage.src) {
+    if (node && node.type.name === 'image') {
+      const alignmentStyles = {
+        left: 'max-width: 100%; height: auto; float: left; margin: 0 1rem 1rem 0;',
+        center: 'max-width: 100%; height: auto; display: block; margin: 1rem auto;',
+        right: 'max-width: 100%; height: auto; float: right; margin: 0 0 1rem 1rem;'
+      };
+      
       editor.chain().focus().updateAttributes('image', { 
-        style: `max-width: 100%; height: auto; ${alignmentStyles[alignment]}`
+        style: alignmentStyles[alignment]
       }).run();
     }
   };
@@ -351,6 +354,11 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         openOnClick: false,
         autolink: true,
         linkOnPaste: true,
+        HTMLAttributes: {
+          class: 'editor-link',
+          rel: 'noopener noreferrer',
+          target: '_blank',
+        },
       }),
       Image.configure({
         inline: true,
@@ -418,6 +426,8 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         .ProseMirror a {
           color: hsl(var(--primary));
           text-decoration: underline;
+          cursor: text;
+          pointer-events: none;
         }
         .ProseMirror a:hover {
           opacity: 0.9;
