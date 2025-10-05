@@ -13,11 +13,14 @@ import {
   ListOrdered,
   Quote,
   Undo,
-  Redo
+  Redo,
+  Library
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
+import { MediaBrowserDialog } from './MediaBrowserDialog';
 
 interface RichTextEditorProps {
   content?: string;
@@ -30,6 +33,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
   const [imageUrl, setImageUrl] = useState('');
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [showImageInput, setShowImageInput] = useState(false);
+  const [showMediaBrowser, setShowMediaBrowser] = useState(false);
 
   if (!editor) return null;
 
@@ -47,6 +51,14 @@ const MenuBar = ({ editor }: { editor: any }) => {
       setImageUrl('');
       setShowImageInput(false);
     }
+  };
+
+  const handleMediaSelect = (url: string, mediaId: string) => {
+    editor.chain().focus().setImage({ 
+      src: url,
+      'data-media-id': mediaId 
+    }).run();
+    setShowMediaBrowser(false);
   };
 
   return (
@@ -155,17 +167,43 @@ const MenuBar = ({ editor }: { editor: any }) => {
       
       {showImageInput && (
         <div className="flex items-center gap-2 ml-4">
-          <Input
-            type="url"
-            placeholder="Enter image URL"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-48"
-            onKeyDown={(e) => e.key === 'Enter' && addImage()}
-          />
-          <Button size="sm" onClick={addImage}>Add</Button>
+          <Tabs defaultValue="url" className="w-full">
+            <TabsList>
+              <TabsTrigger value="library">Browse Library</TabsTrigger>
+              <TabsTrigger value="url">URL</TabsTrigger>
+            </TabsList>
+            <TabsContent value="library" className="mt-2">
+              <Button 
+                size="sm" 
+                onClick={() => setShowMediaBrowser(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Library className="h-4 w-4" />
+                Open Media Library
+              </Button>
+            </TabsContent>
+            <TabsContent value="url" className="mt-2 flex items-center gap-2">
+              <Input
+                type="url"
+                placeholder="Enter image URL"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="w-64"
+                onKeyDown={(e) => e.key === 'Enter' && addImage()}
+              />
+              <Button size="sm" onClick={addImage}>Add</Button>
+            </TabsContent>
+          </Tabs>
         </div>
       )}
+      
+      <MediaBrowserDialog
+        open={showMediaBrowser}
+        onOpenChange={setShowMediaBrowser}
+        onSelect={handleMediaSelect}
+        filterType="image"
+      />
     </div>
   );
 };

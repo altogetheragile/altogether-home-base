@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { BookOpen, FileText, Image, GripVertical, X } from 'lucide-react';
+import { BookOpen, FileText, Image, GripVertical, X, Info } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
@@ -9,6 +9,7 @@ import { useKnowledgeItemMedia, useKnowledgeItemMediaMutations } from '@/hooks/u
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ContentSectionProps {
   knowledgeItemId?: string;
@@ -108,6 +109,14 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId 
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Inline vs Attached Media:</strong> Images inserted in the editor below appear within the text content. 
+              Media in the library section is attached to this item and displayed in the "Images" tab on the detail page.
+            </AlertDescription>
+          </Alert>
+          
           <FormField
             control={form.control}
             name="background"

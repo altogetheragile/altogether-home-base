@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings } from "lucide-react";
 import { format } from "date-fns";
-import FormattedTextDisplay from "@/components/common/FormattedTextDisplay";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -230,7 +229,10 @@ const KnowledgeDetail = () => {
                 {/* Background Tab */}
                 <TabsContent value="background" className="mt-6">
                   {item.background ? (
-                    <FormattedTextDisplay text={item.background} />
+                    <div 
+                      className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg prose-img:shadow-md"
+                      dangerouslySetInnerHTML={{ __html: item.background }}
+                    />
                   ) : (
                     <p className="text-muted-foreground">No background information available.</p>
                   )}
