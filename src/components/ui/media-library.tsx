@@ -17,13 +17,17 @@ interface MediaLibraryProps {
   onSelectionChange: (mediaIds: string[]) => void;
   multiSelect?: boolean;
   bucketName?: string;
+  knowledgeItemId?: string;
+  onMediaUploaded?: (mediaAssetId: string) => void;
 }
 
 export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   selectedMediaIds = [],
   onSelectionChange,
   multiSelect = true,
-  bucketName = 'knowledge-base'
+  bucketName = 'knowledge-base',
+  knowledgeItemId,
+  onMediaUploaded
 }) => {
   const [uploadingItems, setUploadingItems] = useState<Set<number>>(new Set());
   const [newMediaType, setNewMediaType] = useState<'image' | 'video' | 'embed'>('image');
@@ -69,7 +73,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
       }
 
       // Create media asset in database
-      await createMediaAsset.mutateAsync({
+      const newAsset = await createMediaAsset.mutateAsync({
         type: uploadFormData.type || 'image',
         title: uploadFormData.title || file.name,
         description: uploadFormData.description,
@@ -87,6 +91,11 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
       });
 
       console.log(`Upload successful: ${publicUrl}`);
+      
+      // Call callback if provided (for auto-linking to knowledge item)
+      if (onMediaUploaded && newAsset?.id) {
+        onMediaUploaded(newAsset.id);
+      }
     } catch (error: any) {
       const errorMessage = error?.message || 'Unknown error occurred';
       console.error('Media upload error:', error);
@@ -110,7 +119,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
     }
 
     try {
-      await createMediaAsset.mutateAsync({
+      const newAsset = await createMediaAsset.mutateAsync({
         type: uploadFormData.type || 'embed',
         title: uploadFormData.title || 'Untitled',
         description: uploadFormData.description,
@@ -124,6 +133,11 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         description: '',
         url: ''
       });
+      
+      // Call callback if provided (for auto-linking to knowledge item)
+      if (onMediaUploaded && newAsset?.id) {
+        onMediaUploaded(newAsset.id);
+      }
     } catch (error) {
       console.error('Error creating media from URL:', error);
     }

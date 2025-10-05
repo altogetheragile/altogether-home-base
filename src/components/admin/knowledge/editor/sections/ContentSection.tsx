@@ -43,6 +43,18 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId 
     }
   };
 
+  const handleMediaUploaded = async (mediaAssetId: string) => {
+    if (!knowledgeItemId) return;
+    
+    const newMediaIds = [...selectedMediaIds, mediaAssetId];
+    await handleMediaSelectionChange(newMediaIds);
+    
+    toast({
+      title: "Success",
+      description: "Media uploaded and linked to this Knowledge Item",
+    });
+  };
+
   const handleRemoveMedia = async (mediaId: string) => {
     const newMediaIds = orderedMedia.filter(m => m.id !== mediaId).map(m => m.id);
     await handleMediaSelectionChange(newMediaIds);
@@ -223,6 +235,8 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId 
             onSelectionChange={handleMediaSelectionChange}
             multiSelect={true}
             bucketName="knowledge-base"
+            knowledgeItemId={knowledgeItemId}
+            onMediaUploaded={handleMediaUploaded}
           />
         </CardContent>
       </Card>
