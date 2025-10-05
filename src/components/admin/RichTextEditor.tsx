@@ -107,6 +107,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive('bold') ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
         <Bold className="h-4 w-4" />
@@ -115,6 +116,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive('italic') ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
         <Italic className="h-4 w-4" />
@@ -123,6 +125,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive('strike') ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().toggleStrike().run()}
       >
         <Strikethrough className="h-4 w-4" />
@@ -133,6 +136,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive('bulletList') ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
         <List className="h-4 w-4" />
@@ -141,6 +145,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive('orderedList') ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       >
         <ListOrdered className="h-4 w-4" />
@@ -149,6 +154,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive('blockquote') ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
         <Quote className="h-4 w-4" />
@@ -159,6 +165,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant="ghost"
         size="sm"
+        type="button"
         onClick={() => setShowLinkInput(!showLinkInput)}
       >
         <LinkIcon className="h-4 w-4" />
@@ -167,6 +174,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant="ghost"
         size="sm"
+        type="button"
         onClick={() => setShowImageInput(!showImageInput)}
       >
         <ImageIcon className="h-4 w-4" />
@@ -177,6 +185,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant="ghost"
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
       >
@@ -186,6 +195,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant="ghost"
         size="sm"
+        type="button"
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
       >
@@ -197,6 +207,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => setTextAlignment('left')}
         title="Align Text Left"
       >
@@ -206,6 +217,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => setTextAlignment('center')}
         title="Align Text Center"
       >
@@ -215,6 +227,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
         size="sm"
+        type="button"
         onClick={() => setTextAlignment('right')}
         title="Align Text Right"
       >
@@ -226,6 +239,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant="ghost"
         size="sm"
+        type="button"
         onClick={() => setImageSize('small')}
         title="Small (300px)"
       >
@@ -235,6 +249,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant="ghost"
         size="sm"
+        type="button"
         onClick={() => setImageSize('medium')}
         title="Medium (500px)"
       >
@@ -244,6 +259,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         variant="ghost"
         size="sm"
+        type="button"
         onClick={() => setImageSize('large')}
         title="Large (700px)"
       >
@@ -260,7 +276,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
             className="w-48"
             onKeyDown={(e) => e.key === 'Enter' && addLink()}
           />
-          <Button size="sm" onClick={addLink}>Add</Button>
+          <Button size="sm" type="button" onClick={addLink}>Add</Button>
         </div>
       )}
       
@@ -274,6 +290,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
             <TabsContent value="library" className="mt-2">
               <Button 
                 size="sm" 
+                type="button"
                 onClick={() => setShowMediaBrowser(true)}
                 variant="outline"
                 className="flex items-center gap-2"
@@ -291,7 +308,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
                 className="w-64"
                 onKeyDown={(e) => e.key === 'Enter' && addImage()}
               />
-              <Button size="sm" onClick={addImage}>Add</Button>
+              <Button size="sm" type="button" onClick={addImage}>Add</Button>
             </TabsContent>
           </Tabs>
         </div>
@@ -352,6 +369,22 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         .ProseMirror img {
           max-width: 100%;
           height: auto;
+        }
+        .ProseMirror ul {
+          list-style: disc;
+          padding-left: 1.25rem;
+          margin: 0.5rem 0;
+        }
+        .ProseMirror ol {
+          list-style: decimal;
+          padding-left: 1.25rem;
+          margin: 0.5rem 0;
+        }
+        .ProseMirror li {
+          margin: 0.25rem 0;
+        }
+        .ProseMirror p {
+          margin: 0.5rem 0;
         }
       `}</style>
       <MenuBar editor={editor} />
