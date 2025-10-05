@@ -231,4 +231,35 @@
   .dark .prose a {
     color: hsl(var(--primary)) !important;
   }
+
+  /* Image alignment for rich text content */
+  .prose img[data-align="left"] {
+    float: left;
+    margin: 0 1rem 1rem 0;
+    clear: left;
+    max-width: 50%;
+  }
+
+  .prose img[data-align="center"] {
+    display: block;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    float: none;
+    clear: both;
+  }
+
+  .prose img[data-align="right"] {
+    float: right;
+    margin: 0 0 1rem 1rem;
+    clear: right;
+    max-width: 50%;
+  }
+
+  /* Override prose defaults that might interfere */
+  .prose img {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
 }
