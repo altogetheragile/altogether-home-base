@@ -151,6 +151,18 @@ export const useTemplateKnowledgeItems = (templateId: string) => {
   return useQuery({
     queryKey: ['template-knowledge-items', templateId],
     queryFn: async () => {
+      // First verify this is actually a template
+      const { data: templateData } = await supabase
+        .from('media_assets')
+        .select('is_template')
+        .eq('id', templateId)
+        .single();
+
+      // Only proceed if this is marked as a template
+      if (!templateData?.is_template) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('knowledge_item_templates')
         .select(`

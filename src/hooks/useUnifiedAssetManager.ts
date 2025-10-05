@@ -177,6 +177,7 @@ export const useKnowledgeItemUnifiedAssets = (knowledgeItemId?: string) => {
       
       return data
         .filter(item => item.media_assets)
+        .filter(item => !(item.media_assets as any).is_template) // Exclude templates
         .map(item => {
           const asset = item.media_assets as any;
           return {

@@ -46,6 +46,7 @@ export const useMediaAssets = () => {
       const { data, error } = await supabase
         .from('media_assets')
         .select('*')
+        .eq('is_template', false)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -193,6 +194,7 @@ export const useKnowledgeItemMedia = (knowledgeItemId?: string) => {
       
       return data
         .filter(item => item.media_assets && typeof item.media_assets === 'object')
+        .filter(item => !(item.media_assets as any).is_template) // Exclude templates
         .map(item => {
           const asset = item.media_assets as any;
           return {

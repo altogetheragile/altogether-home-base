@@ -36,7 +36,7 @@ const KnowledgeDetail = () => {
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
 
-  const imageAssets = (mediaAssets || []).filter((asset: any) => asset.type === 'image');
+  const imageAssets = (mediaAssets || []).filter((asset: any) => asset.type === 'image' && !asset.is_template);
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
