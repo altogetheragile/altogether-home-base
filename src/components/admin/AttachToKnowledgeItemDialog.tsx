@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link2, Search } from 'lucide-react';
 import {
   Dialog,
@@ -19,15 +19,24 @@ interface AttachToKnowledgeItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedMediaIds: string[];
+  preselectedKnowledgeItemId?: string | null;
 }
 
 export const AttachToKnowledgeItemDialog: React.FC<AttachToKnowledgeItemDialogProps> = ({
   open,
   onOpenChange,
   selectedMediaIds,
+  preselectedKnowledgeItemId,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedKnowledgeItemId, setSelectedKnowledgeItemId] = useState<string | null>(null);
+
+  // Set preselected knowledge item when dialog opens
+  useEffect(() => {
+    if (open && preselectedKnowledgeItemId) {
+      setSelectedKnowledgeItemId(preselectedKnowledgeItemId);
+    }
+  }, [open, preselectedKnowledgeItemId]);
 
   const { data: knowledgeItems = [] } = useKnowledgeItems({
     search: searchQuery || undefined,

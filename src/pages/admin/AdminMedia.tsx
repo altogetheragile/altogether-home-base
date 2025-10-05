@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Link2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,22 @@ import { MediaLibrary } from '@/components/ui/media-library';
 import { AttachToKnowledgeItemDialog } from '@/components/admin/AttachToKnowledgeItemDialog';
 
 const AdminMedia = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>([]);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
+  const [preselectedKnowledgeItemId, setPreselectedKnowledgeItemId] = useState<string | null>(null);
+
+  // Handle ?attachTo query param
+  useEffect(() => {
+    const attachTo = searchParams.get('attachTo');
+    if (attachTo) {
+      setPreselectedKnowledgeItemId(attachTo);
+      setAttachDialogOpen(true);
+      // Remove query param from URL
+      searchParams.delete('attachTo');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   return (
     <div className="space-y-6">
@@ -46,8 +61,14 @@ const AdminMedia = () => {
 
       <AttachToKnowledgeItemDialog
         open={attachDialogOpen}
-        onOpenChange={setAttachDialogOpen}
+        onOpenChange={(open) => {
+          setAttachDialogOpen(open);
+          if (!open) {
+            setPreselectedKnowledgeItemId(null);
+          }
+        }}
         selectedMediaIds={selectedMediaIds}
+        preselectedKnowledgeItemId={preselectedKnowledgeItemId}
       />
     </div>
   );

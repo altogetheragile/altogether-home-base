@@ -19,10 +19,11 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings } from "lucide-react";
 import { format } from "date-fns";
 import FormattedTextDisplay from "@/components/common/FormattedTextDisplay";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const KnowledgeDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -32,6 +33,8 @@ const KnowledgeDetail = () => {
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
 
   const imageAssets = (mediaAssets || []).filter((asset: any) => asset.type === 'image');
 
@@ -108,7 +111,22 @@ const KnowledgeDetail = () => {
         {/* Header */}
         <div className="border-b bg-background">
           <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-4">{item.name}</h1>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h1 className="text-3xl font-bold flex-1">{item.name}</h1>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="flex items-center gap-2"
+                >
+                  <Link to={`/admin/knowledge/items/edit/${item.id}`}>
+                    <Settings className="h-4 w-4" />
+                    Manage Images
+                  </Link>
+                </Button>
+              )}
+            </div>
             
             {item.description && (
               <p className="text-muted-foreground mb-6 max-w-4xl leading-relaxed">
@@ -201,6 +219,11 @@ const KnowledgeDetail = () => {
                   >
                     <ImageIcon className="mr-2 h-4 w-4" />
                     Images
+                    {imageAssets.length > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {imageAssets.length}
+                      </Badge>
+                    )}
                   </TabsTrigger>
                 </TabsList>
 
@@ -326,57 +349,42 @@ const KnowledgeDetail = () => {
 
                 {/* Images Tab */}
                 <TabsContent value="images" className="mt-6">
-                  {mediaAssets && mediaAssets.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {mediaAssets.map((asset: any, index: number) => (
-                        <div key={asset.id} className="space-y-2">
-                          {asset.type === 'image' && asset.url && (
-                            <div 
-                              className="relative group cursor-pointer"
-                              onClick={() => {
-                                const imgIndex = imageAssets.findIndex((img: any) => img.id === asset.id);
-                                if (imgIndex !== -1) openLightbox(imgIndex);
-                              }}
-                            >
-                              <img
-                                src={asset.url}
-                                alt={asset.title || 'Knowledge item image'}
-                                className="w-full h-48 object-cover rounded-lg transition-transform group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                <ImageIcon className="h-8 w-8 text-white" />
-                              </div>
-                            </div>
-                          )}
-                          {asset.type === 'video' && asset.url && (
-                            <video
-                              src={asset.url}
-                              controls
-                              className="w-full rounded-lg"
-                            />
-                          )}
-                          {asset.type === 'embed' && asset.url && (
-                            <div className="aspect-video">
-                              <iframe
-                                src={asset.url}
-                                className="w-full h-full rounded-lg"
-                                allowFullScreen
-                              />
-                            </div>
-                          )}
+                  {imageAssets.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        No images available for this item
+                      </p>
+                      {isAdmin && (
+                        <Button asChild variant="default" className="flex items-center gap-2 mx-auto">
+                          <Link to={`/admin/media?attachTo=${item.id}`}>
+                            <ImagePlus className="h-4 w-4" />
+                            Attach Images
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {imageAssets.map((asset: any, index: number) => (
+                        <div 
+                          key={asset.id} 
+                          className="relative aspect-video rounded-lg overflow-hidden border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => openLightbox(index)}
+                        >
+                          <img
+                            src={asset.url}
+                            alt={asset.title || asset.file_name || 'Knowledge item image'}
+                            className="w-full h-full object-cover"
+                          />
                           {asset.title && (
-                            <h4 className="font-medium">{asset.title}</h4>
-                          )}
-                          {asset.description && (
-                            <p className="text-sm text-muted-foreground">
-                              {asset.description}
-                            </p>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                              <p className="text-white text-sm font-medium">{asset.title}</p>
+                            </div>
                           )}
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-muted-foreground">No example images available yet.</p>
                   )}
                 </TabsContent>
 
