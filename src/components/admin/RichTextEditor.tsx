@@ -127,7 +127,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
   };
 
   const setTextAlignment = (alignment: 'left' | 'center' | 'right' | 'justify') => {
-    editor.chain().focus().setTextAlign(alignment).run();
+    // Apply via TextAlign and also force attributes on common block nodes as a fallback
+    editor
+      .chain()
+      .focus()
+      .setTextAlign(alignment)
+      .updateAttributes('paragraph', { textAlign: alignment })
+      .updateAttributes('heading', { textAlign: alignment })
+      .updateAttributes('listItem', { textAlign: alignment })
+      .run();
   };
 
   const handleAlignClick = (alignment: 'left' | 'center' | 'right') => {
@@ -384,7 +392,7 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         },
       }),
       TextAlign.configure({
-        types: ['heading', 'paragraph'],
+        types: ['heading', 'paragraph', 'listItem'],
         alignments: ['left', 'center', 'right', 'justify'],
       }),
     ],
@@ -439,6 +447,10 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         .ProseMirror p {
           margin: 0.5rem 0;
         }
+        /* Reinforce alignment set by TextAlign extension */
+        .ProseMirror [style*="text-align: center"] { text-align: center !important; }
+        .ProseMirror [style*="text-align: right"] { text-align: right !important; }
+        .ProseMirror [style*="text-align: justify"] { text-align: justify !important; }
         .ProseMirror a {
           color: hsl(var(--primary));
           text-decoration: underline;
