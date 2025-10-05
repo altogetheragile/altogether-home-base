@@ -442,11 +442,13 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         .ProseMirror a {
           color: hsl(var(--primary));
           text-decoration: underline;
-          cursor: text;
-          pointer-events: none;
+          text-underline-offset: 2px;
+          cursor: pointer;
+          pointer-events: auto;
         }
         .ProseMirror a:hover {
           opacity: 0.9;
+          text-decoration-thickness: 2px;
         }
         /* Show clear selection outline for images/nodes */
         .ProseMirror-selectednode,

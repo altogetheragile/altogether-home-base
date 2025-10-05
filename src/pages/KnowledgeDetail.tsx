@@ -244,7 +244,7 @@ const KnowledgeDetail = () => {
                 <TabsContent value="background" className="mt-6">
                   {item.background ? (
                     <div 
-                      className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg prose-img:shadow-md"
+                      className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-a:underline prose-img:rounded-lg prose-img:shadow-md"
                       dangerouslySetInnerHTML={{ __html: item.background }}
                     />
                   ) : (

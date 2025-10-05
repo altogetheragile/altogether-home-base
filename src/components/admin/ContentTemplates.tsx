@@ -395,7 +395,7 @@ export const ContentTemplates = ({ onUseTemplate }: ContentTemplatesProps) => {
                       <div>
                         <h4 className="font-medium mb-2">Content Preview</h4>
                         <div 
-                          className="prose prose-sm max-w-none text-sm"
+                          className="prose prose-sm max-w-none text-sm prose-a:text-primary prose-a:underline"
                           dangerouslySetInnerHTML={{ __html: template.fields.description }}
                         />
                       </div>
