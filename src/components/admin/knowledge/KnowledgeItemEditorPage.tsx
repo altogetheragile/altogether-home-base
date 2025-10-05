@@ -21,6 +21,7 @@ import { ContentSection } from './editor/sections/ContentSection';
 import { TemplatesSection } from './editor/sections/TemplatesSection';
 import { EnhancedSection } from './editor/sections/EnhancedSection';
 import { UseCasesSection } from './editor/sections/UseCasesSection';
+import { HowToSection } from './editor/sections/HowToSection';
 import { AnalyticsSection } from './editor/sections/AnalyticsSection';
 
 // Import hooks for dropdown data
@@ -53,6 +54,18 @@ const stepConfigs = [
     requiredFields: [] as (keyof KnowledgeItemFormData)[],
   },
   {
+    id: 'use-cases',
+    title: 'Use Cases',
+    description: 'Define practical applications and examples',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'how-to',
+    title: 'How-To Steps',
+    description: 'Create step-by-step instructions and guides',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
     id: 'templates',
     title: 'Templates',
     description: 'Associate templates and frameworks for practical application',
@@ -62,12 +75,6 @@ const stepConfigs = [
     id: 'enhanced',
     title: 'Enhanced Details',
     description: 'Add advanced information, pitfalls, and terminology',
-    requiredFields: [] as (keyof KnowledgeItemFormData)[],
-  },
-  {
-    id: 'use-cases',
-    title: 'Use Cases',
-    description: 'Define practical applications and examples',
     requiredFields: [] as (keyof KnowledgeItemFormData)[],
   },
   {
@@ -421,12 +428,14 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       case 2:
         return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
       case 3:
-        return <TemplatesSection knowledgeItemId={knowledgeItem?.id} />;
-      case 4:
-        return <EnhancedSection />;
-      case 5:
         return <UseCasesSection />;
+      case 4:
+        return <HowToSection knowledgeItemId={knowledgeItem?.id} />;
+      case 5:
+        return <TemplatesSection knowledgeItemId={knowledgeItem?.id} />;
       case 6:
+        return <EnhancedSection />;
+      case 7:
         return <AnalyticsSection onStepChange={handleStepChange} />;
       default:
         return <BasicInfoSection form={form} />;

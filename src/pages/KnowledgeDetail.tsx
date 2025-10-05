@@ -6,6 +6,7 @@ import { useKnowledgeItemBySlug } from "@/hooks/useKnowledgeItems";
 import { useKnowledgeUseCases } from "@/hooks/useKnowledgeUseCases";
 import { useKnowledgeItemTemplates } from "@/hooks/useKnowledgeItemTemplates";
 import { useKnowledgeItemUnifiedAssets } from "@/hooks/useUnifiedAssetManager";
+import { useKnowledgeItemSteps } from "@/hooks/useKnowledgeItemSteps";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered } from "lucide-react";
 import { format } from "date-fns";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -30,6 +31,7 @@ const KnowledgeDetail = () => {
   const { data: useCases } = useKnowledgeUseCases(item?.id);
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
+  const { data: steps } = useKnowledgeItemSteps(item?.id);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const { data: userRole } = useUserRole();
@@ -213,6 +215,18 @@ const KnowledgeDetail = () => {
                     Use Cases
                   </TabsTrigger>
                   <TabsTrigger 
+                    value="how-to"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                  >
+                    <ListOrdered className="mr-2 h-4 w-4" />
+                    How-To
+                    {steps && steps.length > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {steps.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
                     value="images"
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
                   >
@@ -346,6 +360,38 @@ const KnowledgeDetail = () => {
                     </div>
                   ) : (
                     <p className="text-muted-foreground">No use cases available yet.</p>
+                  )}
+                </TabsContent>
+
+                {/* How-To Tab */}
+                <TabsContent value="how-to" className="mt-6">
+                  {steps && steps.length > 0 ? (
+                    <div className="space-y-6">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold mb-1">Step-by-Step Guide</h3>
+                        <p className="text-sm text-muted-foreground">Follow these steps to implement this technique</p>
+                      </div>
+                      {steps.map((step, index) => (
+                        <div key={step.id} className="flex gap-4">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 pb-6 border-l-2 border-muted pl-6 -ml-5">
+                            <h4 className="font-semibold text-lg mb-2">{step.title}</h4>
+                            {step.description && (
+                              <p className="text-sm text-muted-foreground leading-relaxed">
+                                {step.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ListOrdered className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No step-by-step instructions available yet.</p>
+                    </div>
                   )}
                 </TabsContent>
 
