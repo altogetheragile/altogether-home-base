@@ -17,7 +17,6 @@
     "test:clean": "rm -rf .vitest dist coverage && vitest run",
     "test:nuclear": "node src/test/clear-cache.js && npm install && npx vitest run --no-cache",
     "test:verify-msw": "node src/test/verify-msw-v2.mjs",
-
     "bdd": "cucumber-js --config cucumber.mjs",
     "bdd:dev": "cucumber-js --config cucumber.mjs --tags \"not @skip\" --parallel 1",
     "bdd:smoke": "cucumber-js --config cucumber.mjs --tags \"@smoke\"",

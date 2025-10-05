@@ -14,7 +14,10 @@ import {
   Quote,
   Undo,
   Redo,
-  Library
+  Library,
+  AlignLeft,
+  AlignCenter,
+  AlignRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,9 +59,42 @@ const MenuBar = ({ editor }: { editor: any }) => {
   const handleMediaSelect = (url: string, mediaId: string) => {
     editor.chain().focus().setImage({ 
       src: url,
-      'data-media-id': mediaId 
+      'data-media-id': mediaId,
+      width: '400px',
+      style: 'max-width: 100%; height: auto;'
     }).run();
     setShowMediaBrowser(false);
+  };
+
+  const setImageSize = (size: 'small' | 'medium' | 'large' | 'full') => {
+    const sizeMap = {
+      small: '300px',
+      medium: '500px',
+      large: '700px',
+      full: '100%'
+    };
+    
+    const currentImage = editor.getAttributes('image');
+    if (currentImage.src) {
+      editor.chain().focus().updateAttributes('image', { 
+        width: sizeMap[size]
+      }).run();
+    }
+  };
+
+  const setImageAlignment = (alignment: 'left' | 'center' | 'right') => {
+    const alignmentStyles = {
+      left: 'float: left; margin: 0 1rem 1rem 0;',
+      center: 'display: block; margin: 1rem auto;',
+      right: 'float: right; margin: 0 0 1rem 1rem;'
+    };
+    
+    const currentImage = editor.getAttributes('image');
+    if (currentImage.src) {
+      editor.chain().focus().updateAttributes('image', { 
+        style: `max-width: 100%; height: auto; ${alignmentStyles[alignment]}`
+      }).run();
+    }
   };
 
   return (
@@ -151,6 +187,62 @@ const MenuBar = ({ editor }: { editor: any }) => {
         <Redo className="h-4 w-4" />
       </Button>
       
+      <div className="w-px h-6 bg-border mx-1" />
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setImageAlignment('left')}
+        title="Align Left"
+      >
+        <AlignLeft className="h-4 w-4" />
+      </Button>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setImageAlignment('center')}
+        title="Align Center"
+      >
+        <AlignCenter className="h-4 w-4" />
+      </Button>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setImageAlignment('right')}
+        title="Align Right"
+      >
+        <AlignRight className="h-4 w-4" />
+      </Button>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setImageSize('small')}
+        title="Small (300px)"
+      >
+        S
+      </Button>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setImageSize('medium')}
+        title="Medium (500px)"
+      >
+        M
+      </Button>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setImageSize('large')}
+        title="Large (700px)"
+      >
+        L
+      </Button>
+      
       {showLinkInput && (
         <div className="flex items-center gap-2 ml-4">
           <Input
@@ -215,7 +307,13 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
       Link.configure({
         openOnClick: false,
       }),
-      Image,
+      Image.configure({
+        inline: true,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: 'editor-image',
+        },
+      }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -230,6 +328,21 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
+      <style>{`
+        .editor-image {
+          max-width: 100%;
+          height: auto;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+        .editor-image:hover {
+          opacity: 0.8;
+        }
+        .ProseMirror img {
+          max-width: 100%;
+          height: auto;
+        }
+      `}</style>
       <MenuBar editor={editor} />
       <EditorContent 
         editor={editor} 
