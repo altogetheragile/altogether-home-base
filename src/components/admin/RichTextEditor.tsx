@@ -3,6 +3,46 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
+
+// Extended Image node to support alignment and sizing attributes
+const ExtendedImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: null,
+        parseHTML: element => element.getAttribute('width'),
+        renderHTML: attributes => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      'data-align': {
+        default: 'left',
+        parseHTML: element => element.getAttribute('data-align') || 'left',
+        renderHTML: attributes => {
+          return { 'data-align': attributes['data-align'] || 'left' };
+        },
+      },
+      'data-media-id': {
+        default: null,
+        parseHTML: element => element.getAttribute('data-media-id'),
+        renderHTML: attributes => {
+          if (!attributes['data-media-id']) return {};
+          return { 'data-media-id': attributes['data-media-id'] };
+        },
+      },
+      style: {
+        default: null,
+        parseHTML: element => element.getAttribute('style'),
+        renderHTML: attributes => {
+          if (!attributes.style) return {};
+          return { style: attributes.style };
+        },
+      },
+    };
+  },
+});
 import { 
   Bold, 
   Italic, 
@@ -100,30 +140,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
       full: '100%'
     };
     
-    const currentImage = editor.getAttributes('image');
-    if (currentImage.src) {
-      editor.chain().focus().updateAttributes('image', { 
-        width: sizeMap[size]
-      }).run();
-    }
+    editor.chain().focus().updateAttributes('image', { 
+      width: sizeMap[size]
+    }).run();
   };
 
   const setImageAlignment = (alignment: 'left' | 'center' | 'right') => {
-    const { state } = editor;
-    const { selection } = state;
-    const node = state.doc.nodeAt(selection.from);
-    
-    if (node && node.type.name === 'image') {
-      const alignmentStyles = {
-        left: 'max-width: 100%; height: auto; float: left; margin: 0 1rem 1rem 0;',
-        center: 'max-width: 100%; height: auto; display: block; margin: 1rem auto;',
-        right: 'max-width: 100%; height: auto; float: right; margin: 0 0 1rem 1rem;'
-      };
-      
-      editor.chain().focus().updateAttributes('image', { 
-        style: alignmentStyles[alignment]
-      }).run();
-    }
+    editor.chain().focus().updateAttributes('image', { 
+      'data-align': alignment
+    }).run();
   };
 
   const setTextAlignment = (alignment: 'left' | 'center' | 'right' | 'justify') => {
@@ -384,7 +409,7 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
           target: '_blank',
         },
       }),
-      Image.configure({
+      ExtendedImage.configure({
         inline: true,
         allowBase64: false,
         HTMLAttributes: {
@@ -430,6 +455,29 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         .ProseMirror img {
           max-width: 100%;
           height: auto;
+        }
+        /* Image alignment based on data-align attribute */
+        .ProseMirror img[data-align="left"] {
+          float: left;
+          margin: 0 1rem 1rem 0;
+          clear: left;
+        }
+        .ProseMirror img[data-align="center"] {
+          display: block;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          float: none;
+          clear: both;
+        }
+        .ProseMirror img[data-align="right"] {
+          float: right;
+          margin: 0 0 1rem 1rem;
+          clear: right;
+        }
+        /* Override prose defaults that might interfere */
+        .prose .ProseMirror img {
+          margin-top: 0;
+          margin-bottom: 0;
         }
         .ProseMirror ul {
           list-style: disc;
