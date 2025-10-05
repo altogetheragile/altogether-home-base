@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { MediaBrowserDialog } from './MediaBrowserDialog';
+import { NodeSelection } from 'prosemirror-state';
 
 interface RichTextEditorProps {
   content?: string;
@@ -42,11 +43,29 @@ const MenuBar = ({ editor }: { editor: any }) => {
   if (!editor) return null;
 
   const addLink = () => {
-    if (linkUrl) {
-      editor.chain().focus().setLink({ href: linkUrl }).run();
-      setLinkUrl('');
-      setShowLinkInput(false);
+    if (!linkUrl) return;
+
+    const { from, to } = editor.state.selection;
+    if (from === to) {
+      // No selection: insert the URL text as a link
+      editor
+        .chain()
+        .focus()
+        .insertContent([
+          {
+            type: 'text',
+            text: linkUrl,
+            marks: [{ type: 'link', attrs: { href: linkUrl } }],
+          },
+        ])
+        .run();
+    } else {
+      // Selection exists: apply link to the selection
+      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
     }
+
+    setLinkUrl('');
+    setShowLinkInput(false);
   };
 
   const addImage = () => {
@@ -330,6 +349,8 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
       StarterKit,
       Link.configure({
         openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
       }),
       Image.configure({
         inline: true,
@@ -350,6 +371,14 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4',
+      },
+      handleClickOn: (view: any, pos: any, node: any, nodePos: any, event: any, direct: any) => {
+        if (node?.type?.name === 'image') {
+          const tr = view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos));
+          view.dispatch(tr);
+          return true;
+        }
+        return false;
       },
     },
   });
@@ -385,6 +414,19 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
         }
         .ProseMirror p {
           margin: 0.5rem 0;
+        }
+        .ProseMirror a {
+          color: hsl(var(--primary));
+          text-decoration: underline;
+        }
+        .ProseMirror a:hover {
+          opacity: 0.9;
+        }
+        /* Show clear selection outline for images/nodes */
+        .ProseMirror-selectednode,
+        img.ProseMirror-selectednode {
+          outline: 2px solid hsl(var(--primary));
+          outline-offset: 2px;
         }
       `}</style>
       <MenuBar editor={editor} />
