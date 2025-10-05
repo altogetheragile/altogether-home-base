@@ -214,4 +214,21 @@
       min-height: 14px; 
     }
   }
+
+  /* Ensure links are always styled in prose content */
+  .prose a {
+    color: hsl(var(--primary)) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  
+  .prose a:hover {
+    opacity: 0.85;
+    text-decoration-thickness: 2px;
+  }
+  
+  .dark .prose a {
+    color: hsl(var(--primary)) !important;
+  }
 }
