@@ -124,6 +124,16 @@ const MenuBar = ({ editor }: { editor: any }) => {
     editor.chain().focus().setTextAlign(alignment).run();
   };
 
+  const handleAlignClick = (alignment: 'left' | 'center' | 'right') => {
+    const { state } = editor;
+    const node = state.doc.nodeAt(state.selection.from);
+    if (node && node.type.name === 'image') {
+      setImageAlignment(alignment);
+    } else {
+      setTextAlignment(alignment);
+    }
+  };
+
   return (
     <div className="border-b border-border p-2 flex flex-wrap gap-1">
       <Button
@@ -230,7 +240,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
         size="sm"
         type="button"
-        onClick={() => setTextAlignment('left')}
+        onClick={() => handleAlignClick('left')}
         title="Align Text Left"
       >
         <AlignLeft className="h-4 w-4" />
@@ -240,7 +250,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
         size="sm"
         type="button"
-        onClick={() => setTextAlignment('center')}
+        onClick={() => handleAlignClick('center')}
         title="Align Text Center"
       >
         <AlignCenter className="h-4 w-4" />
@@ -250,7 +260,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
         size="sm"
         type="button"
-        onClick={() => setTextAlignment('right')}
+        onClick={() => handleAlignClick('right')}
         title="Align Text Right"
       >
         <AlignRight className="h-4 w-4" />
