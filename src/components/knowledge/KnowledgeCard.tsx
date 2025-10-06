@@ -29,7 +29,7 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
 
   return (
     <Card 
-      className="group border-border hover:shadow-lg transition-all duration-200 overflow-hidden h-full flex flex-col"
+      className="group border-border hover:shadow-lg transition-all duration-200 overflow-hidden h-full flex flex-col relative"
       style={{
         backgroundColor: `${categoryColor}08`,
       }}
@@ -77,7 +77,7 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
         )}
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col pt-0 pb-3 px-6 space-y-3">
+      <CardContent className="flex-1 flex flex-col pt-0 pb-3 px-6 space-y-3 relative">
         {/* Use Case and Evidence */}
         <div className="space-y-1 text-xs">
           <div className="flex items-start gap-1">
