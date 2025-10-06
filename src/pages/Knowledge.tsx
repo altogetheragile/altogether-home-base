@@ -16,7 +16,7 @@ const Knowledge = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
   const [selectedFocus, setSelectedFocus] = useState<string>("all");
-  const [sortBy, setSortBy] = useState("recent");
+  const [sortBy, setSortBy] = useState("alphabetical");
   
   const { data: categories } = useKnowledgeCategories();
   const { data: domains } = useActivityDomains();
@@ -46,7 +46,7 @@ const Knowledge = () => {
     setSelectedCategory("all");
     setSelectedDomain("all");
     setSelectedFocus("all");
-    setSortBy("recent");
+    setSortBy("alphabetical");
   };
 
   const hasActiveFilters = searchQuery || selectedCategory !== "all" || 
