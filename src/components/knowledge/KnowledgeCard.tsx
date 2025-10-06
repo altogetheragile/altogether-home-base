@@ -10,6 +10,8 @@ interface KnowledgeCardProps {
 }
 
 export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
+  console.log("📦 Rendering KnowledgeCard:", { id: item.id, name: item.name, slug: item.slug });
+  
   const categoryColor = item.knowledge_categories?.color || '#3B82F6';
   const domainColor = item.activity_domains?.color || '#10B981';
   
