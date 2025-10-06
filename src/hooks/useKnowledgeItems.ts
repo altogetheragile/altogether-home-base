@@ -54,6 +54,7 @@ export interface KnowledgeItem {
   domain_id?: string;
   source?: string;
   background?: string;
+  author?: string;
   is_published: boolean;
   is_featured: boolean;
   view_count: number;
@@ -107,6 +108,13 @@ export interface KnowledgeItem {
     how?: string;
     how_much?: string;
     summary?: string;
+  }>;
+  knowledge_item_tags?: Array<{
+    knowledge_tags: {
+      id: string;
+      name: string;
+      slug: string;
+    };
   }>;
   publications?: {
     id: string;
@@ -163,6 +171,9 @@ export const useKnowledgeItems = (params?: {
           planning_focuses (id, name, slug, color, display_order, description),
           activity_domains (id, name, slug, color, description),
           knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary),
+          knowledge_item_tags (
+            knowledge_tags (id, name, slug)
+          ),
           publications (
             id, title, publication_type, url, publication_year, publisher,
             publication_authors (
@@ -247,6 +258,9 @@ export const useKnowledgeItemBySlug = (slug: string) => {
           planning_focuses (id, name, slug, color, display_order),
           activity_domains (id, name, slug, color),
           knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary),
+          knowledge_item_tags (
+            knowledge_tags (id, name, slug)
+          ),
           publications (
             id, title, publication_type, url, publication_year, publisher,
             publication_authors (
