@@ -26,10 +26,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('knowledge_item_comments')
-        .select(`
-          *,
-          user_profile:profiles!knowledge_item_comments_user_id_fkey(username, full_name, email)
-        `)
+        .select('*')
         .eq('knowledge_item_id', knowledgeItemId)
         .order('created_at', { ascending: false });
 
