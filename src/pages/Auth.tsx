@@ -32,6 +32,54 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Start MFA challenge after an MFA-required sign-in response
+  const handleStartMfa = async (factorsHint?: any[]) => {
+    try {
+      // Prevent redirect race by marking MFA step immediately
+      setMfaRequired(true);
+
+      let factors = Array.isArray(factorsHint) ? factorsHint : [];
+      if (!Array.isArray(factors) || factors.length === 0) {
+        try {
+          const { data } = await (supabase as any).auth.mfa.listFactors();
+          factors = data?.all ?? [];
+        } catch {}
+      }
+      setMfaFactors(factors);
+
+      const verifiedTotp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp" && ((f.status ?? f.factor_status) === "verified"));
+      if (!verifiedTotp) {
+        const hasTotp = factors.some((f: any) => (f.factor_type ?? f.type) === "totp");
+        setMfaRequired(false);
+        toast({
+          title: hasTotp ? "Authenticator not verified" : "No authenticator found",
+          description: hasTotp ? "Finish authenticator setup before using MFA." : "Add an authenticator app in your profile to enable MFA.",
+          variant: "destructive",
+        });
+        try {
+          const { data: sess } = await supabase.auth.getSession();
+          if (sess?.session) {
+            navigate("/");
+          }
+        } catch {}
+        return;
+      }
+
+      console.log('🔐 Using MFA factor:', { factorId: verifiedTotp.id });
+      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: verifiedTotp.id });
+      if (chErr) throw chErr;
+      const challengeId = chData?.id ?? chData?.challengeId ?? null;
+      setMfaFactorId(verifiedTotp.id);
+      setMfaChallengeId(challengeId);
+      console.log('🪪 MFA challenge created:', { challengeId });
+      toast({ title: "MFA required", description: "Enter the 6‑digit code from your authenticator app." });
+    } catch (err: any) {
+      // Don't sign the user out on challenge errors
+      setMfaRequired(false);
+      toast({ title: "MFA challenge failed", description: err?.message || "Please try again.", variant: "destructive" });
+    }
+  };
+
 useEffect(() => {
   let cancelled = false;
   (async () => {
@@ -177,55 +225,6 @@ useEffect(() => {
 
     setLoading(false);
   };
-
-  // Start MFA challenge after an MFA-required sign-in response
-  const handleStartMfa = async (factorsHint?: any[]) => {
-    try {
-      // Prevent redirect race by marking MFA step immediately
-      setMfaRequired(true);
-
-      let factors = Array.isArray(factorsHint) ? factorsHint : [];
-      if (!Array.isArray(factors) || factors.length === 0) {
-        try {
-          const { data } = await (supabase as any).auth.mfa.listFactors();
-          factors = data?.all ?? [];
-        } catch {}
-      }
-      setMfaFactors(factors);
-
-      const verifiedTotp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp" && ((f.status ?? f.factor_status) === "verified"));
-      if (!verifiedTotp) {
-        const hasTotp = factors.some((f: any) => (f.factor_type ?? f.type) === "totp");
-        setMfaRequired(false);
-        toast({
-          title: hasTotp ? "Authenticator not verified" : "No authenticator found",
-          description: hasTotp ? "Finish authenticator setup before using MFA." : "Add an authenticator app in your profile to enable MFA.",
-          variant: "destructive",
-        });
-        try {
-          const { data: sess } = await supabase.auth.getSession();
-          if (sess?.session) {
-            navigate("/");
-          }
-        } catch {}
-        return;
-      }
-
-      console.log('🔐 Using MFA factor:', { factorId: verifiedTotp.id });
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: verifiedTotp.id });
-      if (chErr) throw chErr;
-      const challengeId = chData?.id ?? chData?.challengeId ?? null;
-      setMfaFactorId(verifiedTotp.id);
-      setMfaChallengeId(challengeId);
-      console.log('🪪 MFA challenge created:', { challengeId });
-      toast({ title: "MFA required", description: "Enter the 6‑digit code from your authenticator app." });
-    } catch (err: any) {
-      // Don't sign the user out on challenge errors
-      setMfaRequired(false);
-      toast({ title: "MFA challenge failed", description: err?.message || "Please try again.", variant: "destructive" });
-    }
-  };
-
 
   // Verify the TOTP code to complete sign in
   const handleVerifyMfa = async (e: React.FormEvent) => {

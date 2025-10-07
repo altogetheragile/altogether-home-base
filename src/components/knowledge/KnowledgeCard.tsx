@@ -24,8 +24,8 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
   // Get up to 3 tags
   const tags = item.knowledge_item_tags?.slice(0, 3).map(tag => tag.knowledge_tags.name) || [];
   
-  // Author - fallback to "Unknown" if not available
-  const authorName = item.author || 'Unknown';
+  // Author - only show if available
+  const authorName = item.author;
 
   return (
     <Card 
@@ -112,13 +112,13 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
               <Heart className="h-3 w-3" />
               0
             </span>
-            <span className="flex items-center gap-1">
-              <MessageCircle className="h-3 w-3" />
-              0
-            </span>
-          </div>
-          <span className="text-xs truncate">{authorName}</span>
+          <span className="flex items-center gap-1">
+            <MessageCircle className="h-3 w-3" />
+            0
+          </span>
         </div>
+        {authorName && <span className="text-xs truncate">{authorName}</span>}
+      </div>
         
         {/* Hidden Link - entire card is clickable */}
         <Link 
