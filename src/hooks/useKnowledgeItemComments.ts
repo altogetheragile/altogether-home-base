@@ -24,14 +24,39 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
   const { data: comments, isLoading } = useQuery({
     queryKey: ['knowledge-item-comments', knowledgeItemId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch comments
+      const { data: rawComments, error } = await supabase
         .from('knowledge_item_comments')
         .select('*')
         .eq('knowledge_item_id', knowledgeItemId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as KnowledgeItemComment[];
+      const comments = (rawComments || []) as KnowledgeItemComment[];
+
+      if (comments.length === 0) return comments;
+
+      // Fetch profiles for all distinct user_ids and merge
+      const userIds = Array.from(new Set(comments.map((c) => c.user_id).filter(Boolean)));
+      if (userIds.length === 0) return comments;
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, email')
+        .in('id', userIds as string[]);
+
+      if (profilesError) {
+        // If profiles are restricted by RLS, fall back gracefully
+        return comments;
+      }
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const merged = comments.map((c) => ({
+        ...c,
+        user_profile: profileMap.get(c.user_id) || undefined,
+      }));
+
+      return merged as KnowledgeItemComment[];
     },
     enabled: !!knowledgeItemId,
   });
