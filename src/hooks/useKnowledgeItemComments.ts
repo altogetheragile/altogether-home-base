@@ -10,6 +10,7 @@ export interface KnowledgeItemComment {
   created_at: string;
   updated_at: string;
   user_profile?: {
+    username?: string;
     full_name?: string;
     email?: string;
   };
@@ -19,13 +20,16 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch all comments
+  // Fetch all comments with user profiles
   const { data: comments, isLoading } = useQuery({
     queryKey: ['knowledge-item-comments', knowledgeItemId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('knowledge_item_comments')
-        .select('*')
+        .select(`
+          *,
+          user_profile:profiles!inner(username, full_name, email)
+        `)
         .eq('knowledge_item_id', knowledgeItemId)
         .order('created_at', { ascending: false });
 

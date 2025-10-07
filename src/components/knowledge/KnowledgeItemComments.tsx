@@ -106,7 +106,8 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
                 <div className="flex gap-4">
                   <Avatar className="h-10 w-10 flex-shrink-0">
                     <AvatarFallback>
-                      {comment.user_profile?.full_name?.[0]?.toUpperCase() || 
+                      {comment.user_profile?.username?.[0]?.toUpperCase() || 
+                       comment.user_profile?.full_name?.[0]?.toUpperCase() || 
                        comment.user_profile?.email?.[0]?.toUpperCase() || 
                        "U"}
                     </AvatarFallback>
@@ -114,7 +115,7 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">
-                        {comment.user_profile?.full_name || comment.user_profile?.email || "Anonymous"}
+                        {comment.user_profile?.username || comment.user_profile?.full_name || comment.user_profile?.email || "Anonymous"}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
