@@ -28,7 +28,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
         .from('knowledge_item_comments')
         .select(`
           *,
-          user_profile:profiles!inner(username, full_name, email)
+          user_profile:profiles!knowledge_item_comments_user_id_fkey(username, full_name, email)
         `)
         .eq('knowledge_item_id', knowledgeItemId)
         .order('created_at', { ascending: false });
