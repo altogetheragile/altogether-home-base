@@ -19,16 +19,13 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch all comments with user profiles
+  // Fetch all comments
   const { data: comments, isLoading } = useQuery({
     queryKey: ['knowledge-item-comments', knowledgeItemId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('knowledge_item_comments')
-        .select(`
-          *,
-          user_profile:profiles!inner(full_name, email)
-        `)
+        .select('*')
         .eq('knowledge_item_id', knowledgeItemId)
         .order('created_at', { ascending: false });
 
