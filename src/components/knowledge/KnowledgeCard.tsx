@@ -118,7 +118,7 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
               onClick={handleLikeClick}
               disabled={isLoading}
               className={cn(
-                "flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50",
+                "relative z-10 flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50",
                 hasLiked && "text-red-500"
               )}
             >
