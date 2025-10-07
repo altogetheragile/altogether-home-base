@@ -42,7 +42,8 @@ const KnowledgeDetail = () => {
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
 
-  const imageAssets = (mediaAssets || []).filter((asset: any) => asset.type === 'image' && !asset.is_template);
+  const filteredMediaAssets = (mediaAssets || []).filter((asset: any) => !asset.is_template);
+  const imageAssets = filteredMediaAssets.filter((asset: any) => asset.type === 'image');
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
@@ -295,10 +296,10 @@ const KnowledgeDetail = () => {
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
                   >
                     <ImageIcon className="mr-2 h-4 w-4" />
-                    Images
-                    {imageAssets.length > 0 && (
+                    Media
+                    {filteredMediaAssets.length > 0 && (
                       <Badge variant="secondary" className="ml-2">
-                        {imageAssets.length}
+                        {filteredMediaAssets.length}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -471,36 +472,48 @@ const KnowledgeDetail = () => {
                   )}
                 </TabsContent>
 
-                {/* Images Tab */}
+                {/* Media Tab */}
                 <TabsContent value="images" className="mt-6">
-                  {imageAssets.length === 0 ? (
+                  {filteredMediaAssets.length === 0 ? (
                     <div className="text-center py-12">
                       <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground mb-4">
-                        No images available for this item
+                        No media available for this item
                       </p>
                       {isAdmin && (
                         <Button asChild variant="default" className="flex items-center gap-2 mx-auto">
                           <Link to={`/admin/media?attachTo=${item.id}`}>
                             <ImagePlus className="h-4 w-4" />
-                            Attach Images
+                            Attach Media
                           </Link>
                         </Button>
                       )}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {imageAssets.map((asset: any, index: number) => (
+                      {filteredMediaAssets.map((asset: any, index: number) => (
                         <div 
                           key={asset.id} 
                           className="relative aspect-video rounded-lg overflow-hidden border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => openLightbox(index)}
+                          onClick={() => asset.type === 'image' && openLightbox(imageAssets.findIndex((img: any) => img.id === asset.id))}
                         >
-                          <img
-                            src={asset.url}
-                            alt={asset.title || asset.file_name || 'Knowledge item image'}
-                            className="w-full h-full object-cover"
-                          />
+                          {asset.type === 'image' ? (
+                            <img
+                              src={asset.url}
+                              alt={asset.title || asset.file_name || 'Knowledge item media'}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : asset.type === 'video' ? (
+                            <video
+                              src={asset.url}
+                              className="w-full h-full object-cover"
+                              controls
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full bg-muted">
+                              <FileText className="h-12 w-12 text-muted-foreground" />
+                            </div>
+                          )}
                           {asset.title && (
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                               <p className="text-white text-sm font-medium">{asset.title}</p>
