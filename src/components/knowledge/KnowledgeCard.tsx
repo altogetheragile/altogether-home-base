@@ -6,6 +6,7 @@ import { KnowledgeItem } from "@/hooks/useKnowledgeItems";
 import { Eye, Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { useKnowledgeItemLikes } from "@/hooks/useKnowledgeItemLikes";
 import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 interface KnowledgeCardProps {
@@ -15,6 +16,7 @@ interface KnowledgeCardProps {
 export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
   console.log("📦 Rendering KnowledgeCard:", { id: item.id, name: item.name, slug: item.slug });
   
+  const { user } = useAuth();
   const { likeCount, hasLiked, toggleLike, isLoading } = useKnowledgeItemLikes(item.id);
   const { commentCount } = useKnowledgeItemComments(item.id);
   
@@ -114,17 +116,19 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
               <Eye className="h-3 w-3" />
               {item.view_count || 0}
             </span>
-            <button
-              onClick={handleLikeClick}
-              disabled={isLoading}
-              className={cn(
-                "relative z-10 flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50",
-                hasLiked && "text-red-500"
-              )}
-            >
-              <Heart className={cn("h-3 w-3", hasLiked && "fill-current")} />
-              {likeCount}
-            </button>
+            {user && (
+              <button
+                onClick={handleLikeClick}
+                disabled={isLoading}
+                className={cn(
+                  "relative z-10 flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50",
+                  hasLiked && "text-red-500"
+                )}
+              >
+                <Heart className={cn("h-3 w-3", hasLiked && "fill-current")} />
+                {likeCount}
+              </button>
+            )}
             <span className="flex items-center gap-1">
               <MessageCircle className="h-3 w-3" />
               {commentCount}
