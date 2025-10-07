@@ -18,8 +18,6 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
   // Get first use case title or summary
   const useCase = item.knowledge_use_cases?.[0]?.title || item.knowledge_use_cases?.[0]?.summary || 'General application';
   
-  // Get evidence type from references
-  const evidenceType = item.knowledge_item_references?.[0]?.reference_type || item.evidence_sources?.[0] || 'Research-based';
   
   // Get up to 3 tags
   const tags = item.knowledge_item_tags?.slice(0, 3).map(tag => tag.knowledge_tags.name) || [];
@@ -78,15 +76,11 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col pt-0 pb-3 px-6 space-y-3 relative">
-        {/* Use Case and Evidence */}
+        {/* Use Case */}
         <div className="space-y-1 text-xs">
           <div className="flex items-start gap-1">
             <span className="font-semibold text-muted-foreground">Use Case:</span>
             <span className="text-foreground line-clamp-1">{useCase}</span>
-          </div>
-          <div className="flex items-start gap-1">
-            <span className="font-semibold text-muted-foreground">Evidence:</span>
-            <span className="text-foreground line-clamp-1">{evidenceType}</span>
           </div>
         </div>
 
