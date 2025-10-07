@@ -7,6 +7,8 @@ import { useKnowledgeUseCases } from "@/hooks/useKnowledgeUseCases";
 import { useKnowledgeItemTemplates } from "@/hooks/useKnowledgeItemTemplates";
 import { useKnowledgeItemUnifiedAssets } from "@/hooks/useUnifiedAssetManager";
 import { useKnowledgeItemSteps } from "@/hooks/useKnowledgeItemSteps";
+import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
+import { KnowledgeItemComments } from "@/components/knowledge/KnowledgeItemComments";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -32,6 +34,7 @@ const KnowledgeDetail = () => {
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
   const { data: steps } = useKnowledgeItemSteps(item?.id);
+  const { commentCount } = useKnowledgeItemComments(item?.id || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const { data: userRole } = useUserRole();
@@ -297,6 +300,18 @@ const KnowledgeDetail = () => {
                       </Badge>
                     )}
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="comments"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Comments
+                    {commentCount > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {commentCount}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Background Tab */}
@@ -493,6 +508,11 @@ const KnowledgeDetail = () => {
                       ))}
                     </div>
                   )}
+                </TabsContent>
+
+                {/* Comments Tab */}
+                <TabsContent value="comments" className="mt-6">
+                  <KnowledgeItemComments knowledgeItemId={item.id} />
                 </TabsContent>
 
                 <ImageLightbox
