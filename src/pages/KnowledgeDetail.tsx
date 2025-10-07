@@ -8,6 +8,7 @@ import { useKnowledgeItemTemplates } from "@/hooks/useKnowledgeItemTemplates";
 import { useKnowledgeItemUnifiedAssets } from "@/hooks/useUnifiedAssetManager";
 import { useKnowledgeItemSteps } from "@/hooks/useKnowledgeItemSteps";
 import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
+import { useViewTracking } from "@/hooks/useViewTracking";
 import { KnowledgeItemComments } from "@/components/knowledge/KnowledgeItemComments";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ const KnowledgeDetail = () => {
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
   const { data: steps } = useKnowledgeItemSteps(item?.id);
   const { commentCount } = useKnowledgeItemComments(item?.id || '');
+  useViewTracking(item?.id || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const { data: userRole } = useUserRole();
