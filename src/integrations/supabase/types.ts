@@ -1017,6 +1017,70 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_item_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          knowledge_item_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          knowledge_item_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          knowledge_item_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_comments_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_item_likes: {
+        Row: {
+          created_at: string
+          id: string
+          knowledge_item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          knowledge_item_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          knowledge_item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_likes_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_item_references: {
         Row: {
           created_at: string
@@ -1562,6 +1626,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      kv_store_308f6a12: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
       }
       levels: {
         Row: {

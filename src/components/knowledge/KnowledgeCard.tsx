@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { KnowledgeItem } from "@/hooks/useKnowledgeItems";
 import { Eye, Heart, MessageCircle, ChevronRight } from "lucide-react";
+import { useKnowledgeItemLikes } from "@/hooks/useKnowledgeItemLikes";
+import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
+import { cn } from "@/lib/utils";
 
 interface KnowledgeCardProps {
   item: KnowledgeItem;
@@ -12,8 +15,17 @@ interface KnowledgeCardProps {
 export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
   console.log("📦 Rendering KnowledgeCard:", { id: item.id, name: item.name, slug: item.slug });
   
+  const { likeCount, hasLiked, toggleLike, isLoading } = useKnowledgeItemLikes(item.id);
+  const { commentCount } = useKnowledgeItemComments(item.id);
+  
   const categoryColor = item.knowledge_categories?.color || '#3B82F6';
   const domainColor = item.activity_domains?.color || '#10B981';
+  
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleLike();
+  };
   
   // Get first use case title or summary
   const useCase = item.knowledge_use_cases?.[0]?.title || item.knowledge_use_cases?.[0]?.summary || 'General application';
@@ -102,17 +114,24 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
               <Eye className="h-3 w-3" />
               {item.view_count || 0}
             </span>
+            <button
+              onClick={handleLikeClick}
+              disabled={isLoading}
+              className={cn(
+                "flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50",
+                hasLiked && "text-red-500"
+              )}
+            >
+              <Heart className={cn("h-3 w-3", hasLiked && "fill-current")} />
+              {likeCount}
+            </button>
             <span className="flex items-center gap-1">
-              <Heart className="h-3 w-3" />
-              0
+              <MessageCircle className="h-3 w-3" />
+              {commentCount}
             </span>
-          <span className="flex items-center gap-1">
-            <MessageCircle className="h-3 w-3" />
-            0
-          </span>
+          </div>
+          {authorName && <span className="text-xs truncate">{authorName}</span>}
         </div>
-        {authorName && <span className="text-xs truncate">{authorName}</span>}
-      </div>
         
         {/* Hidden Link - entire card is clickable */}
         <Link 
