@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageCircle, Send, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { MessageCircle, Send, Loader2, Pencil, Trash2, Shield } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { ReportCommentButton } from "./ReportCommentButton";
@@ -16,8 +19,26 @@ interface KnowledgeItemCommentsProps {
 
 export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemCommentsProps) => {
   const { user } = useAuth();
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
+  
   const [newComment, setNewComment] = useState("");
-  const { comments, isLoading, error, addComment, isAddingComment } = useKnowledgeItemComments(knowledgeItemId);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  
+  const { 
+    comments, 
+    isLoading, 
+    error, 
+    addComment, 
+    updateComment, 
+    deleteComment,
+    isAddingComment,
+    isUpdatingComment,
+    isDeletingComment
+  } = useKnowledgeItemComments(knowledgeItemId);
 
   const MIN_LENGTH = 3;
   const MAX_LENGTH = 2000;
@@ -79,6 +100,51 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
       } else {
         toast.error("Failed to add comment");
       }
+    }
+  };
+
+  const handleEditComment = (commentId: string, currentContent: string) => {
+    setEditingCommentId(commentId);
+    setEditContent(currentContent);
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    const qualityCheck = checkCommentQuality(editContent);
+    
+    if (!qualityCheck.valid) {
+      toast.error(qualityCheck.error);
+      return;
+    }
+
+    try {
+      await updateComment({ commentId, content: editContent.trim() });
+      setEditingCommentId(null);
+      toast.success("Comment updated successfully");
+    } catch (error) {
+      toast.error("Failed to update comment");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditContent("");
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!commentToDelete) return;
+
+    try {
+      await deleteComment(commentToDelete);
+      toast.success(isAdmin ? "Comment removed by admin" : "Comment deleted successfully");
+      setDeleteDialogOpen(false);
+      setCommentToDelete(null);
+    } catch (error) {
+      toast.error("Failed to delete comment. Please try again.");
     }
   };
 
@@ -186,15 +252,105 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
+                      {comment.updated_at !== comment.created_at && (
+                        <span className="text-xs text-muted-foreground italic">
+                          (edited)
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {comment.content}
-                    </p>
-                    {user && user.id !== comment.user_id && (
-                      <div className="mt-2">
-                        <ReportCommentButton commentId={comment.id} />
+
+                    {/* Comment Content or Edit Mode */}
+                    {editingCommentId === comment.id ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          rows={3}
+                          maxLength={MAX_LENGTH}
+                          className="resize-none"
+                        />
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">
+                            {editContent.length} / {MAX_LENGTH}
+                          </span>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={handleCancelEdit}
+                              disabled={isUpdatingComment}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              size="sm"
+                              onClick={() => handleSaveEdit(comment.id)}
+                              disabled={isUpdatingComment || editContent.length < MIN_LENGTH || editContent.length > MAX_LENGTH}
+                            >
+                              {isUpdatingComment ? (
+                                <>
+                                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                "Save"
+                              )}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
+                    ) : (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
                     )}
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 mt-2">
+                      {/* Owner Controls */}
+                      {user && user.id === comment.user_id && editingCommentId !== comment.id && (
+                        <>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditComment(comment.id, comment.content)}
+                          >
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteComment(comment.id)}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
+                        </>
+                      )}
+
+                      {/* Admin Controls */}
+                      {isAdmin && user && user.id !== comment.user_id && (
+                        <>
+                          <Badge variant="secondary" className="text-xs">
+                            Admin
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteComment(comment.id)}
+                          >
+                            <Shield className="h-3 w-3 mr-1" />
+                            Remove
+                          </Button>
+                        </>
+                      )}
+
+                      {/* Report Button for other users */}
+                      {user && user.id !== comment.user_id && !isAdmin && (
+                        <ReportCommentButton commentId={comment.id} />
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -211,6 +367,35 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
           </Card>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Comment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this comment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingComment}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeletingComment}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingComment ? (
+                <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
