@@ -21,7 +21,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
   const queryClient = useQueryClient();
 
   // Fetch all comments with user profiles
-  const { data: comments, isLoading } = useQuery({
+  const { data: comments, isLoading, error: commentsError } = useQuery({
     queryKey: ['knowledge-item-comments', knowledgeItemId],
     queryFn: async () => {
       // First fetch comments
@@ -31,7 +31,11 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
         .eq('knowledge_item_id', knowledgeItemId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching comments:', error);
+        throw error;
+      }
+      
       const comments = (rawComments || []) as KnowledgeItemComment[];
 
       if (comments.length === 0) return comments;
@@ -46,6 +50,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
         .in('id', userIds as string[]);
 
       if (profilesError) {
+        console.warn('Could not fetch profiles (RLS restriction):', profilesError);
         // If profiles are restricted by RLS, fall back gracefully
         return comments;
       }
@@ -59,6 +64,8 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
       return merged as KnowledgeItemComment[];
     },
     enabled: !!knowledgeItemId,
+    retry: 1,
+    staleTime: 30000,
   });
 
   // Comment count
@@ -132,6 +139,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     comments,
     commentCount,
     isLoading,
+    error: commentsError,
     addComment: addCommentMutation.mutateAsync,
     updateComment: updateCommentMutation.mutateAsync,
     deleteComment: deleteCommentMutation.mutateAsync,

@@ -16,7 +16,7 @@ interface KnowledgeItemCommentsProps {
 export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemCommentsProps) => {
   const { user } = useAuth();
   const [newComment, setNewComment] = useState("");
-  const { comments, isLoading, addComment, isAddingComment } = useKnowledgeItemComments(knowledgeItemId);
+  const { comments, isLoading, error, addComment, isAddingComment } = useKnowledgeItemComments(knowledgeItemId);
 
   const handleSubmitComment = async () => {
     if (!newComment.trim()) {
@@ -44,6 +44,20 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-destructive/50">
+        <CardContent className="py-8 text-center">
+          <MessageCircle className="mx-auto h-12 w-12 text-destructive mb-3" />
+          <p className="text-destructive font-medium mb-2">Failed to load comments</p>
+          <p className="text-sm text-muted-foreground">
+            {error.message || "Please try refreshing the page"}
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
