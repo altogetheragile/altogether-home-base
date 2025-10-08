@@ -182,7 +182,7 @@ export const AnalyticsSection = ({ onStepChange }: AnalyticsSectionProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <KnowledgeItemAnalytics knowledgeItem={knowledgeItemData} />
+          <KnowledgeItemAnalytics knowledgeItem={knowledgeItemData} useCases={useCases} />
         </CardContent>
       </Card>
     </div>

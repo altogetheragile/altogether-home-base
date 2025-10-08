@@ -5,12 +5,13 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface KnowledgeItemAnalyticsProps {
   knowledgeItem: any;
+  useCases?: any[];
 }
 
-export const KnowledgeItemAnalytics = ({ knowledgeItem }: KnowledgeItemAnalyticsProps) => {
-  const useCasesCount = knowledgeItem.knowledge_use_cases?.length || 0;
-  const genericUseCasesCount = knowledgeItem.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'generic').length || 0;
-  const exampleUseCasesCount = knowledgeItem.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'example').length || 0;
+export const KnowledgeItemAnalytics = ({ knowledgeItem, useCases = [] }: KnowledgeItemAnalyticsProps) => {
+  const useCasesCount = useCases.length;
+  const genericUseCasesCount = useCases.filter((uc: any) => uc.case_type === 'generic').length;
+  const exampleUseCasesCount = useCases.filter((uc: any) => uc.case_type === 'example').length;
 
   return (
     <div className="space-y-6 max-w-4xl">
