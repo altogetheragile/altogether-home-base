@@ -342,6 +342,39 @@ export type Database = {
           },
         ]
       }
+      classification_config: {
+        Row: {
+          classification_type: string
+          created_at: string
+          custom_label: string | null
+          display_order: number
+          id: string
+          is_visible: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          classification_type: string
+          created_at?: string
+          custom_label?: string | null
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          classification_type?: string
+          created_at?: string
+          custom_label?: string | null
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       comment_reports: {
         Row: {
           comment_id: string

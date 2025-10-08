@@ -7,6 +7,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescripti
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
+import { useVisibleClassifications } from '@/hooks/useClassificationConfig';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
 export const ClassificationSection: React.FC = () => {
@@ -14,6 +15,7 @@ export const ClassificationSection: React.FC = () => {
   const { data: categories } = useKnowledgeCategories();
   const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
+  const visibility = useVisibleClassifications();
 
   const watchedValues = form.watch(['category_id', 'planning_focus_id', 'domain_id']);
   const [categoryId, focusId, domainId] = watchedValues;
@@ -21,6 +23,10 @@ export const ClassificationSection: React.FC = () => {
   const selectedCategory = categories?.find(c => c.id === categoryId);
   const selectedFocus = planningFocuses?.find(l => l.id === focusId);
   const selectedDomain = domains?.find(d => d.id === domainId);
+
+  // Count visible classifications for grid layout
+  const visibleCount = [visibility.categories, visibility.planningFocuses, visibility.activityDomains].filter(Boolean).length;
+  const gridCols = visibleCount === 1 ? 'grid-cols-1' : visibleCount === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3';
 
   return (
     <div className="space-y-8">
@@ -38,19 +44,20 @@ export const ClassificationSection: React.FC = () => {
       </div>
 
       {/* Classification Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
-              <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
-                <FolderOpen className="h-4 w-4 text-primary" />
-              </div>
-              Category
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Choose the primary category that best describes this knowledge item
-            </CardDescription>
-          </CardHeader>
+      <div className={`grid grid-cols-1 ${gridCols} gap-6`}>
+        {visibility.categories && (
+          <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
+                <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
+                  <FolderOpen className="h-4 w-4 text-primary" />
+                </div>
+                {visibility.getLabel('categories')}
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Choose the primary category that best describes this knowledge item
+              </CardDescription>
+            </CardHeader>
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
@@ -104,19 +111,21 @@ export const ClassificationSection: React.FC = () => {
             )}
           </CardContent>
         </Card>
+        )}
 
-        <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
-              <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
-                <Layers className="h-4 w-4 text-primary" />
-              </div>
-              Planning Focus
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Select the planning layer where this knowledge item is most applicable
-            </CardDescription>
-          </CardHeader>
+        {visibility.planningFocuses && (
+          <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
+                <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
+                  <Layers className="h-4 w-4 text-primary" />
+                </div>
+                {visibility.getLabel('planning-focuses')}
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Select the planning layer where this knowledge item is most applicable
+              </CardDescription>
+            </CardHeader>
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
@@ -172,19 +181,21 @@ export const ClassificationSection: React.FC = () => {
             )}
           </CardContent>
         </Card>
+        )}
 
-        <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
-              <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
-                <Target className="h-4 w-4 text-primary" />
-              </div>
-              Activity Domain
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Choose the domain where this knowledge is most relevant
-            </CardDescription>
-          </CardHeader>
+        {visibility.activityDomains && (
+          <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
+                <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
+                  <Target className="h-4 w-4 text-primary" />
+                </div>
+                {visibility.getLabel('activity-domains')}
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Choose the domain where this knowledge is most relevant
+              </CardDescription>
+            </CardHeader>
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
@@ -237,6 +248,7 @@ export const ClassificationSection: React.FC = () => {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Classification Summary */}

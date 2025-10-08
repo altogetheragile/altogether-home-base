@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Search, FolderOpen, Layers, Target } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, FolderOpen, Layers, Target, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,11 +19,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { useClassificationConfig, useUpdateClassificationConfig } from '@/hooks/useClassificationConfig';
 
 type ClassificationType = 'categories' | 'planning-focuses' | 'activity-domains';
 
@@ -44,6 +47,7 @@ const AdminClassifications = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<ClassificationType>('categories');
   const [showForm, setShowForm] = useState(false);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<Classification | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
@@ -54,6 +58,8 @@ const AdminClassifications = () => {
     color: '#3B82F6',
     display_order: 0,
   });
+  const { data: configs } = useClassificationConfig();
+  const updateConfig = useUpdateClassificationConfig();
 
   const getTableName = (type: ClassificationType) => {
     switch (type) {
@@ -207,6 +213,17 @@ const AdminClassifications = () => {
 
   const tabConfig = getTabConfig(activeTab);
 
+  // Get visible tabs based on configuration
+  const visibleTabs = configs?.filter(c => c.is_visible).sort((a, b) => a.display_order - b.display_order) || [];
+  const getTabType = (type: string): ClassificationType => {
+    const mapping: Record<string, ClassificationType> = {
+      'categories': 'categories',
+      'planning-focuses': 'planning-focuses',
+      'activity-domains': 'activity-domains'
+    };
+    return mapping[type] || 'categories';
+  };
+
   if (isLoading) {
     return <div className="p-8">Loading...</div>;
   }
@@ -215,29 +232,35 @@ const AdminClassifications = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <FolderOpen className="h-6 w-6" />
-            <span>Classifications Management</span>
-          </CardTitle>
-          <CardDescription>
-            Manage all classification systems for knowledge items in one place
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center space-x-2">
+                <FolderOpen className="h-6 w-6" />
+                <span>Classifications Management</span>
+              </CardTitle>
+              <CardDescription>
+                Manage all classification systems for knowledge items in one place
+              </CardDescription>
+            </div>
+            <Button onClick={() => setShowConfigDialog(true)} variant="outline" size="sm">
+              <Settings className="w-4 h-4 mr-2" />
+              Configure Visibility
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ClassificationType)}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="categories" className="flex items-center space-x-2">
-                <FolderOpen className="h-4 w-4" />
-                <span>Categories</span>
-              </TabsTrigger>
-              <TabsTrigger value="planning-focuses" className="flex items-center space-x-2">
-                <Layers className="h-4 w-4" />
-                <span>Planning Focuses</span>
-              </TabsTrigger>
-              <TabsTrigger value="activity-domains" className="flex items-center space-x-2">
-                <Target className="h-4 w-4" />
-                <span>Domains</span>
-              </TabsTrigger>
+            <TabsList className={`grid w-full grid-cols-${visibleTabs.length}`}>
+              {visibleTabs.map(config => {
+                const tabType = getTabType(config.classification_type);
+                const tabConfigInfo = getTabConfig(tabType);
+                return (
+                  <TabsTrigger key={config.id} value={tabType} className="flex items-center space-x-2">
+                    <tabConfigInfo.icon className="h-4 w-4" />
+                    <span>{config.custom_label || tabConfigInfo.label}</span>
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
 
             {(['categories', 'planning-focuses', 'activity-domains'] as ClassificationType[]).map((type) => (
@@ -412,6 +435,87 @@ const AdminClassifications = () => {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Configuration Dialog */}
+      <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configure Classification Visibility</DialogTitle>
+            <DialogDescription>
+              Control which classification types are visible throughout the application
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 mt-4">
+            {configs?.sort((a, b) => a.display_order - b.display_order).map(config => (
+              <Card key={config.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <Switch
+                        checked={config.is_visible}
+                        onCheckedChange={(checked) => {
+                          updateConfig.mutate({
+                            id: config.id,
+                            updates: { is_visible: checked }
+                          });
+                        }}
+                      />
+                      <div>
+                        <CardTitle className="text-lg">
+                          {config.custom_label || config.classification_type}
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          {config.is_visible ? 'Visible in editor and filters' : 'Hidden from application'}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge variant={config.is_visible ? 'default' : 'secondary'}>
+                      {config.is_visible ? 'Enabled' : 'Disabled'}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor={`label-${config.id}`}>Custom Label</Label>
+                      <Input
+                        id={`label-${config.id}`}
+                        value={config.custom_label || ''}
+                        onBlur={(e) => {
+                          if (e.target.value !== config.custom_label) {
+                            updateConfig.mutate({
+                              id: config.id,
+                              updates: { custom_label: e.target.value }
+                            });
+                          }
+                        }}
+                        placeholder="Enter custom label"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`order-${config.id}`}>Display Order</Label>
+                      <Input
+                        id={`order-${config.id}`}
+                        type="number"
+                        defaultValue={config.display_order}
+                        onBlur={(e) => {
+                          const newOrder = parseInt(e.target.value);
+                          if (newOrder !== config.display_order) {
+                            updateConfig.mutate({
+                              id: config.id,
+                              updates: { display_order: newOrder }
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
