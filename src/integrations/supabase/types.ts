@@ -342,6 +342,50 @@ export type Database = {
           },
         ]
       }
+      comment_reports: {
+        Row: {
+          comment_id: string
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reported_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reported_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reported_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_item_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_votes: {
         Row: {
           comment_id: string
@@ -2450,6 +2494,45 @@ export type Database = {
           status?: string
           technique_id?: string
           time_spent_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_reputation: {
+        Row: {
+          admin_warnings: number
+          created_at: string
+          id: string
+          last_comment_at: string | null
+          reports_dismissed: number
+          reports_received: number
+          total_comments: number
+          trust_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_warnings?: number
+          created_at?: string
+          id?: string
+          last_comment_at?: string | null
+          reports_dismissed?: number
+          reports_received?: number
+          total_comments?: number
+          trust_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_warnings?: number
+          created_at?: string
+          id?: string
+          last_comment_at?: string | null
+          reports_dismissed?: number
+          reports_received?: number
+          total_comments?: number
+          trust_level?: string
           updated_at?: string
           user_id?: string
         }

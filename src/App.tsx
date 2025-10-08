@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout"));
 import ErrorBoundary from "@/components/ErrorBoundary";
 
+import AdminModeration from "./pages/admin/AdminModeration";
 import EventDetail from "./pages/EventDetail";
 import Events from "./pages/Events";
 import Blog from "./pages/Blog";
@@ -147,6 +148,7 @@ const App = () => (
                     <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
                     <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
                     <Route path="logs/auth" element={<AdminLogsAuthRoute />} />
+                    <Route path="moderation" element={<AdminModeration />} />
                   </Route>
                   
                   {/* Knowledge Item Editor - Protected Full Page Routes Outside Admin Layout */}

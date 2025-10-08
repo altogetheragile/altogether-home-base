@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageCircle, Send, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { ReportCommentButton } from "./ReportCommentButton";
 
 interface KnowledgeItemCommentsProps {
   knowledgeItemId: string;
@@ -18,9 +19,43 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
   const [newComment, setNewComment] = useState("");
   const { comments, isLoading, error, addComment, isAddingComment } = useKnowledgeItemComments(knowledgeItemId);
 
+  const MIN_LENGTH = 3;
+  const MAX_LENGTH = 2000;
+  const charCount = newComment.length;
+  const isValidLength = charCount >= MIN_LENGTH && charCount <= MAX_LENGTH;
+
+  // Phase 1: Quality checks
+  const checkCommentQuality = (content: string): { valid: boolean; error?: string } => {
+    const trimmed = content.trim();
+    
+    // Check length
+    if (trimmed.length < MIN_LENGTH) {
+      return { valid: false, error: `Comment must be at least ${MIN_LENGTH} characters` };
+    }
+    if (trimmed.length > MAX_LENGTH) {
+      return { valid: false, error: `Comment must be less than ${MAX_LENGTH} characters` };
+    }
+
+    // Check for all-caps (>80% uppercase)
+    const uppercaseCount = (trimmed.match(/[A-Z]/g) || []).length;
+    const letterCount = (trimmed.match(/[A-Za-z]/g) || []).length;
+    if (letterCount > 10 && uppercaseCount / letterCount > 0.8) {
+      return { valid: false, error: "Please don't use all caps" };
+    }
+
+    // Check for excessive repetition (same character 10+ times)
+    if (/(.)\1{9,}/.test(trimmed)) {
+      return { valid: false, error: "Please avoid excessive repetition" };
+    }
+
+    return { valid: true };
+  };
+
   const handleSubmitComment = async () => {
-    if (!newComment.trim()) {
-      toast.error("Please enter a comment");
+    const qualityCheck = checkCommentQuality(newComment);
+    
+    if (!qualityCheck.valid) {
+      toast.error(qualityCheck.error);
       return;
     }
 
@@ -30,12 +65,20 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
     }
 
     try {
-      await addComment({ content: newComment });
+      await addComment({ content: newComment.trim() });
       setNewComment("");
       toast.success("Comment added successfully");
     } catch (error) {
-      console.error("Error adding comment:", error);
-      toast.error("Failed to add comment");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      
+      // Phase 2: Better error messages for database constraints
+      if (errorMessage.includes("posting too quickly")) {
+        toast.error("Slow down! Please wait 30 seconds between comments");
+      } else if (errorMessage.includes("already posted this comment")) {
+        toast.error("You've already posted this comment");
+      } else {
+        toast.error("Failed to add comment");
+      }
     }
   };
 
@@ -70,17 +113,26 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
             <CardTitle className="text-lg">Add a Comment</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Textarea
-              placeholder="Share your thoughts, questions, or experiences..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              rows={4}
-              className="resize-none"
-            />
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Share your thoughts, questions, or experiences..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                rows={4}
+                className="resize-none"
+                maxLength={MAX_LENGTH}
+              />
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                <span>Minimum {MIN_LENGTH} characters</span>
+                <span className={charCount > MAX_LENGTH ? "text-destructive" : ""}>
+                  {charCount} / {MAX_LENGTH}
+                </span>
+              </div>
+            </div>
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmitComment}
-                disabled={isAddingComment || !newComment.trim()}
+                disabled={isAddingComment || !isValidLength}
               >
                 {isAddingComment ? (
                   <>
@@ -138,6 +190,11 @@ export const KnowledgeItemComments = ({ knowledgeItemId }: KnowledgeItemComments
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {comment.content}
                     </p>
+                    {user && user.id !== comment.user_id && (
+                      <div className="mt-2">
+                        <ReportCommentButton commentId={comment.id} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
