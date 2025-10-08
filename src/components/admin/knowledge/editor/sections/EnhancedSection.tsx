@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
@@ -73,9 +73,6 @@ export const EnhancedSection: React.FC = () => {
             <Lightbulb className="h-4 w-4" />
             Learning Value Summary
           </CardTitle>
-          <CardDescription>
-            Summarize the key learning value and benefits of this knowledge item
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <FormField
@@ -90,9 +87,6 @@ export const EnhancedSection: React.FC = () => {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
-                  Explain what learners will gain from this knowledge item
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
