@@ -157,38 +157,6 @@ export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => 
         </CardContent>
       </Card>
 
-      {/* Template Benefits Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Template Benefits</CardTitle>
-          <CardDescription>
-            Why templates enhance learning and application
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">For Learners</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Structured approach to implementation</li>
-                <li>• Reduced cognitive load</li>
-                <li>• Clear step-by-step guidance</li>
-                <li>• Reusable frameworks</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">For Organizations</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Consistent application methods</li>
-                <li>• Faster knowledge transfer</li>
-                <li>• Standardized outputs</li>
-                <li>• Measurable results</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* PDF Template Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-4xl">
