@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { KnowledgeItemAnalytics } from "../KnowledgeItemAnalytics";
 import { useFormContext } from "react-hook-form";
 import { Plus, ArrowRight } from "lucide-react";
+import { useKnowledgeUseCases } from "@/hooks/useKnowledgeUseCases";
 
 interface AnalyticsSectionProps {
   onStepChange?: (step: number) => void;
@@ -12,17 +13,20 @@ interface AnalyticsSectionProps {
 export const AnalyticsSection = ({ onStepChange }: AnalyticsSectionProps) => {
   const form = useFormContext();
   const knowledgeItemData = form.watch();
+  const knowledgeItemId = knowledgeItemData.id;
   
-  // Count use cases (this would come from the actual use cases data in a real implementation)
-  const useCaseCount = 0; // Placeholder - would be replaced with actual count
+  // Fetch actual use cases count
+  const { data: useCases } = useKnowledgeUseCases(knowledgeItemId);
+  const useCaseCount = useCases?.length || 0;
+  
   const hasCommonPitfalls = knowledgeItemData.common_pitfalls?.length > 0;
   const hasEvidenceSources = knowledgeItemData.evidence_sources?.length > 0;
   const hasLearningValue = !!knowledgeItemData.learning_value_summary;
 
   const handleAddUseCase = () => {
-    // Navigate to use cases section (step index 4)
+    // Navigate to use cases section (step index 2)
     if (onStepChange) {
-      onStepChange(4);
+      onStepChange(2);
     }
   };
 
