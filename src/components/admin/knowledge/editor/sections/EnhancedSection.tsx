@@ -82,7 +82,6 @@ export const EnhancedSection: React.FC = () => {
               <FormItem>
                 <FormControl>
                   <Textarea
-                    placeholder="Describe the key learning value, benefits, and outcomes..."
                     rows={4}
                     {...field}
                   />
