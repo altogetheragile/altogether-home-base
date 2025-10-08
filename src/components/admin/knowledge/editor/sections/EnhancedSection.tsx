@@ -64,9 +64,6 @@ export const EnhancedSection: React.FC = () => {
           <BookOpen className="h-5 w-5" />
           Enhanced Information
         </h3>
-        <p className="text-sm text-muted-foreground">
-          Add detailed insights, pitfalls, evidence, and terminology
-        </p>
       </div>
 
       {/* Learning Value Summary - Always visible */}
