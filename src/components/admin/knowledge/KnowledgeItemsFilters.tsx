@@ -12,6 +12,7 @@ import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
+import { useVisibleClassifications } from '@/hooks/useClassificationConfig';
 import { format } from 'date-fns';
 
 interface KnowledgeItemsFiltersProps {
@@ -26,6 +27,7 @@ export const KnowledgeItemsFilters = ({
   const { data: categories } = useKnowledgeCategories();
   const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
+  const visibility = useVisibleClassifications();
 
   const updateFilters = (updates: Partial<KnowledgeItemsFiltersType>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -141,156 +143,162 @@ export const KnowledgeItemsFilters = ({
       <Separator />
 
       {/* Categories */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Categories</Label>
+      {visibility.categories && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">{visibility.getLabel('categories')}</Label>
+            {filters.categories.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateFilters({ categories: [] })}
+                className="h-6 px-2 text-xs"
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {categories?.map((category) => (
+              <div key={category.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={`category-${category.id}`}
+                  checked={filters.categories.includes(category.id)}
+                  onCheckedChange={() => toggleCategory(category.id)}
+                />
+                <label
+                  htmlFor={`category-${category.id}`}
+                  className="text-sm font-normal cursor-pointer flex-1"
+                >
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    {category.name}
+                  </div>
+                </label>
+              </div>
+            ))}
+          </div>
+
+          {/* Selected categories */}
           {filters.categories.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => updateFilters({ categories: [] })}
-              className="h-6 px-2 text-xs"
-            >
-              Clear
-            </Button>
+            <div className="flex flex-wrap gap-1 pt-2">
+              {filters.categories.map((categoryId) => {
+                const category = categories?.find(c => c.id === categoryId);
+                if (!category) return null;
+                return (
+                  <Badge key={categoryId} variant="secondary" className="text-xs">
+                    {category.name}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleCategory(categoryId)}
+                      className="h-auto p-0 ml-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                );
+              })}
+            </div>
           )}
         </div>
+      )}
 
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {categories?.map((category) => (
-            <div key={category.id} className="flex items-center space-x-3">
-              <Checkbox
-                id={`category-${category.id}`}
-                checked={filters.categories.includes(category.id)}
-                onCheckedChange={() => toggleCategory(category.id)}
-              />
-              <label
-                htmlFor={`category-${category.id}`}
-                className="text-sm font-normal cursor-pointer flex-1"
-              >
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  />
-                  {category.name}
-                </div>
-              </label>
-            </div>
-          ))}
-        </div>
-
-        {/* Selected categories */}
-        {filters.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1 pt-2">
-            {filters.categories.map((categoryId) => {
-              const category = categories?.find(c => c.id === categoryId);
-              if (!category) return null;
-              return (
-                <Badge key={categoryId} variant="secondary" className="text-xs">
-                  {category.name}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleCategory(categoryId)}
-                    className="h-auto p-0 ml-1"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <Separator />
+      {visibility.categories && <Separator />}
 
       {/* Planning Layers */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Planning Layers</Label>
-          {filters.planningLayers.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => updateFilters({ planningLayers: [] })}
-              className="h-6 px-2 text-xs"
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {planningFocuses?.map((layer) => (
-            <div key={layer.id} className="flex items-center space-x-3">
-              <Checkbox
-                id={`layer-${layer.id}`}
-                checked={filters.planningLayers.includes(layer.id)}
-                onCheckedChange={() => togglePlanningLayer(layer.id)}
-              />
-              <label
-                htmlFor={`layer-${layer.id}`}
-                className="text-sm font-normal cursor-pointer flex-1"
+      {visibility.planningFocuses && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">{visibility.getLabel('planning-focuses')}</Label>
+            {filters.planningLayers.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateFilters({ planningLayers: [] })}
+                className="h-6 px-2 text-xs"
               >
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: layer.color }}
-                  />
-                  {layer.name}
-                </div>
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
+                Clear
+              </Button>
+            )}
+          </div>
 
-      <Separator />
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {planningFocuses?.map((layer) => (
+              <div key={layer.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={`layer-${layer.id}`}
+                  checked={filters.planningLayers.includes(layer.id)}
+                  onCheckedChange={() => togglePlanningLayer(layer.id)}
+                />
+                <label
+                  htmlFor={`layer-${layer.id}`}
+                  className="text-sm font-normal cursor-pointer flex-1"
+                >
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: layer.color }}
+                    />
+                    {layer.name}
+                  </div>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {visibility.planningFocuses && <Separator />}
 
       {/* Domains */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Domains of Interest</Label>
-          {filters.domains.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => updateFilters({ domains: [] })}
-              className="h-6 px-2 text-xs"
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {domains?.map((domain) => (
-            <div key={domain.id} className="flex items-center space-x-3">
-              <Checkbox
-                id={`domain-${domain.id}`}
-                checked={filters.domains.includes(domain.id)}
-                onCheckedChange={() => toggleDomain(domain.id)}
-              />
-              <label
-                htmlFor={`domain-${domain.id}`}
-                className="text-sm font-normal cursor-pointer flex-1"
+      {visibility.activityDomains && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">{visibility.getLabel('activity-domains')}</Label>
+            {filters.domains.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateFilters({ domains: [] })}
+                className="h-6 px-2 text-xs"
               >
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: domain.color }}
-                  />
-                  {domain.name}
-                </div>
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
+                Clear
+              </Button>
+            )}
+          </div>
 
-      <Separator />
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {domains?.map((domain) => (
+              <div key={domain.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={`domain-${domain.id}`}
+                  checked={filters.domains.includes(domain.id)}
+                  onCheckedChange={() => toggleDomain(domain.id)}
+                />
+                <label
+                  htmlFor={`domain-${domain.id}`}
+                  className="text-sm font-normal cursor-pointer flex-1"
+                >
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: domain.color }}
+                    />
+                    {domain.name}
+                  </div>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {visibility.activityDomains && <Separator />}
 
       {/* Date Range */}
       <div className="space-y-3">

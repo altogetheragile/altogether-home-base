@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useActivityDomains } from "@/hooks/useActivityDomains";
 import { usePlanningFocuses } from "@/hooks/usePlanningFocuses";
+import { useVisibleClassifications } from "@/hooks/useClassificationConfig";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface KnowledgeFilterProps {
@@ -34,17 +35,20 @@ const KnowledgeFilter = ({
   const { data: categories } = useKnowledgeCategories();
   const { data: domains } = useActivityDomains();
   const { data: focuses } = usePlanningFocuses();
+  const visibility = useVisibleClassifications();
 
   const clearFilters = () => {
     onSearchChange("");
-    onCategoryChange("all");
-    onDomainChange("all");
-    onFocusChange("all");
+    if (visibility.categories) onCategoryChange("all");
+    if (visibility.activityDomains) onDomainChange("all");
+    if (visibility.planningFocuses) onFocusChange("all");
     onSortChange("recent");
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory !== "all" || 
-                          selectedDomain !== "all" || selectedFocus !== "all";
+  const hasActiveFilters = searchQuery || 
+    (visibility.categories && selectedCategory !== "all") || 
+    (visibility.activityDomains && selectedDomain !== "all") || 
+    (visibility.planningFocuses && selectedFocus !== "all");
 
   return (
     <div className="space-y-3 mb-6">
@@ -61,69 +65,75 @@ const KnowledgeFilter = ({
       </div>
 
       {/* Category Pills */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <Button
-          variant={selectedCategory === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onCategoryChange("all")}
-          className="rounded-full"
-        >
-          All
-        </Button>
-        {categories?.map((category) => (
+      {visibility.categories && (
+        <div className="flex flex-wrap gap-2 items-center">
           <Button
-            key={category.id}
-            variant={selectedCategory === category.id ? "default" : "outline"}
+            variant={selectedCategory === "all" ? "default" : "outline"}
             size="sm"
-            onClick={() => onCategoryChange(category.id)}
+            onClick={() => onCategoryChange("all")}
             className="rounded-full"
-            style={
-              selectedCategory === category.id
-                ? {
-                    backgroundColor: category.color,
-                    borderColor: category.color,
-                    color: "white",
-                  }
-                : {
-                    borderColor: `${category.color}50`,
-                    color: category.color,
-                  }
-            }
           >
-            {category.name}
+            All
           </Button>
-        ))}
-      </div>
+          {categories?.map((category) => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => onCategoryChange(category.id)}
+              className="rounded-full"
+              style={
+                selectedCategory === category.id
+                  ? {
+                      backgroundColor: category.color,
+                      borderColor: category.color,
+                      color: "white",
+                    }
+                  : {
+                      borderColor: `${category.color}50`,
+                      color: category.color,
+                    }
+              }
+            >
+              {category.name}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Secondary Filters Row */}
       <div className="flex flex-wrap gap-2 items-center">
-        <Select value={selectedDomain} onValueChange={onDomainChange}>
-          <SelectTrigger className="w-[180px] h-9">
-            <SelectValue placeholder="Domain" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Domains</SelectItem>
-            {domains?.map((domain) => (
-              <SelectItem key={domain.id} value={domain.id}>
-                {domain.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {visibility.activityDomains && (
+          <Select value={selectedDomain} onValueChange={onDomainChange}>
+            <SelectTrigger className="w-[180px] h-9">
+              <SelectValue placeholder={visibility.getLabel('activity-domains')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All {visibility.getLabel('activity-domains')}</SelectItem>
+              {domains?.map((domain) => (
+                <SelectItem key={domain.id} value={domain.id}>
+                  {domain.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
-        <Select value={selectedFocus} onValueChange={onFocusChange}>
-          <SelectTrigger className="w-[180px] h-9">
-            <SelectValue placeholder="Planning Focus" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Focuses</SelectItem>
-            {focuses?.map((focus) => (
-              <SelectItem key={focus.id} value={focus.id}>
-                {focus.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {visibility.planningFocuses && (
+          <Select value={selectedFocus} onValueChange={onFocusChange}>
+            <SelectTrigger className="w-[180px] h-9">
+              <SelectValue placeholder={visibility.getLabel('planning-focuses')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All {visibility.getLabel('planning-focuses')}</SelectItem>
+              {focuses?.map((focus) => (
+                <SelectItem key={focus.id} value={focus.id}>
+                  {focus.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Select value={sortBy} onValueChange={onSortChange}>
           <SelectTrigger className="w-[180px] h-9">

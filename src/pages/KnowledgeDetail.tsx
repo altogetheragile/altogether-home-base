@@ -9,6 +9,7 @@ import { useKnowledgeItemUnifiedAssets } from "@/hooks/useUnifiedAssetManager";
 import { useKnowledgeItemSteps } from "@/hooks/useKnowledgeItemSteps";
 import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
 import { useViewTracking } from "@/hooks/useViewTracking";
+import { useVisibleClassifications } from "@/hooks/useClassificationConfig";
 import { KnowledgeItemComments } from "@/components/knowledge/KnowledgeItemComments";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ const KnowledgeDetail = () => {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
+  const visibility = useVisibleClassifications();
 
   const filteredMediaAssets = (mediaAssets || []).filter((asset: any) => !asset.is_template);
   const imageAssets = filteredMediaAssets.filter((asset: any) => asset.type === 'image');
@@ -146,7 +148,7 @@ const KnowledgeDetail = () => {
 
                 {/* Classification Badges */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {item.knowledge_categories && (
+                  {visibility.categories && item.knowledge_categories && (
                     <Badge 
                       variant="outline" 
                       className="py-1.5 px-3"
@@ -156,10 +158,10 @@ const KnowledgeDetail = () => {
                         color: item.knowledge_categories.color
                       }}
                     >
-                      Strategy & Direction
+                      {item.knowledge_categories.name}
                     </Badge>
                   )}
-                  {item.planning_focuses && (
+                  {visibility.planningFocuses && item.planning_focuses && (
                     <Badge 
                       variant="outline"
                       className="py-1.5 px-3"
@@ -169,10 +171,10 @@ const KnowledgeDetail = () => {
                         color: item.planning_focuses.color
                       }}
                     >
-                      Strategy & Vision
+                      {item.planning_focuses.name}
                     </Badge>
                   )}
-                  {item.activity_domains && (
+                  {visibility.activityDomains && item.activity_domains && (
                     <Badge 
                       variant="outline"
                       className="py-1.5 px-3"
@@ -182,7 +184,7 @@ const KnowledgeDetail = () => {
                         color: item.activity_domains.color
                       }}
                     >
-                      Value Ownership
+                      {item.activity_domains.name}
                     </Badge>
                   )}
                 </div>

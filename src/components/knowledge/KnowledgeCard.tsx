@@ -7,6 +7,7 @@ import { Eye, Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { useKnowledgeItemLikes } from "@/hooks/useKnowledgeItemLikes";
 import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVisibleClassifications } from "@/hooks/useClassificationConfig";
 import { cn } from "@/lib/utils";
 
 interface KnowledgeCardProps {
@@ -19,6 +20,7 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
   const { user } = useAuth();
   const { likeCount, hasLiked, toggleLike, isLoading } = useKnowledgeItemLikes(item.id);
   const { commentCount } = useKnowledgeItemComments(item.id);
+  const visibility = useVisibleClassifications();
   
   const categoryColor = item.knowledge_categories?.color || '#3B82F6';
   const domainColor = item.activity_domains?.color || '#10B981';
@@ -55,7 +57,7 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
         </div>
         
         <div className="flex flex-wrap gap-1.5">
-          {item.knowledge_categories && (
+          {visibility.categories && item.knowledge_categories && (
             <Badge 
               variant="secondary"
               className="text-xs"
@@ -68,7 +70,7 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
               {item.knowledge_categories.name}
             </Badge>
           )}
-          {item.activity_domains && (
+          {visibility.activityDomains && item.activity_domains && (
             <Badge 
               variant="outline"
               className="text-xs"
