@@ -47,12 +47,6 @@ export const UseCasesSection = () => {
 
   return (
     <Card className="border-0 shadow-none">
-      <CardHeader className="px-0 pb-4">
-        <CardTitle className="text-xl font-semibold">Use Cases</CardTitle>
-        <CardDescription>
-          Define practical use cases and examples for this knowledge item
-        </CardDescription>
-      </CardHeader>
       <CardContent className="px-0">
         <KnowledgeItemUseCases
           knowledgeItemId={knowledgeItemId}
