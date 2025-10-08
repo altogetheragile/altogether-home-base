@@ -436,7 +436,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       case 6:
         return <EnhancedSection />;
       case 7:
-        return <AnalyticsSection onStepChange={handleStepChange} />;
+        return <AnalyticsSection />;
       default:
         return <BasicInfoSection form={form} />;
     }
