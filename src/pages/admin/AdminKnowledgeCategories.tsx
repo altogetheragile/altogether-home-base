@@ -33,6 +33,7 @@ const AdminKnowledgeCategories = () => {
     slug: '',
     description: '',
     color: '#3B82F6',
+    display_order: 0,
   });
 
   const { data: categories, isLoading } = useQuery({
@@ -41,7 +42,7 @@ const AdminKnowledgeCategories = () => {
       const { data, error } = await supabase
         .from('knowledge_categories')
         .select('*')
-        .order('name');
+        .order('display_order');
       
       if (error) throw error;
       return data;
@@ -103,7 +104,7 @@ const AdminKnowledgeCategories = () => {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingCategory(null);
-    setFormData({ name: '', slug: '', description: '', color: '#3B82F6' });
+    setFormData({ name: '', slug: '', description: '', color: '#3B82F6', display_order: 0 });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -122,6 +123,7 @@ const AdminKnowledgeCategories = () => {
       slug: category.slug || '',
       description: category.description || '',
       color: category.color || '#3B82F6',
+      display_order: category.display_order || 0,
     });
     setShowForm(true);
   };
@@ -167,6 +169,7 @@ const AdminKnowledgeCategories = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Order</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Description</TableHead>
@@ -177,6 +180,7 @@ const AdminKnowledgeCategories = () => {
           <TableBody>
             {filteredCategories?.map((category) => (
               <TableRow key={category.id}>
+                <TableCell className="font-medium">{category.display_order}</TableCell>
                 <TableCell className="font-medium">{category.name}</TableCell>
                 <TableCell className="text-muted-foreground">{category.slug}</TableCell>
                 <TableCell className="max-w-xs truncate">{category.description}</TableCell>
@@ -211,7 +215,7 @@ const AdminKnowledgeCategories = () => {
             ))}
             {filteredCategories?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {searchTerm ? 'No categories found matching your search.' : 'No categories created yet.'}
                 </TableCell>
               </TableRow>
@@ -262,6 +266,15 @@ const AdminKnowledgeCategories = () => {
                 type="color"
                 value={formData.color}
                 onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="display_order">Display Order</Label>
+              <Input
+                id="display_order"
+                type="number"
+                value={formData.display_order}
+                onChange={(e) => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
               />
             </div>
             <div className="flex justify-end space-x-2">
