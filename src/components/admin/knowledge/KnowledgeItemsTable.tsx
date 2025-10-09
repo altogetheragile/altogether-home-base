@@ -23,6 +23,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
 import { useDeleteKnowledgeItem, useUpdateKnowledgeItem, useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
@@ -211,6 +221,25 @@ export const KnowledgeItemsTable = ({
     });
   };
 
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      await deleteKnowledgeItem.mutateAsync(itemToDelete.id);
+      setItemToDelete(null);
+      toast({
+        title: "Item deleted",
+        description: "The knowledge item has been permanently deleted.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to delete",
+        description: "There was an error deleting the knowledge item.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -377,6 +406,28 @@ export const KnowledgeItemsTable = ({
           )}
         </TableBody>
       </Table>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Knowledge Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{itemToDelete?.name}"? 
+              This action cannot be undone and will also delete all associated use cases, comments, and media.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Item
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
