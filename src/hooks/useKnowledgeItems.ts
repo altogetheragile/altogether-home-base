@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { auditLogger } from "@/utils/auditLogger";
 
 // PostgreSQL error type
 interface PostgreSQLError extends Error {
@@ -331,6 +332,14 @@ export const useCreateKnowledgeItem = () => {
     onSuccess: (result) => {
       console.log('🎉 useCreateKnowledgeItem: Success callback:', result);
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
+      
+      // Log knowledge item creation
+      auditLogger.create('knowledge_items', result.id, {
+        item_name: result.name,
+        is_published: result.is_published,
+        category_id: result.category_id
+      }).catch(console.error);
+      
       toast({
         title: "Success",
         description: "Knowledge item created successfully",
@@ -428,6 +437,12 @@ export const useUpdateKnowledgeItem = () => {
         queryClient.setQueryData(['knowledge-items'], updatedList);
       }
       
+      // Log knowledge item update
+      auditLogger.update('knowledge_items', id, {
+        item_name: result.name,
+        is_published: result.is_published
+      }).catch(console.error);
+      
       toast({
         title: "Success",
         description: "Knowledge item updated successfully",
@@ -480,8 +495,14 @@ export const useDeleteKnowledgeItem = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
+      
+      // Log knowledge item deletion
+      auditLogger.delete('knowledge_items', id, {
+        context: 'permanent_deletion'
+      }).catch(console.error);
+      
       toast({
         title: "Success",
         description: "Knowledge item deleted successfully",

@@ -9,6 +9,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import EventFormFields from '@/components/admin/events/EventFormFields';
+import { auditLogger } from '@/utils/auditLogger';
 
 const EditEvent = () => {
   const { id } = useParams<{ id: string }>();
@@ -60,6 +61,15 @@ const EditEvent = () => {
         .single();
 
       if (error) throw error;
+      
+      // Log that admin viewed this event
+      if (data) {
+        auditLogger.view('events', data.id, {
+          event_title: data.title,
+          context: 'edit_page'
+        }).catch(console.error);
+      }
+      
       return data;
     },
     enabled: !!id,
@@ -124,11 +134,20 @@ const EditEvent = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate all related queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       queryClient.invalidateQueries({ queryKey: ['events'] }); // Main events list
       queryClient.invalidateQueries({ queryKey: ['event', id] });
+      
+      // Log event update
+      if (id) {
+        auditLogger.update('events', id, {
+          event_title: data.title,
+          is_published: data.is_published
+        }).catch(console.error);
+      }
+      
       toast({
         title: "Event updated successfully",
         description: "Your changes have been saved.",

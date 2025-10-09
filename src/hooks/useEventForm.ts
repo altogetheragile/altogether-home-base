@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useToast } from '@/hooks/use-toast';
+import { auditLogger } from '@/utils/auditLogger';
 
 export const useEventForm = () => {
   const navigate = useNavigate();
@@ -145,8 +146,17 @@ export const useEventForm = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      
+      // Log event creation
+      auditLogger.create('events', data.id, {
+        event_title: data.title,
+        template_id: templateId,
+        is_published: data.is_published
+      }).catch(console.error);
+      
       toast({
         title: "Event created successfully",
         description: templateId ? "The event has been created from the template." : "The event has been added to your catalog.",
