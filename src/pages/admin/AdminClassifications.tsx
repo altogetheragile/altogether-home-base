@@ -79,7 +79,7 @@ const AdminClassifications = () => {
       const { data, error } = await supabase
         .from(getTableName(activeTab))
         .select('*')
-        .order(activeTab === 'planning-focuses' ? 'display_order' : 'name');
+        .order(activeTab !== 'activity-domains' ? 'display_order' : 'name');
       
       if (error) throw error;
       return data as Classification[];
@@ -152,7 +152,7 @@ const AdminClassifications = () => {
     if (activeTab !== 'activity-domains') {
       delete submitData.full_description;
     }
-    if (activeTab !== 'planning-focuses') {
+    if (activeTab === 'activity-domains') {
       delete submitData.display_order;
     }
 
@@ -322,7 +322,7 @@ const AdminClassifications = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {type === 'planning-focuses' && <TableHead>Order</TableHead>}
+                        {type !== 'activity-domains' && <TableHead>Order</TableHead>}
                         <TableHead>Name</TableHead>
                         <TableHead>Slug</TableHead>
                         <TableHead>Color</TableHead>
@@ -337,7 +337,7 @@ const AdminClassifications = () => {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleView(item)}
                         >
-                          {type === 'planning-focuses' && (
+                          {type !== 'activity-domains' && (
                             <TableCell className="font-medium">{item.display_order}</TableCell>
                           )}
                           <TableCell className="font-medium">{item.name}</TableCell>
@@ -376,7 +376,7 @@ const AdminClassifications = () => {
                       ))}
                       {filteredItems?.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={type === 'planning-focuses' ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={type !== 'activity-domains' ? 6 : 5} className="text-center py-8 text-muted-foreground">
                             {searchTerm ? `No ${type} found matching your search.` : `No ${type} created yet.`}
                           </TableCell>
                         </TableRow>
@@ -419,7 +419,7 @@ const AdminClassifications = () => {
                 </Badge>
               </div>
             </div>
-            {activeTab === 'planning-focuses' && (
+            {activeTab !== 'activity-domains' && (
               <div>
                 <Label className="text-muted-foreground">Display Order</Label>
                 <p className="mt-1">{viewingItem?.display_order}</p>
@@ -494,7 +494,7 @@ const AdminClassifications = () => {
                 />
               </div>
             )}
-            {activeTab === 'planning-focuses' && (
+            {activeTab !== 'activity-domains' && (
               <div>
                 <Label htmlFor="display_order">Display Order</Label>
                 <Input
