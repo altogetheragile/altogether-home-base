@@ -20,12 +20,12 @@ export const useEventForm = () => {
     description: '',
     start_date: '',
     end_date: '',
-    instructor_id: '',
-    location_id: '',
+    instructor_id: 'none',
+    location_id: 'none',
     price_cents: 0,
     currency: 'usd',
     is_published: false,
-    template_id: templateId || '',
+    template_id: templateId || 'none',
     // New enhanced fields
     capacity: '',
     registration_deadline: '',
@@ -97,15 +97,43 @@ export const useEventForm = () => {
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: typeof formData) => {
+      // Helper function to convert empty strings to null
+      const cleanValue = (value: any) => {
+        if (value === '' || value === 'none') return null;
+        return value;
+      };
+
       // Convert tags from comma-separated string to array and handle null conversions
       const processedData = {
         ...eventData,
-        tags: eventData.tags ? eventData.tags.split(',').map(tag => tag.trim()) : [],
+        tags: eventData.tags ? eventData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
+        
+        // Convert empty strings and 'none' to null for UUID fields
+        instructor_id: cleanValue(eventData.instructor_id),
+        location_id: cleanValue(eventData.location_id),
+        event_type_id: cleanValue(eventData.event_type_id),
+        category_id: cleanValue(eventData.category_id),
+        level_id: cleanValue(eventData.level_id),
+        format_id: cleanValue(eventData.format_id),
+        template_id: cleanValue(eventData.template_id),
+        
+        // Convert empty strings to null for date fields
+        end_date: cleanValue(eventData.end_date),
+        registration_deadline: cleanValue(eventData.registration_deadline),
+        
+        // Handle integer fields
         capacity: eventData.capacity ? parseInt(eventData.capacity) : null,
-        event_type_id: eventData.event_type_id === 'none' ? null : eventData.event_type_id,
-        category_id: eventData.category_id === 'none' ? null : eventData.category_id,
-        level_id: eventData.level_id === 'none' ? null : eventData.level_id,
-        format_id: eventData.format_id === 'none' ? null : eventData.format_id,
+        
+        // Convert empty strings to null for text fields that are optional
+        time_zone: cleanValue(eventData.time_zone),
+        meeting_link: cleanValue(eventData.meeting_link),
+        venue_details: cleanValue(eventData.venue_details),
+        daily_schedule: cleanValue(eventData.daily_schedule),
+        banner_image_url: cleanValue(eventData.banner_image_url),
+        seo_slug: cleanValue(eventData.seo_slug),
+        internal_notes: cleanValue(eventData.internal_notes),
+        course_code: cleanValue(eventData.course_code),
+        lead_source: cleanValue(eventData.lead_source),
       };
       
       const { data, error } = await supabase
