@@ -48,6 +48,8 @@ const AdminClassifications = () => {
   const [activeTab, setActiveTab] = useState<ClassificationType>('categories');
   const [showForm, setShowForm] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [viewingItem, setViewingItem] = useState<Classification | null>(null);
   const [editingItem, setEditingItem] = useState<Classification | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
@@ -161,7 +163,29 @@ const AdminClassifications = () => {
     }
   };
 
-  const handleEdit = (item: Classification) => {
+  const handleView = (item: Classification) => {
+    setViewingItem(item);
+    setShowViewDialog(true);
+  };
+
+  const handleEditFromView = () => {
+    if (viewingItem) {
+      setEditingItem(viewingItem);
+      setFormData({
+        name: viewingItem.name || '',
+        slug: viewingItem.slug || '',
+        description: viewingItem.description || '',
+        full_description: viewingItem.full_description || '',
+        color: viewingItem.color || '#3B82F6',
+        display_order: viewingItem.display_order || 0,
+      });
+      setShowViewDialog(false);
+      setShowForm(true);
+    }
+  };
+
+  const handleEdit = (item: Classification, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEditingItem(item);
     setFormData({
       name: item.name || '',
@@ -174,7 +198,8 @@ const AdminClassifications = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (item: Classification) => {
+  const handleDelete = (item: Classification, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
       deleteMutation.mutate(item.id);
     }
@@ -307,7 +332,11 @@ const AdminClassifications = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredItems?.map((item) => (
-                        <TableRow key={item.id}>
+                        <TableRow 
+                          key={item.id} 
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => handleView(item)}
+                        >
                           {type === 'planning-focuses' && (
                             <TableCell className="font-medium">{item.display_order}</TableCell>
                           )}
@@ -330,14 +359,14 @@ const AdminClassifications = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleEdit(item)}
+                                onClick={(e) => handleEdit(item, e)}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDelete(item)}
+                                onClick={(e) => handleDelete(item, e)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -360,6 +389,65 @@ const AdminClassifications = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* View Dialog */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{viewingItem?.name}</span>
+              <Button onClick={handleEditFromView} size="sm">
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-muted-foreground">Slug</Label>
+              <p className="mt-1 font-mono text-sm">{viewingItem?.slug}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Color</Label>
+              <div className="flex items-center space-x-3 mt-1">
+                <div 
+                  className="w-8 h-8 rounded border" 
+                  style={{ backgroundColor: viewingItem?.color }}
+                />
+                <Badge style={{ backgroundColor: (viewingItem?.color || '') + '20', color: viewingItem?.color }}>
+                  {viewingItem?.color}
+                </Badge>
+              </div>
+            </div>
+            {activeTab === 'planning-focuses' && (
+              <div>
+                <Label className="text-muted-foreground">Display Order</Label>
+                <p className="mt-1">{viewingItem?.display_order}</p>
+              </div>
+            )}
+            <div>
+              <Label className="text-muted-foreground">Description</Label>
+              <p className="mt-1 text-sm">{viewingItem?.description || 'No description'}</p>
+            </div>
+            {activeTab === 'activity-domains' && viewingItem?.full_description && (
+              <div>
+                <Label className="text-muted-foreground">Full Description</Label>
+                <p className="mt-1 text-sm whitespace-pre-wrap">{viewingItem.full_description}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t text-sm">
+              <div>
+                <Label className="text-muted-foreground">Created</Label>
+                <p className="mt-1">{new Date(viewingItem?.created_at || '').toLocaleDateString()}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Updated</Label>
+                <p className="mt-1">{new Date(viewingItem?.updated_at || '').toLocaleDateString()}</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Form Dialog */}
       <Dialog open={showForm} onOpenChange={handleCloseForm}>
