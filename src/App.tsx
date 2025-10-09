@@ -33,6 +33,7 @@ import AdminLogs from "./pages/admin/AdminLogs";
 import AdminLogsApplicationRoute from "./pages/admin/AdminLogsApplicationRoute";
 import AdminLogsDatabaseRoute from "./pages/admin/AdminLogsDatabaseRoute";
 import AdminLogsAuthRoute from "./pages/admin/AdminLogsAuthRoute";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminImports from "./pages/admin/AdminImports";
 import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
@@ -148,6 +149,7 @@ const App = () => (
                     <Route path="logs/application" element={<AdminLogsApplicationRoute />} />
                     <Route path="logs/database" element={<AdminLogsDatabaseRoute />} />
                     <Route path="logs/auth" element={<AdminLogsAuthRoute />} />
+                    <Route path="logs/audit" element={<AdminAuditLogs />} />
                     <Route path="moderation" element={<AdminModeration />} />
                   </Route>
                   

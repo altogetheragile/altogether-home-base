@@ -140,6 +140,12 @@ const AdminLayout = () => {
       href: '/admin/logs/auth',
       icon: Shield,
       description: 'View auth logs'
+    },
+    {
+      label: 'Audit Logs',
+      href: '/admin/logs/audit',
+      icon: Shield,
+      description: 'View admin action logs'
     }
   ];
 
