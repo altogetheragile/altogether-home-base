@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -151,6 +151,14 @@ const AdminLayout = () => {
 
   const tabs = [
     {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      paths: ['/admin'],
+      href: '/admin',
+      exact: true
+    },
+    {
       id: 'events',
       label: 'Events',
       icon: Calendar,
@@ -187,12 +195,19 @@ const AdminLayout = () => {
   const isActive = (path: string) => location.pathname.startsWith(path);
   
   const getActiveTab = () => {
+    // Check for exact match first (for dashboard)
     for (const tab of tabs) {
-      if (tab.paths.some(path => location.pathname.startsWith(path))) {
+      if (tab.exact && location.pathname === tab.paths[0]) {
         return tab.id;
       }
     }
-    return 'events'; // default to events tab
+    // Then check for startsWith matches
+    for (const tab of tabs) {
+      if (!tab.exact && tab.paths.some(path => location.pathname.startsWith(path))) {
+        return tab.id;
+      }
+    }
+    return 'dashboard'; // default to dashboard tab
   };
 
   const activeTab = getActiveTab();
@@ -261,22 +276,23 @@ const AdminLayout = () => {
             </div>
           </div>
 
-          {/* Items Grid - Only show items for active tab */}
-          <div className="px-6 py-3">
-            <div className="flex gap-2">
-              {(() => {
-                // Get items for active tab
-                let itemsToRender = [];
-                
-                if (activeTab === 'events') {
-                  itemsToRender = eventsItems;
-                } else if (activeTab === 'knowledge') {
-                  itemsToRender = knowledgeItems;
-                } else if (activeTab === 'logs') {
-                  itemsToRender = logsItems;
-                } else if (activeTab === 'pages') {
-                  itemsToRender = [{ label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }];
-                }
+          {/* Items Grid - Only show items for active tab (skip for dashboard) */}
+          {activeTab !== 'dashboard' && (
+            <div className="px-6 py-3">
+              <div className="flex gap-2">
+                {(() => {
+                  // Get items for active tab
+                  let itemsToRender = [];
+                  
+                  if (activeTab === 'events') {
+                    itemsToRender = eventsItems;
+                  } else if (activeTab === 'knowledge') {
+                    itemsToRender = knowledgeItems;
+                  } else if (activeTab === 'logs') {
+                    itemsToRender = logsItems;
+                  } else if (activeTab === 'pages') {
+                    itemsToRender = [{ label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }];
+                  }
 
                 return itemsToRender.map((item) => {
                   const IconComponent = item.icon as any;
@@ -315,10 +331,11 @@ const AdminLayout = () => {
                       </Tooltip>
                     </TooltipProvider>
                   );
-                });
-              })()}
+                  });
+                })()}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Main Content */}

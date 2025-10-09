@@ -10,6 +10,7 @@ const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout"));
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 import AdminModeration from "./pages/admin/AdminModeration";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import EventDetail from "./pages/EventDetail";
 import Events from "./pages/Events";
 import Blog from "./pages/Blog";
@@ -18,6 +19,7 @@ import ResetPassword from "./pages/ResetPassword";
 import AIToolsCanvas from "./pages/AIToolsCanvas";
 import AccountSecurity from "./pages/AccountSecurity";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
 // Lazy load AdminEvents to prevent it from running on unrelated routes
 const AdminEvents = React.lazy(() => import("./pages/admin/AdminEvents"));
 import AdminInstructors from "./pages/admin/AdminInstructors";
@@ -87,6 +89,12 @@ const App = () => (
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
               
+              {/* User Dashboard - Protected */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
               
               {/* Protected Project Routes (gated) */}
               {ENABLE_PROTECTED_PROJECTS && (
@@ -105,6 +113,9 @@ const App = () => (
                       </Suspense>
                     </ProtectedRoute>
                   }>
+                    {/* Admin Dashboard - Index/Landing Page */}
+                    <Route index element={<AdminDashboard />} />
+                    
                     <Route path="events" element={
                       <ErrorBoundary fallback={
                         <div className="flex items-center justify-center h-64">
