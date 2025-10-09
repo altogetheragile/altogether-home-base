@@ -45,7 +45,7 @@ interface Classification {
 const AdminClassifications = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<ClassificationType>('categories');
+  const [activeTab, setActiveTab] = useState<ClassificationType>('planning-focuses');
   const [showForm, setShowForm] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
