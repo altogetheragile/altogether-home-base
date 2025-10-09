@@ -53,6 +53,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          target_id: string | null
+          target_table: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_table: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_table?: string
+        }
+        Relationships: []
+      }
       admin_logs: {
         Row: {
           action: string
@@ -452,21 +485,30 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          ip_address: string | null
           message: string | null
+          submitted_at: string | null
+          user_agent: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
           full_name?: string | null
           id?: string
+          ip_address?: string | null
           message?: string | null
+          submitted_at?: string | null
+          user_agent?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
           full_name?: string | null
           id?: string
+          ip_address?: string | null
           message?: string | null
+          submitted_at?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
