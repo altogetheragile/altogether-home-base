@@ -57,7 +57,7 @@ const EventRegistrationsDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Manage Registrations</DialogTitle>
             <DialogDescription>
@@ -87,9 +87,11 @@ const EventRegistrationsDialog = ({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Registered At</TableHead>
-                      <TableHead>User</TableHead>
+                      <TableHead>User Details</TableHead>
+                      <TableHead>Role</TableHead>
                       <TableHead>Payment</TableHead>
                       <TableHead>Session</TableHead>
+                      <TableHead>Reg. ID</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -124,12 +126,36 @@ const EventRegistrationsDialog = ({
                         <TableRow key={r.id}>
                           <TableCell>{dateStr}</TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col gap-1">
                               <span className="font-medium">{displayName}</span>
+                              {(r as any).user?.username && (
+                                <span className="text-xs text-muted-foreground">
+                                  @{(r as any).user.username}
+                                </span>
+                              )}
                               {emailSub && (
                                 <span className="text-xs text-muted-foreground">{emailSub}</span>
                               )}
+                              {r.user_id && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="text-xs text-muted-foreground/60 cursor-help">
+                                        ID: {r.user_id.slice(0, 8)}...
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <span className="font-mono text-xs">{r.user_id}</span>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={(r as any).user?.role === 'admin' ? 'destructive' : 'outline'}>
+                              {(r as any).user?.role || 'user'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant={paymentVariant as any}>
@@ -180,6 +206,33 @@ const EventRegistrationsDialog = ({
     <span className="text-muted-foreground">—</span>
   )}
 </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="font-mono text-xs cursor-help">
+                                      {r.id.slice(0, 8)}...
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <span className="font-mono text-xs">{r.id}</span>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(r.id);
+                                  toast({ title: 'Copied', description: 'Registration ID copied to clipboard.' });
+                                }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="destructive"

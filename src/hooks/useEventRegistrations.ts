@@ -16,6 +16,8 @@ export interface AdminRegistrationUser {
   id: string;
   full_name: string | null;
   email: string | null;
+  username: string | null;
+  role: string | null;
 }
 
 export interface AdminRegistrationWithUser extends AdminRegistration {
@@ -61,7 +63,7 @@ export const useEventRegistrations = (eventId?: string) => {
       // Fetch profiles for these user IDs (admins can view all profiles via RLS policy)
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name, email, username, role')
         .in('id', userIds);
 
       if (profilesError) {
@@ -69,8 +71,36 @@ export const useEventRegistrations = (eventId?: string) => {
         throw profilesError;
       }
 
+      // Log admin viewing these profiles
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && profiles && profiles.length > 0) {
+        await Promise.all(
+          profiles.map(profile => 
+            supabase.from('admin_audit_log').insert({
+              admin_id: user.id,
+              action: 'VIEW_PROFILE',
+              target_table: 'profiles',
+              target_id: profile.id,
+              metadata: {
+                context: 'event_registrations',
+                event_id: eventId
+              }
+            })
+          )
+        );
+      }
+
       const profileMap = new Map<string, AdminRegistrationUser>(
-        (profiles || []).map((p) => [p.id as string, { id: p.id as string, full_name: p.full_name ?? null, email: p.email ?? null }])
+        (profiles || []).map((p) => [
+          p.id as string, 
+          { 
+            id: p.id as string, 
+            full_name: p.full_name ?? null, 
+            email: p.email ?? null,
+            username: p.username ?? null,
+            role: p.role ?? null
+          }
+        ])
       );
 
       // Merge registrations with profiles

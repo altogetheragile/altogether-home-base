@@ -41,6 +41,8 @@ export const createMockUser = (overrides: Partial<AdminRegistrationUser> = {}): 
   id: 'user-123',
   full_name: 'John Doe',
   email: 'john@example.com',
+  username: 'johndoe',
+  role: 'user',
   ...overrides,
 });
 
