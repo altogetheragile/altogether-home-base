@@ -119,17 +119,6 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
             fill={colors.fill} 
             stroke="none"
           />
-          {isSelected && (
-            <polygon 
-              points={hexPoints(w,h)} 
-              fill="none" 
-              stroke={colors.stroke} 
-              strokeWidth={3} 
-              strokeOpacity={0.6}
-              strokeLinejoin="round" 
-              strokeLinecap="round" 
-            />
-          )}
 
           {/* Text content */}
           {!isEditing && (
