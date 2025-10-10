@@ -118,7 +118,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
             points={hexPoints(w,h)} 
             fill={colors.fill} 
             stroke={colors.stroke} 
-            strokeWidth={3} 
+            strokeWidth={4} 
             strokeLinejoin="round" 
             strokeLinecap="round"
           />
@@ -127,8 +127,8 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
               points={hexPoints(w,h)} 
               fill="none" 
               stroke={colors.stroke} 
-              strokeWidth={5} 
-              strokeOpacity={0.5}
+              strokeWidth={6} 
+              strokeOpacity={0.6}
               strokeLinejoin="round" 
               strokeLinecap="round" 
             />
