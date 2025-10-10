@@ -2,14 +2,15 @@
 import React from 'react';
 
 export const hexPoints = (w: number, h: number) => {
-  // Proper flat-top regular hexagon for 140×121 base
+  // Proper flat-top regular hexagon for 140×121 base with slight inset to avoid stroke clipping
+  const m = 2; // padding to keep stroke within viewBox
   const base = [
-    [35, 0],      // top-left
-    [105, 0],     // top-right  
-    [140, 60.5],  // right
-    [105, 121],   // bottom-right
-    [35, 121],    // bottom-left
-    [0, 60.5]     // left
+    [35, m],
+    [105, m],
+    [140 - m, 60.5],
+    [105, 121 - m],
+    [35, 121 - m],
+    [m, 60.5]
   ];
   const sx = w / 140, sy = h / 121;
   return base.map(([px,py]) => `${px*sx},${py*sy}`).join(" ");

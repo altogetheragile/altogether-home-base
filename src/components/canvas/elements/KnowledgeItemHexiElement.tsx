@@ -92,14 +92,20 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg">
-          {/* fill + stroke */}
-          <polygon points={hexPoints(w,h)} fill={fill} />
-          <polygon points={hexPoints(w,h)} fill="none" stroke={stroke} strokeWidth={3} />
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }} shapeRendering="geometricPrecision">
+          {/* hex shape */}
+          <polygon 
+            points={hexPoints(w,h)} 
+            fill={fill} 
+            stroke={stroke} 
+            strokeWidth={3} 
+            strokeLinejoin="round" 
+            strokeLinecap="round"
+          />
 
           {/* selection ring */}
           {isSelected && (
-            <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" />
+            <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" />
           )}
 
           {/* icon (center, small) */}

@@ -6,21 +6,31 @@ const getIconUnicode = (iconName?: string): string => {
   const iconMap: Record<string, string> = {
     'Circle': '⭕',
     'Square': '⬜',
-    'Star': '⭐',
-    'Heart': '❤️',
-    'Lightbulb': '💡',
+    'Users': '👥',
+    'Calendar': '📅',
     'Target': '🎯',
     'Flag': '🚩',
+    'Layers': '📚',
+    'Zap': '⚡',
+    'Star': '⭐',
+    'Heart': '❤️',
+    'Award': '🏅',
+    'Briefcase': '💼',
+    'Clock': '⏰',
+    'Map': '🗺️',
+    'BookOpen': '📖',
+    'FileText': '📄',
+    'Lightbulb': '💡',
+    'TrendingUp': '📈',
+    'Activity': '📊',
     'Check': '✅',
     'X': '❌',
     'Info': 'ℹ️',
     'Warning': '⚠️',
     'Settings': '⚙️',
-    'Users': '👥',
-    'Calendar': '📅',
     'Mail': '📧',
     'Phone': '📞',
-    'Layers': '📚',
+    'Building2': '🏢',
   };
   return iconMap[iconName || 'Layers'] || '📚';
 };
@@ -109,11 +119,18 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg">
-          <polygon points={hexPoints(w,h)} fill={fill} />
-          <polygon points={hexPoints(w,h)} fill="none" stroke={stroke} strokeWidth={3} />
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
+          {/* Hex shape */}
+          <polygon 
+            points={hexPoints(w,h)} 
+            fill={fill} 
+            stroke={stroke} 
+            strokeWidth={3} 
+            strokeLinejoin="round" 
+            strokeLinecap="round"
+          />
           {isSelected && (
-            <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" />
+            <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" />
           )}
 
           {/* Center icon / emoji */}
