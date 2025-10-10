@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { hexPoints, wrapLines } from '../hex-utils';
 
@@ -103,6 +103,35 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
 
   return (
     <>
+      {/* Controls */}
+      {isSelected && onDelete && (
+        <div
+          className="absolute -top-10 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-10 pointer-events-auto"
+          style={{ transform: `translate(${x}px, ${y}px)` }}
+        >
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            title="Move"
+          >
+            <Move className="h-3 w-3" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            title="Delete"
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
       <div
         ref={ref}
         className="absolute select-none cursor-move"
@@ -160,30 +189,6 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
           </div>
         )}
       </div>
-
-      {/* Delete button when selected - positioned relative to note */}
-      {isSelected && onDelete && (
-        <div
-          className="absolute pointer-events-none"
-          style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
-        >
-          <Button
-            size="icon"
-            variant="destructive"
-            className="no-export absolute h-6 w-6 rounded-full shadow-md pointer-events-auto"
-            style={{
-              left: w - 12,
-              top: -12,
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
     </>
   );
 };
