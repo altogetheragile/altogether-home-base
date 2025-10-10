@@ -41,6 +41,7 @@ import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
 import AdminKnowledgeItems from "./pages/admin/AdminKnowledgeItems";
 import AdminKnowledgeTags from "./pages/admin/AdminKnowledgeTags";
+const AdminUsers = React.lazy(() => import("./pages/admin/AdminUsers"));
 import AdminKnowledgeLearningPaths from "./pages/admin/AdminKnowledgeLearningPaths";
 import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsRoute";
 import AdminKnowledgeTemplates from "./pages/admin/AdminKnowledgeTemplates";
@@ -115,6 +116,13 @@ const App = () => (
                   }>
                     {/* Admin Dashboard - Index/Landing Page */}
                     <Route index element={<AdminDashboard />} />
+                    
+                    {/* Users Management */}
+                    <Route path="users" element={
+                      <Suspense fallback={<div className="flex items-center justify-center h-64">Loading users...</div>}>
+                        <AdminUsers />
+                      </Suspense>
+                    } />
                     
                     <Route path="events" element={
                       <ErrorBoundary fallback={

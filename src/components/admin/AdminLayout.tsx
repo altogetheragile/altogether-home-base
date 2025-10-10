@@ -159,6 +159,13 @@ const AdminLayout = () => {
       exact: true
     },
     {
+      id: 'users',
+      label: 'Users',
+      icon: Users,
+      paths: ['/admin/users'],
+      href: '/admin/users'
+    },
+    {
       id: 'events',
       label: 'Events',
       icon: Calendar,
@@ -276,8 +283,8 @@ const AdminLayout = () => {
             </div>
           </div>
 
-          {/* Items Grid - Only show items for active tab (skip for dashboard) */}
-          {activeTab !== 'dashboard' && (
+          {/* Items Grid - Only show items for active tab (skip for dashboard and users) */}
+          {activeTab !== 'dashboard' && activeTab !== 'users' && (
             <div className="px-6 py-3">
               <div className="flex gap-2">
                 {(() => {
