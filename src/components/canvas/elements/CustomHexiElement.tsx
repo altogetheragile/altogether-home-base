@@ -125,7 +125,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         onPointerUp={handlePointerUp}
       >
         <div className="relative w-full h-full group">
-          {/* Hexagon border layer */}
+          {/* Outer hexagon - border color with padding trick */}
           <div
             className={cn(
               "absolute inset-0 transition-all duration-200 group-hover:scale-105",
@@ -134,55 +134,47 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
             style={{
               clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
               background: data.color,
-              opacity: 0.15,
+              padding: '2px',
             }}
-          />
-          
-          {/* Hexagon stroke layer */}
-          <div
-            className="absolute inset-[2px] transition-all duration-200 group-hover:scale-105"
-            style={{
-              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-              border: `2px solid ${data.color}`,
-              background: 'transparent',
-            }}
-          />
-          
-          {/* Content layer */}
-          <div 
-            className="absolute inset-0 flex flex-col items-center justify-center px-3 cursor-pointer"
-            role="button"
-            aria-label={data.label}
           >
-            {data.emoji ? (
-              <div className="text-xl mb-1">{data.emoji}</div>
-            ) : (
-              <IconComponent style={{ color: data.color, width: 20, height: 20 }} />
-            )}
-            {isEditingLabel ? (
-              <input
-                ref={inputRef}
-                value={data.label}
-                onChange={(e) => onContentChange?.({ ...data, label: e.target.value })}
-                onBlur={handleLabelBlur}
-                onKeyDown={handleLabelKeyDown}
-                className="text-xs font-semibold text-center bg-background/80 border rounded px-2 py-1 leading-tight"
-                style={{
-                  maxWidth: '90%',
-                  outline: 'none',
-                  color: 'var(--foreground)',
-                }}
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <p
-                onDoubleClick={handleLabelDoubleClick}
-                className="text-xs font-semibold text-center leading-tight cursor-text px-1 mt-1"
-                style={{ color: 'var(--foreground)' }}
-              >
-                {data.label}
-              </p>
-            )}
+            {/* Inner hexagon - fill color */}
+            <div
+              className="w-full h-full flex flex-col items-center justify-center px-3"
+              style={{
+                clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                background: `${data.color}20`,
+              }}
+            >
+              {data.emoji ? (
+                <div className="text-xl mb-1">{data.emoji}</div>
+              ) : (
+                <IconComponent style={{ color: data.color, width: 20, height: 20 }} />
+              )}
+              {isEditingLabel ? (
+                <input
+                  ref={inputRef}
+                  value={data.label}
+                  onChange={(e) => onContentChange?.({ ...data, label: e.target.value })}
+                  onBlur={handleLabelBlur}
+                  onKeyDown={handleLabelKeyDown}
+                  className="text-xs font-semibold text-center bg-background/80 border rounded px-2 py-1 leading-tight"
+                  style={{
+                    maxWidth: '90%',
+                    outline: 'none',
+                    color: 'var(--foreground)',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <p
+                  onDoubleClick={handleLabelDoubleClick}
+                  className="text-xs font-semibold text-center leading-tight cursor-text px-1 mt-1"
+                  style={{ color: 'var(--foreground)' }}
+                >
+                  {data.label}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -260,7 +260,9 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       const link = document.createElement('a');
       link.download = `${projectName}-canvas.png`;
       link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       
       toast({
         title: "Canvas exported",

@@ -117,7 +117,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             />
           )}
           
-          {/* Hexagon border layer */}
+          {/* Outer hexagon - border color with padding trick */}
           <div
             className={cn(
               "absolute inset-0 transition-all duration-200 group-hover:scale-105",
@@ -126,33 +126,25 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             style={{
               clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
               background: domainColor,
-              opacity: 0.15,
+              padding: '2px',
             }}
-          />
-          
-          {/* Hexagon stroke layer */}
-          <div
-            className="absolute inset-[2px] transition-all duration-200 group-hover:scale-105"
-            style={{
-              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-              border: `2px solid ${domainColor}`,
-              background: 'transparent',
-            }}
-          />
-          
-          {/* Content layer */}
-          <div 
-            className="absolute inset-0 flex flex-col items-center justify-center px-3 cursor-pointer"
-            role="button"
-            aria-label={data.name}
           >
-            <Layers style={{ color: categoryColor, width: 20, height: 20 }} />
-            <p 
-              className="text-xs font-semibold text-center leading-tight mt-1"
-              style={{ color: 'var(--foreground)' }}
+            {/* Inner hexagon - fill color */}
+            <div
+              className="w-full h-full flex flex-col items-center justify-center px-3"
+              style={{
+                clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                background: `${domainColor}20`,
+              }}
             >
-              {data.name}
-            </p>
+              <Layers style={{ color: categoryColor, width: 20, height: 20 }} />
+              <p 
+                className="text-xs font-semibold text-center leading-tight mt-1"
+                style={{ color: 'var(--foreground)' }}
+              >
+                {data.name}
+              </p>
+            </div>
           </div>
         </div>
       </div>
