@@ -165,6 +165,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         planning_focus_color: itemData.planning_focuses?.color,
         planning_focus_name: itemData.planning_focuses?.name,
         category_name: itemData.knowledge_categories?.name,
+        category_color: itemData.knowledge_categories?.color,
       }
     };
     

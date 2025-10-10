@@ -15,6 +15,7 @@ interface KnowledgeItemHexiElementProps {
     planning_focus_color?: string;
     planning_focus_name?: string;
     category_name?: string;
+    category_color?: string;
   };
   isSelected?: boolean;
   onSelect?: () => void;
@@ -78,6 +79,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   };
 
   const domainColor = data.domain_color || '#8B5CF6';
+  const categoryColor = data.category_color || domainColor;
+  const planningFocusColor = data.planning_focus_color;
 
   return (
     <>
@@ -94,48 +97,42 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         onClick={handleClick}
         className="group"
       >
-        {/* Planning Focus Badge */}
-        {data.planning_focus_name && data.planning_focus_color && (
+        {/* Planning Focus Corner Dot */}
+        {planningFocusColor && (
           <div
-            className="absolute -top-2 right-2 text-xs px-2 py-0.5 rounded-full text-white font-medium z-10 shadow-sm"
+            className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-background shadow-sm z-10"
             style={{
-              backgroundColor: data.planning_focus_color,
+              backgroundColor: planningFocusColor,
             }}
-          >
-            {data.planning_focus_name}
-          </div>
+          />
         )}
 
         {/* Hexagon */}
         <div
-          className="relative w-full h-full transition-all duration-200 group-hover:scale-105 group-hover:brightness-110"
+          className="relative w-full h-full transition-all duration-200 group-hover:scale-105"
           style={{
             clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)',
           }}
         >
-          {/* Background with gradient */}
+          {/* Background with solid color and thick border */}
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(135deg, ${domainColor}33, ${domainColor}0D)`,
-              border: isSelected ? `3px solid ${domainColor}` : `2px solid ${domainColor}66`,
+              backgroundColor: `${domainColor}30`,
+              border: `4px solid ${domainColor}`,
             }}
           />
 
-          {/* Content */}
-          <div className="relative h-full flex flex-col items-center justify-center p-4">
+          {/* Content - Text and Icon inside hexagon */}
+          <div className="relative h-full flex flex-col items-center justify-center p-3 px-4">
             <Layers
-              className="w-8 h-8 mb-2"
-              style={{ color: domainColor }}
+              className="w-6 h-6 mb-1.5"
+              style={{ color: categoryColor }}
             />
+            <p className="text-sm font-medium text-foreground text-center line-clamp-3 leading-tight">
+              {data.name}
+            </p>
           </div>
-        </div>
-
-        {/* Label */}
-        <div className="absolute -bottom-8 left-0 right-0 text-center">
-          <p className="text-xs font-medium text-foreground line-clamp-2 px-1">
-            {data.name}
-          </p>
         </div>
       </div>
 

@@ -117,52 +117,46 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
       >
         {/* Hexagon */}
         <div
-          className="relative w-full h-full transition-all duration-200 group-hover:scale-105 group-hover:brightness-110"
+          className="relative w-full h-full transition-all duration-200 group-hover:scale-105"
           style={{
             clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)',
           }}
         >
-          {/* Background with gradient - dashed border effect */}
+          {/* Background with solid color and thick border */}
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(135deg, ${data.color}33, ${data.color}0D)`,
-              border: isSelected ? `3px dashed ${data.color}` : `2px dashed ${data.color}66`,
+              backgroundColor: `${data.color}30`,
+              border: `4px solid ${data.color}`,
             }}
           />
 
-          {/* Content */}
-          <div className="relative h-full flex flex-col items-center justify-center p-4">
+          {/* Content - Icon and Text inside hexagon */}
+          <div className="relative h-full flex flex-col items-center justify-center p-3 px-4">
             {data.emoji ? (
-              <div className="text-3xl mb-2">{data.emoji}</div>
+              <div className="text-2xl mb-1">{data.emoji}</div>
             ) : (
               <IconComponent
-                className="w-8 h-8 mb-2"
+                className="w-6 h-6 mb-1.5"
                 style={{ color: data.color }}
               />
             )}
-          </div>
-        </div>
-
-        {/* Label */}
-        <div
-          className="absolute -bottom-8 left-0 right-0 text-center"
-          onDoubleClick={handleLabelDoubleClick}
-        >
-          <div
-            ref={labelRef}
-            contentEditable={isEditingLabel}
-            suppressContentEditableWarning
-            onBlur={handleLabelBlur}
-            onKeyDown={handleLabelKeyDown}
-            className={`text-xs font-medium text-foreground line-clamp-2 px-1 ${
-              isEditingLabel ? 'bg-background border rounded px-2 py-1' : ''
-            }`}
-            style={{
-              outline: isEditingLabel ? '2px solid hsl(var(--primary))' : 'none',
-            }}
-          >
-            {data.label}
+            <div
+              ref={labelRef}
+              contentEditable={isEditingLabel}
+              suppressContentEditableWarning
+              onBlur={handleLabelBlur}
+              onKeyDown={handleLabelKeyDown}
+              onDoubleClick={handleLabelDoubleClick}
+              className={`text-sm font-medium text-foreground text-center line-clamp-3 leading-tight ${
+                isEditingLabel ? 'bg-background/80 border rounded px-2 py-1' : ''
+              }`}
+              style={{
+                outline: isEditingLabel ? '2px solid hsl(var(--primary))' : 'none',
+              }}
+            >
+              {data.label}
+            </div>
           </div>
         </div>
       </div>
