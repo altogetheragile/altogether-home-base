@@ -161,23 +161,28 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
         )}
       </div>
 
-      {/* Delete button when selected */}
+      {/* Delete button when selected - positioned relative to note */}
       {isSelected && onDelete && (
-        <Button
-          size="icon"
-          variant="destructive"
-          className="no-export absolute h-6 w-6 rounded-full shadow-md"
-          style={{
-            left: x + w - 12,
-            top: y - 12,
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
+        <div
+          className="absolute pointer-events-none"
+          style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
         >
-          <Trash2 className="h-3 w-3" />
-        </Button>
+          <Button
+            size="icon"
+            variant="destructive"
+            className="no-export absolute h-6 w-6 rounded-full shadow-md pointer-events-auto"
+            style={{
+              left: w - 12,
+              top: -12,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
       )}
     </>
   );

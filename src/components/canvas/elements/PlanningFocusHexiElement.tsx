@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Move, Trash2, Layers } from 'lucide-react';
+import { Move, Trash2, LayersIcon } from 'lucide-react';
 import { CanvasElement } from '../BaseCanvas';
 import { hexPoints, wrapLines, LayersGlyph } from '../hex-utils';
 
@@ -124,9 +124,11 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
           strokeWidth="3"
         />
         
-        {/* Icon at top */}
-        <g transform={`translate(${width / 2}, ${height * 0.25})`}>
-          <LayersGlyph x={0} y={0} size={24} />
+        {/* Icon at top - using embedded SVG for Layers icon */}
+        <g transform={`translate(${width / 2 - 12}, ${height * 0.25 - 12})`}>
+          <rect x="2" y="13" width="20" height="4" rx="1" fill="currentColor" opacity="0.8"/>
+          <rect x="4" y="8" width="16" height="4" rx="1" fill="currentColor" opacity="0.9"/>
+          <rect x="6" y="3" width="12" height="4" rx="1" fill="currentColor"/>
         </g>
 
         {/* Text */}
