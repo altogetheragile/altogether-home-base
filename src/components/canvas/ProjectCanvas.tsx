@@ -301,6 +301,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             key={element.id} 
             {...commonProps} 
             onContentChange={(content) => handleElementContentChange(element.id, content)}
+            onDelete={() => handleElementDelete(element.id)}
           />
         );
       case 'sticky':
