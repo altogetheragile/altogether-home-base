@@ -115,29 +115,29 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         onClick={handleClick}
         className="group"
       >
-        {/* Hexagon */}
+        {/* Hexagon - Flat-top orientation */}
         <div
           className="relative w-full h-full transition-all duration-200 group-hover:scale-105"
           style={{
-            clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)',
+            clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
           }}
         >
           {/* Background with solid color and thick border */}
           <div
             className="absolute inset-0"
             style={{
-              backgroundColor: `${data.color}30`,
-              border: `4px solid ${data.color}`,
+              backgroundColor: `${data.color}15`,
+              border: `6px solid ${data.color}`,
             }}
           />
 
           {/* Content - Icon and Text inside hexagon */}
-          <div className="relative h-full flex flex-col items-center justify-center p-3 px-4">
+          <div className="relative h-full flex flex-col items-center justify-center p-4">
             {data.emoji ? (
-              <div className="text-2xl mb-1">{data.emoji}</div>
+              <div className="text-2xl mb-2">{data.emoji}</div>
             ) : (
               <IconComponent
-                className="w-6 h-6 mb-1.5"
+                className="w-5 h-5 mb-2"
                 style={{ color: data.color }}
               />
             )}
@@ -148,7 +148,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
               onBlur={handleLabelBlur}
               onKeyDown={handleLabelKeyDown}
               onDoubleClick={handleLabelDoubleClick}
-              className={`text-sm font-medium text-foreground text-center line-clamp-3 leading-tight ${
+              className={`text-sm font-semibold text-foreground text-center line-clamp-2 leading-tight ${
                 isEditingLabel ? 'bg-background/80 border rounded px-2 py-1' : ''
               }`}
               style={{

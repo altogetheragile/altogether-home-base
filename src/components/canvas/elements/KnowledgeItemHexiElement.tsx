@@ -107,29 +107,29 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           />
         )}
 
-        {/* Hexagon */}
+        {/* Hexagon - Flat-top orientation */}
         <div
           className="relative w-full h-full transition-all duration-200 group-hover:scale-105"
           style={{
-            clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)',
+            clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
           }}
         >
           {/* Background with solid color and thick border */}
           <div
             className="absolute inset-0"
             style={{
-              backgroundColor: `${domainColor}30`,
-              border: `4px solid ${domainColor}`,
+              backgroundColor: `${domainColor}15`,
+              border: `6px solid ${domainColor}`,
             }}
           />
 
           {/* Content - Text and Icon inside hexagon */}
-          <div className="relative h-full flex flex-col items-center justify-center p-3 px-4">
+          <div className="relative h-full flex flex-col items-center justify-center p-4">
             <Layers
-              className="w-6 h-6 mb-1.5"
+              className="w-5 h-5 mb-2"
               style={{ color: categoryColor }}
             />
-            <p className="text-sm font-medium text-foreground text-center line-clamp-3 leading-tight">
+            <p className="text-sm font-semibold text-foreground text-center line-clamp-2 leading-tight">
               {data.name}
             </p>
           </div>
