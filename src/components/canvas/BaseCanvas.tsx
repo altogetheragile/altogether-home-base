@@ -62,13 +62,15 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
     }
 
     // Wait for fonts to load
-    await (document as any).fonts?.ready?.catch?.(() => {});
+    if ((document as any).fonts?.ready) {
+      await (document as any).fonts.ready;
+    }
 
     try {
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: '#ffffff',
-        scale: options.quality || 2,
+        scale: options.quality === 2 ? 2 : 3,
         useCORS: true,
         allowTaint: true,
         foreignObjectRendering: false,

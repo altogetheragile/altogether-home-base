@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Layers } from 'lucide-react';
 import { KnowledgeItemDetailsDialog } from './KnowledgeItemDetailsDialog';
-import { cn } from '@/lib/utils';
+import { hexPoints, wrapLines, LayersGlyph } from '../hex-utils';
 
-interface KnowledgeItemHexiElementProps {
+export interface KnowledgeItemHexiElementProps {
   id: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -35,118 +34,102 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   onMove,
   onDelete,
 }) => {
-  const elementRef = useRef<HTMLDivElement>(null);
+  const { x, y } = position;
+  const { width: w = 140, height: h = 121 } = size;
+  
+  const ref = useRef<HTMLDivElement>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const dragState = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+  const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
-  const domainColor = data.domain_color || '#8B5CF6';
-  const categoryColor = data.category_color || domainColor;
-  const planningFocusColor = data.planning_focus_color;
+  const stroke = data.domain_color ?? "#8B5CF6";
+  const fill = `${(data.domain_color ?? "#8B5CF6")}20`;
+  const dot = data.planning_focus_color;
+  const iconColor = data.category_color ?? stroke;
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+  const lines = wrapLines(data.name, 18, 3);
+
+  const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragState.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      initialX: position.x,
-      initialY: position.y,
-    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    drag.current = { px: e.clientX, py: e.clientY, x, y };
     onSelect?.();
     e.stopPropagation();
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!dragState.current || !elementRef.current) return;
-    
-    const dx = e.clientX - dragState.current.startX;
-    const dy = e.clientY - dragState.current.startY;
-    
-    elementRef.current.style.transform = `translate(${dragState.current.initialX + dx}px, ${dragState.current.initialY + dy}px)`;
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current || !ref.current) return;
+    const dx = e.clientX - drag.current.px;
+    const dy = e.clientY - drag.current.py;
+    ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!dragState.current) return;
-    
-    const dx = e.clientX - dragState.current.startX;
-    const dy = e.clientY - dragState.current.startY;
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    const dx = e.clientX - drag.current.px;
+    const dy = e.clientY - drag.current.py;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     if (distance < 5) {
       setShowDetails(true);
     } else {
-      onMove?.({
-        x: Math.round(dragState.current.initialX + dx),
-        y: Math.round(dragState.current.initialY + dy),
-      });
+      const nx = Math.round(drag.current.x + dx);
+      const ny = Math.round(drag.current.y + dy);
+      onMove?.({ x: nx, y: ny });
     }
     
-    dragState.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    drag.current = null;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
   return (
     <>
       <div
-        ref={elementRef}
+        ref={ref}
+        className="absolute select-none cursor-move"
+        style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
         data-element-id={id}
-        className="absolute select-none"
-        style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
-          width: size.width,
-          height: size.height,
-        }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
       >
-        <div className="relative w-full h-full group">
-          {/* Planning Focus Corner Indicator */}
-          {planningFocusColor && (
-            <span
-              className="absolute z-10"
-              style={{
-                right: '8px',
-                top: '6px',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: planningFocusColor,
-                border: '2px solid white',
-              }}
-            />
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg">
+          {/* fill + stroke */}
+          <polygon points={hexPoints(w,h)} fill={fill} />
+          <polygon points={hexPoints(w,h)} fill="none" stroke={stroke} strokeWidth={3} />
+
+          {/* selection ring */}
+          {isSelected && (
+            <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" />
           )}
-          
-          {/* Outer hexagon - border color with padding trick */}
-          <div
-            className={cn(
-              "absolute inset-0 transition-all duration-200 group-hover:scale-105",
-              isSelected && "scale-105"
-            )}
-            style={{
-              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-              background: domainColor,
-              padding: '2px',
-            }}
-          >
-            {/* Inner hexagon - fill color */}
-            <div
-              className="w-full h-full flex flex-col items-center justify-center px-3"
-              style={{
-                clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                background: `${domainColor}20`,
-              }}
-            >
-              <Layers style={{ color: categoryColor, width: 20, height: 20 }} />
-              <p 
-                className="text-xs font-semibold text-center leading-tight mt-1"
-                style={{ color: 'var(--foreground)' }}
+
+          {/* icon (center, small) */}
+          <g fill={iconColor} stroke="none">
+            <LayersGlyph x={w/2} y={h/2 - Math.min(w,h)/8} size={Math.min(w,h)/5} />
+          </g>
+
+          {/* label */}
+          <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight={600} fill="#111827" textAnchor="middle">
+            {lines.map((ln, i) => (
+              <text
+                key={i}
+                x={w/2}
+                y={h/2 + (i+0.6) * (Math.min(w,h)/7)}
+                fontSize={Math.max(12, Math.min(w,h)/8)}
+                dominantBaseline="middle"
               >
-                {data.name}
-              </p>
-            </div>
-          </div>
-        </div>
+                {ln}
+              </text>
+            ))}
+          </g>
+
+          {/* planning focus dot */}
+          {dot && (
+            <>
+              <circle cx={w-10} cy={10} r={4} fill={dot} />
+              <circle cx={w-10} cy={10} r={4} fill="none" stroke="#ffffff" strokeWidth={1.5}/>
+            </>
+          )}
+        </svg>
       </div>
 
       <KnowledgeItemDetailsDialog
