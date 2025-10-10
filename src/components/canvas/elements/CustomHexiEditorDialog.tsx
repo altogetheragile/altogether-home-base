@@ -32,6 +32,10 @@ interface CustomHexiEditorDialogProps {
   data: {
     label: string;
     color: string;
+    borderColor?: string;
+    fillColor?: string;
+    domain_id?: string;
+    domain_name?: string;
     icon?: string;
     emoji?: string;
     notes?: string;
@@ -93,12 +97,22 @@ export const CustomHexiEditorDialog: React.FC<CustomHexiEditorDialogProps> = ({
               />
             </div>
 
-            {/* Color */}
+            {/* Border Color */}
             <div className="space-y-2">
-              <Label>Color</Label>
+              <Label>Border Color</Label>
               <HexiColorPalette
-                selectedColor={formData.color}
-                onColorChange={(color) => setFormData({ ...formData, color })}
+                selectedColor={formData.borderColor ?? formData.color}
+                onColorChange={(color) => setFormData({ ...formData, borderColor: color })}
+                allowCustom
+              />
+            </div>
+
+            {/* Fill Color */}
+            <div className="space-y-2">
+              <Label>Fill Color</Label>
+              <HexiColorPalette
+                selectedColor={formData.fillColor ?? `${formData.color}30`}
+                onColorChange={(color) => setFormData({ ...formData, fillColor: color })}
                 allowCustom
               />
             </div>

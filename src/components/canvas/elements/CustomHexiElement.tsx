@@ -42,6 +42,8 @@ export interface CustomHexiElementProps {
   data: {
     label: string;
     color: string;
+    borderColor?: string;
+    fillColor?: string;
     domain_id?: string;
     domain_name?: string;
     icon?: string;
@@ -73,8 +75,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   const [showEditor, setShowEditor] = useState(false);
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
-  const stroke = data.color ?? "#8B5CF6";
-  const fill = `${(data.color ?? "#8B5CF6")}30`;
+  const stroke = data.borderColor ?? data.color ?? "#8B5CF6";
+  const fill = data.fillColor ?? `${(data.color ?? "#8B5CF6")}30`;
   const labelLines = wrapLines(data.label || "New Hexagon");
 
   const onPointerDown = (e: React.PointerEvent) => {
