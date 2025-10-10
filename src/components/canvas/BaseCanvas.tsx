@@ -61,31 +61,46 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
       throw new Error('Canvas not available for export');
     }
 
-    // Calculate bounds of all elements to ensure we capture everything
-    const elements = canvasRef.current.querySelectorAll('[style*="position: absolute"]');
+    // Calculate bounds of all positioned elements (computed styles, not inline only)
+    const allNodes = Array.from(canvasRef.current.querySelectorAll('*')) as HTMLElement[];
+    const positioned = allNodes.filter((el) => {
+      const cs = getComputedStyle(el);
+      return cs.position === 'absolute' || cs.position === 'fixed';
+    });
+
     let maxX = 0;
     let maxY = 0;
     let minX = Infinity;
     let minY = Infinity;
 
-    elements.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const canvasRect = canvasRef.current!.getBoundingClientRect();
-      const x = rect.left - canvasRect.left;
-      const y = rect.top - canvasRect.top;
-      const right = x + rect.width;
-      const bottom = y + rect.height;
-      
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, right);
-      maxY = Math.max(maxY, bottom);
-    });
+    if (positioned.length === 0) {
+      // Fallback to canvas size only
+      minX = 0;
+      minY = 0;
+      maxX = canvasRef.current.offsetWidth;
+      maxY = canvasRef.current.offsetHeight;
+    } else {
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      positioned.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const x = rect.left - canvasRect.left;
+        const y = rect.top - canvasRect.top;
+        const right = x + rect.width;
+        const bottom = y + rect.height;
+        
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, right);
+        maxY = Math.max(maxY, bottom);
+      });
+    }
 
-    // Add padding
+    // Add padding and account for negative positions (off-canvas content)
     const padding = 40;
-    const width = Math.max(maxX - minX + padding * 2, canvasRef.current.offsetWidth);
-    const height = Math.max(maxY - minY + padding * 2, canvasRef.current.offsetHeight);
+    const shiftX = (minX < 0 ? -minX : 0) + padding;
+    const shiftY = (minY < 0 ? -minY : 0) + padding;
+    const width = Math.max(maxX - minX + padding * 2, canvasRef.current.offsetWidth + padding * 2);
+    const height = Math.max(maxY - minY + padding * 2, canvasRef.current.offsetHeight + padding * 2);
 
     // Store original styles
     const originalStyle = {
@@ -94,16 +109,25 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
       overflow: canvasRef.current.style.overflow,
     };
 
-    // Temporarily adjust canvas size
+    // Temporarily adjust canvas size and shift children so negative areas are visible
     canvasRef.current.style.width = `${width}px`;
     canvasRef.current.style.height = `${height}px`;
     canvasRef.current.style.overflow = 'visible';
+
+    // Shift direct children to bring content into positive coordinates
+    const children = Array.from(canvasRef.current.children) as HTMLElement[];
+    const originalTransforms = new Map<HTMLElement, string>();
+    children.forEach((child) => {
+      originalTransforms.set(child, child.style.transform || '');
+      const prev = child.style.transform || '';
+      child.style.transform = `translate(${shiftX}px, ${shiftY}px) ${prev}`.trim();
+    });
 
     try {
       const { default: html2canvas } = await import('html2canvas');
       
       const canvas = await html2canvas(canvasRef.current, {
-        backgroundColor: 'white',
+        backgroundColor: '#ffffff',
         scale: options.quality || 2,
         useCORS: true,
         allowTaint: true,
@@ -141,7 +165,12 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
 
       return canvas.toDataURL('image/png');
     } finally {
-      // Restore original styles
+      // Restore child transforms and original styles
+      try {
+        originalTransforms.forEach((prev, el) => {
+          el.style.transform = prev;
+        });
+      } catch {}
       canvasRef.current.style.width = originalStyle.width;
       canvasRef.current.style.height = originalStyle.height;
       canvasRef.current.style.overflow = originalStyle.overflow;
