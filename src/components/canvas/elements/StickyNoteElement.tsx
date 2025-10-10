@@ -103,34 +103,6 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
 
   return (
     <>
-      {/* Controls */}
-      {isSelected && onDelete && (
-        <div
-          className="absolute -top-10 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-10 pointer-events-auto"
-          style={{ transform: `translate(${x}px, ${y}px)` }}
-        >
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 w-7 p-0"
-            title="Move"
-          >
-            <Move className="h-3 w-3" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 w-7 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            title="Delete"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
 
       <div
         ref={ref}
@@ -141,7 +113,37 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
+        {isSelected && onDelete && (
+          <div
+            className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-10 pointer-events-auto"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0"
+              title="Move"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <Move className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              title="Delete"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
         <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
+
           {/* Hex shape */}
           <polygon 
             points={hexPoints(w,h)} 
