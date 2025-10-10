@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
-  StickyNote,
   ZoomIn,
   ZoomOut,
   Download,
@@ -70,7 +69,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onClick={() => onAddElement('sticky')}
           title="Sticky Note"
         >
-          <StickyNote className="h-4 w-4 mr-2" />
+          <Hexagon className="h-4 w-4 mr-2" />
           Sticky Note
         </Button>
 

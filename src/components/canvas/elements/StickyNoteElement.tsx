@@ -1,8 +1,7 @@
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { StickyNote, Move3D, Trash2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { hexPoints, wrapLines } from '../hex-utils';
 
 interface StickyNoteElementProps {
   id: string;
@@ -27,57 +26,67 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
   data,
   isSelected,
   onSelect,
-  onResize,
   onMove,
   onContentChange,
   onDelete,
 }) => {
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [editText, setEditText] = React.useState(data.text);
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect?.();
+  const { x, y } = position;
+  const { width: w = 140, height: h = 121 } = size;
+  
+  const ref = useRef<HTMLDivElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(data.text);
+  const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    if (isEditing || !onMove) return;
-
-    const startX = e.clientX - position.x;
-    const startY = e.clientY - position.y;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      onMove({
-        x: e.clientX - startX,
-        y: e.clientY - startY,
-      });
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+  const stickyColors: Record<string, { fill: string; stroke: string }> = {
+    yellow: { fill: '#FEF9C3', stroke: '#EAB308' },
+    blue: { fill: '#DBEAFE', stroke: '#3B82F6' },
+    green: { fill: '#D1FAE5', stroke: '#10B981' },
+    pink: { fill: '#FCE7F3', stroke: '#EC4899' },
+    purple: { fill: '#E9D5FF', stroke: '#A855F7' },
   };
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const colors = stickyColors[data.color || 'yellow'] || stickyColors.yellow;
+  const labelLines = wrapLines(data.text || "New note", 15, 5);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 || isEditing) return;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    drag.current = { px: e.clientX, py: e.clientY, x, y };
+    onSelect?.();
     e.stopPropagation();
-    if (onContentChange) {
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current || !ref.current) return;
+    const dx = e.clientX - drag.current.px;
+    const dy = e.clientY - drag.current.py;
+    ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    const dx = e.clientX - drag.current.px;
+    const dy = e.clientY - drag.current.py;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 5) {
       setIsEditing(true);
       setEditText(data.text);
       setTimeout(() => textareaRef.current?.focus(), 0);
+    } else {
+      const nx = Math.round(drag.current.x + dx);
+      const ny = Math.round(drag.current.y + dy);
+      onMove?.({ x: nx, y: ny });
     }
+    
+    drag.current = null;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
   const handleSave = () => {
     onContentChange?.({ ...data, text: editText });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setEditText(data.text);
     setIsEditing(false);
   };
 
@@ -87,91 +96,103 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
       handleSave();
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      handleCancel();
+      setEditText(data.text);
+      setIsEditing(false);
     }
   };
 
-  const stickyColors = {
-    yellow: 'bg-yellow-100 border-yellow-200',
-    blue: 'bg-blue-100 border-blue-200',
-    green: 'bg-green-100 border-green-200',
-    pink: 'bg-pink-100 border-pink-200',
-    purple: 'bg-purple-100 border-purple-200',
-  };
-
-  const colorClass = stickyColors[data.color as keyof typeof stickyColors] || stickyColors.yellow;
-
   return (
-    <div
-      className={cn(
-        "absolute select-none border-2 rounded-lg",
-        isSelected ? "border-primary" : "border-transparent",
-        "hover:border-primary/50 transition-colors",
-        isEditing ? "cursor-text" : "cursor-move"
-      )}
-      style={{
-        left: position.x,
-        top: position.y,
-        width: size.width,
-        height: size.height,
-        minWidth: 120,
-        minHeight: 80,
-      }}
-      onMouseDown={handleMouseDown}
-    >
-      <Card className={cn("w-full h-full shadow-md", colorClass, isEditing && "ring-2 ring-primary")}>
-        <CardContent className="p-3 h-full">
-          <div className="flex items-start gap-2 h-full">
-            <div className="no-export">
-              <StickyNote className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-            </div>
-            <div className="flex-1 h-full">
-              {isEditing ? (
-                <textarea
-                  ref={textareaRef}
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onBlur={handleSave}
-                  className="w-full h-full text-sm resize-none border-none outline-none bg-transparent text-foreground"
-                  placeholder="Enter your note..."
-                />
-              ) : (
-                <p 
-                  className="text-sm text-foreground whitespace-pre-wrap break-words overflow-visible cursor-text"
-                  onDoubleClick={handleDoubleClick}
-                >
-                  {data.text || 'Double-click to edit...'}
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {isSelected && (
-        <>
-          {/* Delete button */}
-          {onDelete && (
-            <Button
-              size="icon"
-              variant="destructive"
-              className="no-export absolute -top-3 -right-3 h-6 w-6 rounded-full shadow-md"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
+    <>
+      <div
+        ref={ref}
+        className="absolute select-none cursor-move"
+        style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        data-element-id={id}
+      >
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
+          {/* Hex shape */}
+          <polygon 
+            points={hexPoints(w,h)} 
+            fill={colors.fill} 
+            stroke={colors.stroke} 
+            strokeWidth={3} 
+            strokeLinejoin="round" 
+            strokeLinecap="round"
+          />
+          {isSelected && (
+            <polygon 
+              points={hexPoints(w,h)} 
+              fill="none" 
+              stroke={colors.stroke} 
+              strokeWidth={5} 
+              strokeOpacity={0.5}
+              strokeLinejoin="round" 
+              strokeLinecap="round" 
+            />
           )}
-          
-          {/* Resize handle */}
-          <div className="no-export absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full cursor-se-resize flex items-center justify-center">
-            <Move3D className="w-2 h-2 text-primary-foreground" />
+
+          {/* Text content */}
+          {!isEditing && (
+            <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight={500} fill="#111827" textAnchor="middle">
+              {labelLines.map((ln, i) => (
+                <text
+                  key={i}
+                  x={w/2}
+                  y={h/2 - (labelLines.length * 8) + (i * 16)}
+                  fontSize={12}
+                  dominantBaseline="middle"
+                >
+                  {ln}
+                </text>
+              ))}
+            </g>
+          )}
+        </svg>
+
+        {/* Editing overlay */}
+        {isEditing && (
+          <div 
+            className="absolute inset-0 flex items-center justify-center p-4"
+            style={{ pointerEvents: 'all' }}
+          >
+            <textarea
+              ref={textareaRef}
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleSave}
+              className="w-full h-full text-xs resize-none border-none outline-none bg-transparent text-foreground text-center"
+              placeholder="Enter your note..."
+              style={{ 
+                background: 'transparent',
+                maxWidth: '110px',
+              }}
+            />
           </div>
-        </>
+        )}
+      </div>
+
+      {/* Delete button when selected */}
+      {isSelected && onDelete && (
+        <Button
+          size="icon"
+          variant="destructive"
+          className="no-export absolute h-6 w-6 rounded-full shadow-md"
+          style={{
+            left: x + w - 12,
+            top: y - 12,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
       )}
-    </div>
+    </>
   );
 };

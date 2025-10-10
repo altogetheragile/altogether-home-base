@@ -65,7 +65,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       const normalized = {
         ...canvas.data,
         elements: canvas.data.elements.map(el => {
-          if (el.type === 'knowledgeItem' || el.type === 'customHexi') {
+          if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky') {
             return {
               ...el,
               size: { width: 140, height: 121 }
@@ -77,7 +77,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       
       // Check if any changes were made
       const hasChanges = normalized.elements.some((el, idx) => 
-        (el.type === 'knowledgeItem' || el.type === 'customHexi') &&
+        (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky') &&
         (canvas.data.elements[idx]?.size?.width !== 140 || canvas.data.elements[idx]?.size?.height !== 121)
       );
       
@@ -551,7 +551,6 @@ function getDefaultSize(type: string) {
     case 'story':
       return { width: 240, height: 160 };
     case 'sticky':
-      return { width: 150, height: 120 };
     case 'knowledgeItem':
     case 'customHexi':
       return { width: 140, height: 121 };
