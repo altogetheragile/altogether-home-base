@@ -42,11 +42,11 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
   const stroke = data.domain_color ?? "#8B5CF6";
-  const fill = `${(data.domain_color ?? "#8B5CF6")}20`;
+  const fill = `${(data.domain_color ?? "#8B5CF6")}30`;
   const dot = data.planning_focus_color;
   const iconColor = data.category_color ?? stroke;
 
-  const lines = wrapLines(data.name, 18, 3);
+  const lines = wrapLines(data.name);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
@@ -104,7 +104,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
 
           {/* icon (center, small) */}
           <g fill={iconColor} stroke="none">
-            <LayersGlyph x={w/2} y={h/2 - Math.min(w,h)/8} size={Math.min(w,h)/5} />
+            <LayersGlyph x={w/2} y={h/2 - 25} size={24} />
           </g>
 
           {/* label */}
@@ -113,8 +113,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
               <text
                 key={i}
                 x={w/2}
-                y={h/2 + (i+0.6) * (Math.min(w,h)/7)}
-                fontSize={Math.max(12, Math.min(w,h)/8)}
+                y={h/2 + (i * 16) + 5}
+                fontSize={13}
                 dominantBaseline="middle"
               >
                 {ln}

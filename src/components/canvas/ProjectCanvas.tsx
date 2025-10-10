@@ -60,7 +60,37 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     
     if (canvas?.data) {
       console.log('Setting canvas data from existing canvas');
-      setCanvasData(canvas.data);
+      
+      // Normalize hexagon sizes
+      const normalized = {
+        ...canvas.data,
+        elements: canvas.data.elements.map(el => {
+          if (el.type === 'knowledgeItem' || el.type === 'customHexi') {
+            return {
+              ...el,
+              size: { width: 140, height: 121 }
+            };
+          }
+          return el;
+        })
+      };
+      
+      // Check if any changes were made
+      const hasChanges = normalized.elements.some((el, idx) => 
+        (el.type === 'knowledgeItem' || el.type === 'customHexi') &&
+        (canvas.data.elements[idx]?.size?.width !== 140 || canvas.data.elements[idx]?.size?.height !== 121)
+      );
+      
+      if (hasChanges) {
+        console.log('Normalizing hexagon sizes');
+        setCanvasData(normalized);
+        // Save normalized data immediately
+        if (canvas.id) {
+          updateCanvas.mutate({ projectId, data: normalized });
+        }
+      } else {
+        setCanvasData(canvas.data);
+      }
     } else if (!canvas && !isLoading && !createCanvas.isPending && projectId) {
       console.log('Creating new canvas for project:', projectId);
       // Create new canvas if none exists

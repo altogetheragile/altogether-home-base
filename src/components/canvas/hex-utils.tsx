@@ -2,15 +2,20 @@
 import React from 'react';
 
 export const hexPoints = (w: number, h: number) => {
-  // Base flat-top hex for 160x140, scaled to w/h (keeps nice proportions)
+  // Proper flat-top regular hexagon for 140×121 base
   const base = [
-    [40,14],[120,14],[160,70],[120,126],[40,126],[0,70]
+    [35, 0],      // top-left
+    [105, 0],     // top-right  
+    [140, 60.5],  // right
+    [105, 121],   // bottom-right
+    [35, 121],    // bottom-left
+    [0, 60.5]     // left
   ];
-  const sx = w / 160, sy = h / 140;
+  const sx = w / 140, sy = h / 121;
   return base.map(([px,py]) => `${px*sx},${py*sy}`).join(" ");
 };
 
-export const wrapLines = (text: string, maxChars = 16, maxLines = 3) => {
+export const wrapLines = (text: string, maxChars = 15, maxLines = 3) => {
   const words = (text ?? "").split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = "";

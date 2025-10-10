@@ -2,6 +2,29 @@ import React, { useState, useRef } from 'react';
 import { hexPoints, wrapLines, LayersGlyph } from '../hex-utils';
 import { CustomHexiEditorDialog } from './CustomHexiEditorDialog';
 
+const getIconUnicode = (iconName?: string): string => {
+  const iconMap: Record<string, string> = {
+    'Circle': '⭕',
+    'Square': '⬜',
+    'Star': '⭐',
+    'Heart': '❤️',
+    'Lightbulb': '💡',
+    'Target': '🎯',
+    'Flag': '🚩',
+    'Check': '✅',
+    'X': '❌',
+    'Info': 'ℹ️',
+    'Warning': '⚠️',
+    'Settings': '⚙️',
+    'Users': '👥',
+    'Calendar': '📅',
+    'Mail': '📧',
+    'Phone': '📞',
+    'Layers': '📚',
+  };
+  return iconMap[iconName || 'Layers'] || '📚';
+};
+
 export interface CustomHexiElementProps {
   id: string;
   position: { x: number; y: number };
@@ -39,8 +62,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
   const stroke = data.color ?? "#8B5CF6";
-  const fill = `${(data.color ?? "#8B5CF6")}20`;
-  const labelLines = wrapLines(data.label || "New Hexagon", 18, 3);
+  const fill = `${(data.color ?? "#8B5CF6")}30`;
+  const labelLines = wrapLines(data.label || "New Hexagon");
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
@@ -97,16 +120,26 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
           {data.emoji ? (
             <text
               x={w/2}
-              y={h/2 - Math.min(w,h)/8}
-              fontSize={Math.min(w,h)/4}
+              y={h/2 - 25}
+              fontSize={24}
               textAnchor="middle"
               dominantBaseline="central"
             >
               {data.emoji}
             </text>
+          ) : data.icon ? (
+            <text
+              x={w/2}
+              y={h/2 - 25}
+              fontSize={20}
+              textAnchor="middle"
+              dominantBaseline="central"
+            >
+              {getIconUnicode(data.icon)}
+            </text>
           ) : (
             <g fill={stroke}>
-              <LayersGlyph x={w/2} y={h/2 - Math.min(w,h)/8} size={Math.min(w,h)/5} />
+              <LayersGlyph x={w/2} y={h/2 - 25} size={24} />
             </g>
           )}
 
@@ -116,8 +149,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
               <text
                 key={i}
                 x={w/2}
-                y={h/2 + (i+0.6) * (Math.min(w,h)/7)}
-                fontSize={Math.max(12, Math.min(w,h)/8)}
+                y={h/2 + (i * 16) + 5}
+                fontSize={13}
                 dominantBaseline="middle"
               >
                 {ln}
