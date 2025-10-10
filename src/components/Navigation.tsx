@@ -44,16 +44,6 @@ const Navigation = () => {
           <div className="hidden md:flex items-center space-x-8">
             <div className="flex items-center space-x-8">
               <Link
-                to="/"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Home
-              </Link>
-              <Link
                 to="/events"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive("/events")
@@ -97,22 +87,6 @@ const Navigation = () => {
                   Dashboard
                 </Link>
               )}
-              
-              {/* Admin Link - Only show for admin users with visual indicator */}
-              {showAdminLinks && (
-                <Link
-                  to="/admin/events"
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.startsWith("/admin")
-                      ? "text-primary bg-accent"
-                      : "text-muted-foreground hover:text-primary hover:bg-accent"
-                  }`}
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Admin</span>
-                   <Shield className="h-3 w-3" />
-                 </Link>
-               )}
              </div>
 
               {/* AI Tools Section - Desktop */}
@@ -208,17 +182,6 @@ const Navigation = () => {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-border">
               <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive("/")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Home
-              </Link>
-              <Link
                 to="/events"
                 onClick={() => setIsMenuOpen(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
@@ -266,23 +229,6 @@ const Navigation = () => {
                   Dashboard
                 </Link>
               )}
-              
-              {/* Admin Link - Mobile */}
-              {showAdminLinks && (
-                <Link
-                  to="/admin/events"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    location.pathname.startsWith("/admin")
-                      ? "text-primary bg-accent"
-                      : "text-muted-foreground hover:text-primary hover:bg-accent"
-                  }`}
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Admin</span>
-                  <Shield className="h-3 w-3" />
-                 </Link>
-               )}
                
                  {/* AI Tools Section - Mobile */}
                  <div className="border-t border-border pt-2 mt-2">
