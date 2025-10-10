@@ -240,7 +240,10 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const renderElement = (element: CanvasElement) => {
     const isSelected = selectedElements.includes(element.id);
     
-    const handleSelect = () => setSelectedElements([element.id]);
+    const handleSelect = () => {
+      console.log('Selecting element:', element.id);
+      setSelectedElements([element.id]);
+    };
     const handleMove = (position: { x: number; y: number }) => {
       const updatedElement = { ...element, position };
       const updatedData = {
@@ -318,10 +321,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
               handleDataChange(updatedData);
             }}
             onDelete={() => {
+              console.log('Delete clicked for story element:', element.id);
               const updatedData = {
                 ...canvasData,
                 elements: canvasData.elements.filter(el => el.id !== element.id)
               };
+              console.log('Updated data:', updatedData);
               handleDataChange(updatedData);
               setSelectedElements([]);
             }}

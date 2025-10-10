@@ -87,7 +87,9 @@ const AIToolElement: React.FC<AIToolElementProps> = ({
               size="icon"
               className="h-6 w-6"
               onClick={(e) => {
+                console.log('Delete button clicked in AIToolElement');
                 e.stopPropagation();
+                e.preventDefault();
                 onDelete();
               }}
             >
