@@ -158,7 +158,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `knowledgeItem-${Date.now()}`,
       type: 'knowledgeItem' as any,
       position: { x: 100, y: 100 },
-      size: { width: 140, height: 160 },
+      size: { width: 140, height: 121 },
       content: {
         knowledgeItemId: itemId,
         name: itemData.name,
@@ -187,7 +187,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `customHexi-${Date.now()}`,
       type: 'customHexi' as any,
       position: { x: 200, y: 100 },
-      size: { width: 140, height: 160 },
+      size: { width: 140, height: 121 },
       content: {
         label: 'New Hexagon',
         color: '#8B5CF6',
@@ -401,7 +401,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/dashboard?tab=projects')}
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -501,7 +501,7 @@ function getDefaultSize(type: string) {
       return { width: 150, height: 120 };
     case 'knowledgeItem':
     case 'customHexi':
-      return { width: 140, height: 160 };
+      return { width: 140, height: 121 };
     default:
       return { width: 200, height: 150 };
   }

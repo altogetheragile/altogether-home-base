@@ -117,7 +117,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
           left: position.x,
           top: position.y,
           width: size.width,
-          height: size.height,
+          height: Math.round(size.width * 0.8660254037844386),
           cursor: isDragging ? 'grabbing' : 'grab',
         }}
         onMouseDown={handleMouseDown}
@@ -127,20 +127,20 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         {/* Regular Hexagon SVG */}
         <svg 
           width={size.width} 
-          height={size.height} 
-          viewBox="0 0 100 87"
+          height={Math.round(size.width * 0.8660254037844386)}
           className="transition-all duration-200 group-hover:scale-105"
         >
-          {/* Regular hexagon path */}
-          <path
-            d="M 25,0 L 75,0 L 100,43.5 L 75,87 L 25,87 L 0,43.5 Z"
+          {/* Regular hexagon shape */}
+          <polygon
+            points={`${size.width * 0.25},0 ${size.width * 0.75},0 ${size.width},${Math.round(size.width * 0.8660254037844386) / 2} ${size.width * 0.75},${Math.round(size.width * 0.8660254037844386)} ${size.width * 0.25},${Math.round(size.width * 0.8660254037844386)} 0,${Math.round(size.width * 0.8660254037844386) / 2}`}
             fill={`${data.color}15`}
             stroke={data.color}
             strokeWidth="3"
+            vectorEffect="non-scaling-stroke"
           />
           
           {/* Content using foreignObject */}
-          <foreignObject x="10" y="20" width="80" height="47">
+          <foreignObject x={size.width * 0.1} y={Math.round(size.width * 0.8660254037844386) * 0.23} width={size.width * 0.8} height={Math.round(size.width * 0.8660254037844386) * 0.54}>
             <div className="flex flex-col items-center justify-center h-full">
               {data.emoji ? (
                 <div className="text-xl mb-1">{data.emoji}</div>

@@ -95,6 +95,9 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   const domainColor = data.domain_color || '#8B5CF6';
   const categoryColor = data.category_color || domainColor;
   const planningFocusColor = data.planning_focus_color;
+  const HEX_RATIO = 0.8660254037844386; // sqrt(3)/2 for regular flat-top hex
+  const hexWidth = size.width;
+  const hexHeight = Math.round(hexWidth * HEX_RATIO);
 
   return (
     <>
@@ -104,7 +107,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           left: position.x,
           top: position.y,
           width: size.width,
-          height: size.height,
+          height: hexHeight,
           cursor: isDragging ? 'grabbing' : 'grab',
         }}
         onMouseDown={handleMouseDown}
@@ -123,21 +126,21 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
 
         {/* Regular Hexagon SVG */}
         <svg 
-          width={size.width} 
-          height={size.height} 
-          viewBox="0 0 100 87"
+          width={hexWidth} 
+          height={hexHeight}
           className="transition-all duration-200 group-hover:scale-105"
         >
-          {/* Regular hexagon path */}
-          <path
-            d="M 25,0 L 75,0 L 100,43.5 L 75,87 L 25,87 L 0,43.5 Z"
+          {/* Regular hexagon shape */}
+          <polygon
+            points={`${hexWidth * 0.25},0 ${hexWidth * 0.75},0 ${hexWidth},${hexHeight / 2} ${hexWidth * 0.75},${hexHeight} ${hexWidth * 0.25},${hexHeight} 0,${hexHeight / 2}`}
             fill={`${domainColor}15`}
             stroke={domainColor}
             strokeWidth="3"
+            vectorEffect="non-scaling-stroke"
           />
           
           {/* Content using foreignObject */}
-          <foreignObject x="10" y="20" width="80" height="47">
+          <foreignObject x={hexWidth * 0.1} y={hexHeight * 0.23} width={hexWidth * 0.8} height={hexHeight * 0.54}>
             <div className="flex flex-col items-center justify-center h-full">
               <Layers style={{ color: categoryColor, width: 20, height: 20 }} />
               <p className="text-xs font-semibold text-center leading-tight mt-1 px-1" style={{ color: 'var(--foreground)' }}>

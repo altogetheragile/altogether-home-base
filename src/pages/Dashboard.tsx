@@ -7,10 +7,13 @@ import { ProjectsList } from "@/components/dashboard/ProjectsList";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import { useUserRegistrations } from "@/hooks/useUserRegistrations";
 import { Calendar, FolderKanban } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { data: registrations = [], isLoading: registrationsLoading } = useUserRegistrations();
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || 'events';
 
   const upcomingRegistrations = registrations.filter(
     (reg) => reg.event && new Date(reg.event.start_date) > new Date()
@@ -35,7 +38,7 @@ const Dashboard = () => {
         <DashboardStats />
 
         {/* Main Content - Tabs */}
-        <Tabs defaultValue="events" className="mt-8">
+        <Tabs defaultValue={tab} className="mt-8">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="events" className="flex items-center space-x-2">
               <Calendar className="h-4 w-4" />
