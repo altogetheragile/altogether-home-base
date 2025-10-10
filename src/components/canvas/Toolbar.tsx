@@ -5,9 +5,11 @@ import {
   ZoomIn,
   ZoomOut,
   Download,
-  Hexagon
+  Hexagon,
+  Layers
 } from 'lucide-react';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
+import { PlanningFocusSelector } from './elements/PlanningFocusSelector';
 
 interface ToolbarProps {
   onAddElement: (type: string) => void;
@@ -20,6 +22,7 @@ interface ToolbarProps {
   onStoryGenerated?: (storyData: any) => void;
   onAddKnowledgeItem?: (itemId: string, itemData: any) => void;
   onAddCustomHexi?: () => void;
+  onAddPlanningFocus?: (focusId: string, focusData: any) => void;
   existingKnowledgeItemIds?: string[];
 }
 
@@ -34,9 +37,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onStoryGenerated,
   onAddKnowledgeItem,
   onAddCustomHexi,
+  onAddPlanningFocus,
   existingKnowledgeItemIds = [],
 }) => {
   const [showKnowledgeSelector, setShowKnowledgeSelector] = useState(false);
+  const [showPlanningFocusSelector, setShowPlanningFocusSelector] = useState(false);
   return (
     <>
       <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
@@ -49,6 +54,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         >
           <Hexagon className="h-4 w-4 mr-2" />
           Add Knowledge Item
+        </Button>
+
+        {/* Planning Focus Hexi */}
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => setShowPlanningFocusSelector(true)}
+          title="Planning Focus Hexi"
+        >
+          <Layers className="h-4 w-4 mr-2" />
+          Planning Focus
         </Button>
 
         {/* Custom Hexi */}
@@ -104,6 +120,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           setShowKnowledgeSelector(false);
         }}
         existingItemIds={existingKnowledgeItemIds}
+      />
+
+      <PlanningFocusSelector
+        isOpen={showPlanningFocusSelector}
+        onClose={() => setShowPlanningFocusSelector(false)}
+        onAdd={(focusId, focusData) => {
+          onAddPlanningFocus?.(focusId, focusData);
+          setShowPlanningFocusSelector(false);
+        }}
       />
     </>
   );

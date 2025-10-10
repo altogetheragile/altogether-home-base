@@ -7,6 +7,7 @@ import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
 import { CustomHexiElement } from './elements/CustomHexiElement';
+import { PlanningFocusHexiElement } from './elements/PlanningFocusHexiElement';
 import { useCanvas, useCanvasMutations } from '@/hooks/useCanvas';
 import { useCanvasRealtime } from '@/hooks/canvas/useCanvasRealtime';
 import { useDebounceCanvas } from '@/hooks/useDebounceCanvas';
@@ -65,7 +66,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       const normalized = {
         ...canvas.data,
         elements: canvas.data.elements.map(el => {
-          if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky') {
+          if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') {
             return {
               ...el,
               size: { width: 140, height: 121 }
@@ -77,7 +78,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       
       // Check if any changes were made
       const hasChanges = normalized.elements.some((el, idx) => 
-        (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky') &&
+        (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') &&
         (canvas.data.elements[idx]?.size?.width !== 140 || canvas.data.elements[idx]?.size?.height !== 121)
       );
       
@@ -225,6 +226,32 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         color: '#8B5CF6',
         icon: 'Circle',
         notes: '',
+      }
+    };
+    
+    const newData = {
+      ...canvasData,
+      elements: [...canvasData.elements, newElement],
+    };
+    
+    setCanvasData(newData);
+    flushDataChange(newData);
+    setSelectedElements([newElement.id]);
+  };
+
+  const handleAddPlanningFocus = (focusId: string, focusData: any) => {
+    const newElement: CanvasElement = {
+      id: `planningFocus-${Date.now()}`,
+      type: 'planningFocus' as any,
+      position: { x: 250, y: 150 },
+      size: { width: 140, height: 121 },
+      content: {
+        planningFocusId: focusId,
+        name: focusData.name,
+        slug: focusData.slug,
+        description: focusData.description,
+        color: focusData.color,
+        display_order: focusData.display_order,
       }
     };
     
@@ -412,6 +439,17 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onDelete={() => handleElementDelete(element.id)}
           />
         );
+      case 'planningFocus':
+        return (
+          <PlanningFocusHexiElement
+            key={element.id}
+            element={element}
+            isSelected={isSelected}
+            onSelect={() => setSelectedElements([element.id])}
+            onUpdate={(updates) => handleElementUpdate(element.id, updates)}
+            onDelete={() => handleElementDelete(element.id)}
+          />
+        );
       default:
         return null;
     }
@@ -473,6 +511,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               projectId={projectId}
               onAddKnowledgeItem={handleAddKnowledgeItem}
               onAddCustomHexi={handleAddCustomHexi}
+              onAddPlanningFocus={handleAddPlanningFocus}
               existingKnowledgeItemIds={existingKnowledgeItemIds}
             />
           </div>
@@ -543,6 +582,7 @@ function getDefaultSize(type: string) {
     case 'sticky':
     case 'knowledgeItem':
     case 'customHexi':
+    case 'planningFocus':
       return { width: 140, height: 121 };
     default:
       return { width: 200, height: 150 };
