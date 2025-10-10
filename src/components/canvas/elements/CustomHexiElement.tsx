@@ -36,11 +36,15 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showEditor, setShowEditor] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
-  const labelRef = useRef<HTMLDivElement>(null);
+  const [hasDragged, setHasDragged] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0 || isEditingLabel) return;
     setIsDragging(true);
+    setHasDragged(false);
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
     setDragOffset({
       x: e.clientX - position.x,
       y: e.clientY - position.y,
@@ -51,6 +55,16 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
+    
+    const distance = Math.sqrt(
+      Math.pow(e.clientX - dragStartPos.current.x, 2) + 
+      Math.pow(e.clientY - dragStartPos.current.y, 2)
+    );
+    
+    if (distance > 5) {
+      setHasDragged(true);
+    }
+    
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
     onMove?.({ x: newX, y: newY });
@@ -72,9 +86,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   }, [isDragging, dragOffset]);
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!isDragging && !isEditingLabel) {
-      setShowEditor(true);
-    }
+    if (isEditingLabel || hasDragged) return;
+    setShowEditor(true);
     e.stopPropagation();
   };
 
@@ -85,16 +98,12 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
 
   const handleLabelBlur = () => {
     setIsEditingLabel(false);
-    if (labelRef.current) {
-      const newLabel = labelRef.current.textContent || 'New Hexagon';
-      onContentChange?.({ ...data, label: newLabel });
-    }
   };
 
   const handleLabelKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      labelRef.current?.blur();
+      inputRef.current?.blur();
     }
   };
 
@@ -115,50 +124,56 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         onClick={handleClick}
         className="group"
       >
-        {/* Hexagon - Flat-top orientation */}
-        <div
-          className="relative w-full h-full transition-all duration-200 group-hover:scale-105"
-          style={{
-            clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-          }}
+        {/* Regular Hexagon SVG */}
+        <svg 
+          width={size.width} 
+          height={size.height} 
+          viewBox="0 0 100 87"
+          className="transition-all duration-200 group-hover:scale-105"
         >
-          {/* Background with solid color and thick border */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundColor: `${data.color}15`,
-              border: `6px solid ${data.color}`,
-            }}
+          {/* Regular hexagon path */}
+          <path
+            d="M 25,0 L 75,0 L 100,43.5 L 75,87 L 25,87 L 0,43.5 Z"
+            fill={`${data.color}15`}
+            stroke={data.color}
+            strokeWidth="6"
           />
-
-          {/* Content - Icon and Text inside hexagon */}
-          <div className="relative h-full flex flex-col items-center justify-center p-4">
-            {data.emoji ? (
-              <div className="text-2xl mb-2">{data.emoji}</div>
-            ) : (
-              <IconComponent
-                className="w-5 h-5 mb-2"
-                style={{ color: data.color }}
-              />
-            )}
-            <div
-              ref={labelRef}
-              contentEditable={isEditingLabel}
-              suppressContentEditableWarning
-              onBlur={handleLabelBlur}
-              onKeyDown={handleLabelKeyDown}
-              onDoubleClick={handleLabelDoubleClick}
-              className={`text-sm font-semibold text-foreground text-center line-clamp-2 leading-tight ${
-                isEditingLabel ? 'bg-background/80 border rounded px-2 py-1' : ''
-              }`}
-              style={{
-                outline: isEditingLabel ? '2px solid hsl(var(--primary))' : 'none',
-              }}
-            >
-              {data.label}
+          
+          {/* Content using foreignObject */}
+          <foreignObject x="10" y="20" width="80" height="47">
+            <div className="flex flex-col items-center justify-center h-full">
+              {data.emoji ? (
+                <div className="text-xl mb-1">{data.emoji}</div>
+              ) : (
+                <IconComponent style={{ color: data.color, width: 20, height: 20 }} />
+              )}
+              {isEditingLabel ? (
+                <input
+                  ref={inputRef}
+                  value={data.label}
+                  onChange={(e) => onContentChange?.({ ...data, label: e.target.value })}
+                  onBlur={handleLabelBlur}
+                  onKeyDown={handleLabelKeyDown}
+                  onDoubleClick={handleLabelDoubleClick}
+                  className="text-xs font-semibold text-center bg-background/80 border rounded px-2 py-1 leading-tight"
+                  style={{
+                    maxWidth: '90%',
+                    outline: 'none',
+                    color: 'var(--foreground)',
+                  }}
+                />
+              ) : (
+                <p
+                  onDoubleClick={handleLabelDoubleClick}
+                  className="text-xs font-semibold text-center leading-tight cursor-text px-1 mt-1"
+                  style={{ color: 'var(--foreground)' }}
+                >
+                  {data.label}
+                </p>
+              )}
             </div>
-          </div>
-        </div>
+          </foreignObject>
+        </svg>
       </div>
 
       <CustomHexiEditorDialog
