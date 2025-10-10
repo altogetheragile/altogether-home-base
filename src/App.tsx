@@ -67,7 +67,7 @@ import KnowledgeDetail from "./pages/KnowledgeDetail";
 
 // Feature flags for gradual restoration
 const ENABLE_ADMIN_ROUTES = true; // ✅ Re-enabling admin routes  
-const ENABLE_PROTECTED_PROJECTS = false;
+const ENABLE_PROTECTED_PROJECTS = true; // ✅ Hexagon canvas enabled
 const ENABLE_DYNAMIC_PAGES = true; // ✅ Re-enabling CMS pages
 
 const queryClient = new QueryClient();

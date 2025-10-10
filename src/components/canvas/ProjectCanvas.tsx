@@ -4,6 +4,8 @@ import { CanvasProvider } from './CanvasProvider';
 import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
+import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
+import { CustomHexiElement } from './elements/CustomHexiElement';
 import { useCanvas, useCanvasMutations } from '@/hooks/useCanvas';
 import { useCanvasRealtime } from '@/hooks/canvas/useCanvasRealtime';
 import { useDebounceCanvas } from '@/hooks/useDebounceCanvas';
@@ -40,6 +42,14 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  // Get existing knowledge item IDs for selector
+  const existingKnowledgeItemIds = React.useMemo(() => {
+    return canvasData.elements
+      .filter(el => el.type === 'knowledgeItem')
+      .map(el => el.content?.knowledgeItemId)
+      .filter(Boolean);
+  }, [canvasData.elements]);
 
   // Initialize canvas data
   useEffect(() => {
@@ -136,6 +146,58 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setCanvasData(newData);
     
     // Save immediately for new elements
+    flushDataChange(newData);
+    setSelectedElements([newElement.id]);
+  };
+
+  const handleAddKnowledgeItem = (itemId: string, itemData: any) => {
+    const newElement: CanvasElement = {
+      id: `knowledgeItem-${Date.now()}`,
+      type: 'knowledgeItem' as any,
+      position: { x: 100, y: 100 },
+      size: { width: 140, height: 160 },
+      content: {
+        knowledgeItemId: itemId,
+        name: itemData.name,
+        slug: itemData.slug,
+        domain_color: itemData.activity_domains?.color,
+        domain_name: itemData.activity_domains?.name,
+        planning_focus_color: itemData.planning_focuses?.color,
+        planning_focus_name: itemData.planning_focuses?.name,
+        category_name: itemData.knowledge_categories?.name,
+      }
+    };
+    
+    const newData = {
+      ...canvasData,
+      elements: [...canvasData.elements, newElement],
+    };
+    
+    setCanvasData(newData);
+    flushDataChange(newData);
+    setSelectedElements([newElement.id]);
+  };
+
+  const handleAddCustomHexi = () => {
+    const newElement: CanvasElement = {
+      id: `customHexi-${Date.now()}`,
+      type: 'customHexi' as any,
+      position: { x: 200, y: 100 },
+      size: { width: 140, height: 160 },
+      content: {
+        label: 'New Hexagon',
+        color: '#8B5CF6',
+        icon: 'Circle',
+        notes: '',
+      }
+    };
+    
+    const newData = {
+      ...canvasData,
+      elements: [...canvasData.elements, newElement],
+    };
+    
+    setCanvasData(newData);
     flushDataChange(newData);
     setSelectedElements([newElement.id]);
   };
@@ -245,6 +307,54 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onContentChange={(content) => handleElementContentChange(element.id, content)}
           />
         );
+      case 'knowledgeItem':
+        return (
+          <KnowledgeItemHexiElement
+            key={element.id}
+            id={element.id}
+            position={element.position}
+            size={element.size}
+            knowledgeItemId={element.content.knowledgeItemId}
+            data={element.content}
+            isSelected={isSelected}
+            onSelect={() => setSelectedElements([element.id])}
+            onMove={(position) => {
+              const newData = {
+                ...canvasData,
+                elements: canvasData.elements.map(el =>
+                  el.id === element.id ? { ...el, position } : el
+                ),
+              };
+              setCanvasData(newData);
+              debouncedDataChange(newData);
+            }}
+            onDelete={() => handleElementDelete(element.id)}
+          />
+        );
+      case 'customHexi':
+        return (
+          <CustomHexiElement
+            key={element.id}
+            id={element.id}
+            position={element.position}
+            size={element.size}
+            data={element.content}
+            isSelected={isSelected}
+            onSelect={() => setSelectedElements([element.id])}
+            onMove={(position) => {
+              const newData = {
+                ...canvasData,
+                elements: canvasData.elements.map(el =>
+                  el.id === element.id ? { ...el, position } : el
+                ),
+              };
+              setCanvasData(newData);
+              debouncedDataChange(newData);
+            }}
+            onContentChange={(content) => handleElementContentChange(element.id, content)}
+            onDelete={() => handleElementDelete(element.id)}
+          />
+        );
       default:
         return null;
     }
@@ -304,6 +414,10 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               onZoomOut={() => handleZoom('out')}
               onExport={handleExport}
               zoom={zoom}
+              projectId={projectId}
+              onAddKnowledgeItem={handleAddKnowledgeItem}
+              onAddCustomHexi={handleAddCustomHexi}
+              existingKnowledgeItemIds={existingKnowledgeItemIds}
             />
           </div>
         </div>
@@ -372,6 +486,9 @@ function getDefaultSize(type: string) {
       return { width: 240, height: 160 };
     case 'sticky':
       return { width: 150, height: 120 };
+    case 'knowledgeItem':
+    case 'customHexi':
+      return { width: 140, height: 160 };
     default:
       return { width: 200, height: 150 };
   }

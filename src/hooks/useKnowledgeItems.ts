@@ -247,6 +247,31 @@ export const useKnowledgeItems = (params?: {
   });
 };
 
+export const useKnowledgeItemById = (id: string) => {
+  return useQuery({
+    queryKey: ['knowledge-item-by-id', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('knowledge_items')
+        .select(`
+          id, name, slug, description,
+          knowledge_categories (id, name, color),
+          activity_domains (id, name, color),
+          planning_focuses (id, name, color),
+          knowledge_item_tags (
+            knowledge_tags (id, name, slug)
+          )
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+
 export const useKnowledgeItemBySlug = (slug: string) => {
   return useQuery({
     queryKey: ['knowledge-item', slug],

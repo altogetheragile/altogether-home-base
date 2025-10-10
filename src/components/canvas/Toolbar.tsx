@@ -9,7 +9,8 @@ import {
   ZoomIn,
   ZoomOut,
   Download,
-  Sparkles
+  Sparkles,
+  Hexagon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import BMCGeneratorDialog from '@/components/bmc/BMCGeneratorDialog';
 import { UserStoryClarifierDialog } from '@/components/stories/UserStoryClarifierDialog';
+import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 
 interface ToolbarProps {
   onAddElement: (type: string) => void;
@@ -29,6 +31,9 @@ interface ToolbarProps {
   projectId?: string;
   onBMCGenerated?: (bmcData: any) => void;
   onStoryGenerated?: (storyData: any) => void;
+  onAddKnowledgeItem?: (itemId: string, itemData: any) => void;
+  onAddCustomHexi?: () => void;
+  existingKnowledgeItemIds?: string[];
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -40,9 +45,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   projectId,
   onBMCGenerated,
   onStoryGenerated,
+  onAddKnowledgeItem,
+  onAddCustomHexi,
+  existingKnowledgeItemIds = [],
 }) => {
   const [showBMCDialog, setShowBMCDialog] = useState(false);
   const [showStoryDialog, setShowStoryDialog] = useState(false);
+  const [showKnowledgeSelector, setShowKnowledgeSelector] = useState(false);
   return (
     <>
       <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
@@ -90,6 +99,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
+        <Separator orientation="vertical" className="h-6" />
+
+        {/* Hexagon Elements */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowKnowledgeSelector(true)}
+            title="Add Knowledge Technique"
+          >
+            <Hexagon className="h-4 w-4 mr-2" />
+            Add Technique
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onAddCustomHexi?.()}
+            title="Add Custom Hexagon"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Custom Hexi
+          </Button>
+        </div>
+
       <Separator orientation="vertical" className="h-6" />
 
       {/* Zoom Controls */}
@@ -122,12 +156,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         onBMCGenerated={onBMCGenerated}
       />
 
-        <UserStoryClarifierDialog
+      <UserStoryClarifierDialog
           isOpen={showStoryDialog}
           onClose={() => setShowStoryDialog(false)}
           projectId={projectId}
           onStoryGenerated={onStoryGenerated}
         />
+
+      <KnowledgeItemSelector
+        isOpen={showKnowledgeSelector}
+        onClose={() => setShowKnowledgeSelector(false)}
+        onAdd={(itemId, itemData) => {
+          onAddKnowledgeItem?.(itemId, itemData);
+          setShowKnowledgeSelector(false);
+        }}
+        existingItemIds={existingKnowledgeItemIds}
+      />
     </>
   );
 };
