@@ -64,25 +64,6 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
     // Wait for fonts to load
     await (document as any).fonts?.ready?.catch?.(() => {});
 
-    // Store original parent styles
-    const parent = canvasRef.current.parentElement;
-    const originalParentTransform = parent?.style.transform || '';
-    
-    // Temporarily remove any parent transforms
-    if (parent) {
-      parent.style.transform = 'none';
-    }
-
-    // Store original canvas styles
-    const originalStyles = {
-      position: canvasRef.current.style.position,
-      overflow: canvasRef.current.style.overflow,
-    };
-
-    // Temporarily adjust canvas for export
-    canvasRef.current.style.position = 'relative';
-    canvasRef.current.style.overflow = 'visible';
-
     try {
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(canvasRef.current, {
@@ -90,13 +71,8 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
         scale: options.quality || 2,
         useCORS: true,
         allowTaint: true,
+        foreignObjectRendering: false,
         logging: false,
-        onclone: (clonedDoc) => {
-          const clonedCanvas = clonedDoc.querySelector('[data-canvas-root]') as HTMLElement;
-          if (clonedCanvas) {
-            clonedCanvas.style.transform = 'none';
-          }
-        }
       });
 
       if (options.format === 'pdf') {
@@ -128,14 +104,9 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
       }
 
       return canvas.toDataURL('image/png');
-    } finally {
-      // Restore original styles
-      canvasRef.current.style.position = originalStyles.position;
-      canvasRef.current.style.overflow = originalStyles.overflow;
-      
-      if (parent) {
-        parent.style.transform = originalParentTransform;
-      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      throw error;
     }
   };
 

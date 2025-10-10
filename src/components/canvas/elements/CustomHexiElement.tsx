@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Circle, LucideIcon } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { CustomHexiEditorDialog } from './CustomHexiEditorDialog';
+import { cn } from '@/lib/utils';
 
 interface CustomHexiElementProps {
   id: string;
@@ -32,63 +33,54 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   onContentChange,
   onDelete,
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const elementRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
-  const [hasDragged, setHasDragged] = useState(false);
-  const dragStartPos = useRef({ x: 0, y: 0 });
-  const inputRef = useRef<HTMLInputElement>(null);
+  const dragState = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const IconComponent = data.icon ? (Icons[data.icon as keyof typeof Icons] as LucideIcon) || Circle : Circle;
+
+  const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0 || isEditingLabel) return;
-    setIsDragging(true);
-    setHasDragged(false);
-    dragStartPos.current = { x: e.clientX, y: e.clientY };
-    setDragOffset({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    });
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragState.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: position.x,
+      initialY: position.y,
+    };
     onSelect?.();
     e.stopPropagation();
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragState.current || !elementRef.current) return;
     
-    const distance = Math.sqrt(
-      Math.pow(e.clientX - dragStartPos.current.x, 2) + 
-      Math.pow(e.clientY - dragStartPos.current.y, 2)
-    );
+    const dx = e.clientX - dragState.current.startX;
+    const dy = e.clientY - dragState.current.startY;
     
-    if (distance > 5) {
-      setHasDragged(true);
-    }
-    
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
-    onMove?.({ x: newX, y: newY });
+    elementRef.current.style.transform = `translate(${dragState.current.initialX + dx}px, ${dragState.current.initialY + dy}px)`;
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  React.useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!dragState.current) return;
+    
+    const dx = e.clientX - dragState.current.startX;
+    const dy = e.clientY - dragState.current.startY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 5 && !isEditingLabel) {
+      setShowEditor(true);
+    } else {
+      onMove?.({
+        x: Math.round(dragState.current.initialX + dx),
+        y: Math.round(dragState.current.initialY + dy),
+      });
     }
-  }, [isDragging, dragOffset]);
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (isEditingLabel || hasDragged) return;
-    setShowEditor(true);
-    e.stopPropagation();
+    
+    dragState.current = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
   const handleLabelDoubleClick = (e: React.MouseEvent) => {
@@ -104,77 +96,95 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       inputRef.current?.blur();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      inputRef.current?.blur();
     }
   };
 
-  const IconComponent = data.icon ? (Icons[data.icon as keyof typeof Icons] as LucideIcon) || Circle : Circle;
+  useEffect(() => {
+    if (isEditingLabel && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditingLabel]);
 
   return (
     <>
       <div
+        ref={elementRef}
+        data-element-id={id}
+        className="absolute select-none"
         style={{
-          position: 'absolute',
-          left: position.x,
-          top: position.y,
+          transform: `translate(${position.x}px, ${position.y}px)`,
           width: size.width,
           height: size.height,
-          cursor: isDragging ? 'grabbing' : 'grab',
         }}
-        onMouseDown={handleMouseDown}
-        onClick={handleClick}
-        className="group"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
       >
-        {/* Regular Hexagon SVG with proper viewBox */}
-        <svg 
-          width={size.width} 
-          height={size.height}
-          viewBox="0 0 100 87"
-          className="transition-all duration-200 group-hover:scale-105"
-        >
-          {/* Regular hexagon - flat top with 60° angles */}
-          <polygon
-            points="25,2 75,2 98,43.5 75,85 25,85 2,43.5"
-            fill={`${data.color}15`}
-            stroke={data.color}
-            strokeWidth="2"
-            strokeLinejoin="round"
+        <div className="relative w-full h-full group">
+          {/* Hexagon border layer */}
+          <div
+            className={cn(
+              "absolute inset-0 transition-all duration-200 group-hover:scale-105",
+              isSelected && "scale-105"
+            )}
+            style={{
+              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+              background: data.color,
+              opacity: 0.15,
+            }}
           />
           
-          {/* Content using foreignObject */}
-          <foreignObject x="10" y="20" width="80" height="47">
-            <div className="flex flex-col items-center justify-center h-full">
-              {data.emoji ? (
-                <div className="text-xl mb-1">{data.emoji}</div>
-              ) : (
-                <IconComponent style={{ color: data.color, width: 20, height: 20 }} />
-              )}
-              {isEditingLabel ? (
-                <input
-                  ref={inputRef}
-                  value={data.label}
-                  onChange={(e) => onContentChange?.({ ...data, label: e.target.value })}
-                  onBlur={handleLabelBlur}
-                  onKeyDown={handleLabelKeyDown}
-                  onDoubleClick={handleLabelDoubleClick}
-                  className="text-xs font-semibold text-center bg-background/80 border rounded px-2 py-1 leading-tight"
-                  style={{
-                    maxWidth: '90%',
-                    outline: 'none',
-                    color: 'var(--foreground)',
-                  }}
-                />
-              ) : (
-                <p
-                  onDoubleClick={handleLabelDoubleClick}
-                  className="text-xs font-semibold text-center leading-tight cursor-text px-1 mt-1"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  {data.label}
-                </p>
-              )}
-            </div>
-          </foreignObject>
-        </svg>
+          {/* Hexagon stroke layer */}
+          <div
+            className="absolute inset-[2px] transition-all duration-200 group-hover:scale-105"
+            style={{
+              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+              border: `2px solid ${data.color}`,
+              background: 'transparent',
+            }}
+          />
+          
+          {/* Content layer */}
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center px-3 cursor-pointer"
+            role="button"
+            aria-label={data.label}
+          >
+            {data.emoji ? (
+              <div className="text-xl mb-1">{data.emoji}</div>
+            ) : (
+              <IconComponent style={{ color: data.color, width: 20, height: 20 }} />
+            )}
+            {isEditingLabel ? (
+              <input
+                ref={inputRef}
+                value={data.label}
+                onChange={(e) => onContentChange?.({ ...data, label: e.target.value })}
+                onBlur={handleLabelBlur}
+                onKeyDown={handleLabelKeyDown}
+                className="text-xs font-semibold text-center bg-background/80 border rounded px-2 py-1 leading-tight"
+                style={{
+                  maxWidth: '90%',
+                  outline: 'none',
+                  color: 'var(--foreground)',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <p
+                onDoubleClick={handleLabelDoubleClick}
+                className="text-xs font-semibold text-center leading-tight cursor-text px-1 mt-1"
+                style={{ color: 'var(--foreground)' }}
+              >
+                {data.label}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       <CustomHexiEditorDialog
