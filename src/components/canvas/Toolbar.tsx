@@ -2,19 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Plus, 
   StickyNote,
   ZoomIn,
   ZoomOut,
   Download,
   Hexagon
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 
 interface ToolbarProps {
@@ -48,26 +41,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <>
       <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
-        {/* Manual Add Elements */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Manual Elements
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => onAddCustomHexi?.()}>
-              <Hexagon className="h-4 w-4 mr-2" />
-              Custom Hexi
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAddElement('sticky')}>
-              <StickyNote className="h-4 w-4 mr-2" />
-              Sticky Note
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
+        {/* Add Knowledge Item */}
         <Button 
           variant="ghost" 
           size="sm"
@@ -76,6 +50,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         >
           <Hexagon className="h-4 w-4 mr-2" />
           Add Knowledge Item
+        </Button>
+
+        {/* Custom Hexi */}
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => onAddCustomHexi?.()}
+          title="Custom Hexi"
+        >
+          <Hexagon className="h-4 w-4 mr-2" />
+          Custom Hexi
+        </Button>
+
+        {/* Sticky Note */}
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => onAddElement('sticky')}
+          title="Sticky Note"
+        >
+          <StickyNote className="h-4 w-4 mr-2" />
+          Sticky Note
         </Button>
 
       <Separator orientation="vertical" className="h-6" />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { StickyNote, Move3D } from 'lucide-react';
+import { StickyNote, Move3D, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface StickyNoteElementProps {
@@ -16,6 +17,7 @@ interface StickyNoteElementProps {
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
   onContentChange?: (data: { text: string; color?: string }) => void;
+  onDelete?: () => void;
 }
 
 export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
@@ -28,6 +30,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
   onResize,
   onMove,
   onContentChange,
+  onDelete,
 }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(data.text);
@@ -147,9 +150,27 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
       </Card>
       
       {isSelected && (
-        <div className="no-export absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full cursor-se-resize flex items-center justify-center">
-          <Move3D className="w-2 h-2 text-primary-foreground" />
-        </div>
+        <>
+          {/* Delete button */}
+          {onDelete && (
+            <Button
+              size="icon"
+              variant="destructive"
+              className="no-export absolute -top-3 -right-3 h-6 w-6 rounded-full shadow-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+          
+          {/* Resize handle */}
+          <div className="no-export absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full cursor-se-resize flex items-center justify-center">
+            <Move3D className="w-2 h-2 text-primary-foreground" />
+          </div>
+        </>
       )}
     </div>
   );
