@@ -70,11 +70,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
         <Button 
           variant="ghost" 
-          size="icon"
+          size="sm"
           onClick={() => setShowKnowledgeSelector(true)}
-          title="Add Technique"
+          title="Add Knowledge Item"
         >
-          <Hexagon className="h-4 w-4" />
+          <Hexagon className="h-4 w-4 mr-2" />
+          Add Knowledge Item
         </Button>
 
       <Separator orientation="vertical" className="h-6" />
