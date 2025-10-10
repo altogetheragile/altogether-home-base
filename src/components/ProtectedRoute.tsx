@@ -18,20 +18,39 @@ const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false 
   const { data: userRole, isLoading: roleLoading } = useUserRole();
   const [aalLevel, setAalLevel] = useState<string | null>(null);
   const [aalLoading, setAalLoading] = useState<boolean>(false);
+  const [hasMfaFactors, setHasMfaFactors] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
     const checkAal = async () => {
       if (!requireAAL2 || !user) {
         setAalLevel(null);
+        setHasMfaFactors(false);
         return;
       }
       setAalLoading(true);
       try {
-        const { data } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
-        if (!cancelled) setAalLevel(data?.currentLevel ?? null);
+        // Check if user has MFA factors configured
+        const { data: factors } = await (supabase as any).auth.mfa.listFactors();
+        const verifiedTotp = factors?.all?.find((f: any) => 
+          (f.type === 'totp' || f.factor_type === 'totp') && 
+          (f.status === 'verified' || f.factor_status === 'verified')
+        );
+        setHasMfaFactors(!!verifiedTotp);
+
+        // Only check AAL if user has MFA configured
+        if (verifiedTotp) {
+          const { data } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+          if (!cancelled) setAalLevel(data?.currentLevel ?? null);
+        } else {
+          // No MFA configured, so AAL2 not required
+          if (!cancelled) setAalLevel('aal1');
+        }
       } catch {
-        if (!cancelled) setAalLevel(null);
+        if (!cancelled) {
+          setAalLevel(null);
+          setHasMfaFactors(false);
+        }
       } finally {
         if (!cancelled) setAalLoading(false);
       }
@@ -120,8 +139,10 @@ const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false 
     );
   }
 
-  // Enforce AAL2 if requested
-  if (requireAAL2 && aalLevel !== 'aal2') {
+  // Enforce AAL2 if user has MFA configured
+  if (requireAAL2 && hasMfaFactors && aalLevel !== 'aal2') {
+    // Store redirect intent
+    sessionStorage.setItem('mfa:prompt', 'true');
     return <Navigate to="/auth" replace />;
   }
 

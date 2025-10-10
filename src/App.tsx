@@ -92,7 +92,7 @@ const App = () => (
               
               {/* User Dashboard - Protected */}
               <Route path="/dashboard" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAAL2={true}>
                   <Dashboard />
                 </ProtectedRoute>
               } />
@@ -108,7 +108,7 @@ const App = () => (
               {ENABLE_ADMIN_ROUTES && (
                 <>
                   <Route path="/admin" element={
-                    <ProtectedRoute requiredRole="admin">
+                    <ProtectedRoute requiredRole="admin" requireAAL2={true}>
                       <Suspense fallback={<div className="flex items-center justify-center h-64">Loading admin...</div>}>
                         <AdminLayout />
                       </Suspense>
@@ -174,17 +174,17 @@ const App = () => (
                   
                   {/* Knowledge Item Editor - Protected Full Page Routes Outside Admin Layout */}
                   <Route path="/admin/knowledge/items/new" element={
-                    <ProtectedRoute requiredRole="admin">
+                    <ProtectedRoute requiredRole="admin" requireAAL2={true}>
                       <CreateKnowledgeItem />
                     </ProtectedRoute>
                   } />
                   <Route path="/admin/knowledge/items/:id/edit" element={
-                    <ProtectedRoute requiredRole="admin">
+                    <ProtectedRoute requiredRole="admin" requireAAL2={true}>
                       <EditKnowledgeItem />
                     </ProtectedRoute>
                   } />
                   <Route path="/admin/knowledge/preview/:id" element={
-                    <ProtectedRoute requiredRole="admin">
+                    <ProtectedRoute requiredRole="admin" requireAAL2={true}>
                       <PreviewPage />
                     </ProtectedRoute>
                   } />
