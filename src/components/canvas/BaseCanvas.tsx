@@ -61,97 +61,43 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
       throw new Error('Canvas not available for export');
     }
 
-    // Calculate bounds of all positioned elements (computed styles, not inline only)
-    const allNodes = Array.from(canvasRef.current.querySelectorAll('*')) as HTMLElement[];
-    const positioned = allNodes.filter((el) => {
-      const cs = getComputedStyle(el);
-      return cs.position === 'absolute' || cs.position === 'fixed';
-    });
-
-    let maxX = 0;
-    let maxY = 0;
-    let minX = Infinity;
-    let minY = Infinity;
-
-    if (positioned.length === 0) {
-      // Fallback to canvas size only
-      minX = 0;
-      minY = 0;
-      maxX = canvasRef.current.offsetWidth;
-      maxY = canvasRef.current.offsetHeight;
-    } else {
-      const canvasRect = canvasRef.current.getBoundingClientRect();
-      positioned.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        const x = rect.left - canvasRect.left;
-        const y = rect.top - canvasRect.top;
-        const right = x + rect.width;
-        const bottom = y + rect.height;
-        
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, right);
-        maxY = Math.max(maxY, bottom);
-      });
-    }
-
-    // Add padding and account for negative positions (off-canvas content)
-    const padding = 40;
-    const shiftX = (minX < 0 ? -minX : 0) + padding;
-    const shiftY = (minY < 0 ? -minY : 0) + padding;
-    const width = Math.max(maxX - minX + padding * 2, canvasRef.current.offsetWidth + padding * 2);
-    const height = Math.max(maxY - minY + padding * 2, canvasRef.current.offsetHeight + padding * 2);
-
-    // Create an offscreen clone to avoid disturbing layout and to capture off-canvas content
+    // Wait for fonts to load
     await (document as any).fonts?.ready?.catch?.(() => {});
 
-    const exportContainer = document.createElement('div');
-    exportContainer.style.position = 'fixed';
-    exportContainer.style.left = '-100000px';
-    exportContainer.style.top = '0';
-    exportContainer.style.zIndex = '-1';
-    exportContainer.style.pointerEvents = 'none';
+    // Store original parent styles
+    const parent = canvasRef.current.parentElement;
+    const originalParentTransform = parent?.style.transform || '';
+    
+    // Temporarily remove any parent transforms
+    if (parent) {
+      parent.style.transform = 'none';
+    }
 
-    const exportRoot = document.createElement('div');
-    exportRoot.style.width = `${width}px`;
-    exportRoot.style.height = `${height}px`;
-    exportRoot.style.background = '#ffffff';
-    exportRoot.style.overflow = 'visible';
-    exportRoot.style.position = 'relative';
+    // Store original canvas styles
+    const originalStyles = {
+      position: canvasRef.current.style.position,
+      overflow: canvasRef.current.style.overflow,
+    };
 
-    const innerShift = document.createElement('div');
-    innerShift.style.position = 'absolute';
-    innerShift.style.left = `${shiftX}px`;
-    innerShift.style.top = `${shiftY}px`;
-    innerShift.style.width = `${canvasRef.current.offsetWidth}px`;
-    innerShift.style.height = `${canvasRef.current.offsetHeight}px`;
-    innerShift.style.overflow = 'visible';
-
-    const clone = canvasRef.current.cloneNode(true) as HTMLElement;
-    clone.style.margin = '0';
-    clone.style.width = `${canvasRef.current.offsetWidth}px`;
-    clone.style.height = `${canvasRef.current.offsetHeight}px`;
-    clone.style.overflow = 'visible';
-    clone.style.transform = 'none';
-
-    innerShift.appendChild(clone);
-    exportRoot.appendChild(innerShift);
-    exportContainer.appendChild(exportRoot);
-    document.body.appendChild(exportContainer);
+    // Temporarily adjust canvas for export
+    canvasRef.current.style.position = 'relative';
+    canvasRef.current.style.overflow = 'visible';
 
     try {
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(exportRoot, {
+      const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: '#ffffff',
         scale: options.quality || 2,
         useCORS: true,
         allowTaint: true,
-        width,
-        height,
-        letterRendering: true as any,
-        foreignObjectRendering: false,
         logging: false,
-      } as any);
+        onclone: (clonedDoc) => {
+          const clonedCanvas = clonedDoc.querySelector('[data-canvas-root]') as HTMLElement;
+          if (clonedCanvas) {
+            clonedCanvas.style.transform = 'none';
+          }
+        }
+      });
 
       if (options.format === 'pdf') {
         const { default: jsPDF } = await import('jspdf');
@@ -183,10 +129,13 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
 
       return canvas.toDataURL('image/png');
     } finally {
-      // Clean up cloned elements
-      try {
-        document.body.removeChild(exportContainer);
-      } catch {}
+      // Restore original styles
+      canvasRef.current.style.position = originalStyles.position;
+      canvasRef.current.style.overflow = originalStyles.overflow;
+      
+      if (parent) {
+        parent.style.transform = originalParentTransform;
+      }
     }
   };
 
@@ -225,6 +174,7 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
   return (
     <div
       ref={canvasRef}
+      data-canvas-root
       className={cn(
         'w-full h-full bg-background border border-border rounded-lg relative overflow-hidden',
         className
