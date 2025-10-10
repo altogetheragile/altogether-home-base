@@ -42,6 +42,8 @@ export interface CustomHexiElementProps {
   data: {
     label: string;
     color: string;
+    domain_id?: string;
+    domain_name?: string;
     icon?: string;
     emoji?: string;
     notes?: string;
@@ -130,7 +132,15 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
             strokeLinecap="round"
           />
           {isSelected && (
-            <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" />
+            <polygon 
+              points={hexPoints(w,h)} 
+              fill="none" 
+              stroke={stroke} 
+              strokeWidth={5} 
+              strokeOpacity={0.5}
+              strokeLinejoin="round" 
+              strokeLinecap="round" 
+            />
           )}
 
           {/* Center icon / emoji */}

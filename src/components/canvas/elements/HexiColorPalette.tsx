@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, Palette } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useActivityDomains } from '@/hooks/useActivityDomains';
 
 interface HexiColorPaletteProps {
   selectedColor: string;
@@ -31,6 +33,7 @@ export const HexiColorPalette: React.FC<HexiColorPaletteProps> = ({
 }) => {
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const [customColor, setCustomColor] = useState(selectedColor);
+  const { data: domains } = useActivityDomains();
 
   const handleCustomColorApply = () => {
     onColorChange(customColor);
@@ -39,8 +42,35 @@ export const HexiColorPalette: React.FC<HexiColorPaletteProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* Palette Grid */}
-      <div className="grid grid-cols-6 gap-2">
+      {/* Domain Colors Section */}
+      {domains && domains.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Domain Colors</Label>
+          <div className="grid grid-cols-6 gap-2">
+            {domains.map((domain) => (
+              <button
+                key={domain.id}
+                onClick={() => onColorChange(domain.color)}
+                className="relative w-10 h-10 rounded-md border-2 transition-all hover:scale-110"
+                style={{
+                  backgroundColor: domain.color,
+                  borderColor: selectedColor === domain.color ? domain.color : 'transparent',
+                }}
+                title={domain.name}
+              >
+                {selectedColor === domain.color && (
+                  <Check className="w-5 h-5 text-white absolute inset-0 m-auto drop-shadow-md" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Standard Palette Grid */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Standard Colors</Label>
+        <div className="grid grid-cols-6 gap-2">
         {HEXI_COLOR_PALETTE.map((color) => (
           <button
             key={color.value}
@@ -57,6 +87,7 @@ export const HexiColorPalette: React.FC<HexiColorPaletteProps> = ({
             )}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Custom Color Picker */}
