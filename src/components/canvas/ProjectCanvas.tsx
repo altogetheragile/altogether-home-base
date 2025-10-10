@@ -461,16 +461,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               Back
             </Button>
             <h1 className="text-xl font-semibold">{projectName}</h1>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className={cn(
-                "w-2 h-2 rounded-full",
-                isConnected ? "bg-green-500" : "bg-red-500"
-              )} />
-              {isConnected ? 'Connected' : 'Offline'}
-              {activeUsers.length > 0 && (
-                <span>• {activeUsers.length} collaborator{activeUsers.length > 1 ? 's' : ''}</span>
-              )}
-            </div>
           </div>
           
           <div className="flex items-center gap-2">
