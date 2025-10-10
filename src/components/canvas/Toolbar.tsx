@@ -44,47 +44,44 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         {/* Add Knowledge Item */}
         <Button 
           variant="ghost" 
-          size="sm"
+          size="icon"
           onClick={() => setShowKnowledgeSelector(true)}
           title="Add Knowledge Item"
         >
-          <Hexagon className="h-4 w-4 mr-2" />
-          Add Knowledge Item
+          <Hexagon className="h-4 w-4" />
         </Button>
 
         {/* Custom Hexi */}
         <Button 
           variant="ghost" 
-          size="sm"
+          size="icon"
           onClick={() => onAddCustomHexi?.()}
           title="Custom Hexi"
         >
-          <Hexagon className="h-4 w-4 mr-2" />
-          Custom Hexi
+          <Hexagon className="h-4 w-4" />
         </Button>
 
         {/* Sticky Note */}
         <Button 
           variant="ghost" 
-          size="sm"
+          size="icon"
           onClick={() => onAddElement('sticky')}
           title="Sticky Note"
         >
-          <StickyNote className="h-4 w-4 mr-2" />
-          Sticky Note
+          <StickyNote className="h-4 w-4" />
         </Button>
 
       <Separator orientation="vertical" className="h-6" />
 
       {/* Zoom Controls */}
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" onClick={onZoomOut}>
+        <Button variant="ghost" size="icon" onClick={onZoomOut}>
           <ZoomOut className="h-4 w-4" />
         </Button>
         <span className="text-sm text-muted-foreground min-w-[3rem] text-center">
           {Math.round(zoom * 100)}%
         </span>
-        <Button variant="ghost" size="sm" onClick={onZoomIn}>
+        <Button variant="ghost" size="icon" onClick={onZoomIn}>
           <ZoomIn className="h-4 w-4" />
         </Button>
       </div>
@@ -92,7 +89,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <Separator orientation="vertical" className="h-6" />
 
       {/* Export */}
-        <Button variant="ghost" size="sm" onClick={onExport}>
+        <Button variant="ghost" size="icon" onClick={onExport} title="Export">
           <Download className="h-4 w-4" />
         </Button>
       </div>
