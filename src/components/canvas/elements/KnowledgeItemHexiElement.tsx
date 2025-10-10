@@ -2,6 +2,39 @@ import React, { useState, useRef } from 'react';
 import { KnowledgeItemDetailsDialog } from './KnowledgeItemDetailsDialog';
 import { hexPoints, wrapLines, LayersGlyph } from '../hex-utils';
 
+const getIconUnicode = (iconName?: string): string => {
+  const iconMap: Record<string, string> = {
+    'Circle': '⭕',
+    'Square': '⬜',
+    'Users': '👥',
+    'Calendar': '📅',
+    'Target': '🎯',
+    'Flag': '🚩',
+    'Layers': '📚',
+    'Zap': '⚡',
+    'Star': '⭐',
+    'Heart': '❤️',
+    'Award': '🏅',
+    'Briefcase': '💼',
+    'Clock': '⏰',
+    'Map': '🗺️',
+    'BookOpen': '📖',
+    'FileText': '📄',
+    'Lightbulb': '💡',
+    'TrendingUp': '📈',
+    'Activity': '📊',
+    'Check': '✅',
+    'X': '❌',
+    'Info': 'ℹ️',
+    'Warning': '⚠️',
+    'Settings': '⚙️',
+    'Mail': '📧',
+    'Phone': '📞',
+    'Building2': '🏢',
+  };
+  return iconMap[iconName || 'Layers'] || '📚';
+};
+
 export interface KnowledgeItemHexiElementProps {
   id: string;
   position: { x: number; y: number };
@@ -16,6 +49,8 @@ export interface KnowledgeItemHexiElementProps {
     planning_focus_name?: string;
     category_name?: string;
     category_color?: string;
+    icon?: string;
+    emoji?: string;
   };
   isSelected?: boolean;
   onSelect?: () => void;
@@ -109,9 +144,33 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           )}
 
           {/* icon (center, small) */}
-          <g fill={iconColor} stroke="none">
-            <LayersGlyph x={w/2} y={h/2 - 25} size={24} />
-          </g>
+          {data.emoji ? (
+            <text
+              x={w/2}
+              y={h/2 - 25}
+              fontSize={24}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill={iconColor}
+            >
+              {data.emoji}
+            </text>
+          ) : data.icon ? (
+            <text
+              x={w/2}
+              y={h/2 - 25}
+              fontSize={20}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill={iconColor}
+            >
+              {getIconUnicode(data.icon)}
+            </text>
+          ) : (
+            <g fill={iconColor} stroke="none">
+              <LayersGlyph x={w/2} y={h/2 - 25} size={24} />
+            </g>
+          )}
 
           {/* label */}
           <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight={600} fill="#111827" textAnchor="middle">
