@@ -1,36 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { hexPoints, wrapLines, LayersGlyph } from '../hex-utils';
+import { hexPoints, wrapLines } from '../hex-utils';
 import { CustomHexiEditorDialog } from './CustomHexiEditorDialog';
-
-const renderSimpleIcon = (iconName: string | undefined, x: number, y: number, size: number, color: string) => {
-  const icons: Record<string, JSX.Element> = {
-    'FileText': <rect x={x - size/2} y={y - size/2} width={size} height={size * 1.2} rx={2} fill="none" stroke={color} strokeWidth={2} />,
-    'BookOpen': (
-      <g>
-        <path d={`M ${x - size/2} ${y} L ${x} ${y - size/2} L ${x + size/2} ${y} L ${x} ${y + size/2} Z`} fill="none" stroke={color} strokeWidth={2} />
-        <line x1={x} y1={y - size/2} x2={x} y2={y + size/2} stroke={color} strokeWidth={2} />
-      </g>
-    ),
-    'TrendingUp': (
-      <polyline points={`${x - size/2},${y + size/3} ${x - size/6},${y} ${x + size/6},${y - size/6} ${x + size/2},${y - size/2}`} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    ),
-    'Lightbulb': <circle cx={x} cy={y} r={size/2} fill="none" stroke={color} strokeWidth={2} />,
-    'Users': (
-      <g>
-        <circle cx={x - size/3} cy={y - size/4} r={size/4} fill="none" stroke={color} strokeWidth={2} />
-        <circle cx={x + size/3} cy={y - size/4} r={size/4} fill="none" stroke={color} strokeWidth={2} />
-      </g>
-    ),
-    'Target': (
-      <g>
-        <circle cx={x} cy={y} r={size/2} fill="none" stroke={color} strokeWidth={2} />
-        <circle cx={x} cy={y} r={size/4} fill="none" stroke={color} strokeWidth={2} />
-      </g>
-    ),
-  };
-  
-  return icons[iconName || 'BookOpen'] || icons['BookOpen'];
-};
+import * as Icons from 'lucide-react';
 
 export interface CustomHexiElementProps {
   id: string;
@@ -153,11 +124,14 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
             >
               {data.emoji}
             </text>
-          ) : data.icon ? (
-            <g>{renderSimpleIcon(data.icon, w/2, h/2 - 25, 20, stroke)}</g>
-          ) : (
-            <g>{renderSimpleIcon('BookOpen', w/2, h/2 - 25, 20, stroke)}</g>
-          )}
+          ) : (() => {
+            const IconComponent = data.icon ? Icons[data.icon as keyof typeof Icons] as any : Icons.BookOpen;
+            return IconComponent ? (
+              <foreignObject x={w/2 - 12} y={h/2 - 37} width={24} height={24}>
+                <IconComponent style={{ color: stroke, width: 24, height: 24 }} />
+              </foreignObject>
+            ) : null;
+          })()}
 
           {/* Label */}
           <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight={600} fill="#111827" textAnchor="middle">
