@@ -133,7 +133,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             d="M 25,0 L 75,0 L 100,43.5 L 75,87 L 25,87 L 0,43.5 Z"
             fill={`${domainColor}15`}
             stroke={domainColor}
-            strokeWidth="6"
+            strokeWidth="3"
           />
           
           {/* Content using foreignObject */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
 import { CanvasProvider } from './CanvasProvider';
 import BMCCanvasElement from './elements/BMCCanvasElement';
@@ -19,7 +20,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-  Download
+  Download,
+  ArrowLeft
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -33,6 +35,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   projectId,
   projectName,
 }) => {
+  const navigate = useNavigate();
   const { data: canvas, isLoading, error } = useCanvas(projectId);
   const { createCanvas, updateCanvas } = useCanvasMutations();
   const { toast } = useToast();
@@ -395,6 +398,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-card">
           <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
             <h1 className="text-xl font-semibold">{projectName}</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className={cn(

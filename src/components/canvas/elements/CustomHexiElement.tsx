@@ -136,7 +136,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
             d="M 25,0 L 75,0 L 100,43.5 L 75,87 L 25,87 L 0,43.5 Z"
             fill={`${data.color}15`}
             stroke={data.color}
-            strokeWidth="6"
+            strokeWidth="3"
           />
           
           {/* Content using foreignObject */}
