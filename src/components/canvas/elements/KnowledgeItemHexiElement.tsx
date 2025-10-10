@@ -2,37 +2,34 @@ import React, { useState, useRef } from 'react';
 import { KnowledgeItemDetailsDialog } from './KnowledgeItemDetailsDialog';
 import { hexPoints, wrapLines, LayersGlyph } from '../hex-utils';
 
-const getIconUnicode = (iconName?: string): string => {
-  const iconMap: Record<string, string> = {
-    'Circle': '⭕',
-    'Square': '⬜',
-    'Users': '👥',
-    'Calendar': '📅',
-    'Target': '🎯',
-    'Flag': '🚩',
-    'Layers': '📚',
-    'Zap': '⚡',
-    'Star': '⭐',
-    'Heart': '❤️',
-    'Award': '🏅',
-    'Briefcase': '💼',
-    'Clock': '⏰',
-    'Map': '🗺️',
-    'BookOpen': '📖',
-    'FileText': '📄',
-    'Lightbulb': '💡',
-    'TrendingUp': '📈',
-    'Activity': '📊',
-    'Check': '✅',
-    'X': '❌',
-    'Info': 'ℹ️',
-    'Warning': '⚠️',
-    'Settings': '⚙️',
-    'Mail': '📧',
-    'Phone': '📞',
-    'Building2': '🏢',
+const renderSimpleIcon = (iconName: string | undefined, x: number, y: number, size: number, color: string) => {
+  const icons: Record<string, JSX.Element> = {
+    'FileText': <rect x={x - size/2} y={y - size/2} width={size} height={size * 1.2} rx={2} fill="none" stroke={color} strokeWidth={2} />,
+    'BookOpen': (
+      <g>
+        <path d={`M ${x - size/2} ${y} L ${x} ${y - size/2} L ${x + size/2} ${y} L ${x} ${y + size/2} Z`} fill="none" stroke={color} strokeWidth={2} />
+        <line x1={x} y1={y - size/2} x2={x} y2={y + size/2} stroke={color} strokeWidth={2} />
+      </g>
+    ),
+    'TrendingUp': (
+      <polyline points={`${x - size/2},${y + size/3} ${x - size/6},${y} ${x + size/6},${y - size/6} ${x + size/2},${y - size/2}`} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    ),
+    'Lightbulb': <circle cx={x} cy={y} r={size/2} fill="none" stroke={color} strokeWidth={2} />,
+    'Users': (
+      <g>
+        <circle cx={x - size/3} cy={y - size/4} r={size/4} fill="none" stroke={color} strokeWidth={2} />
+        <circle cx={x + size/3} cy={y - size/4} r={size/4} fill="none" stroke={color} strokeWidth={2} />
+      </g>
+    ),
+    'Target': (
+      <g>
+        <circle cx={x} cy={y} r={size/2} fill="none" stroke={color} strokeWidth={2} />
+        <circle cx={x} cy={y} r={size/4} fill="none" stroke={color} strokeWidth={2} />
+      </g>
+    ),
   };
-  return iconMap[iconName || 'Layers'] || '📚';
+  
+  return icons[iconName || 'BookOpen'] || icons['BookOpen'];
 };
 
 export interface KnowledgeItemHexiElementProps {
@@ -143,7 +140,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" />
           )}
 
-          {/* icon (center, small) */}
+          {/* icon (center, simple SVG shapes) */}
           {data.emoji ? (
             <text
               x={w/2}
@@ -156,27 +153,9 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
               {data.emoji}
             </text>
           ) : data.icon ? (
-            <text
-              x={w/2}
-              y={h/2 - 25}
-              fontSize={20}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fill={iconColor}
-            >
-              {getIconUnicode(data.icon)}
-            </text>
+            <g>{renderSimpleIcon(data.icon, w/2, h/2 - 25, 20, iconColor)}</g>
           ) : (
-            <text
-              x={w/2}
-              y={h/2 - 25}
-              fontSize={24}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fill={iconColor}
-            >
-              📘
-            </text>
+            <g>{renderSimpleIcon('BookOpen', w/2, h/2 - 25, 20, iconColor)}</g>
           )}
 
           {/* label */}
