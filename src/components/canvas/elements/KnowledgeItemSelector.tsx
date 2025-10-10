@@ -19,6 +19,7 @@ import {
 import { useKnowledgeItems } from '@/hooks/useKnowledgeItems';
 import { Search, Plus, Check } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { inferIconForItem } from '@/utils/inferIconForItem';
 
 interface KnowledgeItemSelectorProps {
   isOpen: boolean;
@@ -87,6 +88,8 @@ export const KnowledgeItemSelector: React.FC<KnowledgeItemSelectorProps> = ({
   }, [items]);
 
   const handleAdd = (item: any) => {
+    const icon = inferIconForItem(item.name, item.knowledge_categories?.name);
+    
     onAdd(item.id, {
       name: item.name,
       slug: item.slug,
@@ -94,6 +97,8 @@ export const KnowledgeItemSelector: React.FC<KnowledgeItemSelectorProps> = ({
       activity_domains: item.activity_domains,
       planning_focuses: item.planning_focuses,
       knowledge_categories: item.knowledge_categories,
+      icon,
+      emoji: undefined,
     });
   };
 

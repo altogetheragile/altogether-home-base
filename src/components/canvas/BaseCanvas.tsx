@@ -75,6 +75,7 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
         allowTaint: true,
         foreignObjectRendering: false,
         logging: false,
+        ignoreElements: (el) => el.classList?.contains('no-export'),
       });
 
       if (options.format === 'pdf') {

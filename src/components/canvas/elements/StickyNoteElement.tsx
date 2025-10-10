@@ -119,7 +119,9 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
       <Card className={cn("w-full h-full shadow-md", colorClass, isEditing && "ring-2 ring-primary")}>
         <CardContent className="p-3 h-full">
           <div className="flex items-start gap-2 h-full">
-            <StickyNote className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="no-export">
+              <StickyNote className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            </div>
             <div className="flex-1 h-full">
               {isEditing ? (
                 <textarea
@@ -133,7 +135,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
                 />
               ) : (
                 <p 
-                  className="text-sm text-foreground break-words overflow-auto cursor-text"
+                  className="text-sm text-foreground whitespace-pre-wrap break-words overflow-visible cursor-text"
                   onDoubleClick={handleDoubleClick}
                 >
                   {data.text || 'Double-click to edit...'}
@@ -145,7 +147,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
       </Card>
       
       {isSelected && (
-        <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full cursor-se-resize flex items-center justify-center">
+        <div className="no-export absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full cursor-se-resize flex items-center justify-center">
           <Move3D className="w-2 h-2 text-primary-foreground" />
         </div>
       )}

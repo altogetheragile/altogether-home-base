@@ -155,9 +155,16 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
               {getIconUnicode(data.icon)}
             </text>
           ) : (
-            <g fill={stroke}>
-              <LayersGlyph x={w/2} y={h/2 - 25} size={24} />
-            </g>
+            <text
+              x={w/2}
+              y={h/2 - 25}
+              fontSize={24}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill={stroke}
+            >
+              📘
+            </text>
           )}
 
           {/* Label */}

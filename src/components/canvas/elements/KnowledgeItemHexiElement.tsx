@@ -167,9 +167,16 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
               {getIconUnicode(data.icon)}
             </text>
           ) : (
-            <g fill={iconColor} stroke="none">
-              <LayersGlyph x={w/2} y={h/2 - 25} size={24} />
-            </g>
+            <text
+              x={w/2}
+              y={h/2 - 25}
+              fontSize={24}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill={iconColor}
+            >
+              📘
+            </text>
           )}
 
           {/* label */}

@@ -278,11 +278,14 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const handleExport = async () => {
     if (!canvasRef.current) return;
     
-    // Temporarily reset zoom/pan for export
+    // Temporarily reset zoom/pan and clear selection for export
     const originalZoom = zoom;
     const originalPan = pan;
+    const prevSelected = selectedElements;
+    
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    setSelectedElements([]);
     
     // Wait for state to update
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -307,9 +310,10 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         variant: "destructive",
       });
     } finally {
-      // Restore original zoom and pan
+      // Restore original zoom, pan, and selection
       setZoom(originalZoom);
       setPan(originalPan);
+      setSelectedElements(prevSelected);
     }
   };
 
@@ -531,7 +535,7 @@ function getDefaultContent(type: string) {
       };
     case 'sticky':
       return {
-        text: 'New note...',
+        text: 'New note',
         color: 'yellow',
       };
     default:
