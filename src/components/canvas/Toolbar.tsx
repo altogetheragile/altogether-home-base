@@ -3,13 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
   Plus, 
-  Building2, 
-  FileText, 
   StickyNote,
   ZoomIn,
   ZoomOut,
   Download,
-  Sparkles,
   Hexagon
 } from 'lucide-react';
 import {
@@ -18,8 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import BMCGeneratorDialog from '@/components/bmc/BMCGeneratorDialog';
-import { UserStoryClarifierDialog } from '@/components/stories/UserStoryClarifierDialog';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 
 interface ToolbarProps {
@@ -49,36 +44,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onAddCustomHexi,
   existingKnowledgeItemIds = [],
 }) => {
-  const [showBMCDialog, setShowBMCDialog] = useState(false);
-  const [showStoryDialog, setShowStoryDialog] = useState(false);
   const [showKnowledgeSelector, setShowKnowledgeSelector] = useState(false);
   return (
     <>
       <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
-        {/* AI Tools */}
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowBMCDialog(true)}
-            className="border-bmc-orange/30 hover:bg-bmc-orange/10 text-bmc-orange-dark"
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI BMC Generator
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowStoryDialog(true)}
-            className="border-primary/30 hover:bg-primary/10 text-primary"
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI Story Generator
-          </Button>
-        </div>
-
-        <Separator orientation="vertical" className="h-6" />
-
         {/* Manual Add Elements */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -88,9 +57,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => onAddElement('story')}>
-              <FileText className="h-4 w-4 mr-2" />
-              Blank User Story
+            <DropdownMenuItem onClick={() => onAddCustomHexi?.()}>
+              <Hexagon className="h-4 w-4 mr-2" />
+              Custom Hexi
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAddElement('sticky')}>
               <StickyNote className="h-4 w-4 mr-2" />
@@ -99,30 +68,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Separator orientation="vertical" className="h-6" />
-
-        {/* Hexagon Elements */}
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowKnowledgeSelector(true)}
-            title="Add Knowledge Technique"
-          >
-            <Hexagon className="h-4 w-4 mr-2" />
-            Add Technique
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => onAddCustomHexi?.()}
-            title="Add Custom Hexagon"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Custom Hexi
-          </Button>
-        </div>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => setShowKnowledgeSelector(true)}
+          title="Add Technique"
+        >
+          <Hexagon className="h-4 w-4" />
+        </Button>
 
       <Separator orientation="vertical" className="h-6" />
 
@@ -146,22 +99,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <Download className="h-4 w-4" />
         </Button>
       </div>
-
-      {/* AI Dialog Components */}
-      <BMCGeneratorDialog 
-        isOpen={showBMCDialog}
-        onClose={() => setShowBMCDialog(false)}
-        projectId={projectId}
-        saveToCanvas={true}
-        onBMCGenerated={onBMCGenerated}
-      />
-
-      <UserStoryClarifierDialog
-          isOpen={showStoryDialog}
-          onClose={() => setShowStoryDialog(false)}
-          projectId={projectId}
-          onStoryGenerated={onStoryGenerated}
-        />
 
       <KnowledgeItemSelector
         isOpen={showKnowledgeSelector}
