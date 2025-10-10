@@ -72,7 +72,7 @@ export const CustomHexiEditorDialog: React.FC<CustomHexiEditorDialogProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Edit Custom Hexagon</DialogTitle>
             <DialogDescription>
@@ -80,7 +80,7 @@ export const CustomHexiEditorDialog: React.FC<CustomHexiEditorDialogProps> = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1">
             {/* Label */}
             <div className="space-y-2">
               <Label htmlFor="label">Label</Label>
