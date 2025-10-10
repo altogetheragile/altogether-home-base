@@ -76,6 +76,8 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
         height: `${height}px`,
         cursor: isDragging ? 'grabbing' : 'grab',
         zIndex: isSelected ? 1000 : 1,
+        willChange: isDragging ? 'transform' : 'auto',
+        pointerEvents: 'auto',
       }}
       onMouseDown={handleMouseDown}
       onClick={onSelect}
