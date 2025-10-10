@@ -246,6 +246,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const handleExport = async () => {
     if (!canvasRef.current) return;
     
+    // Temporarily reset zoom/pan for export
+    const originalZoom = zoom;
+    const originalPan = pan;
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    
+    // Wait for state to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     try {
       const dataUrl = await canvasRef.current.exportCanvas({ format: 'png', quality: 2 });
       const link = document.createElement('a');
@@ -263,6 +272,10 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         description: "Failed to export canvas",
         variant: "destructive",
       });
+    } finally {
+      // Restore original zoom and pan
+      setZoom(originalZoom);
+      setPan(originalPan);
     }
   };
 
