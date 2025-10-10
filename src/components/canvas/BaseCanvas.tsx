@@ -102,43 +102,61 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
     const width = Math.max(maxX - minX + padding * 2, canvasRef.current.offsetWidth + padding * 2);
     const height = Math.max(maxY - minY + padding * 2, canvasRef.current.offsetHeight + padding * 2);
 
-    // Store original styles
-    const originalStyle = {
-      width: canvasRef.current.style.width,
-      height: canvasRef.current.style.height,
-      overflow: canvasRef.current.style.overflow,
-    };
+    // Create an offscreen clone to avoid disturbing layout and to capture off-canvas content
+    await (document as any).fonts?.ready?.catch?.(() => {});
 
-    // Temporarily adjust canvas size and shift children so negative areas are visible
-    canvasRef.current.style.width = `${width}px`;
-    canvasRef.current.style.height = `${height}px`;
-    canvasRef.current.style.overflow = 'visible';
+    const exportContainer = document.createElement('div');
+    exportContainer.style.position = 'fixed';
+    exportContainer.style.left = '-100000px';
+    exportContainer.style.top = '0';
+    exportContainer.style.zIndex = '-1';
+    exportContainer.style.pointerEvents = 'none';
 
-    // Shift direct children to bring content into positive coordinates
-    const children = Array.from(canvasRef.current.children) as HTMLElement[];
-    const originalTransforms = new Map<HTMLElement, string>();
-    children.forEach((child) => {
-      originalTransforms.set(child, child.style.transform || '');
-      const prev = child.style.transform || '';
-      child.style.transform = `translate(${shiftX}px, ${shiftY}px) ${prev}`.trim();
-    });
+    const exportRoot = document.createElement('div');
+    exportRoot.style.width = `${width}px`;
+    exportRoot.style.height = `${height}px`;
+    exportRoot.style.background = '#ffffff';
+    exportRoot.style.overflow = 'visible';
+    exportRoot.style.position = 'relative';
+
+    const innerShift = document.createElement('div');
+    innerShift.style.position = 'absolute';
+    innerShift.style.left = `${shiftX}px`;
+    innerShift.style.top = `${shiftY}px`;
+    innerShift.style.width = `${canvasRef.current.offsetWidth}px`;
+    innerShift.style.height = `${canvasRef.current.offsetHeight}px`;
+    innerShift.style.overflow = 'visible';
+
+    const clone = canvasRef.current.cloneNode(true) as HTMLElement;
+    clone.style.margin = '0';
+    clone.style.width = `${canvasRef.current.offsetWidth}px`;
+    clone.style.height = `${canvasRef.current.offsetHeight}px`;
+    clone.style.overflow = 'visible';
+    clone.style.transform = 'none';
+
+    innerShift.appendChild(clone);
+    exportRoot.appendChild(innerShift);
+    exportContainer.appendChild(exportRoot);
+    document.body.appendChild(exportContainer);
 
     try {
       const { default: html2canvas } = await import('html2canvas');
-      
-      const canvas = await html2canvas(canvasRef.current, {
+      const canvas = await html2canvas(exportRoot, {
         backgroundColor: '#ffffff',
         scale: options.quality || 2,
         useCORS: true,
         allowTaint: true,
         width,
         height,
-      });
+        letterRendering: true as any,
+        foreignObjectRendering: false,
+        logging: false,
+      } as any);
 
       if (options.format === 'pdf') {
         const { default: jsPDF } = await import('jspdf');
         const pdf = new jsPDF({
-          orientation: 'landscape',
+          orientation: (canvas.width / canvas.height) > 1 ? 'landscape' : 'portrait',
           unit: 'mm',
           format: 'a4',
         });
@@ -165,15 +183,10 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
 
       return canvas.toDataURL('image/png');
     } finally {
-      // Restore child transforms and original styles
+      // Clean up cloned elements
       try {
-        originalTransforms.forEach((prev, el) => {
-          el.style.transform = prev;
-        });
+        document.body.removeChild(exportContainer);
       } catch {}
-      canvasRef.current.style.width = originalStyle.width;
-      canvasRef.current.style.height = originalStyle.height;
-      canvasRef.current.style.overflow = originalStyle.overflow;
     }
   };
 
