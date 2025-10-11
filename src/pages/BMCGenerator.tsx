@@ -105,14 +105,19 @@ const BMCGenerator = () => {
       });
 
       console.log('[BMC] Fill PDF response:', { data, error });
+      console.log('[BMC] Response data type:', typeof data);
+      console.log('[BMC] Response data keys:', data ? Object.keys(data) : 'null');
 
       if (error) {
         console.error('[BMC] Fill PDF error:', error);
         throw error;
       }
 
-      if (data?.dataUrl) {
-        setFilledPdfUrl(data.dataUrl);
+      // The response might be the dataUrl directly or wrapped in an object
+      const pdfUrl = typeof data === 'string' ? data : data?.dataUrl;
+      
+      if (pdfUrl) {
+        setFilledPdfUrl(pdfUrl);
         console.log('[BMC] ✅ PDF filled successfully');
       } else {
         console.warn('[BMC] No dataUrl in response:', data);
