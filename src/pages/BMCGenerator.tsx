@@ -155,7 +155,8 @@ const BMCGenerator = () => {
         body: {
           bmcData,
           templateUrl: 'https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf',
-          companyName: formData.companyName
+          companyName: formData.companyName,
+          debug: true, // TODO: Set to false once alignment is confirmed
         }
       });
 
@@ -189,18 +190,55 @@ const BMCGenerator = () => {
   const downloadPDF = () => {
     if (!filledPdfUrl) return;
 
-    const link = document.createElement('a');
-    link.href = filledPdfUrl;
-    link.download = `${formData.companyName.replace(/\s+/g, '_')}_BMC.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('PDF downloaded!');
+    try {
+      // Convert data URL to Blob for reliable download
+      const base64 = filledPdfUrl.split(',')[1];
+      const binaryString = window.atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${formData.companyName.replace(/\s+/g, '_')}_BMC.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('PDF downloaded!');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Failed to download PDF');
+    }
   };
 
   const openPDFInNewTab = () => {
     if (!filledPdfUrl) return;
-    window.open(filledPdfUrl, '_blank');
+
+    try {
+      // Convert data URL to Blob for reliable opening in new tab (Safari-compatible)
+      const base64 = filledPdfUrl.split(',')[1];
+      const binaryString = window.atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+      toast.success('PDF opened in new tab');
+
+      // Clean up after a delay to allow the browser to load the PDF
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Error opening PDF:', error);
+      toast.error('Failed to open PDF');
+    }
   };
 
   const resetForm = () => {

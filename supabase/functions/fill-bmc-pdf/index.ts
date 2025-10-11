@@ -27,10 +27,14 @@ interface FillPDFRequest {
   debug?: boolean;
 }
 
+// Padding for text inside sections
+const PADDING = 18;
+const INNER = 2;
+
 // PDF coordinate mappings for BMC sections (relative %, origin top-left)
 // Calibrated for standard Business Model Canvas template
 const BMC_RELATIVE_COORDS = {
-  companyName: { x: 0.42, y: 0.095 },
+  companyName: { x: 0.5, y: 0.055 }, // Centered in header
   keyPartners: { x: 0.025, y: 0.22, w: 0.175, h: 0.46 },
   keyActivities: { x: 0.21, y: 0.22, w: 0.155, h: 0.225 },
   keyResources: { x: 0.21, y: 0.455, w: 0.155, h: 0.225 },
@@ -71,11 +75,11 @@ function calculateFitFontSize(
   maxWidth: number,
   maxHeight: number,
   font: any,
-  startSize: number = 11,
-  minSize: number = 7
+  startSize: number = 13,
+  minSize: number = 9
 ): number {
   for (let size = startSize; size >= minSize; size -= 0.5) {
-    const lineHeight = size + 2;
+    const lineHeight = size + 3;
     let totalHeight = 0;
     
     for (const item of items) {
@@ -136,11 +140,12 @@ serve(async (req) => {
     const textColor = rgb(0.2, 0.2, 0.2);
     const debugColor = rgb(0.9, 0.9, 0.9);
 
-    // Add company name if provided
+    // Add company name if provided (centered in header)
     if (companyName) {
       const coords = BMC_RELATIVE_COORDS.companyName;
+      const textWidth = font.widthOfTextAtSize(companyName, 16);
       firstPage.drawText(companyName, {
-        x: coords.x * pageWidth,
+        x: (coords.x * pageWidth) - (textWidth / 2),
         y: pageHeight - (coords.y * pageHeight),
         size: 16,
         font,
@@ -160,20 +165,20 @@ serve(async (req) => {
       
       const x = coords.x * pageWidth;
       const y = pageHeight - (coords.y * pageHeight);
-      const maxWidth = coords.w * pageWidth - 10;
-      const maxHeight = coords.h * pageHeight - 10;
+      const maxWidth = coords.w * pageWidth - (PADDING * 2);
+      const maxHeight = coords.h * pageHeight - (PADDING * 2);
       
       // Calculate best font size that fits
       const fontSize = calculateFitFontSize(items, maxWidth, maxHeight, font);
-      const lineHeight = fontSize + 2;
+      const lineHeight = fontSize + 3;
       
       console.log(`[PDF Fill] ${sectionKey}: fontSize=${fontSize}, items=${items.length}`);
       
-      // Draw debug rectangle if enabled
+      // Draw debug rectangle if enabled (shows inner text area)
       if (debug) {
         firstPage.drawRectangle({
-          x,
-          y: y - maxHeight,
+          x: x + PADDING,
+          y: y - (maxHeight + PADDING),
           width: maxWidth,
           height: maxHeight,
           borderColor: debugColor,
@@ -181,14 +186,14 @@ serve(async (req) => {
         });
       }
       
-      let currentY = y - 5;
+      let currentY = y - PADDING;
       
       items.forEach((item) => {
         const lines = wrapText(`• ${item}`, maxWidth, font, fontSize);
         lines.forEach((line) => {
-          if (currentY - lineHeight > y - maxHeight) {
+          if (currentY - lineHeight > y - (maxHeight + PADDING)) {
             firstPage.drawText(line, {
-              x: x + 5,
+              x: x + PADDING,
               y: currentY,
               size: fontSize,
               font,
