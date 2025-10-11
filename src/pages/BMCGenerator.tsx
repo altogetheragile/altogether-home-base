@@ -114,7 +114,7 @@ const BMCGenerator = () => {
       }
 
       // The response might be the dataUrl directly or wrapped in an object
-      const pdfUrl = typeof data === 'string' ? data : data?.dataUrl;
+      const pdfUrl = typeof data === 'string' ? data : (data?.dataUrl || data?.pdfDataUrl);
       
       if (pdfUrl) {
         setFilledPdfUrl(pdfUrl);
