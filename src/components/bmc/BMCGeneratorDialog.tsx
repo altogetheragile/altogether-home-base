@@ -44,6 +44,14 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   onBMCGenerated,
 }) => {
   const GUEST_GENERATION_LIMIT = 3;
+  
+  // Get hooks first before using them in state initializers
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { createProject } = useProjectMutations();
+  const { createCanvas } = useCanvasMutations();
+  
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = externalOnClose ? externalOnClose : setInternalIsOpen;
@@ -67,12 +75,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     businessStage: 'startup',
     additionalContext: ''
   });
-  
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { createProject } = useProjectMutations();
-  const { createCanvas } = useCanvasMutations();
 
   const industries = [
     'Technology', 'Healthcare', 'Finance', 'Retail', 'Education', 
