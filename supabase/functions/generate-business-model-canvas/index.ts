@@ -61,12 +61,17 @@ function extractJson(text: string): any | null {
 }
 
 serve(async (req: Request) => {
-  console.log("[BMC] Incoming request:", req.method, req.url);
+  console.log("[BMC] =========================");
+  console.log("[BMC] Function invoked:", new Date().toISOString());
+  console.log("[BMC] Method:", req.method);
+  console.log("[BMC] URL:", req.url);
+  console.log("[BMC] Headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
   
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     console.log("[BMC] Handling OPTIONS preflight");
     return new Response(null, { 
-      status: 200,
+      status: 204,
       headers: corsHeaders 
     });
   }
@@ -74,71 +79,33 @@ serve(async (req: Request) => {
   const headers = { "Content-Type": "application/json", ...corsHeaders };
 
   try {
-    // Initialize Supabase client for rate limiting
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get client IP address for rate limiting
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-               req.headers.get("x-real-ip") || 
-               "unknown";
-    const userAgent = req.headers.get("user-agent") || "unknown";
-
-    console.log("[BMC] Request from IP:", ip);
-
-    // Check rate limit: 5 requests per 24 hours per IP
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count, error: countError } = await supabase
-      .from("anonymous_usage")
-      .select("*", { count: "exact", head: true })
-      .eq("ip_address", ip)
-      .eq("endpoint", "generate-bmc")
-      .gte("created_at", twentyFourHoursAgo);
-
-    if (countError) {
-      console.error("[BMC] Rate limit check failed:", countError);
-      // Continue anyway - don't block on rate limit errors
-    } else if (count !== null && count >= 5) {
-      console.warn("[BMC] Rate limit exceeded for IP:", ip, "count:", count);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Rate limit exceeded. You have reached the maximum of 5 free BMC generations per day. Please sign up for unlimited access or try again in 24 hours." 
-        }),
-        { status: 429, headers }
-      );
-    }
-
-    // Log this usage attempt
-    const { error: insertError } = await supabase
-      .from("anonymous_usage")
-      .insert({
-        ip_address: ip,
-        endpoint: "generate-bmc",
-        user_agent: userAgent,
-        request_count: 1
-      });
-
-    if (insertError) {
-      console.error("[BMC] Failed to log usage:", insertError);
-      // Continue anyway - don't block on logging errors
-    }
-
-    // Check for OpenAI API key
+    console.log("[BMC] Checking OpenAI API key...");
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) {
-      console.error("[BMC] Missing OPENAI_API_KEY");
+      console.error("[BMC] CRITICAL: Missing OPENAI_API_KEY");
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "OpenAI API key not configured. Please add OPENAI_API_KEY to your Supabase Edge Function secrets." 
+          error: "OpenAI API key not configured. Please contact support." 
         }),
         { status: 500, headers }
       );
     }
+    console.log("[BMC] OpenAI key found:", openaiKey.substring(0, 10) + "...");
 
-    const body = await req.json().catch(() => ({}));
+    console.log("[BMC] Parsing request body...");
+    let body;
+    try {
+      body = await req.json();
+      console.log("[BMC] Body parsed successfully:", JSON.stringify(body));
+    } catch (e) {
+      console.error("[BMC] Body parse error:", e);
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid JSON in request body" }),
+        { status: 400, headers }
+      );
+    }
+
     const {
       companyName,
       industry,
@@ -149,10 +116,20 @@ serve(async (req: Request) => {
       templateTitle,
       templateUrl,
     } = body ?? {};
+    
+    console.log("[BMC] Request params:", {
+      companyName,
+      industry,
+      businessStage,
+      hasContext: !!additionalContext,
+      hasTemplate: !!templateTitle
+    });
 
     console.log("[BMC] Generating BMC for:", companyName, industry);
+    console.log("[BMC] Initializing OpenAI client...");
 
     const openai = new OpenAI({ apiKey: openaiKey });
+    console.log("[BMC] OpenAI client initialized");
 
     // Prompt: force JSON only; the UI expects camelCase keys
     const system = `
@@ -185,6 +162,7 @@ Product/Service: ${productService ?? ""}
 Additional context: ${additionalContext ?? ""}
 `;
 
+    console.log("[BMC] Calling OpenAI API...");
     const resp = await openai.chat.completions.create({
       model: "gpt-4o-mini",          // ← reliable, JSON-friendly
       temperature: 0.2,
@@ -195,32 +173,58 @@ Additional context: ${additionalContext ?? ""}
       // If your OpenAI SDK supports it, this is even better:
       // response_format: { type: "json_object" },
     });
+    console.log("[BMC] OpenAI API call completed");
 
     const text = resp.choices?.[0]?.message?.content ?? "";
-    // Log raw in case parsing fails
-    console.log("[BMC][LLM raw]", text?.slice(0, 1000));
+    console.log("[BMC] Response length:", text?.length);
+    console.log("[BMC] Response preview:", text?.slice(0, 300));
 
+    console.log("[BMC] Parsing JSON response...");
     const parsed = extractJson(text);
-    if (!parsed || !looksLikeBmc(parsed)) {
-      console.error("[BMC] JSON parse/shape failed. Raw sample:", text?.slice(0, 400));
+    
+    if (!parsed) {
+      console.error("[BMC] JSON extraction failed. Raw:", text?.slice(0, 500));
       return new Response(
         JSON.stringify({
           success: false,
-          error: "LLM JSON parsing failed",
-          raw: text,
+          error: "Failed to extract valid JSON from AI response",
+          raw: text?.slice(0, 500),
+        }),
+        { status: 422, headers }
+      );
+    }
+    
+    console.log("[BMC] Validating BMC structure...");
+    if (!looksLikeBmc(parsed)) {
+      console.error("[BMC] Invalid BMC structure:", JSON.stringify(parsed).slice(0, 300));
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "AI response doesn't match expected BMC structure",
+          received: Object.keys(parsed),
         }),
         { status: 422, headers }
       );
     }
 
+    console.log("[BMC] ✅ Success! Returning BMC data");
     return new Response(JSON.stringify({ success: true, data: parsed }), {
+      status: 200,
       headers,
     });
   } catch (err) {
-    console.error("[BMC] fatal error:", err);
-    return new Response(JSON.stringify({ success: false, error: String(err) }), {
-      status: 500,
-      headers,
-    });
+    console.error("[BMC] ❌ Fatal error:", err);
+    console.error("[BMC] Error stack:", err instanceof Error ? err.stack : 'No stack');
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: err instanceof Error ? err.message : String(err),
+        type: err instanceof Error ? err.constructor.name : typeof err
+      }), 
+      {
+        status: 500,
+        headers,
+      }
+    );
   }
 });

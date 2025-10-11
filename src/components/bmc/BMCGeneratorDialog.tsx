@@ -177,7 +177,15 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     setIsGenerating(true);
     
     try {
-      console.log('Calling BMC generation with data:', formData);
+      console.log('[BMC] Starting generation request...');
+      console.log('[BMC] Form data:', formData);
+      
+      // Add timeout to detect hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.error('[BMC] Request timeout after 60 seconds');
+      }, 60000); // 60 second timeout
       
       const { data, error } = await supabase.functions.invoke('generate-business-model-canvas', {
         body: {
@@ -191,22 +199,26 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
           templateUrl: bmcTemplate?.url
         }
       });
+      
+      clearTimeout(timeoutId);
+      console.log('[BMC] Edge function response received:', { data, error });
 
       if (error) {
-        // Supabase Functions client wraps non-2xx as error
         console.error('[BMC] Edge function error:', error);
-        throw new Error(error.message ?? 'Edge function failed');
+        throw new Error(error.message || 'Edge function call failed');
       }
 
       const raw = typeof data === "string" ? JSON.parse(data) : data;
+      console.log('[BMC] Parsed response:', raw);
+      
       if (!raw?.success) {
-        console.error('[BMC] LLM parsing failed:', raw?.error, raw?.raw?.slice?.(0, 400));
-        throw new Error('AI response could not be parsed. Please try again.');
+        console.error('[BMC] Generation failed:', raw?.error);
+        throw new Error(raw?.error || 'AI failed to generate BMC. Please try again.');
       }
 
-      const bmcData = raw.data;        // <- flat object with the nine fields
-      console.debug("[BMC] extracted BMC:", bmcData);
-      setGeneratedBMC(bmcData);          // <- pass directly into BMC canvas
+      const bmcData = raw.data;
+      console.log('[BMC] ✅ BMC data extracted:', bmcData);
+      setGeneratedBMC(bmcData);
       setCompanyName(formData.companyName);
       
       // Increment guest generation count
@@ -231,11 +243,29 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
         description: "Your strategic Business Model Canvas is ready for review and export"
       });
     } catch (error) {
-      console.error('Error generating BMC:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('[BMC] ❌ Generation error:', error);
+      
+      let errorMessage = 'Unknown error occurred';
+      let errorTitle = 'Generation Failed';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Provide more specific error messages
+        if (error.name === 'AbortError' || errorMessage.includes('aborted')) {
+          errorTitle = 'Request Timeout';
+          errorMessage = 'The request took too long. Please try again or simplify your inputs.';
+        } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('network')) {
+          errorTitle = 'Network Error';
+          errorMessage = 'Unable to connect to the AI service. Please check your internet connection and try again.';
+        } else if (errorMessage.includes('rate limit')) {
+          errorTitle = 'Rate Limit Exceeded';
+        }
+      }
+      
       toast({
-        title: "Generation Failed",
-        description: `Unable to generate BMC: ${errorMessage}. Please check your inputs and try again.`,
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
