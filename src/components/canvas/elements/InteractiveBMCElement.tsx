@@ -13,15 +13,15 @@ import { supabase } from '@/integrations/supabase/client';
 import AIToolElement from './AIToolElement';
 
 interface BMCData {
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
+  keyPartners: string | string[];
+  keyActivities: string | string[];
+  keyResources: string | string[];
+  valuePropositions: string | string[];
+  customerRelationships: string | string[];
+  channels: string | string[];
+  customerSegments: string | string[];
+  costStructure: string | string[];
+  revenueStreams: string | string[];
 }
 
 interface InteractiveBMCElementProps {

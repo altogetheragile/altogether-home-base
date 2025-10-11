@@ -28,17 +28,18 @@ interface FillPDFRequest {
 }
 
 // PDF coordinate mappings for BMC sections (relative %, origin top-left)
+// Calibrated for standard Business Model Canvas template
 const BMC_RELATIVE_COORDS = {
-  companyName: { x: 0.30, y: 0.05 },
-  keyPartners: { x: 0.02, y: 0.15, w: 0.16, h: 0.35 },
-  keyActivities: { x: 0.19, y: 0.15, w: 0.14, h: 0.17 },
-  keyResources: { x: 0.19, y: 0.33, w: 0.14, h: 0.17 },
-  valuePropositions: { x: 0.34, y: 0.15, w: 0.18, h: 0.35 },
-  customerRelationships: { x: 0.53, y: 0.15, w: 0.14, h: 0.17 },
-  channels: { x: 0.53, y: 0.33, w: 0.14, h: 0.17 },
-  customerSegments: { x: 0.68, y: 0.15, w: 0.30, h: 0.35 },
-  costStructure: { x: 0.02, y: 0.51, w: 0.50, h: 0.18 },
-  revenueStreams: { x: 0.53, y: 0.51, w: 0.45, h: 0.18 },
+  companyName: { x: 0.42, y: 0.095 },
+  keyPartners: { x: 0.025, y: 0.22, w: 0.175, h: 0.46 },
+  keyActivities: { x: 0.21, y: 0.22, w: 0.155, h: 0.225 },
+  keyResources: { x: 0.21, y: 0.455, w: 0.155, h: 0.225 },
+  valuePropositions: { x: 0.375, y: 0.22, w: 0.185, h: 0.46 },
+  customerRelationships: { x: 0.57, y: 0.22, w: 0.155, h: 0.225 },
+  channels: { x: 0.57, y: 0.455, w: 0.155, h: 0.225 },
+  customerSegments: { x: 0.735, y: 0.22, w: 0.24, h: 0.46 },
+  costStructure: { x: 0.025, y: 0.69, w: 0.535, h: 0.24 },
+  revenueStreams: { x: 0.57, y: 0.69, w: 0.405, h: 0.24 },
 };
 
 function wrapText(text: string, maxWidth: number, font: any, fontSize: number): string[] {

@@ -19,15 +19,15 @@ import { Badge } from '@/components/ui/badge';
 const DEFAULT_BMC_TEMPLATE_URL = "https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf";
 
 interface BMCData {
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
+  keyPartners: string | string[];
+  keyActivities: string | string[];
+  keyResources: string | string[];
+  valuePropositions: string | string[];
+  customerRelationships: string | string[];
+  channels: string | string[];
+  customerSegments: string | string[];
+  costStructure: string | string[];
+  revenueStreams: string | string[];
 }
 
 interface BMCGeneratorDialogProps {
@@ -170,28 +170,58 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   };
 
   const normalizeBMCData = (bmcData: BMCData): any => {
-    const normalizeSection = (text: string | undefined): string[] => {
-      if (!text) return [];
+    // Bulletproof section normalizer that handles any input type
+    const normalizeSection = (input: unknown): string[] => {
+      // Helper to recursively flatten to strings
+      const toStrings = (val: unknown): string[] => {
+        if (typeof val === 'string') return [val];
+        if (Array.isArray(val)) return val.flatMap(toStrings);
+        if (val && typeof val === 'object') {
+          return Object.values(val as Record<string, unknown>).flatMap(toStrings);
+        }
+        return [];
+      };
+
+      // Flatten to strings and join for splitting
+      const rawText = toStrings(input).join('\n');
       
-      return text
-        .split(/[•\n;,]/)
-        .map(s => s.trim())
+      return rawText
+        .split(/[•\n;,]+|(?:\r\n)|(?:\r)|(?:\t)/)
+        .map(s => s.replace(/^\s*(?:•|-|\*|–|—|\d+\.)\s*/g, '').trim())
         .filter(s => s.length > 0)
-        .filter((item, index, arr) => arr.indexOf(item) === index)
+        .filter((item, idx, arr) => 
+          arr.findIndex(x => x.toLowerCase() === item.toLowerCase()) === idx
+        )
         .slice(0, 10);
     };
 
-    return {
-      keyPartners: normalizeSection(bmcData.keyPartners),
-      keyActivities: normalizeSection(bmcData.keyActivities),
-      keyResources: normalizeSection(bmcData.keyResources),
-      valuePropositions: normalizeSection(bmcData.valuePropositions),
-      customerRelationships: normalizeSection(bmcData.customerRelationships),
-      channels: normalizeSection(bmcData.channels),
-      customerSegments: normalizeSection(bmcData.customerSegments),
-      costStructure: normalizeSection(bmcData.costStructure),
-      revenueStreams: normalizeSection(bmcData.revenueStreams),
+    // Helper to pick the right key (camelCase or snake_case)
+    const pick = (obj: any, ...keys: string[]) => {
+      for (const k of keys) if (obj?.[k] !== undefined) return obj[k];
+      return undefined;
     };
+
+    try {
+      return {
+        keyPartners: normalizeSection(pick(bmcData, 'keyPartners', 'key_partners')),
+        keyActivities: normalizeSection(pick(bmcData, 'keyActivities', 'key_activities')),
+        keyResources: normalizeSection(pick(bmcData, 'keyResources', 'key_resources')),
+        valuePropositions: normalizeSection(pick(bmcData, 'valuePropositions', 'value_propositions')),
+        customerRelationships: normalizeSection(pick(bmcData, 'customerRelationships', 'customer_relationships')),
+        channels: normalizeSection(pick(bmcData, 'channels')),
+        customerSegments: normalizeSection(pick(bmcData, 'customerSegments', 'customer_segments')),
+        costStructure: normalizeSection(pick(bmcData, 'costStructure', 'cost_structure')),
+        revenueStreams: normalizeSection(pick(bmcData, 'revenueStreams', 'revenue_streams')),
+      };
+    } catch (error) {
+      console.error('[BMC] Normalization error:', error);
+      toast({
+        title: "Data processing error",
+        description: "Failed to process BMC data. Please try regenerating.",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
   const generateBMC = async (retryCount = 0) => {

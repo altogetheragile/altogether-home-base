@@ -2,15 +2,15 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 export interface BMCData {
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
+  keyPartners: string | string[];
+  keyActivities: string | string[];
+  keyResources: string | string[];
+  valuePropositions: string | string[];
+  customerRelationships: string | string[];
+  channels: string | string[];
+  customerSegments: string | string[];
+  costStructure: string | string[];
+  revenueStreams: string | string[];
 }
 
 export interface BMCExportOptions {
@@ -113,8 +113,11 @@ const createExportDOM = (data: BMCData, companyName?: string): HTMLElement => {
       overflow-wrap: break-word;
     `;
     
-    // Get the content and ensure proper text rendering
-    const content = data[section.key as keyof BMCData] || '';
+    // Get the content and convert to string if needed
+    const rawContent = data[section.key as keyof BMCData] || '';
+    const content = Array.isArray(rawContent) 
+      ? rawContent.map(item => `• ${item}`).join('\n')
+      : rawContent;
     contentDiv.textContent = content;
     sectionDiv.appendChild(contentDiv);
 

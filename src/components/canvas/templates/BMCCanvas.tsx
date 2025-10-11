@@ -43,6 +43,19 @@ const BmcSchema = z.object({
 });
 
 export interface BMCData {
+  keyPartners: string | string[];
+  keyActivities: string | string[];
+  keyResources: string | string[];
+  valuePropositions: string | string[];
+  customerRelationships: string | string[];
+  channels: string | string[];
+  customerSegments: string | string[];
+  costStructure: string | string[];
+  revenueStreams: string | string[];
+}
+
+// Internal type for normalized BMC data (always strings for rendering)
+interface NormalizedBMCData {
   keyPartners: string;
   keyActivities: string;
   keyResources: string;
@@ -66,7 +79,7 @@ function pick<T>(a: T | undefined, b: T | undefined): T | undefined {
   return a !== undefined ? a : b;
 }
 
-function normalizeBmc(data: unknown): BMCData {
+function normalizeBmc(data: unknown): NormalizedBMCData {
   const parsed = BmcSchema.safeParse(data);
   if (!parsed.success) {
     return {
@@ -144,7 +157,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   // Memoize data normalization to prevent infinite re-renders
   const normalizedData = useMemo(() => normalizeBmc(data), [data]);
 
-  const defaultData: BMCData = useMemo(() => ({
+  const defaultData: NormalizedBMCData = useMemo(() => ({
     keyPartners: '',
     keyActivities: '',
     keyResources: '',
@@ -158,12 +171,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
 
   const bmcData = useMemo(() => ({ ...defaultData, ...normalizedData }), [defaultData, normalizedData]);
 
-  const handleSectionChange = useCallback((section: keyof BMCData, content: string) => {
+  const handleSectionChange = useCallback((section: keyof NormalizedBMCData, content: string) => {
     const newData = { ...bmcData, [section]: content };
     onDataChange?.(newData);
   }, [bmcData, onDataChange]);
 
-  const getBMCData = (): BMCData => bmcData;
+  const getBMCData = (): NormalizedBMCData => bmcData;
 
   const getBMCDataForExport = () => {
     // Convert internal BMCData to export format
