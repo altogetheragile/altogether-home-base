@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, RotateCcw, Save, ExternalLink, FileText, Download } from 'lucide-react';
+import { Loader2, Sparkles, RotateCcw, Save, ExternalLink, FileText, Download, RefreshCw, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectMutations } from '@/hooks/useProjects';
@@ -15,6 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from './BusinessModelCanvas';
 import BMCExportDialog from './BMCExportDialog';
 import { Badge } from '@/components/ui/badge';
+
+const DEFAULT_BMC_TEMPLATE_URL = "https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf";
 
 interface BMCData {
   keyPartners: string;
@@ -63,6 +65,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   const [isFillingPdf, setIsFillingPdf] = useState(false);
   const canvasRef = useRef<BusinessModelCanvasRef>(null);
   const [bmcTemplate, setBmcTemplate] = useState<{ url: string; title: string } | null>(null);
+  const [usingDefaultTemplate, setUsingDefaultTemplate] = useState(false);
   const [guestGenerationCount, setGuestGenerationCount] = useState(() => {
     if (typeof window !== 'undefined' && !user) {
       return parseInt(localStorage.getItem('guestBMCCount') || '0');
@@ -109,30 +112,44 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
           .limit(1)
           .maybeSingle();
 
-        if (error) {
-          console.log('Template fetch error (non-blocking):', error);
+        if (error || !data?.knowledge_templates) {
+          console.log('[BMC] Using default template fallback');
+          setBmcTemplate({ url: DEFAULT_BMC_TEMPLATE_URL, title: "Business Model Canvas (Default)" });
+          setUsingDefaultTemplate(true);
+          toast({
+            title: "Using default template",
+            description: "Template loaded from storage",
+          });
           return;
         }
 
-        if (data?.knowledge_templates) {
-          const template = Array.isArray(data.knowledge_templates) 
-            ? data.knowledge_templates[0] 
-            : data.knowledge_templates;
-          
-          if (template?.pdf_url) {
-            setBmcTemplate({
-              url: template.pdf_url,
-              title: template.title || 'Business Model Canvas Template'
-            });
-          }
+        const template = Array.isArray(data.knowledge_templates) 
+          ? data.knowledge_templates[0] 
+          : data.knowledge_templates;
+        
+        if (template?.pdf_url) {
+          setBmcTemplate({
+            url: template.pdf_url,
+            title: template.title || 'Business Model Canvas Template'
+          });
+          setUsingDefaultTemplate(false);
+          toast({
+            title: "Template loaded",
+            description: template.title || 'Business Model Canvas Template',
+          });
+        } else {
+          setBmcTemplate({ url: DEFAULT_BMC_TEMPLATE_URL, title: "Business Model Canvas (Default)" });
+          setUsingDefaultTemplate(true);
         }
       } catch (error) {
-        console.error('Error fetching BMC template (non-blocking):', error);
+        console.error('[BMC] Error fetching template:', error);
+        setBmcTemplate({ url: DEFAULT_BMC_TEMPLATE_URL, title: "Business Model Canvas (Default)" });
+        setUsingDefaultTemplate(true);
       }
     };
 
     fetchBMCTemplate();
-  }, []);
+  }, [toast]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -152,7 +169,32 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     }
   };
 
-  const generateBMC = async () => {
+  const normalizeBMCData = (bmcData: BMCData): any => {
+    const normalizeSection = (text: string | undefined): string[] => {
+      if (!text) return [];
+      
+      return text
+        .split(/[•\n;,]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0)
+        .filter((item, index, arr) => arr.indexOf(item) === index)
+        .slice(0, 10);
+    };
+
+    return {
+      keyPartners: normalizeSection(bmcData.keyPartners),
+      keyActivities: normalizeSection(bmcData.keyActivities),
+      keyResources: normalizeSection(bmcData.keyResources),
+      valuePropositions: normalizeSection(bmcData.valuePropositions),
+      customerRelationships: normalizeSection(bmcData.customerRelationships),
+      channels: normalizeSection(bmcData.channels),
+      customerSegments: normalizeSection(bmcData.customerSegments),
+      costStructure: normalizeSection(bmcData.costStructure),
+      revenueStreams: normalizeSection(bmcData.revenueStreams),
+    };
+  };
+
+  const generateBMC = async (retryCount = 0) => {
     // Check generation limit for guest users
     if (!user && guestGenerationCount >= GUEST_GENERATION_LIMIT) {
       toast({
@@ -177,6 +219,8 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     }
 
     setIsGenerating(true);
+    setGeneratedBMC(null);
+    setFilledPdfUrl(null);
     
     try {
       console.log('[BMC] Starting generation request...');
@@ -207,6 +251,13 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
 
       if (error) {
         console.error('[BMC] Edge function error:', error);
+        
+        if (error.message?.includes('Failed to send a request') && retryCount < 2) {
+          console.log(`[BMC] Retrying... (attempt ${retryCount + 1}/2)`);
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return generateBMC(retryCount + 1);
+        }
+        
         throw new Error(error.message || 'Edge function call failed');
       }
 
@@ -220,11 +271,17 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
 
       const bmcData = raw.data;
       console.log('[BMC] ✅ BMC data extracted:', bmcData);
+      const normalizedBMC = normalizeBMCData(bmcData);
       setGeneratedBMC(bmcData);
       setCompanyName(formData.companyName);
       
-      // Fill the PDF with the generated data
-      await fillPDFWithData(bmcData);
+      toast({
+        title: "Business Model Canvas generated!",
+        description: "Creating PDF...",
+      });
+      
+      // Fill the PDF with the normalized data
+      await fillPDFWithData(normalizedBMC);
       
       // Increment guest generation count
       if (!user) {
@@ -278,48 +335,58 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     }
   };
 
-  const fillPDFWithData = async (bmcData: BMCData) => {
+  const fillPDFWithData = async (bmcDataArrays: any, retryCount = 0) => {
     if (!bmcTemplate?.url) {
-      console.warn('[BMC] No PDF template available for filling');
+      console.error('[BMC] No template URL available');
+      toast({
+        title: "Template error",
+        description: "No template available for PDF generation",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsFillingPdf(true);
+    console.log('[BMC] Filling PDF with data...');
+    console.log('[BMC] Template URL:', bmcTemplate.url);
+
     try {
-      console.log('[BMC] Filling PDF with generated data...');
-      
-      // Convert BMC data strings to arrays for the PDF filler
-      const bmcDataArrays = {
-        keyPartners: bmcData.keyPartners?.split('\n').filter(s => s.trim()) || [],
-        keyActivities: bmcData.keyActivities?.split('\n').filter(s => s.trim()) || [],
-        keyResources: bmcData.keyResources?.split('\n').filter(s => s.trim()) || [],
-        valuePropositions: bmcData.valuePropositions?.split('\n').filter(s => s.trim()) || [],
-        customerRelationships: bmcData.customerRelationships?.split('\n').filter(s => s.trim()) || [],
-        channels: bmcData.channels?.split('\n').filter(s => s.trim()) || [],
-        customerSegments: bmcData.customerSegments?.split('\n').filter(s => s.trim()) || [],
-        costStructure: bmcData.costStructure?.split('\n').filter(s => s.trim()) || [],
-        revenueStreams: bmcData.revenueStreams?.split('\n').filter(s => s.trim()) || [],
-      };
+      const { data: pdfData, error: pdfError } = await supabase.functions.invoke(
+        'fill-bmc-pdf',
+        {
+          body: {
+            bmcData: bmcDataArrays,
+            templateUrl: bmcTemplate.url,
+            companyName: formData.companyName,
+          },
+        }
+      );
 
-      const { data, error } = await supabase.functions.invoke('fill-bmc-pdf', {
-        body: {
-          bmcData: bmcDataArrays,
-          templateUrl: bmcTemplate.url,
-          companyName: formData.companyName,
-        },
-      });
+      if (pdfError) {
+        console.error('[BMC] PDF fill error:', pdfError);
+        
+        if (pdfError.message?.includes('Failed to send a request') && retryCount < 2) {
+          console.log(`[BMC] Retrying PDF fill... (attempt ${retryCount + 1}/2)`);
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return fillPDFWithData(bmcDataArrays, retryCount + 1);
+        }
+        
+        throw pdfError;
+      }
 
-      if (error) throw error;
-
-      if (data?.pdfDataUrl) {
-        setFilledPdfUrl(data.pdfDataUrl);
-        console.log('[BMC] PDF filled successfully');
+      if (pdfData?.pdfDataUrl) {
+        console.log('[BMC] ✅ PDF filled successfully');
+        setFilledPdfUrl(pdfData.pdfDataUrl);
+        toast({
+          title: "PDF created",
+          description: "Your Business Model Canvas is ready",
+        });
       }
     } catch (error: any) {
-      console.error('[BMC] Error filling PDF:', error);
+      console.error('[BMC] ❌ PDF fill error:', error);
       toast({
-        title: "PDF Generation Failed",
-        description: "Could not create the filled PDF, but you can still view the canvas.",
+        title: "PDF generation failed",
+        description: error.message || "Could not create PDF from template",
         variant: "destructive",
       });
     } finally {
@@ -467,15 +534,22 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
                   )}
                 </div>
                 {bmcTemplate && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(bmcTemplate.url, '_blank')}
-                    className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
-                  >
-                    <ExternalLink className="h-3 w-3 mr-2" />
-                    View Template
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {usingDefaultTemplate && (
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                        Using default template
+                      </span>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(bmcTemplate.url, '_blank')}
+                      className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-2" />
+                      View Template
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -603,7 +677,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
                   Cancel
                 </Button>
                 <Button
-                  onClick={generateBMC}
+                  onClick={() => generateBMC()}
                   disabled={isGenerating || (!user && guestGenerationCount >= GUEST_GENERATION_LIMIT)}
                   className="bg-gradient-to-r from-bmc-orange to-bmc-orange-dark hover:from-bmc-orange-dark hover:to-bmc-orange text-white px-8"
                 >
@@ -669,6 +743,17 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Generate New BMC
                 </Button>
+                {generatedBMC && (
+                  <Button
+                    onClick={() => fillPDFWithData(normalizeBMCData(generatedBMC))}
+                    variant="outline"
+                    disabled={isFillingPdf}
+                    className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isFillingPdf ? 'animate-spin' : ''}`} />
+                    Re-Fill PDF
+                  </Button>
+                )}
                 {filledPdfUrl && (
                   <Button
                     variant="outline"

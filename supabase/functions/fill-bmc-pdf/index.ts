@@ -4,6 +4,8 @@ import { PDFDocument, rgb, StandardFonts } from "https://cdn.skypack.dev/pdf-lib
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 interface BMCData {
@@ -22,21 +24,21 @@ interface FillPDFRequest {
   bmcData: BMCData;
   templateUrl: string;
   companyName?: string;
+  debug?: boolean;
 }
 
-// PDF coordinate mappings for BMC sections (in points, origin bottom-left)
-// These are approximate positions for a standard BMC template
-const BMC_COORDINATES = {
-  companyName: { x: 300, y: 750, maxWidth: 300 },
-  keyPartners: { x: 50, y: 600, maxWidth: 140, maxHeight: 200 },
-  keyActivities: { x: 200, y: 550, maxWidth: 140, maxHeight: 100 },
-  keyResources: { x: 200, y: 440, maxWidth: 140, maxHeight: 100 },
-  valuePropositions: { x: 350, y: 500, maxWidth: 140, maxHeight: 200 },
-  customerRelationships: { x: 500, y: 550, maxWidth: 140, maxHeight: 100 },
-  channels: { x: 500, y: 440, maxWidth: 140, maxHeight: 100 },
-  customerSegments: { x: 650, y: 500, maxWidth: 140, maxHeight: 200 },
-  costStructure: { x: 50, y: 150, maxWidth: 350, maxHeight: 100 },
-  revenueStreams: { x: 420, y: 150, maxWidth: 370, maxHeight: 100 },
+// PDF coordinate mappings for BMC sections (relative %, origin top-left)
+const BMC_RELATIVE_COORDS = {
+  companyName: { x: 0.30, y: 0.05 },
+  keyPartners: { x: 0.02, y: 0.15, w: 0.16, h: 0.35 },
+  keyActivities: { x: 0.19, y: 0.15, w: 0.14, h: 0.17 },
+  keyResources: { x: 0.19, y: 0.33, w: 0.14, h: 0.17 },
+  valuePropositions: { x: 0.34, y: 0.15, w: 0.18, h: 0.35 },
+  customerRelationships: { x: 0.53, y: 0.15, w: 0.14, h: 0.17 },
+  channels: { x: 0.53, y: 0.33, w: 0.14, h: 0.17 },
+  customerSegments: { x: 0.68, y: 0.15, w: 0.30, h: 0.35 },
+  costStructure: { x: 0.02, y: 0.51, w: 0.50, h: 0.18 },
+  revenueStreams: { x: 0.53, y: 0.51, w: 0.45, h: 0.18 },
 };
 
 function wrapText(text: string, maxWidth: number, font: any, fontSize: number): string[] {
@@ -63,6 +65,31 @@ function wrapText(text: string, maxWidth: number, font: any, fontSize: number): 
   return lines;
 }
 
+function calculateFitFontSize(
+  items: string[],
+  maxWidth: number,
+  maxHeight: number,
+  font: any,
+  startSize: number = 11,
+  minSize: number = 7
+): number {
+  for (let size = startSize; size >= minSize; size -= 0.5) {
+    const lineHeight = size + 2;
+    let totalHeight = 0;
+    
+    for (const item of items) {
+      const lines = wrapText(`• ${item}`, maxWidth, font, size);
+      totalHeight += lines.length * lineHeight;
+    }
+    
+    if (totalHeight <= maxHeight) {
+      return size;
+    }
+  }
+  
+  return minSize;
+}
+
 function formatArrayToText(items: string[] | undefined): string {
   if (!items || items.length === 0) return '';
   return items.map((item, i) => `• ${item}`).join('\n');
@@ -76,17 +103,20 @@ serve(async (req) => {
   }
 
   try {
-    const { bmcData, templateUrl, companyName }: FillPDFRequest = await req.json();
-    console.log('[PDF Fill] Request received for company:', companyName);
+    const { bmcData, templateUrl, companyName, debug }: FillPDFRequest = await req.json();
+    console.log('[PDF Fill] Request received');
+    console.log('[PDF Fill] Company:', companyName);
+    console.log('[PDF Fill] Template URL:', templateUrl);
 
     if (!templateUrl) {
       throw new Error('Template URL is required');
     }
 
     // Download the PDF template
-    console.log('[PDF Fill] Downloading template from:', templateUrl);
+    console.log('[PDF Fill] Downloading template...');
     const templateResponse = await fetch(templateUrl);
     if (!templateResponse.ok) {
+      console.error('[PDF Fill] Template download failed:', templateResponse.status, templateResponse.statusText);
       throw new Error(`Failed to download template: ${templateResponse.statusText}`);
     }
     
@@ -97,57 +127,88 @@ serve(async (req) => {
     const pdfDoc = await PDFDocument.load(templateBytes);
     const pages = pdfDoc.getPages();
     const firstPage = pages[0];
-    const { height } = firstPage.getSize();
+    const { width: pageWidth, height: pageHeight } = firstPage.getSize();
+    console.log('[PDF Fill] Page size:', pageWidth, 'x', pageHeight);
 
     // Embed font
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const fontSize = 9;
-    const lineHeight = fontSize + 2;
     const textColor = rgb(0.2, 0.2, 0.2);
+    const debugColor = rgb(0.9, 0.9, 0.9);
 
     // Add company name if provided
     if (companyName) {
-      const coords = BMC_COORDINATES.companyName;
+      const coords = BMC_RELATIVE_COORDS.companyName;
       firstPage.drawText(companyName, {
-        x: coords.x,
-        y: height - coords.y,
+        x: coords.x * pageWidth,
+        y: pageHeight - (coords.y * pageHeight),
         size: 16,
         font,
         color: rgb(0.1, 0.1, 0.1),
       });
     }
 
-    // Helper function to draw text in a section
+    // Helper function to draw text in a section with auto-fit
     const drawSection = (
-      sectionKey: keyof typeof BMC_COORDINATES,
-      text: string
+      sectionKey: keyof typeof BMC_RELATIVE_COORDS,
+      items: string[] | undefined
     ) => {
-      const coords = BMC_COORDINATES[sectionKey];
-      const lines = wrapText(text, coords.maxWidth, font, fontSize);
-      const maxLines = Math.floor((coords.maxHeight || 200) / lineHeight);
-      const displayLines = lines.slice(0, maxLines);
-
-      displayLines.forEach((line, i) => {
-        firstPage.drawText(line, {
-          x: coords.x,
-          y: height - coords.y - (i * lineHeight),
-          size: fontSize,
-          font,
-          color: textColor,
+      if (!items || items.length === 0) return;
+      
+      const coords = BMC_RELATIVE_COORDS[sectionKey];
+      if (!coords.w || !coords.h) return;
+      
+      const x = coords.x * pageWidth;
+      const y = pageHeight - (coords.y * pageHeight);
+      const maxWidth = coords.w * pageWidth - 10;
+      const maxHeight = coords.h * pageHeight - 10;
+      
+      // Calculate best font size that fits
+      const fontSize = calculateFitFontSize(items, maxWidth, maxHeight, font);
+      const lineHeight = fontSize + 2;
+      
+      console.log(`[PDF Fill] ${sectionKey}: fontSize=${fontSize}, items=${items.length}`);
+      
+      // Draw debug rectangle if enabled
+      if (debug) {
+        firstPage.drawRectangle({
+          x,
+          y: y - maxHeight,
+          width: maxWidth,
+          height: maxHeight,
+          borderColor: debugColor,
+          borderWidth: 1,
+        });
+      }
+      
+      let currentY = y - 5;
+      
+      items.forEach((item) => {
+        const lines = wrapText(`• ${item}`, maxWidth, font, fontSize);
+        lines.forEach((line) => {
+          if (currentY - lineHeight > y - maxHeight) {
+            firstPage.drawText(line, {
+              x: x + 5,
+              y: currentY,
+              size: fontSize,
+              font,
+              color: textColor,
+            });
+            currentY -= lineHeight;
+          }
         });
       });
     };
 
     // Fill in all BMC sections
-    drawSection('keyPartners', formatArrayToText(bmcData.keyPartners));
-    drawSection('keyActivities', formatArrayToText(bmcData.keyActivities));
-    drawSection('keyResources', formatArrayToText(bmcData.keyResources));
-    drawSection('valuePropositions', formatArrayToText(bmcData.valuePropositions));
-    drawSection('customerRelationships', formatArrayToText(bmcData.customerRelationships));
-    drawSection('channels', formatArrayToText(bmcData.channels));
-    drawSection('customerSegments', formatArrayToText(bmcData.customerSegments));
-    drawSection('costStructure', formatArrayToText(bmcData.costStructure));
-    drawSection('revenueStreams', formatArrayToText(bmcData.revenueStreams));
+    drawSection('keyPartners', bmcData.keyPartners);
+    drawSection('keyActivities', bmcData.keyActivities);
+    drawSection('keyResources', bmcData.keyResources);
+    drawSection('valuePropositions', bmcData.valuePropositions);
+    drawSection('customerRelationships', bmcData.customerRelationships);
+    drawSection('channels', bmcData.channels);
+    drawSection('customerSegments', bmcData.customerSegments);
+    drawSection('costStructure', bmcData.costStructure);
+    drawSection('revenueStreams', bmcData.revenueStreams);
 
     // Save the PDF
     const pdfBytes = await pdfDoc.save();
