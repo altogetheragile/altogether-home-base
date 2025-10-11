@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Building2, Sparkles } from 'lucide-react';
+import { Sparkles, Maximize2 } from 'lucide-react';
 import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
 import AIToolElement from './AIToolElement';
 import BMCEditorDialog from './BMCEditorDialog';
+import FabricBMCCanvas from '../../bmc/FabricBMCCanvas';
 import { BMCData } from '../../bmc/FabricBMCCanvas';
 
 // Default empty BMC data
@@ -108,7 +110,7 @@ const BMCHexiElement: React.FC<BMCHexiElementProps> = ({
           id,
           type: 'bmc' as const,
           position,
-          size: { width: 140, height: 160 }, // Fixed hexi size
+          size: size.width && size.height ? size : { width: 600, height: 400 },
           content: data || {}
         }}
         isSelected={isSelected || false}
@@ -119,47 +121,46 @@ const BMCHexiElement: React.FC<BMCHexiElementProps> = ({
         }}
         onDelete={onDelete || (() => {})}
       >
-        <div 
-          className="flex flex-col items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:scale-105"
-          onClick={handleClick}
-        >
-          {/* Hexagonal shape */}
-          <div className="relative mb-2">
-            <div className="w-20 h-20 bg-primary/10 border-2 border-primary/30 relative flex items-center justify-center group-hover:border-primary/60 transition-colors">
-              {/* Hexagon using CSS clip-path */}
-              <div 
-                className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-200"
-                style={{
-                  clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)'
-                }}
-              />
-              <Building2 className="h-8 w-8 text-primary relative z-10" />
-            </div>
-            
-            {/* AI Generated badge */}
-            {isAIGenerated && (
-              <div className="absolute -top-1 -right-1">
-                <Badge variant="secondary" className="text-xs px-1 py-0 h-5 bg-accent">
+        <div className="w-full h-full flex flex-col bg-card rounded-lg overflow-hidden border-2 border-border">
+          {/* Header with title and expand button */}
+          <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {isAIGenerated && (
+                <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-accent shrink-0">
                   <Sparkles className="h-3 w-3 mr-1" />
                   AI
                 </Badge>
-              </div>
-            )}
+              )}
+              <span className="text-sm font-semibold text-foreground truncate">
+                {companyName || 'Business Model Canvas'}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditorOpen(true);
+              }}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
           </div>
-
-          {/* Company name or default label */}
-          <div className="text-center">
-            <div className="text-xs font-medium text-foreground/90 line-clamp-1">
-              {companyName || 'Business Model Canvas'}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Click to edit
-            </div>
+          
+          {/* Canvas content */}
+          <div className="flex-1 overflow-hidden">
+            <FabricBMCCanvas
+              data={bmcData}
+              isEditable={false}
+              width={size.width || 600}
+              height={(size.height || 400) - 45}
+            />
           </div>
         </div>
       </AIToolElement>
 
-      {/* BMC Editor Dialog */}
+      {/* BMC Editor Dialog - Full size editor */}
       <BMCEditorDialog
         isOpen={isEditorOpen}
         onClose={() => setIsEditorOpen(false)}

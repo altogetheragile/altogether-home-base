@@ -186,36 +186,41 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
         evented: false,
       });
 
-      // Create title text
+      // Create title text with responsive sizing
+      const titleFontSize = Math.max(9, Math.min(14, width * 0.014));
+      
       const title = new IText(config.title, {
-        left: actualX + 8,
-        top: actualY + 8,
-        fontSize: 11,
+        left: actualX + 6,
+        top: actualY + 6,
+        fontSize: titleFontSize,
         fontWeight: 'bold',
         fill: config.highlight ? colors.accentForeground : colors.foreground,
         selectable: false,
         evented: false,
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
       });
 
-      // Create content text with proper null safety
+      // Create content text with proper null safety and better sizing
       const textContent = String(safeData[sectionKey] || '');
+      
+      // Calculate responsive font size based on canvas dimensions
+      const baseFontSize = Math.max(8, Math.min(12, width * 0.012));
+      
       const content = new Textbox(textContent, {
-        left: actualX + 8,
-        top: actualY + 28,
-        width: actualWidth - 16,
-        height: actualHeight - 36,
-        fontSize: 9,
+        left: actualX + 6,
+        top: actualY + 24,
+        width: actualWidth - 12,
+        height: actualHeight - 30,
+        fontSize: baseFontSize,
         fill: colors.foreground,
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         selectable: isEditable,
         evented: isEditable,
-        splitByGrapheme: true,
+        splitByGrapheme: false,
         breakWords: true,
         textAlign: 'left',
-        lineHeight: 1.1,
+        lineHeight: 1.3,
         charSpacing: 0,
-        overflow: 'hidden',
         styles: {},
       });
 
