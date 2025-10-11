@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
-import { Toolbar } from './Toolbar';
+import { AIToolbar } from './AIToolbar';
 import { Button } from '@/components/ui/button';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -377,7 +377,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           <div>
             <h1 className="text-xl font-semibold">AI Tools Canvas</h1>
             <p className="text-sm text-muted-foreground">
-              Create and organize AI-powered tools and workflows
+              Generate AI-powered Business Model Canvases and strategic frameworks
             </p>
           </div>
         </div>
@@ -402,13 +402,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
 
       {/* Toolbar */}
       <div className="border-b px-4 py-2 bg-card/50">
-        <Toolbar
+        <AIToolbar
           onAddElement={handleAddElement}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onExport={handleExport}
           zoom={zoom}
-          projectId={projectId}
           onBMCGenerated={handleAddBMCFromGenerator}
           onStoryGenerated={handleAddStoryFromGenerator}
         />
@@ -440,7 +439,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
                     Welcome to AI Tools Canvas
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Use the AI BMC Generator or AI Story Generator from the toolbar above to create sophisticated content, or add blank user stories and sticky notes for manual creation.
+                    Click "Generate BMC" to create AI-powered Business Model Canvases using strategic frameworks from our Knowledge Base. Add sticky notes for additional context.
                   </p>
                 </div>
               </div>

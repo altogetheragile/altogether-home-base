@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, RotateCcw, Save } from 'lucide-react';
+import { Loader2, Sparkles, RotateCcw, Save, ExternalLink, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectMutations } from '@/hooks/useProjects';
@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from './BusinessModelCanvas';
 import BMCExportDialog from './BMCExportDialog';
+import { Badge } from '@/components/ui/badge';
 
 interface BMCData {
   keyPartners: string;
@@ -50,6 +51,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   const [generatedBMC, setGeneratedBMC] = useState<BMCData | null>(null);
   const [companyName, setCompanyName] = useState('');
   const canvasRef = useRef<BusinessModelCanvasRef>(null);
+  const [bmcTemplate, setBmcTemplate] = useState<{ url: string; title: string } | null>(null);
   const [formData, setFormData] = useState({
     companyName: '',
     industry: '',
@@ -78,6 +80,47 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     { value: 'established', label: 'Established Business' },
     { value: 'pivot', label: 'Pivoting/Transformation' }
   ];
+
+  // Fetch BMC template from Knowledge Base
+  useEffect(() => {
+    const fetchBMCTemplate = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('knowledge_item_templates')
+          .select(`
+            template_id,
+            knowledge_templates:template_id (
+              pdf_url,
+              title
+            )
+          `)
+          .eq('knowledge_item_id', 'd5789af4-6e3f-4b14-99c6-8c3dc356642a')
+          .single();
+
+        if (error) {
+          console.log('Template fetch error:', error);
+          return;
+        }
+
+        if (data?.knowledge_templates) {
+          const template = Array.isArray(data.knowledge_templates) 
+            ? data.knowledge_templates[0] 
+            : data.knowledge_templates;
+          
+          if (template?.pdf_url) {
+            setBmcTemplate({
+              url: template.pdf_url,
+              title: template.title || 'Business Model Canvas Template'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching BMC template:', error);
+      }
+    };
+
+    fetchBMCTemplate();
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -287,10 +330,33 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
         {!generatedBMC ? (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-bmc-orange/10 to-bmc-orange-light/10 p-4 rounded-lg border border-bmc-orange/30 shadow-sm">
-              <p className="text-sm text-bmc-text">
-                <strong>✨ Enhanced AI Generation:</strong> Our GPT-5 powered system creates strategic, 
-                industry-specific Business Model Canvases with actionable insights and competitive analysis.
-              </p>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-sm text-bmc-text">
+                    <strong>✨ Enhanced AI Generation:</strong> Our GPT-5 powered system creates strategic, 
+                    industry-specific Business Model Canvases with actionable insights and competitive analysis.
+                  </p>
+                  {bmcTemplate && (
+                    <div className="flex items-center gap-2 mt-3">
+                      <Badge variant="outline" className="bg-bmc-orange/10 border-bmc-orange/30 text-bmc-orange-dark">
+                        <FileText className="h-3 w-3 mr-1" />
+                        Based on {bmcTemplate.title}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+                {bmcTemplate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(bmcTemplate.url, '_blank')}
+                    className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
+                  >
+                    <ExternalLink className="h-3 w-3 mr-2" />
+                    View Template
+                  </Button>
+                )}
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
