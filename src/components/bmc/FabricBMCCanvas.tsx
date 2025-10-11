@@ -147,10 +147,10 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
 
     setFabricCanvas(canvas);
 
-      return () => {
+    return () => {
       canvas.dispose();
     };
-  }, [width, height, isEditable, colors]);
+  }, [width, height, isEditable]);
 
   useEffect(() => {
     if (!fabricCanvas) return;
