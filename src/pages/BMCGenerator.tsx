@@ -76,6 +76,14 @@ const BMCGenerator = () => {
       if (error) throw error;
       
       const bmcData = data as BMCData;
+      console.log('[BMC] Raw data received:', data);
+      console.log('[BMC] Data structure:', {
+        type: typeof data,
+        keys: data ? Object.keys(data) : 'null',
+        keyPartners: Array.isArray(data?.keyPartners) ? `array[${data.keyPartners.length}]` : typeof data?.keyPartners,
+        keyActivities: Array.isArray(data?.keyActivities) ? `array[${data.keyActivities.length}]` : typeof data?.keyActivities,
+        valuePropositions: Array.isArray(data?.valuePropositions) ? `array[${data.valuePropositions.length}]` : typeof data?.valuePropositions,
+      });
       setGeneratedBMC(bmcData);
       console.log('[BMC] ✅ BMC generated successfully');
       
@@ -94,6 +102,14 @@ const BMCGenerator = () => {
   const fillPDF = async (bmcData: BMCData) => {
     setIsFilling(true);
     console.log('[BMC] Filling PDF with data...');
+    console.log('[BMC] BMC data being sent to fill-bmc-pdf:', {
+      hasKeyPartners: !!bmcData?.keyPartners,
+      keyPartnersLength: bmcData?.keyPartners?.length,
+      keyPartnersType: Array.isArray(bmcData?.keyPartners) ? 'array' : typeof bmcData?.keyPartners,
+      firstKeyPartner: bmcData?.keyPartners?.[0],
+      allKeys: bmcData ? Object.keys(bmcData) : 'null',
+      fullData: JSON.stringify(bmcData, null, 2)
+    });
 
     try {
       const { data, error } = await supabase.functions.invoke('fill-bmc-pdf', {
