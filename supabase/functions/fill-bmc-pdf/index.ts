@@ -215,8 +215,15 @@ serve(async (req) => {
     const pdfBytes = await pdfDoc.save();
     console.log('[PDF Fill] PDF filled successfully, size:', pdfBytes.length);
 
-    // Return the PDF as base64
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
+    // Return the PDF as base64 (encode in chunks to avoid stack overflow)
+    const uint8Array = new Uint8Array(pdfBytes);
+    let binary = '';
+    const chunkSize = 0x8000; // 32KB chunks
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const base64 = btoa(binary);
     const dataUrl = `data:application/pdf;base64,${base64}`;
 
     return new Response(
