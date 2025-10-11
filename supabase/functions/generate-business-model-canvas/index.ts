@@ -60,13 +60,32 @@ function extractJson(text: string): any | null {
 }
 
 serve(async (req: Request) => {
+  console.log("[BMC] Incoming request:", req.method, req.url);
+  
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    console.log("[BMC] Handling OPTIONS preflight");
+    return new Response(null, { 
+      status: 200,
+      headers: corsHeaders 
+    });
   }
 
   const headers = { "Content-Type": "application/json", ...corsHeaders };
 
   try {
+    // Check for OpenAI API key first
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) {
+      console.error("[BMC] Missing OPENAI_API_KEY");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "OpenAI API key not configured. Please add OPENAI_API_KEY to your Supabase Edge Function secrets." 
+        }),
+        { status: 500, headers }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const {
       companyName,
@@ -79,7 +98,9 @@ serve(async (req: Request) => {
       templateUrl,
     } = body ?? {};
 
-    const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
+    console.log("[BMC] Generating BMC for:", companyName, industry);
+
+    const openai = new OpenAI({ apiKey: openaiKey });
 
     // Prompt: force JSON only; the UI expects camelCase keys
     const system = `
