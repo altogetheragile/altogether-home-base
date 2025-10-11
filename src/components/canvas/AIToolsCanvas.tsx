@@ -43,31 +43,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     onSave?.(data);
   }, [onSave]);
 
-  const handleAddBMCFromGenerator = useCallback((generatedData: any) => {
-    const newElement: CanvasElement = {
-      id: crypto.randomUUID(),
-      type: 'bmc' as any,
-      position: { 
-        x: 100 + (canvasData.elements.length * 20), 
-        y: 100 + (canvasData.elements.length * 20) 
-      },
-      size: { width: 800, height: 600 },
-      content: generatedData,
-    };
-
-    const updatedData = {
-      ...canvasData,
-      elements: [...canvasData.elements, newElement],
-    };
-    
-    handleDataChange(updatedData);
-    
-    toast({
-      title: "BMC Added to Canvas",
-      description: `${generatedData.companyName} Business Model Canvas has been added to your canvas`,
-    });
-  }, [canvasData, handleDataChange, toast]);
-
   const handleAddStoryFromGenerator = useCallback((storyData: any) => {
     const newElement: CanvasElement = {
       id: crypto.randomUUID(),
@@ -409,7 +384,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           onZoomOut={handleZoomOut}
           onExport={handleExport}
           zoom={zoom}
-          onBMCGenerated={handleAddBMCFromGenerator}
           onStoryGenerated={handleAddStoryFromGenerator}
         />
       </div>

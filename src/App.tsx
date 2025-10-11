@@ -17,6 +17,7 @@ import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import AIToolsCanvas from "./pages/AIToolsCanvas";
+import BMCGenerator from "./pages/BMCGenerator";
 import AccountSecurity from "./pages/AccountSecurity";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
@@ -89,6 +90,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
+              <Route path="/bmc-generator" element={<BMCGenerator />} />
               
               {/* User Dashboard - Protected */}
               <Route path="/dashboard" element={

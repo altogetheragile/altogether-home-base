@@ -100,9 +100,15 @@ const Navigation = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
+                    <Link to="/bmc-generator" className="w-full">
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      BMC Generator
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/ai-tools" className="w-full">
                       <Sparkles className="mr-2 h-4 w-4" />
-                      AI Tools Canvas
+                      User Story Canvas
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -233,11 +239,21 @@ const Navigation = () => {
                  {/* AI Tools Section - Mobile */}
                  <div className="border-t border-border pt-2 mt-2">
                    <div className="px-3 py-2 text-sm font-medium text-muted-foreground mb-2">
-                     <div className="flex items-center space-x-2">
-                       <Sparkles className="h-4 w-4" />
-                       <span>AI Tools</span>
-                     </div>
-                   </div>
+                   <div className="flex items-center space-x-2">
+                      <Sparkles className="h-4 w-4" />
+                      <span>AI Tools</span>
+                    </div>
+                  </div>
+                    <Link
+                      to="/bmc-generator"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="h-4 w-4" />
+                        <span>BMC Generator</span>
+                      </div>
+                    </Link>
                     <Link
                       to="/ai-tools"
                       onClick={() => setIsMenuOpen(false)}
@@ -245,7 +261,7 @@ const Navigation = () => {
                     >
                       <div className="flex items-center space-x-2">
                         <Sparkles className="h-4 w-4" />
-                        <span>AI Tools Canvas</span>
+                        <span>User Story Canvas</span>
                       </div>
                     </Link>
                     <Link
