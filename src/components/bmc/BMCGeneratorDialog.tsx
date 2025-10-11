@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, RotateCcw, Save, ExternalLink, FileText } from 'lucide-react';
+import { Loader2, Sparkles, RotateCcw, Save, ExternalLink, FileText, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectMutations } from '@/hooks/useProjects';
@@ -59,6 +59,8 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [generatedBMC, setGeneratedBMC] = useState<BMCData | null>(null);
   const [companyName, setCompanyName] = useState('');
+  const [filledPdfUrl, setFilledPdfUrl] = useState<string | null>(null);
+  const [isFillingPdf, setIsFillingPdf] = useState(false);
   const canvasRef = useRef<BusinessModelCanvasRef>(null);
   const [bmcTemplate, setBmcTemplate] = useState<{ url: string; title: string } | null>(null);
   const [guestGenerationCount, setGuestGenerationCount] = useState(() => {
@@ -221,6 +223,9 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       setGeneratedBMC(bmcData);
       setCompanyName(formData.companyName);
       
+      // Fill the PDF with the generated data
+      await fillPDFWithData(bmcData);
+      
       // Increment guest generation count
       if (!user) {
         const newCount = guestGenerationCount + 1;
@@ -273,6 +278,55 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     }
   };
 
+  const fillPDFWithData = async (bmcData: BMCData) => {
+    if (!bmcTemplate?.url) {
+      console.warn('[BMC] No PDF template available for filling');
+      return;
+    }
+
+    setIsFillingPdf(true);
+    try {
+      console.log('[BMC] Filling PDF with generated data...');
+      
+      // Convert BMC data strings to arrays for the PDF filler
+      const bmcDataArrays = {
+        keyPartners: bmcData.keyPartners?.split('\n').filter(s => s.trim()) || [],
+        keyActivities: bmcData.keyActivities?.split('\n').filter(s => s.trim()) || [],
+        keyResources: bmcData.keyResources?.split('\n').filter(s => s.trim()) || [],
+        valuePropositions: bmcData.valuePropositions?.split('\n').filter(s => s.trim()) || [],
+        customerRelationships: bmcData.customerRelationships?.split('\n').filter(s => s.trim()) || [],
+        channels: bmcData.channels?.split('\n').filter(s => s.trim()) || [],
+        customerSegments: bmcData.customerSegments?.split('\n').filter(s => s.trim()) || [],
+        costStructure: bmcData.costStructure?.split('\n').filter(s => s.trim()) || [],
+        revenueStreams: bmcData.revenueStreams?.split('\n').filter(s => s.trim()) || [],
+      };
+
+      const { data, error } = await supabase.functions.invoke('fill-bmc-pdf', {
+        body: {
+          bmcData: bmcDataArrays,
+          templateUrl: bmcTemplate.url,
+          companyName: formData.companyName,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.pdfDataUrl) {
+        setFilledPdfUrl(data.pdfDataUrl);
+        console.log('[BMC] PDF filled successfully');
+      }
+    } catch (error: any) {
+      console.error('[BMC] Error filling PDF:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "Could not create the filled PDF, but you can still view the canvas.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFillingPdf(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       companyName: '',
@@ -284,6 +338,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     });
     setGeneratedBMC(null);
     setCompanyName('');
+    setFilledPdfUrl(null);
   };
 
   const handleClose = () => {
@@ -569,13 +624,40 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
-            <BusinessModelCanvas
-              ref={canvasRef}
-              data={generatedBMC}
-              companyName={companyName}
-              isEditable={true}
-              onDataChange={setGeneratedBMC}
-            />
+            {isFillingPdf ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <Loader2 className="h-12 w-12 animate-spin text-bmc-orange" />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-bmc-text">Creating Your Professional PDF...</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Filling your Business Model Canvas template with AI-generated content
+                  </p>
+                </div>
+              </div>
+            ) : filledPdfUrl ? (
+              <div className="space-y-4">
+                <div className="bg-bmc-orange/10 border border-bmc-orange/30 rounded-lg p-4">
+                  <p className="text-sm text-bmc-text">
+                    <strong>✨ Your Professional BMC is Ready!</strong> The PDF has been filled with your AI-generated content.
+                  </p>
+                </div>
+                <div className="border-2 border-bmc-orange/30 rounded-lg overflow-hidden shadow-lg bg-white">
+                  <iframe
+                    src={filledPdfUrl}
+                    className="w-full h-[600px] border-none"
+                    title={`Business Model Canvas - ${companyName}`}
+                  />
+                </div>
+              </div>
+            ) : (
+              <BusinessModelCanvas
+                ref={canvasRef}
+                data={generatedBMC}
+                companyName={companyName}
+                isEditable={true}
+                onDataChange={setGeneratedBMC}
+              />
+            )}
             
             <div className="flex justify-between items-center pt-4 border-t border-bmc-orange/20">
               <div className="flex space-x-2">
@@ -587,9 +669,34 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Generate New BMC
                 </Button>
+                {filledPdfUrl && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = filledPdfUrl;
+                      link.download = `${companyName || 'BMC'}-Business-Model-Canvas.pdf`;
+                      link.click();
+                      toast({
+                        title: "Download Started",
+                        description: "Your Business Model Canvas PDF is downloading"
+                      });
+                    }}
+                    className="border-bmc-orange text-bmc-orange-dark hover:bg-bmc-orange/10"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
+                )}
               </div>
               
               <div className="flex space-x-2">
+                {!filledPdfUrl && (
+                  <BMCExportDialog 
+                    companyName={companyName} 
+                    canvasRef={canvasRef}
+                  />
+                )}
                 {user && (
                   <Button
                     onClick={saveAsProject}
@@ -624,10 +731,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
                     Save as Project (Sign In)
                   </Button>
                 )}
-                <BMCExportDialog 
-                  companyName={companyName} 
-                  canvasRef={canvasRef}
-                />
                 <Button
                   variant="outline"
                   onClick={handleClose}

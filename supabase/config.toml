@@ -75,6 +75,9 @@ verify_jwt = true
 [functions.generate-business-model-canvas]
 verify_jwt = false
 
+[functions.fill-bmc-pdf]
+verify_jwt = false
+
 [edge-runtime]
 enabled = true
 port = 54330
