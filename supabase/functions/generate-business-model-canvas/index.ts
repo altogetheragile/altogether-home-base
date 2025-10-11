@@ -1,6 +1,7 @@
 // Deno + Supabase Edge Function
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.57.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,7 +74,58 @@ serve(async (req: Request) => {
   const headers = { "Content-Type": "application/json", ...corsHeaders };
 
   try {
-    // Check for OpenAI API key first
+    // Initialize Supabase client for rate limiting
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get client IP address for rate limiting
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+               req.headers.get("x-real-ip") || 
+               "unknown";
+    const userAgent = req.headers.get("user-agent") || "unknown";
+
+    console.log("[BMC] Request from IP:", ip);
+
+    // Check rate limit: 5 requests per 24 hours per IP
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count, error: countError } = await supabase
+      .from("anonymous_usage")
+      .select("*", { count: "exact", head: true })
+      .eq("ip_address", ip)
+      .eq("endpoint", "generate-bmc")
+      .gte("created_at", twentyFourHoursAgo);
+
+    if (countError) {
+      console.error("[BMC] Rate limit check failed:", countError);
+      // Continue anyway - don't block on rate limit errors
+    } else if (count !== null && count >= 5) {
+      console.warn("[BMC] Rate limit exceeded for IP:", ip, "count:", count);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Rate limit exceeded. You have reached the maximum of 5 free BMC generations per day. Please sign up for unlimited access or try again in 24 hours." 
+        }),
+        { status: 429, headers }
+      );
+    }
+
+    // Log this usage attempt
+    const { error: insertError } = await supabase
+      .from("anonymous_usage")
+      .insert({
+        ip_address: ip,
+        endpoint: "generate-bmc",
+        user_agent: userAgent,
+        request_count: 1
+      });
+
+    if (insertError) {
+      console.error("[BMC] Failed to log usage:", insertError);
+      // Continue anyway - don't block on logging errors
+    }
+
+    // Check for OpenAI API key
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) {
       console.error("[BMC] Missing OPENAI_API_KEY");

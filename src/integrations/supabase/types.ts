@@ -110,6 +110,33 @@ export type Database = {
         }
         Relationships: []
       }
+      anonymous_usage: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip_address: string
+          request_count: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_address: string
+          request_count?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_address?: string
+          request_count?: number | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       auth_logs: {
         Row: {
           created_at: string | null
@@ -2727,6 +2754,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_anonymous_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_knowledge_slug: {
         Args: { input_text: string }
         Returns: string
