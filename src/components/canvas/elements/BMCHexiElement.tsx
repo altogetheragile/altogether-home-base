@@ -36,6 +36,7 @@ interface BMCHexiElementProps {
   onContentChange?: (data: BMCData | BMCGeneratedData) => void;
   onDelete?: () => void;
   onEdit?: () => void;
+  showWatermark?: boolean;
 }
 
 const BMCHexiElement: React.FC<BMCHexiElementProps> = ({
@@ -50,6 +51,7 @@ const BMCHexiElement: React.FC<BMCHexiElementProps> = ({
   onContentChange,
   onDelete,
   onEdit,
+  showWatermark = false,
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 

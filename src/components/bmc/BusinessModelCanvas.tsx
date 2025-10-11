@@ -7,6 +7,7 @@ interface BusinessModelCanvasProps {
   companyName?: string;
   isEditable?: boolean;
   onDataChange?: (data: BMCData) => void;
+  showWatermark?: boolean;
 }
 
 export interface BusinessModelCanvasRef {
@@ -20,7 +21,8 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
   data,
   companyName,
   isEditable = false,
-  onDataChange
+  onDataChange,
+  showWatermark = false
 }, ref) => {
   const canvasRef = useRef<BMCCanvasRef>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,7 +64,7 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
     <div 
       ref={containerRef}
       id="bmc-canvas" 
-      className="w-full max-w-[1200px] mx-auto"
+      className="w-full max-w-[1200px] mx-auto relative"
       data-testid="bmc-container"
     >
       <BMCCanvas
@@ -73,6 +75,13 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
         onDataChange={onDataChange}
         className="min-h-[700px]"
       />
+      {showWatermark && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div className="text-muted-foreground/20 text-6xl font-bold transform -rotate-45 select-none">
+            Sign in to export
+          </div>
+        </div>
+      )}
     </div>
   );
 });

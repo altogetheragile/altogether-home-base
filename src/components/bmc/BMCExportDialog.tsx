@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, FileText, Image, Printer, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { exportBMC, downloadBMC, printBMC, BMCData } from '@/utils/bmcExport';
 import { BusinessModelCanvasRef } from './BusinessModelCanvas';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BMCExportDialogProps {
   companyName?: string;
@@ -25,6 +28,8 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
   const [quality, setQuality] = useState('95');
   
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -129,6 +134,35 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
     }
   };
 
+  // If user is not authenticated, show sign-in requirement
+  if (!user) {
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="text-bmc-orange border-bmc-orange hover:bg-bmc-orange hover:text-white"
+            onClick={(e) => {
+              e.preventDefault();
+              toast({
+                title: "Sign In Required",
+                description: "Create a free account to export your Business Model Canvas",
+                action: (
+                  <Button size="sm" onClick={() => navigate('/auth')}>
+                    Sign Up Free
+                  </Button>
+                )
+              });
+            }}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export BMC
+          </Button>
+        </DialogTrigger>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -141,6 +175,7 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-bmc-orange-dark">Export Business Model Canvas</DialogTitle>
+          <DialogDescription>Choose your preferred export format and settings</DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -201,15 +236,21 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
           )}
 
           <div className="flex space-x-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={handlePrint}
-              className="flex-1 h-8 text-xs"
-              size="sm"
-            >
-              <Printer className="w-3 h-3 mr-1" />
-              Print
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={handlePrint}
+                    className="flex-1 h-8 text-xs"
+                    size="sm"
+                  >
+                    <Printer className="w-3 h-3 mr-1" />
+                    Print
+                  </Button>
+                </TooltipTrigger>
+              </Tooltip>
+            </TooltipProvider>
             
             <Button
               onClick={handleExport}

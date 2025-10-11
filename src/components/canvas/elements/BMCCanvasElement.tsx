@@ -20,6 +20,7 @@ interface BMCCanvasElementProps {
   onContentChange?: (data: BMCData | BMCGeneratedData) => void;
   onDelete?: () => void;
   onEdit?: () => void;
+  showWatermark?: boolean;
 }
 
 const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
@@ -34,6 +35,7 @@ const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
   onContentChange,
   onDelete,
   onEdit,
+  showWatermark,
 }) => {
   return (
     <BMCHexiElement
@@ -48,6 +50,7 @@ const BMCCanvasElement: React.FC<BMCCanvasElementProps> = ({
       onContentChange={onContentChange}
       onDelete={onDelete}
       onEdit={onEdit}
+      showWatermark={showWatermark}
     />
   );
 };

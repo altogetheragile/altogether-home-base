@@ -73,7 +73,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.generate-business-model-canvas]
-verify_jwt = true
+verify_jwt = false
 
 [edge-runtime]
 enabled = true

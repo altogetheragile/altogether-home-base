@@ -278,6 +278,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             onSelect={handleSelect}
             onMove={handleMove}
             onResize={handleResize}
+            showWatermark={!user}
             onContentChange={(newContent) => {
               const updatedElement = { ...element, content: newContent };
               const updatedData = {

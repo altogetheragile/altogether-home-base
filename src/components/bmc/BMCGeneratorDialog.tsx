@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,6 +43,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   saveToCanvas = false,
   onBMCGenerated,
 }) => {
+  const GUEST_GENERATION_LIMIT = 3;
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = externalOnClose ? externalOnClose : setInternalIsOpen;
@@ -52,6 +53,12 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   const [companyName, setCompanyName] = useState('');
   const canvasRef = useRef<BusinessModelCanvasRef>(null);
   const [bmcTemplate, setBmcTemplate] = useState<{ url: string; title: string } | null>(null);
+  const [guestGenerationCount, setGuestGenerationCount] = useState(() => {
+    if (typeof window !== 'undefined' && !user) {
+      return parseInt(localStorage.getItem('guestBMCCount') || '0');
+    }
+    return 0;
+  });
   const [formData, setFormData] = useState({
     companyName: '',
     industry: '',
@@ -95,10 +102,11 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
             )
           `)
           .eq('knowledge_item_id', 'd5789af4-6e3f-4b14-99c6-8c3dc356642a')
-          .single();
+          .limit(1)
+          .maybeSingle();
 
         if (error) {
-          console.log('Template fetch error:', error);
+          console.log('Template fetch error (non-blocking):', error);
           return;
         }
 
@@ -115,7 +123,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
           }
         }
       } catch (error) {
-        console.error('Error fetching BMC template:', error);
+        console.error('Error fetching BMC template (non-blocking):', error);
       }
     };
 
@@ -141,6 +149,20 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   };
 
   const generateBMC = async () => {
+    // Check generation limit for guest users
+    if (!user && guestGenerationCount >= GUEST_GENERATION_LIMIT) {
+      toast({
+        title: "Generation Limit Reached",
+        description: `You've used all ${GUEST_GENERATION_LIMIT} free generations. Sign up for unlimited access!`,
+        action: (
+          <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+            Sign Up Free
+          </Button>
+        )
+      });
+      return;
+    }
+
     if (!formData.companyName || !formData.industry || !formData.targetCustomers || !formData.productService) {
       toast({
         title: "Missing Information",
@@ -162,7 +184,9 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
           targetCustomers: formData.targetCustomers,
           productService: formData.productService,
           businessStage: formData.businessStage,
-          additionalContext: formData.additionalContext
+          additionalContext: formData.additionalContext,
+          templateTitle: bmcTemplate?.title,
+          templateUrl: bmcTemplate?.url
         }
       });
 
@@ -182,6 +206,13 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       console.debug("[BMC] extracted BMC:", bmcData);
       setGeneratedBMC(bmcData);          // <- pass directly into BMC canvas
       setCompanyName(formData.companyName);
+      
+      // Increment guest generation count
+      if (!user) {
+        const newCount = guestGenerationCount + 1;
+        setGuestGenerationCount(newCount);
+        localStorage.setItem('guestBMCCount', newCount.toString());
+      }
       
       // If canvas integration is enabled, pass the data back
       if (saveToCanvas && onBMCGenerated) {
@@ -325,6 +356,9 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
             <Sparkles className="w-4 h-4 mr-2" />
             AI Business Model Canvas Generator
           </DialogTitle>
+          <DialogDescription>
+            Provide company information to generate an AI-powered Business Model Canvas
+          </DialogDescription>
         </DialogHeader>
         
         {!generatedBMC ? (
@@ -455,37 +489,50 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
               />
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (externalOnClose) {
-                    externalOnClose();
-                  } else {
-                    setInternalIsOpen(false);
-                  }
-                }}
-                className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={generateBMC}
-                disabled={isGenerating}
-                className="bg-gradient-to-r from-bmc-orange to-bmc-orange-dark hover:from-bmc-orange-dark hover:to-bmc-orange text-white px-8"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating Strategic BMC...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate BMC
-                  </>
-                )}
-              </Button>
+            <div className="space-y-3">
+              {!user && (
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <p className="text-sm text-center text-muted-foreground">
+                    <strong>{GUEST_GENERATION_LIMIT - guestGenerationCount}</strong> free generation{GUEST_GENERATION_LIMIT - guestGenerationCount !== 1 ? 's' : ''} remaining.{' '}
+                    <Button variant="link" size="sm" className="h-auto p-0 text-primary" onClick={() => navigate('/auth')}>
+                      Sign up for unlimited
+                    </Button>
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (externalOnClose) {
+                      externalOnClose();
+                    } else {
+                      setInternalIsOpen(false);
+                    }
+                  }}
+                  className="border-bmc-orange/30 text-bmc-text hover:bg-bmc-orange/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={generateBMC}
+                  disabled={isGenerating || (!user && guestGenerationCount >= GUEST_GENERATION_LIMIT)}
+                  className="bg-gradient-to-r from-bmc-orange to-bmc-orange-dark hover:from-bmc-orange-dark hover:to-bmc-orange text-white px-8"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating Strategic BMC...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate BMC
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         ) : (

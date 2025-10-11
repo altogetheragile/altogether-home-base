@@ -2,23 +2,11 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.57.0";
 
-const ALLOWED_ORIGINS = [
-  "http://localhost:3000",
-  "https://altogether-home-base.lovable.app",
-  "https://preview--altogether-home-base.lovable.app",
-];
-
-function corsHeaders(req: Request) {
-  const origin = req.headers.get("origin") ?? "";
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    "Access-Control-Allow-Origin": allowed,
-    "Vary": "Origin",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
-  };
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+};
 
 // ---------- Helpers
 type Bmc = {
@@ -73,10 +61,10 @@ function extractJson(text: string): any | null {
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders(req) });
+    return new Response("ok", { headers: corsHeaders });
   }
 
-  const headers = { "Content-Type": "application/json", ...corsHeaders(req) };
+  const headers = { "Content-Type": "application/json", ...corsHeaders };
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -87,6 +75,8 @@ serve(async (req: Request) => {
       targetCustomers,
       productService,
       additionalContext,
+      templateTitle,
+      templateUrl,
     } = body ?? {};
 
     const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
@@ -110,6 +100,7 @@ Do not include any prose before or after the JSON. Keys must be camelCase:
 
 Each field should be a newline-separated bullet list (using "• ") in a single string,
 OR an array of bullet strings. Keep it concise and specific to the inputs.
+${templateTitle ? `\n\nAlign your output with the official Business Model Canvas template: "${templateTitle}". Ensure all content fits the standard nine-block BMC structure from the template.` : ''}
 `;
 
     const user = `
