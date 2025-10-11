@@ -200,8 +200,30 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
         fontFamily: 'system-ui, -apple-system, sans-serif',
       });
 
-      // Create content text with proper null safety and better sizing
-      const textContent = String(safeData[sectionKey] || '');
+      // Create content text with proper formatting for arrays and strings
+      const formatContent = (value: string | string[] | undefined): string => {
+        if (!value) return '';
+        
+        // If it's an array, format with bullet points
+        if (Array.isArray(value)) {
+          const items = value.filter(Boolean).map(item => String(item).trim());
+          return items.map(item => `• ${item}`).join('\n');
+        }
+        
+        // If it's a string, check if it needs formatting
+        const strValue = String(value).trim();
+        if (!strValue) return '';
+        
+        // If already has bullets or newlines, return as is
+        if (strValue.includes('•') || strValue.includes('\n')) {
+          return strValue;
+        }
+        
+        // Otherwise, treat as single item with bullet
+        return `• ${strValue}`;
+      };
+      
+      const textContent = formatContent(safeData[sectionKey]);
       
       // Calculate responsive font size based on canvas dimensions
       const baseFontSize = Math.max(8, Math.min(12, width * 0.012));
