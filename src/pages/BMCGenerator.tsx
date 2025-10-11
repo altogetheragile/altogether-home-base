@@ -32,6 +32,34 @@ interface FormData {
   additionalContext: string;
 }
 
+// Helper to convert string | string[] | undefined to string[]
+function toArray(val?: string | string[]): string[] {
+  if (!val) return [];
+  if (Array.isArray(val)) {
+    return val.map(s => `${s}`.replace(/^[-•\s]+/, '').trim()).filter(Boolean);
+  }
+  // Split on line breaks or bullets, clean bullets/dashes and trim
+  return `${val}`
+    .split(/\r?\n|•/g)
+    .map(s => s.replace(/^[-•\s]+/, '').trim())
+    .filter(Boolean);
+}
+
+// Normalize raw BMC data to ensure all fields are string arrays
+function normalizeBmc(raw: Record<string, string | string[] | undefined>): BMCData {
+  return {
+    keyPartners: toArray(raw.keyPartners),
+    keyActivities: toArray(raw.keyActivities),
+    keyResources: toArray(raw.keyResources),
+    valuePropositions: toArray(raw.valuePropositions),
+    customerRelationships: toArray(raw.customerRelationships),
+    channels: toArray(raw.channels),
+    customerSegments: toArray(raw.customerSegments),
+    costStructure: toArray(raw.costStructure),
+    revenueStreams: toArray(raw.revenueStreams),
+  };
+}
+
 const BMCGenerator = () => {
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
@@ -75,15 +103,26 @@ const BMCGenerator = () => {
 
       if (error) throw error;
       
-      const bmcData = data as BMCData;
       console.log('[BMC] Raw data received:', data);
-      console.log('[BMC] Data structure:', {
-        type: typeof data,
-        keys: data ? Object.keys(data) : 'null',
-        keyPartners: Array.isArray(data?.keyPartners) ? `array[${data.keyPartners.length}]` : typeof data?.keyPartners,
-        keyActivities: Array.isArray(data?.keyActivities) ? `array[${data.keyActivities.length}]` : typeof data?.keyActivities,
-        valuePropositions: Array.isArray(data?.valuePropositions) ? `array[${data.valuePropositions.length}]` : typeof data?.valuePropositions,
+      
+      // Unwrap { success, data } wrapper from edge function
+      const raw = (data && typeof data === 'object' && 'data' in data) ? (data as any).data : data;
+      
+      // Normalize to ensure all fields are string arrays
+      const bmcData = normalizeBmc(raw as Record<string, string | string[] | undefined>);
+      
+      console.log('[BMC] Normalized data lengths:', {
+        keyPartners: bmcData.keyPartners.length,
+        keyActivities: bmcData.keyActivities.length,
+        keyResources: bmcData.keyResources.length,
+        valuePropositions: bmcData.valuePropositions.length,
+        customerRelationships: bmcData.customerRelationships.length,
+        channels: bmcData.channels.length,
+        customerSegments: bmcData.customerSegments.length,
+        costStructure: bmcData.costStructure.length,
+        revenueStreams: bmcData.revenueStreams.length,
       });
+      
       setGeneratedBMC(bmcData);
       console.log('[BMC] ✅ BMC generated successfully');
       
