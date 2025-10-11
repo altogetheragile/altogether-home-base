@@ -103,7 +103,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
               title
             )
           `)
-          .eq('knowledge_item_id', 'd5789af4-6e3f-4b14-99c6-8c3dc356642a')
+          .eq('knowledge_item_id', '2c82f234-71f9-43a2-b6c2-6d7f785f3540')
           .limit(1)
           .maybeSingle();
 
