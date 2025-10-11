@@ -104,15 +104,23 @@ const BMCGenerator = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('[BMC] Fill PDF response:', { data, error });
+
+      if (error) {
+        console.error('[BMC] Fill PDF error:', error);
+        throw error;
+      }
 
       if (data?.dataUrl) {
         setFilledPdfUrl(data.dataUrl);
         console.log('[BMC] ✅ PDF filled successfully');
+      } else {
+        console.warn('[BMC] No dataUrl in response:', data);
+        toast.error('PDF was generated but URL is missing');
       }
     } catch (error: any) {
       console.error('[BMC] PDF fill error:', error);
-      toast.error('Failed to fill PDF template');
+      toast.error(error.message || 'Failed to fill PDF template');
     } finally {
       setIsFilling(false);
     }
