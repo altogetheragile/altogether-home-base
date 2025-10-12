@@ -2279,6 +2279,7 @@ export type Database = {
           show_events: boolean | null
           show_knowledge: boolean | null
           show_protected_projects: boolean | null
+          show_recommendations: boolean | null
           social_facebook: string | null
           social_github: string | null
           social_linkedin: string | null
@@ -2306,6 +2307,7 @@ export type Database = {
           show_events?: boolean | null
           show_knowledge?: boolean | null
           show_protected_projects?: boolean | null
+          show_recommendations?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null
@@ -2333,6 +2335,7 @@ export type Database = {
           show_events?: boolean | null
           show_knowledge?: boolean | null
           show_protected_projects?: boolean | null
+          show_recommendations?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null

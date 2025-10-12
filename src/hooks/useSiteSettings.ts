@@ -33,6 +33,7 @@ export interface SiteSettings {
   show_protected_projects: boolean | null;
   show_dynamic_pages: boolean | null;
   show_dashboard: boolean | null;
+  show_recommendations: boolean | null;
 }
 
 export const useSiteSettings = () => {

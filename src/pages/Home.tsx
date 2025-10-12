@@ -17,10 +17,8 @@ const Home: React.FC = () => {
 
   const { settings } = useSiteSettings();
 
-  // Feature flags for safe reintroduction of dynamic content
-  const ENABLE_RECOMMENDATIONS = false; // Can be toggled to false for testing
-  
   // Feature flags from database with fallbacks
+  const ENABLE_RECOMMENDATIONS = settings?.show_recommendations ?? false;
   const SHOW_EVENTS = settings?.show_events ?? false;
   const SHOW_KNOWLEDGE = settings?.show_knowledge ?? false;
   const SHOW_BLOG = settings?.show_blog ?? false;

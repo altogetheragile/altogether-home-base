@@ -20,6 +20,7 @@ export default function AdminSettings() {
     show_admin_routes: settings?.show_admin_routes ?? true,
     show_protected_projects: settings?.show_protected_projects ?? true,
     show_dynamic_pages: settings?.show_dynamic_pages ?? true,
+    show_recommendations: settings?.show_recommendations ?? false,
   });
 
   // Update local state when settings load
@@ -35,6 +36,7 @@ export default function AdminSettings() {
         show_admin_routes: settings.show_admin_routes ?? true,
         show_protected_projects: settings.show_protected_projects ?? true,
         show_dynamic_pages: settings.show_dynamic_pages ?? true,
+        show_recommendations: settings.show_recommendations ?? false,
       });
     }
   });
@@ -211,6 +213,33 @@ export default function AdminSettings() {
               id="show_dynamic_pages"
               checked={localSettings.show_dynamic_pages}
               onCheckedChange={() => handleToggle('show_dynamic_pages')}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            <CardTitle>Content Display</CardTitle>
+          </div>
+          <CardDescription>
+            Configure dynamic content sections on your homepage
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_recommendations" className="text-base font-medium">Recommendations Section</Label>
+              <p className="text-sm text-muted-foreground">
+                Display personalized content recommendations including featured techniques, upcoming events, and latest blog posts on the homepage
+              </p>
+            </div>
+            <Switch
+              id="show_recommendations"
+              checked={localSettings.show_recommendations}
+              onCheckedChange={() => handleToggle('show_recommendations')}
             />
           </div>
         </CardContent>
