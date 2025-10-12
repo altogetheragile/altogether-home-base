@@ -508,32 +508,59 @@ export type Database = {
       }
       contacts: {
         Row: {
+          attachment_filename: string | null
+          attachment_size: number | null
+          attachment_type: string | null
+          attachment_url: string | null
           created_at: string | null
           email: string
+          enquiry_type: string
           full_name: string | null
           id: string
           ip_address: string | null
           message: string | null
+          phone: string | null
+          preferred_contact_method: string | null
+          status: string | null
+          subject: string | null
           submitted_at: string | null
           user_agent: string | null
         }
         Insert: {
+          attachment_filename?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           created_at?: string | null
           email: string
+          enquiry_type?: string
           full_name?: string | null
           id?: string
           ip_address?: string | null
           message?: string | null
+          phone?: string | null
+          preferred_contact_method?: string | null
+          status?: string | null
+          subject?: string | null
           submitted_at?: string | null
           user_agent?: string | null
         }
         Update: {
+          attachment_filename?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           created_at?: string | null
           email?: string
+          enquiry_type?: string
           full_name?: string | null
           id?: string
           ip_address?: string | null
           message?: string | null
+          phone?: string | null
+          preferred_contact_method?: string | null
+          status?: string | null
+          subject?: string | null
           submitted_at?: string | null
           user_agent?: string | null
         }
