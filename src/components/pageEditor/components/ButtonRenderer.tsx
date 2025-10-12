@@ -13,38 +13,14 @@ export const ButtonRenderer: React.FC<ButtonRendererProps> = ({ content, styles 
   const safeStyles = styles || {};
   
   const buttons = Array.isArray(safeContent.buttons) ? safeContent.buttons : [];
-  const hasLegacyCTA = typeof safeContent.ctaText === 'string' && typeof safeContent.ctaLink === 'string' && safeContent.ctaText && safeContent.ctaLink;
   
-  if (buttons.length === 0 && !hasLegacyCTA) return null;
+  if (buttons.length === 0) return null;
   
   // Ensure buttonSpacing is a string
   const buttonSpacing = typeof safeStyles.buttonsSpacing === 'string' ? safeStyles.buttonsSpacing : 'gap-4';
   
   return (
     <div className={`flex flex-wrap ${buttonSpacing} justify-center`}>
-      {/* Legacy CTA button for hero sections */}
-      {hasLegacyCTA && (
-        <Button 
-          variant={typeof safeStyles.buttonsVariant === 'string' ? safeStyles.buttonsVariant : 'default'} 
-          size={typeof safeStyles.buttonsSize === 'string' ? safeStyles.buttonsSize : 'lg'} 
-          asChild
-          className={`${typeof safeStyles.ctaFontWeight === 'string' ? safeStyles.ctaFontWeight : ''} w-[200px]`}
-          style={{
-            ...(safeStyles.ctaBackgroundColor && typeof safeStyles.ctaBackgroundColor === 'string' && safeStyles.ctaBackgroundColor !== 'default' && {
-              backgroundColor: safeStyles.ctaBackgroundColor
-            }),
-            ...(safeStyles.ctaTextColor && typeof safeStyles.ctaTextColor === 'string' && safeStyles.ctaTextColor !== 'default' && {
-              color: safeStyles.ctaTextColor
-            })
-          }}
-        >
-          <Link to={String(safeContent.ctaLink)}>
-            {String(safeContent.ctaText)}
-          </Link>
-        </Button>
-      )}
-      
-      {/* New multi-button system */}
       {buttons.map((button: any, index: number) => {
         // Check visibility flag
         if (button.visible === false) return null;

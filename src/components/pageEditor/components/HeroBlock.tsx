@@ -53,11 +53,13 @@ export const HeroBlock: React.FC<HeroBlockProps> = React.memo(({ block }) => {
           as="h1"
           value={safeTitle}
           className={`${titleSize} font-bold leading-tight text-center`}
+          style={titleStyle}
         />
         <SafeText
           as="p"
           value={safeSubtitle}
           className={`${subtitleSize} opacity-90 leading-relaxed text-center max-w-3xl mx-auto`}
+          style={subtitleStyle}
         />
         <div className="text-center pt-2">
           <ButtonRenderer content={content} styles={styles} />

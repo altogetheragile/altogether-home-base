@@ -314,83 +314,9 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
 
       <div>
         <h4 className="text-sm font-medium mb-3">Buttons</h4>
-        <Tabs defaultValue="cta" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="cta">CTA Button</TabsTrigger>
-            <TabsTrigger value="additional">Additional Buttons</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="cta" className="space-y-3">
-            <div>
-              <Label htmlFor="cta-variant">Button Style</Label>
-              <Select
-                value={styles.ctaVariant || 'default'}
-                onValueChange={(value) => onStyleChange('ctaVariant', value === 'default' ? '' : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select button style" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="primary">Primary</SelectItem>
-                  <SelectItem value="secondary">Secondary</SelectItem>
-                  <SelectItem value="outline">Outline</SelectItem>
-                  <SelectItem value="ghost">Ghost</SelectItem>
-                  <SelectItem value="destructive">Destructive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="cta-size">Button Size</Label>
-              <Select
-                value={styles.ctaSize || 'default'}
-                onValueChange={(value) => onStyleChange('ctaSize', value === 'default' ? '' : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select button size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="sm">Small</SelectItem>
-                  <SelectItem value="lg">Large</SelectItem>
-                  <SelectItem value="xl">Extra Large</SelectItem>
-                  <SelectItem value="2xl">2X Large</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <ColorPicker
-              label="Button Background Color"
-              value={styles.ctaBackgroundColor || 'default'}
-              onChange={(color) => onStyleChange('ctaBackgroundColor', color)}
-            />
-            <ColorPicker
-              label="Button Text Color"
-              value={styles.ctaTextColor || 'default'}
-              onChange={(color) => onStyleChange('ctaTextColor', color)}
-            />
-            <div>
-              <Label htmlFor="cta-font-weight">Button Text Weight</Label>
-              <Select
-                value={styles.ctaFontWeight || 'default'}
-                onValueChange={(value) => onStyleChange('ctaFontWeight', value === 'default' ? '' : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select font weight" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="font-normal">Normal</SelectItem>
-                  <SelectItem value="font-medium">Medium</SelectItem>
-                  <SelectItem value="font-semibold">Semi Bold</SelectItem>
-                  <SelectItem value="font-bold">Bold</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="additional" className="space-y-3">
-            <div>
-              <Label htmlFor="buttons-variant">Default Button Style</Label>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="buttons-variant">Default Button Style</Label>
               <Select
                 value={styles.buttonsVariant || 'default'}
                 onValueChange={(value) => onStyleChange('buttonsVariant', value === 'default' ? '' : value)}
@@ -468,11 +394,10 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
                   <SelectItem value="gap-2">Small (8px)</SelectItem>
                   <SelectItem value="gap-6">Large (24px)</SelectItem>
                   <SelectItem value="gap-8">Extra Large (32px)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </TabsContent>
-        </Tabs>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       <div className="pt-4 border-t">

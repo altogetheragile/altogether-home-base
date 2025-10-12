@@ -451,24 +451,6 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
           </div>
           {renderHeightControl()}
           {renderBackgroundImageControl()}
-          <div>
-            <Label htmlFor="hero-cta-text">Call to Action Text</Label>
-            <Input
-              id="hero-cta-text"
-              value={content?.ctaText || ''}
-              onChange={(e) => onContentChange('ctaText', e.target.value)}
-              placeholder="Button text"
-            />
-          </div>
-          <div>
-            <Label htmlFor="hero-cta-link">Call to Action Link</Label>
-            <Input
-              id="hero-cta-link"
-              value={content?.ctaLink || ''}
-              onChange={(e) => onContentChange('ctaLink', e.target.value)}
-              placeholder="/events"
-            />
-          </div>
           {renderButtonsControl()}
           {renderParallaxControl()}
         </div>
