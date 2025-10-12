@@ -13,11 +13,11 @@ export function isNonEmptyString(v: unknown): v is string {
 }
 
 // Safe render for text content nodes (headings, labels, etc.)
-export const SafeText: React.FC<{ value: unknown; as?: keyof JSX.IntrinsicElements; className?: string }> = ({ value, as = "span", className }) => {
+export const SafeText: React.FC<{ value: unknown; as?: keyof JSX.IntrinsicElements; className?: string; style?: React.CSSProperties }> = ({ value, as = "span", className, style }) => {
   const Comp: any = as;
   const txt = textOrEmpty(value);
   if (!txt) return null;
-  return <Comp className={className}>{txt}</Comp>;
+  return <Comp className={className} style={style}>{txt}</Comp>;
 };
 
 // Debug-only pretty print (never for production UI text nodes)

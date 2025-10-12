@@ -32,11 +32,13 @@ export const SectionBlock: React.FC<SectionBlockProps> = React.memo(({ block }) 
           as="h2"
           value={content.title}
           className={`${titleSize} font-bold text-center`}
+          style={titleStyle}
         />
         <SafeText
           as="p"
           value={content.content}
           className={`${contentSize} leading-relaxed text-center mx-auto max-w-4xl px-2 sm:px-4`}
+          style={contentStyle}
         />
         <div className="text-center">
           <ButtonRenderer content={content} styles={styles} />
