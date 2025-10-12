@@ -35,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
     const companyName = Deno.env.get("COMPANY_NAME") || "Altogether Agile";
 
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <onboarding@resend.dev>`,
+      from: `${companyName} <noreply@altogetheragile.com>`,
       to: [adminEmail],
       replyTo: email,
       subject: `New Contact Form: ${subject}`,
@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to user
     const confirmationResponse = await resend.emails.send({
-      from: `${companyName} <onboarding@resend.dev>`,
+      from: `${companyName} <noreply@altogetheragile.com>`,
       to: [email],
       subject: `Thank you for contacting ${companyName}`,
       html: `
