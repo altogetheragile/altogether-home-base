@@ -199,8 +199,14 @@ const App = () => (
                 </>
               )}
               
-              {/* Static Home Page - Restored Safely */}
-              <Route path="/" element={<Home />} />
+              {/* Dynamic CMS Home Page */}
+              <Route path="/" element={
+                <ErrorBoundary fallback={<Home />}>
+                  <Suspense fallback={<div className="flex items-center justify-center h-64">Loading...</div>}>
+                    <DynamicPageRenderer slug="home" />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
               
               {/* Dynamic CMS Pages - Handles other slugs (gated) */}
               {ENABLE_DYNAMIC_PAGES && (
