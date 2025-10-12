@@ -42,7 +42,7 @@ export const useContactForm = () => {
       const { error: insertError } = await supabase
         .from('contacts')
         .insert({
-          name: data.name,
+          full_name: data.name,
           email: data.email,
           phone: data.phone,
           subject: data.subject,
@@ -54,7 +54,7 @@ export const useContactForm = () => {
           attachment_size: attachmentSize,
           attachment_type: attachmentType,
           ip_address: ipAddress,
-          status: 'new',
+          status: 'unread',
         });
 
       if (insertError) throw insertError;

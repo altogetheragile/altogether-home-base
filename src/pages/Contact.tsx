@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { contactFormSchema, ContactFormData } from "@/schemas/contactForm";
 import { useContactForm } from "@/hooks/useContactForm";
 import { Mail, Phone, MapPin } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 const Contact = () => {
   const form = useForm<ContactFormData>({
@@ -38,6 +39,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+      <Navigation />
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
