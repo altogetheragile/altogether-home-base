@@ -59,6 +59,7 @@ import CreateKnowledgeTemplate from "./pages/admin/CreateKnowledgeTemplate";
 import { PreviewPage } from "./components/admin/knowledge/PreviewPage";
 import { PageEditor } from "./components/pageEditor/PageEditor";
 import ProjectCanvas from "./pages/ProjectCanvas";
+import ProjectBMC from "./pages/ProjectBMC";
 import Home from "./pages/Home";
 import HomeSafe from "./pages/HomeSafe";
 import { DynamicPageRenderer } from "./components/DynamicPageRenderer";
@@ -101,7 +102,10 @@ const App = () => (
               
               {/* Protected Project Routes (gated) */}
               {ENABLE_PROTECTED_PROJECTS && (
-                <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
+                <>
+                  <Route path="/projects/:projectId/canvas" element={<ProtectedRoute><ProjectCanvas /></ProtectedRoute>} />
+                  <Route path="/projects/:projectId/bmc" element={<ProtectedRoute><ProjectBMC /></ProtectedRoute>} />
+                </>
               )}
               
               <Route path="/account/security" element={<AccountSecurity />} />

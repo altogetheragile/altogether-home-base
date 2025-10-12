@@ -192,11 +192,11 @@ const BMCGenerator: React.FC = () => {
       });
 
       toast({
-        title: "🎉 Project Created!",
-        description: `${companyName} BMC has been saved as a project and you can now collaborate on it.`
+        title: "🎉 BMC Saved Successfully!",
+        description: `${companyName} is now in your projects.`,
       });
-
-      navigate(`/projects/${projectResult.id}/canvas`);
+      
+      navigate(`/projects/${projectResult.id}/bmc`);
       
     } catch (error) {
       console.error('Error saving BMC as project:', error);
