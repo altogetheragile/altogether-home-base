@@ -32,6 +32,7 @@ export interface SiteSettings {
   show_admin_routes: boolean | null;
   show_protected_projects: boolean | null;
   show_dynamic_pages: boolean | null;
+  show_dashboard: boolean | null;
 }
 
 export const useSiteSettings = () => {

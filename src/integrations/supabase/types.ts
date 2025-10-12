@@ -2274,6 +2274,7 @@ export type Database = {
           show_ai_tools: boolean | null
           show_blog: boolean | null
           show_contact: boolean | null
+          show_dashboard: boolean | null
           show_dynamic_pages: boolean | null
           show_events: boolean | null
           show_knowledge: boolean | null
@@ -2300,6 +2301,7 @@ export type Database = {
           show_ai_tools?: boolean | null
           show_blog?: boolean | null
           show_contact?: boolean | null
+          show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
           show_events?: boolean | null
           show_knowledge?: boolean | null
@@ -2326,6 +2328,7 @@ export type Database = {
           show_ai_tools?: boolean | null
           show_blog?: boolean | null
           show_contact?: boolean | null
+          show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
           show_events?: boolean | null
           show_knowledge?: boolean | null

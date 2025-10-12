@@ -27,6 +27,7 @@ const Navigation = () => {
   const SHOW_BLOG = settings?.show_blog ?? false;
   const SHOW_AI_TOOLS = settings?.show_ai_tools ?? true;
   const SHOW_CONTACT = settings?.show_contact ?? true;
+  const SHOW_DASHBOARD = settings?.show_dashboard ?? true;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -101,7 +102,7 @@ const Navigation = () => {
               )}
               
               {/* Dashboard Link - Only show for authenticated users */}
-              {user && (
+              {SHOW_DASHBOARD && user && (
                 <Link
                   to="/dashboard"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -161,12 +162,14 @@ const Navigation = () => {
                   </Button>
                 </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to="/dashboard">
-                        <LayoutDashboard className="h-4 w-4 mr-2" />
-                        My Dashboard
-                      </Link>
-                    </DropdownMenuItem>
+                    {SHOW_DASHBOARD && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/dashboard">
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          My Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link to="/account/security">
                         <Shield className="h-4 w-4 mr-2" />
@@ -269,7 +272,7 @@ const Navigation = () => {
               )}
               
               {/* Dashboard Link - Mobile */}
-              {user && (
+              {SHOW_DASHBOARD && user && (
                 <Link
                   to="/dashboard"
                   onClick={() => setIsMenuOpen(false)}

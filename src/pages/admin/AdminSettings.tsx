@@ -16,6 +16,7 @@ export default function AdminSettings() {
     show_blog: settings?.show_blog ?? false,
     show_ai_tools: settings?.show_ai_tools ?? true,
     show_contact: settings?.show_contact ?? true,
+    show_dashboard: settings?.show_dashboard ?? true,
     show_admin_routes: settings?.show_admin_routes ?? true,
     show_protected_projects: settings?.show_protected_projects ?? true,
     show_dynamic_pages: settings?.show_dynamic_pages ?? true,
@@ -30,6 +31,7 @@ export default function AdminSettings() {
         show_blog: settings.show_blog ?? false,
         show_ai_tools: settings.show_ai_tools ?? true,
         show_contact: settings.show_contact ?? true,
+        show_dashboard: settings.show_dashboard ?? true,
         show_admin_routes: settings.show_admin_routes ?? true,
         show_protected_projects: settings.show_protected_projects ?? true,
         show_dynamic_pages: settings.show_dynamic_pages ?? true,
@@ -142,6 +144,20 @@ export default function AdminSettings() {
               id="show_contact"
               checked={localSettings.show_contact}
               onCheckedChange={() => handleToggle('show_contact')}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_dashboard" className="text-base font-medium">Dashboard</Label>
+              <p className="text-sm text-muted-foreground">Show user dashboard page and navigation links</p>
+            </div>
+            <Switch
+              id="show_dashboard"
+              checked={localSettings.show_dashboard}
+              onCheckedChange={() => handleToggle('show_dashboard')}
             />
           </div>
         </CardContent>
