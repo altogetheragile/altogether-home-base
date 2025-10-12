@@ -83,6 +83,16 @@ const Navigation = () => {
                   Blog
                 </Link>
               )}
+              <Link
+                to="/contact"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/contact")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Contact
+              </Link>
               
               {/* Dashboard Link - Only show for authenticated users */}
               {user && (
@@ -236,6 +246,17 @@ const Navigation = () => {
                   Blog
                 </Link>
               )}
+              <Link
+                to="/contact"
+                onClick={() => setIsMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isActive("/contact")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Contact
+              </Link>
               
               {/* Dashboard Link - Mobile */}
               {user && (

@@ -10,6 +10,7 @@ const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout"));
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 import AdminModeration from "./pages/admin/AdminModeration";
+import AdminContacts from "./pages/admin/AdminContacts";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import EventDetail from "./pages/EventDetail";
 import Events from "./pages/Events";
@@ -21,6 +22,7 @@ import BMCGenerator from "./components/bmc/BMCGenerator";
 import AccountSecurity from "./pages/AccountSecurity";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
+import Contact from "./pages/Contact";
 // Lazy load AdminEvents to prevent it from running on unrelated routes
 const AdminEvents = React.lazy(() => import("./pages/admin/AdminEvents"));
 import AdminInstructors from "./pages/admin/AdminInstructors";
@@ -93,6 +95,7 @@ const App = () => (
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
               <Route path="/bmc-generator" element={<BMCGenerator />} />
+              <Route path="/contact" element={<Contact />} />
               
               {/* User Dashboard - Protected */}
               <Route path="/dashboard" element={
@@ -178,6 +181,7 @@ const App = () => (
                     <Route path="logs/auth" element={<AdminLogsAuthRoute />} />
                     <Route path="logs/audit" element={<AdminAuditLogs />} />
                     <Route path="moderation" element={<AdminModeration />} />
+                    <Route path="contacts" element={<AdminContacts />} />
                   </Route>
                   
                   {/* Knowledge Item Editor - Protected Full Page Routes Outside Admin Layout */}

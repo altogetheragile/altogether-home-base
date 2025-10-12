@@ -78,6 +78,9 @@ verify_jwt = false
 [functions.fill-bmc-pdf]
 verify_jwt = false
 
+[functions.send-contact-email]
+verify_jwt = false
+
 [edge-runtime]
 enabled = true
 port = 54330
