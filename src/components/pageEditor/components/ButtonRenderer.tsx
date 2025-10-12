@@ -46,6 +46,9 @@ export const ButtonRenderer: React.FC<ButtonRendererProps> = ({ content, styles 
       
       {/* New multi-button system */}
       {buttons.map((button: any, index: number) => {
+        // Check visibility flag
+        if (button.visible === false) return null;
+        
         // Ensure button is an object with required string properties
         if (!button || typeof button !== 'object' || typeof button.text !== 'string' || typeof button.link !== 'string' || !button.text || !button.link) {
           return null;

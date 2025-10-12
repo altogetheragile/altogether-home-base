@@ -1,6 +1,10 @@
 // Helper functions for managing background styles in content blocks
 
-export const getHeightClass = (height: string, blockType: string) => {
+export const getHeightClass = (height: string, blockType: string, customHeight?: string) => {
+  if (height === 'custom' && customHeight) {
+    return ''; // Return empty class when using custom inline height
+  }
+  
   switch (height) {
     case 'small': return blockType === 'hero' ? 'py-12 min-h-[240px]' : 'py-6';
     case 'medium': return blockType === 'hero' ? 'py-16 min-h-[400px]' : 'py-12';
@@ -13,24 +17,25 @@ export const getHeightClass = (height: string, blockType: string) => {
 };
 
 export const getBackgroundStyles = (content: any) => {
-  if (!content?.backgroundImage) return {};
+  const styles: React.CSSProperties = {};
   
-  if (content.parallax) {
-    return {
-      backgroundImage: `url(${content.backgroundImage})`,
-      backgroundAttachment: 'fixed',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-    };
-  } else {
-    return {
-      backgroundImage: `url(${content.backgroundImage})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-    };
+  if (content?.backgroundImage) {
+    styles.backgroundImage = `url(${content.backgroundImage})`;
+    styles.backgroundSize = content.backgroundSize || 'cover';
+    styles.backgroundPosition = content.backgroundPosition || 'center';
+    styles.backgroundRepeat = 'no-repeat';
+    
+    if (content.parallax) {
+      styles.backgroundAttachment = 'fixed';
+    }
   }
+  
+  // Add custom height if specified
+  if (content?.height === 'custom' && content?.customHeight) {
+    styles.height = content.customHeight;
+  }
+  
+  return styles;
 };
 
 export const getInlineStyles = (styles: any) => {
@@ -64,6 +69,7 @@ export const getStyleClasses = (styles: any) => {
   const safeStyles = styles || {};
   
   return [
+    typeof safeStyles.fontFamily === 'string' ? safeStyles.fontFamily : '',
     typeof safeStyles.backgroundColor === 'string' ? safeStyles.backgroundColor : '',
     typeof safeStyles.textColor === 'string' ? safeStyles.textColor : '',
     typeof safeStyles.borderColor === 'string' ? safeStyles.borderColor : '',

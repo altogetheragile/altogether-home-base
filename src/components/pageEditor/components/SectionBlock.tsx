@@ -20,12 +20,18 @@ export const SectionBlock: React.FC<SectionBlockProps> = React.memo(({ block }) 
 
   return (
     <div 
-      className={`relative px-4 sm:px-6 md:px-8 ${getHeightClass(content.height, 'section')} ${styleClasses} ${content.backgroundImage ? 'text-white' : ''} w-full max-w-full overflow-hidden`}
+      className={`relative px-4 sm:px-6 md:px-8 ${getHeightClass(content.height, 'section', content.customHeight)} ${styleClasses} ${content.backgroundImage ? 'text-white' : ''} w-full max-w-full overflow-hidden`}
       style={{...inlineStyles, ...sectionBackgroundStyles}}
     >
       {/* Dark overlay for background images to ensure text readability */}
-      {isNonEmptyString(content.backgroundImage) && (
-        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
+      {isNonEmptyString(content.backgroundImage) && content.overlayOpacity > 0 && (
+        <div 
+          className="absolute inset-0 rounded-lg" 
+          style={{
+            backgroundColor: content.overlayColor || '#000000',
+            opacity: (content.overlayOpacity || 0) / 100
+          }}
+        ></div>
       )}
       <div className="relative z-10 px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-16 space-y-3 sm:space-y-4 md:space-y-8 w-full max-w-6xl mx-auto">
         <SafeText

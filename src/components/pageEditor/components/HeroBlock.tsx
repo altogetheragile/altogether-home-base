@@ -35,12 +35,18 @@ export const HeroBlock: React.FC<HeroBlockProps> = React.memo(({ block }) => {
   
   return (
     <div 
-      className={`relative ${heroBackgroundClasses} text-white px-4 sm:px-6 md:px-8 text-center rounded-lg ${getHeightClass(content.height, 'hero')} flex items-center justify-center ${styleClasses} w-full max-w-full overflow-hidden`}
+      className={`relative ${heroBackgroundClasses} text-white px-4 sm:px-6 md:px-8 text-center rounded-lg ${getHeightClass(content.height, 'hero', content.customHeight)} flex items-center justify-center ${styleClasses} w-full max-w-full overflow-hidden`}
       style={{...inlineStyles, ...heroBackgroundStyles}}
     >
       {/* Dark overlay for background images to ensure text readability */}
-      {isNonEmptyString(content.backgroundImage) && (
-        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
+      {isNonEmptyString(content.backgroundImage) && content.overlayOpacity > 0 && (
+        <div 
+          className="absolute inset-0 rounded-lg" 
+          style={{
+            backgroundColor: content.overlayColor || '#000000',
+            opacity: (content.overlayOpacity || 0) / 100
+          }}
+        ></div>
       )}
       <div className="relative z-10 max-w-4xl mx-auto px-2 sm:px-4 py-6 sm:py-8 md:py-16 space-y-3 sm:space-y-4 md:space-y-6 w-full">
         <SafeText

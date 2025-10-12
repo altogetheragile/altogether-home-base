@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, Plus, Trash2 } from 'lucide-react';
@@ -124,7 +125,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
   };
 
   const renderHeightControl = () => (
-    <div>
+    <div className="space-y-2">
       <Label htmlFor={`${blockType}-height`}>Height</Label>
       <Select
         value={content?.height || 'default'}
@@ -141,13 +142,28 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
           <SelectItem value="xl">Extra Large</SelectItem>
           <SelectItem value="2xl">2X Large</SelectItem>
           {blockType === 'hero' && <SelectItem value="screen">Full Screen</SelectItem>}
+          <SelectItem value="custom">Custom</SelectItem>
         </SelectContent>
       </Select>
+      {content?.height === 'custom' && (
+        <div>
+          <Label htmlFor={`${blockType}-custom-height`}>Custom Height</Label>
+          <Input
+            id={`${blockType}-custom-height`}
+            value={content?.customHeight || ''}
+            onChange={(e) => onContentChange('customHeight', e.target.value)}
+            placeholder="e.g., 500px, 80vh, auto"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Enter any valid CSS height value
+          </p>
+        </div>
+      )}
     </div>
   );
 
   const renderBackgroundImageControl = () => (
-    <div>
+    <div className="space-y-3">
       <Label>Background Image</Label>
       {content?.backgroundImage ? (
         <div className="space-y-2">
@@ -196,6 +212,78 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
           </p>
         </div>
       )}
+      
+      {/* Background Image Properties */}
+      {content?.backgroundImage && (
+        <div className="space-y-3 pt-2 border-t">
+          <div>
+            <Label htmlFor={`${blockType}-bg-position`}>Background Position</Label>
+            <Select
+              value={content?.backgroundPosition || 'center'}
+              onValueChange={(value) => onContentChange('backgroundPosition', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select position" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="top">Top</SelectItem>
+                <SelectItem value="bottom">Bottom</SelectItem>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+                <SelectItem value="top left">Top Left</SelectItem>
+                <SelectItem value="top right">Top Right</SelectItem>
+                <SelectItem value="bottom left">Bottom Left</SelectItem>
+                <SelectItem value="bottom right">Bottom Right</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor={`${blockType}-bg-size`}>Background Size</Label>
+            <Select
+              value={content?.backgroundSize || 'cover'}
+              onValueChange={(value) => onContentChange('backgroundSize', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cover">Cover (fill area)</SelectItem>
+                <SelectItem value="contain">Contain (fit area)</SelectItem>
+                <SelectItem value="auto">Auto (original size)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor={`${blockType}-overlay-opacity`}>
+              Overlay Opacity: {content?.overlayOpacity || 0}%
+            </Label>
+            <input
+              id={`${blockType}-overlay-opacity`}
+              type="range"
+              min="0"
+              max="100"
+              value={content?.overlayOpacity || 0}
+              onChange={(e) => onContentChange('overlayOpacity', parseInt(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          
+          {content?.overlayOpacity > 0 && (
+            <div>
+              <Label htmlFor={`${blockType}-overlay-color`}>Overlay Color</Label>
+              <Input
+                id={`${blockType}-overlay-color`}
+                type="color"
+                value={content?.overlayColor || '#000000'}
+                onChange={(e) => onContentChange('overlayColor', e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -216,7 +304,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
     const buttons = content?.buttons || [];
     
     const addButton = () => {
-      const newButtons = [...buttons, { text: '', link: '', variant: 'default' }];
+      const newButtons = [...buttons, { text: '', link: '', variant: 'default', visible: true }];
       onContentChange('buttons', newButtons);
     };
 
@@ -225,7 +313,7 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
       onContentChange('buttons', newButtons);
     };
 
-    const updateButton = (index: number, field: string, value: string) => {
+    const updateButton = (index: number, field: string, value: string | boolean) => {
       const newButtons = [...buttons];
       newButtons[index] = { ...newButtons[index], [field]: value };
       onContentChange('buttons', newButtons);
@@ -250,7 +338,19 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
             {buttons.map((button: any, index: number) => (
               <div key={index} className="p-3 border rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Button {index + 1}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Button {index + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id={`button-${index}-visible`}
+                        checked={button.visible !== false}
+                        onCheckedChange={(checked) => updateButton(index, 'visible', checked)}
+                      />
+                      <Label htmlFor={`button-${index}-visible`} className="text-xs text-muted-foreground cursor-pointer">
+                        Visible
+                      </Label>
+                    </div>
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPicker } from './ColorPicker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StyleTemplateManager } from './StyleTemplateManager';
 
 interface StyleFieldsRendererProps {
   styles: any;
@@ -17,8 +18,23 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
   onStyleChange,
   onResetToDefault,
 }) => {
+  const handleLoadTemplate = (templateStyles: Record<string, any>) => {
+    Object.entries(templateStyles).forEach(([key, value]) => {
+      onStyleChange(key, value);
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Template Manager */}
+      <div className="pb-4 border-b">
+        <h4 className="text-sm font-medium mb-3">Style Templates</h4>
+        <StyleTemplateManager
+          currentStyles={styles}
+          onLoadTemplate={handleLoadTemplate}
+        />
+      </div>
+
       <div>
         <h4 className="text-sm font-medium mb-3">Colors</h4>
         <Tabs defaultValue="custom" className="w-full">
@@ -174,6 +190,33 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
       <div>
         <h4 className="text-sm font-medium mb-3">Typography</h4>
         <div className="space-y-3">
+          <div>
+            <Label htmlFor="font-family">Font Family</Label>
+            <Select
+              value={styles.fontFamily || 'default'}
+              onValueChange={(value) => onStyleChange('fontFamily', value === 'default' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select font family" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default (System)</SelectItem>
+                <SelectItem value="font-sans">Sans Serif</SelectItem>
+                <SelectItem value="font-serif">Serif</SelectItem>
+                <SelectItem value="font-mono">Monospace</SelectItem>
+                <SelectItem value="font-inter">Inter</SelectItem>
+                <SelectItem value="font-roboto">Roboto</SelectItem>
+                <SelectItem value="font-open-sans">Open Sans</SelectItem>
+                <SelectItem value="font-lato">Lato</SelectItem>
+                <SelectItem value="font-montserrat">Montserrat</SelectItem>
+                <SelectItem value="font-playfair">Playfair Display</SelectItem>
+                <SelectItem value="font-merriweather">Merriweather</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Selected fonts will load from Google Fonts
+            </p>
+          </div>
           <div>
             <Label htmlFor="title-font-size">Title Font Size</Label>
             <div className="space-y-2">
