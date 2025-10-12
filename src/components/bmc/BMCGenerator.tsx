@@ -211,7 +211,7 @@ const BMCGenerator: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container max-w-5xl mx-auto py-8 px-4 space-y-6">
       {!generatedBMC ? (
         <>
           <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 rounded-lg border border-primary/20">
@@ -385,15 +385,12 @@ const BMCGenerator: React.FC = () => {
               {!user && (
                 <Button
                   onClick={() => {
-                    toast({
-                      title: "Sign In Required",
-                      description: "Please sign in to save BMC as a project"
-                    });
+                    navigate('/auth');
                   }}
                   variant="outline"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  Save as Project (Sign In)
+                  Sign In to Save
                 </Button>
               )}
               <BMCExportDialog 
