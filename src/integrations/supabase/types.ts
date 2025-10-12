@@ -2199,6 +2199,63 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          company_description: string | null
+          company_name: string | null
+          contact_email: string | null
+          contact_location: string | null
+          contact_phone: string | null
+          copyright_text: string | null
+          created_at: string | null
+          id: string
+          quick_links: Json | null
+          social_facebook: string | null
+          social_github: string | null
+          social_linkedin: string | null
+          social_twitter: string | null
+          social_youtube: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          company_description?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_location?: string | null
+          contact_phone?: string | null
+          copyright_text?: string | null
+          created_at?: string | null
+          id?: string
+          quick_links?: Json | null
+          social_facebook?: string | null
+          social_github?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          company_description?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_location?: string | null
+          contact_phone?: string | null
+          copyright_text?: string | null
+          created_at?: string | null
+          id?: string
+          quick_links?: Json | null
+          social_facebook?: string | null
+          social_github?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       staging_data: {
         Row: {
           created_at: string
