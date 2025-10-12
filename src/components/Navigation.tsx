@@ -13,6 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Feature flags - set to true when features are ready
+const SHOW_EVENTS = false;
+const SHOW_KNOWLEDGE = false;
+const SHOW_BLOG = false;
 
 const Navigation = () => {
   const location = useLocation();
@@ -43,36 +47,42 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <div className="flex items-center space-x-8">
-              <Link
-                to="/events"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/events")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Events
-              </Link>
-              <Link
-                to="/knowledge"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/knowledge")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Knowledge Base
-              </Link>
-              <Link
-                to="/blog"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/blog")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Blog
-              </Link>
+              {SHOW_EVENTS && (
+                <Link
+                  to="/events"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive("/events")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Events
+                </Link>
+              )}
+              {SHOW_KNOWLEDGE && (
+                <Link
+                  to="/knowledge"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive("/knowledge")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Knowledge Base
+                </Link>
+              )}
+              {SHOW_BLOG && (
+                <Link
+                  to="/blog"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive("/blog")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Blog
+                </Link>
+              )}
               
               {/* Dashboard Link - Only show for authenticated users */}
               {user && (
@@ -187,39 +197,45 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-border">
-              <Link
-                to="/events"
-                onClick={() => setIsMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive("/events")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Events
-              </Link>
-              <Link
-                to="/knowledge"
-                onClick={() => setIsMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive("/knowledge")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Knowledge Base
-              </Link>
-              <Link
-                to="/blog"
-                onClick={() => setIsMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive("/blog")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Blog
-              </Link>
+              {SHOW_EVENTS && (
+                <Link
+                  to="/events"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isActive("/events")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Events
+                </Link>
+              )}
+              {SHOW_KNOWLEDGE && (
+                <Link
+                  to="/knowledge"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isActive("/knowledge")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Knowledge Base
+                </Link>
+              )}
+              {SHOW_BLOG && (
+                <Link
+                  to="/blog"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isActive("/blog")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Blog
+                </Link>
+              )}
               
               {/* Dashboard Link - Mobile */}
               {user && (

@@ -16,6 +16,11 @@ const Home: React.FC = () => {
 
   // Feature flags for safe reintroduction of dynamic content
   const ENABLE_RECOMMENDATIONS = false; // Can be toggled to false for testing
+  
+  // Feature flags for content visibility
+  const SHOW_EVENTS = false;
+  const SHOW_KNOWLEDGE = false;
+  const SHOW_BLOG = false;
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,18 +51,22 @@ const Home: React.FC = () => {
               join events, and connect with like-minded professionals.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button size="lg" asChild>
-                <Link to="/events">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Browse Events
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link to="/knowledge">
-                  <BookOpen className="h-5 w-5 mr-2" />
-                  Explore Knowledge
-                </Link>
-              </Button>
+              {SHOW_EVENTS && (
+                <Button size="lg" asChild>
+                  <Link to="/events">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Browse Events
+                  </Link>
+                </Button>
+              )}
+              {SHOW_KNOWLEDGE && (
+                <Button variant="outline" size="lg" asChild>
+                  <Link to="/knowledge">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    Explore Knowledge
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -75,54 +84,60 @@ const Home: React.FC = () => {
             </p>
           </div>
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="hover:shadow-lg transition-all duration-200">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <BookOpen className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-foreground">Learning Techniques</h3>
-                <p className="mt-2 text-muted-foreground">
-                  Discover proven agile techniques and methodologies to enhance your skills.
-                </p>
-                <Button variant="ghost" size="sm" className="mt-4" asChild>
-                  <Link to="/knowledge">
-                    Learn More <ArrowRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-lg transition-all duration-200">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10">
-                  <Calendar className="h-6 w-6 text-secondary" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-foreground">Events & Workshops</h3>
-                <p className="mt-2 text-muted-foreground">
-                  Join live events, workshops, and training sessions with agile experts.
-                </p>
-                <Button variant="ghost" size="sm" className="mt-4" asChild>
-                  <Link to="/events">
-                    View Events <ArrowRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-lg transition-all duration-200">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10">
-                  <Users className="h-6 w-6 text-accent" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-foreground">Community</h3>
-                <p className="mt-2 text-muted-foreground">
-                  Connect with a vibrant community of agile practitioners and coaches.
-                </p>
-                <Button variant="ghost" size="sm" className="mt-4" asChild>
-                  <Link to="/blog">
-                    Read Blog <ArrowRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            {SHOW_KNOWLEDGE && (
+              <Card className="hover:shadow-lg transition-all duration-200">
+                <CardContent className="p-6 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">Learning Techniques</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Discover proven agile techniques and methodologies to enhance your skills.
+                  </p>
+                  <Button variant="ghost" size="sm" className="mt-4" asChild>
+                    <Link to="/knowledge">
+                      Learn More <ArrowRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            {SHOW_EVENTS && (
+              <Card className="hover:shadow-lg transition-all duration-200">
+                <CardContent className="p-6 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10">
+                    <Calendar className="h-6 w-6 text-secondary" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">Events & Workshops</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Join live events, workshops, and training sessions with agile experts.
+                  </p>
+                  <Button variant="ghost" size="sm" className="mt-4" asChild>
+                    <Link to="/events">
+                      View Events <ArrowRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            {SHOW_BLOG && (
+              <Card className="hover:shadow-lg transition-all duration-200">
+                <CardContent className="p-6 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10">
+                    <Users className="h-6 w-6 text-accent" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">Community</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Connect with a vibrant community of agile practitioners and coaches.
+                  </p>
+                  <Button variant="ghost" size="sm" className="mt-4" asChild>
+                    <Link to="/blog">
+                      Read Blog <ArrowRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </section>
