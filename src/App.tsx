@@ -17,7 +17,7 @@ import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import AIToolsCanvas from "./pages/AIToolsCanvas";
-import BMCGenerator from "./pages/BMCGenerator";
+import BMCGenerator from "./components/bmc/BMCGenerator";
 import AccountSecurity from "./pages/AccountSecurity";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";

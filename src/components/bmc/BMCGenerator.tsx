@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, RotateCcw, Save } from 'lucide-react';
+import { Loader2, Sparkles, RotateCcw, Save, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectMutations } from '@/hooks/useProjects';
@@ -134,6 +134,11 @@ const BMCGenerator: React.FC = () => {
     });
     setGeneratedBMC(null);
     setCompanyName('');
+  };
+
+  const downloadBlankTemplate = () => {
+    const templateUrl = 'https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf';
+    window.open(templateUrl, '_blank');
   };
 
   const saveAsProject = async () => {
@@ -310,7 +315,14 @@ const BMCGenerator: React.FC = () => {
             />
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-between items-center pt-4">
+            <Button
+              variant="outline"
+              onClick={downloadBlankTemplate}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Blank PDF Template
+            </Button>
             <Button
               onClick={generateBMC}
               disabled={isGenerating}
