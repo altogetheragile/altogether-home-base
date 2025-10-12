@@ -31,19 +31,19 @@ interface FillPDFRequest {
 const PADDING = 18;
 const INNER = 2;
 
-// PDF coordinate mappings for BMC sections (relative %, origin top-left)
-// Calibrated for standard Business Model Canvas template
+// PDF coordinate mappings for BMC sections (relative %, ORIGIN: bottom-left)
+// Calibrated for the provided template; tweak as needed with debug=true
 const BMC_RELATIVE_COORDS = {
-  companyName: { x: 0.5, y: 0.055 }, // Centered in header
-  keyPartners: { x: 0.025, y: 0.22, w: 0.175, h: 0.46 },
-  keyActivities: { x: 0.21, y: 0.22, w: 0.155, h: 0.225 },
-  keyResources: { x: 0.21, y: 0.455, w: 0.155, h: 0.225 },
-  valuePropositions: { x: 0.375, y: 0.22, w: 0.185, h: 0.46 },
-  customerRelationships: { x: 0.57, y: 0.22, w: 0.155, h: 0.225 },
-  channels: { x: 0.57, y: 0.455, w: 0.155, h: 0.225 },
-  customerSegments: { x: 0.735, y: 0.22, w: 0.24, h: 0.46 },
-  costStructure: { x: 0.025, y: 0.69, w: 0.535, h: 0.24 },
-  revenueStreams: { x: 0.57, y: 0.69, w: 0.405, h: 0.24 },
+  companyName: { x: 0.5, y: 0.91 }, // Center line in header area
+  keyPartners: { x: 0.025, y: 0.26, w: 0.175, h: 0.43 },
+  keyActivities: { x: 0.21, y: 0.48, w: 0.155, h: 0.21 },
+  keyResources: { x: 0.21, y: 0.26, w: 0.155, h: 0.21 },
+  valuePropositions: { x: 0.375, y: 0.26, w: 0.185, h: 0.43 },
+  customerRelationships: { x: 0.57, y: 0.48, w: 0.155, h: 0.21 },
+  channels: { x: 0.57, y: 0.26, w: 0.155, h: 0.21 },
+  customerSegments: { x: 0.735, y: 0.26, w: 0.24, h: 0.43 },
+  costStructure: { x: 0.025, y: 0.03, w: 0.535, h: 0.22 },
+  revenueStreams: { x: 0.57, y: 0.03, w: 0.405, h: 0.22 },
 };
 
 function wrapText(text: string, maxWidth: number, font: any, fontSize: number): string[] {
@@ -146,7 +146,7 @@ serve(async (req) => {
       const textWidth = font.widthOfTextAtSize(companyName, 16);
       firstPage.drawText(companyName, {
         x: (coords.x * pageWidth) - (textWidth / 2),
-        y: pageHeight - (coords.y * pageHeight),
+        y: coords.y * pageHeight,
         size: 16,
         font,
         color: rgb(0.1, 0.1, 0.1),
@@ -164,9 +164,11 @@ serve(async (req) => {
       if (!coords.w || !coords.h) return;
       
       const x = coords.x * pageWidth;
-      const y = pageHeight - (coords.y * pageHeight);
-      const maxWidth = coords.w * pageWidth - (PADDING * 2);
-      const maxHeight = coords.h * pageHeight - (PADDING * 2);
+      const y = coords.y * pageHeight; // bottom-left origin
+      const sectionWidth = (coords.w as number) * pageWidth;
+      const sectionHeight = (coords.h as number) * pageHeight;
+      const maxWidth = sectionWidth - (PADDING * 2);
+      const maxHeight = sectionHeight - (PADDING * 2);
       
       // Calculate best font size that fits
       const fontSize = calculateFitFontSize(items, maxWidth, maxHeight, font);
@@ -178,7 +180,7 @@ serve(async (req) => {
       if (debug) {
         firstPage.drawRectangle({
           x: x + PADDING,
-          y: y - (maxHeight + PADDING),
+          y: y + PADDING,
           width: maxWidth,
           height: maxHeight,
           borderColor: debugColor,
@@ -186,12 +188,13 @@ serve(async (req) => {
         });
       }
       
-      let currentY = y - PADDING;
+      // Start from top of the text area and go down
+      let currentY = y + sectionHeight - PADDING;
       
       items.forEach((item) => {
         const lines = wrapText(`• ${item}`, maxWidth, font, fontSize);
         lines.forEach((line) => {
-          if (currentY - lineHeight > y - (maxHeight + PADDING)) {
+          if (currentY - lineHeight >= y + PADDING) {
             firstPage.drawText(line, {
               x: x + PADDING,
               y: currentY,
