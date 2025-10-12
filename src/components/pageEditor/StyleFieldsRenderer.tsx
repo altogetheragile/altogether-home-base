@@ -222,7 +222,12 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
             <div className="space-y-2">
               <Select
                 value={styles.titleFontSize || 'default'}
-                onValueChange={(value) => onStyleChange('titleFontSize', value === 'default' ? '' : value)}
+                onValueChange={(value) => {
+                  onStyleChange('titleFontSize', value === 'default' ? '' : value);
+                  if (value !== 'custom') {
+                    onStyleChange('customTitleFontSize', '');
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select title font size" />
@@ -260,7 +265,12 @@ export const StyleFieldsRenderer: React.FC<StyleFieldsRendererProps> = ({
             <div className="space-y-2">
               <Select
                 value={styles.subtitleFontSize || 'default'}
-                onValueChange={(value) => onStyleChange('subtitleFontSize', value === 'default' ? '' : value)}
+                onValueChange={(value) => {
+                  onStyleChange('subtitleFontSize', value === 'default' ? '' : value);
+                  if (value !== 'custom') {
+                    onStyleChange('customSubtitleFontSize', '');
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select subtitle font size" />
