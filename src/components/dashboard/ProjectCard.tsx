@@ -22,6 +22,7 @@ import {
 import { Project, ProjectStats } from '@/hooks/useProjects';
 import { Navigate, useNavigate, Link } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
+import { useCanvas } from '@/hooks/useCanvas';
 
 interface ProjectCardProps {
   project: Project;
@@ -42,8 +43,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // Fetch canvas data to check for BMC
+  const { data: canvas } = useCanvas(project.id);
+  
   // Check if this project has a BMC
-  const hasBMC = stats && stats.bmcs_count > 0;
+  const hasBMC = !!canvas?.data?.elements?.some((el: any) => el?.type === 'bmc');
+  const bmcCount = hasBMC ? 1 : 0;
 
   const handleOpenProject = () => {
     if (hasBMC) {
@@ -122,7 +127,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>{stats?.bmcs_count || 0} BMCs</span>
+              <span>{bmcCount} BMCs</span>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +46,28 @@ const BMCGenerator: React.FC = () => {
   const navigate = useNavigate();
   const { createProject } = useProjectMutations();
   const { createCanvas } = useCanvasMutations();
+
+  // Restore BMC data from sessionStorage on mount
+  useEffect(() => {
+    const stash = sessionStorage.getItem('bmc:resume');
+    if (stash) {
+      try {
+        const parsed = JSON.parse(stash);
+        if (parsed?.generatedBMC) {
+          setGeneratedBMC(parsed.generatedBMC);
+          if (parsed?.companyName) setCompanyName(parsed.companyName);
+          if (parsed?.formData) setFormData(parsed.formData);
+          toast({
+            title: "Welcome back!",
+            description: "Your BMC has been restored. You can now save it.",
+          });
+        }
+      } catch (err) {
+        console.error('Failed to restore BMC:', err);
+      }
+      sessionStorage.removeItem('bmc:resume');
+    }
+  }, []);
 
   const industries = [
     'Technology', 'Healthcare', 'Finance', 'Retail', 'Education', 
@@ -385,6 +407,18 @@ const BMCGenerator: React.FC = () => {
               {!user && (
                 <Button
                   onClick={() => {
+                    try {
+                      if (generatedBMC) {
+                        sessionStorage.setItem('auth:returnTo', '/bmc-generator?resume=1');
+                        sessionStorage.setItem('bmc:resume', JSON.stringify({
+                          companyName,
+                          formData,
+                          generatedBMC,
+                        }));
+                      }
+                    } catch (err) {
+                      console.error('Failed to save BMC to sessionStorage:', err);
+                    }
                     navigate('/auth');
                   }}
                   variant="outline"

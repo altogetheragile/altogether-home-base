@@ -32,6 +32,17 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Helper to navigate after successful auth
+  const navigateAfterAuth = () => {
+    const returnTo = sessionStorage.getItem('auth:returnTo');
+    if (returnTo) {
+      sessionStorage.removeItem('auth:returnTo');
+      navigate(returnTo);
+    } else {
+      navigate('/');
+    }
+  };
+
   // Start MFA challenge after an MFA-required sign-in response
   const handleStartMfa = async (factorsHint?: any[]) => {
     try {
@@ -59,7 +70,7 @@ const Auth = () => {
         try {
           const { data: sess } = await supabase.auth.getSession();
           if (sess?.session) {
-            navigate("/");
+            navigateAfterAuth();
           }
         } catch {}
         return;
@@ -110,8 +121,8 @@ useEffect(() => {
       console.log('🔍 Auth useEffect: AAL level check', { currentLevel });
       
       if (currentLevel === 'aal2') {
-        console.log('✅ Auth useEffect: AAL2 confirmed, navigating to home');
-        if (!cancelled) navigate("/");
+        console.log('✅ Auth useEffect: AAL2 confirmed, navigating after auth');
+        if (!cancelled) navigateAfterAuth();
         return;
       }
 
@@ -131,12 +142,12 @@ useEffect(() => {
       }
 
       // No verified TOTP → safe to redirect
-      console.log('✅ Auth useEffect: No TOTP factors, navigating to home');
-      if (!cancelled) navigate("/");
+      console.log('✅ Auth useEffect: No TOTP factors, navigating after auth');
+      if (!cancelled) navigateAfterAuth();
     } catch (err) {
       console.warn('❌ Auth useEffect: AAL-aware redirect check failed:', err);
-      console.log('✅ Auth useEffect: Error occurred, navigating to home anyway');
-      if (!cancelled) navigate("/");
+      console.log('✅ Auth useEffect: Error occurred, navigating after auth anyway');
+      if (!cancelled) navigateAfterAuth();
     }
   })();
   return () => { cancelled = true; };
@@ -213,7 +224,7 @@ useEffect(() => {
       }
 
       toast({ title: "Welcome back!", description: "You have been signed in successfully." });
-      navigate("/");
+      navigateAfterAuth();
     } catch (err) {
       const friendly = getFriendlyAuthError(err, 'sign-in');
       toast({
@@ -247,7 +258,7 @@ useEffect(() => {
         console.warn('Failed to fetch final AAL after verify:', aalErr);
       }
       toast({ title: "MFA verified (AAL2)", description: "You're fully signed in." });
-      navigate("/");
+      navigateAfterAuth();
     } catch (err: any) {
       const msg = (err?.message || '').toLowerCase();
       const is422 = err?.status === 422 || err?.statusCode === 422;
