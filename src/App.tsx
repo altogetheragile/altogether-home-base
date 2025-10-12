@@ -48,6 +48,7 @@ import AdminKnowledgeAnalyticsRoute from "./pages/admin/AdminKnowledgeAnalyticsR
 import AdminKnowledgeTemplates from "./pages/admin/AdminKnowledgeTemplates";
 import AdminClassifications from "./pages/admin/AdminClassifications";
 import AdminMedia from "./pages/admin/AdminMedia";
+import AdminFooter from "./pages/admin/AdminFooter";
 import CreateEvent from "./pages/admin/CreateEvent";
 import EditEvent from "./pages/admin/EditEvent";
 import CreateInstructor from "./pages/admin/CreateInstructor";
@@ -155,6 +156,7 @@ const App = () => (
                     <Route path="formats" element={<AdminFormats />} />
                     <Route path="pages" element={<AdminPages />} />
                     <Route path="pages/:id/edit" element={<PageEditor />} />
+                    <Route path="footer" element={<AdminFooter />} />
                     
                     <Route path="knowledge/items" element={<AdminKnowledgeItems />} />
                     <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={<CreateKnowledgeUseCase />} />

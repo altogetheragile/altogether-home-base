@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -177,8 +177,12 @@ const AdminLayout = () => {
       id: 'pages',
       label: 'Pages',
       icon: Layout,
-      paths: ['/admin/pages'],
-      href: '/admin/pages'
+      paths: ['/admin/pages', '/admin/footer'],
+      href: '/admin/pages',
+      items: [
+        { label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' },
+        { label: 'Footer', href: '/admin/footer', icon: Footprints, description: 'Configure footer settings' }
+      ]
     },
     {
       id: 'knowledge',
@@ -298,7 +302,10 @@ const AdminLayout = () => {
                   } else if (activeTab === 'logs') {
                     itemsToRender = logsItems;
                   } else if (activeTab === 'pages') {
-                    itemsToRender = [{ label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' }];
+                    itemsToRender = [
+                      { label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' },
+                      { label: 'Footer', href: '/admin/footer', icon: Footprints, description: 'Configure footer settings' }
+                    ];
                   }
 
                 return itemsToRender.map((item) => {
