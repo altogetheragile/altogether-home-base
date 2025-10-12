@@ -24,6 +24,14 @@ export interface SiteSettings {
   social_github: string | null;
   quick_links: QuickLink[] | null;
   copyright_text: string | null;
+  show_events: boolean | null;
+  show_knowledge: boolean | null;
+  show_blog: boolean | null;
+  show_ai_tools: boolean | null;
+  show_contact: boolean | null;
+  show_admin_routes: boolean | null;
+  show_protected_projects: boolean | null;
+  show_dynamic_pages: boolean | null;
 }
 
 export const useSiteSettings = () => {

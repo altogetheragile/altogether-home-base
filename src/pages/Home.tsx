@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen, Calendar, Users, Star, ArrowRight } from 'lucide-react';
@@ -14,13 +15,15 @@ const Home: React.FC = () => {
     console.log('🏠 Home page rendering');
   }
 
+  const { settings } = useSiteSettings();
+
   // Feature flags for safe reintroduction of dynamic content
   const ENABLE_RECOMMENDATIONS = false; // Can be toggled to false for testing
   
-  // Feature flags for content visibility
-  const SHOW_EVENTS = false;
-  const SHOW_KNOWLEDGE = false;
-  const SHOW_BLOG = false;
+  // Feature flags from database with fallbacks
+  const SHOW_EVENTS = settings?.show_events ?? false;
+  const SHOW_KNOWLEDGE = settings?.show_knowledge ?? false;
+  const SHOW_BLOG = settings?.show_blog ?? false;
 
   return (
     <div className="min-h-screen bg-background">

@@ -177,11 +177,12 @@ const AdminLayout = () => {
       id: 'pages',
       label: 'Pages',
       icon: Layout,
-      paths: ['/admin/pages', '/admin/footer'],
+      paths: ['/admin/pages', '/admin/footer', '/admin/settings'],
       href: '/admin/pages',
       items: [
         { label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' },
-        { label: 'Footer', href: '/admin/footer', icon: Footprints, description: 'Configure footer settings' }
+        { label: 'Footer', href: '/admin/footer', icon: Footprints, description: 'Configure footer settings' },
+        { label: 'Settings', href: '/admin/settings', icon: Settings, description: 'Site feature toggles' }
       ]
     },
     {
@@ -304,7 +305,8 @@ const AdminLayout = () => {
                   } else if (activeTab === 'pages') {
                     itemsToRender = [
                       { label: 'Pages', href: '/admin/pages', icon: Layout, description: 'Manage pages' },
-                      { label: 'Footer', href: '/admin/footer', icon: Footprints, description: 'Configure footer settings' }
+                      { label: 'Footer', href: '/admin/footer', icon: Footprints, description: 'Configure footer settings' },
+                      { label: 'Settings', href: '/admin/settings', icon: Settings, description: 'Site feature toggles' }
                     ];
                   }
 

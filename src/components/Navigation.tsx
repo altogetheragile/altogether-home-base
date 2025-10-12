@@ -4,6 +4,7 @@ import { Menu, X, User, LogOut, Settings, LayoutDashboard, Shield, Sparkles, Che
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,16 +14,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Feature flags - set to true when features are ready
-const SHOW_EVENTS = false;
-const SHOW_KNOWLEDGE = false;
-const SHOW_BLOG = false;
-
 const Navigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
+  const { settings } = useSiteSettings();
+  
+  // Feature flags from database with fallbacks
+  const SHOW_EVENTS = settings?.show_events ?? false;
+  const SHOW_KNOWLEDGE = settings?.show_knowledge ?? false;
+  const SHOW_BLOG = settings?.show_blog ?? false;
+  const SHOW_AI_TOOLS = settings?.show_ai_tools ?? true;
+  const SHOW_CONTACT = settings?.show_contact ?? true;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -83,16 +87,18 @@ const Navigation = () => {
                   Blog
                 </Link>
               )}
-              <Link
-                to="/contact"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/contact")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Contact
-              </Link>
+              {SHOW_CONTACT && (
+                <Link
+                  to="/contact"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive("/contact")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Contact
+                </Link>
+              )}
               
               {/* Dashboard Link - Only show for authenticated users */}
               {user && (
@@ -106,11 +112,12 @@ const Navigation = () => {
                 >
                   Dashboard
                 </Link>
-              )}
-             </div>
+               )}
+              </div>
 
               {/* AI Tools Section - Desktop */}
-              <DropdownMenu>
+              {SHOW_AI_TOOLS && (
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="flex items-center space-x-2">
                     <Sparkles className="h-4 w-4" />
@@ -136,9 +143,10 @@ const Navigation = () => {
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Foundation Phase
                     </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
             {/* Auth Section */}
             {loading ? (
@@ -246,17 +254,19 @@ const Navigation = () => {
                   Blog
                 </Link>
               )}
-              <Link
-                to="/contact"
-                onClick={() => setIsMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive("/contact")
-                    ? "text-primary bg-accent"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent"
-                }`}
-              >
-                Contact
-              </Link>
+              {SHOW_CONTACT && (
+                <Link
+                  to="/contact"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isActive("/contact")
+                      ? "text-primary bg-accent"
+                      : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
+                >
+                  Contact
+                </Link>
+              )}
               
               {/* Dashboard Link - Mobile */}
               {user && (
@@ -274,7 +284,8 @@ const Navigation = () => {
               )}
                
                  {/* AI Tools Section - Mobile */}
-                 <div className="border-t border-border pt-2 mt-2">
+                 {SHOW_AI_TOOLS && (
+                   <div className="border-t border-border pt-2 mt-2">
                    <div className="px-3 py-2 text-sm font-medium text-muted-foreground mb-2">
                    <div className="flex items-center space-x-2">
                       <Sparkles className="h-4 w-4" />
@@ -312,6 +323,7 @@ const Navigation = () => {
                       </div>
                     </Link>
                  </div>
+                 )}
                
                {/* Mobile Auth Section */}
                <div className="border-t border-border pt-2 mt-2">
