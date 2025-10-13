@@ -99,6 +99,7 @@ const generateFreshRecommendations = async (
   const techRecs: any[] = [];
   const eventRecs: any[] = [];
   const blogRecs: any[] = [];
+  const testimonialRecs: any[] = [];
 
   // Fetch techniques
   if (types.includes('technique')) {
@@ -182,8 +183,36 @@ const generateFreshRecommendations = async (
     });
   }
 
+  // Fetch testimonials
+  if (types.includes('testimonial')) {
+    let testimonialQuery = supabase
+      .from('course_feedback')
+      .select('*')
+      .eq('is_approved', true)
+      .eq('is_featured', true)
+      .order('rating', { ascending: false })
+      .limit(limit);
+
+    if (excludeIds.length > 0) {
+      testimonialQuery = testimonialQuery.not('id', 'in', `(${excludeIds.join(',')})`);
+    }
+
+    const { data: testimonials } = await testimonialQuery;
+    
+    testimonials?.forEach((testimonial, index) => {
+      testimonialRecs.push({
+        content_type: 'testimonial',
+        content_id: testimonial.id,
+        score: (limit - index) / limit,
+        recommendation_type: 'popular',
+        context_data: { rating: testimonial.rating },
+        content: testimonial,
+      });
+    });
+  }
+
   // Interleave arrays in round-robin fashion to mix content types
-  const listsInOrder = [techRecs, eventRecs, blogRecs].filter(list => list.length > 0);
+  const listsInOrder = [techRecs, eventRecs, blogRecs, testimonialRecs].filter(list => list.length > 0);
   const indices = listsInOrder.map(() => 0);
   const final: any[] = [];
 

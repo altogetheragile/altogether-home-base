@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRecommendations, useTrackInteraction } from '@/hooks/useRecommendations';
 import { RecommendationCard } from './RecommendationCard';
+import { TestimonialsCarousel } from '@/components/feedback/TestimonialsCarousel';
+import { CourseFeedback } from '@/hooks/useCourseFeedback';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
@@ -9,7 +11,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface RecommendationsSectionProps {
   title?: string;
-  contentType?: 'technique' | 'event' | 'blog'; // Kept for backward compatibility
+  contentType?: 'technique' | 'event' | 'blog' | 'testimonial'; // Kept for backward compatibility
   contentTypes?: ('technique' | 'event' | 'blog' | 'testimonial')[];
   limit?: number;
   excludeIds?: string[];
@@ -57,6 +59,9 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
         case 'blog':
           navigate(`/blog/${recommendation.content?.slug || id}`);
           break;
+        case 'testimonial':
+          navigate('/testimonials');
+          break;
         default:
           console.warn('Unknown content type:', recommendation.content_type);
       }
@@ -76,6 +81,9 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
       case 'blog':
         navigate('/blog');
         break;
+      case 'testimonial':
+        navigate('/testimonials');
+        break;
       default:
         navigate('/knowledge');
     }
@@ -83,6 +91,11 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   
   // Hide view all button if multiple types are selected
   const shouldShowViewAll = showViewAll && (!types || types.length <= 1);
+
+  // Separate testimonials from other content
+  const testimonials = recommendations?.filter(r => r.content_type === 'testimonial') || [];
+  const otherRecommendations = recommendations?.filter(r => r.content_type !== 'testimonial') || [];
+  const onlyTestimonials = types?.length === 1 && types[0] === 'testimonial';
 
   if (isLoading) {
     return (
@@ -158,22 +171,41 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
           </Button>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {recommendations.map((recommendation) => (
-          <ErrorBoundary
-            key={`${recommendation.content_type}-${recommendation.content_id}`}
-            fallback={
-              <div className="p-4 border rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Unable to load this recommendation</p>
-              </div>
-            }
-          >
-            <RecommendationCard
-              recommendation={recommendation}
-              onView={handleView}
+      
+      <div className="space-y-12">
+        {/* Testimonials Carousel */}
+        {testimonials.length > 0 && (
+          <div>
+            {!onlyTestimonials && otherRecommendations.length > 0 && (
+              <h3 className="text-xl font-semibold mb-6">What Our Attendees Say</h3>
+            )}
+            <TestimonialsCarousel 
+              testimonials={testimonials.map(t => t.content as CourseFeedback)}
+              limit={limit}
             />
-          </ErrorBoundary>
-        ))}
+          </div>
+        )}
+
+        {/* Other Recommendations Grid */}
+        {otherRecommendations.length > 0 && (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {otherRecommendations.map((recommendation) => (
+              <ErrorBoundary
+                key={`${recommendation.content_type}-${recommendation.content_id}`}
+                fallback={
+                  <div className="p-4 border rounded-lg bg-muted/50">
+                    <p className="text-sm text-muted-foreground">Unable to load this recommendation</p>
+                  </div>
+                }
+              >
+                <RecommendationCard
+                  recommendation={recommendation}
+                  onView={handleView}
+                />
+              </ErrorBoundary>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
