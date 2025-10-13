@@ -42,6 +42,8 @@ import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminImports from "./pages/admin/AdminImports";
 import AdminKnowledgeImport from "./pages/admin/AdminKnowledgeImport";
 import AdminActivityDomains from "./pages/admin/AdminActivityDomains";
+import AdminFeedback from "./pages/admin/AdminFeedback";
+import Testimonials from "./pages/Testimonials";
 import AdminKnowledgeItems from "./pages/admin/AdminKnowledgeItems";
 import AdminKnowledgeTags from "./pages/admin/AdminKnowledgeTags";
 const AdminUsers = React.lazy(() => import("./pages/admin/AdminUsers"));
@@ -92,6 +94,7 @@ const App = () => (
               <Route path="/blog" element={<Blog />} />
               <Route path="/knowledge" element={<Knowledge />} />
               <Route path="/knowledge/:slug" element={<KnowledgeDetail />} />
+              <Route path="/testimonials" element={<Testimonials />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/reset" element={<ResetPassword />} />
               <Route path="/ai-tools" element={<AIToolsCanvas />} />
@@ -184,6 +187,7 @@ const App = () => (
                     <Route path="logs/audit" element={<AdminAuditLogs />} />
                     <Route path="moderation" element={<AdminModeration />} />
                     <Route path="contacts" element={<AdminContacts />} />
+                    <Route path="feedback" element={<AdminFeedback />} />
                   </Route>
                   
                   {/* Knowledge Item Editor - Protected Full Page Routes Outside Admin Layout */}

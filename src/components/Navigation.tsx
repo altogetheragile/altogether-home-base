@@ -88,6 +88,16 @@ const Navigation = () => {
                   Blog
                 </Link>
               )}
+              <Link
+                to="/testimonials"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/testimonials")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Testimonials
+              </Link>
               {SHOW_CONTACT && (
                 <Link
                   to="/contact"
@@ -257,6 +267,17 @@ const Navigation = () => {
                   Blog
                 </Link>
               )}
+              <Link
+                to="/testimonials"
+                onClick={() => setIsMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isActive("/testimonials")
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent"
+                }`}
+              >
+                Testimonials
+              </Link>
               {SHOW_CONTACT && (
                 <Link
                   to="/contact"

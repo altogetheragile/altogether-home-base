@@ -607,6 +607,77 @@ export type Database = {
           },
         ]
       }
+      course_feedback: {
+        Row: {
+          comment: string
+          company: string | null
+          course_name: string
+          created_at: string
+          created_by: string | null
+          event_id: string | null
+          first_name: string
+          id: string
+          is_approved: boolean
+          is_featured: boolean
+          job_title: string | null
+          last_name: string
+          rating: number | null
+          source: string
+          source_url: string | null
+          submitted_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          comment: string
+          company?: string | null
+          course_name: string
+          created_at?: string
+          created_by?: string | null
+          event_id?: string | null
+          first_name: string
+          id?: string
+          is_approved?: boolean
+          is_featured?: boolean
+          job_title?: string | null
+          last_name: string
+          rating?: number | null
+          source?: string
+          source_url?: string | null
+          submitted_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          comment?: string
+          company?: string | null
+          course_name?: string
+          created_at?: string
+          created_by?: string | null
+          event_id?: string | null
+          first_name?: string
+          id?: string
+          is_approved?: boolean
+          is_featured?: boolean
+          job_title?: string | null
+          last_name?: string
+          rating?: number | null
+          source?: string
+          source_url?: string | null
+          submitted_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_feedback_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_imports: {
         Row: {
           created_at: string
