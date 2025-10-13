@@ -94,13 +94,14 @@ const generateFreshRecommendations = async (
   excludeIds: string[] = [],
   userId?: string
 ) => {
-  const recommendations: any[] = [];
-  
-  // If no types specified, fetch all types
   const types = contentTypes && contentTypes.length > 0 ? contentTypes : ['technique', 'event', 'blog'];
 
+  const techRecs: any[] = [];
+  const eventRecs: any[] = [];
+  const blogRecs: any[] = [];
+
+  // Fetch techniques
   if (types.includes('technique')) {
-    // Get popular techniques
     let techniqueQuery = supabase
       .from('knowledge_items')
       .select('id, name, slug, description, view_count')
@@ -115,7 +116,7 @@ const generateFreshRecommendations = async (
     const { data: techniques } = await techniqueQuery;
     
     techniques?.forEach((technique, index) => {
-      recommendations.push({
+      techRecs.push({
         content_type: 'technique',
         content_id: technique.id,
         score: (limit - index) / limit,
@@ -126,8 +127,8 @@ const generateFreshRecommendations = async (
     });
   }
 
+  // Fetch events
   if (types.includes('event')) {
-    // Get upcoming events
     let eventQuery = supabase
       .from('events')
       .select('id, title, description, start_date, end_date, price_cents, capacity')
@@ -143,7 +144,7 @@ const generateFreshRecommendations = async (
     const { data: events } = await eventQuery;
     
     events?.forEach((event, index) => {
-      recommendations.push({
+      eventRecs.push({
         content_type: 'event',
         content_id: event.id,
         score: (limit - index) / limit,
@@ -154,8 +155,8 @@ const generateFreshRecommendations = async (
     });
   }
 
+  // Fetch blogs
   if (types.includes('blog')) {
-    // Get recent blog posts
     let blogQuery = supabase
       .from('blog_posts')
       .select('id, title, excerpt, slug, featured_image_url, published_at, view_count')
@@ -170,7 +171,7 @@ const generateFreshRecommendations = async (
     const { data: blogs } = await blogQuery;
     
     blogs?.forEach((blog, index) => {
-      recommendations.push({
+      blogRecs.push({
         content_type: 'blog',
         content_id: blog.id,
         score: (limit - index) / limit,
@@ -181,7 +182,28 @@ const generateFreshRecommendations = async (
     });
   }
 
-  return recommendations.slice(0, limit);
+  // Interleave arrays in round-robin fashion to mix content types
+  const listsInOrder = [techRecs, eventRecs, blogRecs].filter(list => list.length > 0);
+  const indices = listsInOrder.map(() => 0);
+  const final: any[] = [];
+
+  while (final.length < limit && listsInOrder.some((list, idx) => indices[idx] < list.length)) {
+    for (let i = 0; i < listsInOrder.length && final.length < limit; i++) {
+      const idx = indices[i];
+      const list = listsInOrder[i];
+      if (idx < list.length) {
+        final.push(list[idx]);
+        indices[i] = idx + 1;
+      }
+    }
+  }
+
+  // Normalize scores based on final order
+  for (let i = 0; i < final.length; i++) {
+    final[i].score = (limit - i) / limit;
+  }
+
+  return final;
 };
 
 export const useTrackInteraction = () => {
