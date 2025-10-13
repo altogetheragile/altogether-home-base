@@ -7,9 +7,17 @@ import { useState } from "react";
 
 interface TestimonialCardProps {
   feedback: CourseFeedback;
+  showName?: boolean;
+  showCompany?: boolean;
+  showRating?: boolean;
 }
 
-const TestimonialCard = ({ feedback }: TestimonialCardProps) => {
+const TestimonialCard = ({ 
+  feedback,
+  showName = true,
+  showCompany = true,
+  showRating = true
+}: TestimonialCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const truncateLength = 200;
   const needsTruncation = feedback.comment.length > truncateLength;
@@ -41,34 +49,38 @@ const TestimonialCard = ({ feedback }: TestimonialCardProps) => {
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-6 space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg">
-                {feedback.first_name} {feedback.last_name}
-              </h3>
-              {feedback.source === 'linkedin' && (
-                <Linkedin className="w-4 h-4 text-blue-600" />
+        {(showName || showCompany) && (
+          <div className="flex items-start justify-between">
+            <div className="space-y-1 flex-1">
+              {showName && (
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">
+                    {feedback.first_name} {feedback.last_name}
+                  </h3>
+                  {feedback.source === 'linkedin' && (
+                    <Linkedin className="w-4 h-4 text-blue-600" />
+                  )}
+                </div>
+              )}
+              {showCompany && feedback.job_title && feedback.company && (
+                <p className="text-sm text-muted-foreground">
+                  {feedback.job_title} at {feedback.company}
+                </p>
+              )}
+              {showCompany && feedback.company && !feedback.job_title && (
+                <p className="text-sm text-muted-foreground">{feedback.company}</p>
               )}
             </div>
-            {feedback.job_title && feedback.company && (
-              <p className="text-sm text-muted-foreground">
-                {feedback.job_title} at {feedback.company}
-              </p>
-            )}
-            {feedback.company && !feedback.job_title && (
-              <p className="text-sm text-muted-foreground">{feedback.company}</p>
+            {feedback.is_featured && (
+              <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-900">
+                Featured
+              </Badge>
             )}
           </div>
-          {feedback.is_featured && (
-            <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-900">
-              Featured
-            </Badge>
-          )}
-        </div>
+        )}
 
         <div className="space-y-2">
-          {renderStars()}
+          {showRating && renderStars()}
           <Badge variant="secondary">{feedback.course_name}</Badge>
         </div>
 

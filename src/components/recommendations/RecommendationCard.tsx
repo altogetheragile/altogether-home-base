@@ -265,6 +265,51 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     </Card>
   );
 
+  const renderTestimonialCard = () => {
+    const content = recommendation.content || {};
+    const fullName = `${content.first_name || ''} ${content.last_name || ''}`.trim();
+    
+    return (
+      <Card className={`hover:shadow-lg transition-all duration-200 cursor-pointer ${className}`}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <CardTitle className="text-lg line-clamp-2 leading-tight">
+              {content.course_name || 'Testimonial'}
+            </CardTitle>
+            <div className="flex items-center gap-1 ml-2">
+              {getRecommendationIcon()}
+              <Badge variant="outline" className="text-xs">
+                {content.rating || 10}/10
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+            "{content.comment || ''}"
+          </p>
+          <div className="space-y-1 mb-4">
+            {fullName && (
+              <p className="text-sm font-semibold">{fullName}</p>
+            )}
+            {content.job_title && content.company && (
+              <p className="text-xs text-muted-foreground">
+                {content.job_title} at {content.company}
+              </p>
+            )}
+          </div>
+          <Button
+            size="sm"
+            onClick={() => onView(recommendation.id)}
+            className="w-full"
+          >
+            View All Testimonials
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
+
   switch (content_type) {
     case 'technique':
       return renderTechniqueCard();
@@ -272,6 +317,8 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       return renderEventCard();
     case 'blog':
       return renderBlogCard();
+    case 'testimonial':
+      return renderTestimonialCard();
     default:
       return renderTechniqueCard();
   }

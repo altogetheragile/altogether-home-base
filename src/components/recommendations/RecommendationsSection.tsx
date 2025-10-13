@@ -10,7 +10,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 interface RecommendationsSectionProps {
   title?: string;
   contentType?: 'technique' | 'event' | 'blog'; // Kept for backward compatibility
-  contentTypes?: ('technique' | 'event' | 'blog')[];
+  contentTypes?: ('technique' | 'event' | 'blog' | 'testimonial')[];
   limit?: number;
   excludeIds?: string[];
   showViewAll?: boolean;

@@ -1,24 +1,22 @@
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { TestimonialBubble } from "@/components/feedback/TestimonialBubble";
+import TestimonialCard from "@/components/feedback/TestimonialCard";
 import { useCourseFeedback, useFeedbackStats } from "@/hooks/useCourseFeedback";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const Testimonials = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [showName, setShowName] = useState(true);
+  const [showCompany, setShowCompany] = useState(true);
+  const [showRating, setShowRating] = useState(true);
 
   const { data: feedback, isLoading } = useCourseFeedback({ isApproved: true });
   const { data: stats } = useFeedbackStats();
@@ -43,25 +41,25 @@ const Testimonials = () => {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-16 px-4 bg-gradient-to-b from-primary/5 to-background">
-          <div className="max-w-7xl mx-auto text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold">What Our Attendees Say</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+        <section className="py-8 px-4 border-b border-border">
+          <div className="max-w-7xl mx-auto text-center space-y-2">
+            <h1 className="text-3xl md:text-4xl font-bold">What Our Attendees Say</h1>
+            <p className="text-base text-muted-foreground max-w-2xl mx-auto">
               Real feedback from professionals who have attended our courses
             </p>
             {stats && (
-              <div className="flex items-center justify-center gap-2 pt-4">
-                <Star className="w-6 h-6 fill-yellow-500 text-yellow-500" />
-                <span className="text-2xl font-bold">{stats.averageRating}/10</span>
-                <span className="text-muted-foreground">from {stats.totalRatings} reviews</span>
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
+                <span className="text-xl font-bold">{stats.averageRating}/10</span>
+                <span className="text-sm text-muted-foreground">from {stats.totalRatings} reviews</span>
               </div>
             )}
           </div>
         </section>
 
         {/* Filters */}
-        <section className="py-8 px-4 border-b border-border">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-6 px-4 border-b border-border bg-muted/30">
+          <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
               <Input
                 placeholder="Search testimonials..."
@@ -93,10 +91,38 @@ const Testimonials = () => {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Display Toggles */}
+            <div className="flex flex-wrap gap-6 pt-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show-name"
+                  checked={showName}
+                  onCheckedChange={setShowName}
+                />
+                <Label htmlFor="show-name" className="cursor-pointer">Show Name</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show-company"
+                  checked={showCompany}
+                  onCheckedChange={setShowCompany}
+                />
+                <Label htmlFor="show-company" className="cursor-pointer">Show Company</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show-rating"
+                  checked={showRating}
+                  onCheckedChange={setShowRating}
+                />
+                <Label htmlFor="show-rating" className="cursor-pointer">Show Rating</Label>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Testimonials Carousel */}
+        {/* Testimonials Grid */}
         <section className="py-12 px-4">
           <div className="max-w-7xl mx-auto">
             {isLoading ? (
@@ -106,26 +132,17 @@ const Testimonials = () => {
                 ))}
               </div>
             ) : filteredFeedback.length > 0 ? (
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: false,
-                }}
-                className="w-full"
-              >
-                <CarouselContent className="-ml-4">
-                  {filteredFeedback.map((item, index) => (
-                    <CarouselItem key={item.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                      <TestimonialBubble 
-                        feedback={item} 
-                        colorIndex={index}
-                      />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="hidden md:flex" />
-                <CarouselNext className="hidden md:flex" />
-              </Carousel>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredFeedback.map((item) => (
+                  <TestimonialCard
+                    key={item.id}
+                    feedback={item}
+                    showName={showName}
+                    showCompany={showCompany}
+                    showRating={showRating}
+                  />
+                ))}
+              </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">No testimonials found matching your filters.</p>

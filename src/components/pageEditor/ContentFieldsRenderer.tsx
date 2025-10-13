@@ -646,6 +646,22 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
                   Blog Posts
                 </Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="contentType-testimonial"
+                  checked={content?.contentTypes?.includes('testimonial') ?? false}
+                  onCheckedChange={(checked) => {
+                    const currentTypes = content?.contentTypes || [];
+                    const newTypes = checked
+                      ? [...currentTypes.filter((t: string) => t !== 'testimonial'), 'testimonial']
+                      : currentTypes.filter((t: string) => t !== 'testimonial');
+                    onContentChange('contentTypes', newTypes);
+                  }}
+                />
+                <Label htmlFor="contentType-testimonial" className="font-normal cursor-pointer">
+                  Testimonials
+                </Label>
+              </div>
             </div>
           </div>
           <div>

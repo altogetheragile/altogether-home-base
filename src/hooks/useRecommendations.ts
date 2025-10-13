@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface Recommendation {
   id: string;
-  content_type: 'technique' | 'event' | 'blog';
+  content_type: 'technique' | 'event' | 'blog' | 'testimonial';
   content_id: string;
   score: number;
   recommendation_type: 'similar' | 'popular' | 'personalized';
@@ -71,7 +71,7 @@ export const useUpdateUserPreferences = () => {
 };
 
 export const useRecommendations = (
-  contentTypes?: ('technique' | 'event' | 'blog')[],
+  contentTypes?: ('technique' | 'event' | 'blog' | 'testimonial')[],
   limit = 6,
   excludeIds: string[] = []
 ) => {
@@ -89,7 +89,7 @@ export const useRecommendations = (
 };
 
 const generateFreshRecommendations = async (
-  contentTypes?: ('technique' | 'event' | 'blog')[],
+  contentTypes?: ('technique' | 'event' | 'blog' | 'testimonial')[],
   limit = 6,
   excludeIds: string[] = [],
   userId?: string
@@ -217,7 +217,7 @@ export const useTrackInteraction = () => {
       interactionType,
       value = 1
     }: {
-      contentType: 'technique' | 'event' | 'blog';
+      contentType: 'technique' | 'event' | 'blog' | 'testimonial';
       contentId: string;
       interactionType: 'view' | 'like' | 'bookmark' | 'register' | 'complete';
       value?: number;
