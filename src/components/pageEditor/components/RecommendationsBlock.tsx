@@ -21,7 +21,7 @@ export const RecommendationsBlock: React.FC<RecommendationsBlockProps> = ({ bloc
     <div className="container mx-auto px-4 py-12">
       <RecommendationsSection
         title={title}
-        contentTypes={contentTypes as ('technique' | 'event' | 'blog')[] | undefined}
+        contentTypes={contentTypes as ('technique' | 'event' | 'blog' | 'testimonial')[] | undefined}
         limit={limit}
         showViewAll={showViewAll}
         excludeIds={excludeIds}
