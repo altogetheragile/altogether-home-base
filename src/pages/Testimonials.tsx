@@ -9,6 +9,7 @@ import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Testimonials = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,6 +21,8 @@ const Testimonials = () => {
 
   const { data: feedback, isLoading } = useCourseFeedback({ isApproved: true });
   const { data: stats } = useFeedbackStats();
+  const { data: role } = useUserRole();
+  const isAdmin = role === 'admin';
 
   const filteredFeedback = feedback?.filter(f => {
     const matchesSearch = 
@@ -92,33 +95,35 @@ const Testimonials = () => {
               </Select>
             </div>
             
-            {/* Display Toggles */}
-            <div className="flex flex-wrap gap-6 pt-2">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="show-name"
-                  checked={showName}
-                  onCheckedChange={setShowName}
-                />
-                <Label htmlFor="show-name" className="cursor-pointer">Show Name</Label>
+            {/* Display Toggles - Admin Only */}
+            {isAdmin && (
+              <div className="flex flex-wrap gap-6 pt-2 border-t border-border mt-4 pt-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="show-name"
+                    checked={showName}
+                    onCheckedChange={setShowName}
+                  />
+                  <Label htmlFor="show-name" className="cursor-pointer">Show Name</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="show-company"
+                    checked={showCompany}
+                    onCheckedChange={setShowCompany}
+                  />
+                  <Label htmlFor="show-company" className="cursor-pointer">Show Company</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="show-rating"
+                    checked={showRating}
+                    onCheckedChange={setShowRating}
+                  />
+                  <Label htmlFor="show-rating" className="cursor-pointer">Show Rating</Label>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="show-company"
-                  checked={showCompany}
-                  onCheckedChange={setShowCompany}
-                />
-                <Label htmlFor="show-company" className="cursor-pointer">Show Company</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="show-rating"
-                  checked={showRating}
-                  onCheckedChange={setShowRating}
-                />
-                <Label htmlFor="show-rating" className="cursor-pointer">Show Rating</Label>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
