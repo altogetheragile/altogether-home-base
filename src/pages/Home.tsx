@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
+import { FeaturedTestimonials } from '@/components/feedback/FeaturedTestimonials';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -140,6 +141,32 @@ const Home: React.FC = () => {
               </Card>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
+          <ErrorBoundary fallback={
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Testimonials temporarily unavailable</p>
+            </div>
+          }>
+            <Suspense fallback={
+              <div className="text-center py-8">
+                <div className="animate-pulse">
+                  <div className="h-8 bg-muted rounded w-64 mx-auto mb-4"></div>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="h-80 bg-muted rounded-lg"></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            }>
+              <FeaturedTestimonials />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </section>
 

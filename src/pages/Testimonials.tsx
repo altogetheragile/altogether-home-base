@@ -1,12 +1,19 @@
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import TestimonialCard from "@/components/feedback/TestimonialCard";
+import { TestimonialBubble } from "@/components/feedback/TestimonialBubble";
 import { useCourseFeedback, useFeedbackStats } from "@/hooks/useCourseFeedback";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const Testimonials = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,21 +96,36 @@ const Testimonials = () => {
           </div>
         </section>
 
-        {/* Testimonials Grid */}
+        {/* Testimonials Carousel */}
         <section className="py-12 px-4">
           <div className="max-w-7xl mx-auto">
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-64" />
+                  <Skeleton key={i} className="h-80" />
                 ))}
               </div>
             ) : filteredFeedback.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredFeedback.map((item) => (
-                  <TestimonialCard key={item.id} feedback={item} />
-                ))}
-              </div>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: false,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-4">
+                  {filteredFeedback.map((item, index) => (
+                    <CarouselItem key={item.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                      <TestimonialBubble 
+                        feedback={item} 
+                        colorIndex={index}
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex" />
+                <CarouselNext className="hidden md:flex" />
+              </Carousel>
             ) : (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">No testimonials found matching your filters.</p>

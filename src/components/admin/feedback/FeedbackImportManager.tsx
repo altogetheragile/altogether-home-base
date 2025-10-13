@@ -83,21 +83,27 @@ const FeedbackImportManager = () => {
 
       const { data: { user } } = await supabase.auth.getUser();
       
-      const feedbackData = jsonData.map(row => ({
-        first_name: row.First_Name || 'Anonymous',
-        last_name: row.Last_Name || '',
-        rating: Math.min(10, Math.max(1, Math.round(row.Score || 5))),
-        comment: row.Content || '',
-        company: row.Company || null,
-        job_title: row.Job_Title || null,
-        course_name: row['Course / Activity'] || 'Unknown Course',
-        source: row.Source?.toLowerCase().replace(/\s+/g, '_') || 'imported',
-        source_url: row.Source_Link || null,
-        submitted_at: parseDate(row.Creation_Date),
-        is_approved: autoApprove || row.Source?.toLowerCase() === 'linkedin',
-        is_featured: false,
-        created_by: user?.id,
-      }));
+      const feedbackData = jsonData.map(row => {
+        const source = row.Source?.toLowerCase() || 'imported';
+        const isLinkedIn = source.includes('linkedin');
+        const rating = row.Score ? Math.min(10, Math.max(1, Math.round(row.Score))) : null;
+        
+        return {
+          first_name: row.First_Name || 'Anonymous',
+          last_name: row.Last_Name || '',
+          rating: rating,
+          comment: row.Content || '',
+          company: row.Company || null,
+          job_title: row.Job_Title || null,
+          course_name: row['Course / Activity'] || 'Unknown Course',
+          source: source.replace(/\s+/g, '_'),
+          source_url: row.Source_Link || null,
+          submitted_at: parseDate(row.Creation_Date),
+          is_approved: autoApprove || isLinkedIn,
+          is_featured: isLinkedIn && rating && rating >= 9,
+          created_by: user?.id,
+        };
+      });
 
       const { error } = await supabase
         .from('course_feedback')
