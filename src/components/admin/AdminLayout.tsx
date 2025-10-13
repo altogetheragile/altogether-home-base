@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -172,6 +172,13 @@ const AdminLayout = () => {
       paths: ['/admin/events', '/admin/event-blueprints', '/admin/instructors', '/admin/locations', '/admin/event-categories', '/admin/event-types', '/admin/levels', '/admin/formats'],
       href: '/admin/events',
       items: eventsItems
+    },
+    {
+      id: 'feedback',
+      label: 'Feedback',
+      icon: MessageSquare,
+      paths: ['/admin/feedback'],
+      href: '/admin/feedback'
     },
     {
       id: 'pages',
