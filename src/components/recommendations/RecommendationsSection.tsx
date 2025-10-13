@@ -172,10 +172,10 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
         )}
       </div>
       
-      <div className="space-y-12">
+      <div className="space-y-12 max-w-6xl mx-auto">
         {/* Testimonials Carousel */}
         {testimonials.length > 0 && (
-          <div className="max-w-6xl mx-auto">
+          <div>
             {!onlyTestimonials && otherRecommendations.length > 0 && (
               <h3 className="text-xl font-semibold mb-6">What Our Attendees Say</h3>
             )}
