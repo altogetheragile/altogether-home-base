@@ -9,9 +9,10 @@ interface RecommendationsBlockProps {
 export const RecommendationsBlock: React.FC<RecommendationsBlockProps> = ({ block }) => {
   const content = block.content || {};
   
-  // Extract configuration from block content
+  // Extract configuration from block content with backward compatibility
   const title = content.title || 'Recommended for You';
-  const contentType = content.contentType as 'technique' | 'event' | 'blog' | undefined;
+  const contentTypes = content.contentTypes || 
+    (content.contentType && content.contentType !== 'all' ? [content.contentType] : undefined);
   const limit = content.limit || 6;
   const showViewAll = content.showViewAll !== false;
   const excludeIds = content.excludeIds || [];
@@ -20,7 +21,7 @@ export const RecommendationsBlock: React.FC<RecommendationsBlockProps> = ({ bloc
     <div className="container mx-auto px-4 py-12">
       <RecommendationsSection
         title={title}
-        contentType={contentType}
+        contentTypes={contentTypes as ('technique' | 'event' | 'blog')[] | undefined}
         limit={limit}
         showViewAll={showViewAll}
         excludeIds={excludeIds}

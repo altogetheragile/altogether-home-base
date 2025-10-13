@@ -71,32 +71,35 @@ export const useUpdateUserPreferences = () => {
 };
 
 export const useRecommendations = (
-  contentType?: 'technique' | 'event' | 'blog',
+  contentTypes?: ('technique' | 'event' | 'blog')[],
   limit = 6,
   excludeIds: string[] = []
 ) => {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['recommendations', user?.id, contentType, limit, excludeIds],
+    queryKey: ['recommendations', user?.id, contentTypes, limit, excludeIds],
     queryFn: async () => {
       // Always generate fresh recommendations since recommendation_cache table doesn't exist
       console.log('Recommendation cache table does not exist, generating fresh recommendations');
-      return await generateFreshRecommendations(contentType, limit, excludeIds, user?.id);
+      return await generateFreshRecommendations(contentTypes, limit, excludeIds, user?.id);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
 const generateFreshRecommendations = async (
-  contentType?: string,
+  contentTypes?: ('technique' | 'event' | 'blog')[],
   limit = 6,
   excludeIds: string[] = [],
   userId?: string
 ) => {
   const recommendations: any[] = [];
+  
+  // If no types specified, fetch all types
+  const types = contentTypes && contentTypes.length > 0 ? contentTypes : ['technique', 'event', 'blog'];
 
-  if (!contentType || contentType === 'technique') {
+  if (types.includes('technique')) {
     // Get popular techniques
     let techniqueQuery = supabase
       .from('knowledge_items')
@@ -123,7 +126,7 @@ const generateFreshRecommendations = async (
     });
   }
 
-  if (!contentType || contentType === 'event') {
+  if (types.includes('event')) {
     // Get upcoming events
     let eventQuery = supabase
       .from('events')
@@ -151,7 +154,7 @@ const generateFreshRecommendations = async (
     });
   }
 
-  if (!contentType || contentType === 'blog') {
+  if (types.includes('blog')) {
     // Get recent blog posts
     let blogQuery = supabase
       .from('blog_posts')

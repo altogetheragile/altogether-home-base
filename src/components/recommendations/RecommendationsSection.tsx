@@ -9,7 +9,8 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface RecommendationsSectionProps {
   title?: string;
-  contentType?: 'technique' | 'event' | 'blog';
+  contentType?: 'technique' | 'event' | 'blog'; // Kept for backward compatibility
+  contentTypes?: ('technique' | 'event' | 'blog')[];
   limit?: number;
   excludeIds?: string[];
   showViewAll?: boolean;
@@ -19,13 +20,16 @@ interface RecommendationsSectionProps {
 export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   title = "Recommended for You",
   contentType,
+  contentTypes,
   limit = 6,
   excludeIds = [],
   showViewAll = true,
   className = '',
 }) => {
   const navigate = useNavigate();
-  const { data: recommendations, isLoading, error } = useRecommendations(contentType, limit, excludeIds);
+  // Use contentTypes if provided, otherwise fall back to contentType for backward compatibility
+  const types = contentTypes || (contentType ? [contentType] : undefined);
+  const { data: recommendations, isLoading, error } = useRecommendations(types, limit, excludeIds);
   const trackInteraction = useTrackInteraction();
 
   const handleView = (id: string) => {
@@ -60,7 +64,9 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   };
 
   const handleViewAll = () => {
-    switch (contentType) {
+    // Only show view all if single type is selected
+    const singleType = types && types.length === 1 ? types[0] : contentType;
+    switch (singleType) {
       case 'technique':
         navigate('/knowledge');
         break;
@@ -74,13 +80,16 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
         navigate('/knowledge');
     }
   };
+  
+  // Hide view all button if multiple types are selected
+  const shouldShowViewAll = showViewAll && (!types || types.length <= 1);
 
   if (isLoading) {
     return (
       <div className={className}>
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-8 w-64" />
-          {showViewAll && <Skeleton className="h-10 w-24" />}
+          {shouldShowViewAll && <Skeleton className="h-10 w-24" />}
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: limit }).map((_, i) => (
@@ -119,7 +128,7 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
         <div className="text-center">
           <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
           <p className="text-muted-foreground">No recommendations available at the moment</p>
-          {showViewAll && (
+          {shouldShowViewAll && (
             <Button
               variant="outline"
               size="sm"
@@ -138,7 +147,7 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
     <div className={className}>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-        {showViewAll && (
+        {shouldShowViewAll && (
           <Button
             variant="outline"
             onClick={handleViewAll}

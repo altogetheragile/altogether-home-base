@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, Plus, Trash2 } from 'lucide-react';
@@ -592,24 +593,60 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
             />
           </div>
           <div>
-            <Label htmlFor="recommendations-type">Content Type</Label>
-            <Select
-              value={content?.contentType || 'all'}
-              onValueChange={(value) => onContentChange('contentType', value === 'all' ? undefined : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select content type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Content (Mixed)</SelectItem>
-                <SelectItem value="technique">Knowledge Items Only</SelectItem>
-                <SelectItem value="event">Events Only</SelectItem>
-                <SelectItem value="blog">Blog Posts Only</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Choose what type of content to recommend
+            <Label>Content Types</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              Select one or more content types to recommend
             </p>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="contentType-technique"
+                  checked={content?.contentTypes?.includes('technique') ?? false}
+                  onCheckedChange={(checked) => {
+                    const currentTypes = content?.contentTypes || [];
+                    const newTypes = checked
+                      ? [...currentTypes.filter((t: string) => t !== 'technique'), 'technique']
+                      : currentTypes.filter((t: string) => t !== 'technique');
+                    onContentChange('contentTypes', newTypes);
+                  }}
+                />
+                <Label htmlFor="contentType-technique" className="font-normal cursor-pointer">
+                  Knowledge Items
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="contentType-event"
+                  checked={content?.contentTypes?.includes('event') ?? false}
+                  onCheckedChange={(checked) => {
+                    const currentTypes = content?.contentTypes || [];
+                    const newTypes = checked
+                      ? [...currentTypes.filter((t: string) => t !== 'event'), 'event']
+                      : currentTypes.filter((t: string) => t !== 'event');
+                    onContentChange('contentTypes', newTypes);
+                  }}
+                />
+                <Label htmlFor="contentType-event" className="font-normal cursor-pointer">
+                  Events
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="contentType-blog"
+                  checked={content?.contentTypes?.includes('blog') ?? false}
+                  onCheckedChange={(checked) => {
+                    const currentTypes = content?.contentTypes || [];
+                    const newTypes = checked
+                      ? [...currentTypes.filter((t: string) => t !== 'blog'), 'blog']
+                      : currentTypes.filter((t: string) => t !== 'blog');
+                    onContentChange('contentTypes', newTypes);
+                  }}
+                />
+                <Label htmlFor="contentType-blog" className="font-normal cursor-pointer">
+                  Blog Posts
+                </Label>
+              </div>
+            </div>
           </div>
           <div>
             <Label htmlFor="recommendations-limit">Number of Items</Label>
