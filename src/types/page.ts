@@ -23,7 +23,7 @@ export interface ContentBlock {
 
 export interface RecommendationsBlockContent {
   title?: string;
-  contentTypes?: ('technique' | 'event' | 'blog')[];
+  contentTypes?: ('technique' | 'event' | 'blog' | 'testimonial')[];
   limit?: number;
   showViewAll?: boolean;
   excludeIds?: string[];

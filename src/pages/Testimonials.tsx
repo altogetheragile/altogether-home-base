@@ -7,22 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const Testimonials = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
-  const [showName, setShowName] = useState(true);
-  const [showCompany, setShowCompany] = useState(true);
-  const [showRating, setShowRating] = useState(true);
 
   const { data: feedback, isLoading } = useCourseFeedback({ isApproved: true });
   const { data: stats } = useFeedbackStats();
-  const { data: role } = useUserRole();
-  const isAdmin = role === 'admin';
+  const { settings } = useSiteSettings();
+
+  // Get display settings from site settings (default to true if not set)
+  const showName = settings?.show_testimonial_name ?? true;
+  const showCompany = settings?.show_testimonial_company ?? true;
+  const showRatingHeader = settings?.show_testimonial_rating_header ?? true;
 
   const filteredFeedback = feedback?.filter(f => {
     const matchesSearch = 
@@ -50,7 +49,7 @@ const Testimonials = () => {
             <p className="text-base text-muted-foreground max-w-2xl mx-auto">
               Real feedback from professionals who have attended our courses
             </p>
-            {stats && (
+            {showRatingHeader && stats && (
               <div className="flex items-center justify-center gap-2 pt-2">
                 <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                 <span className="text-xl font-bold">{stats.averageRating}/10</span>
@@ -94,36 +93,6 @@ const Testimonials = () => {
                 </SelectContent>
               </Select>
             </div>
-            
-            {/* Display Toggles - Admin Only */}
-            {isAdmin && (
-              <div className="flex flex-wrap gap-6 pt-2 border-t border-border mt-4 pt-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="show-name"
-                    checked={showName}
-                    onCheckedChange={setShowName}
-                  />
-                  <Label htmlFor="show-name" className="cursor-pointer">Show Name</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="show-company"
-                    checked={showCompany}
-                    onCheckedChange={setShowCompany}
-                  />
-                  <Label htmlFor="show-company" className="cursor-pointer">Show Company</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="show-rating"
-                    checked={showRating}
-                    onCheckedChange={setShowRating}
-                  />
-                  <Label htmlFor="show-rating" className="cursor-pointer">Show Rating</Label>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
@@ -139,13 +108,13 @@ const Testimonials = () => {
             ) : filteredFeedback.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredFeedback.map((item) => (
-                  <TestimonialCard
-                    key={item.id}
-                    feedback={item}
-                    showName={showName}
-                    showCompany={showCompany}
-                    showRating={showRating}
-                  />
+              <TestimonialCard 
+                key={item.id} 
+                feedback={item}
+                showName={showName}
+                showCompany={showCompany}
+                showRating={true}
+              />
                 ))}
               </div>
             ) : (

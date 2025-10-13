@@ -2351,6 +2351,9 @@ export type Database = {
           show_knowledge: boolean | null
           show_protected_projects: boolean | null
           show_recommendations: boolean | null
+          show_testimonial_company: boolean | null
+          show_testimonial_name: boolean | null
+          show_testimonial_rating_header: boolean | null
           social_facebook: string | null
           social_github: string | null
           social_linkedin: string | null
@@ -2379,6 +2382,9 @@ export type Database = {
           show_knowledge?: boolean | null
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
+          show_testimonial_company?: boolean | null
+          show_testimonial_name?: boolean | null
+          show_testimonial_rating_header?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null
@@ -2407,6 +2413,9 @@ export type Database = {
           show_knowledge?: boolean | null
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
+          show_testimonial_company?: boolean | null
+          show_testimonial_name?: boolean | null
+          show_testimonial_rating_header?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null

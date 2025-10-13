@@ -197,7 +197,27 @@ const generateFreshRecommendations = async (
       testimonialQuery = testimonialQuery.not('id', 'in', `(${excludeIds.join(',')})`);
     }
 
-    const { data: testimonials } = await testimonialQuery;
+    let { data: testimonials } = await testimonialQuery;
+
+    // Fallback: if no featured testimonials, get highest-rated approved ones
+    if (!testimonials || testimonials.length === 0) {
+      console.info('No featured testimonials found, using fallback query for approved testimonials');
+      let fallbackQuery = supabase
+        .from('course_feedback')
+        .select('*')
+        .eq('is_approved', true)
+        .order('rating', { ascending: false })
+        .limit(limit);
+
+      if (excludeIds.length > 0) {
+        fallbackQuery = fallbackQuery.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
+
+      const { data: fallbackTestimonials } = await fallbackQuery;
+      testimonials = fallbackTestimonials;
+    }
+
+    console.info(`Testimonials fetched: ${testimonials?.length || 0} (featured check completed)`);
     
     testimonials?.forEach((testimonial, index) => {
       testimonialRecs.push({

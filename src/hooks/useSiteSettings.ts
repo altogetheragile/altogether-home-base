@@ -34,6 +34,9 @@ export interface SiteSettings {
   show_dynamic_pages: boolean | null;
   show_dashboard: boolean | null;
   show_recommendations: boolean | null;
+  show_testimonial_name: boolean | null;
+  show_testimonial_company: boolean | null;
+  show_testimonial_rating_header: boolean | null;
 }
 
 export const useSiteSettings = () => {
