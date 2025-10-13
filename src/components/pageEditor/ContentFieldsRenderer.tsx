@@ -579,6 +579,64 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
         </div>
       );
 
+    case 'recommendations':
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="recommendations-title">Section Title</Label>
+            <Input
+              id="recommendations-title"
+              value={content?.title || ''}
+              onChange={(e) => onContentChange('title', e.target.value)}
+              placeholder="Recommended for You"
+            />
+          </div>
+          <div>
+            <Label htmlFor="recommendations-type">Content Type</Label>
+            <Select
+              value={content?.contentType || 'all'}
+              onValueChange={(value) => onContentChange('contentType', value === 'all' ? undefined : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select content type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Content (Mixed)</SelectItem>
+                <SelectItem value="technique">Knowledge Items Only</SelectItem>
+                <SelectItem value="event">Events Only</SelectItem>
+                <SelectItem value="blog">Blog Posts Only</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Choose what type of content to recommend
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="recommendations-limit">Number of Items</Label>
+            <Input
+              id="recommendations-limit"
+              type="number"
+              min="1"
+              max="12"
+              value={content?.limit || 6}
+              onChange={(e) => onContentChange('limit', parseInt(e.target.value) || 6)}
+              placeholder="6"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              How many items to show (1-12)
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="recommendations-show-view-all"
+              checked={content?.showViewAll !== false}
+              onCheckedChange={(checked) => onContentChange('showViewAll', checked)}
+            />
+            <Label htmlFor="recommendations-show-view-all">Show "View All" button</Label>
+          </div>
+        </div>
+      );
+
     default:
       return null;
   }

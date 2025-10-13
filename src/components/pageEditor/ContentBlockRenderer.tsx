@@ -8,6 +8,7 @@ import { SectionBlock } from './components/SectionBlock';
 import { TextBlock } from './components/TextBlock';
 import { ImageBlock } from './components/ImageBlock';
 import { VideoBlock } from './components/VideoBlock';
+import { RecommendationsBlock } from './components/RecommendationsBlock';
 
 interface ContentBlockRendererProps {
   block: ContentBlock;
@@ -47,6 +48,8 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
         return <ImageBlock block={normalizedBlock} />;
       case 'video':
         return <VideoBlock block={normalizedBlock} />;
+      case 'recommendations':
+        return <RecommendationsBlock block={normalizedBlock} />;
       default:
         console.warn('Unknown block type:', String(block.type));
         return (

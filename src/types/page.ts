@@ -13,12 +13,20 @@ export interface Page {
 export interface ContentBlock {
   id: string;
   page_id: string;
-  type: 'text' | 'image' | 'video' | 'hero' | 'section';
+  type: 'text' | 'image' | 'video' | 'hero' | 'section' | 'recommendations';
   content: Record<string, any>;
   position: number;
   is_visible: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface RecommendationsBlockContent {
+  title?: string;
+  contentType?: 'technique' | 'event' | 'blog' | 'all';
+  limit?: number;
+  showViewAll?: boolean;
+  excludeIds?: string[];
 }
 
 export interface PageWithBlocks extends Page {
