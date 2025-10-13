@@ -100,7 +100,7 @@ const FeedbackImportManager = () => {
           source_url: row.Source_Link || null,
           submitted_at: parseDate(row.Creation_Date),
           is_approved: autoApprove || isLinkedIn,
-          is_featured: isLinkedIn && rating && rating >= 9,
+          is_featured: isLinkedIn && rating !== null && rating >= 9,
           created_by: user?.id,
         };
       });
