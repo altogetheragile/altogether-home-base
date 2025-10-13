@@ -31,6 +31,7 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
       opts={{
         align: "start",
         loop: true,
+        slidesToScroll: 1,
       }}
       onMouseEnter={plugin.current.stop}
       onMouseLeave={plugin.current.reset}
