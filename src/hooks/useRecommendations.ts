@@ -94,7 +94,12 @@ const generateFreshRecommendations = async (
   excludeIds: string[] = [],
   userId?: string
 ) => {
-  const types = contentTypes && contentTypes.length > 0 ? contentTypes : ['technique', 'event', 'blog'];
+  // If explicitly empty array, return nothing
+  if (contentTypes !== undefined && contentTypes.length === 0) {
+    return [];
+  }
+  // If undefined, use defaults; otherwise use provided types
+  const types = contentTypes || ['technique', 'event', 'blog'];
 
   const techRecs: any[] = [];
   const eventRecs: any[] = [];

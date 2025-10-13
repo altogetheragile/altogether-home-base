@@ -24,10 +24,10 @@ export const TestimonialBubble = ({ feedback, colorIndex = 0 }: TestimonialBubbl
     : feedback.comment;
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
+    <div className="flex flex-col items-center gap-3 p-2">
       {/* Speech Bubble */}
       <div 
-        className="relative rounded-2xl px-6 py-6 shadow-md min-h-[160px] flex items-center justify-center w-full"
+        className="relative rounded-2xl px-6 py-4 shadow-md min-h-[120px] flex items-center justify-center w-full"
         style={{ backgroundColor: color.bg }}
       >
         {/* Bubble Tail */}

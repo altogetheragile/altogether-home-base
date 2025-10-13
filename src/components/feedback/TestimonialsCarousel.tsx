@@ -24,13 +24,19 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
   );
 
   const displayedTestimonials = testimonials.slice(0, limit);
+  
+  // Only show arrows if there are enough items to scroll
+  // Desktop (lg): shows 3 items, need > 3
+  // Tablet (md): shows 2 items, need > 2
+  // Mobile: shows 1 item, need > 1
+  const showArrows = displayedTestimonials.length > 1;
 
   return (
     <Carousel
       plugins={[plugin.current]}
       opts={{
         align: "start",
-        loop: true,
+        loop: displayedTestimonials.length > 3,
         slidesToScroll: 1,
       }}
       onMouseEnter={plugin.current.stop}
@@ -47,8 +53,12 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="hidden md:flex" />
-      <CarouselNext className="hidden md:flex" />
+      {showArrows && (
+        <>
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </>
+      )}
     </Carousel>
   );
 };
