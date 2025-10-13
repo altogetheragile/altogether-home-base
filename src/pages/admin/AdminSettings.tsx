@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -24,7 +24,7 @@ export default function AdminSettings() {
   });
 
   // Update local state when settings load
-  useState(() => {
+  useEffect(() => {
     if (settings) {
       setLocalSettings({
         show_events: settings.show_events ?? false,
@@ -39,7 +39,7 @@ export default function AdminSettings() {
         show_recommendations: settings.show_recommendations ?? false,
       });
     }
-  });
+  }, [settings]);
 
   const handleToggle = (key: keyof typeof localSettings) => {
     setLocalSettings(prev => ({ ...prev, [key]: !prev[key] }));
