@@ -62,7 +62,7 @@ export const FeaturedTestimonials = () => {
         >
           <CarouselContent className="-ml-4">
             {testimonials.map((testimonial, index) => (
-              <CarouselItem key={testimonial.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+              <CarouselItem key={testimonial.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/2 xl:basis-1/3">
                 <TestimonialBubble 
                   feedback={testimonial} 
                   colorIndex={index}
