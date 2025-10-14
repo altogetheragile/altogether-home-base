@@ -53,7 +53,9 @@ export const FeaturedTestimonials = () => {
         <Carousel
           opts={{
             align: "start",
-            loop: true,
+            loop: (testimonials?.length ?? 0) > 1,
+            slidesToScroll: 1,
+            containScroll: "trimSnaps",
           }}
           plugins={[plugin.current]}
           className="w-full"
