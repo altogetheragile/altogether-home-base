@@ -34,7 +34,14 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
   }
 
   if (!testimonials || testimonials.length === 0) {
-    return null;
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-foreground mb-6">{title}</h2>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No testimonials available at the moment</p>
+        </div>
+      </div>
+    );
   }
 
   return (
