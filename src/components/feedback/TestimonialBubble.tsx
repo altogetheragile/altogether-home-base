@@ -18,7 +18,7 @@ export const TestimonialBubble = ({ feedback, colorIndex = 0 }: TestimonialBubbl
   const displayName = `${feedback.first_name} ${feedback.last_name}`;
   
   // Truncate comment for bubble display
-  const maxLength = 150;
+  const maxLength = 250;
   const displayComment = feedback.comment.length > maxLength 
     ? `${feedback.comment.substring(0, maxLength)}...` 
     : feedback.comment;
@@ -27,7 +27,7 @@ export const TestimonialBubble = ({ feedback, colorIndex = 0 }: TestimonialBubbl
     <div className="flex flex-col items-center gap-3 p-2">
       {/* Speech Bubble */}
       <div 
-        className="relative rounded-2xl px-6 py-4 shadow-md min-h-[120px] flex items-center justify-center w-full"
+        className="relative rounded-2xl px-6 py-6 shadow-md min-h-[200px] flex items-center justify-center w-full"
         style={{ backgroundColor: color.bg }}
       >
         {/* Bubble Tail */}
