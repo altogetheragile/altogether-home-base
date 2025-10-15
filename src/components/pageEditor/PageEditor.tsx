@@ -76,11 +76,20 @@ export const PageEditor: React.FC = () => {
     } else {
       // Create new block
       const maxPosition = Math.max(0, ...page.content_blocks.map(b => b.position));
+      
+      // Ensure required fields are present
+      if (!blockData.type) {
+        console.error('Block type is required');
+        return;
+      }
+      
       createContentBlock.mutate({
         page_id: page.id,
+        type: blockData.type,
+        content: blockData.content || {},
         position: maxPosition + 1,
-        ...blockData,
-      } as ContentBlockCreate);
+        is_visible: blockData.is_visible !== false,
+      });
     }
   };
 
