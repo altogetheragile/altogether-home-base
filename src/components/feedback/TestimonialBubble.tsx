@@ -4,6 +4,9 @@ import { User } from "lucide-react";
 interface TestimonialBubbleProps {
   feedback: CourseFeedback;
   colorIndex?: number;
+  showName?: boolean;
+  showCompany?: boolean;
+  showJobTitle?: boolean;
 }
 
 const BUBBLE_COLORS = [
@@ -13,7 +16,13 @@ const BUBBLE_COLORS = [
   { bg: "hsl(210 100% 90%)", text: "hsl(210 100% 40%)" }, // Light Blue
 ];
 
-export const TestimonialBubble = ({ feedback, colorIndex = 0 }: TestimonialBubbleProps) => {
+export const TestimonialBubble = ({ 
+  feedback, 
+  colorIndex = 0,
+  showName = true,
+  showCompany = true,
+  showJobTitle = true
+}: TestimonialBubbleProps) => {
   const color = BUBBLE_COLORS[colorIndex % BUBBLE_COLORS.length];
   const displayName = `${feedback.first_name} ${feedback.last_name}`;
   
@@ -57,11 +66,13 @@ export const TestimonialBubble = ({ feedback, colorIndex = 0 }: TestimonialBubbl
         
         {/* Name and Details */}
         <div className="text-center">
-          <p className="font-semibold text-sm text-foreground">{displayName}</p>
-          {feedback.job_title && (
+          {showName && (
+            <p className="font-semibold text-sm text-foreground">{displayName}</p>
+          )}
+          {showJobTitle && feedback.job_title && (
             <p className="text-xs text-muted-foreground">{feedback.job_title}</p>
           )}
-          {feedback.company && (
+          {showCompany && feedback.company && (
             <p className="text-xs text-muted-foreground">{feedback.company}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1 font-medium">

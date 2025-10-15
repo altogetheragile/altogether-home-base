@@ -17,6 +17,9 @@ interface TestimonialsCarouselProps {
   autoPlayDelay?: number;
   showArrows?: boolean;
   showDots?: boolean;
+  showNames?: boolean;
+  showCompanies?: boolean;
+  showJobTitles?: boolean;
 }
 
 export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({ 
@@ -25,7 +28,10 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
   autoPlay = true,
   autoPlayDelay = 4000,
   showArrows = true,
-  showDots = false
+  showDots = false,
+  showNames = true,
+  showCompanies = true,
+  showJobTitles = true
 }) => {
   const plugin = useRef(
     Autoplay({ delay: autoPlayDelay, stopOnInteraction: true })
@@ -52,6 +58,9 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
             <TestimonialBubble 
               feedback={testimonial} 
               colorIndex={index}
+              showName={showNames}
+              showCompany={showCompanies}
+              showJobTitle={showJobTitles}
             />
           </CarouselItem>
         ))}

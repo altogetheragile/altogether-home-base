@@ -3,7 +3,7 @@ import { ContentBlock } from '@/types/page';
 import { TestimonialsCarousel } from '@/components/feedback/TestimonialsCarousel';
 import { useCourseFeedback } from '@/hooks/useCourseFeedback';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getStyleClasses } from '../utils/backgroundUtils';
+import { getStyleClasses, getInlineStyles } from '../utils/backgroundUtils';
 
 interface TestimonialsCarouselBlockProps {
   block: ContentBlock;
@@ -13,6 +13,7 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
   const content = block.content || {};
   const styles = useMemo(() => (content.styles && typeof content.styles === 'object') ? content.styles : {}, [content.styles]);
   const styleClasses = getStyleClasses(styles);
+  const inlineStyles = getInlineStyles(styles);
   
   const title = content.title || 'What Our Attendees Say';
   const limit = content.limit || 6;
@@ -21,6 +22,9 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
   const showArrows = content.showArrows !== false;
   const showDots = content.showDots || false;
   const onlyFeatured = content.onlyFeatured || false;
+  const showNames = content.showNames !== false;
+  const showCompanies = content.showCompanies !== false;
+  const showJobTitles = content.showJobTitles !== false;
 
   const { data: allTestimonials, isLoading } = useCourseFeedback({ 
     isApproved: true,
@@ -31,7 +35,7 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
 
   if (isLoading) {
     return (
-      <div className={`container mx-auto px-4 py-12 ${styleClasses}`}>
+      <div className={`container mx-auto px-4 py-12 ${styleClasses}`} style={inlineStyles}>
         <Skeleton className="h-8 w-64 mb-6" />
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -44,7 +48,7 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
 
   if (!testimonials || testimonials.length === 0) {
     return (
-      <div className={`container mx-auto px-4 py-12 ${styleClasses}`}>
+      <div className={`container mx-auto px-4 py-12 ${styleClasses}`} style={inlineStyles}>
         <h2 className="text-2xl font-bold text-foreground mb-6">{title}</h2>
         <div className="text-center py-8">
           <p className="text-muted-foreground">No testimonials available at the moment</p>
@@ -54,7 +58,7 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
   }
 
   return (
-    <div className={`container mx-auto px-4 py-12 ${styleClasses}`}>
+    <div className={`container mx-auto px-4 py-12 ${styleClasses}`} style={inlineStyles}>
       <h2 className="text-2xl font-bold text-foreground mb-6">{title}</h2>
       <TestimonialsCarousel
         testimonials={testimonials}
@@ -63,6 +67,9 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
         autoPlayDelay={autoPlayDelay}
         showArrows={showArrows}
         showDots={showDots}
+        showNames={showNames}
+        showCompanies={showCompanies}
+        showJobTitles={showJobTitles}
       />
     </div>
   );

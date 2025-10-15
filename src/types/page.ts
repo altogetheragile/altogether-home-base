@@ -36,6 +36,10 @@ export interface TestimonialsCarouselBlockContent {
   autoPlayDelay?: number;
   showArrows?: boolean;
   showDots?: boolean;
+  showNames?: boolean;
+  showCompanies?: boolean;
+  showJobTitles?: boolean;
+  onlyFeatured?: boolean;
 }
 
 export interface KnowledgeItemsBlockContent {

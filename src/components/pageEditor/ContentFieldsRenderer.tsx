@@ -793,6 +793,43 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
             />
             <Label htmlFor="testimonials-dots">Show dots indicators</Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="testimonials-only-featured"
+              checked={content?.onlyFeatured || false}
+              onCheckedChange={(checked) => onContentChange('onlyFeatured', checked)}
+            />
+            <Label htmlFor="testimonials-only-featured">Show only featured testimonials</Label>
+          </div>
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-medium mb-3">Display Options</h4>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="testimonials-show-names"
+                  checked={content?.showNames !== false}
+                  onCheckedChange={(checked) => onContentChange('showNames', checked)}
+                />
+                <Label htmlFor="testimonials-show-names">Show names</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="testimonials-show-companies"
+                  checked={content?.showCompanies !== false}
+                  onCheckedChange={(checked) => onContentChange('showCompanies', checked)}
+                />
+                <Label htmlFor="testimonials-show-companies">Show companies</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="testimonials-show-job-titles"
+                  checked={content?.showJobTitles !== false}
+                  onCheckedChange={(checked) => onContentChange('showJobTitles', checked)}
+                />
+                <Label htmlFor="testimonials-show-job-titles">Show job titles</Label>
+              </div>
+            </div>
+          </div>
         </div>
       );
 
