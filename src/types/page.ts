@@ -13,7 +13,7 @@ export interface Page {
 export interface ContentBlock {
   id: string;
   page_id: string;
-  type: 'text' | 'image' | 'video' | 'hero' | 'section' | 'recommendations';
+  type: 'text' | 'image' | 'video' | 'hero' | 'section' | 'recommendations' | 'testimonials-carousel';
   content: Record<string, any>;
   position: number;
   is_visible: boolean;
@@ -27,6 +27,15 @@ export interface RecommendationsBlockContent {
   limit?: number;
   showViewAll?: boolean;
   excludeIds?: string[];
+}
+
+export interface TestimonialsCarouselBlockContent {
+  title?: string;
+  limit?: number;
+  autoPlay?: boolean;
+  autoPlayDelay?: number;
+  showArrows?: boolean;
+  showDots?: boolean;
 }
 
 export interface PageWithBlocks extends Page {

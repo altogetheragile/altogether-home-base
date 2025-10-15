@@ -13,34 +13,42 @@ import Autoplay from "embla-carousel-autoplay";
 interface TestimonialsCarouselProps {
   testimonials: CourseFeedback[];
   limit?: number;
+  autoPlay?: boolean;
+  autoPlayDelay?: number;
+  showArrows?: boolean;
+  showDots?: boolean;
 }
 
 export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({ 
   testimonials,
-  limit = 6 
+  limit = 6,
+  autoPlay = true,
+  autoPlayDelay = 4000,
+  showArrows = true,
+  showDots = false
 }) => {
   const plugin = useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: autoPlayDelay, stopOnInteraction: true })
   );
 
   const displayedTestimonials = testimonials.slice(0, limit);
 
   return (
     <Carousel
-      plugins={[plugin.current]}
+      plugins={autoPlay ? [plugin.current] : []}
       opts={{
         align: "start",
         loop: displayedTestimonials.length > 1,
         slidesToScroll: 1,
         containScroll: "trimSnaps",
       }}
-      onMouseEnter={plugin.current.stop}
-      onMouseLeave={plugin.current.reset}
+      onMouseEnter={autoPlay ? plugin.current.stop : undefined}
+      onMouseLeave={autoPlay ? plugin.current.reset : undefined}
       className="w-full"
     >
       <CarouselContent className="-ml-4">
         {displayedTestimonials.map((testimonial, index) => (
-          <CarouselItem key={testimonial.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/2">
+          <CarouselItem key={testimonial.id} className="pl-4 basis-full sm:basis-1/2">
             <TestimonialBubble 
               feedback={testimonial} 
               colorIndex={index}
@@ -48,8 +56,12 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="hidden md:flex" />
-      <CarouselNext className="hidden md:flex" />
+      {showArrows && (
+        <>
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </>
+      )}
     </Carousel>
   );
 };

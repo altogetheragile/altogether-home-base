@@ -646,22 +646,6 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
                   Blog Posts
                 </Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="contentType-testimonial"
-                  checked={content?.contentTypes?.includes('testimonial') ?? false}
-                  onCheckedChange={(checked) => {
-                    const currentTypes = content?.contentTypes || [];
-                    const newTypes = checked
-                      ? [...currentTypes.filter((t: string) => t !== 'testimonial'), 'testimonial']
-                      : currentTypes.filter((t: string) => t !== 'testimonial');
-                    onContentChange('contentTypes', newTypes);
-                  }}
-                />
-                <Label htmlFor="contentType-testimonial" className="font-normal cursor-pointer">
-                  Testimonials
-                </Label>
-              </div>
             </div>
           </div>
           <div>
@@ -686,6 +670,78 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
               onCheckedChange={(checked) => onContentChange('showViewAll', checked)}
             />
             <Label htmlFor="recommendations-show-view-all">Show "View All" button</Label>
+          </div>
+        </div>
+      );
+
+    case 'testimonials-carousel':
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="testimonials-title">Section Title</Label>
+            <Input
+              id="testimonials-title"
+              value={content?.title || ''}
+              onChange={(e) => onContentChange('title', e.target.value)}
+              placeholder="What Our Attendees Say"
+            />
+          </div>
+          <div>
+            <Label htmlFor="testimonials-limit">Number of Items</Label>
+            <Input
+              id="testimonials-limit"
+              type="number"
+              min="1"
+              max="12"
+              value={content?.limit || 6}
+              onChange={(e) => onContentChange('limit', parseInt(e.target.value) || 6)}
+              placeholder="6"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              How many testimonials to show (1-12)
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="testimonials-autoplay"
+              checked={content?.autoPlay !== false}
+              onCheckedChange={(checked) => onContentChange('autoPlay', checked)}
+            />
+            <Label htmlFor="testimonials-autoplay">Enable auto-play</Label>
+          </div>
+          {content?.autoPlay !== false && (
+            <div>
+              <Label htmlFor="testimonials-delay">Auto-play Delay (milliseconds)</Label>
+              <Input
+                id="testimonials-delay"
+                type="number"
+                min="1000"
+                max="10000"
+                step="1000"
+                value={content?.autoPlayDelay || 4000}
+                onChange={(e) => onContentChange('autoPlayDelay', parseInt(e.target.value) || 4000)}
+                placeholder="4000"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Time between slides (1000ms = 1 second)
+              </p>
+            </div>
+          )}
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="testimonials-arrows"
+              checked={content?.showArrows !== false}
+              onCheckedChange={(checked) => onContentChange('showArrows', checked)}
+            />
+            <Label htmlFor="testimonials-arrows">Show navigation arrows</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="testimonials-dots"
+              checked={content?.showDots || false}
+              onCheckedChange={(checked) => onContentChange('showDots', checked)}
+            />
+            <Label htmlFor="testimonials-dots">Show dots indicators</Label>
           </div>
         </div>
       );
