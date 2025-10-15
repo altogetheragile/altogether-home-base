@@ -37,14 +37,12 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
     Autoplay({ delay: autoPlayDelay, stopOnInteraction: true })
   );
 
-  const displayedTestimonials = testimonials.slice(0, limit);
-
   return (
     <Carousel
       plugins={autoPlay ? [plugin.current] : []}
       opts={{
         align: "start",
-        loop: displayedTestimonials.length > 1,
+        loop: testimonials.length > 1,
         slidesToScroll: 1,
         containScroll: "trimSnaps",
       }}
@@ -52,8 +50,8 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
       onMouseLeave={autoPlay ? plugin.current.reset : undefined}
       className="w-full"
     >
-      <CarouselContent className="-ml-4">
-        {displayedTestimonials.map((testimonial, index) => (
+      <CarouselContent>
+        {testimonials.map((testimonial, index) => (
           <CarouselItem key={testimonial.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
             <TestimonialBubble 
               feedback={testimonial} 
@@ -65,10 +63,10 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
           </CarouselItem>
         ))}
       </CarouselContent>
-      {showArrows && (
+      {showArrows && testimonials.length > 3 && (
         <>
-          <CarouselPrevious className="hidden md:flex bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg" />
-          <CarouselNext className="hidden md:flex bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg" />
+          <CarouselPrevious className="hidden md:flex z-20 pointer-events-auto bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+          <CarouselNext className="hidden md:flex z-20 pointer-events-auto bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary" />
         </>
       )}
     </Carousel>

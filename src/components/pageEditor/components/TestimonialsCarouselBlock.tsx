@@ -31,7 +31,7 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
     isFeatured: onlyFeatured ? true : undefined
   });
   
-  const testimonials = allTestimonials?.slice(0, limit);
+  const testimonials = allTestimonials || [];
 
   if (isLoading) {
     return (
