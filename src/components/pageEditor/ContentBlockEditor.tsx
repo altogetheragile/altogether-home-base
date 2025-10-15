@@ -110,7 +110,10 @@ export const ContentBlockEditor: React.FC<ContentBlockEditorProps> = ({
                   <SelectItem value="text">Text Block</SelectItem>
                   <SelectItem value="image">Image</SelectItem>
                   <SelectItem value="video">Video</SelectItem>
-                  <SelectItem value="recommendations">Recommendations</SelectItem>
+                  <SelectItem value="knowledge-items">Knowledge Items</SelectItem>
+                  <SelectItem value="events-list">Events List</SelectItem>
+                  <SelectItem value="blog-posts">Blog Posts</SelectItem>
+                  <SelectItem value="recommendations">Recommendations (Mixed)</SelectItem>
                   <SelectItem value="testimonials-carousel">Testimonials Carousel</SelectItem>
                 </SelectContent>
               </Select>

@@ -580,9 +580,59 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
         </div>
       );
 
+    case 'knowledge-items':
+    case 'events-list':
+    case 'blog-posts':
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="section-title">Section Title</Label>
+            <Input
+              id="section-title"
+              value={content?.title || ''}
+              onChange={(e) => onContentChange('title', e.target.value)}
+              placeholder={
+                blockType === 'knowledge-items' ? 'Knowledge Items' :
+                blockType === 'events-list' ? 'Upcoming Events' :
+                'Latest Blog Posts'
+              }
+            />
+          </div>
+          <div>
+            <Label htmlFor="item-limit">Number of Items</Label>
+            <Input
+              id="item-limit"
+              type="number"
+              min="1"
+              max="12"
+              value={content?.limit || 6}
+              onChange={(e) => onContentChange('limit', parseInt(e.target.value) || 6)}
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              How many items to show (1-12)
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-view-all"
+              checked={content?.showViewAll !== false}
+              onCheckedChange={(checked) => onContentChange('showViewAll', checked)}
+            />
+            <Label htmlFor="show-view-all">Show "View All" button</Label>
+          </div>
+        </div>
+      );
+
     case 'recommendations':
       return (
         <div className="space-y-4">
+          <div className="p-3 bg-muted rounded-lg mb-4">
+            <p className="text-sm text-muted-foreground">
+              This block displays mixed content from multiple sources. 
+              For single content type sections, use the specific block types 
+              (Knowledge Items, Events List, or Blog Posts).
+            </p>
+          </div>
           <div>
             <Label htmlFor="recommendations-title">Section Title</Label>
             <Input

@@ -10,6 +10,9 @@ import { ImageBlock } from './components/ImageBlock';
 import { VideoBlock } from './components/VideoBlock';
 import { RecommendationsBlock } from './components/RecommendationsBlock';
 import { TestimonialsCarouselBlock } from './components/TestimonialsCarouselBlock';
+import { KnowledgeItemsBlock } from './components/KnowledgeItemsBlock';
+import { EventsListBlock } from './components/EventsListBlock';
+import { BlogPostsBlock } from './components/BlogPostsBlock';
 
 interface ContentBlockRendererProps {
   block: ContentBlock;
@@ -53,6 +56,12 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
         return <RecommendationsBlock block={normalizedBlock} />;
       case 'testimonials-carousel':
         return <TestimonialsCarouselBlock block={normalizedBlock} />;
+      case 'knowledge-items':
+        return <KnowledgeItemsBlock block={normalizedBlock} />;
+      case 'events-list':
+        return <EventsListBlock block={normalizedBlock} />;
+      case 'blog-posts':
+        return <BlogPostsBlock block={normalizedBlock} />;
       default:
         console.warn('Unknown block type:', String(block.type));
         return (
