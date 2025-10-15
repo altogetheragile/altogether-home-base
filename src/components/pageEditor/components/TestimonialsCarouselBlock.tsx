@@ -1,7 +1,7 @@
 import React from 'react';
 import { ContentBlock } from '@/types/page';
 import { TestimonialsCarousel } from '@/components/feedback/TestimonialsCarousel';
-import { useFeaturedFeedback } from '@/hooks/useCourseFeedback';
+import { useCourseFeedback } from '@/hooks/useCourseFeedback';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface TestimonialsCarouselBlockProps {
@@ -17,8 +17,14 @@ export const TestimonialsCarouselBlock: React.FC<TestimonialsCarouselBlockProps>
   const autoPlayDelay = content.autoPlayDelay || 4000;
   const showArrows = content.showArrows !== false;
   const showDots = content.showDots || false;
+  const onlyFeatured = content.onlyFeatured || false;
 
-  const { data: testimonials, isLoading } = useFeaturedFeedback(limit);
+  const { data: allTestimonials, isLoading } = useCourseFeedback({ 
+    isApproved: true,
+    isFeatured: onlyFeatured ? true : undefined
+  });
+  
+  const testimonials = allTestimonials?.slice(0, limit);
 
   if (isLoading) {
     return (
