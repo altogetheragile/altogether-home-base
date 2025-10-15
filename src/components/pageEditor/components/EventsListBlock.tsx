@@ -15,14 +15,13 @@ export const EventsListBlock: React.FC<EventsListBlockProps> = ({ block }) => {
   const excludeIds = content.excludeIds || [];
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <RecommendationsSection
-        title={title}
-        contentTypes={['event']}
-        limit={limit}
-        showViewAll={showViewAll}
-        excludeIds={excludeIds}
-      />
-    </div>
+    <RecommendationsSection
+      className="container mx-auto px-4 py-12"
+      title={title}
+      contentTypes={['event']}
+      limit={limit}
+      showViewAll={showViewAll}
+      excludeIds={excludeIds}
+    />
   );
 };
