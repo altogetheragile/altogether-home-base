@@ -67,8 +67,8 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
       </CarouselContent>
       {showArrows && (
         <>
-          <CarouselPrevious className="hidden md:flex" />
-          <CarouselNext className="hidden md:flex" />
+          <CarouselPrevious className="hidden md:flex bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg" />
+          <CarouselNext className="hidden md:flex bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg" />
         </>
       )}
     </Carousel>

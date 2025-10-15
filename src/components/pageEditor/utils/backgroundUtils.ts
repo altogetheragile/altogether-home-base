@@ -57,7 +57,11 @@ export const getInlineStyles = (styles: any) => {
   }
   if (styles.customBorderColor && styles.customBorderColor !== 'default') {
     inlineStyles.borderColor = styles.customBorderColor;
-    inlineStyles.borderWidth = '1px';
+    inlineStyles.borderWidth = styles.borderWidth || '2px';
+    inlineStyles.borderStyle = 'solid';
+  } else if (styles.borderColor && styles.borderColor !== 'default') {
+    // Handle Tailwind border color classes
+    inlineStyles.borderWidth = styles.borderWidth || '2px';
     inlineStyles.borderStyle = 'solid';
   }
 
@@ -68,14 +72,21 @@ export const getStyleClasses = (styles: any) => {
   // Ensure styles is an object and all values are strings
   const safeStyles = styles || {};
   
-  return [
+  const classes = [
     typeof safeStyles.fontFamily === 'string' ? safeStyles.fontFamily : '',
     typeof safeStyles.backgroundColor === 'string' ? safeStyles.backgroundColor : '',
     typeof safeStyles.textColor === 'string' ? safeStyles.textColor : '',
-    typeof safeStyles.borderColor === 'string' ? safeStyles.borderColor : '',
     typeof safeStyles.padding === 'string' ? safeStyles.padding : '',
     typeof safeStyles.textAlign === 'string' ? safeStyles.textAlign : '',
     typeof safeStyles.fontSize === 'string' ? safeStyles.fontSize : '',
     typeof safeStyles.fontWeight === 'string' ? safeStyles.fontWeight : '',
-  ].filter(Boolean).join(' ');
+  ].filter(Boolean);
+  
+  // Add border classes if borderColor is set
+  if (typeof safeStyles.borderColor === 'string' && safeStyles.borderColor) {
+    classes.push(safeStyles.borderColor);
+    classes.push('border-2'); // Add border width class
+  }
+  
+  return classes.join(' ');
 };
