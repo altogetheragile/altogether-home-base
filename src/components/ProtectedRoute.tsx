@@ -95,12 +95,12 @@ const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false 
   }, [user]);
 
   // Show enhanced loading state while checking authentication, role, and AAL level (if required)
-  if (loading || roleLoading || (requireAAL2 && (aalLoading || aalLevel === null))) {
+  if (loading || (user && roleLoading) || (user && requireAAL2 && (aalLoading || aalLevel === null))) {
     const loadingReasons = [];
     if (loading) loadingReasons.push('auth');
-    if (roleLoading) loadingReasons.push('role'); 
-    if (requireAAL2 && aalLoading) loadingReasons.push('mfa');
-    if (requireAAL2 && aalLevel === null) loadingReasons.push('mfa-level');
+    if (user && roleLoading) loadingReasons.push('role'); 
+    if (user && requireAAL2 && aalLoading) loadingReasons.push('mfa');
+    if (user && requireAAL2 && aalLevel === null) loadingReasons.push('mfa-level');
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
