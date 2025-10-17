@@ -24,6 +24,17 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
   const { data: role, isLoading: roleLoading } = useUserRole();
   const isAdmin = role === 'admin';
 
+  console.log('🎨 DynamicPageRenderer:', {
+    slug,
+    hasPage: !!page,
+    isLoading,
+    role,
+    roleLoading,
+    isAdmin,
+    pagePublished: page?.is_published,
+    pageInMenu: page?.show_in_main_menu
+  });
+
   if (isLoading || roleLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -38,6 +49,7 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
 
   // Page doesn't exist
   if (!page) {
+    console.log('❌ DynamicPageRenderer: Page not found for slug:', slug);
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
@@ -95,6 +107,7 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
   // Check if this is a special page that should use a custom component
   const SpecialComponent = SPECIAL_PAGE_COMPONENTS[slug];
   if (SpecialComponent) {
+    console.log('✅ DynamicPageRenderer: Rendering special component for:', slug);
     return <SpecialComponent />;
   }
 
