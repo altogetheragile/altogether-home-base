@@ -54,6 +54,10 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
 
   // Page exists but is unpublished - only admins can view
   if (!page.is_published && !isAdmin) {
+    if (import.meta.env.DEV) {
+      console.log(`🔒 Page "${slug}" is unpublished and user is not admin - blocking access`);
+    }
+    
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />

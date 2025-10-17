@@ -59,21 +59,66 @@ export const useSiteSettings = () => {
 
   const updateSettings = useMutation({
     mutationFn: async (updates: Partial<SiteSettings>) => {
-      const { data, error } = await supabase
+      // 1. Update site_settings table
+      const { data: settingsData, error: settingsError } = await supabase
         .from('site_settings')
         .update(updates)
         .eq('id', SETTINGS_ID)
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (settingsError) throw settingsError;
+
+      // 2. Update pages.is_published for special pages
+      const pageUpdates = [];
+      
+      if ('show_blog' in updates) {
+        pageUpdates.push(
+          supabase
+            .from('pages')
+            .update({ is_published: updates.show_blog ?? false })
+            .eq('slug', 'blog')
+        );
+      }
+      
+      if ('show_events' in updates) {
+        pageUpdates.push(
+          supabase
+            .from('pages')
+            .update({ is_published: updates.show_events ?? false })
+            .eq('slug', 'events')
+        );
+      }
+      
+      if ('show_knowledge' in updates) {
+        pageUpdates.push(
+          supabase
+            .from('pages')
+            .update({ is_published: updates.show_knowledge ?? false })
+            .eq('slug', 'knowledge')
+        );
+      }
+
+      // Execute all page updates in parallel
+      if (pageUpdates.length > 0) {
+        const results = await Promise.all(pageUpdates);
+        const pageError = results.find(r => r.error);
+        if (pageError) throw pageError.error;
+      }
+
+      return settingsData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['pages'] });
+      // Also invalidate specific page queries
+      queryClient.invalidateQueries({ queryKey: ['page', 'blog'] });
+      queryClient.invalidateQueries({ queryKey: ['page', 'events'] });
+      queryClient.invalidateQueries({ queryKey: ['page', 'knowledge'] });
+      
       toast({
         title: 'Settings updated',
-        description: 'Footer settings have been saved successfully.',
+        description: 'Site settings and page visibility have been saved successfully.',
       });
     },
     onError: (error) => {
