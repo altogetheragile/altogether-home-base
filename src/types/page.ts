@@ -4,6 +4,7 @@ export interface Page {
   title: string;
   description?: string;
   is_published: boolean;
+  show_in_main_menu: boolean;
   created_at: string;
   updated_at: string;
   created_by?: string;

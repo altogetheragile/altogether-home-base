@@ -69,14 +69,17 @@ export const useSiteSettings = () => {
 
       if (settingsError) throw settingsError;
 
-      // 2. Update pages.is_published for special pages
+      // 2. Update pages.is_published and show_in_main_menu for special pages
       const pageUpdates = [];
       
       if ('show_blog' in updates) {
         pageUpdates.push(
           supabase
             .from('pages')
-            .update({ is_published: updates.show_blog ?? false })
+            .update({ 
+              is_published: updates.show_blog ?? false,
+              show_in_main_menu: updates.show_blog ?? false
+            })
             .eq('slug', 'blog')
         );
       }
@@ -85,7 +88,10 @@ export const useSiteSettings = () => {
         pageUpdates.push(
           supabase
             .from('pages')
-            .update({ is_published: updates.show_events ?? false })
+            .update({ 
+              is_published: updates.show_events ?? false,
+              show_in_main_menu: updates.show_events ?? false
+            })
             .eq('slug', 'events')
         );
       }
@@ -94,7 +100,10 @@ export const useSiteSettings = () => {
         pageUpdates.push(
           supabase
             .from('pages')
-            .update({ is_published: updates.show_knowledge ?? false })
+            .update({ 
+              is_published: updates.show_knowledge ?? false,
+              show_in_main_menu: updates.show_knowledge ?? false
+            })
             .eq('slug', 'knowledge')
         );
       }

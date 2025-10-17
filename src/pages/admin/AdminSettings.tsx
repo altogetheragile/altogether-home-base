@@ -84,7 +84,9 @@ export default function AdminSettings() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="show_events" className="text-base font-medium">Events</Label>
-              <p className="text-sm text-muted-foreground">Show events page in navigation and make it publicly accessible</p>
+              <p className="text-sm text-muted-foreground">
+                Controls navigation visibility AND page accessibility. When OFF: Page is hidden from navigation and non-admins cannot access it. When ON: Page appears in navigation and is publicly accessible.
+              </p>
             </div>
             <Switch
               id="show_events"
@@ -98,7 +100,9 @@ export default function AdminSettings() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="show_knowledge" className="text-base font-medium">Knowledge Base</Label>
-              <p className="text-sm text-muted-foreground">Show knowledge base in navigation and make it publicly accessible</p>
+              <p className="text-sm text-muted-foreground">
+                Controls navigation visibility AND page accessibility. When OFF: Page is hidden from navigation and non-admins cannot access it. When ON: Page appears in navigation and is publicly accessible.
+              </p>
             </div>
             <Switch
               id="show_knowledge"
@@ -112,7 +116,9 @@ export default function AdminSettings() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="show_blog" className="text-base font-medium">Blog</Label>
-              <p className="text-sm text-muted-foreground">Show blog in navigation and make it publicly accessible</p>
+              <p className="text-sm text-muted-foreground">
+                Controls navigation visibility AND page accessibility. When OFF: Page is hidden from navigation and non-admins cannot access it. When ON: Page appears in navigation and is publicly accessible.
+              </p>
             </div>
             <Switch
               id="show_blog"

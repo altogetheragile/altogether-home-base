@@ -2037,6 +2037,7 @@ export type Database = {
           description: string | null
           id: string
           is_published: boolean | null
+          show_in_main_menu: boolean | null
           slug: string
           title: string
           updated_at: string
@@ -2048,6 +2049,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean | null
+          show_in_main_menu?: boolean | null
           slug: string
           title: string
           updated_at?: string
@@ -2059,6 +2061,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean | null
+          show_in_main_menu?: boolean | null
           slug?: string
           title?: string
           updated_at?: string
