@@ -48,7 +48,7 @@ const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false 
         }
       } catch {
         if (!cancelled) {
-          setAalLevel(null);
+          setAalLevel('aal1'); // Non-blocking: treat as AAL1 on error
           setHasMfaFactors(false);
         }
       } finally {
@@ -94,13 +94,18 @@ const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false 
     }
   }, [user]);
 
+  // Early redirect for unauthenticated users - no need to show loading
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   // Show enhanced loading state while checking authentication, role, and AAL level (if required)
-  if (loading || (user && roleLoading) || (user && requireAAL2 && (aalLoading || aalLevel === null))) {
+  if (loading || (user && roleLoading) || (user && requireAAL2 && hasMfaFactors && (aalLoading || aalLevel === null))) {
     const loadingReasons = [];
     if (loading) loadingReasons.push('auth');
     if (user && roleLoading) loadingReasons.push('role'); 
-    if (user && requireAAL2 && aalLoading) loadingReasons.push('mfa');
-    if (user && requireAAL2 && aalLevel === null) loadingReasons.push('mfa-level');
+    if (user && requireAAL2 && hasMfaFactors && aalLoading) loadingReasons.push('mfa');
+    if (user && requireAAL2 && hasMfaFactors && aalLevel === null) loadingReasons.push('mfa-level');
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
