@@ -3,6 +3,17 @@ import { usePage } from '@/hooks/usePages';
 import { ContentBlockRenderer } from './pageEditor/ContentBlockRenderer';
 import Navigation from './Navigation';
 import Footer from './Footer';
+import { useUserRole } from '@/hooks/useUserRole';
+import Events from '@/pages/Events';
+import Blog from '@/pages/Blog';
+import Knowledge from '@/pages/Knowledge';
+
+// Map special page slugs to their custom components
+const SPECIAL_PAGE_COMPONENTS: Record<string, React.ComponentType> = {
+  'events': Events,
+  'blog': Blog,
+  'knowledge': Knowledge,
+};
 
 interface DynamicPageRendererProps {
   slug: string;
@@ -10,6 +21,8 @@ interface DynamicPageRendererProps {
 
 export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }) => {
   const { data: page, isLoading } = usePage(slug);
+  const { data: role } = useUserRole();
+  const isAdmin = role === 'admin';
 
   if (isLoading) {
     return (
@@ -23,7 +36,8 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
     );
   }
 
-  if (!page || !page.is_published) {
+  // Page doesn't exist
+  if (!page) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
@@ -36,6 +50,28 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
         <Footer />
       </div>
     );
+  }
+
+  // Page exists but is unpublished - only admins can view
+  if (!page.is_published && !isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
+            <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Check if this is a special page that should use a custom component
+  const SpecialComponent = SPECIAL_PAGE_COMPONENTS[slug];
+  if (SpecialComponent) {
+    return <SpecialComponent />;
   }
 
   return (

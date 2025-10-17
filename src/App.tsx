@@ -89,10 +89,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/knowledge" element={<Knowledge />} />
               <Route path="/knowledge/:slug" element={<KnowledgeDetail />} />
               <Route path="/testimonials" element={<Testimonials />} />
               <Route path="/auth" element={<Auth />} />
