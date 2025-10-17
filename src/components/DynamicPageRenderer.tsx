@@ -21,10 +21,10 @@ interface DynamicPageRendererProps {
 
 export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }) => {
   const { data: page, isLoading } = usePage(slug);
-  const { data: role } = useUserRole();
+  const { data: role, isLoading: roleLoading } = useUserRole();
   const isAdmin = role === 'admin';
 
-  if (isLoading) {
+  if (isLoading || roleLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
