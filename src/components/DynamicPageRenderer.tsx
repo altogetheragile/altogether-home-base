@@ -1,20 +1,10 @@
 import React from 'react';
 import { usePage } from '@/hooks/usePages';
 import { ContentBlockRenderer } from './pageEditor/ContentBlockRenderer';
+import { BlockErrorBoundary } from './blocks/BlockErrorBoundary';
 import Navigation from './Navigation';
 import Footer from './Footer';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useSiteSettings } from '@/hooks/useSiteSettings';
-import Events from '@/pages/Events';
-import Blog from '@/pages/Blog';
-import Knowledge from '@/pages/Knowledge';
-
-// Map special page slugs to their custom components
-const SPECIAL_PAGE_COMPONENTS: Record<string, React.ComponentType> = {
-  'events': Events,
-  'blog': Blog,
-  'knowledge': Knowledge,
-};
 
 // Reusable loading state component
 const LoadingState = () => (
@@ -49,40 +39,7 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
   const { data: role, isLoading: roleLoading } = useUserRole();
   const isAdmin = role === 'admin';
 
-  // CHECK FOR SPECIAL PAGES FIRST - before any DB queries
-  const SpecialComponent = SPECIAL_PAGE_COMPONENTS[slug];
-  
-  if (SpecialComponent) {
-    // For special pages, use site_settings to control visibility
-    const { settings, isLoading: settingsLoading } = useSiteSettings();
-    
-    if (settingsLoading || roleLoading) {
-      return <LoadingState />;
-    }
-    
-    // Check visibility based on site settings
-    const isVisible = (
-      (slug === 'knowledge' && settings?.show_knowledge) ||
-      (slug === 'events' && settings?.show_events) ||
-      (slug === 'blog' && settings?.show_blog)
-    );
-    
-    // If toggled off and user is not admin, show 404
-    if (!isVisible && !isAdmin) {
-      if (import.meta.env.DEV) {
-        console.log(`🔒 Special page "${slug}" is disabled via site_settings`);
-      }
-      return <PageNotFoundState />;
-    }
-    
-    // Render the special component
-    if (import.meta.env.DEV) {
-      console.log(`✅ Rendering special page: ${slug} (visible: ${isVisible}, isAdmin: ${isAdmin})`);
-    }
-    return <SpecialComponent />;
-  }
-
-  // For regular CMS pages, query the database
+  // Query the database for CMS page
   const { data: page, isLoading } = usePage(slug);
 
   if (isLoading || roleLoading) {
@@ -120,7 +77,9 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
           .sort((a, b) => a.position - b.position)
           .map((block) => (
             <div key={block.id} className="content-block-spacing">
-              <ContentBlockRenderer block={block} />
+              <BlockErrorBoundary blockId={block.id}>
+                <ContentBlockRenderer block={block} />
+              </BlockErrorBoundary>
             </div>
           ))}
       </div>

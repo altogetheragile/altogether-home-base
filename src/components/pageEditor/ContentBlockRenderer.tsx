@@ -38,10 +38,8 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
   };
   
   const renderContent = () => {
-    // Safe logging - no objects in console.log that might leak to JSX
-    console.log('Styles for block:', String(block.id), 'hasStyles:', !!(normalizedBlock.content?.styles));
-    
-    switch (block.type) {
+    try {
+      switch (block.type) {
       case 'hero':
         return <HeroBlock block={normalizedBlock} />;
       case 'section':
@@ -63,12 +61,19 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
       case 'blog-posts':
         return <BlogPostsBlock block={normalizedBlock} />;
       default:
-        console.warn('Unknown block type:', String(block.type));
         return (
           <div className="py-4 px-6 bg-muted rounded-lg">
             <p className="text-muted-foreground">Unknown content type: {String(block.type)}</p>
           </div>
         );
+      }
+    } catch (error) {
+      console.error('ContentBlockRenderer error:', error, { blockId: block.id, type: block.type });
+      return (
+        <div className="py-4 px-6 bg-destructive/10 rounded-lg border border-destructive">
+          <p className="text-destructive">Failed to render this content block</p>
+        </div>
+      );
     }
   };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ContentBlock } from '@/types/page';
 import { useBlogPosts } from '@/hooks/useBlogPosts';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { UnifiedContentCard } from '@/components/content/UnifiedContentCard';
 import { adaptBlogPostToUnifiedContent } from '@/utils/contentAdapters';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +13,17 @@ interface BlogPostsBlockProps {
 }
 
 export const BlogPostsBlock: React.FC<BlogPostsBlockProps> = ({ block }) => {
+  const { settings } = useSiteSettings();
   const content = block.content || {};
+  
+  // Don't render if blog is disabled
+  if (!settings?.show_blog) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-muted-foreground">Blog is currently unavailable</p>
+      </div>
+    );
+  }
   
   const title = content.title || 'Latest Blog Posts';
   const limit = content.limit || 6;

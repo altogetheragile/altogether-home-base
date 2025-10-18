@@ -467,6 +467,11 @@ export const AdminRoutes = () => {
 export const DynamicRoutes = () => {
   if (!featureFlags.dynamicPages) return null;
 
+  // Special page components - must be defined BEFORE catch-all
+  const Knowledge = lazy(() => import('@/pages/Knowledge'));
+  const Events = lazy(() => import('@/pages/Events'));
+  const Blog = lazy(() => import('@/pages/Blog'));
+
   return (
     <>
       {/* Home Page */}
@@ -482,7 +487,32 @@ export const DynamicRoutes = () => {
         </ErrorBoundary>
       } />
       
-      {/* Dynamic Catch-All for CMS Pages */}
+      {/* Special Pages - MUST come before catch-all to prevent route conflicts */}
+      <Route path="/knowledge" element={
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Knowledge />
+          </Suspense>
+        </ErrorBoundary>
+      } />
+      
+      <Route path="/events" element={
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Events />
+          </Suspense>
+        </ErrorBoundary>
+      } />
+      
+      <Route path="/blog" element={
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Blog />
+          </Suspense>
+        </ErrorBoundary>
+      } />
+      
+      {/* Dynamic Catch-All for CMS Pages - MUST be last */}
       <Route path="/:slug" element={
         <ErrorBoundary fallback={
           <div className="flex items-center justify-center h-64">

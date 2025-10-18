@@ -11,11 +11,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen, Calendar, Users, Star, ArrowRight } from 'lucide-react';
 
 const Home: React.FC = () => {
-  // Development log to confirm this is the home page being rendered
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🏠 Home page rendering');
-  }
-
   const { settings } = useSiteSettings();
 
   // Feature flags from database with fallbacks

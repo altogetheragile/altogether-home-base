@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,7 @@ interface KnowledgeCardProps {
   item: KnowledgeItem;
 }
 
-export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
-  console.log("📦 Rendering KnowledgeCard:", { id: item.id, name: item.name, slug: item.slug });
-  
+export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
   const { user } = useAuth();
   const { likeCount, hasLiked, toggleLike, isLoading } = useKnowledgeItemLikes(item.id);
   const { commentCount } = useKnowledgeItemComments(item.id);
@@ -148,4 +147,8 @@ export const KnowledgeCard = ({ item }: KnowledgeCardProps) => {
       </CardContent>
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if item ID or view count changes
+  return prevProps.item.id === nextProps.item.id && 
+         prevProps.item.view_count === nextProps.item.view_count;
+});
