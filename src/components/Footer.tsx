@@ -36,7 +36,15 @@ const Footer = () => {
               <ul className="space-y-2">
                 {quickLinks.map((link: any, index: number) => (
                   <li key={index}>
-                    <Link to={link.url} className="text-muted-foreground hover:text-primary transition-colors">
+                    <Link 
+                      to={link.url} 
+                      onClick={() => {
+                        if (link.url === '/') {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      }}
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    >
                       {link.label}
                     </Link>
                   </li>
