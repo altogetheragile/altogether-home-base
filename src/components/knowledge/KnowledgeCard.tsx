@@ -33,9 +33,10 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
   // Get first use case title or summary
   const useCase = item.knowledge_use_cases?.[0]?.title || item.knowledge_use_cases?.[0]?.summary || 'General application';
   
-  
-  // Get up to 3 tags
-  const tags = item.knowledge_item_tags?.slice(0, 3).map(tag => tag.knowledge_tags.name) || [];
+  // Get up to 3 tags - safely handle undefined
+  const tags = Array.isArray(item.knowledge_item_tags)
+    ? item.knowledge_item_tags.slice(0, 3).map(tag => tag.knowledge_tags.name)
+    : [];
   
   // Author - only show if available
   const authorName = item.author;

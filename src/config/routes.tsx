@@ -520,7 +520,7 @@ export const DynamicRoutes = () => {
           </div>
         }>
           <Suspense fallback={<LoadingFallback />}>
-            <DynamicPageRenderer slug={window.location.pathname.slice(1)} />
+            <DynamicPageRenderer />
           </Suspense>
         </ErrorBoundary>
       } />

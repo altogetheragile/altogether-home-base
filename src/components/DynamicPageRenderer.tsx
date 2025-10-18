@@ -1,4 +1,5 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import { usePage } from '@/hooks/usePages';
 import { ContentBlockRenderer } from './pageEditor/ContentBlockRenderer';
 import { BlockErrorBoundary } from './blocks/BlockErrorBoundary';
@@ -32,15 +33,18 @@ const PageNotFoundState = () => (
 );
 
 interface DynamicPageRendererProps {
-  slug: string;
+  slug?: string;
 }
 
 export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }) => {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const effectiveSlug = slug ?? paramSlug ?? 'home';
+  
   const { data: role, isLoading: roleLoading } = useUserRole();
   const isAdmin = role === 'admin';
 
   // Query the database for CMS page
-  const { data: page, isLoading } = usePage(slug);
+  const { data: page, isLoading } = usePage(effectiveSlug);
 
   if (isLoading || roleLoading) {
     return <LoadingState />;

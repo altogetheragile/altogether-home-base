@@ -30,13 +30,6 @@ const Knowledge = () => {
     sortBy: sortBy
   });
 
-  // Debug logging
-  console.log("🔍 Knowledge Items Loaded:", {
-    count: knowledgeItems?.length,
-    items: knowledgeItems?.map(item => ({ id: item.id, name: item.name, slug: item.slug })),
-    filters: { selectedCategory, selectedDomain, selectedFocus, sortBy }
-  });
-
   const handleSearch = (value: string) => {
     setSearchQuery(value);
   };
