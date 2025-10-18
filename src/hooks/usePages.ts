@@ -21,26 +21,38 @@ export const usePage = (slug: string) => {
   return useQuery({
     queryKey: ['page', slug],
     queryFn: async (): Promise<PageWithBlocks | null> => {
-      const { data, error } = await supabase
+      // First, fetch the page
+      const { data: pageData, error: pageError } = await supabase
         .from('pages')
-        .select(`
-          *,
-          content_blocks (*)
-        `)
+        .select('*')
         .eq('slug', slug)
         .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') return null;
-        throw error;
+      if (pageError) {
+        if (pageError.code === 'PGRST116') return null;
+        throw pageError;
       }
 
-      // Sort content blocks by position
-      if (data?.content_blocks) {
-        data.content_blocks.sort((a, b) => a.position - b.position);
+      if (!pageData) return null;
+
+      // Then, fetch content blocks separately
+      const { data: blocksData, error: blocksError } = await supabase
+        .from('content_blocks')
+        .select('*')
+        .eq('page_id', pageData.id)
+        .order('position');
+
+      if (blocksError) {
+        console.error('Error fetching content blocks:', blocksError);
+        // Return page with empty blocks rather than failing
+        return { ...pageData, content_blocks: [] };
       }
 
-      return data;
+      // Combine and return
+      return {
+        ...pageData,
+        content_blocks: blocksData || []
+      };
     },
     enabled: !!slug,
   });
@@ -50,26 +62,36 @@ export const usePageById = (id: string) => {
   return useQuery({
     queryKey: ['page-by-id', id],
     queryFn: async (): Promise<PageWithBlocks | null> => {
-      const { data, error } = await supabase
+      // Fetch page first
+      const { data: pageData, error: pageError } = await supabase
         .from('pages')
-        .select(`
-          *,
-          content_blocks (*)
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') return null;
-        throw error;
+      if (pageError) {
+        if (pageError.code === 'PGRST116') return null;
+        throw pageError;
       }
 
-      // Sort content blocks by position
-      if (data?.content_blocks) {
-        data.content_blocks.sort((a, b) => a.position - b.position);
+      if (!pageData) return null;
+
+      // Fetch content blocks separately
+      const { data: blocksData, error: blocksError } = await supabase
+        .from('content_blocks')
+        .select('*')
+        .eq('page_id', pageData.id)
+        .order('position');
+
+      if (blocksError) {
+        console.error('Error fetching content blocks:', blocksError);
+        return { ...pageData, content_blocks: [] };
       }
 
-      return data;
+      return {
+        ...pageData,
+        content_blocks: blocksData || []
+      };
     },
     enabled: !!id,
   });
