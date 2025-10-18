@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { featureFlags } from './featureFlags';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { SiteSettingsRouteGuard } from '@/components/SiteSettingsRouteGuard';
 
 // ============= Loading Fallback Components =============
 const LoadingFallback = () => (
@@ -104,24 +105,22 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // ============= Public Routes =============
 export const PublicRoutes = () => {
-  const { settings } = useSiteSettings();
-  
   return (
     <>
-      {settings?.show_events && (
-        <Route path="/events/:id" element={
+      <Route path="/events/:id" element={
+        <SiteSettingsRouteGuard feature="events">
           <Suspense fallback={<LoadingFallback />}>
             <EventDetail />
           </Suspense>
-        } />
-      )}
-      {settings?.show_knowledge && (
-        <Route path="/knowledge/:slug" element={
+        </SiteSettingsRouteGuard>
+      } />
+      <Route path="/knowledge/:slug" element={
+        <SiteSettingsRouteGuard feature="knowledge">
           <Suspense fallback={<LoadingFallback />}>
             <KnowledgeDetail />
           </Suspense>
-        } />
-      )}
+        </SiteSettingsRouteGuard>
+      } />
     <Route path="/testimonials" element={
       <Suspense fallback={<LoadingFallback />}>
         <Testimonials />
@@ -476,13 +475,6 @@ export const AdminRoutes = () => {
 export const DynamicRoutes = () => {
   if (!featureFlags.dynamicPages) return null;
 
-  const { settings, isLoading } = useSiteSettings();
-
-  // Show loading while settings are being fetched
-  if (isLoading) {
-    return <Route path="*" element={<LoadingFallback />} />;
-  }
-
   // Special page components - must be defined BEFORE catch-all
   const Knowledge = lazy(() => import('@/pages/Knowledge'));
   const Events = lazy(() => import('@/pages/Events'));
@@ -503,36 +495,36 @@ export const DynamicRoutes = () => {
         </ErrorBoundary>
       } />
       
-      {/* Special Pages - MUST come before catch-all to prevent route conflicts */}
-      {settings?.show_knowledge && (
-        <Route path="/knowledge" element={
+      {/* Special Pages - Always defined, guarded by SiteSettingsRouteGuard */}
+      <Route path="/knowledge" element={
+        <SiteSettingsRouteGuard feature="knowledge">
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Knowledge />
             </Suspense>
           </ErrorBoundary>
-        } />
-      )}
+        </SiteSettingsRouteGuard>
+      } />
       
-      {settings?.show_events && (
-        <Route path="/events" element={
+      <Route path="/events" element={
+        <SiteSettingsRouteGuard feature="events">
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Events />
             </Suspense>
           </ErrorBoundary>
-        } />
-      )}
+        </SiteSettingsRouteGuard>
+      } />
       
-      {settings?.show_blog && (
-        <Route path="/blog" element={
+      <Route path="/blog" element={
+        <SiteSettingsRouteGuard feature="blog">
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Blog />
             </Suspense>
           </ErrorBoundary>
-        } />
-      )}
+        </SiteSettingsRouteGuard>
+      } />
       
       {/* Dynamic Catch-All for CMS Pages - MUST be last */}
       <Route path="/:slug" element={
