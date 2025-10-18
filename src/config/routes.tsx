@@ -3,6 +3,7 @@ import { Route } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { featureFlags } from './featureFlags';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 // ============= Loading Fallback Components =============
 const LoadingFallback = () => (
@@ -102,18 +103,25 @@ const Home = lazy(() => import('@/pages/Home'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // ============= Public Routes =============
-export const PublicRoutes = () => (
-  <>
-    <Route path="/events/:id" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <EventDetail />
-      </Suspense>
-    } />
-    <Route path="/knowledge/:slug" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <KnowledgeDetail />
-      </Suspense>
-    } />
+export const PublicRoutes = () => {
+  const { settings } = useSiteSettings();
+  
+  return (
+    <>
+      {settings?.show_events && (
+        <Route path="/events/:id" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <EventDetail />
+          </Suspense>
+        } />
+      )}
+      {settings?.show_knowledge && (
+        <Route path="/knowledge/:slug" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <KnowledgeDetail />
+          </Suspense>
+        } />
+      )}
     <Route path="/testimonials" element={
       <Suspense fallback={<LoadingFallback />}>
         <Testimonials />
@@ -149,8 +157,9 @@ export const PublicRoutes = () => (
         <AccountSecurity />
       </Suspense>
     } />
-  </>
-);
+    </>
+  );
+};
 
 // ============= Protected User Routes =============
 export const ProtectedUserRoutes = () => (
@@ -467,6 +476,13 @@ export const AdminRoutes = () => {
 export const DynamicRoutes = () => {
   if (!featureFlags.dynamicPages) return null;
 
+  const { settings, isLoading } = useSiteSettings();
+
+  // Show loading while settings are being fetched
+  if (isLoading) {
+    return <Route path="*" element={<LoadingFallback />} />;
+  }
+
   // Special page components - must be defined BEFORE catch-all
   const Knowledge = lazy(() => import('@/pages/Knowledge'));
   const Events = lazy(() => import('@/pages/Events'));
@@ -482,35 +498,41 @@ export const DynamicRoutes = () => {
           </Suspense>
         }>
           <Suspense fallback={<LoadingFallback />}>
-            <DynamicPageRenderer slug="home" />
+            <DynamicPageRenderer />
           </Suspense>
         </ErrorBoundary>
       } />
       
       {/* Special Pages - MUST come before catch-all to prevent route conflicts */}
-      <Route path="/knowledge" element={
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <Knowledge />
-          </Suspense>
-        </ErrorBoundary>
-      } />
+      {settings?.show_knowledge && (
+        <Route path="/knowledge" element={
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <Knowledge />
+            </Suspense>
+          </ErrorBoundary>
+        } />
+      )}
       
-      <Route path="/events" element={
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <Events />
-          </Suspense>
-        </ErrorBoundary>
-      } />
+      {settings?.show_events && (
+        <Route path="/events" element={
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <Events />
+            </Suspense>
+          </ErrorBoundary>
+        } />
+      )}
       
-      <Route path="/blog" element={
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <Blog />
-          </Suspense>
-        </ErrorBoundary>
-      } />
+      {settings?.show_blog && (
+        <Route path="/blog" element={
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <Blog />
+            </Suspense>
+          </ErrorBoundary>
+        } />
+      )}
       
       {/* Dynamic Catch-All for CMS Pages - MUST be last */}
       <Route path="/:slug" element={

@@ -11,8 +11,10 @@ import EventsHeader from "@/components/events/EventsHeader";
 import EventsList from "@/components/events/EventsList";
 import EventsFilter, { FilterState } from "@/components/events/EventsFilter";
 import { EventData } from "@/hooks/useEvents";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const Events = () => {
+  const { settings } = useSiteSettings();
   const { data: events, isLoading, error } = useEvents();
   const { verifyPayment } = useEventRegistration();
   const { user } = useAuth();
@@ -94,6 +96,24 @@ const Events = () => {
 
   if (error) {
     console.error('Events page error:', error);
+  }
+
+  // Defensive check - should not be reached if routes are configured correctly
+  if (!settings?.show_events) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md px-4">
+            <h1 className="text-2xl font-bold mb-2">Feature Unavailable</h1>
+            <p className="text-muted-foreground">
+              This feature is currently disabled.
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   return (

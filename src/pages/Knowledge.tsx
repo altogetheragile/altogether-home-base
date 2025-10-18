@@ -10,8 +10,10 @@ import { useActivityDomains } from "@/hooks/useActivityDomains";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const Knowledge = () => {
+  const { settings } = useSiteSettings();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
@@ -44,6 +46,24 @@ const Knowledge = () => {
 
   const hasActiveFilters = searchQuery || selectedCategory !== "all" || 
                           selectedDomain !== "all" || selectedFocus !== "all";
+
+  // Defensive check - should not be reached if routes are configured correctly
+  if (!settings?.show_knowledge) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md px-4">
+            <h1 className="text-2xl font-bold mb-2">Feature Unavailable</h1>
+            <p className="text-muted-foreground">
+              This feature is currently disabled.
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

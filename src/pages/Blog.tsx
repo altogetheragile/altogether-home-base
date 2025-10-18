@@ -12,8 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Search, Trophy, BookOpen } from "lucide-react";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const Blog = () => {
+  const { settings } = useSiteSettings();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>("all");
   const [selectedTag, setSelectedTag] = useState<string | undefined>("all");
@@ -41,6 +43,24 @@ const Blog = () => {
     setSelectedTag("all");
     setSortBy("newest");
   };
+
+  // Defensive check - should not be reached if routes are configured correctly
+  if (!settings?.show_blog) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md px-4">
+            <h1 className="text-2xl font-bold mb-2">Feature Unavailable</h1>
+            <p className="text-muted-foreground">
+              This feature is currently disabled.
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
