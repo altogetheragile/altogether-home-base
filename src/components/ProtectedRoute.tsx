@@ -9,11 +9,11 @@ import { resetAuthState } from '@/utils/authDebug';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: string;
-  requireAAL2?: boolean;
+  requiredRole?: string; // If specified, only users with this role can access. If omitted, all authenticated users can access.
+  requireAAL2?: boolean; // If true, require AAL2 MFA for users who have MFA configured
 }
 
-const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, requiredRole, requireAAL2 = false }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
   const [aalLevel, setAalLevel] = useState<string | null>(null);
@@ -134,11 +134,11 @@ const ProtectedRoute = ({ children, requiredRole = 'admin', requireAAL2 = false 
     return <Navigate to="/auth" replace />;
   }
 
-  // Show AccessDenied component instead of redirecting home
-  if (userRole !== requiredRole) {
+  // Only check role if a specific role is required
+  if (requiredRole && userRole !== requiredRole) {
     return (
       <AccessDenied 
-        title="Admin Access Required"
+        title="Access Required"
         message={`You need ${requiredRole} privileges to access this page. Your current role is: ${userRole || 'user'}.`}
       />
     );
