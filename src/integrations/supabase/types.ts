@@ -1877,21 +1877,6 @@ export type Database = {
           },
         ]
       }
-      kv_store_308f6a12: {
-        Row: {
-          key: string
-          value: Json
-        }
-        Insert: {
-          key: string
-          value: Json
-        }
-        Update: {
-          key?: string
-          value?: Json
-        }
-        Relationships: []
-      }
       levels: {
         Row: {
           id: string
