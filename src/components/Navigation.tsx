@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, Settings, LayoutDashboard, Shield, Sparkles, ChevronDown } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, LayoutDashboard, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -45,7 +45,7 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
+          <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex-shrink-0">
             <h1 className="text-2xl font-bold text-primary">AltogetherAgile</h1>
           </Link>
 
@@ -111,6 +111,32 @@ const Navigation = () => {
                 </Link>
               )}
               
+              {/* AI Tools as separate links */}
+              {SHOW_AI_TOOLS && (
+                <>
+                  <Link
+                    to="/bmc-generator"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive("/bmc-generator")
+                        ? "text-primary bg-accent"
+                        : "text-muted-foreground hover:text-primary hover:bg-accent"
+                    }`}
+                  >
+                    BMC Generator
+                  </Link>
+                  <Link
+                    to="/ai-tools"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive("/ai-tools")
+                        ? "text-primary bg-accent"
+                        : "text-muted-foreground hover:text-primary hover:bg-accent"
+                    }`}
+                  >
+                    User Story Canvas
+                  </Link>
+                </>
+              )}
+              
               {/* Dashboard Link - Only show for authenticated users */}
               {SHOW_DASHBOARD && user && (
                 <Link
@@ -125,33 +151,6 @@ const Navigation = () => {
                 </Link>
                )}
               </div>
-
-              {/* AI Tools Section - Desktop */}
-              {SHOW_AI_TOOLS && (
-                <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                    <Sparkles className="h-4 w-4" />
-                    <span>AI Tools</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/bmc-generator" className="w-full">
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      BMC Generator
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/ai-tools" className="w-full">
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      User Story Canvas
-                    </Link>
-                  </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
 
             {/* Auth Section */}
             {loading ? (
@@ -286,6 +285,34 @@ const Navigation = () => {
                 </Link>
               )}
               
+              {/* AI Tools as separate links - Mobile */}
+              {SHOW_AI_TOOLS && (
+                <>
+                  <Link
+                    to="/bmc-generator"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isActive("/bmc-generator")
+                        ? "text-primary bg-accent"
+                        : "text-muted-foreground hover:text-primary hover:bg-accent"
+                    }`}
+                  >
+                    BMC Generator
+                  </Link>
+                  <Link
+                    to="/ai-tools"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isActive("/ai-tools")
+                        ? "text-primary bg-accent"
+                        : "text-muted-foreground hover:text-primary hover:bg-accent"
+                    }`}
+                  >
+                    User Story Canvas
+                  </Link>
+                </>
+              )}
+              
               {/* Dashboard Link - Mobile */}
               {SHOW_DASHBOARD && user && (
                 <Link
@@ -300,38 +327,6 @@ const Navigation = () => {
                   Dashboard
                 </Link>
               )}
-               
-                 {/* AI Tools Section - Mobile */}
-                 {SHOW_AI_TOOLS && (
-                   <div className="border-t border-border pt-2 mt-2">
-                   <div className="px-3 py-2 text-sm font-medium text-muted-foreground mb-2">
-                   <div className="flex items-center space-x-2">
-                      <Sparkles className="h-4 w-4" />
-                      <span>AI Tools</span>
-                    </div>
-                  </div>
-                    <Link
-                      to="/bmc-generator"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Sparkles className="h-4 w-4" />
-                        <span>BMC Generator</span>
-                      </div>
-                    </Link>
-                    <Link
-                      to="/ai-tools"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Sparkles className="h-4 w-4" />
-                        <span>User Story Canvas</span>
-                      </div>
-                    </Link>
-                 </div>
-                 )}
                
                {/* Mobile Auth Section */}
                <div className="border-t border-border pt-2 mt-2">
