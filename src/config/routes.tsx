@@ -31,7 +31,7 @@ const Testimonials = lazy(() => import('@/pages/Testimonials'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const AIToolsCanvas = lazy(() => import('@/pages/AIToolsCanvas'));
-const BMCGenerator = lazy(() => import('@/components/bmc/BMCGenerator'));
+const BMCGenerator = lazy(() => import('@/pages/BMCGenerator'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const AccountSecurity = lazy(() => import('@/pages/AccountSecurity'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -136,7 +136,7 @@ export const PublicRoutes = () => {
         <ResetPassword />
       </Suspense>
     } />
-    <Route path="/user-story-canvas" element={
+    <Route path="/ai-tools" element={
       <Suspense fallback={<LoadingFallback />}>
         <AIToolsCanvas />
       </Suspense>
