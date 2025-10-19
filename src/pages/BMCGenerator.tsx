@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Download, ExternalLink, Sparkles } from 'lucide-react';
+import { Loader2, Download, ExternalLink, Sparkles, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -61,6 +62,7 @@ function normalizeBmc(raw: Record<string, string | string[] | undefined>): BMCDa
 }
 
 const BMCGenerator = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     industry: '',
@@ -257,6 +259,24 @@ const BMCGenerator = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
+      
+      {/* Header with back button */}
+      <div className="border-b bg-background sticky top-16 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h2 className="text-xl font-semibold">Business Model Canvas Generator</h2>
+          </div>
+        </div>
+      </div>
+      
       <main className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">

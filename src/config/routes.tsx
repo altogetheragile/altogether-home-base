@@ -136,7 +136,7 @@ export const PublicRoutes = () => {
         <ResetPassword />
       </Suspense>
     } />
-    <Route path="/ai-tools" element={
+    <Route path="/user-story-canvas" element={
       <Suspense fallback={<LoadingFallback />}>
         <AIToolsCanvas />
       </Suspense>

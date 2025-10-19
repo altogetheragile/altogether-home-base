@@ -111,30 +111,34 @@ const Navigation = () => {
                 </Link>
               )}
               
-              {/* AI Tools as separate links */}
+              {/* AI Tools Dropdown */}
               {SHOW_AI_TOOLS && (
-                <>
-                  <Link
-                    to="/bmc-generator"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive("/bmc-generator")
-                        ? "text-primary bg-accent"
-                        : "text-muted-foreground hover:text-primary hover:bg-accent"
-                    }`}
-                  >
-                    BMC Generator
-                  </Link>
-                  <Link
-                    to="/ai-tools"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive("/ai-tools")
-                        ? "text-primary bg-accent"
-                        : "text-muted-foreground hover:text-primary hover:bg-accent"
-                    }`}
-                  >
-                    User Story Canvas
-                  </Link>
-                </>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className={`px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive("/bmc-generator") || isActive("/user-story-canvas")
+                          ? "text-primary bg-accent"
+                          : "text-muted-foreground hover:text-primary hover:bg-accent"
+                      }`}
+                    >
+                      AI Tools
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-background z-50">
+                    <DropdownMenuItem asChild>
+                      <Link to="/bmc-generator" className="cursor-pointer">
+                        BMC Generator
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/user-story-canvas" className="cursor-pointer">
+                        User Story Canvas
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               
               {/* Dashboard Link - Only show for authenticated users */}
@@ -285,13 +289,16 @@ const Navigation = () => {
                 </Link>
               )}
               
-              {/* AI Tools as separate links - Mobile */}
+              {/* AI Tools - Mobile */}
               {SHOW_AI_TOOLS && (
                 <>
+                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
+                    AI Tools
+                  </div>
                   <Link
                     to="/bmc-generator"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    className={`block px-6 py-2 rounded-md text-base font-medium transition-colors ${
                       isActive("/bmc-generator")
                         ? "text-primary bg-accent"
                         : "text-muted-foreground hover:text-primary hover:bg-accent"
@@ -300,10 +307,10 @@ const Navigation = () => {
                     BMC Generator
                   </Link>
                   <Link
-                    to="/ai-tools"
+                    to="/user-story-canvas"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      isActive("/ai-tools")
+                    className={`block px-6 py-2 rounded-md text-base font-medium transition-colors ${
+                      isActive("/user-story-canvas")
                         ? "text-primary bg-accent"
                         : "text-muted-foreground hover:text-primary hover:bg-accent"
                     }`}
