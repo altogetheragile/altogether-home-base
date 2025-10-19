@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useProjects } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
+import { useAIStoryGeneration } from '@/hooks/useAIStoryGeneration';
 
 interface UserStoryClarifierDialogProps {
   isOpen: boolean;
@@ -62,6 +63,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   const { user } = useAuth();
   const { data: projects } = useProjects();
   const { updateCanvas } = useCanvasMutations();
+  const { generateStoryAsync, isGenerating } = useAIStoryGeneration();
 
   const handleAnalyze = async () => {
     if (!title.trim()) {
@@ -77,87 +79,81 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
     setAnalysisResult(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('generate-canvas', {
-        body: {
-          canvasType: 'story-analysis',
-          analysisType,
-          storyType,
-          title,
-          description,
-        },
+      const result = await generateStoryAsync({
+        storyLevel: storyType,
+        userInput: `Title: ${title}\nDescription: ${description}`,
       });
 
-      if (error) {
-        console.error('Error analyzing story:', error);
-        let errorMessage = "Failed to analyze story. Please try again.";
-        
-        if (error.message?.includes('Failed to send a request')) {
-          errorMessage = "Network connection issue. Please check your internet connection and try again.";
-        } else if (error.message?.includes('non-2xx status code')) {
-          errorMessage = "AI service is temporarily unavailable. Please try again in a moment.";
-        }
-        
+      if (!result.success || !result.data) {
         toast({
-          title: "Analysis failed",
-          description: errorMessage,
+          title: "Generation failed",
+          description: result.error || "Failed to generate story.",
           variant: "destructive",
         });
         return;
       }
 
-      if (!data || !data.generatedCanvas) {
-        toast({
-          title: "No results",
-          description: "The analysis didn't return any results. Please try rephrasing your story.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const result = data.generatedCanvas;
-      setAnalysisResult(result);
+      const generatedData = result.data;
       
-      // Auto-populate fields if we got a user story generation
-      if (result.analysisType === 'user-story-generation' || analysisType === 'user-story-generation') {
-        if (result.title) setTitle(result.title);
-        if (result.description) setDescription(result.description);
-        
-        // If canvas integration is enabled, pass the data back immediately
-        if (onStoryGenerated && result.title && result.description) {
-          onStoryGenerated({
-            title: result.title,
-            story: result.description,
-            acceptanceCriteria: result.acceptanceCriteria || [],
-            priority: 'medium',
-            storyPoints: 3,
-            status: 'draft'
-          });
-          onClose();
-          return;
+      // Extract common properties based on story type with proper type guards
+      let storyDescription = '';
+      let acceptanceCriteria: string[] = [];
+      let priority = 'medium';
+      let storyPoints = 3;
+      
+      // Type guard for GeneratedStory
+      if ('userStory' in generatedData && typeof generatedData.userStory === 'string') {
+        storyDescription = generatedData.userStory;
+        if ('acceptanceCriteria' in generatedData && Array.isArray(generatedData.acceptanceCriteria)) {
+          acceptanceCriteria = generatedData.acceptanceCriteria;
         }
+        if ('priority' in generatedData && typeof generatedData.priority === 'string') {
+          priority = generatedData.priority;
+        }
+        if ('storyPoints' in generatedData && typeof generatedData.storyPoints === 'number') {
+          storyPoints = generatedData.storyPoints;
+        }
+      } else if ('description' in generatedData && typeof generatedData.description === 'string') {
+        // GeneratedEpic, GeneratedFeature, or GeneratedTask
+        storyDescription = generatedData.description;
+      }
+      
+      // Map the generated data to analysis result format
+      const mappedResult: StoryAnalysisResult = {
+        analysisType: 'user-story-generation',
+        title: generatedData.title,
+        description: storyDescription,
+        acceptanceCriteria,
+        suggestions: [],
+      };
+      
+      setAnalysisResult(mappedResult);
+      setTitle(generatedData.title);
+      setDescription(storyDescription);
+      
+      // If canvas integration is enabled, pass the data back immediately
+      if (onStoryGenerated) {
+        onStoryGenerated({
+          title: generatedData.title,
+          story: storyDescription,
+          acceptanceCriteria,
+          priority,
+          storyPoints,
+          status: 'draft'
+        });
+        onClose();
+        return;
       }
       
       toast({
-        title: "Analysis complete!",
-        description: analysisType === 'user-story-generation' ? 
-          "Your user story has been generated!" : 
-          "Your story has been successfully analyzed.",
+        title: "Story generated!",
+        description: "Your user story has been successfully generated.",
       });
     } catch (error) {
-      console.error('Error analyzing story:', error);
-      let errorMessage = "An unexpected error occurred.";
-      
-      if (error instanceof Error) {
-        if (error.message.includes('network') || error.message.includes('fetch')) {
-          errorMessage = "Network error. Please check your connection and try again.";
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
+      console.error('Error generating story:', error);
       toast({
-        title: "Analysis failed",
-        description: errorMessage,
+        title: "Generation failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {

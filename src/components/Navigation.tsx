@@ -137,6 +137,11 @@ const Navigation = () => {
                         User Story Canvas
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/stories" className="cursor-pointer">
+                        Stories List
+                      </Link>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -316,6 +321,17 @@ const Navigation = () => {
                     }`}
                   >
                     User Story Canvas
+                  </Link>
+                  <Link
+                    to="/stories"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block px-6 py-2 rounded-md text-base font-medium transition-colors ${
+                      isActive("/stories")
+                        ? "text-primary bg-accent"
+                        : "text-muted-foreground hover:text-primary hover:bg-accent"
+                    }`}
+                  >
+                    Stories List
                   </Link>
                 </>
               )}

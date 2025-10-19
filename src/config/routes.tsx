@@ -152,6 +152,11 @@ export const PublicRoutes = () => {
         <UserStoryCanvas />
       </Suspense>
     } />
+    <Route path="/stories" element={
+      <Suspense fallback={<LoadingFallback />}>
+        {React.createElement(lazy(() => import('@/pages/Stories')))}
+      </Suspense>
+    } />
     <Route path="/contact" element={
       <Suspense fallback={<LoadingFallback />}>
         <Contact />
