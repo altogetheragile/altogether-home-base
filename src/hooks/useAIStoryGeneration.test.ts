@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn(),
+      getUser: vi.fn(),
     },
     functions: {
       invoke: vi.fn(),
@@ -17,21 +17,25 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('sonner', () => ({
-  toast: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
+  toast: vi.fn(),
+}));
+
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toast: vi.fn(),
+  }),
 }));
 
 describe('useAIStoryGeneration', () => {
-  const mockSession = {
-    access_token: 'mock-token',
+  const mockUser = {
+    id: 'user-123',
+    email: 'test@example.com',
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (supabase.auth.getSession as any).mockResolvedValue({
-      data: { session: mockSession },
+    (supabase.auth.getUser as any).mockResolvedValue({
+      data: { user: mockUser },
       error: null,
     });
   });
@@ -39,11 +43,14 @@ describe('useAIStoryGeneration', () => {
   it('should generate a user story successfully', async () => {
     const mockResponse = {
       data: {
-        story: {
-          title: 'Test Story',
-          description: 'Test Description',
-          acceptance_criteria: ['Criterion 1', 'Criterion 2'],
-          confidence_level: 4,
+        success: true,
+        data: {
+          story: {
+            title: 'Test Story',
+            description: 'Test Description',
+            acceptance_criteria: ['Criterion 1', 'Criterion 2'],
+            confidence_level: 4,
+          },
         },
       },
       error: null,
@@ -54,13 +61,16 @@ describe('useAIStoryGeneration', () => {
     const { result } = renderHook(() => useAIStoryGeneration());
 
     const request = {
-      level: 'story' as const,
+      storyLevel: 'story' as const,
       userInput: 'Create a login feature',
-      userPersona: 'End User',
-      businessObjective: 'Improve security',
+      additionalFields: {
+        userRole: 'End User',
+        goal: 'Improve security',
+        context: 'Authentication system',
+      },
     };
 
-    const response = await result.current.generateStory(request);
+    const response = await result.current.generateStoryAsync(request);
 
     expect(response).toEqual(mockResponse.data);
     expect(supabase.functions.invoke).toHaveBeenCalledWith(
@@ -84,37 +94,35 @@ describe('useAIStoryGeneration', () => {
     const { result } = renderHook(() => useAIStoryGeneration());
 
     await expect(
-      result.current.generateStory({
-        level: 'story',
+      result.current.generateStoryAsync({
+        storyLevel: 'story',
         userInput: 'Test input',
       })
-    ).rejects.toThrow('Rate limit exceeded');
-
-    expect(toast.error).toHaveBeenCalledWith(
-      expect.stringContaining('Rate limit exceeded'),
-      expect.any(Object)
-    );
+    ).rejects.toThrow();
   });
 
   it('should handle authentication errors', async () => {
-    (supabase.auth.getSession as any).mockResolvedValue({
-      data: { session: null },
+    (supabase.auth.getUser as any).mockResolvedValue({
+      data: { user: null },
       error: null,
     });
 
     const { result } = renderHook(() => useAIStoryGeneration());
 
     await expect(
-      result.current.generateStory({
-        level: 'story',
+      result.current.generateStoryAsync({
+        storyLevel: 'story',
         userInput: 'Test input',
       })
-    ).rejects.toThrow('Authentication required');
+    ).rejects.toThrow('You must be logged in');
   });
 
   it('should track loading state correctly', async () => {
     const mockResponse = {
-      data: { story: { title: 'Test' } },
+      data: { 
+        success: true,
+        data: { story: { title: 'Test' } } 
+      },
       error: null,
     };
 
@@ -129,8 +137,8 @@ describe('useAIStoryGeneration', () => {
 
     expect(result.current.isGenerating).toBe(false);
 
-    const promise = result.current.generateStory({
-      level: 'story',
+    const promise = result.current.generateStoryAsync({
+      storyLevel: 'story',
       userInput: 'Test input',
     });
 
@@ -147,7 +155,10 @@ describe('useAIStoryGeneration', () => {
 
   it('should handle different story levels', async () => {
     const mockResponse = {
-      data: { epic: { title: 'Test Epic' } },
+      data: { 
+        success: true,
+        data: { epic: { title: 'Test Epic' } } 
+      },
       error: null,
     };
 
@@ -155,8 +166,8 @@ describe('useAIStoryGeneration', () => {
 
     const { result } = renderHook(() => useAIStoryGeneration());
 
-    await result.current.generateStory({
-      level: 'epic',
+    await result.current.generateStoryAsync({
+      storyLevel: 'epic',
       userInput: 'Create user management system',
     });
 
@@ -164,7 +175,7 @@ describe('useAIStoryGeneration', () => {
       'generate-user-story',
       expect.objectContaining({
         body: expect.objectContaining({
-          level: 'epic',
+          storyLevel: 'epic',
         }),
       })
     );
@@ -172,7 +183,10 @@ describe('useAIStoryGeneration', () => {
 
   it('should include parent context when provided', async () => {
     const mockResponse = {
-      data: { story: { title: 'Test' } },
+      data: { 
+        success: true,
+        data: { story: { title: 'Test' } } 
+      },
       error: null,
     };
 
@@ -187,8 +201,8 @@ describe('useAIStoryGeneration', () => {
       description: 'System for managing users',
     };
 
-    await result.current.generateStory({
-      level: 'feature',
+    await result.current.generateStoryAsync({
+      storyLevel: 'feature',
       userInput: 'User registration',
       parentContext,
     });

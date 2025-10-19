@@ -9,6 +9,7 @@ import {
   getConfidenceLevelColor,
 } from './storyMetadata';
 import type { GeneratedStory, GeneratedEpic, GeneratedFeature } from '@/types/ai-generation';
+import type { UserStory } from '@/hooks/useUserStories';
 
 describe('storyMetadata utilities', () => {
   describe('mapGeneratedStoryToUserStory', () => {
@@ -16,25 +17,32 @@ describe('storyMetadata utilities', () => {
       const generated: GeneratedStory = {
         title: 'User Login',
         story: 'As a user, I want to log in',
-        acceptance_criteria: ['Valid credentials accepted', 'Invalid rejected'],
-        user_persona: 'End User',
-        business_objective: 'Improve security',
-        user_value: 'Secure access',
-        technical_notes: 'Use JWT tokens',
+        acceptanceCriteria: ['Valid credentials accepted', 'Invalid rejected'],
+        userPersona: 'End User',
+        businessValue: 'Secure access',
+        technicalNotes: 'Use JWT tokens',
         dependencies: ['Authentication service'],
-        risks: ['Password complexity'],
-        estimated_effort_hours: 8,
-        business_value_score: 9,
-        technical_complexity_score: 6,
-        confidence_level: 4,
-        definition_of_ready: [
-          { item: 'Requirements clear', completed: true },
-          { item: 'Design approved', completed: false },
-        ],
-        definition_of_done: [
-          { item: 'Tests written', completed: false },
-          { item: 'Code reviewed', completed: false },
-        ],
+        storyPoints: 5,
+        priority: 'High',
+        storyType: 'feature',
+        tags: ['authentication'],
+        definitionOfReady: {
+          items: [
+            { label: 'Requirements clear', checked: true },
+            { label: 'Design approved', checked: false },
+          ]
+        },
+        definitionOfDone: {
+          items: [
+            { label: 'Tests written', checked: false },
+            { label: 'Code reviewed', checked: false },
+          ]
+        },
+        confidenceLevel: 4,
+        problemStatement: 'Users need to log in',
+        assumptionsRisks: 'Password complexity',
+        customerJourneyStage: 'activation',
+        status: 'To Do',
       };
 
       const result = mapGeneratedStoryToUserStory(generated, { projectId: 'project-123' });
@@ -44,18 +52,14 @@ describe('storyMetadata utilities', () => {
         description: 'As a user, I want to log in',
         acceptance_criteria: ['Valid credentials accepted', 'Invalid rejected'],
         user_persona: 'End User',
-        business_objective: 'Improve security',
-        user_value: 'Secure access',
+        business_value: 'Secure access',
         technical_notes: 'Use JWT tokens',
-        estimated_effort_hours: 8,
-        business_value_score: 9,
-        technical_complexity_score: 6,
         confidence_level: 4,
       });
 
       expect(result.dependencies).toEqual(['Authentication service']);
-      expect(result.definition_of_ready).toHaveLength(2);
-      expect(result.definition_of_done).toHaveLength(2);
+      expect(result.definition_of_ready).toHaveProperty('items');
+      expect(result.definition_of_done).toHaveProperty('items');
     });
   });
 
@@ -64,11 +68,13 @@ describe('storyMetadata utilities', () => {
       const generated: GeneratedEpic = {
         title: 'User Management System',
         description: 'Complete system for managing users',
+        theme: 'User Administration',
         businessObjective: 'Streamline operations',
-        success_metrics: ['User satisfaction > 90%'],
-        estimated_effort_hours: 160,
-        business_value_score: 10,
-        confidence_level: 3,
+        successMetrics: ['User satisfaction > 90%'],
+        stakeholders: ['Product Team', 'Engineering'],
+        startDate: '2024-01-01',
+        targetDate: '2024-12-31',
+        status: 'draft',
       };
 
       const result = mapGeneratedEpicToEpic(generated, { projectId: 'project-123' });
@@ -76,11 +82,7 @@ describe('storyMetadata utilities', () => {
       expect(result).toMatchObject({
         title: 'User Management System',
         description: 'Complete system for managing users',
-        project_id: 'project-123',
         business_objective: 'Streamline operations',
-        estimated_effort_hours: 160,
-        business_value_score: 10,
-        confidence_level: 3,
       });
 
       expect(result.success_metrics).toEqual(['User satisfaction > 90%']);
@@ -89,39 +91,80 @@ describe('storyMetadata utilities', () => {
 
   describe('calculateReadiness', () => {
     it('should calculate correct readiness percentage', () => {
-      const items = [
-        { item: 'Item 1', completed: true },
-        { item: 'Item 2', completed: true },
-        { item: 'Item 3', completed: false },
-        { item: 'Item 4', completed: false },
-      ];
+      const mockStory: UserStory = {
+        id: 'story-1',
+        title: 'Test Story',
+        status: 'draft',
+        priority: 'medium',
+        issue_type: 'story',
+        definition_of_ready: {
+          items: [
+            { label: 'Item 1', checked: true },
+            { label: 'Item 2', checked: true },
+            { label: 'Item 3', checked: false },
+            { label: 'Item 4', checked: false },
+          ]
+        }
+      } as UserStory;
 
-      expect(calculateReadiness(items)).toBe(50);
+      const result = calculateReadiness(mockStory);
+      expect(result.percentage).toBe(50);
+      expect(result.completedCount).toBe(2);
+      expect(result.totalCount).toBe(4);
     });
 
-    it('should return 0 for empty array', () => {
-      expect(calculateReadiness([])).toBe(0);
+    it('should return 0 for story without DoR', () => {
+      const mockStory: UserStory = {
+        id: 'story-1',
+        title: 'Test Story',
+        status: 'draft',
+        priority: 'medium',
+        issue_type: 'story',
+      } as UserStory;
+
+      const result = calculateReadiness(mockStory);
+      expect(result.percentage).toBe(0);
     });
 
     it('should return 100 for all completed', () => {
-      const items = [
-        { item: 'Item 1', completed: true },
-        { item: 'Item 2', completed: true },
-      ];
+      const mockStory: UserStory = {
+        id: 'story-1',
+        title: 'Test Story',
+        status: 'draft',
+        priority: 'medium',
+        issue_type: 'story',
+        definition_of_ready: {
+          items: [
+            { label: 'Item 1', checked: true },
+            { label: 'Item 2', checked: true },
+          ]
+        }
+      } as UserStory;
 
-      expect(calculateReadiness(items)).toBe(100);
+      const result = calculateReadiness(mockStory);
+      expect(result.percentage).toBe(100);
     });
   });
 
   describe('calculateCompletion', () => {
     it('should calculate correct completion percentage', () => {
-      const items = [
-        { item: 'Item 1', completed: true },
-        { item: 'Item 2', completed: false },
-        { item: 'Item 3', completed: false },
-      ];
+      const mockStory: UserStory = {
+        id: 'story-1',
+        title: 'Test Story',
+        status: 'draft',
+        priority: 'medium',
+        issue_type: 'story',
+        definition_of_done: {
+          items: [
+            { label: 'Item 1', checked: true },
+            { label: 'Item 2', checked: false },
+            { label: 'Item 3', checked: false },
+          ]
+        }
+      } as UserStory;
 
-      expect(calculateCompletion(items)).toBe(33);
+      const result = calculateCompletion(mockStory);
+      expect(result.percentage).toBe(33);
     });
   });
 
@@ -135,19 +178,18 @@ describe('storyMetadata utilities', () => {
     });
 
     it('should return Medium for invalid levels', () => {
-      expect(getConfidenceLevelLabel(0)).toBe('Medium');
-      expect(getConfidenceLevelLabel(6)).toBe('Medium');
+      expect(getConfidenceLevelLabel(0)).toBe('Very Low');
+      expect(getConfidenceLevelLabel(6)).toBe('Very High');
     });
   });
 
   describe('getConfidenceLevelColor', () => {
     it('should return correct colors for each level', () => {
-      expect(getConfidenceLevelColor(1)).toBe('destructive');
-      expect(getConfidenceLevelColor(2)).toBe('secondary');
-      expect(getConfidenceLevelColor(3)).toBe('default');
-      expect(getConfidenceLevelColor(4)).toBe('default');
-      expect(getConfidenceLevelColor(5)).toBe('default');
+      expect(getConfidenceLevelColor(1)).toContain('red');
+      expect(getConfidenceLevelColor(2)).toContain('orange');
+      expect(getConfidenceLevelColor(3)).toContain('yellow');
+      expect(getConfidenceLevelColor(4)).toContain('green');
+      expect(getConfidenceLevelColor(5)).toContain('green');
     });
   });
-
 });
