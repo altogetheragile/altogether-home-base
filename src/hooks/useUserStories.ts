@@ -19,6 +19,33 @@ export interface UserStory {
   updated_at?: string;
   jira_issue_key?: string;
   position?: number;
+  
+  // Rich metadata fields (Phase 1 enhancements)
+  user_persona?: string;
+  problem_statement?: string;
+  business_value?: string;
+  assumptions_risks?: string;
+  dependencies?: string[];
+  technical_notes?: string;
+  design_notes?: string;
+  ui_mockup_url?: string;
+  definition_of_ready?: {
+    items: Array<{ label: string; checked: boolean }>;
+  };
+  definition_of_done?: {
+    items: Array<{ label: string; checked: boolean }>;
+  };
+  tags?: string[];
+  story_type?: 'feature' | 'spike' | 'bug' | 'chore' | 'task';
+  sprint?: string;
+  impact_effort_matrix?: {
+    impact?: number;
+    effort?: number;
+  };
+  evidence_links?: string[];
+  non_functional_requirements?: string[];
+  customer_journey_stage?: string;
+  confidence_level?: number;
 }
 
 export interface Epic {
@@ -33,6 +60,14 @@ export interface Epic {
   updated_at?: string;
   jira_issue_key?: string;
   position?: number;
+  project_id?: string;
+  
+  // Phase 1 enhancements
+  business_objective?: string;
+  success_metrics?: string[];
+  stakeholders?: string[];
+  start_date?: string;
+  target_date?: string;
 }
 
 export interface Feature {
@@ -46,6 +81,12 @@ export interface Feature {
   updated_at?: string;
   jira_issue_key?: string;
   position?: number;
+  project_id?: string;
+  
+  // Phase 1 enhancements
+  user_value?: string;
+  acceptance_criteria?: string[];
+  status?: 'draft' | 'in_progress' | 'completed';
 }
 
 export function useUserStories() {
