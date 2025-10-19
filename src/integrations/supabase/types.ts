@@ -734,6 +734,7 @@ export type Database = {
       }
       epics: {
         Row: {
+          business_objective: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -741,13 +742,18 @@ export type Database = {
           jira_issue_key: string | null
           position: number | null
           project_id: string | null
+          stakeholders: string[] | null
+          start_date: string | null
           status: string | null
+          success_metrics: string[] | null
+          target_date: string | null
           theme: string | null
           title: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          business_objective?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -755,13 +761,18 @@ export type Database = {
           jira_issue_key?: string | null
           position?: number | null
           project_id?: string | null
+          stakeholders?: string[] | null
+          start_date?: string | null
           status?: string | null
+          success_metrics?: string[] | null
+          target_date?: string | null
           theme?: string | null
           title: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          business_objective?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -769,7 +780,11 @@ export type Database = {
           jira_issue_key?: string | null
           position?: number | null
           project_id?: string | null
+          stakeholders?: string[] | null
+          start_date?: string | null
           status?: string | null
+          success_metrics?: string[] | null
+          target_date?: string | null
           theme?: string | null
           title?: string
           updated_at?: string
@@ -1131,6 +1146,7 @@ export type Database = {
       }
       features: {
         Row: {
+          acceptance_criteria: string[] | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -1139,11 +1155,14 @@ export type Database = {
           jira_issue_key: string | null
           position: number | null
           project_id: string | null
+          status: string | null
           title: string
           updated_at: string
           updated_by: string | null
+          user_value: string | null
         }
         Insert: {
+          acceptance_criteria?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1152,11 +1171,14 @@ export type Database = {
           jira_issue_key?: string | null
           position?: number | null
           project_id?: string | null
+          status?: string | null
           title: string
           updated_at?: string
           updated_by?: string | null
+          user_value?: string | null
         }
         Update: {
+          acceptance_criteria?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1165,9 +1187,11 @@ export type Database = {
           jira_issue_key?: string | null
           position?: number | null
           project_id?: string | null
+          status?: string | null
           title?: string
           updated_at?: string
           updated_by?: string | null
+          user_value?: string | null
         }
         Relationships: [
           {
@@ -2885,60 +2909,114 @@ export type Database = {
       user_stories: {
         Row: {
           acceptance_criteria: string[] | null
+          assumptions_risks: string | null
+          business_value: string | null
+          confidence_level: number | null
           created_at: string
           created_by: string | null
+          customer_journey_stage: string | null
+          definition_of_done: Json | null
+          definition_of_ready: Json | null
+          dependencies: string[] | null
           description: string | null
+          design_notes: string | null
           epic_id: string | null
+          evidence_links: string[] | null
           feature_id: string | null
           id: string
+          impact_effort_matrix: Json | null
           issue_type: string | null
           jira_issue_key: string | null
+          non_functional_requirements: string[] | null
           position: number | null
           priority: string | null
+          problem_statement: string | null
           project_id: string | null
+          sprint: string | null
           status: string | null
           story_points: number | null
+          story_type: string | null
+          tags: string[] | null
+          technical_notes: string | null
           title: string
+          ui_mockup_url: string | null
           updated_at: string
           updated_by: string | null
+          user_persona: string | null
         }
         Insert: {
           acceptance_criteria?: string[] | null
+          assumptions_risks?: string | null
+          business_value?: string | null
+          confidence_level?: number | null
           created_at?: string
           created_by?: string | null
+          customer_journey_stage?: string | null
+          definition_of_done?: Json | null
+          definition_of_ready?: Json | null
+          dependencies?: string[] | null
           description?: string | null
+          design_notes?: string | null
           epic_id?: string | null
+          evidence_links?: string[] | null
           feature_id?: string | null
           id?: string
+          impact_effort_matrix?: Json | null
           issue_type?: string | null
           jira_issue_key?: string | null
+          non_functional_requirements?: string[] | null
           position?: number | null
           priority?: string | null
+          problem_statement?: string | null
           project_id?: string | null
+          sprint?: string | null
           status?: string | null
           story_points?: number | null
+          story_type?: string | null
+          tags?: string[] | null
+          technical_notes?: string | null
           title: string
+          ui_mockup_url?: string | null
           updated_at?: string
           updated_by?: string | null
+          user_persona?: string | null
         }
         Update: {
           acceptance_criteria?: string[] | null
+          assumptions_risks?: string | null
+          business_value?: string | null
+          confidence_level?: number | null
           created_at?: string
           created_by?: string | null
+          customer_journey_stage?: string | null
+          definition_of_done?: Json | null
+          definition_of_ready?: Json | null
+          dependencies?: string[] | null
           description?: string | null
+          design_notes?: string | null
           epic_id?: string | null
+          evidence_links?: string[] | null
           feature_id?: string | null
           id?: string
+          impact_effort_matrix?: Json | null
           issue_type?: string | null
           jira_issue_key?: string | null
+          non_functional_requirements?: string[] | null
           position?: number | null
           priority?: string | null
+          problem_statement?: string | null
           project_id?: string | null
+          sprint?: string | null
           status?: string | null
           story_points?: number | null
+          story_type?: string | null
+          tags?: string[] | null
+          technical_notes?: string | null
           title?: string
+          ui_mockup_url?: string | null
           updated_at?: string
           updated_by?: string | null
+          user_persona?: string | null
         }
         Relationships: [
           {
