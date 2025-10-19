@@ -111,7 +111,8 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
           "h-full border-2 rounded-lg p-3 hover:border-primary/50 transition-colors cursor-pointer shadow-sm",
           getLevelColor(storyLevel)
         )}
-        onClick={onEdit}
+        onDoubleClick={onEdit}
+        title="Double-click to edit"
       >
         {data ? (
           <div className="space-y-2">
