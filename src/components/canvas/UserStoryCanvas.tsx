@@ -16,12 +16,10 @@ import { useAIStoryGeneration } from '@/hooks/useAIStoryGeneration';
 import { mapGeneratedStoryToUserStory, mapGeneratedEpicToEpic, mapGeneratedFeatureToFeature } from '@/utils/storyMetadata';
 
 interface UserStoryCanvasProps {
-  projectId?: string;
   projectName?: string;
 }
 
 const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
-  projectId = 'default-project',
   projectName = 'User Story Canvas',
 }) => {
   const [canvasData, setCanvasData] = useState<CanvasData>({ elements: [] });
@@ -37,7 +35,9 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const { updateCanvas, createCanvas } = useCanvasMutations();
-  const { data: savedCanvas } = useCanvas(projectId);
+  
+  // Use user-scoped canvas instead of project-scoped
+  const { data: savedCanvas } = useCanvas(undefined, user?.id, 'user-story');
 
   // Load saved canvas data
   useEffect(() => {
@@ -53,16 +53,25 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
     setIsSaving(true);
     try {
       if (savedCanvas) {
-        await updateCanvas.mutateAsync({ projectId, data });
+        await updateCanvas.mutateAsync({ 
+          canvasId: savedCanvas.id,
+          userId: user.id, 
+          canvasType: 'user-story', 
+          data 
+        });
       } else {
-        await createCanvas.mutateAsync({ projectId, data });
+        await createCanvas.mutateAsync({ 
+          userId: user.id, 
+          canvasType: 'user-story', 
+          data 
+        });
       }
     } catch (error) {
       console.error('Failed to save canvas:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [user, savedCanvas, updateCanvas, createCanvas, projectId]);
+  }, [user, savedCanvas, updateCanvas, createCanvas]);
 
   const { debouncedCallback } = useDebounceCanvas(handleCanvasSave, 500);
 

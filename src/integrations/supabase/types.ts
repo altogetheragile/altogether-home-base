@@ -438,31 +438,37 @@ export type Database = {
       }
       canvases: {
         Row: {
+          canvas_type: string | null
           created_at: string
           created_by: string | null
           data: Json
           id: string
-          project_id: string
+          project_id: string | null
           updated_at: string
           updated_by: string | null
+          user_id: string | null
         }
         Insert: {
+          canvas_type?: string | null
           created_at?: string
           created_by?: string | null
           data?: Json
           id?: string
-          project_id: string
+          project_id?: string | null
           updated_at?: string
           updated_by?: string | null
+          user_id?: string | null
         }
         Update: {
+          canvas_type?: string | null
           created_at?: string
           created_by?: string | null
           data?: Json
           id?: string
-          project_id?: string
+          project_id?: string | null
           updated_at?: string
           updated_by?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
