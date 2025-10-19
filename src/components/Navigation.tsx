@@ -118,7 +118,7 @@ const Navigation = () => {
                     <Button 
                       variant="ghost" 
                       className={`px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive("/bmc-generator") || isActive("/ai-tools")
+                        isActive("/bmc-generator") || isActive("/user-story-canvas")
                           ? "text-primary bg-accent"
                           : "text-muted-foreground hover:text-primary hover:bg-accent"
                       }`}
@@ -133,7 +133,7 @@ const Navigation = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/ai-tools" className="cursor-pointer">
+                      <Link to="/user-story-canvas" className="cursor-pointer">
                         User Story Canvas
                       </Link>
                     </DropdownMenuItem>
@@ -310,7 +310,7 @@ const Navigation = () => {
                     to="/user-story-canvas"
                     onClick={() => setIsMenuOpen(false)}
                     className={`block px-6 py-2 rounded-md text-base font-medium transition-colors ${
-                      isActive("/ai-tools")
+                      isActive("/user-story-canvas")
                         ? "text-primary bg-accent"
                         : "text-muted-foreground hover:text-primary hover:bg-accent"
                     }`}
