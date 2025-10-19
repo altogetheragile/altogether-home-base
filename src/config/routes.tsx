@@ -32,6 +32,7 @@ const Auth = lazy(() => import('@/pages/Auth'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const AIToolsCanvas = lazy(() => import('@/pages/AIToolsCanvas'));
 const BMCGenerator = lazy(() => import('@/pages/BMCGenerator'));
+const UserStoryCanvas = lazy(() => import('@/pages/UserStoryCanvas'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const AccountSecurity = lazy(() => import('@/pages/AccountSecurity'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -144,6 +145,11 @@ export const PublicRoutes = () => {
     <Route path="/bmc-generator" element={
       <Suspense fallback={<LoadingFallback />}>
         <BMCGenerator />
+      </Suspense>
+    } />
+    <Route path="/user-story-canvas" element={
+      <Suspense fallback={<LoadingFallback />}>
+        <UserStoryCanvas />
       </Suspense>
     } />
     <Route path="/contact" element={
