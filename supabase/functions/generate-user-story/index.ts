@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.5';
 import type { StoryLevel, PromptContext } from "../_shared/prompt-templates.ts";
 import { buildPrompt, getSystemPrompt } from "../_shared/prompt-templates.ts";
 import { 
@@ -12,6 +13,8 @@ import {
 } from "../_shared/prompt-utils.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,6 +41,7 @@ interface GenerateStoryRequest {
 
 serve(async (req) => {
   const startTime = Date.now();
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -59,8 +63,59 @@ serve(async (req) => {
     });
   }
 
+  // Get user from auth header
+  const authHeader = req.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  
+  if (authError || !user) {
+    console.error('Authentication failed:', authError);
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Get request metadata for audit
+  const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+
+  let rawRequest: GenerateStoryRequest;
+  let storyLevel: StoryLevel = 'story';
+  
   try {
-    const rawRequest: GenerateStoryRequest = await req.json();
+    rawRequest = await req.json();
+    storyLevel = rawRequest.storyLevel || 'story';
+    
+    // Check rate limits
+    const { data: rateLimitOk, error: rateLimitError } = await supabase.rpc('check_ai_rate_limit', {
+      p_user_id: user.id,
+      p_endpoint: 'generate-user-story',
+      p_max_requests: 50,
+      p_window_minutes: 60
+    });
+
+    if (rateLimitError) {
+      console.error('Rate limit check failed:', rateLimitError);
+    } else if (!rateLimitOk) {
+      await supabase.from('ai_generation_audit').insert({
+        user_id: user.id,
+        story_level: storyLevel,
+        input_data: { error: 'rate_limit_exceeded' },
+        success: false,
+        error_message: 'Rate limit exceeded. Please try again later.',
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        execution_time_ms: Date.now() - startTime
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded. You can make up to 50 requests per hour. Please try again later.' 
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Sanitize all input fields
     const sanitizedRequest = sanitizeObject(rawRequest);
@@ -139,6 +194,19 @@ serve(async (req) => {
     const executionTime = Date.now() - startTime;
     logPromptMetrics(storyLevel, tokenValidation.tokenCount, executionTime, true);
 
+    // Audit log successful generation
+    await supabase.from('ai_generation_audit').insert({
+      user_id: user.id,
+      story_level: storyLevel,
+      input_data: sanitizedRequest,
+      output_data: result,
+      token_count: tokenValidation.tokenCount,
+      execution_time_ms: executionTime,
+      success: true,
+      ip_address: ipAddress,
+      user_agent: userAgent
+    });
+
     console.log(`Successfully generated ${storyLevel} in ${executionTime}ms`);
 
     return new Response(JSON.stringify({ 
@@ -154,8 +222,19 @@ serve(async (req) => {
     });
   } catch (error) {
     const executionTime = Date.now() - startTime;
-    const storyLevel = (await req.json().catch(() => ({})))?.storyLevel || 'unknown';
     logPromptMetrics(storyLevel, 0, executionTime, false);
+    
+    // Audit log failed generation
+    await supabase.from('ai_generation_audit').insert({
+      user_id: user.id,
+      story_level: storyLevel,
+      input_data: rawRequest || {},
+      success: false,
+      error_message: error instanceof Error ? error.message : 'Unknown error occurred',
+      execution_time_ms: executionTime,
+      ip_address: ipAddress,
+      user_agent: userAgent
+    });
     
     console.error('Error in generate-user-story function:', error);
     return new Response(JSON.stringify({ 
