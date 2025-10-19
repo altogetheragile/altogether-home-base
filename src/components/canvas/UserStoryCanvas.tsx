@@ -9,7 +9,7 @@ import { useDebounceCanvas } from '@/hooks/useDebounceCanvas';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { StoryCardElement } from './elements/StoryCardElement';
-import { useUserStories, useEpics, useFeatures, type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
+import { type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from '@/components/stories/UserStoryClarifierDialog';
 import { StoryEditDialog } from '@/components/stories/StoryEditDialog';
 import { useAIStoryGeneration } from '@/hooks/useAIStoryGeneration';
@@ -26,7 +26,7 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   const [zoom, setZoom] = useState(1);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [showAIDialog, setShowAIDialog] = useState(false);
-  const [editingStory, setEditingStory] = useState<{ story: UserStory | Epic | null; type: 'story' | 'epic' } | null>(null);
+  const [editingStory, setEditingStory] = useState<{ story: UserStory | Epic | null; type: 'story' | 'epic'; elementId: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
   const canvasRef = useRef<BaseCanvasRef>(null);
@@ -222,7 +222,7 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
     const handleEdit = () => {
       const storyLevel = element.metadata?.storyLevel || 'story';
       const type = storyLevel === 'epic' ? 'epic' : 'story';
-      setEditingStory({ story: element.content as any, type });
+      setEditingStory({ story: element.content as any, type, elementId: element.id });
     };
 
     const handleDelete = () => {
@@ -352,6 +352,24 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
           onClose={() => setEditingStory(null)}
           story={editingStory.story}
           type={editingStory.type}
+          mode="canvas"
+          onSave={(updatedData) => {
+            const updatedElements = canvasData.elements.map(el => {
+              if (el.id === editingStory.elementId) {
+                return {
+                  ...el,
+                  content: {
+                    ...el.content,
+                    ...updatedData,
+                  },
+                };
+              }
+              return el;
+            });
+            
+            handleDataChange({ ...canvasData, elements: updatedElements });
+            setEditingStory(null);
+          }}
         />
       )}
     </div>
