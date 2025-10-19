@@ -28,16 +28,12 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
 }) => {
   return (
     <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
-      {/* Generate User Story - Placeholder for future implementation */}
+      {/* Generate User Story */}
       <Button 
         variant="ghost" 
         size="sm"
-        onClick={() => {
-          // Future implementation
-          console.log('User Story generation coming soon');
-        }}
-        title="Generate User Story (Coming Soon)"
-        disabled
+        onClick={() => onAddElement('story')}
+        title="Generate User Story"
       >
         <FileText className="h-4 w-4 mr-2" />
         Generate Story

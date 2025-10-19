@@ -69,16 +69,26 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   }, [canvasData, handleDataChange, toast]);
 
   const handleAddElement = useCallback((type: string) => {
+    // Calculate element size
+    const elementWidth = type === 'bmc' ? 800 : type === 'story' ? 300 : 140;
+    const elementHeight = type === 'bmc' ? 600 : type === 'story' ? 200 : 121;
+    
+    // Center the element in a typical viewport (assuming ~1200x700 canvas area)
+    // and offset slightly for multiple elements
+    const offset = canvasData.elements.length * 20;
+    const centerX = (1200 - elementWidth) / 2 + offset;
+    const centerY = (700 - elementHeight) / 2 + offset;
+    
     const newElement: CanvasElement = {
       id: crypto.randomUUID(),
       type: type as any,
       position: { 
-        x: 100 + (canvasData.elements.length * 20), 
-        y: 100 + (canvasData.elements.length * 20) 
+        x: Math.max(50, centerX), 
+        y: Math.max(50, centerY) 
       },
       size: { 
-        width: type === 'bmc' ? 800 : type === 'story' ? 300 : 200, 
-        height: type === 'bmc' ? 600 : type === 'story' ? 200 : 150 
+        width: elementWidth, 
+        height: elementHeight 
       },
       content: getDefaultContent(type),
     };
