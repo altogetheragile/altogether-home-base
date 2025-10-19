@@ -1,5 +1,15 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import type { StoryLevel, PromptContext } from "../_shared/prompt-templates.ts";
+import { buildPrompt, getSystemPrompt } from "../_shared/prompt-templates.ts";
+import { 
+  sanitizeObject, 
+  validateTokenLimit, 
+  validateRequiredFields,
+  formatValidationErrors,
+  extractJSON,
+  logPromptMetrics 
+} from "../_shared/prompt-utils.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
@@ -8,24 +18,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface UserStoryRequest {
-  feature: string;
-  userRole?: string;
-  goal?: string;
-  context?: string;
-}
-
-interface UserStoryResponse {
-  title: string;
-  story: string;
-  acceptanceCriteria: string[];
-  priority: string;
-  storyPoints: number;
-  epic?: string;
-  status: string;
+interface GenerateStoryRequest {
+  storyLevel: StoryLevel;
+  userInput: string;
+  parentContext?: {
+    level: StoryLevel;
+    title: string;
+    description?: string;
+    businessObjective?: string;
+    userValue?: string;
+  };
+  additionalFields?: {
+    userRole?: string;
+    goal?: string;
+    context?: string;
+  };
+  parentId?: string;
 }
 
 serve(async (req) => {
+  const startTime = Date.now();
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,43 +60,46 @@ serve(async (req) => {
   }
 
   try {
-    const { feature, userRole = "user", goal, context }: UserStoryRequest = await req.json();
+    const rawRequest: GenerateStoryRequest = await req.json();
 
-    if (!feature) {
-      return new Response(JSON.stringify({ error: 'Feature description is required' }), {
+    // Sanitize all input fields
+    const sanitizedRequest = sanitizeObject(rawRequest);
+    const { storyLevel, userInput, parentContext, additionalFields, parentId } = sanitizedRequest;
+
+    // Validate required fields
+    const validation = validateRequiredFields(storyLevel, userInput, parentId);
+    if (!validation.valid) {
+      const errorMessage = formatValidationErrors(validation.errors);
+      console.error('Validation failed:', errorMessage);
+      return new Response(JSON.stringify({ error: errorMessage }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('Generating user story for:', { feature, userRole, goal, context });
+    // Build context-aware prompt
+    const promptContext: PromptContext = {
+      storyLevel,
+      userInput,
+      parentContext,
+      additionalFields,
+    };
+    
+    const prompt = buildPrompt(promptContext);
+    const systemPrompt = getSystemPrompt(storyLevel);
 
-    const prompt = `Generate a well-structured user story for the following feature:
+    // Validate token limits
+    const combinedPrompt = `${systemPrompt}\n\n${prompt}`;
+    const tokenValidation = validateTokenLimit(combinedPrompt, 3500);
+    if (!tokenValidation.valid) {
+      console.error('Token limit exceeded:', tokenValidation.message);
+      return new Response(JSON.stringify({ error: tokenValidation.message }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-Feature: ${feature}
-User Role: ${userRole}
-${goal ? `Goal: ${goal}` : ''}
-${context ? `Context: ${context}` : ''}
-
-Please create a comprehensive user story with the following structure:
-- A clear, concise title
-- A properly formatted user story following the "As a [user], I want [feature], so that [benefit]" format
-- Acceptance criteria as a list of testable requirements (3-5 criteria)
-- Priority level (High, Medium, Low) based on business value
-- Story points estimate (1, 2, 3, 5, 8, 13) based on complexity
-- Suggested epic category if applicable
-- Initial status (typically "To Do")
-
-Return the response as a JSON object with the following structure:
-{
-  "title": "Brief descriptive title",
-  "story": "As a [user role], I want [feature] so that [benefit]",
-  "acceptanceCriteria": ["Given... When... Then...", "..."],
-  "priority": "High|Medium|Low",
-  "storyPoints": number,
-  "epic": "Epic category (optional)",
-  "status": "To Do"
-}`;
+    console.log(`Generating ${storyLevel} with ${tokenValidation.tokenCount} tokens`);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -94,13 +110,10 @@ Return the response as a JSON object with the following structure:
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
-            content: 'You are an expert product manager and agile coach. Generate well-structured user stories with clear acceptance criteria and appropriate estimations. Always respond with valid JSON only. Do not include any text before or after the JSON object.'
-          },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        max_tokens: 800,
+        max_tokens: 1200,
         temperature: 0.2,
         response_format: { type: "json_object" }
       }),
@@ -115,29 +128,35 @@ Return the response as a JSON object with the following structure:
     const data = await response.json();
     const generatedContent = data.choices?.[0]?.message?.content;
 
-    console.log('Generated content:', generatedContent);
-
     if (!generatedContent) {
       console.error('Empty response from OpenAI:', data);
       throw new Error('Empty response from OpenAI API');
     }
 
-    // Parse the JSON response
-    let userStory: UserStoryResponse;
-    try {
-      userStory = JSON.parse(generatedContent);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', generatedContent);
-      throw new Error('Invalid response format from AI');
-    }
+    // Extract and parse JSON with validation
+    const result = extractJSON(generatedContent);
+    
+    const executionTime = Date.now() - startTime;
+    logPromptMetrics(storyLevel, tokenValidation.tokenCount, executionTime, true);
+
+    console.log(`Successfully generated ${storyLevel} in ${executionTime}ms`);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      data: userStory 
+      data: result,
+      metadata: {
+        level: storyLevel,
+        tokenCount: tokenValidation.tokenCount,
+        executionTime
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const executionTime = Date.now() - startTime;
+    const storyLevel = (await req.json().catch(() => ({})))?.storyLevel || 'unknown';
+    logPromptMetrics(storyLevel, 0, executionTime, false);
+    
     console.error('Error in generate-user-story function:', error);
     return new Response(JSON.stringify({ 
       success: false, 
