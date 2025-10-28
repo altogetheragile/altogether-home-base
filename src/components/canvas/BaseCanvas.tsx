@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 export interface CanvasElement {
   id: string;
-  type: 'text' | 'sticky' | 'shape' | 'connector' | 'image' | 'group' | 'bmc' | 'story' | 'userStory' | 'knowledgeItem' | 'customHexi' | 'planningFocus';
+  type: 'text' | 'sticky' | 'shape' | 'connector' | 'image' | 'group' | 'bmc' | 'story' | 'knowledgeItem' | 'customHexi' | 'planningFocus';
   content: any;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -26,7 +26,6 @@ export interface BaseCanvasProps {
   children?: React.ReactNode;
   layout?: 'freeform' | 'grid' | 'template';
   direction?: 'horizontal' | 'vertical';
-  noOverflow?: boolean;
 }
 
 export interface BaseCanvasRef {
@@ -49,7 +48,6 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
   children,
   layout = 'freeform',
   direction = 'horizontal',
-  noOverflow = false,
   ...props
 }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -152,8 +150,7 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
       ref={canvasRef}
       data-canvas-root
       className={cn(
-        'w-full h-full bg-background border border-border rounded-lg relative',
-        noOverflow ? '' : 'overflow-hidden',
+        'w-full h-full bg-background border border-border rounded-lg relative overflow-hidden',
         className
       )}
       {...props}

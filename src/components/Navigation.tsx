@@ -118,7 +118,7 @@ const Navigation = () => {
                     <Button 
                       variant="ghost" 
                       className={`px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive("/bmc-generator") || isActive("/user-story-canvas")
+                        isActive("/bmc-generator") || isActive("/ai-tools")
                           ? "text-primary bg-accent"
                           : "text-muted-foreground hover:text-primary hover:bg-accent"
                       }`}
@@ -133,13 +133,8 @@ const Navigation = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/user-story-canvas" className="cursor-pointer">
+                      <Link to="/ai-tools" className="cursor-pointer">
                         User Story Canvas
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/stories" className="cursor-pointer">
-                        Stories List
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -315,23 +310,12 @@ const Navigation = () => {
                     to="/user-story-canvas"
                     onClick={() => setIsMenuOpen(false)}
                     className={`block px-6 py-2 rounded-md text-base font-medium transition-colors ${
-                      isActive("/user-story-canvas")
+                      isActive("/ai-tools")
                         ? "text-primary bg-accent"
                         : "text-muted-foreground hover:text-primary hover:bg-accent"
                     }`}
                   >
                     User Story Canvas
-                  </Link>
-                  <Link
-                    to="/stories"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block px-6 py-2 rounded-md text-base font-medium transition-colors ${
-                      isActive("/stories")
-                        ? "text-primary bg-accent"
-                        : "text-muted-foreground hover:text-primary hover:bg-accent"
-                    }`}
-                  >
-                    Stories List
                   </Link>
                 </>
               )}

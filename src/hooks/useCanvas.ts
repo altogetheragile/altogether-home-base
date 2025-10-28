@@ -5,9 +5,7 @@ import { CanvasData } from '@/components/canvas/BaseCanvas';
 
 export interface Canvas {
   id: string;
-  project_id: string | null;
-  user_id: string | null;
-  canvas_type: string;
+  project_id: string;
   data: CanvasData;
   created_by: string;
   updated_by: string;
@@ -15,29 +13,19 @@ export interface Canvas {
   updated_at: string;
 }
 
-export const useCanvas = (projectId?: string, userId?: string, canvasType: string = 'project') => {
-  const scopeId = projectId || userId;
-  const scopeType = projectId ? 'project' : 'user';
-  
+export const useCanvas = (projectId: string) => {
   return useQuery({
-    queryKey: ['canvas', scopeType, scopeId, canvasType],
+    queryKey: ['canvas', projectId],
     queryFn: async () => {
-      console.log(`Fetching ${canvasType} canvas for ${scopeType}:`, scopeId);
+      console.log('Fetching canvas for project:', projectId);
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('canvases')
         .select('*')
-        .eq('canvas_type', canvasType)
+        .eq('project_id', projectId)
         .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (projectId) {
-        query = query.eq('project_id', projectId);
-      } else if (userId) {
-        query = query.eq('user_id', userId);
-      }
-
-      const { data, error } = await query.maybeSingle();
+        .limit(1)
+        .maybeSingle(); // Get the most recent canvas if multiple exist
 
       if (error) {
         console.error('Error fetching canvas:', error);
@@ -47,12 +35,12 @@ export const useCanvas = (projectId?: string, userId?: string, canvasType: strin
       if (data) {
         console.log('Canvas found:', data.id);
       } else {
-        console.log(`No ${canvasType} canvas found for ${scopeType}`);
+        console.log('No canvas found for project');
       }
       
       return data as Canvas | null;
     },
-    enabled: !!scopeId,
+    enabled: !!projectId,
     retry: (failureCount, error: any) => {
       // Don't retry if it's a permissions error
       if (error?.code === 'PGRST301' || error?.code === '42501') {
@@ -68,27 +56,13 @@ export const useCanvasMutations = () => {
   const { toast } = useToast();
 
   const createCanvas = useMutation({
-    mutationFn: async ({ 
-      projectId, 
-      userId, 
-      canvasType = 'project', 
-      data 
-    }: { 
-      projectId?: string; 
-      userId?: string; 
-      canvasType?: string; 
-      data: CanvasData 
-    }) => {
-      const user = (await supabase.auth.getUser()).data.user;
-      
+    mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
       const { data: canvas, error } = await supabase
         .from('canvases')
         .insert([{
-          project_id: projectId || null,
-          user_id: userId || null,
-          canvas_type: canvasType,
+          project_id: projectId,
           data,
-          created_by: user?.id
+          created_by: (await supabase.auth.getUser()).data.user?.id
         }])
         .select()
         .single();
@@ -97,9 +71,7 @@ export const useCanvasMutations = () => {
       return canvas as Canvas;
     },
     onSuccess: (canvas) => {
-      const scopeType = canvas.project_id ? 'project' : 'user';
-      const scopeId = canvas.project_id || canvas.user_id;
-      queryClient.invalidateQueries({ queryKey: ['canvas', scopeType, scopeId, canvas.canvas_type] });
+      queryClient.invalidateQueries({ queryKey: ['canvas', canvas.project_id] });
     },
     onError: (error) => {
       toast({
@@ -111,41 +83,19 @@ export const useCanvasMutations = () => {
   });
 
   const updateCanvas = useMutation({
-    mutationFn: async ({ 
-      canvasId,
-      projectId, 
-      userId, 
-      canvasType = 'project', 
-      data 
-    }: { 
-      canvasId?: string;
-      projectId?: string; 
-      userId?: string; 
-      canvasType?: string; 
-      data: CanvasData 
-    }) => {
-      let query = supabase
+    mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
+      const { data: canvas, error } = await supabase
         .from('canvases')
         .update({ data })
-        .eq('canvas_type', canvasType);
-
-      if (canvasId) {
-        query = query.eq('id', canvasId);
-      } else if (projectId) {
-        query = query.eq('project_id', projectId);
-      } else if (userId) {
-        query = query.eq('user_id', userId);
-      }
-
-      const { data: canvas, error } = await query.select().single();
+        .eq('project_id', projectId)
+        .select()
+        .single();
 
       if (error) throw error;
       return canvas as Canvas;
     },
     onSuccess: (canvas) => {
-      const scopeType = canvas.project_id ? 'project' : 'user';
-      const scopeId = canvas.project_id || canvas.user_id;
-      queryClient.invalidateQueries({ queryKey: ['canvas', scopeType, scopeId, canvas.canvas_type] });
+      queryClient.invalidateQueries({ queryKey: ['canvas', canvas.project_id] });
     },
     onError: (error) => {
       toast({

@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, Plus, Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useUserStories, useEpics, useFeatures, useStoryMutations, type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from './UserStoryClarifierDialog';
 import { StoryEditDialog } from './StoryEditDialog';
-import { useNavigate } from 'react-router-dom';
 
 const statusColors = {
   draft: 'bg-gray-500',
@@ -25,22 +24,7 @@ const priorityColors = {
   critical: 'bg-red-100 text-red-800',
 };
 
-interface StoryListProps {
-  stories?: UserStory[];
-  epics?: Epic[];
-  features?: Feature[];
-  mode?: 'database' | 'canvas';
-  canvasId?: string;
-}
-
-export function StoryList({ 
-  stories: propStories, 
-  epics: propEpics, 
-  features: propFeatures,
-  mode = 'database',
-  canvasId 
-}: StoryListProps) {
-  const navigate = useNavigate();
+export function StoryList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -50,29 +34,15 @@ export function StoryList({
   const [editingType, setEditingType] = useState<'story' | 'epic'>('story');
   const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(new Set());
 
-  // Use props if provided, otherwise fetch from database
-  const { data: dbStories = [], isLoading: storiesLoading } = useUserStories();
-  const { data: dbEpics = [], isLoading: epicsLoading } = useEpics();
-  const { data: dbFeatures = [], isLoading: featuresLoading } = useFeatures();
+  const { data: stories = [], isLoading: storiesLoading } = useUserStories();
+  const { data: epics = [], isLoading: epicsLoading } = useEpics();
+  const { data: features = [], isLoading: featuresLoading } = useFeatures();
   const { deleteStory } = useStoryMutations();
 
-  const stories = propStories || dbStories;
-  const epics = propEpics || dbEpics;
-  const features = propFeatures || dbFeatures;
-
   const handleEditStory = (story: UserStory | Epic, type: 'story' | 'epic') => {
-    if (mode === 'canvas') {
-      // Navigate to canvas with element highlighted
-      navigate(`/user-story-canvas?highlight=${story.id}`);
-    } else {
-      setEditingStory(story);
-      setEditingType(type);
-      setShowEditDialog(true);
-    }
-  };
-
-  const handleViewOnCanvas = (storyId: string) => {
-    navigate(`/user-story-canvas?highlight=${storyId}`);
+    setEditingStory(story);
+    setEditingType(type);
+    setShowEditDialog(true);
   };
 
   const handleCloseEditDialog = () => {
@@ -178,26 +148,17 @@ export function StoryList({
                     <Badge variant="secondary" className="mb-3">{epic.theme}</Badge>
                   )}
                   <div className="flex justify-end space-x-2">
-                    {mode === 'canvas' ? (
-                      <Button size="sm" variant="outline" onClick={() => handleViewOnCanvas(epic.id)}>
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        View on Canvas
-                      </Button>
-                    ) : (
-                      <>
-                        <Button size="sm" variant="outline" onClick={() => handleEditStory(epic, 'epic')}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => deleteStory.mutate(epic.id)}
-                          disabled={deleteStory.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
+                    <Button size="sm" variant="outline" onClick={() => handleEditStory(epic, 'epic')}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => deleteStory.mutate(epic.id)}
+                      disabled={deleteStory.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -273,26 +234,17 @@ export function StoryList({
                 )}
 
                 <div className="flex justify-end space-x-2">
-                  {mode === 'canvas' ? (
-                    <Button size="sm" variant="outline" onClick={() => handleViewOnCanvas(story.id)}>
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      View on Canvas
-                    </Button>
-                  ) : (
-                    <>
-                      <Button size="sm" variant="outline" onClick={() => handleEditStory(story, 'story')}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => deleteStory.mutate(story.id)}
-                        disabled={deleteStory.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
+                  <Button size="sm" variant="outline" onClick={() => handleEditStory(story, 'story')}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => deleteStory.mutate(story.id)}
+                    disabled={deleteStory.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>

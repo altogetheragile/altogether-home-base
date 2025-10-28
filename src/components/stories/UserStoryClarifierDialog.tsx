@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,19 +13,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from '@/hooks/useUserStories';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useProjects } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
-import { useAIStoryGeneration } from '@/hooks/useAIStoryGeneration';
 
 interface UserStoryClarifierDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectId?: string;
   onStoryGenerated?: (storyData: any) => void;
-  canvasData?: { elements: any[] };
 }
 
 interface StoryAnalysisResult {
@@ -49,7 +46,7 @@ interface StoryAnalysisResult {
   };
 }
 
-export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGenerated, canvasData }: UserStoryClarifierDialogProps) {
+export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGenerated }: UserStoryClarifierDialogProps) {
   const [storyType, setStoryType] = useState<'epic' | 'feature' | 'story'>('story');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -59,51 +56,12 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || '');
   const [saveToCanvas, setSaveToCanvas] = useState(false);
-  const [parentId, setParentId] = useState<string>('');
-  const [availableParents, setAvailableParents] = useState<Array<{id: string, title: string}>>([]);
-  const [isLoadingParents, setIsLoadingParents] = useState(false);
   
   const { toast } = useToast();
   const { createStory, createEpic, createFeature, createBulkStories } = useStoryMutations();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { data: projects } = useProjects();
   const { updateCanvas } = useCanvasMutations();
-  const { generateStoryAsync, isGenerating, anonymousUsage } = useAIStoryGeneration();
-
-  // Fetch available parents when story type changes
-  useEffect(() => {
-    if (storyType === 'epic' || !canvasData) {
-      setAvailableParents([]);
-      setParentId('');
-      return;
-    }
-    
-    setIsLoadingParents(true);
-    
-    // Get the appropriate parent level
-    const parentLevel = storyType === 'feature' ? 'epic' : 
-                       storyType === 'story' ? 'feature' : 
-                       'story'; // for tasks
-    
-    // Filter canvas elements for appropriate parents
-    const parents = canvasData?.elements
-      ?.filter(el => el.metadata?.storyLevel === parentLevel)
-      ?.map(el => ({
-        id: el.id,
-        title: el.content?.title || 'Untitled'
-      })) || [];
-    
-    setAvailableParents(parents);
-    setIsLoadingParents(false);
-    
-    // Auto-select if only one parent exists
-    if (parents.length === 1) {
-      setParentId(parents[0].id);
-    } else {
-      setParentId('');
-    }
-  }, [storyType, canvasData]);
 
   const handleAnalyze = async () => {
     if (!title.trim()) {
@@ -119,83 +77,87 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
     setAnalysisResult(null);
     
     try {
-      const result = await generateStoryAsync({
-        storyLevel: storyType,
-        userInput: `Title: ${title}\nDescription: ${description}`,
-        parentId: parentId || undefined,
+      const { data, error } = await supabase.functions.invoke('generate-canvas', {
+        body: {
+          canvasType: 'story-analysis',
+          analysisType,
+          storyType,
+          title,
+          description,
+        },
       });
 
-      if (!result.success || !result.data) {
+      if (error) {
+        console.error('Error analyzing story:', error);
+        let errorMessage = "Failed to analyze story. Please try again.";
+        
+        if (error.message?.includes('Failed to send a request')) {
+          errorMessage = "Network connection issue. Please check your internet connection and try again.";
+        } else if (error.message?.includes('non-2xx status code')) {
+          errorMessage = "AI service is temporarily unavailable. Please try again in a moment.";
+        }
+        
         toast({
-          title: "Generation failed",
-          description: result.error || "Failed to generate story.",
+          title: "Analysis failed",
+          description: errorMessage,
           variant: "destructive",
         });
         return;
       }
 
-      const generatedData = result.data;
-      
-      // Extract common properties based on story type with proper type guards
-      let storyDescription = '';
-      let acceptanceCriteria: string[] = [];
-      let priority = 'medium';
-      let storyPoints = 3;
-      
-      // Type guard for GeneratedStory
-      if ('userStory' in generatedData && typeof generatedData.userStory === 'string') {
-        storyDescription = generatedData.userStory;
-        if ('acceptanceCriteria' in generatedData && Array.isArray(generatedData.acceptanceCriteria)) {
-          acceptanceCriteria = generatedData.acceptanceCriteria;
-        }
-        if ('priority' in generatedData && typeof generatedData.priority === 'string') {
-          priority = generatedData.priority;
-        }
-        if ('storyPoints' in generatedData && typeof generatedData.storyPoints === 'number') {
-          storyPoints = generatedData.storyPoints;
-        }
-      } else if ('description' in generatedData && typeof generatedData.description === 'string') {
-        // GeneratedEpic, GeneratedFeature, or GeneratedTask
-        storyDescription = generatedData.description;
-      }
-      
-      // Map the generated data to analysis result format
-      const mappedResult: StoryAnalysisResult = {
-        analysisType: 'user-story-generation',
-        title: generatedData.title,
-        description: storyDescription,
-        acceptanceCriteria,
-        suggestions: [],
-      };
-      
-      setAnalysisResult(mappedResult);
-      setTitle(generatedData.title);
-      setDescription(storyDescription);
-      
-      // If canvas integration is enabled, pass the data back immediately
-      if (onStoryGenerated) {
-        onStoryGenerated({
-          title: generatedData.title,
-          story: storyDescription,
-          acceptanceCriteria,
-          priority,
-          storyPoints,
-          status: 'draft',
-          parentId: parentId || undefined,
+      if (!data || !data.generatedCanvas) {
+        toast({
+          title: "No results",
+          description: "The analysis didn't return any results. Please try rephrasing your story.",
+          variant: "destructive",
         });
-        onClose();
         return;
       }
+
+      const result = data.generatedCanvas;
+      setAnalysisResult(result);
+      
+      // Auto-populate fields if we got a user story generation
+      if (result.analysisType === 'user-story-generation' || analysisType === 'user-story-generation') {
+        if (result.title) setTitle(result.title);
+        if (result.description) setDescription(result.description);
+        
+        // If canvas integration is enabled, pass the data back immediately
+        if (onStoryGenerated && result.title && result.description) {
+          onStoryGenerated({
+            title: result.title,
+            story: result.description,
+            acceptanceCriteria: result.acceptanceCriteria || [],
+            priority: 'medium',
+            storyPoints: 3,
+            status: 'draft'
+          });
+          onClose();
+          return;
+        }
+      }
       
       toast({
-        title: "Story generated!",
-        description: "Your user story has been successfully generated.",
+        title: "Analysis complete!",
+        description: analysisType === 'user-story-generation' ? 
+          "Your user story has been generated!" : 
+          "Your story has been successfully analyzed.",
       });
     } catch (error) {
-      console.error('Error generating story:', error);
+      console.error('Error analyzing story:', error);
+      let errorMessage = "An unexpected error occurred.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Generation failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        title: "Analysis failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -322,8 +284,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
     setAnalysisType('user-story-generation');
     setStoryType('story');
     setSaveToCanvas(false);
-    setParentId('');
-    setAvailableParents([]);
     if (!projectId) {
       setSelectedProjectId('');
     }
@@ -617,9 +577,8 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>{3 - anonymousUsage.count} free {3 - anonymousUsage.count === 1 ? 'generation' : 'generations'} remaining</strong>
-                  <br />
-                  Try AI generation free! Sign in for unlimited AI generations and save your work!
+                  <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in. 
+                  Sign in to save your stories and manage them in projects.
                 </AlertDescription>
               </Alert>
             )}
@@ -682,51 +641,17 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                          </PopoverContent>
                        </Popover>
                      </div>
-                     <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
-                       <SelectTrigger id="storyType">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent>
-                         <SelectItem value="story">User Story</SelectItem>
-                         <SelectItem value="feature">Feature</SelectItem>
-                         <SelectItem value="epic">Epic</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
-
-                   {/* Parent Selection - shown for non-epic types */}
-                   {storyType !== 'epic' && (
-                     <div className="space-y-2">
-                       <Label htmlFor="parent">
-                         Parent {storyType === 'feature' ? 'Epic' : 'Feature'} *
-                       </Label>
-                       <Select 
-                         value={parentId} 
-                         onValueChange={setParentId}
-                         disabled={isLoadingParents || availableParents.length === 0}
-                       >
-                         <SelectTrigger id="parent">
-                           <SelectValue placeholder={
-                             availableParents.length === 0 
-                               ? `No ${storyType === 'feature' ? 'Epics' : 'Features'} available`
-                               : "Select parent..."
-                           } />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {availableParents.map(parent => (
-                             <SelectItem key={parent.id} value={parent.id}>
-                               {parent.title}
-                             </SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
-                       {availableParents.length === 0 && (
-                         <p className="text-sm text-muted-foreground">
-                           Create a {storyType === 'feature' ? 'Epic' : 'Feature'} first
-                         </p>
-                       )}
-                     </div>
-                   )}
+                    <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
+                      <SelectTrigger id="storyType">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="story">User Story</SelectItem>
+                        <SelectItem value="feature">Feature</SelectItem>
+                        <SelectItem value="epic">Epic</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                    <div className="space-y-2">
                      <div className="flex items-center gap-2">
@@ -842,19 +767,11 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                 )}
               </div>
               <div className="space-x-2">
-                <Button 
-                  onClick={handleAnalyze} 
-                  disabled={isGenerating || !title.trim() || (!user && anonymousUsage.count >= 3) || (storyType !== 'epic' && !parentId)}
-                >
-                  {isGenerating ? (
+                <Button onClick={handleAnalyze} disabled={isAnalyzing}>
+                  {isAnalyzing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (!user && anonymousUsage.count >= 3) ? (
-                    <>
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Sign In for Unlimited Access
+                      Analyzing...
                     </>
                   ) : (
                     <>
@@ -885,7 +802,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                       )}
                     </div>
                   ) : (
-                    <Button onClick={() => navigate('/auth')} variant="default">
+                    <Button onClick={handleSignInRedirect} variant="default">
                       <LogIn className="h-4 w-4 mr-2" />
                       Sign in to Save
                     </Button>

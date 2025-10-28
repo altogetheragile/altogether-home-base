@@ -15,14 +15,12 @@ interface StoryEditDialogProps {
   onClose: () => void;
   story: UserStory | Epic | null;
   type: 'story' | 'epic';
-  mode?: 'database' | 'canvas';
-  onSave?: (updatedStory: Partial<UserStory | Epic>) => void;
 }
 
 type StoryStatus = 'draft' | 'ready' | 'in_progress' | 'testing' | 'done';
 type EpicStatus = 'draft' | 'active' | 'completed' | 'cancelled';
 
-export function StoryEditDialog({ isOpen, onClose, story, type, mode = 'database', onSave }: StoryEditDialogProps) {
+export function StoryEditDialog({ isOpen, onClose, story, type }: StoryEditDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<StoryStatus | EpicStatus>('draft');
@@ -63,55 +61,32 @@ export function StoryEditDialog({ isOpen, onClose, story, type, mode = 'database
     }
 
     try {
-      if (mode === 'canvas' && onSave) {
-        // Canvas mode: call the callback with updated data
-        const updatedData = {
+      if (type === 'epic') {
+        await updateEpic.mutateAsync({
+          id: story.id,
           title,
           description,
-          status,
-          ...(type === 'epic' ? { theme } : {
-            priority,
-            story_points: storyPoints,
-            acceptance_criteria: acceptanceCriteria.filter(criteria => criteria.trim()),
-          }),
-        };
-        onSave(updatedData);
-        
-        toast({
-          title: "Success!",
-          description: `${type === 'epic' ? 'Epic' : 'Story'} updated successfully.`,
+          status: status as EpicStatus,
+          theme,
         });
-        
-        onClose();
       } else {
-        // Database mode: use mutations
-        if (type === 'epic') {
-          await updateEpic.mutateAsync({
-            id: story.id,
-            title,
-            description,
-            status: status as EpicStatus,
-            theme,
-          });
-        } else {
-          await updateStory.mutateAsync({
-            id: story.id,
-            title,
-            description,
-            status: status as StoryStatus,
-            priority,
-            story_points: storyPoints,
-            acceptance_criteria: acceptanceCriteria.filter(criteria => criteria.trim()),
-          });
-        }
-
-        toast({
-          title: "Success!",
-          description: `${type === 'epic' ? 'Epic' : 'Story'} updated successfully.`,
+        await updateStory.mutateAsync({
+          id: story.id,
+          title,
+          description,
+          status: status as StoryStatus,
+          priority,
+          story_points: storyPoints,
+          acceptance_criteria: acceptanceCriteria.filter(criteria => criteria.trim()),
         });
-        
-        onClose();
       }
+
+      toast({
+        title: "Success!",
+        description: `${type === 'epic' ? 'Epic' : 'Story'} updated successfully.`,
+      });
+      
+      onClose();
     } catch (error) {
       console.error('Error updating:', error);
       toast({
@@ -285,10 +260,7 @@ export function StoryEditDialog({ isOpen, onClose, story, type, mode = 'database
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={mode === 'database' && (updateStory.isPending || updateEpic.isPending)}
-            >
+            <Button onClick={handleSave} disabled={updateStory.isPending || updateEpic.isPending}>
               Save Changes
             </Button>
           </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { CanvasElement } from '../BaseCanvas';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Move } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AIToolElementProps {
@@ -25,15 +25,8 @@ const AIToolElement: React.FC<AIToolElementProps> = ({
   className,
 }) => {
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Don't drag if clicking on buttons or interactive elements
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.tagName === 'BUTTON') {
-      return;
-    }
-    
     if (e.button !== 0) return; // Only handle left click
     
-    e.preventDefault(); // Prevent text selection while dragging
     onSelect();
     
     const startX = e.clientX - element.position.x;
@@ -71,7 +64,6 @@ const AIToolElement: React.FC<AIToolElementProps> = ({
         height: element.size.height,
       }}
       onClick={onSelect}
-      onMouseDown={handleMouseDown}
     >
       <Card
         className={cn(
@@ -83,10 +75,19 @@ const AIToolElement: React.FC<AIToolElementProps> = ({
         {isSelected && (
           <div className="absolute -top-8 right-0 flex items-center gap-1 z-10">
             <Button
+              variant="secondary"
+              size="icon"
+              className="h-6 w-6"
+              onMouseDown={handleMouseDown}
+            >
+              <Move className="h-3 w-3" />
+            </Button>
+            <Button
               variant="destructive"
               size="icon"
               className="h-6 w-6"
               onClick={(e) => {
+                console.log('Delete button clicked in AIToolElement');
                 e.stopPropagation();
                 e.preventDefault();
                 onDelete();

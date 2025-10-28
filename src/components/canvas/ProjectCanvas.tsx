@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
 import { CanvasProvider } from './CanvasProvider';
 import BMCCanvasElement from './elements/BMCCanvasElement';
@@ -20,7 +21,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-  Download
+  Download,
+  ArrowLeft
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -34,6 +36,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   projectId,
   projectName,
 }) => {
+  const navigate = useNavigate();
   const { data: canvas, isLoading, error } = useCanvas(projectId);
   const { createCanvas, updateCanvas } = useCanvasMutations();
   const { toast } = useToast();
@@ -43,17 +46,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [disableTransforms, setDisableTransforms] = useState(false);
-  const hasCentered = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // AGGRESSIVE DEBUG: Log on component mount
-  useEffect(() => {
-    console.log('🚀 ProjectCanvas MOUNTED - New code is running!', {
-      projectId,
-      timestamp: new Date().toISOString()
-    });
-  }, [projectId]);
 
   // Get existing knowledge item IDs for selector
   const existingKnowledgeItemIds = React.useMemo(() => {
@@ -77,7 +69,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
           if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') {
             return {
               ...el,
-              size: { width: 180, height: 156 }
+              size: { width: 140, height: 121 }
             };
           }
           return el;
@@ -87,7 +79,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       // Check if any changes were made
       const hasChanges = normalized.elements.some((el, idx) => 
         (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') &&
-        (canvas.data.elements[idx]?.size?.width !== 180 || canvas.data.elements[idx]?.size?.height !== 156)
+        (canvas.data.elements[idx]?.size?.width !== 140 || canvas.data.elements[idx]?.size?.height !== 121)
       );
       
       if (hasChanges) {
@@ -119,40 +111,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       });
     }
   }, [canvas, isLoading, projectId]); // Removed createCanvas from dependency array
-
-  // Auto-center view on canvas elements when first loaded
-  useEffect(() => {
-    if (canvasData.elements.length > 0 && !hasCentered.current) {
-      console.log('🎯 Auto-centering view on', canvasData.elements.length, 'elements');
-      console.log('📊 Canvas data:', canvasData);
-      
-      // Get viewport dimensions
-      const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
-      const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
-      
-      console.log('📐 Viewport:', { viewportWidth, viewportHeight });
-      
-      // Calculate bounding box of all elements
-      const positions = canvasData.elements.map(el => el.position);
-      const minX = Math.min(...positions.map(p => p.x));
-      const maxX = Math.max(...positions.map(p => p.x));
-      const minY = Math.min(...positions.map(p => p.y));
-      const maxY = Math.max(...positions.map(p => p.y));
-      
-      console.log('📍 Elements bounding box:', { minX, maxX, minY, maxY });
-      
-      // Center elements in viewport
-      const centerX = (maxX + minX) / 2;
-      const centerY = (maxY + minY) / 2;
-      const newPanX = viewportWidth / 2 - centerX;
-      const newPanY = viewportHeight / 2 - centerY;
-      
-      console.log('🎯 Setting pan to:', { x: newPanX, y: newPanY });
-      setPan({ x: newPanX, y: newPanY });
-      setZoom(0.8); // Zoom out slightly to see all elements
-      hasCentered.current = true;
-    }
-  }, [canvasData.elements.length]);
 
   // Real-time collaboration
   const { isConnected, activeUsers } = useCanvasRealtime({
@@ -227,40 +185,11 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   };
 
   const handleAddKnowledgeItem = (itemId: string, itemData: any) => {
-    // Initialize technique-specific content if this is a technique hexi
-    let techniqueContent = {};
-    if (itemData.techniqueType === 'bmc') {
-      techniqueContent = {
-        bmcData: {
-          keyPartners: '',
-          keyActivities: '',
-          keyResources: '',
-          valuePropositions: '',
-          customerRelationships: '',
-          channels: '',
-          customerSegments: '',
-          costStructure: '',
-          revenueStreams: '',
-        }
-      };
-    } else if (itemData.techniqueType === 'userStory') {
-      techniqueContent = {
-        stories: []
-      };
-    }
-
-    // Calculate staggered position based on existing elements count
-    const existingCount = canvasData.elements.length;
-    const position = {
-      x: 100 + (existingCount * 200),
-      y: 100 + ((existingCount % 3) * 176)
-    };
-
     const newElement: CanvasElement = {
       id: `knowledgeItem-${Date.now()}`,
       type: 'knowledgeItem' as any,
-      position,
-      size: { width: 180, height: 156 },
+      position: { x: 100, y: 100 },
+      size: { width: 140, height: 121 },
       content: {
         knowledgeItemId: itemId,
         name: itemData.name,
@@ -273,10 +202,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         category_color: itemData.knowledge_categories?.color,
         icon: itemData.icon,
         emoji: itemData.emoji,
-        hasAISupport: itemData.has_ai_support || !!itemData.techniqueType,
-        techniqueType: itemData.techniqueType,
-        openAsTab: false, // User must explicitly open as tab
-        ...techniqueContent,
       }
     };
     
@@ -288,11 +213,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setCanvasData(newData);
     flushDataChange(newData);
     setSelectedElements([newElement.id]);
-
-    toast({
-      title: "Hexi added",
-      description: `${itemData.name} has been added to the canvas`,
-    });
   };
 
   const handleAddCustomHexi = () => {
@@ -300,7 +220,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `customHexi-${Date.now()}`,
       type: 'customHexi' as any,
       position: { x: 200, y: 100 },
-      size: { width: 180, height: 156 },
+      size: { width: 140, height: 121 },
       content: {
         label: 'New Hexagon',
         color: '#8B5CF6',
@@ -324,7 +244,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `planningFocus-${Date.now()}`,
       type: 'planningFocus' as any,
       position: { x: 250, y: 150 },
-      size: { width: 180, height: 156 },
+      size: { width: 140, height: 121 },
       content: {
         planningFocusId: focusId,
         name: focusData.name,
@@ -375,93 +295,10 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setSelectedElements(prev => prev.filter(id => id !== elementId));
   };
 
-  const handleOpenAsTab = (elementId: string) => {
-    const element = canvasData.elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'knowledgeItem') return;
-
-    const newOpenAsTab = !element.content?.openAsTab;
-    
-    const newData = {
-      ...canvasData,
-      elements: canvasData.elements.map(el =>
-        el.id === elementId 
-          ? { ...el, content: { ...el.content, openAsTab: newOpenAsTab } }
-          : el
-      ),
-    };
-    
-    handleDataChange(newData);
-    
-    toast({
-      title: newOpenAsTab ? "Tab opened" : "Tab closed",
-      description: newOpenAsTab 
-        ? `${element.content?.name} is now available as a tab`
-        : `${element.content?.name} tab has been closed`,
-    });
-  };
-
   const handleZoom = (direction: 'in' | 'out') => {
     setZoom(prev => {
       const newZoom = direction === 'in' ? prev * 1.2 : prev / 1.2;
       return Math.max(0.1, Math.min(3, newZoom));
-    });
-  };
-
-  const handleResetView = () => {
-    console.log('🔄 Resetting view to default');
-    hasCentered.current = false;
-    
-    // Re-trigger auto-centering
-    if (canvasData.elements.length > 0) {
-      const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
-      const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
-      
-      const positions = canvasData.elements.map(el => el.position);
-      const minX = Math.min(...positions.map(p => p.x));
-      const maxX = Math.max(...positions.map(p => p.x));
-      const minY = Math.min(...positions.map(p => p.y));
-      const maxY = Math.max(...positions.map(p => p.y));
-      
-      const centerX = (maxX + minX) / 2;
-      const centerY = (maxY + minY) / 2;
-      setPan({ 
-        x: viewportWidth / 2 - centerX, 
-        y: viewportHeight / 2 - centerY 
-      });
-      setZoom(0.8);
-      hasCentered.current = true;
-    }
-  };
-
-  const handleShowAllElements = () => {
-    console.log('🔍 DEBUG: All canvas elements:', canvasData.elements);
-    console.log('📊 Element count:', canvasData.elements.length);
-    canvasData.elements.forEach((el, idx) => {
-      console.log(`Element ${idx}:`, {
-        id: el.id,
-        type: el.type,
-        position: el.position,
-        size: el.size,
-        content: el.content
-      });
-    });
-    handleResetView();
-  };
-
-  const handleTeleportToOrigin = () => {
-    console.log('🚀 Teleporting all hexis to origin');
-    const relocated = {
-      ...canvasData,
-      elements: canvasData.elements.map((el, i) => ({
-        ...el,
-        position: { x: 40 + i * 200, y: 40 }
-      }))
-    };
-    setCanvasData(relocated);
-    flushDataChange(relocated);
-    toast({
-      title: "Elements teleported",
-      description: "All elements moved to visible positions",
     });
   };
 
@@ -576,7 +413,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               debouncedDataChange(newData);
             }}
             onDelete={() => handleElementDelete(element.id)}
-            onOpenAsTab={() => handleOpenAsTab(element.id)}
           />
         );
       case 'customHexi':
@@ -611,35 +447,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             isSelected={isSelected}
             onSelect={() => setSelectedElements([element.id])}
             onUpdate={(updates) => handleElementUpdate(element.id, updates)}
-            onDelete={() => handleElementDelete(element.id)}
-          />
-        );
-      case 'userStory':
-        return (
-          <CustomHexiElement
-            key={element.id}
-            id={element.id}
-            position={element.position}
-            size={element.size}
-            data={{
-              label: 'Product Backlog',
-              color: '#10B981',
-              icon: 'ListTodo',
-              notes: 'Click the Product Backlog tab to manage your stories'
-            }}
-            isSelected={isSelected}
-            onSelect={() => setSelectedElements([element.id])}
-            onMove={(position) => {
-              const newData = {
-                ...canvasData,
-                elements: canvasData.elements.map(el =>
-                  el.id === element.id ? { ...el, position } : el
-                ),
-              };
-              setCanvasData(newData);
-              debouncedDataChange(newData);
-            }}
-            onContentChange={(content) => handleElementContentChange(element.id, content)}
             onDelete={() => handleElementDelete(element.id)}
           />
         );
@@ -678,42 +485,43 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
   return (
     <CanvasProvider>
-      <div className="h-full bg-background flex flex-col overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex items-center justify-end p-4 border-b bg-card">
-          <Toolbar 
-            onAddElement={handleAddElement}
-            onZoomIn={() => handleZoom('in')}
-            onZoomOut={() => handleZoom('out')}
-            onResetView={handleResetView}
-            onShowAllElements={handleShowAllElements}
-            onTeleport={handleTeleportToOrigin}
-            onToggleTransforms={() => setDisableTransforms(prev => !prev)}
-            disableTransforms={disableTransforms}
-            onExport={handleExport}
-            zoom={zoom}
-            onAddKnowledgeItem={handleAddKnowledgeItem}
-            onAddPlanningFocus={handleAddPlanningFocus}
-            existingKnowledgeItemIds={existingKnowledgeItemIds}
-          />
+      <div className="h-screen bg-background flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-card">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard?tab=projects')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <h1 className="text-xl font-semibold">{projectName}</h1>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Toolbar 
+              onAddElement={handleAddElement}
+              onZoomIn={() => handleZoom('in')}
+              onZoomOut={() => handleZoom('out')}
+              onExport={handleExport}
+              zoom={zoom}
+              projectId={projectId}
+              onAddKnowledgeItem={handleAddKnowledgeItem}
+              onAddCustomHexi={handleAddCustomHexi}
+              onAddPlanningFocus={handleAddPlanningFocus}
+              existingKnowledgeItemIds={existingKnowledgeItemIds}
+            />
+          </div>
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 relative" ref={containerRef}>
-          {/* VISUAL DEBUG: Element Count Indicator - ALWAYS VISIBLE */}
-          <div className="fixed top-20 left-20 bg-yellow-500 text-black p-4 rounded-lg shadow-2xl z-[9999] font-mono border-4 border-black">
-            <div className="font-bold text-xl">🐛 DEBUG MODE</div>
-            <div className="text-lg">Elements: {canvasData.elements.length}</div>
-            <div className="text-lg">Pan: x:{Math.round(pan.x)} y:{Math.round(pan.y)}</div>
-            <div className="text-lg">Zoom: {(zoom * 100).toFixed(0)}%</div>
-            <div className="text-sm mt-2">Transforms: {disableTransforms ? 'OFF' : 'ON'}</div>
-            <div className="text-sm">Container: {containerRef.current ? 
-              `${containerRef.current.clientWidth}x${containerRef.current.clientHeight}` : 'NULL'}</div>
-          </div>
-          
+        <div className="flex-1 relative overflow-hidden">
           <div 
-            style={disableTransforms ? {} : {
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            style={{
+              transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
               transformOrigin: 'top left',
             }}
             className="w-full h-full"
@@ -723,38 +531,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               data={canvasData}
               onDataChange={handleDataChange}
               className="w-full h-full"
-              noOverflow={true}
             >
-              {/* TEST SQUARES for visibility check */}
-              <div className="absolute z-[9999]" style={{ left: 0, top: 0, width: 40, height: 40, background: '#00ff00' }} />
-              <div className="absolute z-[9999]" style={{ transform: 'translate(100px, 100px)', width: 40, height: 40, background: '#0000ff' }} />
-              
-              {/* Position markers for each element */}
-              {canvasData.elements.map((element) => (
-                <div
-                  key={element.id + '-marker'}
-                  className="absolute z-[9998]"
-                  style={{
-                    transform: `translate(${element.position.x}px, ${element.position.y}px)`,
-                    width: 10,
-                    height: 10,
-                    background: '#ff0066',
-                    border: '2px solid #000',
-                    borderRadius: '50%',
-                    pointerEvents: 'none'
-                  }}
-                />
-              ))}
-              
-              {canvasData.elements.map((element, index) => {
-                console.log(`Rendering element ${index}:`, {
-                  type: element.type,
-                  position: element.position,
-                  id: element.id,
-                  content: element.content
-                });
-                return renderElement(element);
-              })}
+              {canvasData.elements.map(renderElement)}
             </BaseCanvas>
           </div>
         </div>
@@ -805,7 +583,7 @@ function getDefaultSize(type: string) {
     case 'knowledgeItem':
     case 'customHexi':
     case 'planningFocus':
-      return { width: 180, height: 156 };
+      return { width: 140, height: 121 };
     default:
       return { width: 200, height: 150 };
   }

@@ -118,7 +118,6 @@ export type Database = {
           id: string
           input_data: Json
           ip_address: string | null
-          is_anonymous: boolean | null
           output_data: Json | null
           story_level: string
           success: boolean
@@ -133,7 +132,6 @@ export type Database = {
           id?: string
           input_data: Json
           ip_address?: string | null
-          is_anonymous?: boolean | null
           output_data?: Json | null
           story_level: string
           success: boolean
@@ -148,7 +146,6 @@ export type Database = {
           id?: string
           input_data?: Json
           ip_address?: string | null
-          is_anonymous?: boolean | null
           output_data?: Json | null
           story_level?: string
           success?: boolean
@@ -441,37 +438,31 @@ export type Database = {
       }
       canvases: {
         Row: {
-          canvas_type: string | null
           created_at: string
           created_by: string | null
           data: Json
           id: string
-          project_id: string | null
+          project_id: string
           updated_at: string
           updated_by: string | null
-          user_id: string | null
         }
         Insert: {
-          canvas_type?: string | null
           created_at?: string
           created_by?: string | null
           data?: Json
           id?: string
-          project_id?: string | null
+          project_id: string
           updated_at?: string
           updated_by?: string | null
-          user_id?: string | null
         }
         Update: {
-          canvas_type?: string | null
           created_at?: string
           created_by?: string | null
           data?: Json
           id?: string
-          project_id?: string | null
+          project_id?: string
           updated_at?: string
           updated_by?: string | null
-          user_id?: string | null
         }
         Relationships: [
           {
@@ -1627,7 +1618,6 @@ export type Database = {
           description: string | null
           domain_id: string | null
           evidence_sources: string[] | null
-          has_ai_support: boolean | null
           id: string
           is_featured: boolean | null
           is_published: boolean | null
@@ -1655,7 +1645,6 @@ export type Database = {
           description?: string | null
           domain_id?: string | null
           evidence_sources?: string[] | null
-          has_ai_support?: boolean | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
@@ -1683,7 +1672,6 @@ export type Database = {
           description?: string | null
           domain_id?: string | null
           evidence_sources?: string[] | null
-          has_ai_support?: boolean | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
@@ -3137,17 +3125,14 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_anonymous_ai_rate_limit: {
-        Args: {
-          p_endpoint: string
-          p_ip_address: string
-          p_max_requests?: number
-          p_window_hours?: number
-        }
-        Returns: boolean
+      cleanup_old_anonymous_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
-      cleanup_old_anonymous_usage: { Args: never; Returns: undefined }
-      create_knowledge_slug: { Args: { input_text: string }; Returns: string }
+      create_knowledge_slug: {
+        Args: { input_text: string }
+        Returns: string
+      }
       get_next_template_version: {
         Args: { template_title: string }
         Returns: string
@@ -3178,7 +3163,10 @@ export type Database = {
         Args: { asset_uuid: string }
         Returns: undefined
       }
-      is_admin: { Args: never; Returns: boolean }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

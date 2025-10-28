@@ -12,7 +12,6 @@ interface StoryData {
   storyPoints: number;
   epic?: string;
   status: string;
-  parentTitle?: string;
 }
 
 interface StoryCardElementProps {
@@ -27,7 +26,6 @@ interface StoryCardElementProps {
   onContentChange?: (data: StoryData) => void;
   onDelete?: () => void;
   onEdit?: () => void;
-  storyLevel?: 'epic' | 'feature' | 'story' | 'task';
 }
 
 export const StoryCardElement: React.FC<StoryCardElementProps> = ({
@@ -42,7 +40,6 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   onContentChange,
   onDelete,
   onEdit,
-  storyLevel = 'story',
 }) => {
   const handleUpdate = (element: any) => {
     onMove?.(element.position);
@@ -50,44 +47,10 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
 
   const getPriorityColor = (priority?: string) => {
     switch (priority?.toLowerCase()) {
-      case 'critical': return 'destructive';
       case 'high': return 'destructive';
       case 'medium': return 'default';
       case 'low': return 'secondary';
       default: return 'outline';
-    }
-  };
-
-  const getStatusColor = (status?: string) => {
-    switch (status?.toLowerCase()) {
-      case 'done':
-      case 'completed': return 'default';
-      case 'in_progress':
-      case 'active': return 'default';
-      case 'testing': return 'secondary';
-      case 'ready': return 'secondary';
-      case 'draft': return 'outline';
-      default: return 'outline';
-    }
-  };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'epic': return 'border-purple-500 bg-purple-50 dark:bg-purple-950/20';
-      case 'feature': return 'border-blue-500 bg-blue-50 dark:bg-blue-950/20';
-      case 'story': return 'border-green-500 bg-green-50 dark:bg-green-950/20';
-      case 'task': return 'border-orange-500 bg-orange-50 dark:bg-orange-950/20';
-      default: return 'border-border bg-card';
-    }
-  };
-
-  const getLevelIcon = (level: string) => {
-    switch (level) {
-      case 'epic': return '🎯';
-      case 'feature': return '⭐';
-      case 'story': return '📝';
-      case 'task': return '✓';
-      default: return '📄';
     }
   };
 
@@ -108,73 +71,39 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
       onDelete={onDelete || (() => {})}
     >
       <div 
-        className={cn(
-          "h-full border-2 rounded-lg p-3 hover:border-primary/50 transition-colors cursor-pointer shadow-sm",
-          getLevelColor(storyLevel)
-        )}
-        onDoubleClick={onEdit}
-        title="Double-click to edit"
+        className="h-full bg-card border-2 border-border rounded-lg p-3 hover:border-primary/50 transition-colors cursor-pointer"
+        onClick={onEdit}
       >
         {data ? (
           <div className="space-y-2">
-            {/* Level Badge */}
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium opacity-70">
-                {getLevelIcon(storyLevel)} {storyLevel.toUpperCase()}
-              </span>
-              {data.status && (
-                <Badge 
-                  variant={getStatusColor(data.status)}
-                  className="text-xs px-1.5 py-0"
-                >
-                  {data.status}
-                </Badge>
-              )}
-            </div>
-
             {/* Title */}
             <h4 className="text-sm font-semibold line-clamp-2 leading-tight">
               {data.title}
             </h4>
 
-            {/* Parent Reference */}
-            {data.parentTitle && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="opacity-50">↳</span>
-                <span className="truncate">{data.parentTitle}</span>
-              </div>
-            )}
-
             {/* Metadata */}
-            <div className="flex items-center justify-between flex-wrap gap-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 {data.priority && (
                   <Badge 
                     variant={getPriorityColor(data.priority)}
-                    className="text-xs px-1.5 py-0"
+                    className="text-xs px-2 py-0.5"
                   >
                     {data.priority}
                   </Badge>
                 )}
-                {data.storyPoints !== undefined && data.storyPoints > 0 && (
-                  <span className="text-xs font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                {data.storyPoints && (
+                  <span className="text-xs text-muted-foreground">
                     {data.storyPoints} pts
                   </span>
                 )}
               </div>
             </div>
-
-            {/* Acceptance Criteria Count */}
-            {data.acceptanceCriteria && data.acceptanceCriteria.length > 0 && (
-              <div className="text-xs text-muted-foreground">
-                ✓ {data.acceptanceCriteria.length} criteria
-              </div>
-            )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
             <FileText className="h-6 w-6 mb-1 opacity-50" />
-            <p className="text-xs">Click to edit</p>
+            <p className="text-xs">Click to create story</p>
           </div>
         )}
       </div>
