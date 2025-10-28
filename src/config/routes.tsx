@@ -495,11 +495,7 @@ export const DynamicRoutes = () => {
     <>
       {/* Home Page */}
       <Route path="/" element={
-        <ErrorBoundary fallback={
-          <Suspense fallback={<LoadingFallback />}>
-            <Home />
-          </Suspense>
-        }>
+        <ErrorBoundary>
           <Suspense fallback={<LoadingFallback />}>
             <DynamicPageRenderer />
           </Suspense>
