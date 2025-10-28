@@ -114,34 +114,31 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   // Auto-center view on canvas elements when first loaded
   useEffect(() => {
     if (canvasData.elements.length > 0 && !hasCentered.current) {
-      console.log('🎯 Auto-centering view on', canvasData.elements.length, 'elements');
-      console.log('📊 Canvas data:', canvasData);
-      
-      // Get viewport dimensions
-      const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
-      const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
-      
-      console.log('📐 Viewport:', { viewportWidth, viewportHeight });
-      
-      // Calculate bounding box of all elements
-      const positions = canvasData.elements.map(el => el.position);
-      const minX = Math.min(...positions.map(p => p.x));
-      const maxX = Math.max(...positions.map(p => p.x));
-      const minY = Math.min(...positions.map(p => p.y));
-      const maxY = Math.max(...positions.map(p => p.y));
-      
-      console.log('📍 Elements bounding box:', { minX, maxX, minY, maxY });
-      
-      // Center elements in viewport
-      const centerX = (maxX + minX) / 2;
-      const centerY = (maxY + minY) / 2;
-      const newPanX = viewportWidth / 2 - centerX;
-      const newPanY = viewportHeight / 2 - centerY;
-      
-      console.log('🎯 Setting pan to:', { x: newPanX, y: newPanY });
-      setPan({ x: newPanX, y: newPanY });
-      setZoom(0.8); // Zoom out slightly to see all elements
-      hasCentered.current = true;
+      // Wait for next frame to ensure container has rendered with correct dimensions
+      requestAnimationFrame(() => {
+        const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
+        const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
+        
+        // Only center if we have valid dimensions
+        if (viewportWidth > 0 && viewportHeight > 0) {
+          // Calculate bounding box of all elements
+          const positions = canvasData.elements.map(el => el.position);
+          const minX = Math.min(...positions.map(p => p.x));
+          const maxX = Math.max(...positions.map(p => p.x));
+          const minY = Math.min(...positions.map(p => p.y));
+          const maxY = Math.max(...positions.map(p => p.y));
+          
+          // Center elements in viewport
+          const centerX = (maxX + minX) / 2;
+          const centerY = (maxY + minY) / 2;
+          const newPanX = viewportWidth / 2 - centerX;
+          const newPanY = viewportHeight / 2 - centerY;
+          
+          setPan({ x: newPanX, y: newPanY });
+          setZoom(1.0);
+          hasCentered.current = true;
+        }
+      });
     }
   }, [canvasData.elements.length]);
 
@@ -192,14 +189,22 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       return;
     }
 
+    // Center new elements in viewport
+    const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
+    const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
+    const defaultSize = getDefaultSize(type);
+    
     const newElement: CanvasElement = {
       id: `${type}-${Date.now()}`,
       type: type as CanvasElement['type'],
-      position: { x: 100, y: 100 },
+      position: { 
+        x: (viewportWidth / 2 - defaultSize.width / 2) / zoom - pan.x / zoom,
+        y: (viewportHeight / 2 - defaultSize.height / 2) / zoom - pan.y / zoom
+      },
       content: {
         ...getDefaultContent(type),
       },
-      size: getDefaultSize(type),
+      size: defaultSize,
     };
     
     console.log('Created new element:', newElement.id);
@@ -399,29 +404,28 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   };
 
   const handleResetView = () => {
-    console.log('🔄 Resetting view to default');
-    hasCentered.current = false;
-    
-    // Re-trigger auto-centering
-    if (canvasData.elements.length > 0) {
-      const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
-      const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
-      
-      const positions = canvasData.elements.map(el => el.position);
-      const minX = Math.min(...positions.map(p => p.x));
-      const maxX = Math.max(...positions.map(p => p.x));
-      const minY = Math.min(...positions.map(p => p.y));
-      const maxY = Math.max(...positions.map(p => p.y));
-      
-      const centerX = (maxX + minX) / 2;
-      const centerY = (maxY + minY) / 2;
-      setPan({ 
-        x: viewportWidth / 2 - centerX, 
-        y: viewportHeight / 2 - centerY 
-      });
-      setZoom(0.8);
-      hasCentered.current = true;
+    if (canvasData.elements.length === 0) {
+      setPan({ x: 0, y: 0 });
+      setZoom(1.0);
+      return;
     }
+    
+    const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
+    const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
+    
+    const positions = canvasData.elements.map(el => el.position);
+    const minX = Math.min(...positions.map(p => p.x));
+    const maxX = Math.max(...positions.map(p => p.x));
+    const minY = Math.min(...positions.map(p => p.y));
+    const maxY = Math.max(...positions.map(p => p.y));
+    
+    const centerX = (maxX + minX) / 2;
+    const centerY = (maxY + minY) / 2;
+    setPan({ 
+      x: viewportWidth / 2 - centerX, 
+      y: viewportHeight / 2 - centerY 
+    });
+    setZoom(1.0);
   };
 
   const handleExport = async () => {
