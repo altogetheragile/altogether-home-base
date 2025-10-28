@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
-import { ProjectCanvas as ProjectCanvasComponent } from '@/components/canvas/ProjectCanvas';
+import { ProjectWorkspace } from '@/components/canvas/ProjectWorkspace';
 
 export default function ProjectCanvas() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -29,7 +29,7 @@ export default function ProjectCanvas() {
   }
 
   return (
-    <ProjectCanvasComponent 
+    <ProjectWorkspace 
       projectId={projectId!} 
       projectName={project.name}
     />

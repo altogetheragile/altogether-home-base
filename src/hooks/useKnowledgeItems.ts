@@ -63,6 +63,7 @@ export interface KnowledgeItem {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+  has_ai_support?: boolean;
   
   // Enhanced fields
   common_pitfalls?: string[];

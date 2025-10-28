@@ -1,13 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
 import { StoryToolbar } from './StoryToolbar';
-import { Button } from '@/components/ui/button';
-import { Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCanvas, useCanvasMutations } from '@/hooks/useCanvas';
 import { useDebounceCanvas } from '@/hooks/useDebounceCanvas';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from '@/components/stories/UserStoryClarifierDialog';
@@ -33,7 +30,6 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { updateCanvas, createCanvas } = useCanvasMutations();
   
   // Use user-scoped canvas instead of project-scoped
@@ -82,8 +78,26 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
 
   // Calculate smart grid position for new elements
   const calculateGridPosition = useCallback((
-    storyLevel: 'epic' | 'feature' | 'story' | 'task'
+    storyLevel: 'epic' | 'feature' | 'story' | 'task',
+    parentId?: string
   ) => {
+    // If parent exists, position relative to parent
+    if (parentId) {
+      const parent = canvasData.elements.find(el => el.id === parentId);
+      if (parent) {
+        // Count siblings at same level with same parent
+        const siblings = canvasData.elements.filter(
+          e => e.metadata?.parentId === parentId && e.metadata?.storyLevel === storyLevel
+        );
+        
+        // Position children to the right and slightly down from parent
+        return {
+          x: parent.position.x + 250,
+          y: parent.position.y + (siblings.length * 180),
+        };
+      }
+    }
+
     const GRID_SIZE = 220;
     const LEVEL_OFFSETS = {
       epic: { x: 50, y: 50 },
@@ -108,9 +122,10 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   // Handle adding story to canvas
   const handleAddStory = useCallback((
     level: 'epic' | 'feature' | 'story' | 'task',
-    data?: Partial<UserStory | Epic | Feature>
+    data?: Partial<UserStory | Epic | Feature>,
+    parentId?: string
   ) => {
-    const position = calculateGridPosition(level);
+    const position = calculateGridPosition(level, parentId);
     
     const newElement: CanvasElement = {
       id: crypto.randomUUID(),
@@ -127,6 +142,7 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
       },
       metadata: {
         storyLevel: level,
+        parentId,
       },
     };
 
@@ -177,6 +193,50 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   const handleZoomOut = useCallback(() => {
     setZoom(prev => Math.max(prev / 1.2, 0.3));
   }, []);
+
+  const handleShowAll = useCallback(() => {
+    if (canvasData.elements.length === 0) {
+      toast({
+        title: "No Elements",
+        description: "Add some elements to the canvas first",
+      });
+      return;
+    }
+
+    // Calculate bounding box of all elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    canvasData.elements.forEach(el => {
+      const left = el.position.x;
+      const top = el.position.y;
+      const right = left + (el.size?.width || 200);
+      const bottom = top + (el.size?.height || 160);
+      
+      minX = Math.min(minX, left);
+      minY = Math.min(minY, top);
+      maxX = Math.max(maxX, right);
+      maxY = Math.max(maxY, bottom);
+    });
+
+    // Add padding
+    const padding = 50;
+    const contentWidth = maxX - minX + (padding * 2);
+    const contentHeight = maxY - minY + (padding * 2);
+
+    // Calculate zoom to fit (assuming canvas container is roughly viewport size)
+    const viewportWidth = window.innerWidth - 100;
+    const viewportHeight = window.innerHeight - 200;
+    const zoomX = viewportWidth / contentWidth;
+    const zoomY = viewportHeight / contentHeight;
+    const optimalZoom = Math.min(zoomX, zoomY, 1); // Don't zoom in more than 100%
+
+    setZoom(Math.max(optimalZoom, 0.3)); // Ensure minimum zoom
+    
+    toast({
+      title: "View Adjusted",
+      description: `Showing all ${canvasData.elements.length} elements`,
+    });
+  }, [canvasData.elements, toast]);
 
   const handleExport = useCallback(async () => {
     try {
@@ -234,13 +294,21 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
       setSelectedElements([]);
     };
 
+    // Find parent title if parentId exists
+    const parentTitle = element.metadata?.parentId 
+      ? canvasData.elements.find(el => el.id === element.metadata?.parentId)?.content?.title
+      : undefined;
+
     return (
       <StoryCardElement 
         key={element.id}
         id={element.id}
         position={element.position}
         size={element.size}
-        data={element.content}
+        data={{
+          ...element.content,
+          parentTitle,
+        }}
         isSelected={isSelected}
         onSelect={handleSelect}
         onMove={handleMove}
@@ -252,53 +320,14 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-xl font-semibold">{projectName}</h1>
-            <p className="text-sm text-muted-foreground">
-              Interactive canvas for epics, features, stories, and tasks
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {isSaving && (
-            <span className="text-sm text-muted-foreground">Saving...</span>
-          )}
-          {user && (
-            <Button onClick={() => handleCanvasSave(canvasData)}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Now
-            </Button>
-          )}
-          {!user && (
-            <Button
-              onClick={() => navigate('/auth')}
-              variant="outline"
-            >
-              Sign In to Save
-            </Button>
-          )}
-        </div>
-      </div>
-
+    <div className="h-full flex flex-col bg-background">
       {/* Toolbar */}
       <div className="border-b px-4 py-2 bg-card/50">
         <StoryToolbar
           onAddStory={handleAddStory}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          onShowAll={handleShowAll}
           onExport={handleExport}
           onGenerateAI={() => setShowAIDialog(true)}
           zoom={zoom}
@@ -344,6 +373,11 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
       <UserStoryClarifierDialog
         isOpen={showAIDialog}
         onClose={() => setShowAIDialog(false)}
+        canvasData={canvasData}
+        onStoryGenerated={(storyData) => {
+          const level = storyData.level || 'story';
+          handleAddStory(level, storyData, storyData.parentId);
+        }}
       />
 
       {editingStory && (

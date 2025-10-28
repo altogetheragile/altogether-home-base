@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Trash2 } from 'lucide-react';
+import { ExternalLink, Trash2, Sparkles, Check } from 'lucide-react';
 
 interface KnowledgeItemDetailsDialogProps {
   isOpen: boolean;
@@ -25,8 +25,12 @@ interface KnowledgeItemDetailsDialogProps {
     planning_focus_name?: string;
     planning_focus_color?: string;
     category_name?: string;
+    hasAISupport?: boolean;
+    techniqueType?: string;
+    openAsTab?: boolean;
   };
   onRemove: () => void;
+  onOpenAsTab?: () => void;
 }
 
 export const KnowledgeItemDetailsDialog: React.FC<KnowledgeItemDetailsDialogProps> = ({
@@ -34,6 +38,7 @@ export const KnowledgeItemDetailsDialog: React.FC<KnowledgeItemDetailsDialogProp
   onClose,
   knowledgeItemData,
   onRemove,
+  onOpenAsTab,
 }) => {
   const navigate = useNavigate();
 
@@ -103,7 +108,26 @@ export const KnowledgeItemDetailsDialog: React.FC<KnowledgeItemDetailsDialogProp
             <Trash2 className="h-4 w-4 mr-2" />
             Remove from Canvas
           </Button>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+            {knowledgeItemData.hasAISupport && knowledgeItemData.techniqueType && onOpenAsTab && (
+              <Button
+                onClick={onOpenAsTab}
+                variant={knowledgeItemData.openAsTab ? "secondary" : "default"}
+                className="flex-1 sm:flex-initial"
+              >
+                {knowledgeItemData.openAsTab ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Opened as Tab
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Open as Tab
+                  </>
+                )}
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>

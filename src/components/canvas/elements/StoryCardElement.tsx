@@ -12,6 +12,7 @@ interface StoryData {
   storyPoints: number;
   epic?: string;
   status: string;
+  parentTitle?: string;
 }
 
 interface StoryCardElementProps {
@@ -135,6 +136,14 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
             <h4 className="text-sm font-semibold line-clamp-2 leading-tight">
               {data.title}
             </h4>
+
+            {/* Parent Reference */}
+            {data.parentTitle && (
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="opacity-50">↳</span>
+                <span className="truncate">{data.parentTitle}</span>
+              </div>
+            )}
 
             {/* Metadata */}
             <div className="flex items-center justify-between flex-wrap gap-1">

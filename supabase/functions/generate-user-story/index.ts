@@ -63,63 +63,105 @@ serve(async (req) => {
     });
   }
 
-  // Get user from auth header
+  // Get user from auth header (optional - supports anonymous)
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  let user = null;
   
-  if (authError || !user) {
-    console.error('Authentication failed:', authError);
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  if (token) {
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+    if (!authError && authUser) {
+      user = authUser;
+    }
   }
+  
+  const isAnonymous = !user;
 
   // Get request metadata for audit
   const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
   const userAgent = req.headers.get('user-agent') || 'unknown';
 
-  let rawRequest: GenerateStoryRequest;
-  let storyLevel: StoryLevel = 'story';
-  
   try {
-    rawRequest = await req.json();
-    storyLevel = rawRequest.storyLevel || 'story';
-    
-    // Check rate limits
-    const { data: rateLimitOk, error: rateLimitError } = await supabase.rpc('check_ai_rate_limit', {
-      p_user_id: user.id,
-      p_endpoint: 'generate-user-story',
-      p_max_requests: 50,
-      p_window_minutes: 60
-    });
-
-    if (rateLimitError) {
-      console.error('Rate limit check failed:', rateLimitError);
-    } else if (!rateLimitOk) {
-      await supabase.from('ai_generation_audit').insert({
-        user_id: user.id,
-        story_level: storyLevel,
-        input_data: { error: 'rate_limit_exceeded' },
-        success: false,
-        error_message: 'Rate limit exceeded. Please try again later.',
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        execution_time_ms: Date.now() - startTime
-      });
-      
-      return new Response(JSON.stringify({ 
-        error: 'Rate limit exceeded. You can make up to 50 requests per hour. Please try again later.' 
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Sanitize all input fields
+    // Parse and sanitize request body first
+    const rawRequest: GenerateStoryRequest = await req.json();
     const sanitizedRequest = sanitizeObject(rawRequest);
     const { storyLevel, userInput, parentContext, additionalFields, parentId } = sanitizedRequest;
+    
+    // Check rate limits based on user type
+    let rateLimitOk = false;
+    
+    if (isAnonymous) {
+      // Anonymous users: 3 requests per 24 hours by IP
+      const { data, error: rateLimitError } = await supabase.rpc('check_anonymous_ai_rate_limit', {
+        p_ip_address: ipAddress,
+        p_endpoint: 'generate-user-story',
+        p_max_requests: 3,
+        p_window_hours: 24
+      });
+      
+      if (rateLimitError) {
+        console.error('Anonymous rate limit check failed:', rateLimitError);
+      } else {
+        rateLimitOk = data || false;
+      }
+      
+      if (!rateLimitOk) {
+        await supabase.from('ai_generation_audit').insert({
+          user_id: null,
+          is_anonymous: true,
+          story_level: storyLevel,
+          input_data: { error: 'rate_limit_exceeded' },
+          success: false,
+          error_message: 'Free generation limit reached. Sign in for unlimited access.',
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          execution_time_ms: Date.now() - startTime
+        });
+        
+        return new Response(JSON.stringify({ 
+          error: 'ANONYMOUS_LIMIT_REACHED',
+          message: 'You have used all 3 free AI generations. Sign in for unlimited access!'
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      // Authenticated users: 50 requests per hour
+      const { data, error: rateLimitError } = await supabase.rpc('check_ai_rate_limit', {
+        p_user_id: user.id,
+        p_endpoint: 'generate-user-story',
+        p_max_requests: 50,
+        p_window_minutes: 60
+      });
+
+      if (rateLimitError) {
+        console.error('Rate limit check failed:', rateLimitError);
+      } else {
+        rateLimitOk = data || false;
+      }
+      
+      if (!rateLimitOk) {
+        await supabase.from('ai_generation_audit').insert({
+          user_id: user.id,
+          is_anonymous: false,
+          story_level: storyLevel,
+          input_data: { error: 'rate_limit_exceeded' },
+          success: false,
+          error_message: 'Rate limit exceeded. Please try again later.',
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          execution_time_ms: Date.now() - startTime
+        });
+        
+        return new Response(JSON.stringify({ 
+          error: 'Rate limit exceeded. You can make up to 50 requests per hour. Please try again later.' 
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Validate required fields
     const validation = validateRequiredFields(storyLevel, userInput, parentId);
@@ -196,7 +238,8 @@ serve(async (req) => {
 
     // Audit log successful generation
     await supabase.from('ai_generation_audit').insert({
-      user_id: user.id,
+      user_id: user?.id || null,
+      is_anonymous: isAnonymous,
       story_level: storyLevel,
       input_data: sanitizedRequest,
       output_data: result,
@@ -222,13 +265,14 @@ serve(async (req) => {
     });
   } catch (error) {
     const executionTime = Date.now() - startTime;
-    logPromptMetrics(storyLevel, 0, executionTime, false);
+    logPromptMetrics('story', 0, executionTime, false);
     
     // Audit log failed generation
     await supabase.from('ai_generation_audit').insert({
-      user_id: user.id,
-      story_level: storyLevel,
-      input_data: rawRequest || {},
+      user_id: user?.id || null,
+      is_anonymous: isAnonymous,
+      story_level: 'story',
+      input_data: {},
       success: false,
       error_message: error instanceof Error ? error.message : 'Unknown error occurred',
       execution_time_ms: executionTime,
