@@ -16,6 +16,7 @@ interface ToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetView: () => void;
+  onShowAllElements: () => void;
   onExport: () => void;
   zoom: number;
   onAddKnowledgeItem: (itemId: string, itemData: any) => void;
@@ -28,6 +29,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onZoomIn,
   onZoomOut,
   onResetView,
+  onShowAllElements,
   onExport,
   zoom,
   onAddKnowledgeItem,
@@ -92,6 +94,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             title="Reset View"
           >
             <Maximize2 className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onShowAllElements}
+            title="Debug: Show All Elements"
+          >
+            🐛
           </Button>
         </div>
 

@@ -44,6 +44,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const hasCentered = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // AGGRESSIVE DEBUG: Log on component mount
+  useEffect(() => {
+    console.log('🚀 ProjectCanvas MOUNTED - New code is running!', {
+      projectId,
+      timestamp: new Date().toISOString()
+    });
+  }, [projectId]);
 
   // Get existing knowledge item IDs for selector
   const existingKnowledgeItemIds = React.useMemo(() => {
@@ -113,15 +122,33 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   // Auto-center view on canvas elements when first loaded
   useEffect(() => {
     if (canvasData.elements.length > 0 && !hasCentered.current) {
-      console.log('Auto-centering view on', canvasData.elements.length, 'elements');
+      console.log('🎯 Auto-centering view on', canvasData.elements.length, 'elements');
+      console.log('📊 Canvas data:', canvasData);
+      
+      // Get viewport dimensions
+      const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
+      const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
+      
+      console.log('📐 Viewport:', { viewportWidth, viewportHeight });
       
       // Calculate bounding box of all elements
       const positions = canvasData.elements.map(el => el.position);
       const minX = Math.min(...positions.map(p => p.x));
+      const maxX = Math.max(...positions.map(p => p.x));
       const minY = Math.min(...positions.map(p => p.y));
+      const maxY = Math.max(...positions.map(p => p.y));
       
-      // Center view with some padding
-      setPan({ x: -minX + 200, y: -minY + 200 });
+      console.log('📍 Elements bounding box:', { minX, maxX, minY, maxY });
+      
+      // Center elements in viewport
+      const centerX = (maxX + minX) / 2;
+      const centerY = (maxY + minY) / 2;
+      const newPanX = viewportWidth / 2 - centerX;
+      const newPanY = viewportHeight / 2 - centerY;
+      
+      console.log('🎯 Setting pan to:', { x: newPanX, y: newPanY });
+      setPan({ x: newPanX, y: newPanY });
+      setZoom(0.8); // Zoom out slightly to see all elements
       hasCentered.current = true;
     }
   }, [canvasData.elements.length]);
@@ -380,19 +407,44 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   };
 
   const handleResetView = () => {
-    console.log('Resetting view to default');
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-    hasCentered.current = false; // Allow re-centering
+    console.log('🔄 Resetting view to default');
+    hasCentered.current = false;
     
-    // Trigger auto-centering again
+    // Re-trigger auto-centering
     if (canvasData.elements.length > 0) {
+      const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
+      const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
+      
       const positions = canvasData.elements.map(el => el.position);
       const minX = Math.min(...positions.map(p => p.x));
+      const maxX = Math.max(...positions.map(p => p.x));
       const minY = Math.min(...positions.map(p => p.y));
-      setPan({ x: -minX + 200, y: -minY + 200 });
+      const maxY = Math.max(...positions.map(p => p.y));
+      
+      const centerX = (maxX + minX) / 2;
+      const centerY = (maxY + minY) / 2;
+      setPan({ 
+        x: viewportWidth / 2 - centerX, 
+        y: viewportHeight / 2 - centerY 
+      });
+      setZoom(0.8);
       hasCentered.current = true;
     }
+  };
+
+  const handleShowAllElements = () => {
+    console.log('🔍 DEBUG: All canvas elements:', canvasData.elements);
+    console.log('📊 Element count:', canvasData.elements.length);
+    canvasData.elements.forEach((el, idx) => {
+      console.log(`Element ${idx}:`, {
+        id: el.id,
+        type: el.type,
+        position: el.position,
+        size: el.size,
+        content: el.content
+      });
+    });
+    handleResetView();
   };
 
   const handleExport = async () => {
@@ -616,6 +668,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onZoomIn={() => handleZoom('in')}
             onZoomOut={() => handleZoom('out')}
             onResetView={handleResetView}
+            onShowAllElements={handleShowAllElements}
             onExport={handleExport}
             zoom={zoom}
             onAddKnowledgeItem={handleAddKnowledgeItem}
@@ -625,7 +678,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative overflow-hidden" ref={containerRef}>
+          {/* VISUAL DEBUG: Element Count Indicator */}
+          <div className="absolute top-4 left-4 bg-destructive text-destructive-foreground p-3 rounded-lg shadow-lg z-50 font-mono">
+            <div className="font-bold">🐛 DEBUG MODE</div>
+            <div>Elements: {canvasData.elements.length}</div>
+            <div>Pan: x:{Math.round(pan.x)} y:{Math.round(pan.y)}</div>
+            <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
+          </div>
+          
           <div 
             style={{
               transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
