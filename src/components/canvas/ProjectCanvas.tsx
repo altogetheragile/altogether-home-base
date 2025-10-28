@@ -43,17 +43,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [disableTransforms, setDisableTransforms] = useState(false);
   const hasCentered = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // AGGRESSIVE DEBUG: Log on component mount
-  useEffect(() => {
-    console.log('🚀 ProjectCanvas MOUNTED - New code is running!', {
-      projectId,
-      timestamp: new Date().toISOString()
-    });
-  }, [projectId]);
 
   // Get existing knowledge item IDs for selector
   const existingKnowledgeItemIds = React.useMemo(() => {
@@ -433,38 +424,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     }
   };
 
-  const handleShowAllElements = () => {
-    console.log('🔍 DEBUG: All canvas elements:', canvasData.elements);
-    console.log('📊 Element count:', canvasData.elements.length);
-    canvasData.elements.forEach((el, idx) => {
-      console.log(`Element ${idx}:`, {
-        id: el.id,
-        type: el.type,
-        position: el.position,
-        size: el.size,
-        content: el.content
-      });
-    });
-    handleResetView();
-  };
-
-  const handleTeleportToOrigin = () => {
-    console.log('🚀 Teleporting all hexis to origin');
-    const relocated = {
-      ...canvasData,
-      elements: canvasData.elements.map((el, i) => ({
-        ...el,
-        position: { x: 40 + i * 160, y: 40 }
-      }))
-    };
-    setCanvasData(relocated);
-    flushDataChange(relocated);
-    toast({
-      title: "Elements teleported",
-      description: "All elements moved to visible positions",
-    });
-  };
-
   const handleExport = async () => {
     if (!canvasRef.current) return;
     
@@ -686,10 +645,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onZoomIn={() => handleZoom('in')}
             onZoomOut={() => handleZoom('out')}
             onResetView={handleResetView}
-            onShowAllElements={handleShowAllElements}
-            onTeleport={handleTeleportToOrigin}
-            onToggleTransforms={() => setDisableTransforms(prev => !prev)}
-            disableTransforms={disableTransforms}
             onExport={handleExport}
             zoom={zoom}
             onAddKnowledgeItem={handleAddKnowledgeItem}
@@ -700,19 +655,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
         {/* Canvas */}
         <div className="flex-1 min-h-[640px] relative" ref={containerRef}>
-          {/* VISUAL DEBUG: Element Count Indicator - ALWAYS VISIBLE */}
-          <div className="fixed top-20 left-20 bg-yellow-500 text-black p-4 rounded-lg shadow-2xl z-[9999] font-mono border-4 border-black">
-            <div className="font-bold text-xl">🐛 DEBUG MODE</div>
-            <div className="text-lg">Elements: {canvasData.elements.length}</div>
-            <div className="text-lg">Pan: x:{Math.round(pan.x)} y:{Math.round(pan.y)}</div>
-            <div className="text-lg">Zoom: {(zoom * 100).toFixed(0)}%</div>
-            <div className="text-sm mt-2">Transforms: {disableTransforms ? 'OFF' : 'ON'}</div>
-            <div className="text-sm">Container: {containerRef.current ? 
-              `${containerRef.current.clientWidth}x${containerRef.current.clientHeight}` : 'NULL'}</div>
-          </div>
-          
           <div 
-            style={disableTransforms ? {} : {
+            style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'top left',
             }}
@@ -723,38 +667,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               data={canvasData}
               onDataChange={handleDataChange}
               className="w-full h-full min-h-[640px]"
-              noOverflow={true}
             >
-              {/* TEST SQUARES for visibility check */}
-              <div className="absolute z-[9999]" style={{ left: 0, top: 0, width: 40, height: 40, background: '#00ff00' }} />
-              <div className="absolute z-[9999]" style={{ transform: 'translate(100px, 100px)', width: 40, height: 40, background: '#0000ff' }} />
-              
-              {/* Position markers for each element */}
-              {canvasData.elements.map((element) => (
-                <div
-                  key={element.id + '-marker'}
-                  className="absolute z-[9998]"
-                  style={{
-                    transform: `translate(${element.position.x}px, ${element.position.y}px)`,
-                    width: 10,
-                    height: 10,
-                    background: '#ff0066',
-                    border: '2px solid #000',
-                    borderRadius: '50%',
-                    pointerEvents: 'none'
-                  }}
-                />
-              ))}
-              
-              {canvasData.elements.map((element, index) => {
-                console.log(`Rendering element ${index}:`, {
-                  type: element.type,
-                  position: element.position,
-                  id: element.id,
-                  content: element.content
-                });
-                return renderElement(element);
-              })}
+              {canvasData.elements.map((element) => renderElement(element))}
             </BaseCanvas>
           </div>
         </div>

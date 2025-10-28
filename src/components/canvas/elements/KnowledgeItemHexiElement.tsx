@@ -97,8 +97,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         style={{ 
           transform: `translate(${x}px, ${y}px)`, 
           width: w, 
-          height: h,
-          outline: '2px dashed #00ff88'
+          height: h
         }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

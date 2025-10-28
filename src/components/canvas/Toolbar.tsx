@@ -16,10 +16,6 @@ interface ToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetView: () => void;
-  onShowAllElements: () => void;
-  onTeleport: () => void;
-  onToggleTransforms: () => void;
-  disableTransforms: boolean;
   onExport: () => void;
   zoom: number;
   onAddKnowledgeItem: (itemId: string, itemData: any) => void;
@@ -32,10 +28,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onZoomIn,
   onZoomOut,
   onResetView,
-  onShowAllElements,
-  onTeleport,
-  onToggleTransforms,
-  disableTransforms,
   onExport,
   zoom,
   onAddKnowledgeItem,
@@ -100,38 +92,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             title="Reset View"
           >
             <Maximize2 className="h-4 w-4" />
-          </Button>
-          
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={onShowAllElements}
-            title="Debug: Show All Elements"
-          >
-            🐛
-          </Button>
-        </div>
-
-        <Separator orientation="vertical" className="h-6" />
-
-        {/* Debug Controls */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onTeleport}
-            title="Teleport to Origin"
-          >
-            🚀
-          </Button>
-          
-          <Button
-            variant={disableTransforms ? "default" : "outline"}
-            size="sm"
-            onClick={onToggleTransforms}
-            title="Toggle Transforms"
-          >
-            {disableTransforms ? "📍" : "🔄"}
           </Button>
         </div>
 
