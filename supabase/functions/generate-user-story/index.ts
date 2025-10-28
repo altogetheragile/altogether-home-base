@@ -81,12 +81,11 @@ serve(async (req) => {
   const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
   const userAgent = req.headers.get('user-agent') || 'unknown';
 
-  let rawRequest: GenerateStoryRequest;
-  let storyLevel: StoryLevel = 'story';
-  
   try {
-    rawRequest = await req.json();
-    storyLevel = rawRequest.storyLevel || 'story';
+    // Parse and sanitize request body first
+    const rawRequest: GenerateStoryRequest = await req.json();
+    const sanitizedRequest = sanitizeObject(rawRequest);
+    const { storyLevel, userInput, parentContext, additionalFields, parentId } = sanitizedRequest;
     
     // Check rate limits based on user type
     let rateLimitOk = false;
@@ -163,10 +162,6 @@ serve(async (req) => {
         });
       }
     }
-
-    // Sanitize all input fields
-    const sanitizedRequest = sanitizeObject(rawRequest);
-    const { storyLevel, userInput, parentContext, additionalFields, parentId } = sanitizedRequest;
 
     // Validate required fields
     const validation = validateRequiredFields(storyLevel, userInput, parentId);
@@ -270,14 +265,14 @@ serve(async (req) => {
     });
   } catch (error) {
     const executionTime = Date.now() - startTime;
-    logPromptMetrics(storyLevel, 0, executionTime, false);
+    logPromptMetrics('story', 0, executionTime, false);
     
     // Audit log failed generation
     await supabase.from('ai_generation_audit').insert({
       user_id: user?.id || null,
       is_anonymous: isAnonymous,
-      story_level: storyLevel,
-      input_data: rawRequest || {},
+      story_level: 'story',
+      input_data: {},
       success: false,
       error_message: error instanceof Error ? error.message : 'Unknown error occurred',
       execution_time_ms: executionTime,
