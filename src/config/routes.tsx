@@ -100,7 +100,7 @@ const AdminFeedback = lazy(() => import('@/pages/admin/AdminFeedback'));
 const AdminImports = lazy(() => import('@/pages/admin/AdminImports'));
 
 // Dynamic Pages
-const DynamicPageRenderer = lazy(() => import('@/components/DynamicPageRenderer').then(m => ({ default: m.DynamicPageRenderer })));
+const DynamicPageRenderer = lazy(() => import('@/components/DynamicPageRenderer'));
 const Home = lazy(() => import('@/pages/Home'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 

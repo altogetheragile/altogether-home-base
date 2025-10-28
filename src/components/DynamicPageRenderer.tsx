@@ -91,3 +91,5 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
     </div>
   );
 };
+
+export default DynamicPageRenderer;
