@@ -26,6 +26,7 @@ export interface BaseCanvasProps {
   children?: React.ReactNode;
   layout?: 'freeform' | 'grid' | 'template';
   direction?: 'horizontal' | 'vertical';
+  noOverflow?: boolean;
 }
 
 export interface BaseCanvasRef {
@@ -48,6 +49,7 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
   children,
   layout = 'freeform',
   direction = 'horizontal',
+  noOverflow = false,
   ...props
 }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -150,7 +152,8 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
       ref={canvasRef}
       data-canvas-root
       className={cn(
-        'w-full h-full bg-background border border-border rounded-lg relative overflow-hidden',
+        'w-full h-full bg-background border border-border rounded-lg relative',
+        noOverflow ? '' : 'overflow-hidden',
         className
       )}
       {...props}

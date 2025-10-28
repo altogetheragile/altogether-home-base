@@ -93,8 +93,13 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     <>
       <div
         ref={ref}
-        className="absolute select-none cursor-move"
-        style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
+        className="absolute select-none cursor-move z-20"
+        style={{ 
+          transform: `translate(${x}px, ${y}px)`, 
+          width: w, 
+          height: h,
+          outline: '2px dashed #00ff88'
+        }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
