@@ -678,13 +678,14 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 relative overflow-hidden" ref={containerRef}>
-          {/* VISUAL DEBUG: Element Count Indicator */}
-          <div className="absolute top-4 left-4 bg-destructive text-destructive-foreground p-3 rounded-lg shadow-lg z-50 font-mono">
-            <div className="font-bold">🐛 DEBUG MODE</div>
-            <div>Elements: {canvasData.elements.length}</div>
-            <div>Pan: x:{Math.round(pan.x)} y:{Math.round(pan.y)}</div>
-            <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
+        <div className="flex-1 relative bg-red-500" ref={containerRef}>
+          {/* VISUAL DEBUG: Element Count Indicator - ALWAYS VISIBLE */}
+          <div className="fixed top-20 left-20 bg-yellow-500 text-black p-4 rounded-lg shadow-2xl z-[9999] font-mono border-4 border-black">
+            <div className="font-bold text-xl">🐛 DEBUG MODE</div>
+            <div className="text-lg">Elements: {canvasData.elements.length}</div>
+            <div className="text-lg">Pan: x:{Math.round(pan.x)} y:{Math.round(pan.y)}</div>
+            <div className="text-lg">Zoom: {(zoom * 100).toFixed(0)}%</div>
+            <div className="text-sm mt-2">Container ref: {containerRef.current ? 'EXISTS' : 'NULL'}</div>
           </div>
           
           <div 
@@ -692,7 +693,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
               transformOrigin: 'top left',
             }}
-            className="w-full h-full"
+            className="w-full h-full bg-blue-500"
           >
             <BaseCanvas
               ref={canvasRef}
