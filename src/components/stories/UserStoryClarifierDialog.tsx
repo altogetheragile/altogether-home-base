@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from '@/hooks/useUserStories';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useProjects } from '@/hooks/useProjects';
@@ -61,9 +62,10 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   const { toast } = useToast();
   const { createStory, createEpic, createFeature, createBulkStories } = useStoryMutations();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: projects } = useProjects();
   const { updateCanvas } = useCanvasMutations();
-  const { generateStoryAsync, isGenerating } = useAIStoryGeneration();
+  const { generateStoryAsync, isGenerating, anonymousUsage } = useAIStoryGeneration();
 
   const handleAnalyze = async () => {
     if (!title.trim()) {
@@ -573,8 +575,9 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in. 
-                  Sign in to save your stories and manage them in projects.
+                  <strong>{3 - anonymousUsage.count} free {3 - anonymousUsage.count === 1 ? 'generation' : 'generations'} remaining</strong>
+                  <br />
+                  Try AI generation free! Sign in for unlimited AI generations and save your work!
                 </AlertDescription>
               </Alert>
             )}
@@ -763,11 +766,19 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                 )}
               </div>
               <div className="space-x-2">
-                <Button onClick={handleAnalyze} disabled={isAnalyzing}>
-                  {isAnalyzing ? (
+                <Button 
+                  onClick={handleAnalyze} 
+                  disabled={isGenerating || !title.trim() || (!user && anonymousUsage.count >= 3)}
+                >
+                  {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Analyzing...
+                      Generating...
+                    </>
+                  ) : (!user && anonymousUsage.count >= 3) ? (
+                    <>
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign In for Unlimited Access
                     </>
                   ) : (
                     <>
@@ -798,7 +809,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                       )}
                     </div>
                   ) : (
-                    <Button onClick={handleSignInRedirect} variant="default">
+                    <Button onClick={() => navigate('/auth')} variant="default">
                       <LogIn className="h-4 w-4 mr-2" />
                       Sign in to Save
                     </Button>

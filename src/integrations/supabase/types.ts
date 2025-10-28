@@ -118,6 +118,7 @@ export type Database = {
           id: string
           input_data: Json
           ip_address: string | null
+          is_anonymous: boolean | null
           output_data: Json | null
           story_level: string
           success: boolean
@@ -132,6 +133,7 @@ export type Database = {
           id?: string
           input_data: Json
           ip_address?: string | null
+          is_anonymous?: boolean | null
           output_data?: Json | null
           story_level: string
           success: boolean
@@ -146,6 +148,7 @@ export type Database = {
           id?: string
           input_data?: Json
           ip_address?: string | null
+          is_anonymous?: boolean | null
           output_data?: Json | null
           story_level?: string
           success?: boolean
@@ -3131,14 +3134,17 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_old_anonymous_usage: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      check_anonymous_ai_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_ip_address: string
+          p_max_requests?: number
+          p_window_hours?: number
+        }
+        Returns: boolean
       }
-      create_knowledge_slug: {
-        Args: { input_text: string }
-        Returns: string
-      }
+      cleanup_old_anonymous_usage: { Args: never; Returns: undefined }
+      create_knowledge_slug: { Args: { input_text: string }; Returns: string }
       get_next_template_version: {
         Args: { template_title: string }
         Returns: string
@@ -3169,10 +3175,7 @@ export type Database = {
         Args: { asset_uuid: string }
         Returns: undefined
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
