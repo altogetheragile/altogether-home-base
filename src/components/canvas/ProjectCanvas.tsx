@@ -77,7 +77,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
           if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') {
             return {
               ...el,
-              size: { width: 140, height: 121 }
+              size: { width: 180, height: 156 }
             };
           }
           return el;
@@ -87,7 +87,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       // Check if any changes were made
       const hasChanges = normalized.elements.some((el, idx) => 
         (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') &&
-        (canvas.data.elements[idx]?.size?.width !== 140 || canvas.data.elements[idx]?.size?.height !== 121)
+        (canvas.data.elements[idx]?.size?.width !== 180 || canvas.data.elements[idx]?.size?.height !== 156)
       );
       
       if (hasChanges) {
@@ -252,15 +252,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     // Calculate staggered position based on existing elements count
     const existingCount = canvasData.elements.length;
     const position = {
-      x: 100 + (existingCount * 160),
-      y: 100 + ((existingCount % 3) * 140)
+      x: 100 + (existingCount * 200),
+      y: 100 + ((existingCount % 3) * 176)
     };
 
     const newElement: CanvasElement = {
       id: `knowledgeItem-${Date.now()}`,
       type: 'knowledgeItem' as any,
       position,
-      size: { width: 140, height: 121 },
+      size: { width: 180, height: 156 },
       content: {
         knowledgeItemId: itemId,
         name: itemData.name,
@@ -300,7 +300,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `customHexi-${Date.now()}`,
       type: 'customHexi' as any,
       position: { x: 200, y: 100 },
-      size: { width: 140, height: 121 },
+      size: { width: 180, height: 156 },
       content: {
         label: 'New Hexagon',
         color: '#8B5CF6',
@@ -324,7 +324,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `planningFocus-${Date.now()}`,
       type: 'planningFocus' as any,
       position: { x: 250, y: 150 },
-      size: { width: 140, height: 121 },
+      size: { width: 180, height: 156 },
       content: {
         planningFocusId: focusId,
         name: focusData.name,
@@ -454,7 +454,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       ...canvasData,
       elements: canvasData.elements.map((el, i) => ({
         ...el,
-        position: { x: 40 + i * 160, y: 40 }
+        position: { x: 40 + i * 200, y: 40 }
       }))
     };
     setCanvasData(relocated);
@@ -805,7 +805,7 @@ function getDefaultSize(type: string) {
     case 'knowledgeItem':
     case 'customHexi':
     case 'planningFocus':
-      return { width: 140, height: 121 };
+      return { width: 180, height: 156 };
     default:
       return { width: 200, height: 150 };
   }
