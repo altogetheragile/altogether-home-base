@@ -182,6 +182,28 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   };
 
   const handleAddKnowledgeItem = (itemId: string, itemData: any) => {
+    // Initialize technique-specific content if this is a technique hexi
+    let techniqueContent = {};
+    if (itemData.techniqueType === 'bmc') {
+      techniqueContent = {
+        bmcData: {
+          keyPartners: '',
+          keyActivities: '',
+          keyResources: '',
+          valuePropositions: '',
+          customerRelationships: '',
+          channels: '',
+          customerSegments: '',
+          costStructure: '',
+          revenueStreams: '',
+        }
+      };
+    } else if (itemData.techniqueType === 'userStory') {
+      techniqueContent = {
+        stories: []
+      };
+    }
+
     const newElement: CanvasElement = {
       id: `knowledgeItem-${Date.now()}`,
       type: 'knowledgeItem' as any,
@@ -199,6 +221,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         category_color: itemData.knowledge_categories?.color,
         icon: itemData.icon,
         emoji: itemData.emoji,
+        techniqueType: itemData.techniqueType, // Include technique type
+        ...techniqueContent, // Add technique-specific data
       }
     };
     
@@ -210,6 +234,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setCanvasData(newData);
     flushDataChange(newData);
     setSelectedElements([newElement.id]);
+
+    const tabMessage = itemData.techniqueType 
+      ? ` - ${itemData.name} tab will appear` 
+      : '';
+    
+    toast({
+      title: "Hexi added",
+      description: `${itemData.name} has been added to the canvas${tabMessage}`,
+    });
   };
 
   const handleAddCustomHexi = () => {
@@ -260,47 +293,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setCanvasData(newData);
     flushDataChange(newData);
     setSelectedElements([newElement.id]);
-  };
-
-  const handleAddTechniqueHexi = (type: 'bmc' | 'userStory') => {
-    const newElement: CanvasElement = {
-      id: `${type}-${Date.now()}`,
-      type: type as any,
-      position: { x: 300, y: 100 },
-      size: { width: 140, height: 121 },
-      content: type === 'bmc' 
-        ? {
-            companyName: projectName || 'New Company',
-            bmcData: {
-              keyPartners: '',
-              keyActivities: '',
-              keyResources: '',
-              valuePropositions: '',
-              customerRelationships: '',
-              channels: '',
-              customerSegments: '',
-              costStructure: '',
-              revenueStreams: '',
-            }
-          }
-        : {
-            stories: []
-          }
-    };
-    
-    const newData = {
-      ...canvasData,
-      elements: [...canvasData.elements, newElement],
-    };
-    
-    setCanvasData(newData);
-    flushDataChange(newData);
-    setSelectedElements([newElement.id]);
-    
-    toast({
-      title: type === 'bmc' ? 'Business Model Canvas added' : 'Product Backlog added',
-      description: `Check the tabs above to start editing your ${type === 'bmc' ? 'BMC' : 'backlog'}.`,
-    });
   };
 
   const handleElementUpdate = (elementId: string, updates: Partial<CanvasElement>) => {
@@ -561,11 +553,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onZoomOut={() => handleZoom('out')}
             onExport={handleExport}
             zoom={zoom}
-            projectId={projectId}
             onAddKnowledgeItem={handleAddKnowledgeItem}
-            onAddCustomHexi={handleAddCustomHexi}
             onAddPlanningFocus={handleAddPlanningFocus}
-            onAddTechniqueHexi={handleAddTechniqueHexi}
             existingKnowledgeItemIds={existingKnowledgeItemIds}
           />
         </div>

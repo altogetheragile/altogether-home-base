@@ -25,15 +25,34 @@ export const TECHNIQUE_HEXIS: Record<string, TechniqueConfig> = {
   },
 };
 
+// Map slugs to technique types
+const SLUG_TO_TECHNIQUE: Record<string, string> = {
+  'business-model-canvas': 'bmc',
+  'product-backlog': 'userStory',
+};
+
+export const getTechniqueTypeFromSlug = (slug: string): string | null => {
+  return SLUG_TO_TECHNIQUE[slug] || null;
+};
+
 export const getTabsFromElements = (elements?: any[]): TechniqueConfig[] => {
   if (!elements || elements.length === 0) return [];
   
   const foundTabs = new Map<string, TechniqueConfig>();
   
   elements.forEach((element) => {
+    // Check direct technique types (legacy support)
     if (element.type && TECHNIQUE_HEXIS[element.type]) {
       const config = TECHNIQUE_HEXIS[element.type];
       foundTabs.set(config.tabKey, config);
+    }
+    
+    // Check knowledge item technique types (new approach)
+    if (element.type === 'knowledgeItem' && element.content?.techniqueType) {
+      const config = TECHNIQUE_HEXIS[element.content.techniqueType];
+      if (config) {
+        foundTabs.set(config.tabKey, config);
+      }
     }
   });
   
