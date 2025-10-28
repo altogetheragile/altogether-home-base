@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 export interface CanvasElement {
   id: string;
-  type: 'text' | 'sticky' | 'shape' | 'connector' | 'image' | 'group' | 'bmc' | 'story' | 'knowledgeItem' | 'customHexi' | 'planningFocus';
+  type: 'text' | 'sticky' | 'shape' | 'connector' | 'image' | 'group' | 'bmc' | 'story' | 'userStory' | 'knowledgeItem' | 'customHexi' | 'planningFocus';
   content: any;
   position: { x: number; y: number };
   size: { width: number; height: number };

@@ -6,7 +6,10 @@ import {
   ZoomOut,
   Download,
   Hexagon,
-  Layers
+  Layers,
+  Building2,
+  ListTodo,
+  StickyNote
 } from 'lucide-react';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 import { PlanningFocusSelector } from './elements/PlanningFocusSelector';
@@ -23,6 +26,7 @@ interface ToolbarProps {
   onAddKnowledgeItem?: (itemId: string, itemData: any) => void;
   onAddCustomHexi?: () => void;
   onAddPlanningFocus?: (focusId: string, focusData: any) => void;
+  onAddTechniqueHexi?: (type: 'bmc' | 'userStory') => void;
   existingKnowledgeItemIds?: string[];
 }
 
@@ -38,6 +42,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onAddKnowledgeItem,
   onAddCustomHexi,
   onAddPlanningFocus,
+  onAddTechniqueHexi,
   existingKnowledgeItemIds = [],
 }) => {
   const [showKnowledgeSelector, setShowKnowledgeSelector] = useState(false);
@@ -45,6 +50,29 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <>
       <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
+        {/* Technique Hexis */}
+        <Button 
+          variant="default" 
+          size="sm"
+          onClick={() => onAddTechniqueHexi?.('bmc')}
+          title="Add Business Model Canvas"
+        >
+          <Building2 className="h-4 w-4 mr-2" />
+          Business Model Canvas
+        </Button>
+
+        <Button 
+          variant="default" 
+          size="sm"
+          onClick={() => onAddTechniqueHexi?.('userStory')}
+          title="Add Product Backlog"
+        >
+          <ListTodo className="h-4 w-4 mr-2" />
+          Product Backlog
+        </Button>
+
+        <Separator orientation="vertical" className="h-6" />
+
         {/* Add Knowledge Item */}
         <Button 
           variant="ghost" 
@@ -53,7 +81,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           title="Add Knowledge Item"
         >
           <Hexagon className="h-4 w-4 mr-2" />
-          Add Knowledge Item
+          Knowledge Item
         </Button>
 
         {/* Planning Focus Hexi */}
@@ -85,7 +113,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onClick={() => onAddElement('sticky')}
           title="Sticky Note"
         >
-          <Hexagon className="h-4 w-4 mr-2" />
+          <StickyNote className="h-4 w-4 mr-2" />
           Sticky Note
         </Button>
 

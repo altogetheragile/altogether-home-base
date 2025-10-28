@@ -262,6 +262,47 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setSelectedElements([newElement.id]);
   };
 
+  const handleAddTechniqueHexi = (type: 'bmc' | 'userStory') => {
+    const newElement: CanvasElement = {
+      id: `${type}-${Date.now()}`,
+      type: type as any,
+      position: { x: 300, y: 100 },
+      size: { width: 140, height: 121 },
+      content: type === 'bmc' 
+        ? {
+            companyName: projectName || 'New Company',
+            bmcData: {
+              keyPartners: '',
+              keyActivities: '',
+              keyResources: '',
+              valuePropositions: '',
+              customerRelationships: '',
+              channels: '',
+              customerSegments: '',
+              costStructure: '',
+              revenueStreams: '',
+            }
+          }
+        : {
+            stories: []
+          }
+    };
+    
+    const newData = {
+      ...canvasData,
+      elements: [...canvasData.elements, newElement],
+    };
+    
+    setCanvasData(newData);
+    flushDataChange(newData);
+    setSelectedElements([newElement.id]);
+    
+    toast({
+      title: type === 'bmc' ? 'Business Model Canvas added' : 'Product Backlog added',
+      description: `Check the tabs above to start editing your ${type === 'bmc' ? 'BMC' : 'backlog'}.`,
+    });
+  };
+
   const handleElementUpdate = (elementId: string, updates: Partial<CanvasElement>) => {
     const newData = {
       ...canvasData,
@@ -447,6 +488,35 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onDelete={() => handleElementDelete(element.id)}
           />
         );
+      case 'userStory':
+        return (
+          <CustomHexiElement
+            key={element.id}
+            id={element.id}
+            position={element.position}
+            size={element.size}
+            data={{
+              label: 'Product Backlog',
+              color: '#10B981',
+              icon: 'ListTodo',
+              notes: 'Click the Product Backlog tab to manage your stories'
+            }}
+            isSelected={isSelected}
+            onSelect={() => setSelectedElements([element.id])}
+            onMove={(position) => {
+              const newData = {
+                ...canvasData,
+                elements: canvasData.elements.map(el =>
+                  el.id === element.id ? { ...el, position } : el
+                ),
+              };
+              setCanvasData(newData);
+              debouncedDataChange(newData);
+            }}
+            onContentChange={(content) => handleElementContentChange(element.id, content)}
+            onDelete={() => handleElementDelete(element.id)}
+          />
+        );
       default:
         return null;
     }
@@ -495,6 +565,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onAddKnowledgeItem={handleAddKnowledgeItem}
             onAddCustomHexi={handleAddCustomHexi}
             onAddPlanningFocus={handleAddPlanningFocus}
+            onAddTechniqueHexi={handleAddTechniqueHexi}
             existingKnowledgeItemIds={existingKnowledgeItemIds}
           />
         </div>
