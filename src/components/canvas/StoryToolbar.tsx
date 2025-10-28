@@ -11,14 +11,12 @@ import {
   FileText,
   Target,
   CheckSquare,
-  Maximize2,
 } from 'lucide-react';
 
 interface StoryToolbarProps {
   onAddStory: (level: 'epic' | 'feature' | 'story' | 'task') => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onShowAll: () => void;
   onExport: () => void;
   onGenerateAI: () => void;
   zoom: number;
@@ -28,7 +26,6 @@ export const StoryToolbar: React.FC<StoryToolbarProps> = ({
   onAddStory,
   onZoomIn,
   onZoomOut,
-  onShowAll,
   onExport,
   onGenerateAI,
   zoom,
@@ -101,9 +98,6 @@ export const StoryToolbar: React.FC<StoryToolbarProps> = ({
         </span>
         <Button variant="ghost" size="sm" onClick={onZoomIn}>
           <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onShowAll} title="Show All Elements">
-          <Maximize2 className="h-4 w-4" />
         </Button>
       </div>
 

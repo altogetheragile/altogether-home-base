@@ -19,15 +19,11 @@ export interface KnowledgeItemHexiElementProps {
     category_color?: string;
     icon?: string;
     emoji?: string;
-    hasAISupport?: boolean;
-    techniqueType?: string;
-    openAsTab?: boolean;
   };
   isSelected?: boolean;
   onSelect?: () => void;
   onMove?: (position: { x: number; y: number }) => void;
   onDelete?: () => void;
-  onOpenAsTab?: () => void;
 }
 
 export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> = ({
@@ -40,7 +36,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   onSelect,
   onMove,
   onDelete,
-  onOpenAsTab,
 }) => {
   const { x, y } = position;
   const { width: w = 140, height: h = 121 } = size;
@@ -93,12 +88,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     <>
       <div
         ref={ref}
-        className="absolute select-none cursor-move z-20"
-        style={{ 
-          transform: `translate(${x}px, ${y}px)`, 
-          width: w, 
-          height: h
-        }}
+        className="absolute select-none cursor-move"
+        style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -175,10 +166,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           setShowDetails(false);
           onDelete?.();
         }}
-        onOpenAsTab={onOpenAsTab ? () => {
-          setShowDetails(false);
-          onOpenAsTab();
-        } : undefined}
       />
     </>
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
 import { CanvasProvider } from './CanvasProvider';
 import BMCCanvasElement from './elements/BMCCanvasElement';
@@ -20,7 +21,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-  Download
+  Download,
+  ArrowLeft
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -34,25 +36,16 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   projectId,
   projectName,
 }) => {
+  const navigate = useNavigate();
   const { data: canvas, isLoading, error } = useCanvas(projectId);
   const { createCanvas, updateCanvas } = useCanvasMutations();
   const { toast } = useToast();
   const canvasRef = useRef<BaseCanvasRef>(null);
   
-  const [canvasData, setCanvasData] = useState<{
-    elements: CanvasElement[];
-    metadata?: Record<string, any>;
-    viewport?: { pan: { x: number; y: number }; zoom: number };
-  }>({
-    elements: [],
-    metadata: {},
-    viewport: undefined
-  });
+  const [canvasData, setCanvasData] = useState<CanvasData>({ elements: [] });
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const hasCentered = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Get existing knowledge item IDs for selector
   const existingKnowledgeItemIds = React.useMemo(() => {
@@ -69,28 +62,19 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     if (canvas?.data) {
       console.log('Setting canvas data from existing canvas');
       
-      // Normalize hexagon sizes (only for old elements, new ones use getDefaultSize)
+      // Normalize hexagon sizes
       const normalized = {
         ...canvas.data,
-        viewport: canvas.data.viewport, // Preserve viewport
         elements: canvas.data.elements.map(el => {
-          if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'planningFocus') {
-            // Update old hexis to new size
+          if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') {
             return {
               ...el,
-              size: { width: 180, height: 156 }
+              size: { width: 140, height: 121 }
             };
           }
           return el;
         })
       };
-      
-      // Restore saved viewport if it exists
-      if (normalized.viewport) {
-        setPan(normalized.viewport.pan);
-        setZoom(normalized.viewport.zoom);
-        hasCentered.current = true; // Mark as centered to prevent auto-center
-      }
       
       // Check if any changes were made
       const hasChanges = normalized.elements.some((el, idx) => 
@@ -111,7 +95,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     } else if (!canvas && !isLoading && !createCanvas.isPending && projectId) {
       console.log('Creating new canvas for project:', projectId);
       // Create new canvas if none exists
-      const initialData = { elements: [], metadata: {}, viewport: undefined };
+      const initialData = { elements: [], metadata: {} };
       setCanvasData(initialData); // Set immediately for UI responsiveness
       
       createCanvas.mutate({
@@ -127,63 +111,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       });
     }
   }, [canvas, isLoading, projectId]); // Removed createCanvas from dependency array
-
-  // Auto-center view on canvas elements when first loaded (only if no saved viewport)
-  useEffect(() => {
-    if (canvasData.elements.length > 0 && !hasCentered.current && !canvasData.viewport) {
-      // Wait for next frame to ensure container has rendered with correct dimensions
-      requestAnimationFrame(() => {
-        const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
-        const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
-        
-        // Only center if we have valid dimensions
-        if (viewportWidth > 0 && viewportHeight > 0) {
-          // Calculate bounding box of all elements
-          const positions = canvasData.elements.map(el => el.position);
-          const minX = Math.min(...positions.map(p => p.x));
-          const maxX = Math.max(...positions.map(p => p.x));
-          const minY = Math.min(...positions.map(p => p.y));
-          const maxY = Math.max(...positions.map(p => p.y));
-          
-          // Calculate content dimensions (including element sizes)
-        const contentWidth = maxX - minX + 180; // +180 for hexi width
-        const contentHeight = maxY - minY + 156; // +156 for hexi height
-        
-        // Calculate zoom to fit with padding
-        const zoomX = (viewportWidth * 0.8) / contentWidth;
-        const zoomY = (viewportHeight * 0.8) / contentHeight;
-        const fitZoom = Math.min(zoomX, zoomY, 1.5); // Cap at 1.5 for better visibility
-          
-        // Center of content
-        const centerX = (maxX + minX) / 2 + 90; // +90 for half hexi width
-        const centerY = (maxY + minY) / 2 + 78; // +78 for half hexi height
-          
-          // Pan to center content in viewport
-          const newPanX = viewportWidth / 2 - centerX * fitZoom;
-          const newPanY = viewportHeight / 2 - centerY * fitZoom;
-          
-          setPan({ x: newPanX, y: newPanY });
-          setZoom(fitZoom);
-          hasCentered.current = true;
-        }
-      });
-    }
-  }, [canvasData.elements.length, canvasData.viewport]);
-
-  // Save viewport state to database when pan/zoom changes
-  useEffect(() => {
-    // Debounce viewport saves to avoid too many DB writes
-    const timeoutId = setTimeout(() => {
-      if (canvasData.elements.length > 0 && hasCentered.current) {
-        setCanvasData(prev => ({
-          ...prev,
-          viewport: { pan, zoom }
-        }));
-      }
-    }, 1000); // Save 1 second after last change
-    
-    return () => clearTimeout(timeoutId);
-  }, [pan, zoom, canvasData.elements.length]);
 
   // Real-time collaboration
   const { isConnected, activeUsers } = useCanvasRealtime({
@@ -232,33 +159,14 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       return;
     }
 
-    // Center new elements in visible viewport
-    const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
-    const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
-    const defaultSize = getDefaultSize(type);
-    
-    // Calculate center of visible viewport in canvas coordinates
-    const viewportCenterX = (viewportWidth / 2 - pan.x) / zoom;
-    const viewportCenterY = (viewportHeight / 2 - pan.y) / zoom;
-    
-    const halfWidth = defaultSize.width / 2;
-    const halfHeight = defaultSize.height / 2;
-    
-    // Ensure minimum position of 100,100 for safety
-    const safeX = Math.max(100, viewportCenterX - halfWidth);
-    const safeY = Math.max(100, viewportCenterY - halfHeight);
-    
     const newElement: CanvasElement = {
       id: `${type}-${Date.now()}`,
       type: type as CanvasElement['type'],
-      position: { 
-        x: safeX,
-        y: safeY
-      },
+      position: { x: 100, y: 100 },
       content: {
         ...getDefaultContent(type),
       },
-      size: defaultSize,
+      size: getDefaultSize(type),
     };
     
     console.log('Created new element:', newElement.id);
@@ -277,40 +185,11 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   };
 
   const handleAddKnowledgeItem = (itemId: string, itemData: any) => {
-    // Initialize technique-specific content if this is a technique hexi
-    let techniqueContent = {};
-    if (itemData.techniqueType === 'bmc') {
-      techniqueContent = {
-        bmcData: {
-          keyPartners: '',
-          keyActivities: '',
-          keyResources: '',
-          valuePropositions: '',
-          customerRelationships: '',
-          channels: '',
-          customerSegments: '',
-          costStructure: '',
-          revenueStreams: '',
-        }
-      };
-    } else if (itemData.techniqueType === 'userStory') {
-      techniqueContent = {
-        stories: []
-      };
-    }
-
-    // Calculate staggered position based on existing elements count
-    const existingCount = canvasData.elements.length;
-    const position = {
-      x: 100 + (existingCount * 160),
-      y: 100 + ((existingCount % 3) * 140)
-    };
-
     const newElement: CanvasElement = {
       id: `knowledgeItem-${Date.now()}`,
       type: 'knowledgeItem' as any,
-      position,
-      size: { width: 180, height: 156 },
+      position: { x: 100, y: 100 },
+      size: { width: 140, height: 121 },
       content: {
         knowledgeItemId: itemId,
         name: itemData.name,
@@ -323,10 +202,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         category_color: itemData.knowledge_categories?.color,
         icon: itemData.icon,
         emoji: itemData.emoji,
-        hasAISupport: itemData.has_ai_support || !!itemData.techniqueType,
-        techniqueType: itemData.techniqueType,
-        openAsTab: false, // User must explicitly open as tab
-        ...techniqueContent,
       }
     };
     
@@ -338,11 +213,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setCanvasData(newData);
     flushDataChange(newData);
     setSelectedElements([newElement.id]);
-
-    toast({
-      title: "Hexi added",
-      description: `${itemData.name} has been added to the canvas`,
-    });
   };
 
   const handleAddCustomHexi = () => {
@@ -350,7 +220,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `customHexi-${Date.now()}`,
       type: 'customHexi' as any,
       position: { x: 200, y: 100 },
-      size: { width: 180, height: 156 },
+      size: { width: 140, height: 121 },
       content: {
         label: 'New Hexagon',
         color: '#8B5CF6',
@@ -374,7 +244,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `planningFocus-${Date.now()}`,
       type: 'planningFocus' as any,
       position: { x: 250, y: 150 },
-      size: { width: 180, height: 156 },
+      size: { width: 140, height: 121 },
       content: {
         planningFocusId: focusId,
         name: focusData.name,
@@ -425,127 +295,11 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     setSelectedElements(prev => prev.filter(id => id !== elementId));
   };
 
-  const handleOpenAsTab = (elementId: string) => {
-    const element = canvasData.elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'knowledgeItem') return;
-
-    const newOpenAsTab = !element.content?.openAsTab;
-    
-    const newData = {
-      ...canvasData,
-      elements: canvasData.elements.map(el =>
-        el.id === elementId 
-          ? { ...el, content: { ...el.content, openAsTab: newOpenAsTab } }
-          : el
-      ),
-    };
-    
-    handleDataChange(newData);
-    
-    toast({
-      title: newOpenAsTab ? "Tab opened" : "Tab closed",
-      description: newOpenAsTab 
-        ? `${element.content?.name} is now available as a tab`
-        : `${element.content?.name} tab has been closed`,
-    });
-  };
-
   const handleZoom = (direction: 'in' | 'out') => {
     setZoom(prev => {
       const newZoom = direction === 'in' ? prev * 1.2 : prev / 1.2;
       return Math.max(0.1, Math.min(3, newZoom));
     });
-  };
-
-  const handleResetView = () => {
-    if (canvasData.elements.length === 0) {
-      setPan({ x: 0, y: 0 });
-      setZoom(1.0);
-      return;
-    }
-    
-    const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
-    const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
-    
-    const positions = canvasData.elements.map(el => el.position);
-    const minX = Math.min(...positions.map(p => p.x));
-    const maxX = Math.max(...positions.map(p => p.x));
-    const minY = Math.min(...positions.map(p => p.y));
-    const maxY = Math.max(...positions.map(p => p.y));
-    
-    // Calculate content dimensions
-    const contentWidth = maxX - minX + 180; // +180 for hexi width
-    const contentHeight = maxY - minY + 156; // +156 for hexi height
-    
-    // Calculate zoom to fit with padding
-    const zoomX = (viewportWidth * 0.8) / contentWidth;
-    const zoomY = (viewportHeight * 0.8) / contentHeight;
-    const fitZoom = Math.min(zoomX, zoomY, 1.5); // Cap at 1.5 for better visibility
-    
-    // Center of content
-    const centerX = (maxX + minX) / 2 + 90; // +90 for half hexi width
-    const centerY = (maxY + minY) / 2 + 78; // +78 for half hexi height
-    
-    // Pan to center content in viewport
-    const newPanX = viewportWidth / 2 - centerX * fitZoom;
-    const newPanY = viewportHeight / 2 - centerY * fitZoom;
-    
-    setPan({ x: newPanX, y: newPanY });
-    setZoom(fitZoom);
-  };
-
-  const handleSetZoom = (zoomLevel: number) => {
-    setZoom(zoomLevel);
-  };
-
-  const handleNormalizePositions = () => {
-    if (canvasData.elements.length === 0) {
-      toast({
-        title: "No elements to normalize",
-        variant: "default",
-      });
-      return;
-    }
-    
-    // Find minimum positions
-    const positions = canvasData.elements.map(el => el.position);
-    const minX = Math.min(...positions.map(p => p.x));
-    const minY = Math.min(...positions.map(p => p.y));
-    
-    // Shift all elements to positive coordinates with padding
-    const padding = 100;
-    const offset = {
-      x: minX < padding ? padding - minX : 0,
-      y: minY < padding ? padding - minY : 0
-    };
-    
-    if (offset.x > 0 || offset.y > 0) {
-      const normalizedElements = canvasData.elements.map(el => ({
-        ...el,
-        position: {
-          x: el.position.x + offset.x,
-          y: el.position.y + offset.y
-        }
-      }));
-      
-      setCanvasData({
-        ...canvasData,
-        elements: normalizedElements,
-        viewport: undefined // Clear viewport to trigger re-center
-      });
-      
-      hasCentered.current = false; // Allow re-center
-      toast({
-        title: "Canvas positions normalized",
-        description: `Shifted ${canvasData.elements.length} elements to positive coordinates`,
-      });
-    } else {
-      toast({
-        title: "Positions already normalized",
-        description: "All elements are already in valid positions",
-        variant: "default",
-      });
-    }
   };
 
   const handleExport = async () => {
@@ -659,7 +413,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               debouncedDataChange(newData);
             }}
             onDelete={() => handleElementDelete(element.id)}
-            onOpenAsTab={() => handleOpenAsTab(element.id)}
           />
         );
       case 'customHexi':
@@ -694,35 +447,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             isSelected={isSelected}
             onSelect={() => setSelectedElements([element.id])}
             onUpdate={(updates) => handleElementUpdate(element.id, updates)}
-            onDelete={() => handleElementDelete(element.id)}
-          />
-        );
-      case 'userStory':
-        return (
-          <CustomHexiElement
-            key={element.id}
-            id={element.id}
-            position={element.position}
-            size={element.size}
-            data={{
-              label: 'Product Backlog',
-              color: '#10B981',
-              icon: 'ListTodo',
-              notes: 'Click the Product Backlog tab to manage your stories'
-            }}
-            isSelected={isSelected}
-            onSelect={() => setSelectedElements([element.id])}
-            onMove={(position) => {
-              const newData = {
-                ...canvasData,
-                elements: canvasData.elements.map(el =>
-                  el.id === element.id ? { ...el, position } : el
-                ),
-              };
-              setCanvasData(newData);
-              debouncedDataChange(newData);
-            }}
-            onContentChange={(content) => handleElementContentChange(element.id, content)}
             onDelete={() => handleElementDelete(element.id)}
           />
         );
@@ -761,40 +485,54 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
   return (
     <CanvasProvider>
-      <div className="flex-1 min-h-0 bg-background flex flex-col overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex items-center justify-end p-4 border-b bg-card">
-          <Toolbar 
-            onAddElement={handleAddElement}
-            onZoomIn={() => handleZoom('in')}
-            onZoomOut={() => handleZoom('out')}
-            onResetView={handleResetView}
-            onNormalizePositions={handleNormalizePositions}
-            onSetZoom={handleSetZoom}
-            onExport={handleExport}
-            zoom={zoom}
-            onAddKnowledgeItem={handleAddKnowledgeItem}
-            onAddPlanningFocus={handleAddPlanningFocus}
-            existingKnowledgeItemIds={existingKnowledgeItemIds}
-          />
+      <div className="h-screen bg-background flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-card">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard?tab=projects')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <h1 className="text-xl font-semibold">{projectName}</h1>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Toolbar 
+              onAddElement={handleAddElement}
+              onZoomIn={() => handleZoom('in')}
+              onZoomOut={() => handleZoom('out')}
+              onExport={handleExport}
+              zoom={zoom}
+              projectId={projectId}
+              onAddKnowledgeItem={handleAddKnowledgeItem}
+              onAddCustomHexi={handleAddCustomHexi}
+              onAddPlanningFocus={handleAddPlanningFocus}
+              existingKnowledgeItemIds={existingKnowledgeItemIds}
+            />
+          </div>
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 min-h-[640px] relative" ref={containerRef}>
+        <div className="flex-1 relative overflow-hidden">
           <div 
             style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
               transformOrigin: 'top left',
             }}
-            className="w-full h-full min-h-[640px]"
+            className="w-full h-full"
           >
             <BaseCanvas
               ref={canvasRef}
               data={canvasData}
               onDataChange={handleDataChange}
-              className="w-full h-full min-h-[640px]"
+              className="w-full h-full"
             >
-              {canvasData.elements.map((element) => renderElement(element))}
+              {canvasData.elements.map(renderElement)}
             </BaseCanvas>
           </div>
         </div>
@@ -842,11 +580,10 @@ function getDefaultSize(type: string) {
     case 'story':
       return { width: 240, height: 160 };
     case 'sticky':
-      return { width: 140, height: 121 };
     case 'knowledgeItem':
     case 'customHexi':
     case 'planningFocus':
-      return { width: 180, height: 156 };
+      return { width: 140, height: 121 };
     default:
       return { width: 200, height: 150 };
   }

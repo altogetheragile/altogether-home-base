@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from '@/hooks/useUserStories';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useProjects } from '@/hooks/useProjects';
@@ -25,7 +24,6 @@ interface UserStoryClarifierDialogProps {
   onClose: () => void;
   projectId?: string;
   onStoryGenerated?: (storyData: any) => void;
-  canvasData?: { elements: any[] };
 }
 
 interface StoryAnalysisResult {
@@ -49,7 +47,7 @@ interface StoryAnalysisResult {
   };
 }
 
-export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGenerated, canvasData }: UserStoryClarifierDialogProps) {
+export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGenerated }: UserStoryClarifierDialogProps) {
   const [storyType, setStoryType] = useState<'epic' | 'feature' | 'story'>('story');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -59,51 +57,13 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || '');
   const [saveToCanvas, setSaveToCanvas] = useState(false);
-  const [parentId, setParentId] = useState<string>('');
-  const [availableParents, setAvailableParents] = useState<Array<{id: string, title: string}>>([]);
-  const [isLoadingParents, setIsLoadingParents] = useState(false);
   
   const { toast } = useToast();
   const { createStory, createEpic, createFeature, createBulkStories } = useStoryMutations();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { data: projects } = useProjects();
   const { updateCanvas } = useCanvasMutations();
-  const { generateStoryAsync, isGenerating, anonymousUsage } = useAIStoryGeneration();
-
-  // Fetch available parents when story type changes
-  useEffect(() => {
-    if (storyType === 'epic' || !canvasData) {
-      setAvailableParents([]);
-      setParentId('');
-      return;
-    }
-    
-    setIsLoadingParents(true);
-    
-    // Get the appropriate parent level
-    const parentLevel = storyType === 'feature' ? 'epic' : 
-                       storyType === 'story' ? 'feature' : 
-                       'story'; // for tasks
-    
-    // Filter canvas elements for appropriate parents
-    const parents = canvasData?.elements
-      ?.filter(el => el.metadata?.storyLevel === parentLevel)
-      ?.map(el => ({
-        id: el.id,
-        title: el.content?.title || 'Untitled'
-      })) || [];
-    
-    setAvailableParents(parents);
-    setIsLoadingParents(false);
-    
-    // Auto-select if only one parent exists
-    if (parents.length === 1) {
-      setParentId(parents[0].id);
-    } else {
-      setParentId('');
-    }
-  }, [storyType, canvasData]);
+  const { generateStoryAsync, isGenerating } = useAIStoryGeneration();
 
   const handleAnalyze = async () => {
     if (!title.trim()) {
@@ -122,7 +82,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       const result = await generateStoryAsync({
         storyLevel: storyType,
         userInput: `Title: ${title}\nDescription: ${description}`,
-        parentId: parentId || undefined,
       });
 
       if (!result.success || !result.data) {
@@ -180,8 +139,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
           acceptanceCriteria,
           priority,
           storyPoints,
-          status: 'draft',
-          parentId: parentId || undefined,
+          status: 'draft'
         });
         onClose();
         return;
@@ -322,8 +280,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
     setAnalysisType('user-story-generation');
     setStoryType('story');
     setSaveToCanvas(false);
-    setParentId('');
-    setAvailableParents([]);
     if (!projectId) {
       setSelectedProjectId('');
     }
@@ -617,9 +573,8 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>{3 - anonymousUsage.count} free {3 - anonymousUsage.count === 1 ? 'generation' : 'generations'} remaining</strong>
-                  <br />
-                  Try AI generation free! Sign in for unlimited AI generations and save your work!
+                  <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in. 
+                  Sign in to save your stories and manage them in projects.
                 </AlertDescription>
               </Alert>
             )}
@@ -682,51 +637,17 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                          </PopoverContent>
                        </Popover>
                      </div>
-                     <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
-                       <SelectTrigger id="storyType">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent>
-                         <SelectItem value="story">User Story</SelectItem>
-                         <SelectItem value="feature">Feature</SelectItem>
-                         <SelectItem value="epic">Epic</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
-
-                   {/* Parent Selection - shown for non-epic types */}
-                   {storyType !== 'epic' && (
-                     <div className="space-y-2">
-                       <Label htmlFor="parent">
-                         Parent {storyType === 'feature' ? 'Epic' : 'Feature'} *
-                       </Label>
-                       <Select 
-                         value={parentId} 
-                         onValueChange={setParentId}
-                         disabled={isLoadingParents || availableParents.length === 0}
-                       >
-                         <SelectTrigger id="parent">
-                           <SelectValue placeholder={
-                             availableParents.length === 0 
-                               ? `No ${storyType === 'feature' ? 'Epics' : 'Features'} available`
-                               : "Select parent..."
-                           } />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {availableParents.map(parent => (
-                             <SelectItem key={parent.id} value={parent.id}>
-                               {parent.title}
-                             </SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
-                       {availableParents.length === 0 && (
-                         <p className="text-sm text-muted-foreground">
-                           Create a {storyType === 'feature' ? 'Epic' : 'Feature'} first
-                         </p>
-                       )}
-                     </div>
-                   )}
+                    <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
+                      <SelectTrigger id="storyType">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="story">User Story</SelectItem>
+                        <SelectItem value="feature">Feature</SelectItem>
+                        <SelectItem value="epic">Epic</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                    <div className="space-y-2">
                      <div className="flex items-center gap-2">
@@ -842,19 +763,11 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                 )}
               </div>
               <div className="space-x-2">
-                <Button 
-                  onClick={handleAnalyze} 
-                  disabled={isGenerating || !title.trim() || (!user && anonymousUsage.count >= 3) || (storyType !== 'epic' && !parentId)}
-                >
-                  {isGenerating ? (
+                <Button onClick={handleAnalyze} disabled={isAnalyzing}>
+                  {isAnalyzing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (!user && anonymousUsage.count >= 3) ? (
-                    <>
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Sign In for Unlimited Access
+                      Analyzing...
                     </>
                   ) : (
                     <>
@@ -885,7 +798,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                       )}
                     </div>
                   ) : (
-                    <Button onClick={() => navigate('/auth')} variant="default">
+                    <Button onClick={handleSignInRedirect} variant="default">
                       <LogIn className="h-4 w-4 mr-2" />
                       Sign in to Save
                     </Button>
