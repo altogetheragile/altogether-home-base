@@ -178,6 +178,50 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
     setZoom(prev => Math.max(prev / 1.2, 0.3));
   }, []);
 
+  const handleShowAll = useCallback(() => {
+    if (canvasData.elements.length === 0) {
+      toast({
+        title: "No Elements",
+        description: "Add some elements to the canvas first",
+      });
+      return;
+    }
+
+    // Calculate bounding box of all elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    canvasData.elements.forEach(el => {
+      const left = el.position.x;
+      const top = el.position.y;
+      const right = left + (el.size?.width || 200);
+      const bottom = top + (el.size?.height || 160);
+      
+      minX = Math.min(minX, left);
+      minY = Math.min(minY, top);
+      maxX = Math.max(maxX, right);
+      maxY = Math.max(maxY, bottom);
+    });
+
+    // Add padding
+    const padding = 50;
+    const contentWidth = maxX - minX + (padding * 2);
+    const contentHeight = maxY - minY + (padding * 2);
+
+    // Calculate zoom to fit (assuming canvas container is roughly viewport size)
+    const viewportWidth = window.innerWidth - 100;
+    const viewportHeight = window.innerHeight - 200;
+    const zoomX = viewportWidth / contentWidth;
+    const zoomY = viewportHeight / contentHeight;
+    const optimalZoom = Math.min(zoomX, zoomY, 1); // Don't zoom in more than 100%
+
+    setZoom(Math.max(optimalZoom, 0.3)); // Ensure minimum zoom
+    
+    toast({
+      title: "View Adjusted",
+      description: `Showing all ${canvasData.elements.length} elements`,
+    });
+  }, [canvasData.elements, toast]);
+
   const handleExport = useCallback(async () => {
     try {
       const dataUrl = await canvasRef.current?.exportCanvas({ format: 'png' });
@@ -299,6 +343,7 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
           onAddStory={handleAddStory}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          onShowAll={handleShowAll}
           onExport={handleExport}
           onGenerateAI={() => setShowAIDialog(true)}
           zoom={zoom}
