@@ -16,6 +16,7 @@ export interface CanvasData {
   elements: CanvasElement[];
   layout?: any;
   metadata?: Record<string, any>;
+  viewport?: { pan: { x: number; y: number }; zoom: number };
 }
 
 export interface BaseCanvasProps {

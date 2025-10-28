@@ -7,7 +7,8 @@ import {
   ZoomOut,
   Download,
   StickyNote,
-  Maximize2
+  Maximize2,
+  AlignStartVertical
 } from 'lucide-react';
 import { HexiSelector } from './elements/HexiSelector';
 
@@ -16,6 +17,7 @@ interface ToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetView: () => void;
+  onNormalizePositions: () => void;
   onExport: () => void;
   zoom: number;
   onAddKnowledgeItem: (itemId: string, itemData: any) => void;
@@ -28,6 +30,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onZoomIn,
   onZoomOut,
   onResetView,
+  onNormalizePositions,
   onExport,
   zoom,
   onAddKnowledgeItem,
@@ -92,6 +95,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             title="Reset View"
           >
             <Maximize2 className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onNormalizePositions}
+            title="Fix Element Positions"
+          >
+            <AlignStartVertical className="h-4 w-4" />
           </Button>
         </div>
 

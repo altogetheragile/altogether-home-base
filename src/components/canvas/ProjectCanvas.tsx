@@ -39,7 +39,15 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const { toast } = useToast();
   const canvasRef = useRef<BaseCanvasRef>(null);
   
-  const [canvasData, setCanvasData] = useState<CanvasData>({ elements: [] });
+  const [canvasData, setCanvasData] = useState<{
+    elements: CanvasElement[];
+    metadata?: Record<string, any>;
+    viewport?: { pan: { x: number; y: number }; zoom: number };
+  }>({
+    elements: [],
+    metadata: {},
+    viewport: undefined
+  });
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -64,6 +72,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       // Normalize hexagon sizes
       const normalized = {
         ...canvas.data,
+        viewport: canvas.data.viewport, // Preserve viewport
         elements: canvas.data.elements.map(el => {
           if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') {
             return {
@@ -74,6 +83,13 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
           return el;
         })
       };
+      
+      // Restore saved viewport if it exists
+      if (normalized.viewport) {
+        setPan(normalized.viewport.pan);
+        setZoom(normalized.viewport.zoom);
+        hasCentered.current = true; // Mark as centered to prevent auto-center
+      }
       
       // Check if any changes were made
       const hasChanges = normalized.elements.some((el, idx) => 
@@ -94,7 +110,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     } else if (!canvas && !isLoading && !createCanvas.isPending && projectId) {
       console.log('Creating new canvas for project:', projectId);
       // Create new canvas if none exists
-      const initialData = { elements: [], metadata: {} };
+      const initialData = { elements: [], metadata: {}, viewport: undefined };
       setCanvasData(initialData); // Set immediately for UI responsiveness
       
       createCanvas.mutate({
@@ -111,9 +127,9 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     }
   }, [canvas, isLoading, projectId]); // Removed createCanvas from dependency array
 
-  // Auto-center view on canvas elements when first loaded
+  // Auto-center view on canvas elements when first loaded (only if no saved viewport)
   useEffect(() => {
-    if (canvasData.elements.length > 0 && !hasCentered.current) {
+    if (canvasData.elements.length > 0 && !hasCentered.current && !canvasData.viewport) {
       // Wait for next frame to ensure container has rendered with correct dimensions
       requestAnimationFrame(() => {
         const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
@@ -128,19 +144,45 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
           const minY = Math.min(...positions.map(p => p.y));
           const maxY = Math.max(...positions.map(p => p.y));
           
-          // Center elements in viewport
-          const centerX = (maxX + minX) / 2;
-          const centerY = (maxY + minY) / 2;
-          const newPanX = viewportWidth / 2 - centerX;
-          const newPanY = viewportHeight / 2 - centerY;
+          // Calculate content dimensions (including element sizes)
+          const contentWidth = maxX - minX + 140; // +140 for hexi width
+          const contentHeight = maxY - minY + 121; // +121 for hexi height
+          
+          // Calculate zoom to fit with padding
+          const zoomX = (viewportWidth * 0.8) / contentWidth;
+          const zoomY = (viewportHeight * 0.8) / contentHeight;
+          const fitZoom = Math.min(zoomX, zoomY, 1.0); // Cap at 1.0
+          
+          // Center of content
+          const centerX = (maxX + minX) / 2 + 70; // +70 for half hexi width
+          const centerY = (maxY + minY) / 2 + 60; // +60 for half hexi height
+          
+          // Pan to center content in viewport
+          const newPanX = viewportWidth / 2 - centerX * fitZoom;
+          const newPanY = viewportHeight / 2 - centerY * fitZoom;
           
           setPan({ x: newPanX, y: newPanY });
-          setZoom(1.0);
+          setZoom(fitZoom);
           hasCentered.current = true;
         }
       });
     }
-  }, [canvasData.elements.length]);
+  }, [canvasData.elements.length, canvasData.viewport]);
+
+  // Save viewport state to database when pan/zoom changes
+  useEffect(() => {
+    // Debounce viewport saves to avoid too many DB writes
+    const timeoutId = setTimeout(() => {
+      if (canvasData.elements.length > 0 && hasCentered.current) {
+        setCanvasData(prev => ({
+          ...prev,
+          viewport: { pan, zoom }
+        }));
+      }
+    }, 1000); // Save 1 second after last change
+    
+    return () => clearTimeout(timeoutId);
+  }, [pan, zoom, canvasData.elements.length]);
 
   // Real-time collaboration
   const { isConnected, activeUsers } = useCanvasRealtime({
@@ -189,17 +231,28 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       return;
     }
 
-    // Center new elements in viewport
+    // Center new elements in visible viewport
     const viewportWidth = containerRef.current?.clientWidth || window.innerWidth;
     const viewportHeight = containerRef.current?.clientHeight || window.innerHeight;
     const defaultSize = getDefaultSize(type);
+    
+    // Calculate center of visible viewport in canvas coordinates
+    const viewportCenterX = (viewportWidth / 2 - pan.x) / zoom;
+    const viewportCenterY = (viewportHeight / 2 - pan.y) / zoom;
+    
+    const halfWidth = defaultSize.width / 2;
+    const halfHeight = defaultSize.height / 2;
+    
+    // Ensure minimum position of 100,100 for safety
+    const safeX = Math.max(100, viewportCenterX - halfWidth);
+    const safeY = Math.max(100, viewportCenterY - halfHeight);
     
     const newElement: CanvasElement = {
       id: `${type}-${Date.now()}`,
       type: type as CanvasElement['type'],
       position: { 
-        x: (viewportWidth / 2 - defaultSize.width / 2) / zoom - pan.x / zoom,
-        y: (viewportHeight / 2 - defaultSize.height / 2) / zoom - pan.y / zoom
+        x: safeX,
+        y: safeY
       },
       content: {
         ...getDefaultContent(type),
@@ -419,13 +472,75 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     const minY = Math.min(...positions.map(p => p.y));
     const maxY = Math.max(...positions.map(p => p.y));
     
-    const centerX = (maxX + minX) / 2;
-    const centerY = (maxY + minY) / 2;
-    setPan({ 
-      x: viewportWidth / 2 - centerX, 
-      y: viewportHeight / 2 - centerY 
-    });
-    setZoom(1.0);
+    // Calculate content dimensions
+    const contentWidth = maxX - minX + 140;
+    const contentHeight = maxY - minY + 121;
+    
+    // Calculate zoom to fit with padding
+    const zoomX = (viewportWidth * 0.8) / contentWidth;
+    const zoomY = (viewportHeight * 0.8) / contentHeight;
+    const fitZoom = Math.min(zoomX, zoomY, 1.0);
+    
+    // Center of content
+    const centerX = (maxX + minX) / 2 + 70;
+    const centerY = (maxY + minY) / 2 + 60;
+    
+    // Pan to center content in viewport
+    const newPanX = viewportWidth / 2 - centerX * fitZoom;
+    const newPanY = viewportHeight / 2 - centerY * fitZoom;
+    
+    setPan({ x: newPanX, y: newPanY });
+    setZoom(fitZoom);
+  };
+
+  const handleNormalizePositions = () => {
+    if (canvasData.elements.length === 0) {
+      toast({
+        title: "No elements to normalize",
+        variant: "default",
+      });
+      return;
+    }
+    
+    // Find minimum positions
+    const positions = canvasData.elements.map(el => el.position);
+    const minX = Math.min(...positions.map(p => p.x));
+    const minY = Math.min(...positions.map(p => p.y));
+    
+    // Shift all elements to positive coordinates with padding
+    const padding = 100;
+    const offset = {
+      x: minX < padding ? padding - minX : 0,
+      y: minY < padding ? padding - minY : 0
+    };
+    
+    if (offset.x > 0 || offset.y > 0) {
+      const normalizedElements = canvasData.elements.map(el => ({
+        ...el,
+        position: {
+          x: el.position.x + offset.x,
+          y: el.position.y + offset.y
+        }
+      }));
+      
+      setCanvasData({
+        ...canvasData,
+        elements: normalizedElements,
+        viewport: undefined // Clear viewport to trigger re-center
+      });
+      
+      hasCentered.current = false; // Allow re-center
+      toast({
+        title: "Canvas positions normalized",
+        description: `Shifted ${canvasData.elements.length} elements to positive coordinates`,
+      });
+    } else {
+      toast({
+        title: "Positions already normalized",
+        description: "All elements are already in valid positions",
+        variant: "default",
+      });
+    }
   };
 
   const handleExport = async () => {
@@ -649,6 +764,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onZoomIn={() => handleZoom('in')}
             onZoomOut={() => handleZoom('out')}
             onResetView={handleResetView}
+            onNormalizePositions={handleNormalizePositions}
             onExport={handleExport}
             zoom={zoom}
             onAddKnowledgeItem={handleAddKnowledgeItem}
