@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: {
-      getUser: vi.fn(),
+      getSession: vi.fn(),
     },
     functions: {
       invoke: vi.fn(),
@@ -30,8 +30,8 @@ describe('useAIStoryGeneration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (supabase.auth.getUser as any).mockResolvedValue({
-      data: { user: { id: 'test-user-id' } },
+    (supabase.auth.getSession as any).mockResolvedValue({
+      data: { session: mockSession },
       error: null,
     });
   });
@@ -54,8 +54,10 @@ describe('useAIStoryGeneration', () => {
     const { result } = renderHook(() => useAIStoryGeneration());
 
     const request = {
-      storyLevel: 'story' as const,
+      level: 'story' as const,
       userInput: 'Create a login feature',
+      userPersona: 'End User',
+      businessObjective: 'Improve security',
     };
 
     const response = await result.current.generateStory(request);
@@ -83,7 +85,7 @@ describe('useAIStoryGeneration', () => {
 
     await expect(
       result.current.generateStory({
-        storyLevel: 'story',
+        level: 'story',
         userInput: 'Test input',
       })
     ).rejects.toThrow('Rate limit exceeded');
@@ -95,8 +97,8 @@ describe('useAIStoryGeneration', () => {
   });
 
   it('should handle authentication errors', async () => {
-    (supabase.auth.getUser as any).mockResolvedValue({
-      data: { user: null },
+    (supabase.auth.getSession as any).mockResolvedValue({
+      data: { session: null },
       error: null,
     });
 
@@ -104,10 +106,10 @@ describe('useAIStoryGeneration', () => {
 
     await expect(
       result.current.generateStory({
-        storyLevel: 'story',
+        level: 'story',
         userInput: 'Test input',
       })
-    ).rejects.toThrow('You must be logged in to generate stories');
+    ).rejects.toThrow('Authentication required');
   });
 
   it('should track loading state correctly', async () => {
@@ -128,7 +130,7 @@ describe('useAIStoryGeneration', () => {
     expect(result.current.isGenerating).toBe(false);
 
     const promise = result.current.generateStory({
-      storyLevel: 'story',
+      level: 'story',
       userInput: 'Test input',
     });
 
@@ -154,7 +156,7 @@ describe('useAIStoryGeneration', () => {
     const { result } = renderHook(() => useAIStoryGeneration());
 
     await result.current.generateStory({
-      storyLevel: 'epic',
+      level: 'epic',
       userInput: 'Create user management system',
     });
 
@@ -186,7 +188,7 @@ describe('useAIStoryGeneration', () => {
     };
 
     await result.current.generateStory({
-      storyLevel: 'feature',
+      level: 'feature',
       userInput: 'User registration',
       parentContext,
     });
