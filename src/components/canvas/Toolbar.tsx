@@ -18,6 +18,7 @@ interface ToolbarProps {
   onZoomOut: () => void;
   onResetView: () => void;
   onNormalizePositions: () => void;
+  onSetZoom: (zoom: number) => void;
   onExport: () => void;
   zoom: number;
   onAddKnowledgeItem: (itemId: string, itemData: any) => void;
@@ -31,12 +32,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onZoomOut,
   onResetView,
   onNormalizePositions,
+  onSetZoom,
   onExport,
   zoom,
   onAddKnowledgeItem,
   onAddPlanningFocus,
   existingKnowledgeItemIds = [],
 }) => {
+  const zoomPresets = [0.5, 0.75, 1.0, 1.5, 2.0];
   const [showHexiSelector, setShowHexiSelector] = useState(false);
 
   return (
@@ -75,9 +78,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <ZoomOut className="h-4 w-4" />
           </Button>
           
-          <span className="text-xs font-medium min-w-[3rem] text-center">
-            {Math.round(zoom * 100)}%
-          </span>
+          <div className="flex items-center gap-1">
+            {zoomPresets.map((preset) => (
+              <Button
+                key={preset}
+                variant={Math.abs(zoom - preset) < 0.01 ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => onSetZoom(preset)}
+                className="text-xs px-2 h-7"
+                title={`Zoom to ${preset * 100}%`}
+              >
+                {preset * 100}%
+              </Button>
+            ))}
+          </div>
           
           <Button
             variant="ghost"

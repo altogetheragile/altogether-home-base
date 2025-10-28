@@ -69,15 +69,16 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     if (canvas?.data) {
       console.log('Setting canvas data from existing canvas');
       
-      // Normalize hexagon sizes
+      // Normalize hexagon sizes (only for old elements, new ones use getDefaultSize)
       const normalized = {
         ...canvas.data,
         viewport: canvas.data.viewport, // Preserve viewport
         elements: canvas.data.elements.map(el => {
-          if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'sticky' || el.type === 'planningFocus') {
+          if (el.type === 'knowledgeItem' || el.type === 'customHexi' || el.type === 'planningFocus') {
+            // Update old hexis to new size
             return {
               ...el,
-              size: { width: 140, height: 121 }
+              size: { width: 180, height: 156 }
             };
           }
           return el;
@@ -145,17 +146,17 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
           const maxY = Math.max(...positions.map(p => p.y));
           
           // Calculate content dimensions (including element sizes)
-          const contentWidth = maxX - minX + 140; // +140 for hexi width
-          const contentHeight = maxY - minY + 121; // +121 for hexi height
+        const contentWidth = maxX - minX + 180; // +180 for hexi width
+        const contentHeight = maxY - minY + 156; // +156 for hexi height
+        
+        // Calculate zoom to fit with padding
+        const zoomX = (viewportWidth * 0.8) / contentWidth;
+        const zoomY = (viewportHeight * 0.8) / contentHeight;
+        const fitZoom = Math.min(zoomX, zoomY, 1.5); // Cap at 1.5 for better visibility
           
-          // Calculate zoom to fit with padding
-          const zoomX = (viewportWidth * 0.8) / contentWidth;
-          const zoomY = (viewportHeight * 0.8) / contentHeight;
-          const fitZoom = Math.min(zoomX, zoomY, 1.0); // Cap at 1.0
-          
-          // Center of content
-          const centerX = (maxX + minX) / 2 + 70; // +70 for half hexi width
-          const centerY = (maxY + minY) / 2 + 60; // +60 for half hexi height
+        // Center of content
+        const centerX = (maxX + minX) / 2 + 90; // +90 for half hexi width
+        const centerY = (maxY + minY) / 2 + 78; // +78 for half hexi height
           
           // Pan to center content in viewport
           const newPanX = viewportWidth / 2 - centerX * fitZoom;
@@ -309,7 +310,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `knowledgeItem-${Date.now()}`,
       type: 'knowledgeItem' as any,
       position,
-      size: { width: 140, height: 121 },
+      size: { width: 180, height: 156 },
       content: {
         knowledgeItemId: itemId,
         name: itemData.name,
@@ -349,7 +350,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `customHexi-${Date.now()}`,
       type: 'customHexi' as any,
       position: { x: 200, y: 100 },
-      size: { width: 140, height: 121 },
+      size: { width: 180, height: 156 },
       content: {
         label: 'New Hexagon',
         color: '#8B5CF6',
@@ -373,7 +374,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       id: `planningFocus-${Date.now()}`,
       type: 'planningFocus' as any,
       position: { x: 250, y: 150 },
-      size: { width: 140, height: 121 },
+      size: { width: 180, height: 156 },
       content: {
         planningFocusId: focusId,
         name: focusData.name,
@@ -473,17 +474,17 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     const maxY = Math.max(...positions.map(p => p.y));
     
     // Calculate content dimensions
-    const contentWidth = maxX - minX + 140;
-    const contentHeight = maxY - minY + 121;
+    const contentWidth = maxX - minX + 180; // +180 for hexi width
+    const contentHeight = maxY - minY + 156; // +156 for hexi height
     
     // Calculate zoom to fit with padding
     const zoomX = (viewportWidth * 0.8) / contentWidth;
     const zoomY = (viewportHeight * 0.8) / contentHeight;
-    const fitZoom = Math.min(zoomX, zoomY, 1.0);
+    const fitZoom = Math.min(zoomX, zoomY, 1.5); // Cap at 1.5 for better visibility
     
     // Center of content
-    const centerX = (maxX + minX) / 2 + 70;
-    const centerY = (maxY + minY) / 2 + 60;
+    const centerX = (maxX + minX) / 2 + 90; // +90 for half hexi width
+    const centerY = (maxY + minY) / 2 + 78; // +78 for half hexi height
     
     // Pan to center content in viewport
     const newPanX = viewportWidth / 2 - centerX * fitZoom;
@@ -491,6 +492,10 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     
     setPan({ x: newPanX, y: newPanY });
     setZoom(fitZoom);
+  };
+
+  const handleSetZoom = (zoomLevel: number) => {
+    setZoom(zoomLevel);
   };
 
   const handleNormalizePositions = () => {
@@ -765,6 +770,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
             onZoomOut={() => handleZoom('out')}
             onResetView={handleResetView}
             onNormalizePositions={handleNormalizePositions}
+            onSetZoom={handleSetZoom}
             onExport={handleExport}
             zoom={zoom}
             onAddKnowledgeItem={handleAddKnowledgeItem}
@@ -836,10 +842,11 @@ function getDefaultSize(type: string) {
     case 'story':
       return { width: 240, height: 160 };
     case 'sticky':
+      return { width: 140, height: 121 };
     case 'knowledgeItem':
     case 'customHexi':
     case 'planningFocus':
-      return { width: 140, height: 121 };
+      return { width: 180, height: 156 };
     default:
       return { width: 200, height: 150 };
   }
