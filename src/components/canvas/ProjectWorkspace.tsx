@@ -54,7 +54,8 @@ export const ProjectWorkspace = ({ projectId, projectName }: ProjectWorkspacePro
     setIsSaving(true);
     try {
       const updatedElements = canvas.data.elements.map((el: any) => {
-        if (el.type === 'bmc') {
+        // Check both legacy type and new knowledge item approach
+        if (el.type === 'bmc' || (el.type === 'knowledgeItem' && el.content?.techniqueType === 'bmc')) {
           return {
             ...el,
             content: {

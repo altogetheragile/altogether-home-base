@@ -61,10 +61,18 @@ export const getTabsFromElements = (elements?: any[]): TechniqueConfig[] => {
 
 export const getBMCElementFromCanvas = (elements?: any[]) => {
   if (!elements) return null;
-  return elements.find((el) => el.type === 'bmc');
+  // Check both legacy direct type and new knowledge item approach
+  return elements.find((el) => 
+    el.type === 'bmc' || 
+    (el.type === 'knowledgeItem' && el.content?.techniqueType === 'bmc')
+  );
 };
 
 export const getUserStoryElementFromCanvas = (elements?: any[]) => {
   if (!elements) return null;
-  return elements.find((el) => el.type === 'userStory');
+  // Check both legacy direct type and new knowledge item approach
+  return elements.find((el) => 
+    el.type === 'userStory' || 
+    (el.type === 'knowledgeItem' && el.content?.techniqueType === 'userStory')
+  );
 };
