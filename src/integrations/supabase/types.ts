@@ -1627,6 +1627,7 @@ export type Database = {
           description: string | null
           domain_id: string | null
           evidence_sources: string[] | null
+          has_ai_support: boolean | null
           id: string
           is_featured: boolean | null
           is_published: boolean | null
@@ -1654,6 +1655,7 @@ export type Database = {
           description?: string | null
           domain_id?: string | null
           evidence_sources?: string[] | null
+          has_ai_support?: boolean | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
@@ -1681,6 +1683,7 @@ export type Database = {
           description?: string | null
           domain_id?: string | null
           evidence_sources?: string[] | null
+          has_ai_support?: boolean | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null

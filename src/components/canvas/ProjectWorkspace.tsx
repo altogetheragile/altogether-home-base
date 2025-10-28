@@ -131,10 +131,25 @@ export const ProjectWorkspace = ({ projectId, projectName }: ProjectWorkspacePro
       </div>
 
       {/* Tab Navigation */}
-      <TechniqueTabNavigation
+      <TechniqueTabNavigation 
         tabs={availableTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        onCloseTab={(elementId) => {
+          // Find the canvas and update the element to close the tab
+          if (!canvas?.data) return;
+          
+          const updatedElements = canvas.data.elements.map(el =>
+            el.id === elementId 
+              ? { ...el, content: { ...el.content, openAsTab: false } }
+              : el
+          );
+          
+          updateCanvas.mutate({
+            projectId,
+            data: { ...canvas.data, elements: updatedElements }
+          });
+        }}
       />
 
       {/* Tab Content */}

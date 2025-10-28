@@ -204,10 +204,17 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       };
     }
 
+    // Calculate staggered position based on existing elements count
+    const existingCount = canvasData.elements.length;
+    const position = {
+      x: 100 + (existingCount * 160),
+      y: 100 + ((existingCount % 3) * 140)
+    };
+
     const newElement: CanvasElement = {
       id: `knowledgeItem-${Date.now()}`,
       type: 'knowledgeItem' as any,
-      position: { x: 100, y: 100 },
+      position,
       size: { width: 140, height: 121 },
       content: {
         knowledgeItemId: itemId,
@@ -221,8 +228,10 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         category_color: itemData.knowledge_categories?.color,
         icon: itemData.icon,
         emoji: itemData.emoji,
-        techniqueType: itemData.techniqueType, // Include technique type
-        ...techniqueContent, // Add technique-specific data
+        hasAISupport: itemData.has_ai_support || !!itemData.techniqueType,
+        techniqueType: itemData.techniqueType,
+        openAsTab: false, // User must explicitly open as tab
+        ...techniqueContent,
       }
     };
     
@@ -235,13 +244,9 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     flushDataChange(newData);
     setSelectedElements([newElement.id]);
 
-    const tabMessage = itemData.techniqueType 
-      ? ` - ${itemData.name} tab will appear` 
-      : '';
-    
     toast({
       title: "Hexi added",
-      description: `${itemData.name} has been added to the canvas${tabMessage}`,
+      description: `${itemData.name} has been added to the canvas`,
     });
   };
 
@@ -323,6 +328,31 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
     };
     handleDataChange(newData);
     setSelectedElements(prev => prev.filter(id => id !== elementId));
+  };
+
+  const handleOpenAsTab = (elementId: string) => {
+    const element = canvasData.elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'knowledgeItem') return;
+
+    const newOpenAsTab = !element.content?.openAsTab;
+    
+    const newData = {
+      ...canvasData,
+      elements: canvasData.elements.map(el =>
+        el.id === elementId 
+          ? { ...el, content: { ...el.content, openAsTab: newOpenAsTab } }
+          : el
+      ),
+    };
+    
+    handleDataChange(newData);
+    
+    toast({
+      title: newOpenAsTab ? "Tab opened" : "Tab closed",
+      description: newOpenAsTab 
+        ? `${element.content?.name} is now available as a tab`
+        : `${element.content?.name} tab has been closed`,
+    });
   };
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -443,6 +473,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               debouncedDataChange(newData);
             }}
             onDelete={() => handleElementDelete(element.id)}
+            onOpenAsTab={() => handleOpenAsTab(element.id)}
           />
         );
       case 'customHexi':

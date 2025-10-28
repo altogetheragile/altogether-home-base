@@ -6,6 +6,7 @@ export interface TechniqueConfig {
   icon: any;
   tabKey: string;
   description?: string;
+  elementId?: string;
 }
 
 export const TECHNIQUE_HEXIS: Record<string, TechniqueConfig> = {
@@ -41,17 +42,15 @@ export const getTabsFromElements = (elements?: any[]): TechniqueConfig[] => {
   const foundTabs = new Map<string, TechniqueConfig>();
   
   elements.forEach((element) => {
-    // Check direct technique types (legacy support)
-    if (element.type && TECHNIQUE_HEXIS[element.type]) {
-      const config = TECHNIQUE_HEXIS[element.type];
-      foundTabs.set(config.tabKey, config);
-    }
-    
-    // Check knowledge item technique types (new approach)
-    if (element.type === 'knowledgeItem' && element.content?.techniqueType) {
+    // Only show tabs for elements explicitly opened as tabs
+    if (
+      element.type === 'knowledgeItem' && 
+      element.content?.openAsTab === true &&
+      element.content?.techniqueType
+    ) {
       const config = TECHNIQUE_HEXIS[element.content.techniqueType];
       if (config) {
-        foundTabs.set(config.tabKey, config);
+        foundTabs.set(config.tabKey, { ...config, elementId: element.id });
       }
     }
   });

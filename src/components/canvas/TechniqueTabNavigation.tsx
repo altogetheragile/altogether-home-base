@@ -1,4 +1,4 @@
-import { Layout } from 'lucide-react';
+import { Layout, X } from 'lucide-react';
 import { TechniqueConfig } from '@/utils/techniqueMapping';
 import { cn } from '@/lib/utils';
 
@@ -6,12 +6,14 @@ interface TechniqueTabNavigationProps {
   tabs: TechniqueConfig[];
   activeTab: string;
   onTabChange: (tabKey: string) => void;
+  onCloseTab?: (elementId: string) => void;
 }
 
 export const TechniqueTabNavigation = ({
   tabs,
   activeTab,
   onTabChange,
+  onCloseTab,
 }: TechniqueTabNavigationProps) => {
   return (
     <div className="border-b bg-card/50">
@@ -36,20 +38,39 @@ export const TechniqueTabNavigation = ({
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button
+              <div
                 key={tab.tabKey}
-                onClick={() => onTabChange(tab.tabKey)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap",
-                  "border-b-2 -mb-px",
+                  "flex items-center gap-1 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap",
+                  "border-b-2 -mb-px group",
                   activeTab === tab.tabKey
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 )}
               >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
+                <button
+                  onClick={() => onTabChange(tab.tabKey)}
+                  className="flex items-center gap-2"
+                >
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+                {onCloseTab && tab.elementId && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeTab === tab.tabKey) {
+                        onTabChange('canvas');
+                      }
+                      onCloseTab(tab.elementId);
+                    }}
+                    className="ml-1 p-0.5 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Close tab (hexi remains on canvas)"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>

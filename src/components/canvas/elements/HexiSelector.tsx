@@ -35,44 +35,28 @@ export const HexiSelector: React.FC<HexiSelectorProps> = ({
   existingItemIds,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('techniques');
+  const [activeTab, setActiveTab] = useState('knowledge');
 
   const { data: allKnowledgeItems, isLoading: isLoadingKnowledge } = useKnowledgeItems();
   const { data: planningFocuses, isLoading: isLoadingFocuses } = usePlanningFocuses();
 
-  // Separate techniques from regular knowledge items
-  const { techniques, knowledgeItems } = useMemo(() => {
-    if (!allKnowledgeItems) return { techniques: [], knowledgeItems: [] };
-
-    const techs: any[] = [];
-    const items: any[] = [];
-
-    allKnowledgeItems.forEach(item => {
+  // Add technique type to all knowledge items based on slug
+  const knowledgeItemsWithTechnique = useMemo(() => {
+    if (!allKnowledgeItems) return [];
+    
+    return allKnowledgeItems.map(item => {
       const techniqueType = getTechniqueTypeFromSlug(item.slug);
-      if (techniqueType) {
-        techs.push({ ...item, techniqueType });
-      } else {
-        items.push(item);
-      }
+      return { ...item, techniqueType };
     });
-
-    return { techniques: techs, knowledgeItems: items };
   }, [allKnowledgeItems]);
 
   // Filter based on search
-  const filteredTechniques = useMemo(() => {
-    if (!searchQuery) return techniques;
-    return techniques.filter(item =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [techniques, searchQuery]);
-
   const filteredKnowledgeItems = useMemo(() => {
-    if (!searchQuery) return knowledgeItems;
-    return knowledgeItems.filter(item =>
+    if (!searchQuery) return knowledgeItemsWithTechnique;
+    return knowledgeItemsWithTechnique.filter(item =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [knowledgeItems, searchQuery]);
+  }, [knowledgeItemsWithTechnique, searchQuery]);
 
   const filteredFocuses = useMemo(() => {
     if (!planningFocuses || !searchQuery) return planningFocuses || [];
@@ -127,8 +111,7 @@ export const HexiSelector: React.FC<HexiSelectorProps> = ({
     return (
       <div className="grid grid-cols-2 gap-3">
         {items.map(item => {
-          const isAdded = existingItemIds.includes(item.id);
-          const isTechnique = !!item.techniqueType;
+          const hasAISupport = item.has_ai_support || !!item.techniqueType;
           
           return (
             <div
@@ -141,25 +124,19 @@ export const HexiSelector: React.FC<HexiSelectorProps> = ({
                     <h4 className="text-sm font-medium line-clamp-2">
                       {item.name}
                     </h4>
-                    {isTechnique && (
+                    {hasAISupport && (
                       <Badge variant="secondary" className="mt-1 text-xs">
                         <Sparkles className="h-3 w-3 mr-1" />
-                        Creates Tab
+                        AI Enabled
                       </Badge>
                     )}
                   </div>
                   <Button
                     size="sm"
-                    variant={isAdded ? "secondary" : "default"}
-                    onClick={() => !isAdded && handleAddKnowledgeItem(item)}
-                    disabled={isAdded}
+                    onClick={() => handleAddKnowledgeItem(item)}
                     className="shrink-0"
                   >
-                    {isAdded ? (
-                      <Check className="h-3 w-3" />
-                    ) : (
-                      <Plus className="h-3 w-3" />
-                    )}
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -202,7 +179,7 @@ export const HexiSelector: React.FC<HexiSelectorProps> = ({
         <DialogHeader>
           <DialogTitle>Add Hexi to Canvas</DialogTitle>
           <DialogDescription>
-            Choose a hexi type to add to your canvas. Technique hexis create dedicated workspace tabs.
+            Choose a hexi type to add to your canvas. Items with AI support can be opened as workspace tabs.
           </DialogDescription>
         </DialogHeader>
 
@@ -220,22 +197,11 @@ export const HexiSelector: React.FC<HexiSelectorProps> = ({
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="techniques">Techniques</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
               <TabsTrigger value="planning">Planning</TabsTrigger>
               <TabsTrigger value="custom">Custom</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="techniques" className="mt-4">
-              <div className="max-h-[400px] overflow-y-auto">
-                {renderItemGrid(
-                  filteredTechniques,
-                  isLoadingKnowledge,
-                  'No techniques found'
-                )}
-              </div>
-            </TabsContent>
 
             <TabsContent value="knowledge" className="mt-4">
               <div className="max-h-[400px] overflow-y-auto">

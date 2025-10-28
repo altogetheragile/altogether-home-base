@@ -19,11 +19,15 @@ export interface KnowledgeItemHexiElementProps {
     category_color?: string;
     icon?: string;
     emoji?: string;
+    hasAISupport?: boolean;
+    techniqueType?: string;
+    openAsTab?: boolean;
   };
   isSelected?: boolean;
   onSelect?: () => void;
   onMove?: (position: { x: number; y: number }) => void;
   onDelete?: () => void;
+  onOpenAsTab?: () => void;
 }
 
 export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> = ({
@@ -36,6 +40,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   onSelect,
   onMove,
   onDelete,
+  onOpenAsTab,
 }) => {
   const { x, y } = position;
   const { width: w = 140, height: h = 121 } = size;
@@ -166,6 +171,10 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           setShowDetails(false);
           onDelete?.();
         }}
+        onOpenAsTab={onOpenAsTab ? () => {
+          setShowDetails(false);
+          onOpenAsTab();
+        } : undefined}
       />
     </>
   );
