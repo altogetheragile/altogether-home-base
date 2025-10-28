@@ -82,8 +82,26 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
 
   // Calculate smart grid position for new elements
   const calculateGridPosition = useCallback((
-    storyLevel: 'epic' | 'feature' | 'story' | 'task'
+    storyLevel: 'epic' | 'feature' | 'story' | 'task',
+    parentId?: string
   ) => {
+    // If parent exists, position relative to parent
+    if (parentId) {
+      const parent = canvasData.elements.find(el => el.id === parentId);
+      if (parent) {
+        // Count siblings at same level with same parent
+        const siblings = canvasData.elements.filter(
+          e => e.metadata?.parentId === parentId && e.metadata?.storyLevel === storyLevel
+        );
+        
+        // Position children to the right and slightly down from parent
+        return {
+          x: parent.position.x + 250,
+          y: parent.position.y + (siblings.length * 180),
+        };
+      }
+    }
+
     const GRID_SIZE = 220;
     const LEVEL_OFFSETS = {
       epic: { x: 50, y: 50 },
@@ -108,9 +126,10 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   // Handle adding story to canvas
   const handleAddStory = useCallback((
     level: 'epic' | 'feature' | 'story' | 'task',
-    data?: Partial<UserStory | Epic | Feature>
+    data?: Partial<UserStory | Epic | Feature>,
+    parentId?: string
   ) => {
-    const position = calculateGridPosition(level);
+    const position = calculateGridPosition(level, parentId);
     
     const newElement: CanvasElement = {
       id: crypto.randomUUID(),
@@ -127,6 +146,7 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
       },
       metadata: {
         storyLevel: level,
+        parentId,
       },
     };
 
@@ -278,13 +298,21 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
       setSelectedElements([]);
     };
 
+    // Find parent title if parentId exists
+    const parentTitle = element.metadata?.parentId 
+      ? canvasData.elements.find(el => el.id === element.metadata?.parentId)?.content?.title
+      : undefined;
+
     return (
       <StoryCardElement 
         key={element.id}
         id={element.id}
         position={element.position}
         size={element.size}
-        data={element.content}
+        data={{
+          ...element.content,
+          parentTitle,
+        }}
         isSelected={isSelected}
         onSelect={handleSelect}
         onMove={handleMove}
@@ -389,6 +417,11 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
       <UserStoryClarifierDialog
         isOpen={showAIDialog}
         onClose={() => setShowAIDialog(false)}
+        canvasData={canvasData}
+        onStoryGenerated={(storyData) => {
+          const level = storyData.level || 'story';
+          handleAddStory(level, storyData, storyData.parentId);
+        }}
       />
 
       {editingStory && (
