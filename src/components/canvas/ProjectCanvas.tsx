@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
 import { CanvasProvider } from './CanvasProvider';
 import BMCCanvasElement from './elements/BMCCanvasElement';
@@ -21,8 +20,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-  Download,
-  ArrowLeft
+  Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -36,7 +34,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   projectId,
   projectName,
 }) => {
-  const navigate = useNavigate();
   const { data: canvas, isLoading, error } = useCanvas(projectId);
   const { createCanvas, updateCanvas } = useCanvasMutations();
   const { toast } = useToast();
@@ -485,36 +482,21 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
   return (
     <CanvasProvider>
-      <div className="h-screen bg-background flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-card">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/dashboard?tab=projects')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <h1 className="text-xl font-semibold">{projectName}</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Toolbar 
-              onAddElement={handleAddElement}
-              onZoomIn={() => handleZoom('in')}
-              onZoomOut={() => handleZoom('out')}
-              onExport={handleExport}
-              zoom={zoom}
-              projectId={projectId}
-              onAddKnowledgeItem={handleAddKnowledgeItem}
-              onAddCustomHexi={handleAddCustomHexi}
-              onAddPlanningFocus={handleAddPlanningFocus}
-              existingKnowledgeItemIds={existingKnowledgeItemIds}
-            />
-          </div>
+      <div className="h-full bg-background flex flex-col overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex items-center justify-end p-4 border-b bg-card">
+          <Toolbar 
+            onAddElement={handleAddElement}
+            onZoomIn={() => handleZoom('in')}
+            onZoomOut={() => handleZoom('out')}
+            onExport={handleExport}
+            zoom={zoom}
+            projectId={projectId}
+            onAddKnowledgeItem={handleAddKnowledgeItem}
+            onAddCustomHexi={handleAddCustomHexi}
+            onAddPlanningFocus={handleAddPlanningFocus}
+            existingKnowledgeItemIds={existingKnowledgeItemIds}
+          />
         </div>
 
         {/* Canvas */}

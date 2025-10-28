@@ -1,13 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
 import { StoryToolbar } from './StoryToolbar';
-import { Button } from '@/components/ui/button';
-import { Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCanvas, useCanvasMutations } from '@/hooks/useCanvas';
 import { useDebounceCanvas } from '@/hooks/useDebounceCanvas';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from '@/components/stories/UserStoryClarifierDialog';
@@ -33,7 +30,6 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { updateCanvas, createCanvas } = useCanvasMutations();
   
   // Use user-scoped canvas instead of project-scoped
@@ -324,47 +320,7 @@ const UserStoryCanvas: React.FC<UserStoryCanvasProps> = ({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-xl font-semibold">{projectName}</h1>
-            <p className="text-sm text-muted-foreground">
-              Interactive canvas for epics, features, stories, and tasks
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {isSaving && (
-            <span className="text-sm text-muted-foreground">Saving...</span>
-          )}
-          {user && (
-            <Button onClick={() => handleCanvasSave(canvasData)}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Now
-            </Button>
-          )}
-          {!user && (
-            <Button
-              onClick={() => navigate('/auth')}
-              variant="outline"
-            >
-              Sign In to Save
-            </Button>
-          )}
-        </div>
-      </div>
-
+    <div className="h-full flex flex-col bg-background">
       {/* Toolbar */}
       <div className="border-b px-4 py-2 bg-card/50">
         <StoryToolbar
