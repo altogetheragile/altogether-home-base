@@ -678,7 +678,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
   return (
     <CanvasProvider>
-      <div className="h-full bg-background flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 bg-background flex flex-col overflow-hidden">
         {/* Toolbar */}
         <div className="flex items-center justify-end p-4 border-b bg-card">
           <Toolbar 
@@ -699,7 +699,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 relative" ref={containerRef}>
+        <div className="flex-1 min-h-[640px] relative" ref={containerRef}>
           {/* VISUAL DEBUG: Element Count Indicator - ALWAYS VISIBLE */}
           <div className="fixed top-20 left-20 bg-yellow-500 text-black p-4 rounded-lg shadow-2xl z-[9999] font-mono border-4 border-black">
             <div className="font-bold text-xl">🐛 DEBUG MODE</div>
@@ -716,13 +716,13 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'top left',
             }}
-            className="w-full h-full"
+            className="w-full h-full min-h-[640px]"
           >
             <BaseCanvas
               ref={canvasRef}
               data={canvasData}
               onDataChange={handleDataChange}
-              className="w-full h-full"
+              className="w-full h-full min-h-[640px]"
               noOverflow={true}
             >
               {/* TEST SQUARES for visibility check */}
