@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import TestimonialCard from "@/components/feedback/TestimonialCard";
@@ -23,6 +23,13 @@ const Testimonials = () => {
   const showCompany = settings?.show_testimonial_company ?? true;
   const showRatingHeader = settings?.show_testimonial_rating_header ?? true;
 
+  // Extract unique course names from the feedback data
+  const uniqueCourses = useMemo(() => {
+    if (!feedback) return [];
+    const courses = [...new Set(feedback.map(f => f.course_name))];
+    return courses.sort(); // Sort alphabetically
+  }, [feedback]);
+
   const filteredFeedback = feedback?.filter(f => {
     const matchesSearch = 
       f.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -31,7 +38,7 @@ const Testimonials = () => {
       f.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.comment.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCourse = courseFilter === "all" || f.course_name.toLowerCase().includes(courseFilter.toLowerCase());
+    const matchesCourse = courseFilter === "all" || f.course_name === courseFilter;
     const matchesRating = ratingFilter === "all" || f.rating >= parseInt(ratingFilter);
 
     return matchesSearch && matchesCourse && matchesRating;
@@ -75,10 +82,11 @@ const Testimonials = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Courses</SelectItem>
-                  <SelectItem value="agilepm">AgilePM</SelectItem>
-                  <SelectItem value="scrum">Scrum</SelectItem>
-                  <SelectItem value="management">Management 3.0</SelectItem>
-                  <SelectItem value="prince2">PRINCE2</SelectItem>
+                  {uniqueCourses.map((course) => (
+                    <SelectItem key={course} value={course}>
+                      {course}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select value={ratingFilter} onValueChange={setRatingFilter}>
