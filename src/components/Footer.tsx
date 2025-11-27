@@ -2,10 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Youtube, Github } from 'lucide-react';
 
 const Footer = () => {
   const { settings } = useSiteSettings();
+  const { user } = useAuth();
+  const { data: userRole } = useUserRole();
 
   const socialLinks = [
     { icon: Linkedin, url: settings?.social_linkedin, label: 'LinkedIn' },
@@ -15,7 +19,20 @@ const Footer = () => {
     { icon: Github, url: settings?.social_github, label: 'GitHub' },
   ].filter(link => link.url);
 
-  const quickLinks = (settings?.quick_links as any[])?.filter(link => link.enabled) || [];
+  // Dynamic navigation links matching Navigation component logic
+  const navLinks = [
+    { label: 'Home', url: '/', show: true },
+    { label: 'Events', url: '/events', show: settings?.show_events ?? false },
+    { label: 'Knowledge Base', url: '/knowledge', show: settings?.show_knowledge ?? false },
+    { label: 'Blog', url: '/blog', show: settings?.show_blog ?? false },
+    { label: 'Testimonials', url: '/testimonials', show: true },
+    { label: 'Contact', url: '/contact', show: settings?.show_contact ?? true },
+    { label: 'AI Tools', url: '/ai-tools', show: settings?.show_ai_tools ?? true },
+    { label: 'Dashboard', url: '/dashboard', show: (settings?.show_dashboard ?? true) && !!user },
+    { label: 'Admin Panel', url: '/admin/events', show: !!user && userRole === 'admin' },
+  ];
+
+  const quickLinks = navLinks.filter(link => link.show);
 
   return (
     <footer className="bg-muted mt-auto">
@@ -30,28 +47,26 @@ const Footer = () => {
             </p>
           </div>
           
-          {quickLinks.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                {quickLinks.map((link: any, index: number) => (
-                  <li key={index}>
-                    <Link 
-                      to={link.url} 
-                      onClick={() => {
-                        if (link.url === '/') {
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                      }}
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-4">Quick Links</h4>
+            <ul className="space-y-2">
+              {quickLinks.map((link, index) => (
+                <li key={index}>
+                  <Link 
+                    to={link.url} 
+                    onClick={() => {
+                      if (link.url === '/') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
           
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-4">Contact</h4>
