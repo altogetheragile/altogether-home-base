@@ -8,9 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Download, ExternalLink, Sparkles, ArrowLeft } from 'lucide-react';
+import { Loader2, Download, ExternalLink, Sparkles, ArrowLeft, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 
 interface BMCData {
   keyPartners: string[];
@@ -63,6 +65,7 @@ function normalizeBmc(raw: Record<string, string | string[] | undefined>): BMCDa
 
 const BMCGenerator = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     industry: '',
@@ -76,6 +79,7 @@ const BMCGenerator = () => {
   const [filledPdfUrl, setFilledPdfUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFilling, setIsFilling] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -256,6 +260,24 @@ const BMCGenerator = () => {
     setFilledPdfUrl('');
   };
 
+  const handleSaveToProject = () => {
+    if (!user) {
+      toast.error('Please sign in to save to a project');
+      navigate('/auth');
+      return;
+    }
+    setSaveDialogOpen(true);
+  };
+
+  const handleSaveComplete = (projectId: string, artifactId: string) => {
+    toast.success('BMC saved to project successfully!', {
+      action: {
+        label: 'View Project',
+        onClick: () => navigate(`/projects/${projectId}`),
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -396,9 +418,15 @@ const BMCGenerator = () => {
                         <CardTitle>Your Business Model Canvas</CardTitle>
                         <CardDescription>{formData.companyName}</CardDescription>
                       </div>
-                      <Button variant="outline" onClick={resetForm}>
-                        Generate New BMC
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={handleSaveToProject}>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save to Project
+                        </Button>
+                        <Button variant="outline" onClick={resetForm}>
+                          Generate New BMC
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -444,6 +472,22 @@ const BMCGenerator = () => {
         </div>
       </main>
       <Footer />
+      
+      {generatedBMC && (
+        <SaveToProjectDialog
+          open={saveDialogOpen}
+          onOpenChange={setSaveDialogOpen}
+          artifactType="bmc"
+          artifactName={`${formData.companyName} - Business Model Canvas`}
+          artifactDescription={`Generated BMC for ${formData.companyName}${formData.industry ? ` in ${formData.industry}` : ''}`}
+          artifactData={{
+            formData,
+            bmcData: generatedBMC,
+            pdfUrl: filledPdfUrl,
+          }}
+          onSaveComplete={handleSaveComplete}
+        />
+      )}
     </div>
   );
 };

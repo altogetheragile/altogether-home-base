@@ -2255,6 +2255,53 @@ export type Database = {
         }
         Relationships: []
       }
+      project_artifacts: {
+        Row: {
+          artifact_type: string
+          created_at: string
+          created_by: string | null
+          data: Json
+          description: string | null
+          id: string
+          name: string
+          project_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          artifact_type: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          description?: string | null
+          id?: string
+          name: string
+          project_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          artifact_type?: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          description?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           color_theme: string | null
