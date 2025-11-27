@@ -80,7 +80,7 @@ const TestimonialCard = ({
         )}
 
         <div className="space-y-2">
-          {showRating && renderStars()}
+          {showRating && feedback.rating && feedback.rating > 0 && renderStars()}
           <Badge variant="secondary">{feedback.course_name}</Badge>
         </div>
 
