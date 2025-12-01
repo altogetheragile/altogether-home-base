@@ -6,7 +6,8 @@ import {
   ZoomOut,
   Download,
   Hexagon,
-  Layers
+  Layers,
+  Save
 } from 'lucide-react';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 import { PlanningFocusSelector } from './elements/PlanningFocusSelector';
@@ -24,6 +25,8 @@ interface ToolbarProps {
   onAddCustomHexi?: () => void;
   onAddPlanningFocus?: (focusId: string, focusData: any) => void;
   existingKnowledgeItemIds?: string[];
+  artifactId?: string;
+  onSaveChanges?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -39,6 +42,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onAddCustomHexi,
   onAddPlanningFocus,
   existingKnowledgeItemIds = [],
+  artifactId,
+  onSaveChanges,
 }) => {
   const [showKnowledgeSelector, setShowKnowledgeSelector] = useState(false);
   const [showPlanningFocusSelector, setShowPlanningFocusSelector] = useState(false);
@@ -106,10 +111,23 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Export */}
+      {/* Action Buttons */}
+      {artifactId ? (
+        <>
+          <Button size="sm" onClick={onSaveChanges} title="Save Changes">
+            <Save className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
+          <Button variant="outline" size="sm" onClick={onExport} title="Export">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </>
+      ) : (
         <Button variant="ghost" size="sm" onClick={onExport} title="Export">
           <Download className="h-4 w-4" />
         </Button>
+      )}
       </div>
 
       <KnowledgeItemSelector
