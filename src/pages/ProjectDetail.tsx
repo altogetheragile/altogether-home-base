@@ -47,7 +47,7 @@ export default function ProjectDetail() {
                 onClick={() => navigate('/dashboard')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
+                Back to Projects
               </Button>
               <div className="flex items-center gap-3">
                 <div 
