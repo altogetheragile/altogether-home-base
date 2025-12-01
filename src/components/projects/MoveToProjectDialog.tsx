@@ -10,9 +10,11 @@ import {
 } from '@/components/ui/dialog';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectArtifact } from '@/hooks/useProjectArtifacts';
-import { Loader2, FolderOpen } from 'lucide-react';
+import { Loader2, FolderOpen, Plus } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { ProjectDialog } from '@/components/dashboard/ProjectDialog';
+import { useProjectMutations } from '@/hooks/useProjects';
 
 interface MoveToProjectDialogProps {
   open: boolean;
@@ -33,6 +35,8 @@ export const MoveToProjectDialog: React.FC<MoveToProjectDialogProps> = ({
 }) => {
   const { data: projects, isLoading } = useProjects();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { createProject } = useProjectMutations();
 
   // Filter out current project
   const availableProjects = projects?.filter(p => p.id !== currentProjectId) || [];
@@ -67,9 +71,13 @@ export const MoveToProjectDialog: React.FC<MoveToProjectDialogProps> = ({
           ) : availableProjects.length === 0 ? (
             <div className="text-center py-8">
               <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                No other projects available. Create a new project first.
+              <p className="text-sm text-muted-foreground mb-4">
+                No other projects available.
               </p>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Project
+              </Button>
             </div>
           ) : (
             <RadioGroup value={selectedProjectId} onValueChange={setSelectedProjectId}>
@@ -114,6 +122,16 @@ export const MoveToProjectDialog: React.FC<MoveToProjectDialogProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <ProjectDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSubmit={async (data) => {
+          await createProject.mutateAsync(data as any);
+          setCreateDialogOpen(false);
+        }}
+        isLoading={createProject.isPending}
+      />
     </Dialog>
   );
 };

@@ -68,20 +68,18 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
     <>
     <Card className="hover:shadow-md transition-shadow group cursor-pointer" onClick={() => onOpen(artifact)}>
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="p-2 rounded-lg bg-muted">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="p-2 rounded-lg bg-muted flex-shrink-0">
               {getArtifactIcon(artifact.artifact_type)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <CardTitle className="text-base leading-tight truncate">
-                  {artifact.name}
-                </CardTitle>
-                <Badge variant="secondary" className="text-xs">
-                  {getArtifactTypeName(artifact.artifact_type)}
-                </Badge>
-              </div>
+              <CardTitle className="text-base leading-tight truncate mb-2">
+                {artifact.name}
+              </CardTitle>
+              <Badge variant="secondary" className="text-xs mb-2">
+                {getArtifactTypeName(artifact.artifact_type)}
+              </Badge>
               {artifact.description && (
                 <CardDescription className="line-clamp-2 text-sm">
                   {artifact.description}
@@ -94,7 +92,7 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
