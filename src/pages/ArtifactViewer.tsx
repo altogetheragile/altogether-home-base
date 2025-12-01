@@ -1,18 +1,53 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useProjectArtifact } from '@/hooks/useProjectArtifacts';
+import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil, Save } from 'lucide-react';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
+import { toast } from 'sonner';
 
 export default function ArtifactViewer() {
   const { projectId, artifactId } = useParams();
   const navigate = useNavigate();
   const { data: artifact, isLoading: isLoadingArtifact } = useProjectArtifact(artifactId);
   const { data: project, isLoading: isLoadingProject } = useProject(projectId);
+  const { updateArtifact } = useProjectArtifactMutations();
   const bmcRef = useRef<BusinessModelCanvasRef>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState<any>(null);
+
+  const handleBMCDataChange = (newData: any) => {
+    setEditedData(newData);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!artifact || !editedData) return;
+    
+    try {
+      const updatedArtifactData = {
+        ...artifact.data,
+        bmcData: editedData,
+      };
+      
+      await updateArtifact.mutateAsync({
+        id: artifact.id,
+        updates: { data: updatedArtifactData }
+      });
+      
+      toast.success('Changes saved successfully');
+      setIsEditing(false);
+    } catch (error) {
+      toast.error('Failed to save changes');
+      console.error('Error saving artifact:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedData(null);
+  };
 
   if (isLoadingArtifact || isLoadingProject) {
     return (
@@ -37,14 +72,17 @@ export default function ArtifactViewer() {
   const renderArtifactContent = () => {
     switch (artifact.artifact_type) {
       case 'bmc':
+        // Extract bmcData from the saved artifact structure
+        const bmcData = artifact.data?.bmcData || artifact.data;
         return (
           <div className="max-w-7xl mx-auto">
             <BusinessModelCanvas
               ref={bmcRef}
-              data={artifact.data}
+              data={bmcData}
               companyName={artifact.name}
-              isEditable={false}
+              isEditable={isEditing}
               showWatermark={false}
+              onDataChange={handleBMCDataChange}
             />
           </div>
         );
@@ -73,30 +111,49 @@ export default function ArtifactViewer() {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/projects/${projectId}`)}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Project
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">{artifact.name}</h1>
-                <p className="text-sm text-muted-foreground">
-                  {project.name}
-                </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/projects/${projectId}`)}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Project
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">{artifact.name}</h1>
+                  <p className="text-sm text-muted-foreground">
+                    {project.name}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {artifact.artifact_type === 'bmc' && !isEditing && (
+                  <Button variant="outline" onClick={() => setIsEditing(true)}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                )}
+                {isEditing && (
+                  <>
+                    <Button variant="outline" onClick={handleCancelEdit}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveChanges}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </Button>
+                  </>
+                )}
+                {artifact.artifact_type === 'bmc' && !isEditing && (
+                  <BMCExportDialog
+                    canvasRef={bmcRef}
+                    companyName={artifact.name}
+                  />
+                )}
               </div>
             </div>
-            {artifact.artifact_type === 'bmc' && (
-              <BMCExportDialog
-                canvasRef={bmcRef}
-                companyName={artifact.name}
-              />
-            )}
-          </div>
         </div>
       </div>
 
