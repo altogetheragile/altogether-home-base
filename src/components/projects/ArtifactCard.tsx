@@ -22,6 +22,7 @@ import { ProjectArtifact } from '@/hooks/useProjectArtifacts';
 interface ArtifactCardProps {
   artifact: ProjectArtifact;
   onDelete: (id: string) => void;
+  onOpen: (artifact: ProjectArtifact) => void;
 }
 
 const getArtifactIcon = (type: string) => {
@@ -50,9 +51,9 @@ const getArtifactTypeName = (type: string) => {
   }
 };
 
-export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete }) => {
+export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, onOpen }) => {
   return (
-    <Card className="hover:shadow-md transition-shadow group">
+    <Card className="hover:shadow-md transition-shadow group cursor-pointer" onClick={() => onOpen(artifact)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1">
@@ -81,13 +82,26 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete }
                 variant="ghost" 
                 size="sm" 
                 className="opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem 
-                onClick={() => onDelete(artifact.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpen(artifact);
+                }}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(artifact.id);
+                }}
                 className="text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -103,6 +117,17 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete }
           <span>
             Created {formatDistanceToNow(new Date(artifact.created_at), { addSuffix: true })}
           </span>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(artifact);
+            }}
+          >
+            <ExternalLink className="h-4 w-4 mr-1" />
+            View
+          </Button>
         </div>
       </CardContent>
     </Card>

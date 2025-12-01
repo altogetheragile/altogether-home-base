@@ -49,6 +49,10 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
     }
   };
 
+  const handleOpenArtifact = (artifact: ProjectArtifact) => {
+    navigate(`/projects/${projectId}/artifacts/${artifact.id}`);
+  };
+
   // Group artifacts by type
   const groupedArtifacts = artifacts.reduce((acc, artifact) => {
     if (!acc[artifact.artifact_type]) {
@@ -118,6 +122,7 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
                   key={artifact.id}
                   artifact={artifact}
                   onDelete={handleDeleteArtifact}
+                  onOpen={handleOpenArtifact}
                 />
               ))}
             </div>

@@ -48,6 +48,25 @@ export const useProjectArtifacts = (projectId?: string) => {
   });
 };
 
+export const useProjectArtifact = (artifactId?: string) => {
+  return useQuery({
+    queryKey: ["project-artifact", artifactId],
+    queryFn: async () => {
+      if (!artifactId) return null;
+      
+      const { data, error } = await supabase
+        .from("project_artifacts")
+        .select("*")
+        .eq("id", artifactId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as ProjectArtifact | null;
+    },
+    enabled: !!artifactId,
+  });
+};
+
 export const useProjectArtifactMutations = () => {
   const queryClient = useQueryClient();
 
