@@ -38,7 +38,7 @@ export const ProjectsList: React.FC = () => {
   };
 
   const handleOpenProject = (project: Project) => {
-    navigate(`/projects/${project.id}/canvas`);
+    navigate(`/projects/${project.id}`);
   };
 
   const handleArchiveProject = (project: Project) => {
