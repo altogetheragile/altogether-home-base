@@ -100,8 +100,9 @@ const TextElement: React.FC<TextElementProps> = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className={cn(
-          'w-full h-full resize-none border-0 bg-transparent p-1',
-          'focus:ring-1 focus:ring-primary/30 focus:border-transparent',
+          'w-full h-full resize-none p-1',
+          'bg-white/50 border border-dashed border-primary/30 cursor-text',
+          'focus:ring-2 focus:ring-primary focus:border-primary',
           'placeholder:text-muted-foreground/50',
           fontSizeClasses[fontSize],
           alignClasses[align],

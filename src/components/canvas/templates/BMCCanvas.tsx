@@ -235,7 +235,12 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     headerColor?: string;
     sectionType?: 'partners' | 'activities' | 'resources' | 'value' | 'relationships' | 'channels' | 'segments' | 'costs' | 'revenue';
   }) => (
-    <div className="h-full flex flex-col min-h-0 bg-card border-2 border-border/30 overflow-hidden shadow-sm">
+    <div className={cn(
+      "h-full flex flex-col min-h-0 bg-card border-2 overflow-hidden shadow-sm",
+      isEditable 
+        ? "border-primary/50 ring-2 ring-primary/20"
+        : "border-border/30"
+    )}>
       <SectionHeader title={title} color={headerColor} />
       <div className="flex-1 p-1 min-h-[120px] overflow-auto relative z-0">
         {isEditable ? (

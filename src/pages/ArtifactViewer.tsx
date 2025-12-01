@@ -22,6 +22,12 @@ export default function ArtifactViewer() {
     setEditedData(newData);
   };
 
+  const handleStartEdit = () => {
+    const originalBmcData = artifact?.data?.bmcData || artifact?.data;
+    setEditedData(originalBmcData);
+    setIsEditing(true);
+  };
+
   const handleSaveChanges = async () => {
     if (!artifact || !editedData) return;
     
@@ -38,6 +44,7 @@ export default function ArtifactViewer() {
       
       toast.success('Changes saved successfully');
       setIsEditing(false);
+      setEditedData(null);
     } catch (error) {
       toast.error('Failed to save changes');
       console.error('Error saving artifact:', error);
@@ -73,7 +80,9 @@ export default function ArtifactViewer() {
     switch (artifact.artifact_type) {
       case 'bmc':
         // Extract bmcData from the saved artifact structure
-        const bmcData = artifact.data?.bmcData || artifact.data;
+        const originalBmcData = artifact.data?.bmcData || artifact.data;
+        // Use editedData if available (during editing), otherwise use original
+        const bmcData = editedData || originalBmcData;
         return (
           <div className="max-w-7xl mx-auto">
             <BusinessModelCanvas
@@ -130,7 +139,7 @@ export default function ArtifactViewer() {
               </div>
               <div className="flex gap-2">
                 {artifact.artifact_type === 'bmc' && !isEditing && (
-                  <Button variant="outline" onClick={() => setIsEditing(true)}>
+                  <Button variant="outline" onClick={handleStartEdit}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Edit
                   </Button>
