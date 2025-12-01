@@ -74,7 +74,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle>My Projects</CardTitle>
                 <CardDescription>
-                  Manage your project canvases and work
+                  Manage your saved work and artifacts
                 </CardDescription>
               </CardHeader>
               <CardContent>

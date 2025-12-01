@@ -23,6 +23,14 @@ const AIToolsHub = () => {
       route: "/user-story-canvas",
       badge: "AI-Powered",
     },
+    {
+      id: "project-modelling",
+      name: "Project Modelling Canvas",
+      description: "Brainstorm and visually model your project using hexagonal elements, knowledge items, planning focuses, and sticky notes.",
+      icon: LayoutTemplate,
+      route: "/project-modelling",
+      badge: "Brainstorm",
+    },
   ];
 
   return (
