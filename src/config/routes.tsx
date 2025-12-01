@@ -38,6 +38,7 @@ const AccountSecurity = lazy(() => import('@/pages/AccountSecurity'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 
 // Protected Project Pages
+const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
 const ProjectCanvas = lazy(() => import('@/pages/ProjectCanvas'));
 const ProjectBMC = lazy(() => import('@/pages/ProjectBMC'));
 
@@ -181,6 +182,13 @@ export const ProtectedUserRoutes = () => (
     {/* Project Routes */}
     {featureFlags.protectedProjects && (
       <>
+        <Route path="/projects/:projectId" element={
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <ProjectDetail />
+            </Suspense>
+          </ProtectedRoute>
+        } />
         <Route path="/projects/:projectId/canvas" element={
           <ProtectedRoute>
             <Suspense fallback={<LoadingFallback />}>

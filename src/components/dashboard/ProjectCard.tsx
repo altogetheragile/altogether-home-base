@@ -51,11 +51,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const bmcCount = hasBMC ? 1 : 0;
 
   const handleOpenProject = () => {
-    if (hasBMC) {
-      navigate(`/projects/${project.id}/bmc`);
-    } else {
-      navigate(`/projects/${project.id}/canvas`);
-    }
+    navigate(`/projects/${project.id}`);
   };
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer group">
@@ -137,7 +133,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
             </Badge>
             <Button size="sm" variant="outline" onClick={handleOpenProject}>
-              {hasBMC ? 'View BMC' : 'Open Canvas'}
+              View Project
             </Button>
           </div>
         </div>

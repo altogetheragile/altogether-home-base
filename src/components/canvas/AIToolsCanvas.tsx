@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
+import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 
 interface AIToolsCanvasProps {
   projectId?: string;
@@ -30,13 +31,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   );
   const [zoom, setZoom] = useState(1);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const canvasRef = useRef<BaseCanvasRef>(null);
   
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { createProject } = useProjectMutations();
-  const { createCanvas } = useCanvasMutations();
 
   const handleDataChange = useCallback((data: CanvasData) => {
     setCanvasData(data);
@@ -185,41 +185,26 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     }
   }, [toast]);
 
-  const handleSaveAsProject = async () => {
+  const handleSaveToProject = () => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to save your canvas as a project",
+        description: "Please sign in to save your canvas",
         variant: "destructive"
       });
+      navigate('/auth');
       return;
     }
 
-    try {
-      const projectResult = await createProject.mutateAsync({
-        name: projectName || 'AI Tools Canvas',
-        description: 'Canvas with AI-powered tools and elements',
-        color_theme: '#F97316'
-      });
+    setSaveDialogOpen(true);
+  };
 
-      await createCanvas.mutateAsync({
-        projectId: projectResult.id,
-        data: canvasData
-      });
-
-      toast({
-        title: "🎉 Project Saved!",
-        description: "Your AI Tools Canvas has been saved as a project"
-      });
-
-      navigate(`/projects/${projectResult.id}/canvas`);
-    } catch (error) {
-      toast({
-        title: "Save Failed",
-        description: "Unable to save canvas as project",
-        variant: "destructive"
-      });
-    }
+  const handleSaveComplete = (projectId: string, artifactId: string) => {
+    toast({
+      title: "🎉 Canvas Saved!",
+      description: "Your canvas has been saved to the project"
+    });
+    navigate(`/projects/${projectId}`);
   };
 
   const renderElement = (element: CanvasElement) => {
@@ -370,9 +355,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         
         <div className="flex items-center gap-2">
           {user && (
-            <Button onClick={handleSaveAsProject}>
+            <Button onClick={handleSaveToProject}>
               <Save className="h-4 w-4 mr-2" />
-              Save as Project
+              Save to Project
             </Button>
           )}
           {!user && (
@@ -432,6 +417,17 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           </div>
         </BaseCanvas>
       </div>
+
+      {/* Save to Project Dialog */}
+      <SaveToProjectDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        artifactType="canvas"
+        artifactName="User Story Canvas"
+        artifactDescription={`Canvas with ${canvasData.elements.length} elements`}
+        artifactData={canvasData}
+        onSaveComplete={handleSaveComplete}
+      />
     </div>
   );
 };
