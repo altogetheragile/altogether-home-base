@@ -44,7 +44,7 @@ export default function ProjectDetail() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/dashboard?tab=projects')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Projects
