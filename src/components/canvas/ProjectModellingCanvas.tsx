@@ -161,45 +161,40 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/ai-tools')}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to AI Tools
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Project Modelling Canvas</h1>
-                <p className="text-sm text-muted-foreground">
-                  Brainstorm and model your project using techniques and frameworks
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {artifactId ? (
-                <Button onClick={handleSaveChanges}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+      {/* Header - only show in standalone mode */}
+      {!artifactId && (
+        <div className="border-b bg-card">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/ai-tools')}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to AI Tools
                 </Button>
-              ) : (
+                <div>
+                  <h1 className="text-2xl font-bold">Project Modelling Canvas</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Brainstorm and model your project using techniques and frameworks
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
                 <Button variant="outline" onClick={handleSaveToProject}>
                   Save to Project
                 </Button>
-              )}
-              <Button variant="outline" onClick={handleExport}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+                <Button variant="outline" onClick={handleExport}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Toolbar */}
       <div className="border-b bg-card">
@@ -214,6 +209,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             onExport={handleExport}
             zoom={zoom}
             existingKnowledgeItemIds={existingItemIds}
+            artifactId={artifactId}
+            onSaveChanges={handleSaveChanges}
           />
         </div>
       </div>
