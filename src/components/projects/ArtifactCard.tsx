@@ -9,7 +9,8 @@ import {
   Trash2,
   ExternalLink,
   MoreHorizontal,
-  FolderInput
+  FolderInput,
+  Pencil
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -21,13 +22,16 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { ProjectArtifact } from '@/hooks/useProjectArtifacts';
 import { MoveToProjectDialog } from './MoveToProjectDialog';
+import { RenameArtifactDialog } from './RenameArtifactDialog';
 
 interface ArtifactCardProps {
   artifact: ProjectArtifact;
   onDelete: (id: string) => void;
   onOpen: (artifact: ProjectArtifact) => void;
   onMove?: (artifactId: string, toProjectId: string) => void;
+  onRename?: (artifactId: string, name: string, description?: string) => void;
   isMoving?: boolean;
+  isRenaming?: boolean;
 }
 
 const getArtifactIcon = (type: string) => {
@@ -56,12 +60,18 @@ const getArtifactTypeName = (type: string) => {
   }
 };
 
-export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, onOpen, onMove, isMoving }) => {
+export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, onOpen, onMove, onRename, isMoving, isRenaming }) => {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
 
   const handleMove = (artifactId: string, toProjectId: string) => {
     onMove?.(artifactId, toProjectId);
     setMoveDialogOpen(false);
+  };
+
+  const handleRename = (artifactId: string, name: string, description?: string) => {
+    onRename?.(artifactId, name, description);
+    setRenameDialogOpen(false);
   };
 
   return (
@@ -108,6 +118,17 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
                 <ExternalLink className="h-4 w-4 mr-2" />
                 View
               </DropdownMenuItem>
+              {onRename && (
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRenameDialogOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+              )}
               {onMove && (
                 <DropdownMenuItem 
                   onClick={(e) => {
@@ -154,6 +175,16 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
         </div>
       </CardContent>
     </Card>
+
+    {onRename && (
+      <RenameArtifactDialog
+        open={renameDialogOpen}
+        onOpenChange={setRenameDialogOpen}
+        artifact={artifact}
+        onRename={handleRename}
+        isRenaming={isRenaming}
+      />
+    )}
 
     {onMove && (
       <MoveToProjectDialog
