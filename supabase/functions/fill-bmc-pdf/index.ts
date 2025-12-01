@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { PDFDocument, rgb, StandardFonts } from "https://cdn.skypack.dev/pdf-lib@1.17.1";
+import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,16 +34,16 @@ const INNER = 2;
 // PDF coordinate mappings for BMC sections (relative %, ORIGIN: bottom-left)
 // Calibrated for the provided template; tweak as needed with debug=true
 const BMC_RELATIVE_COORDS = {
-  companyName: { x: 0.5, y: 0.91 }, // Center line in header area
-  keyPartners: { x: 0.025, y: 0.26, w: 0.175, h: 0.43 },
-  keyActivities: { x: 0.21, y: 0.48, w: 0.155, h: 0.21 },
-  keyResources: { x: 0.21, y: 0.26, w: 0.155, h: 0.21 },
-  valuePropositions: { x: 0.375, y: 0.26, w: 0.185, h: 0.43 },
-  customerRelationships: { x: 0.57, y: 0.48, w: 0.155, h: 0.21 },
-  channels: { x: 0.57, y: 0.26, w: 0.155, h: 0.21 },
-  customerSegments: { x: 0.735, y: 0.26, w: 0.24, h: 0.43 },
-  costStructure: { x: 0.025, y: 0.03, w: 0.535, h: 0.22 },
-  revenueStreams: { x: 0.57, y: 0.03, w: 0.405, h: 0.22 },
+  companyName: { x: 0.5, y: 0.87 }, // Center line in header area (lowered from 0.91)
+  keyPartners: { x: 0.025, y: 0.30, w: 0.175, h: 0.39 },
+  keyActivities: { x: 0.21, y: 0.52, w: 0.155, h: 0.17 },
+  keyResources: { x: 0.21, y: 0.30, w: 0.155, h: 0.17 },
+  valuePropositions: { x: 0.375, y: 0.30, w: 0.185, h: 0.39 },
+  customerRelationships: { x: 0.57, y: 0.52, w: 0.155, h: 0.17 },
+  channels: { x: 0.57, y: 0.30, w: 0.155, h: 0.17 },
+  customerSegments: { x: 0.735, y: 0.30, w: 0.24, h: 0.39 },
+  costStructure: { x: 0.025, y: 0.06, w: 0.535, h: 0.20 },
+  revenueStreams: { x: 0.57, y: 0.06, w: 0.405, h: 0.20 },
 };
 
 function wrapText(text: string, maxWidth: number, font: any, fontSize: number): string[] {

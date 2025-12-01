@@ -9,6 +9,7 @@ import { useProjects, useProjectMutations } from "@/hooks/useProjects";
 import { useProjectArtifactMutations } from "@/hooks/useProjectArtifacts";
 import { Loader2, Plus, FolderOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface SaveToProjectDialogProps {
   open: boolean;
@@ -39,6 +40,14 @@ export const SaveToProjectDialog = ({
   const { createProject } = useProjectMutations();
   const { createArtifact } = useProjectArtifactMutations();
 
+  const resetForm = () => {
+    setMode("existing");
+    setSelectedProjectId("");
+    setNewProjectName("");
+    setNewProjectDescription("");
+    setNewProjectColor("#3B82F6");
+  };
+
   const handleSave = async () => {
     try {
       let projectId = selectedProjectId;
@@ -46,22 +55,27 @@ export const SaveToProjectDialog = ({
       // Create new project if needed
       if (mode === "new") {
         if (!newProjectName.trim()) {
+          toast.error("Please enter a project name");
           return;
         }
 
+        console.log("[SaveToProject] Creating new project...");
         const newProject = await createProject.mutateAsync({
           name: newProjectName,
           description: newProjectDescription || undefined,
           color_theme: newProjectColor,
         });
         projectId = newProject.id;
+        console.log("[SaveToProject] Project created:", projectId);
       }
 
       if (!projectId) {
+        toast.error("Please select a project");
         return;
       }
 
       // Create artifact
+      console.log("[SaveToProject] Creating artifact...");
       const artifact = await createArtifact.mutateAsync({
         project_id: projectId,
         artifact_type: artifactType,
@@ -69,18 +83,18 @@ export const SaveToProjectDialog = ({
         description: artifactDescription,
         data: artifactData,
       });
+      console.log("[SaveToProject] Artifact created:", artifact.id);
 
-      onSaveComplete?.(projectId, artifact.id);
+      // Close dialog and reset form
       onOpenChange(false);
+      resetForm();
       
-      // Reset form
-      setMode("existing");
-      setSelectedProjectId("");
-      setNewProjectName("");
-      setNewProjectDescription("");
-      setNewProjectColor("#3B82F6");
+      // Notify parent after cleanup
+      onSaveComplete?.(projectId, artifact.id);
+      
     } catch (error) {
-      console.error("Error saving to project:", error);
+      console.error("[SaveToProject] Error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to save to project");
     }
   };
 
