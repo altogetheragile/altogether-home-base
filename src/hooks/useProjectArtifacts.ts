@@ -27,6 +27,7 @@ export interface ProjectArtifactUpdate {
   name?: string;
   description?: string;
   data?: any;
+  project_id?: string;
 }
 
 export const useProjectArtifacts = (projectId?: string) => {
@@ -145,9 +146,36 @@ export const useProjectArtifactMutations = () => {
     },
   });
 
+  const moveArtifact = useMutation({
+    mutationFn: async ({ id, fromProjectId, toProjectId }: { id: string; fromProjectId: string; toProjectId: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { data, error } = await supabase
+        .from("project_artifacts")
+        .update({ project_id: toProjectId, updated_by: user.id })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { artifact: data as ProjectArtifact, fromProjectId, toProjectId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["project-artifacts", data.fromProjectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-artifacts", data.toProjectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Artifact moved successfully");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to move artifact: " + error.message);
+    },
+  });
+
   return {
     createArtifact,
     updateArtifact,
     deleteArtifact,
+    moveArtifact,
   };
 };
