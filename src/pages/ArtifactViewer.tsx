@@ -1,10 +1,10 @@
+import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil, Save } from 'lucide-react';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
-import { useRef, useState } from 'react';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
 import { toast } from 'sonner';
 
@@ -94,6 +94,16 @@ export default function ArtifactViewer() {
               onDataChange={handleBMCDataChange}
             />
           </div>
+        );
+      case 'project-model':
+        // Dynamically import and render the Project Modelling Canvas
+        const ProjectModellingCanvas = React.lazy(() => 
+          import('@/components/canvas/ProjectModellingCanvas').then(m => ({ default: m.ProjectModellingCanvas }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading canvas...</div>}>
+            <ProjectModellingCanvas initialData={artifact.data} />
+          </React.Suspense>
         );
       case 'canvas':
       case 'user_story':
