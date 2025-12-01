@@ -102,7 +102,11 @@ export default function ArtifactViewer() {
         );
         return (
           <React.Suspense fallback={<div className="flex justify-center p-8">Loading canvas...</div>}>
-            <ProjectModellingCanvas initialData={artifact.data} />
+            <ProjectModellingCanvas 
+              initialData={artifact.data}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
           </React.Suspense>
         );
       case 'canvas':

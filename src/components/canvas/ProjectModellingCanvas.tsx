@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
 import { PlanningFocusHexiElement } from './elements/PlanningFocusHexiElement';
@@ -8,6 +8,7 @@ import { CustomHexiElement } from './elements/CustomHexiElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { Toolbar } from './Toolbar';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
+import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -22,15 +23,22 @@ interface CanvasElement {
 
 interface ProjectModellingCanvasProps {
   initialData?: { elements: CanvasElement[] };
+  artifactId?: string;
+  projectId?: string;
 }
 
-export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({ initialData }) => {
+export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({ 
+  initialData, 
+  artifactId, 
+  projectId 
+}) => {
   const [elements, setElements] = useState<CanvasElement[]>(initialData?.elements || []);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { updateArtifact } = useProjectArtifactMutations();
 
   const handleAddKnowledgeItem = useCallback((itemId: string, itemData: any) => {
     const newElement: CanvasElement = {
@@ -130,6 +138,21 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({ 
     setSaveDialogOpen(true);
   };
 
+  const handleSaveChanges = async () => {
+    if (!artifactId || !projectId) return;
+    
+    try {
+      await updateArtifact.mutateAsync({
+        id: artifactId,
+        updates: { data: { elements } }
+      });
+      toast.success('Changes saved successfully');
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      toast.error('Failed to save changes');
+    }
+  };
+
 
   const existingItemIds = elements
     .filter(el => el.type === 'knowledge-item')
@@ -159,9 +182,16 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({ 
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleSaveToProject}>
-                Save to Project
-              </Button>
+              {artifactId ? (
+                <Button onClick={handleSaveChanges}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={handleSaveToProject}>
+                  Save to Project
+                </Button>
+              )}
               <Button variant="outline" onClick={handleExport}>
                 <Download className="h-4 w-4 mr-2" />
                 Export
