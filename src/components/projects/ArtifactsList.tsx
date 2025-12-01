@@ -23,7 +23,7 @@ interface ArtifactsListProps {
 
 export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, projectId }) => {
   const navigate = useNavigate();
-  const { deleteArtifact } = useProjectArtifactMutations();
+  const { deleteArtifact, moveArtifact } = useProjectArtifactMutations();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [artifactToDelete, setArtifactToDelete] = useState<ProjectArtifact | null>(null);
 
@@ -51,6 +51,10 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
 
   const handleOpenArtifact = (artifact: ProjectArtifact) => {
     navigate(`/projects/${projectId}/artifacts/${artifact.id}`);
+  };
+
+  const handleMoveArtifact = (artifactId: string, toProjectId: string) => {
+    moveArtifact.mutate({ id: artifactId, fromProjectId: projectId, toProjectId });
   };
 
   // Group artifacts by type
@@ -123,6 +127,8 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
                   artifact={artifact}
                   onDelete={handleDeleteArtifact}
                   onOpen={handleOpenArtifact}
+                  onMove={handleMoveArtifact}
+                  isMoving={moveArtifact.isPending}
                 />
               ))}
             </div>

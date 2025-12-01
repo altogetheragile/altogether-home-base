@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,21 +8,26 @@ import {
   Layout, 
   Trash2,
   ExternalLink,
-  MoreHorizontal
+  MoreHorizontal,
+  FolderInput
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ProjectArtifact } from '@/hooks/useProjectArtifacts';
+import { MoveToProjectDialog } from './MoveToProjectDialog';
 
 interface ArtifactCardProps {
   artifact: ProjectArtifact;
   onDelete: (id: string) => void;
   onOpen: (artifact: ProjectArtifact) => void;
+  onMove?: (artifactId: string, toProjectId: string) => void;
+  isMoving?: boolean;
 }
 
 const getArtifactIcon = (type: string) => {
@@ -51,8 +56,16 @@ const getArtifactTypeName = (type: string) => {
   }
 };
 
-export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, onOpen }) => {
+export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, onOpen, onMove, isMoving }) => {
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+
+  const handleMove = (artifactId: string, toProjectId: string) => {
+    onMove?.(artifactId, toProjectId);
+    setMoveDialogOpen(false);
+  };
+
   return (
+    <>
     <Card className="hover:shadow-md transition-shadow group cursor-pointer" onClick={() => onOpen(artifact)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
@@ -97,6 +110,18 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
                 <ExternalLink className="h-4 w-4 mr-2" />
                 View
               </DropdownMenuItem>
+              {onMove && (
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMoveDialogOpen(true);
+                  }}
+                >
+                  <FolderInput className="h-4 w-4 mr-2" />
+                  Move to Project
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -131,5 +156,17 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
         </div>
       </CardContent>
     </Card>
+
+    {onMove && (
+      <MoveToProjectDialog
+        open={moveDialogOpen}
+        onOpenChange={setMoveDialogOpen}
+        artifact={artifact}
+        currentProjectId={artifact.project_id}
+        onMove={handleMove}
+        isMoving={isMoving}
+      />
+    )}
+    </>
   );
 };
