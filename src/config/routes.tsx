@@ -41,6 +41,7 @@ const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
 const ProjectCanvas = lazy(() => import('@/pages/ProjectCanvas'));
 const ProjectBMC = lazy(() => import('@/pages/ProjectBMC'));
+const ArtifactViewer = lazy(() => import('@/pages/ArtifactViewer'));
 
 // Admin Pages - Dashboard
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -200,6 +201,13 @@ export const ProtectedUserRoutes = () => (
           <ProtectedRoute>
             <Suspense fallback={<LoadingFallback />}>
               <ProjectBMC />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+        <Route path="/projects/:projectId/artifacts/:artifactId" element={
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <ArtifactViewer />
             </Suspense>
           </ProtectedRoute>
         } />
