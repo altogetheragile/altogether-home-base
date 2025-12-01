@@ -115,10 +115,11 @@ export const useProjectArtifactMutations = () => {
       if (error) throw error;
       return data as ProjectArtifact;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["project-artifacts", data.project_id] });
-      toast.success("Artifact updated successfully");
-    },
+  onSuccess: (data) => {
+    queryClient.invalidateQueries({ queryKey: ["project-artifacts", data.project_id] });
+    queryClient.invalidateQueries({ queryKey: ["project-artifact", data.id] });
+    toast.success("Artifact updated successfully");
+  },
     onError: (error: Error) => {
       toast.error("Failed to update artifact: " + error.message);
     },
