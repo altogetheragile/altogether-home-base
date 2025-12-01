@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -8,11 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Download, ExternalLink, Sparkles, ArrowLeft, Save } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
+import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
+import BMCExportDialog from '@/components/bmc/BMCExportDialog';
 
 interface BMCData {
   keyPartners: string[];
@@ -66,6 +68,7 @@ function normalizeBmc(raw: Record<string, string | string[] | undefined>): BMCDa
 const BMCGenerator = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const bmcRef = useRef<BusinessModelCanvasRef>(null);
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     industry: '',
@@ -76,9 +79,7 @@ const BMCGenerator = () => {
   });
   
   const [generatedBMC, setGeneratedBMC] = useState<BMCData | null>(null);
-  const [filledPdfUrl, setFilledPdfUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isFilling, setIsFilling] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -132,118 +133,12 @@ const BMCGenerator = () => {
       setGeneratedBMC(bmcData);
       console.log('[BMC] ✅ BMC generated successfully');
       
-      // Automatically fill the PDF
-      await fillPDF(bmcData);
-      
       toast.success('Business Model Canvas generated successfully!');
     } catch (error: any) {
       console.error('[BMC] Generation error:', error);
       toast.error(error.message || 'Failed to generate BMC');
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const fillPDF = async (bmcData: BMCData) => {
-    setIsFilling(true);
-    console.log('[BMC] Filling PDF with data...');
-    console.log('[BMC] BMC data being sent to fill-bmc-pdf:', {
-      hasKeyPartners: !!bmcData?.keyPartners,
-      keyPartnersLength: bmcData?.keyPartners?.length,
-      keyPartnersType: Array.isArray(bmcData?.keyPartners) ? 'array' : typeof bmcData?.keyPartners,
-      firstKeyPartner: bmcData?.keyPartners?.[0],
-      allKeys: bmcData ? Object.keys(bmcData) : 'null',
-      fullData: JSON.stringify(bmcData, null, 2)
-    });
-
-    try {
-      const { data, error } = await supabase.functions.invoke('fill-bmc-pdf', {
-        body: {
-          bmcData,
-          templateUrl: 'https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf',
-          companyName: formData.companyName,
-          debug: true, // TODO: Set to false once alignment is confirmed
-        }
-      });
-
-      console.log('[BMC] Fill PDF response:', { data, error });
-      console.log('[BMC] Response data type:', typeof data);
-      console.log('[BMC] Response data keys:', data ? Object.keys(data) : 'null');
-
-      if (error) {
-        console.error('[BMC] Fill PDF error:', error);
-        throw error;
-      }
-
-      // The response might be the dataUrl directly or wrapped in an object
-      const pdfUrl = typeof data === 'string' ? data : (data?.dataUrl || data?.pdfDataUrl);
-      
-      if (pdfUrl) {
-        setFilledPdfUrl(pdfUrl);
-        console.log('[BMC] ✅ PDF filled successfully');
-      } else {
-        console.warn('[BMC] No dataUrl in response:', data);
-        toast.error('PDF was generated but URL is missing');
-      }
-    } catch (error: any) {
-      console.error('[BMC] PDF fill error:', error);
-      toast.error(error.message || 'Failed to fill PDF template');
-    } finally {
-      setIsFilling(false);
-    }
-  };
-
-  const downloadPDF = () => {
-    if (!filledPdfUrl) return;
-
-    try {
-      // Convert data URL to Blob for reliable download
-      const base64 = filledPdfUrl.split(',')[1];
-      const binaryString = window.atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${formData.companyName.replace(/\s+/g, '_')}_BMC.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast.success('PDF downloaded!');
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error('Failed to download PDF');
-    }
-  };
-
-  const openPDFInNewTab = () => {
-    if (!filledPdfUrl) return;
-
-    try {
-      // Convert data URL to Blob for reliable opening in new tab (Safari-compatible)
-      const base64 = filledPdfUrl.split(',')[1];
-      const binaryString = window.atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-
-      window.open(url, '_blank', 'noopener,noreferrer');
-      toast.success('PDF opened in new tab');
-
-      // Clean up after a delay to allow the browser to load the PDF
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (error) {
-      console.error('Error opening PDF:', error);
-      toast.error('Failed to open PDF');
     }
   };
 
@@ -257,7 +152,6 @@ const BMCGenerator = () => {
       additionalContext: ''
     });
     setGeneratedBMC(null);
-    setFilledPdfUrl('');
   };
 
   const handleSaveToProject = () => {
@@ -430,40 +324,27 @@ const BMCGenerator = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {isFilling ? (
-                      <div className="flex items-center justify-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <span className="ml-2">Filling PDF template...</span>
+                    <div className="space-y-4">
+                      {/* Export Dialog */}
+                      <div className="flex gap-2">
+                        <BMCExportDialog 
+                          companyName={formData.companyName}
+                          canvasRef={bmcRef}
+                          bmcData={generatedBMC}
+                        />
                       </div>
-                    ) : filledPdfUrl ? (
-                      <div className="space-y-4">
-                        <div className="flex gap-2">
-                          <Button onClick={downloadPDF}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Download PDF
-                          </Button>
-                          <Button variant="outline" onClick={openPDFInNewTab}>
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            Open in New Tab
-                          </Button>
-                          <Button variant="outline" onClick={() => fillPDF(generatedBMC)}>
-                            Re-fill PDF
-                          </Button>
-                        </div>
-                        
-                        <div className="border rounded-lg overflow-hidden bg-white">
-                          <iframe
-                            src={filledPdfUrl}
-                            className="w-full h-[800px]"
-                            title="Business Model Canvas PDF"
-                          />
-                        </div>
+                      
+                      {/* BMC Canvas Preview */}
+                      <div className="border rounded-lg overflow-hidden bg-white p-4">
+                        <BusinessModelCanvas
+                          ref={bmcRef}
+                          data={generatedBMC}
+                          companyName={formData.companyName}
+                          isEditable={false}
+                          showWatermark={!user}
+                        />
                       </div>
-                    ) : (
-                      <div className="text-center py-12 text-muted-foreground">
-                        PDF generation in progress...
-                      </div>
-                    )}
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -483,7 +364,6 @@ const BMCGenerator = () => {
           artifactData={{
             formData,
             bmcData: generatedBMC,
-            pdfUrl: filledPdfUrl,
           }}
           onSaveComplete={handleSaveComplete}
         />
