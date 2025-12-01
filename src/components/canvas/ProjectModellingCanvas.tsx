@@ -241,17 +241,28 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({ 
                     onDelete={() => handleElementDelete(element.id)}
                   />
                 );
-              case 'planning-focus':
-                return (
-                  <PlanningFocusHexiElement
-                    key={element.id}
-                    element={element.data}
-                    isSelected={isSelected}
-                    onSelect={() => setSelectedElementId(element.id)}
-                    onUpdate={(newData) => handleElementUpdate(element.id, { data: newData })}
-                    onDelete={() => handleElementDelete(element.id)}
-                  />
-                );
+        case 'planning-focus':
+          return (
+            <PlanningFocusHexiElement
+              key={element.id}
+              element={{
+                ...element,
+                type: 'planningFocus' as const,
+                content: element.data,
+              } as any}
+              isSelected={isSelected}
+              onSelect={() => setSelectedElementId(element.id)}
+              onUpdate={(updates) => {
+                if (updates.position) {
+                  handleElementUpdate(element.id, { position: updates.position });
+                }
+                if (updates.content) {
+                  handleElementUpdate(element.id, { data: updates.content });
+                }
+              }}
+              onDelete={() => handleElementDelete(element.id)}
+            />
+          );
               case 'custom-hexi':
                 return (
                   <CustomHexiElement
