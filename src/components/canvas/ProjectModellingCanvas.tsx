@@ -239,7 +239,14 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       </div>
 
       {/* Canvas Area */}
-      <div className="flex-1 overflow-auto bg-muted/30">
+      <div 
+        className="flex-1 overflow-auto bg-muted/30"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setSelectedElementId(null);
+          }
+        }}
+      >
         <div
           ref={canvasRef}
           className="relative min-h-full"
