@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
 import { PlanningFocusHexiElement } from './elements/PlanningFocusHexiElement';
 import { CustomHexiElement } from './elements/CustomHexiElement';
@@ -38,6 +38,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedProjectId = searchParams.get('projectId');
   const { updateArtifact } = useProjectArtifactMutations();
 
   const handleAddKnowledgeItem = useCallback((itemId: string, itemData: any) => {
@@ -336,6 +338,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         artifactName="Project Model"
         artifactDescription="Visual project model with techniques and planning elements"
         artifactData={{ elements }}
+        preselectedProjectId={preselectedProjectId || undefined}
         onSaveComplete={() => {
           toast.success('Project model saved successfully');
           setSaveDialogOpen(false);

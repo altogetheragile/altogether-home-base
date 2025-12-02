@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -67,6 +67,8 @@ function normalizeBmc(raw: Record<string, string | string[] | undefined>): BMCDa
 
 const BMCGenerator = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedProjectId = searchParams.get('projectId');
   const { user } = useAuth();
   const bmcRef = useRef<BusinessModelCanvasRef>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -365,6 +367,7 @@ const BMCGenerator = () => {
             formData,
             bmcData: generatedBMC,
           }}
+          preselectedProjectId={preselectedProjectId || undefined}
           onSaveComplete={handleSaveComplete}
         />
       )}

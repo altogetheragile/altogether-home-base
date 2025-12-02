@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProjectMutations } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
@@ -33,6 +33,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const canvasRef = useRef<BaseCanvasRef>(null);
+  const [searchParams] = useSearchParams();
+  const preselectedProjectId = searchParams.get('projectId');
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -426,6 +428,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         artifactName="User Story Canvas"
         artifactDescription={`Canvas with ${canvasData.elements.length} elements`}
         artifactData={canvasData}
+        preselectedProjectId={preselectedProjectId || undefined}
         onSaveComplete={handleSaveComplete}
       />
     </div>
