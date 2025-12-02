@@ -249,6 +249,12 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             width: `${100 / zoom}%`,
             height: `${100 / zoom}%`,
           }}
+          onClick={(e) => {
+            // Deselect when clicking on canvas background
+            if (e.target === e.currentTarget) {
+              setSelectedElementId(null);
+            }
+          }}
         >
           {elements.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
