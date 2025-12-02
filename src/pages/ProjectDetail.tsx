@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ArtifactsList } from '@/components/projects/ArtifactsList';
 import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -47,6 +48,10 @@ export default function ProjectDetail() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+                AltogetherAgile
+              </Link>
+              <Separator orientation="vertical" className="h-6" />
               <Button
                 variant="ghost"
                 size="sm"
