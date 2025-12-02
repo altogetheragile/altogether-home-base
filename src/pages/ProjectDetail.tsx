@@ -4,7 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Sparkles, FileText, Hexagon } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ArtifactsList } from '@/components/projects/ArtifactsList';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -61,11 +67,33 @@ export default function ProjectDetail() {
                       {project.description}
                     </p>
                   )}
-                </div>
               </div>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Artifact
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate(`/bmc-generator?projectId=${projectId}`)}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Business Model Canvas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/user-story-canvas?projectId=${projectId}`)}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  User Story Canvas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/project-modelling?projectId=${projectId}`)}>
+                  <Hexagon className="h-4 w-4 mr-2" />
+                  Project Model
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Content */}

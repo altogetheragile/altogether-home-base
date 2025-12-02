@@ -18,6 +18,7 @@ interface SaveToProjectDialogProps {
   artifactName: string;
   artifactDescription?: string;
   artifactData: any;
+  preselectedProjectId?: string;
   onSaveComplete?: (projectId: string, artifactId: string) => void;
 }
 
@@ -28,10 +29,11 @@ export const SaveToProjectDialog = ({
   artifactName,
   artifactDescription,
   artifactData,
+  preselectedProjectId,
   onSaveComplete,
 }: SaveToProjectDialogProps) => {
   const [mode, setMode] = useState<"existing" | "new">("existing");
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(preselectedProjectId || "");
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDescription, setNewProjectDescription] = useState("");
   const [newProjectColor, setNewProjectColor] = useState("#3B82F6");
