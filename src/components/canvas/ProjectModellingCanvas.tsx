@@ -13,6 +13,7 @@ import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import type { KBItemData } from './elements/SaveToKBDialog';
 
 interface CanvasElement {
   id: string;
@@ -340,24 +341,52 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
-                  onSaveToKB={(knowledgeItemId?: string, convertToKB?: boolean) => {
+                  onSaveToKB={(knowledgeItemId: string, convertToKB: boolean, convertAllMatching: boolean, itemData: KBItemData) => {
                     const el = element;
-                    if (convertToKB && knowledgeItemId) {
-                      // Convert the custom-hexi to a knowledge-item type
-                      setElements(prev => prev.map(e => {
-                        if (e.id === el.id) {
-                          return {
-                            ...e,
-                            type: 'knowledge-item',
-                            data: {
-                              ...e.data,
-                              knowledgeItemId,
-                            },
-                          };
-                        }
-                        return e;
-                      }));
-                      toast.success(`"${el.data.label}" saved and converted to KB item!`);
+                    if (convertToKB && knowledgeItemId && itemData) {
+                      const newKBData = {
+                        id: knowledgeItemId,
+                        name: itemData.name,
+                        slug: itemData.slug,
+                        icon: itemData.icon,
+                        emoji: itemData.emoji,
+                        activity_domain: itemData.activity_domain,
+                        planning_focus: itemData.planning_focus,
+                        category: itemData.category,
+                      };
+
+                      if (convertAllMatching) {
+                        // Find all custom-hexi elements with the same label and convert them all
+                        const matchingLabel = el.data.label;
+                        let convertedCount = 0;
+                        
+                        setElements(prev => prev.map(e => {
+                          if (e.type === 'custom-hexi' && e.data.label === matchingLabel) {
+                            convertedCount++;
+                            return {
+                              ...e,
+                              type: 'knowledge-item' as const,
+                              data: newKBData,
+                            };
+                          }
+                          return e;
+                        }));
+                        
+                        toast.success(`Saved "${itemData.name}" and converted all matching hexis!`);
+                      } else {
+                        // Convert only this element
+                        setElements(prev => prev.map(e => {
+                          if (e.id === el.id) {
+                            return {
+                              ...e,
+                              type: 'knowledge-item' as const,
+                              data: newKBData,
+                            };
+                          }
+                          return e;
+                        }));
+                        toast.success(`"${itemData.name}" saved and converted to KB item!`);
+                      }
                     } else {
                       toast.success(`"${el.data.label}" saved to Knowledge Base!`);
                     }
