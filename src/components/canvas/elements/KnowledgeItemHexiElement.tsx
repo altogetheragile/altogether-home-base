@@ -25,6 +25,7 @@ export interface KnowledgeItemHexiElementProps {
   onSelect?: () => void;
   onMove?: (position: { x: number; y: number }) => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
 }
 
 export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> = ({
@@ -37,6 +38,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   onSelect,
   onMove,
   onDelete,
+  onDuplicate,
 }) => {
   const { x, y } = position;
   const { width: w = 140, height: h = 121 } = size;
@@ -100,8 +102,9 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           <HexiFloatingToolbar
             onEdit={() => setShowDetails(true)}
             onDelete={onDelete}
+            onDuplicate={onDuplicate}
             showEdit={true}
-            showDuplicate={false}
+            showDuplicate={true}
           />
         )}
 

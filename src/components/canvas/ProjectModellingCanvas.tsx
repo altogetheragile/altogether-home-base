@@ -303,6 +303,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onSelect={() => setSelectedElementId(element.id)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onDelete={() => handleElementDelete(element.id)}
+                    onDuplicate={() => handleDuplicateElement(element.id)}
                   />
                 );
         case 'planning-focus':
