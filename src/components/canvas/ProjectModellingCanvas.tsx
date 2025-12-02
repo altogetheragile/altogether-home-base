@@ -103,6 +103,22 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     toast.success('Element deleted');
   }, [selectedElementId]);
 
+  const handleDuplicateElement = useCallback((id: string) => {
+    const element = elements.find(el => el.id === id);
+    if (!element) return;
+    
+    const newElement: CanvasElement = {
+      ...element,
+      id: crypto.randomUUID(),
+      position: { 
+        x: element.position.x + 30, 
+        y: element.position.y + 30 
+      },
+    };
+    setElements(prev => [...prev, newElement]);
+    toast.success('Element duplicated');
+  }, [elements]);
+
   const handleZoomIn = useCallback(() => {
     setZoom(prev => Math.min(prev + 0.1, 2));
   }, []);
@@ -310,6 +326,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}
+                    onDuplicate={() => handleDuplicateElement(element.id)}
                   />
                 );
               case 'sticky-note':

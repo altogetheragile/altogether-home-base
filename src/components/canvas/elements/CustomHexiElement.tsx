@@ -23,6 +23,7 @@ export interface CustomHexiElementProps {
   onMove?: (position: { x: number; y: number }) => void;
   onContentChange?: (data: any) => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
 }
 
 export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
@@ -35,6 +36,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   onMove,
   onContentChange,
   onDelete,
+  onDuplicate,
 }) => {
   const { x, y } = position;
   const { width: w = 140, height: h = 121 } = size;
@@ -162,6 +164,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
           onDelete?.();
           setShowEditor(false);
         }}
+        onDuplicate={onDuplicate}
       />
     </>
   );
