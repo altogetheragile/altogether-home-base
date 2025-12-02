@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Move, Trash2, LayersIcon } from 'lucide-react';
+import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { CanvasElement } from '../BaseCanvas';
-import { hexPoints, wrapLines, LayersGlyph } from '../hex-utils';
+import { hexPoints, wrapLines } from '../hex-utils';
 
 interface PlanningFocusHexiElementProps {
   element: CanvasElement;
@@ -82,30 +80,13 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
       onMouseDown={handleMouseDown}
       onClick={onSelect}
     >
-      {/* Controls */}
+      {/* Unified floating toolbar */}
       {isSelected && (
-        <div className="absolute -top-10 left-0 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-10">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 w-7 p-0"
-            title="Move"
-          >
-            <Move className="h-3 w-3" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 w-7 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            title="Delete"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
+        <HexiFloatingToolbar
+          onDelete={onDelete}
+          showEdit={false}
+          showDuplicate={false}
+        />
       )}
 
       {/* Hexagon SVG */}

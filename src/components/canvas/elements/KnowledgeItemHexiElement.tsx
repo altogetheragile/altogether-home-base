@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { KnowledgeItemDetailsDialog } from './KnowledgeItemDetailsDialog';
+import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { hexPoints, wrapLines } from '../hex-utils';
 import * as Icons from 'lucide-react';
 
@@ -72,9 +73,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     const dy = e.clientY - drag.current.py;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance < 5) {
-      setShowDetails(true);
-    } else {
+    // Only select, don't auto-open dialog anymore
+    if (distance >= 5) {
       const nx = Math.round(drag.current.x + dx);
       const ny = Math.round(drag.current.y + dy);
       onMove?.({ x: nx, y: ny });
@@ -95,6 +95,16 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
+        {/* Floating toolbar when selected */}
+        {isSelected && (
+          <HexiFloatingToolbar
+            onEdit={() => setShowDetails(true)}
+            onDelete={onDelete}
+            showEdit={true}
+            showDuplicate={false}
+          />
+        )}
+
         <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }} shapeRendering="geometricPrecision">
           {/* hex shape */}
           <polygon 
