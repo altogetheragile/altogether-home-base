@@ -18,7 +18,7 @@ export const HexiFloatingToolbar: React.FC<HexiFloatingToolbarProps> = ({
   showDuplicate = true,
 }) => {
   return (
-    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-50">
+    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-[9999]">
       <Button
         size="sm"
         variant="ghost"
