@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil, Save } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
 import { toast } from 'sonner';
@@ -135,22 +136,26 @@ export default function ArtifactViewer() {
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(`/projects/${projectId}`)}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Project
-                </Button>
-                <div>
-                  <h1 className="text-2xl font-bold">{artifact.name}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {project.name}
-                  </p>
-                </div>
+            <div className="flex items-center gap-4">
+              <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+                AltogetherAgile
+              </Link>
+              <Separator orientation="vertical" className="h-6" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/projects/${projectId}`)}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Project
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">{artifact.name}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {project.name}
+                </p>
               </div>
+            </div>
               <div className="flex gap-2">
                 {artifact.artifact_type === 'bmc' && !isEditing && (
                   <Button variant="outline" onClick={handleStartEdit}>
