@@ -67,6 +67,7 @@ export default function ProjectDetail() {
                       {project.description}
                     </p>
                   )}
+                </div>
               </div>
             </div>
             <DropdownMenu>
@@ -93,7 +94,6 @@ export default function ProjectDetail() {
             </DropdownMenu>
           </div>
         </div>
-      </div>
       </div>
 
       {/* Content */}
