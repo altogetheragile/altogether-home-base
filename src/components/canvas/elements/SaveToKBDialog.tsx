@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
@@ -36,7 +37,7 @@ interface SaveToKBDialogProps {
     emoji?: string;
     notes?: string;
   };
-  onSaveComplete?: (knowledgeItemId: string) => void;
+  onSaveComplete?: (knowledgeItemId: string, convertToKB: boolean) => void;
 }
 
 export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
@@ -51,6 +52,7 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
   const [domainId, setDomainId] = useState<string>('');
   const [planningFocusId, setPlanningFocusId] = useState<string>('');
   const [isPublished, setIsPublished] = useState(false);
+  const [convertToKB, setConvertToKB] = useState(true);
 
   const { data: categories, isLoading: loadingCategories } = useKnowledgeCategories();
   const { data: domains, isLoading: loadingDomains } = useActivityDomains();
@@ -84,6 +86,8 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
         planning_focus_id: planningFocusId || null,
         is_published: isPublished,
         is_featured: false,
+        icon: data.icon || null,
+        emoji: data.emoji || null,
       });
 
       toast.success('Knowledge Item created successfully!', {
@@ -93,7 +97,7 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
         },
       });
 
-      onSaveComplete?.(result.id);
+      onSaveComplete?.(result.id, convertToKB);
       onClose();
     } catch (error) {
       console.error('Error creating knowledge item:', error);
@@ -190,6 +194,17 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
               checked={isPublished}
               onCheckedChange={setIsPublished}
             />
+          </div>
+
+          <div className="flex items-center space-x-2 pt-2 border-t">
+            <Checkbox
+              id="convertToKB"
+              checked={convertToKB}
+              onCheckedChange={(checked) => setConvertToKB(checked === true)}
+            />
+            <Label htmlFor="convertToKB" className="text-sm text-muted-foreground">
+              Replace this hexi with KB item (uses KB colors)
+            </Label>
           </div>
         </div>
 

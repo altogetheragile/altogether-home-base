@@ -340,9 +340,28 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
-                    onSaveToKB={(knowledgeItemId) => {
-                      toast.success('Saved to Knowledge Base!');
-                    }}
+                  onSaveToKB={(knowledgeItemId?: string, convertToKB?: boolean) => {
+                    const el = element;
+                    if (convertToKB && knowledgeItemId) {
+                      // Convert the custom-hexi to a knowledge-item type
+                      setElements(prev => prev.map(e => {
+                        if (e.id === el.id) {
+                          return {
+                            ...e,
+                            type: 'knowledge-item',
+                            data: {
+                              ...e.data,
+                              knowledgeItemId,
+                            },
+                          };
+                        }
+                        return e;
+                      }));
+                      toast.success(`"${el.data.label}" saved and converted to KB item!`);
+                    } else {
+                      toast.success(`"${el.data.label}" saved to Knowledge Base!`);
+                    }
+                  }}
                   />
                 );
               case 'sticky-note':

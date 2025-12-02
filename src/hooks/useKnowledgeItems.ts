@@ -64,6 +64,10 @@ export interface KnowledgeItem {
   created_by?: string;
   updated_by?: string;
   
+  // Visual fields
+  icon?: string;
+  emoji?: string;
+  
   // Enhanced fields
   common_pitfalls?: string[];
   evidence_sources?: string[];

@@ -1626,8 +1626,10 @@ export type Database = {
           created_by: string | null
           description: string | null
           domain_id: string | null
+          emoji: string | null
           evidence_sources: string[] | null
           has_ai_support: boolean | null
+          icon: string | null
           id: string
           is_featured: boolean | null
           is_published: boolean | null
@@ -1654,8 +1656,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           domain_id?: string | null
+          emoji?: string | null
           evidence_sources?: string[] | null
           has_ai_support?: boolean | null
+          icon?: string | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
@@ -1682,8 +1686,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           domain_id?: string | null
+          emoji?: string | null
           evidence_sources?: string[] | null
           has_ai_support?: boolean | null
+          icon?: string | null
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
