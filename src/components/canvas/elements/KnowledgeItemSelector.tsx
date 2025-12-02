@@ -88,7 +88,8 @@ export const KnowledgeItemSelector: React.FC<KnowledgeItemSelectorProps> = ({
   }, [items]);
 
   const handleAdd = (item: any) => {
-    const icon = inferIconForItem(item.name, item.knowledge_categories?.name);
+    // Prefer stored icon/emoji, fallback to inference
+    const icon = item.icon || inferIconForItem(item.name, item.knowledge_categories?.name);
     
     onAdd(item.id, {
       name: item.name,
@@ -98,7 +99,7 @@ export const KnowledgeItemSelector: React.FC<KnowledgeItemSelectorProps> = ({
       planning_focuses: item.planning_focuses,
       knowledge_categories: item.knowledge_categories,
       icon,
-      emoji: undefined,
+      emoji: item.emoji || undefined,
     });
   };
 

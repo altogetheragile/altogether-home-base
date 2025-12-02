@@ -26,7 +26,7 @@ export interface CustomHexiElementProps {
   onContentChange?: (data: any) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
-  onSaveToKB?: (knowledgeItemId: string) => void;
+  onSaveToKB?: (knowledgeItemId?: string, convertToKB?: boolean) => void;
 }
 
 export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
@@ -187,8 +187,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         isOpen={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
         data={data}
-        onSaveComplete={(knowledgeItemId) => {
-          onSaveToKB?.(knowledgeItemId);
+        onSaveComplete={(knowledgeItemId, convertToKB) => {
+          onSaveToKB?.(knowledgeItemId, convertToKB);
           setShowSaveDialog(false);
         }}
       />
