@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { hexPoints, wrapLines } from '../hex-utils';
 import { CustomHexiEditorDialog } from './CustomHexiEditorDialog';
+import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import * as Icons from 'lucide-react';
 
 export interface CustomHexiElementProps {
@@ -70,9 +71,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
     const dy = e.clientY - drag.current.py;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance < 5) {
-      setShowEditor(true);
-    } else {
+    if (distance >= 5) {
       const nx = Math.round(drag.current.x + dx);
       const ny = Math.round(drag.current.y + dy);
       onMove?.({ x: nx, y: ny });
@@ -93,6 +92,17 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
+        {/* Floating toolbar when selected */}
+        {isSelected && (
+          <HexiFloatingToolbar
+            onEdit={() => setShowEditor(true)}
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+            showEdit={true}
+            showDuplicate={!!onDuplicate}
+          />
+        )}
+
         <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
           {/* Hex shape */}
           <polygon 
