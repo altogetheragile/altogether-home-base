@@ -134,58 +134,55 @@ export default function ArtifactViewer() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
-                AltogetherAgile
-              </Link>
-              <Separator orientation="vertical" className="h-6" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/projects/${projectId}`)}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Project
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">{artifact.name}</h1>
-                <p className="text-sm text-muted-foreground">
-                  {project.name}
-                </p>
-              </div>
-            </div>
-              <div className="flex gap-2">
-                {artifact.artifact_type === 'bmc' && !isEditing && (
-                  <Button variant="outline" onClick={handleStartEdit}>
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
+        <div className="container mx-auto px-4 py-3">
+          {/* Top row: Logo and actions */}
+          <div className="flex items-center justify-between mb-2">
+            <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+              AltogetherAgile
+            </Link>
+            <div className="flex gap-2">
+              {artifact.artifact_type === 'bmc' && !isEditing && (
+                <Button variant="outline" onClick={handleStartEdit}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+              {isEditing && (
+                <>
+                  <Button variant="outline" onClick={handleCancelEdit}>
+                    Cancel
                   </Button>
-                )}
-                {isEditing && (
-                  <>
-                    <Button variant="outline" onClick={handleCancelEdit}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveChanges}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </>
-                )}
-                {artifact.artifact_type === 'bmc' && !isEditing && (
-                  <BMCExportDialog
-                    canvasRef={bmcRef}
-                    companyName={artifact.name}
-                  />
-                )}
-              </div>
+                  <Button onClick={handleSaveChanges}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </>
+              )}
+              {artifact.artifact_type === 'bmc' && !isEditing && (
+                <BMCExportDialog
+                  canvasRef={bmcRef}
+                  companyName={artifact.name}
+                />
+              )}
             </div>
+          </div>
+          {/* Bottom row: Back button and title */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/projects/${projectId}`)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Project
+            </Button>
+            <Separator orientation="vertical" className="h-5" />
+            <h1 className="text-xl font-semibold">{artifact.name}</h1>
+          </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className={`container mx-auto px-4 ${artifact.artifact_type === 'project-model' ? 'py-0' : 'py-8'}`}>
         {renderArtifactContent()}
       </div>
     </div>
