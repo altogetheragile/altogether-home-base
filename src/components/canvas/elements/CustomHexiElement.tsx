@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { hexPoints, wrapLines } from '../hex-utils';
 import { CustomHexiEditorDialog } from './CustomHexiEditorDialog';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
+import { SaveToKBDialog } from './SaveToKBDialog';
 import * as Icons from 'lucide-react';
 
 export interface CustomHexiElementProps {
@@ -25,6 +26,7 @@ export interface CustomHexiElementProps {
   onContentChange?: (data: any) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
+  onSaveToKB?: (knowledgeItemId: string) => void;
 }
 
 export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
@@ -38,12 +40,14 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   onContentChange,
   onDelete,
   onDuplicate,
+  onSaveToKB,
 }) => {
   const { x, y } = position;
   const { width: w = 140, height: h = 121 } = size;
   
   const ref = useRef<HTMLDivElement>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
   const stroke = data.borderColor ?? data.color ?? "#8B5CF6";
@@ -98,8 +102,10 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
             onEdit={() => setShowEditor(true)}
             onDuplicate={onDuplicate}
             onDelete={onDelete}
+            onSaveToKB={() => setShowSaveDialog(true)}
             showEdit={true}
             showDuplicate={!!onDuplicate}
+            showSaveToKB={true}
           />
         )}
 
@@ -175,6 +181,16 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
           setShowEditor(false);
         }}
         onDuplicate={onDuplicate}
+      />
+
+      <SaveToKBDialog
+        isOpen={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        data={data}
+        onSaveComplete={(knowledgeItemId) => {
+          onSaveToKB?.(knowledgeItemId);
+          setShowSaveDialog(false);
+        }}
       />
     </>
   );

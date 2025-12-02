@@ -340,6 +340,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
+                    onSaveToKB={(knowledgeItemId) => {
+                      toast.success('Saved to Knowledge Base!');
+                    }}
                   />
                 );
               case 'sticky-note':
