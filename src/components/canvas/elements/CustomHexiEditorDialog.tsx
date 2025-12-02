@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Copy } from 'lucide-react';
 import { HexiColorPalette } from './HexiColorPalette';
 import { HexiIconSelector } from './HexiIconSelector';
 import {
@@ -42,6 +42,7 @@ interface CustomHexiEditorDialogProps {
   };
   onSave: (data: any) => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
 }
 
 export const CustomHexiEditorDialog: React.FC<CustomHexiEditorDialogProps> = ({
@@ -50,6 +51,7 @@ export const CustomHexiEditorDialog: React.FC<CustomHexiEditorDialogProps> = ({
   data,
   onSave,
   onDelete,
+  onDuplicate,
 }) => {
   const [formData, setFormData] = useState(data);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -142,14 +144,29 @@ export const CustomHexiEditorDialog: React.FC<CustomHexiEditorDialogProps> = ({
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="w-full sm:w-auto"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              {onDuplicate && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    onDuplicate();
+                    onClose();
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </Button>
+              )}
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                className="w-full sm:w-auto"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose}>
                 Cancel
