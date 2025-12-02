@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Save } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Separator } from '@/components/ui/separator';
 import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
 import { PlanningFocusHexiElement } from './elements/PlanningFocusHexiElement';
 import { CustomHexiElement } from './elements/CustomHexiElement';
@@ -169,6 +170,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
+                <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+                  AltogetherAgile
+                </Link>
+                <Separator orientation="vertical" className="h-6" />
                 <Button
                   variant="ghost"
                   size="sm"

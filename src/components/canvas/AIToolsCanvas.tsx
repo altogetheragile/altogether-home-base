@@ -7,7 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProjectMutations } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Separator } from '@/components/ui/separator';
 import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
@@ -339,6 +340,10 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       {/* Header */}
       <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
         <div className="flex items-center gap-3">
+          <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+            AltogetherAgile
+          </Link>
+          <Separator orientation="vertical" className="h-6" />
           <Button
             variant="ghost"
             size="sm"
