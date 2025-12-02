@@ -342,10 +342,10 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/ai-tools')}
+            onClick={() => navigate(preselectedProjectId ? `/projects/${preselectedProjectId}` : '/ai-tools')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
           </Button>
           <div>
             <h1 className="text-xl font-semibold">AI Tools Canvas</h1>

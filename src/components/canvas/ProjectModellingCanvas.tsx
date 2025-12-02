@@ -172,10 +172,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate('/ai-tools')}
+                  onClick={() => navigate(preselectedProjectId ? `/projects/${preselectedProjectId}` : '/ai-tools')}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to AI Tools
+                  {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
                 </Button>
                 <div>
                   <h1 className="text-2xl font-bold">Project Modelling Canvas</h1>
