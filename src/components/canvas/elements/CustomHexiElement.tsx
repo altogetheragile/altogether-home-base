@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { hexPoints, wrapLines } from '../hex-utils';
 import { CustomHexiEditorDialog } from './CustomHexiEditorDialog';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
-import { SaveToKBDialog } from './SaveToKBDialog';
+import { SaveToKBDialog, KBItemData } from './SaveToKBDialog';
 import * as Icons from 'lucide-react';
 
 export interface CustomHexiElementProps {
@@ -26,7 +26,12 @@ export interface CustomHexiElementProps {
   onContentChange?: (data: any) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
-  onSaveToKB?: (knowledgeItemId?: string, convertToKB?: boolean) => void;
+  onSaveToKB?: (
+    knowledgeItemId: string, 
+    convertToKB: boolean, 
+    convertAllMatching: boolean,
+    itemData: KBItemData
+  ) => void;
 }
 
 export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
@@ -187,8 +192,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         isOpen={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
         data={data}
-        onSaveComplete={(knowledgeItemId, convertToKB) => {
-          onSaveToKB?.(knowledgeItemId, convertToKB);
+        onSaveComplete={(knowledgeItemId, convertToKB, convertAllMatching, itemData) => {
+          onSaveToKB?.(knowledgeItemId, convertToKB, convertAllMatching, itemData);
           setShowSaveDialog(false);
         }}
       />

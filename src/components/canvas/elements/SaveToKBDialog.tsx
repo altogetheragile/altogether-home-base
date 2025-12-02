@@ -27,6 +27,16 @@ import { useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
+export interface KBItemData {
+  name: string;
+  slug: string;
+  icon?: string;
+  emoji?: string;
+  activity_domain?: { id: string; name: string; color: string };
+  planning_focus?: { id: string; name: string; color: string };
+  category?: { id: string; name: string; color: string };
+}
+
 interface SaveToKBDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,7 +47,12 @@ interface SaveToKBDialogProps {
     emoji?: string;
     notes?: string;
   };
-  onSaveComplete?: (knowledgeItemId: string, convertToKB: boolean) => void;
+  onSaveComplete?: (
+    knowledgeItemId: string, 
+    convertToKB: boolean, 
+    convertAllMatching: boolean,
+    itemData: KBItemData
+  ) => void;
 }
 
 export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
@@ -51,8 +66,9 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
   const [categoryId, setCategoryId] = useState<string>('');
   const [domainId, setDomainId] = useState<string>('');
   const [planningFocusId, setPlanningFocusId] = useState<string>('');
-  const [isPublished, setIsPublished] = useState(false);
+  const [isPublished, setIsPublished] = useState(true);
   const [convertToKB, setConvertToKB] = useState(true);
+  const [convertAllMatching, setConvertAllMatching] = useState(false);
 
   const { data: categories, isLoading: loadingCategories } = useKnowledgeCategories();
   const { data: domains, isLoading: loadingDomains } = useActivityDomains();
@@ -90,6 +106,11 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
         emoji: data.emoji || null,
       });
 
+      // Look up selected items to get their full data including colors
+      const selectedDomain = domains?.find(d => d.id === domainId);
+      const selectedCategory = categories?.find(c => c.id === categoryId);
+      const selectedFocus = planningFocuses?.find(f => f.id === planningFocusId);
+
       toast.success('Knowledge Item created successfully!', {
         action: {
           label: 'View in KB',
@@ -97,7 +118,27 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
         },
       });
 
-      onSaveComplete?.(result.id, convertToKB);
+      onSaveComplete?.(result.id, convertToKB, convertAllMatching, {
+        name: name.trim(),
+        slug: result.slug,
+        icon: data.icon,
+        emoji: data.emoji,
+        activity_domain: selectedDomain ? { 
+          id: selectedDomain.id, 
+          name: selectedDomain.name, 
+          color: selectedDomain.color || '#6B7280' 
+        } : undefined,
+        planning_focus: selectedFocus ? { 
+          id: selectedFocus.id, 
+          name: selectedFocus.name, 
+          color: selectedFocus.color || '#6B7280' 
+        } : undefined,
+        category: selectedCategory ? { 
+          id: selectedCategory.id, 
+          name: selectedCategory.name, 
+          color: selectedCategory.color || '#6B7280' 
+        } : undefined,
+      });
       onClose();
     } catch (error) {
       console.error('Error creating knowledge item:', error);
@@ -196,15 +237,35 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
             />
           </div>
 
-          <div className="flex items-center space-x-2 pt-2 border-t">
-            <Checkbox
-              id="convertToKB"
-              checked={convertToKB}
-              onCheckedChange={(checked) => setConvertToKB(checked === true)}
-            />
-            <Label htmlFor="convertToKB" className="text-sm text-muted-foreground">
-              Replace this hexi with KB item (uses KB colors)
-            </Label>
+          <div className="space-y-3 pt-2 border-t">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="convertToKB"
+                checked={convertToKB}
+                onCheckedChange={(checked) => {
+                  setConvertToKB(checked === true);
+                  if (!checked) setConvertAllMatching(false);
+                }}
+              />
+              <Label htmlFor="convertToKB" className="text-sm text-muted-foreground">
+                Replace this hexi with KB item (uses KB colors)
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2 ml-6">
+              <Checkbox
+                id="convertAllMatching"
+                checked={convertAllMatching}
+                onCheckedChange={(checked) => setConvertAllMatching(checked === true)}
+                disabled={!convertToKB}
+              />
+              <Label 
+                htmlFor="convertAllMatching" 
+                className={`text-sm ${convertToKB ? 'text-muted-foreground' : 'text-muted-foreground/50'}`}
+              >
+                Convert all "{data.label}" hexis on canvas
+              </Label>
+            </div>
           </div>
         </div>
 
