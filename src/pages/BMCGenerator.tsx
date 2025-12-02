@@ -185,10 +185,10 @@ const BMCGenerator = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/ai-tools')}
+              onClick={() => navigate(preselectedProjectId ? `/projects/${preselectedProjectId}` : '/ai-tools')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
             </Button>
             <h2 className="text-xl font-semibold">Business Model Canvas Generator</h2>
           </div>
