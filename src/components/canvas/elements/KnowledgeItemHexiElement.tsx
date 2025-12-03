@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { KnowledgeItemDetailsDialog } from './KnowledgeItemDetailsDialog';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { hexPoints, wrapLines } from '../hex-utils';
-import * as Icons from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface KnowledgeItemHexiElementProps {
   id: string;
@@ -49,8 +49,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
 
   const stroke = data.domain_color ?? "#8B5CF6";
   const fill = `${(data.domain_color ?? "#8B5CF6")}30`;
-  const dot = data.planning_focus_color;
-  const iconColor = data.domain_color ?? stroke;
+  const categoryColor = data.category_color ?? "#6B7280";
 
   const lines = wrapLines(data.name);
 
@@ -129,26 +128,23 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             strokeLinecap="round"
           />
 
-          {/* icon (center, simple SVG shapes) */}
-          {data.emoji ? (
-            <text
-              x={w/2}
-              y={h/2 - 25}
-              fontSize={24}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fill={iconColor}
-            >
-              {data.emoji}
-            </text>
-          ) : (() => {
-            const IconComponent = data.icon ? Icons[data.icon as keyof typeof Icons] as any : Icons.BookOpen;
-            return IconComponent ? (
-              <foreignObject x={w/2 - 12} y={h/2 - 37} width={24} height={24}>
-                <IconComponent style={{ color: iconColor, width: 24, height: 24 }} />
-              </foreignObject>
-            ) : null;
-          })()}
+          {/* Category indicator with tooltip */}
+          <foreignObject x={w/2 - 12} y={h/2 - 37} width={24} height={24} style={{ overflow: 'visible' }}>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm cursor-pointer"
+                    style={{ backgroundColor: categoryColor }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs font-medium">
+                  {data.category_name || 'Uncategorized'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </foreignObject>
 
           {/* label */}
           <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight={600} fill="#111827" textAnchor="middle">
@@ -165,13 +161,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             ))}
           </g>
 
-          {/* planning focus dot */}
-          {dot && (
-            <>
-              <circle cx={w-10} cy={10} r={4} fill={dot} />
-              <circle cx={w-10} cy={10} r={4} fill="none" stroke="#ffffff" strokeWidth={1.5}/>
-            </>
-          )}
         </svg>
       </div>
 
