@@ -114,7 +114,16 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
           />
         )}
 
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
+        <svg 
+          width={w} 
+          height={h} 
+          viewBox={`0 0 ${w} ${h}`} 
+          xmlns="http://www.w3.org/2000/svg" 
+          style={{ 
+            overflow: 'visible',
+            filter: isSelected ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+          }}
+        >
           {/* Hex shape */}
           <polygon 
             points={hexPoints(w,h)} 
@@ -124,17 +133,6 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
             strokeLinejoin="round" 
             strokeLinecap="round"
           />
-          {isSelected && (
-            <polygon 
-              points={hexPoints(w,h)} 
-              fill="none" 
-              stroke={stroke} 
-              strokeWidth={5} 
-              strokeOpacity={0.5}
-              strokeLinejoin="round" 
-              strokeLinecap="round" 
-            />
-          )}
 
           {/* Center icon / emoji */}
           {data.emoji ? (
