@@ -108,7 +108,17 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           />
         )}
 
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }} shapeRendering="geometricPrecision">
+        <svg 
+          width={w} 
+          height={h} 
+          viewBox={`0 0 ${w} ${h}`} 
+          xmlns="http://www.w3.org/2000/svg" 
+          style={{ 
+            overflow: 'visible',
+            filter: isSelected ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+          }} 
+          shapeRendering="geometricPrecision"
+        >
           {/* hex shape */}
           <polygon 
             points={hexPoints(w,h)} 
@@ -118,11 +128,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             strokeLinejoin="round" 
             strokeLinecap="round"
           />
-
-          {/* selection ring */}
-          {isSelected && (
-            <polygon points={hexPoints(w,h)} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" />
-          )}
 
           {/* icon (center, simple SVG shapes) */}
           {data.emoji ? (
