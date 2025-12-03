@@ -50,7 +50,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   const stroke = data.domain_color ?? "#8B5CF6";
   const fill = `${(data.domain_color ?? "#8B5CF6")}30`;
   const dot = data.planning_focus_color;
-  const iconColor = data.category_color ?? stroke;
+  const iconColor = data.domain_color ?? stroke;
 
   const lines = wrapLines(data.name);
 
