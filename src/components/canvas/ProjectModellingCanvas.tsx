@@ -290,12 +290,12 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     data={{
                       name: element.data.name || 'Unknown',
                       slug: element.data.slug || '',
-                      domain_color: element.data.activity_domain?.color,
-                      domain_name: element.data.activity_domain?.name,
-                      planning_focus_color: element.data.planning_focus?.color,
-                      planning_focus_name: element.data.planning_focus?.name,
-                      category_color: element.data.category?.color,
-                      category_name: element.data.category?.name,
+                      domain_color: element.data.activity_domains?.color,
+                      domain_name: element.data.activity_domains?.name,
+                      planning_focus_color: element.data.planning_focuses?.color,
+                      planning_focus_name: element.data.planning_focuses?.name,
+                      category_color: element.data.knowledge_categories?.color,
+                      category_name: element.data.knowledge_categories?.name,
                       icon: element.data.icon,
                       emoji: element.data.emoji,
                     }}
