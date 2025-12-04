@@ -51,11 +51,11 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   const isAdmin = userRole === 'admin';
 
   const handleView = () => {
-    navigate(`/knowledge/${data.slug}`);
+    navigate(`/knowledge/${data.slug}?from=project-model`);
   };
 
   const handleEdit = () => {
-    navigate(`/admin/knowledge/items/${knowledgeItemId}/edit`);
+    navigate(`/admin/knowledge/items/${knowledgeItemId}/edit?from=project-model`);
   };
 
   const stroke = data.domain_color ?? "#8B5CF6";
