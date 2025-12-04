@@ -128,34 +128,12 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             strokeLinecap="round"
           />
 
-          {/* Category indicator - mini hexagon with tooltip */}
-          <foreignObject x={w/2 - 14} y={h/2 - 38} width={28} height={26} style={{ overflow: 'visible' }}>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div 
-                    className="cursor-pointer"
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <svg 
-                      width={28} 
-                      height={24} 
-                      viewBox="0 0 28 24" 
-                      className="drop-shadow-sm"
-                    >
-                      <polygon 
-                        points="7,0 21,0 28,12 21,24 7,24 0,12" 
-                        fill={categoryColor}
-                      />
-                    </svg>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs font-medium">
-                  {data.category_name || 'Uncategorized'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </foreignObject>
+          {/* Category indicator - mini hexagon centered above label */}
+          <polygon 
+            points={`${w/2-10},${h/2-35} ${w/2+10},${h/2-35} ${w/2+17},${h/2-23} ${w/2+10},${h/2-11} ${w/2-10},${h/2-11} ${w/2-17},${h/2-23}`}
+            fill={categoryColor}
+            className="drop-shadow-sm"
+          />
 
           {/* label */}
           <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight={600} fill="#111827" textAnchor="middle">
@@ -173,6 +151,28 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           </g>
 
         </svg>
+
+        {/* Category tooltip trigger overlay */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className="absolute cursor-pointer"
+                style={{ 
+                  left: w/2 - 17, 
+                  top: h/2 - 35, 
+                  width: 34, 
+                  height: 24,
+                  zIndex: 10
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs font-medium">
+              {data.category_name || 'Uncategorized'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <KnowledgeItemDetailsDialog
