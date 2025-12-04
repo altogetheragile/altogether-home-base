@@ -6,16 +6,20 @@ import { hexPoints, wrapLines } from '../hex-utils';
 interface PlanningFocusHexiElementProps {
   element: CanvasElement;
   isSelected: boolean;
-  onSelect: () => void;
+  isMultiSelected?: boolean;
+  onSelect: (e?: React.MouseEvent) => void;
   onUpdate: (updates: Partial<CanvasElement>) => void;
+  onMoveGroup?: (delta: { dx: number; dy: number }) => void;
   onDelete: () => void;
 }
 
 export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> = ({
   element,
   isSelected,
+  isMultiSelected,
   onSelect,
   onUpdate,
+  onMoveGroup,
   onDelete,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -28,7 +32,7 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
       x: e.clientX - element.position.x,
       y: e.clientY - element.position.y,
     });
-    onSelect();
+    onSelect(e);
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -41,7 +45,14 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
     });
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: MouseEvent) => {
+    if (isDragging && isMultiSelected && onMoveGroup) {
+      const dx = e.clientX - dragStart.x - element.position.x;
+      const dy = e.clientY - dragStart.y - element.position.y;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        onMoveGroup({ dx, dy });
+      }
+    }
     setIsDragging(false);
   };
 

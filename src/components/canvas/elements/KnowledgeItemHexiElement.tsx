@@ -23,8 +23,10 @@ export interface KnowledgeItemHexiElementProps {
     emoji?: string;
   };
   isSelected?: boolean;
-  onSelect?: () => void;
+  isMultiSelected?: boolean;
+  onSelect?: (e?: React.PointerEvent | React.MouseEvent) => void;
   onMove?: (position: { x: number; y: number }) => void;
+  onMoveGroup?: (delta: { dx: number; dy: number }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   artifactId?: string;
@@ -38,8 +40,10 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   knowledgeItemId,
   data,
   isSelected,
+  isMultiSelected,
   onSelect,
   onMove,
+  onMoveGroup,
   onDelete,
   onDuplicate,
   artifactId,
@@ -78,7 +82,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     if (e.button !== 0) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { px: e.clientX, py: e.clientY, x, y };
-    onSelect?.();
+    onSelect?.(e);
     e.stopPropagation();
   };
 
@@ -95,11 +99,15 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     const dy = e.clientY - drag.current.py;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Only select, don't auto-open dialog anymore
     if (distance >= 5) {
-      const nx = Math.round(drag.current.x + dx);
-      const ny = Math.round(drag.current.y + dy);
-      onMove?.({ x: nx, y: ny });
+      if (isMultiSelected && onMoveGroup) {
+        // Move all selected elements together
+        onMoveGroup({ dx, dy });
+      } else {
+        const nx = Math.round(drag.current.x + dx);
+        const ny = Math.round(drag.current.y + dy);
+        onMove?.({ x: nx, y: ny });
+      }
     }
     
     drag.current = null;
