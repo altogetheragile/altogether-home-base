@@ -287,7 +287,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       const shouldLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
       if (!shouldLeave) return;
     }
-    navigate('/admin/knowledge/items');
+    navigate(returnTo === 'project-model' ? '/project-modelling' : '/admin/knowledge/items');
   };
 
   const handleStepChange = (step: number) => {
@@ -467,6 +467,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
           isCompactMode={isCompactMode}
           onToggleCompactMode={() => setIsCompactMode(!isCompactMode)}
           onOpenPreview={handleOpenPreview}
+          returnTo={returnTo}
         />
 
         {/* Main Layout */}

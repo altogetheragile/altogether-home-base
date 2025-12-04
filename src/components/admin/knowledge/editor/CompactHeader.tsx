@@ -16,6 +16,7 @@ interface CompactHeaderProps {
   onToggleCompactMode?: () => void;
   onOpenPreview?: () => void;
   className?: string;
+  returnTo?: string | null;
 }
 
 export const CompactHeader: React.FC<CompactHeaderProps> = ({
@@ -29,7 +30,8 @@ export const CompactHeader: React.FC<CompactHeaderProps> = ({
   isCompactMode = false,
   onToggleCompactMode,
   onOpenPreview,
-  className
+  className,
+  returnTo
 }) => {
   const stepConfigs = [
     'Basic Info',
@@ -56,7 +58,7 @@ export const CompactHeader: React.FC<CompactHeaderProps> = ({
               className="hover:bg-accent/50 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              {returnTo === 'project-model' ? 'Back to Project Model' : 'Back'}
             </Button>
             <div className="h-5 w-px bg-border/60" />
             <div className="flex flex-col">
