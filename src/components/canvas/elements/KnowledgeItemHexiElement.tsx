@@ -27,6 +27,8 @@ export interface KnowledgeItemHexiElementProps {
   onMove?: (position: { x: number; y: number }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
+  artifactId?: string;
+  projectId?: string;
 }
 
 export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> = ({
@@ -40,6 +42,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   onMove,
   onDelete,
   onDuplicate,
+  artifactId,
+  projectId,
 }) => {
   const { x, y } = position;
   const { width: w = 140, height: h = 121 } = size;
@@ -51,11 +55,17 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   const isAdmin = userRole === 'admin';
 
   const handleView = () => {
-    navigate(`/knowledge/${data.slug}?from=project-model`);
+    const params = new URLSearchParams({ from: 'project-model' });
+    if (artifactId) params.set('artifactId', artifactId);
+    if (projectId) params.set('projectId', projectId);
+    navigate(`/knowledge/${data.slug}?${params.toString()}`);
   };
 
   const handleEdit = () => {
-    navigate(`/admin/knowledge/items/${knowledgeItemId}/edit?from=project-model`);
+    const params = new URLSearchParams({ from: 'project-model' });
+    if (artifactId) params.set('artifactId', artifactId);
+    if (projectId) params.set('projectId', projectId);
+    navigate(`/admin/knowledge/items/${knowledgeItemId}/edit?${params.toString()}`);
   };
 
   const stroke = data.domain_color ?? "#8B5CF6";

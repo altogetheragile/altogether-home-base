@@ -33,6 +33,15 @@ const KnowledgeDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const fromProjectModel = searchParams.get('from') === 'project-model';
+  const artifactId = searchParams.get('artifactId');
+  const projectId = searchParams.get('projectId');
+  
+  // Determine back URL based on context
+  const backUrl = fromProjectModel && artifactId && projectId
+    ? `/projects/${projectId}/artifacts/${artifactId}`
+    : fromProjectModel
+    ? '/project-modelling'
+    : '/knowledge';
   const { data: item, isLoading, error } = useKnowledgeItemBySlug(slug!);
   const { data: useCases } = useKnowledgeUseCases(item?.id);
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
@@ -83,7 +92,7 @@ const KnowledgeDetail = () => {
             <h1 className="text-2xl font-bold mb-2">Knowledge Item Not Found</h1>
             <p className="text-muted-foreground mb-6">The item you're looking for doesn't exist.</p>
             <Button asChild>
-              <Link to={fromProjectModel ? "/project-modelling" : "/knowledge"}>
+              <Link to={backUrl}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Link>
@@ -104,7 +113,7 @@ const KnowledgeDetail = () => {
         <div className="border-b bg-muted/20">
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link to={fromProjectModel ? "/project-modelling" : "/knowledge"} className="flex items-center gap-2">
+              <Link to={backUrl} className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Link>
