@@ -366,14 +366,14 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                         } : undefined,
                       };
 
+                      let updatedElements: CanvasElement[];
+
                       if (convertAllMatching) {
                         // Find all custom-hexi elements with the same label and convert them all
                         const matchingLabel = el.data.label;
-                        let convertedCount = 0;
                         
-                        setElements(prev => prev.map(e => {
+                        updatedElements = elements.map(e => {
                           if (e.type === 'custom-hexi' && e.data.label === matchingLabel) {
-                            convertedCount++;
                             return {
                               ...e,
                               type: 'knowledge-item' as const,
@@ -381,12 +381,13 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                             };
                           }
                           return e;
-                        }));
+                        });
                         
+                        setElements(updatedElements);
                         toast.success(`Saved "${itemData.name}" and converted all matching hexis!`);
                       } else {
                         // Convert only this element
-                        setElements(prev => prev.map(e => {
+                        updatedElements = elements.map(e => {
                           if (e.id === el.id) {
                             return {
                               ...e,
@@ -395,8 +396,21 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                             };
                           }
                           return e;
-                        }));
+                        });
+                        
+                        setElements(updatedElements);
                         toast.success(`"${itemData.name}" saved and converted to KB item!`);
+                      }
+
+                      // Auto-save to persist the type conversion
+                      if (artifactId && projectId) {
+                        updateArtifact.mutateAsync({
+                          id: artifactId,
+                          updates: { data: { elements: updatedElements } }
+                        }).catch(error => {
+                          console.error('Auto-save failed:', error);
+                          toast.error('Failed to auto-save conversion');
+                        });
                       }
                     } else {
                       toast.success(`"${el.data.label}" saved to Knowledge Base!`);
