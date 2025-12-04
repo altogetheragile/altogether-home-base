@@ -89,6 +89,8 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get('from');
+  const artifactId = searchParams.get('artifactId');
+  const projectId = searchParams.get('projectId');
   const { toast } = useToast();
   
   // State management
@@ -287,7 +289,13 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       const shouldLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
       if (!shouldLeave) return;
     }
-    navigate(returnTo === 'project-model' ? '/project-modelling' : '/admin/knowledge/items');
+    // Navigate back to the specific canvas if we have context, otherwise fallback
+    const backUrl = returnTo === 'project-model' && artifactId && projectId
+      ? `/projects/${projectId}/artifacts/${artifactId}`
+      : returnTo === 'project-model'
+      ? '/project-modelling'
+      : '/admin/knowledge/items';
+    navigate(backUrl);
   };
 
   const handleStepChange = (step: number) => {
@@ -468,6 +476,8 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
           onToggleCompactMode={() => setIsCompactMode(!isCompactMode)}
           onOpenPreview={handleOpenPreview}
           returnTo={returnTo}
+          artifactId={artifactId}
+          projectId={projectId}
         />
 
         {/* Main Layout */}

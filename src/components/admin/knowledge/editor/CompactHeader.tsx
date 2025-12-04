@@ -17,6 +17,8 @@ interface CompactHeaderProps {
   onOpenPreview?: () => void;
   className?: string;
   returnTo?: string | null;
+  artifactId?: string | null;
+  projectId?: string | null;
 }
 
 export const CompactHeader: React.FC<CompactHeaderProps> = ({
@@ -31,8 +33,13 @@ export const CompactHeader: React.FC<CompactHeaderProps> = ({
   onToggleCompactMode,
   onOpenPreview,
   className,
-  returnTo
+  returnTo,
+  artifactId,
+  projectId
 }) => {
+  // Determine the back button label based on context
+  const hasCanvasContext = returnTo === 'project-model' && artifactId && projectId;
+  const backLabel = hasCanvasContext ? 'Back to Canvas' : returnTo === 'project-model' ? 'Back to Project Model' : 'Back';
   const stepConfigs = [
     'Basic Info',
     'Classification', 
@@ -58,7 +65,7 @@ export const CompactHeader: React.FC<CompactHeaderProps> = ({
               className="hover:bg-accent/50 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {returnTo === 'project-model' ? 'Back to Project Model' : 'Back'}
+              {backLabel}
             </Button>
             <div className="h-5 w-px bg-border/60" />
             <div className="flex flex-col">
