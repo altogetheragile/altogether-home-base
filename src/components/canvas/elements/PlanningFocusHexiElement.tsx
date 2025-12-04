@@ -10,6 +10,8 @@ interface PlanningFocusHexiElementProps {
   onSelect: (e?: React.MouseEvent, preserveIfSelected?: boolean) => void;
   onUpdate: (updates: Partial<CanvasElement>) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
+  onGroupDragStart?: () => void;
+  onGroupDragProgress?: (delta: { dx: number; dy: number }) => void;
   onDelete: () => void;
 }
 
@@ -20,36 +22,56 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
   onSelect,
   onUpdate,
   onMoveGroup,
+  onGroupDragStart,
+  onGroupDragProgress,
   onDelete,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
     setIsDragging(true);
     setDragStart({
-      x: e.clientX - element.position.x,
-      y: e.clientY - element.position.y,
+      x: e.clientX,
+      y: e.clientY,
+    });
+    setInitialPosition({
+      x: element.position.x,
+      y: element.position.y,
     });
     onSelect(e, true);
+    if (isMultiSelected) {
+      onGroupDragStart?.();
+    }
   };
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
-    onUpdate({
-      position: {
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      },
-    });
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    
+    if (isMultiSelected) {
+      // During group drag, notify canvas to update all elements visually
+      onGroupDragProgress?.({ dx, dy });
+    } else {
+      // Single element drag - update position directly
+      onUpdate({
+        position: {
+          x: initialPosition.x + dx,
+          y: initialPosition.y + dy,
+        },
+      });
+    }
   };
 
   const handleMouseUp = (e: MouseEvent) => {
-    if (isDragging && isMultiSelected && onMoveGroup) {
-      const dx = e.clientX - dragStart.x - element.position.x;
-      const dy = e.clientY - dragStart.y - element.position.y;
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+    if (isDragging) {
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      
+      if (isMultiSelected && onMoveGroup && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
         onMoveGroup({ dx, dy });
       }
     }
@@ -65,7 +87,7 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragStart, initialPosition, isMultiSelected]);
 
   const { name, color, description } = element.content || {};
   const width = element.size?.width || 140;
@@ -91,8 +113,8 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
       onMouseDown={handleMouseDown}
       onClick={onSelect}
     >
-      {/* Unified floating toolbar */}
-      {isSelected && (
+      {/* Unified floating toolbar (hide during multi-select) */}
+      {isSelected && !isMultiSelected && (
         <HexiFloatingToolbar
           onDelete={onDelete}
           showEdit={false}

@@ -17,6 +17,8 @@ interface StickyNoteElementProps {
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
+  onGroupDragStart?: () => void;
+  onGroupDragProgress?: (delta: { dx: number; dy: number }) => void;
   onContentChange?: (data: { text: string; color?: string }) => void;
   onDelete?: () => void;
 }
@@ -31,6 +33,8 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
   onSelect,
   onMove,
   onMoveGroup,
+  onGroupDragStart,
+  onGroupDragProgress,
   onContentChange,
   onDelete,
 }) => {
@@ -59,6 +63,9 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { px: e.clientX, py: e.clientY, x, y };
     onSelect?.(e, true);
+    if (isMultiSelected) {
+      onGroupDragStart?.();
+    }
     e.stopPropagation();
   };
 
@@ -66,7 +73,12 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
     if (!drag.current || !ref.current) return;
     const dx = e.clientX - drag.current.px;
     const dy = e.clientY - drag.current.py;
-    ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+    
+    if (isMultiSelected) {
+      onGroupDragProgress?.({ dx, dy });
+    } else {
+      ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+    }
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
@@ -121,7 +133,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
-        {isSelected && onDelete && (
+        {isSelected && !isMultiSelected && onDelete && (
           <div
             className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-10 pointer-events-auto"
             onPointerDown={(e) => e.stopPropagation()}

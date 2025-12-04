@@ -25,6 +25,8 @@ export interface CustomHexiElementProps {
   onSelect?: (e?: React.PointerEvent | React.MouseEvent, preserveIfSelected?: boolean) => void;
   onMove?: (position: { x: number; y: number }) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
+  onGroupDragStart?: () => void;
+  onGroupDragProgress?: (delta: { dx: number; dy: number }) => void;
   onContentChange?: (data: any) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
@@ -46,6 +48,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   onSelect,
   onMove,
   onMoveGroup,
+  onGroupDragStart,
+  onGroupDragProgress,
   onContentChange,
   onDelete,
   onDuplicate,
@@ -68,6 +72,9 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { px: e.clientX, py: e.clientY, x, y };
     onSelect?.(e, true);
+    if (isMultiSelected) {
+      onGroupDragStart?.();
+    }
     e.stopPropagation();
   };
 
@@ -75,7 +82,12 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
     if (!drag.current || !ref.current) return;
     const dx = e.clientX - drag.current.px;
     const dy = e.clientY - drag.current.py;
-    ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+    
+    if (isMultiSelected) {
+      onGroupDragProgress?.({ dx, dy });
+    } else {
+      ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+    }
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
@@ -109,8 +121,8 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
-        {/* Floating toolbar when selected */}
-        {isSelected && (
+        {/* Floating toolbar when selected (hide during multi-select) */}
+        {isSelected && !isMultiSelected && (
           <HexiFloatingToolbar
             onEdit={() => setShowEditor(true)}
             onDuplicate={onDuplicate}
