@@ -130,15 +130,42 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         style={{
-          filter: isSelected ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+          overflow: 'visible',
+          filter: isSelected 
+            ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 4px rgba(59, 130, 246, 1))' 
+            : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
         }}
       >
+        {/* Selection ring */}
+        {isSelected && (
+          <polygon
+            points={hexPoints(width, height)}
+            fill="none"
+            stroke="#3B82F6"
+            strokeWidth={2}
+            strokeDasharray="6 3"
+            transform={`translate(${width/2}, ${height/2}) scale(1.08) translate(${-width/2}, ${-height/2})`}
+          />
+        )}
+        
         <polygon
           points={hexPoints(width, height)}
           fill={fillColor}
           stroke={borderColor}
           strokeWidth="3"
         />
+        
+        {/* Selection corner dots */}
+        {isSelected && (
+          <g className="selection-handles">
+            <circle cx={width/2} cy={4} r={4} fill="#3B82F6" />
+            <circle cx={width - 8} cy={height * 0.25 + 4} r={4} fill="#3B82F6" />
+            <circle cx={width - 8} cy={height * 0.75 - 4} r={4} fill="#3B82F6" />
+            <circle cx={width/2} cy={height - 4} r={4} fill="#3B82F6" />
+            <circle cx={8} cy={height * 0.75 - 4} r={4} fill="#3B82F6" />
+            <circle cx={8} cy={height * 0.25 + 4} r={4} fill="#3B82F6" />
+          </g>
+        )}
         
         {/* Icon at top - using embedded SVG for Layers icon */}
         <g transform={`translate(${width / 2 - 12}, ${height * 0.25 - 12})`}>
