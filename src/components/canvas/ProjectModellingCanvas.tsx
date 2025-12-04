@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Save } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -355,6 +355,32 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     .map(el => el.data.id)
     .filter(Boolean);
 
+  // Calculate dynamic canvas bounds based on element positions
+  const canvasBounds = useMemo(() => {
+    const MIN_WIDTH = 2000;
+    const MIN_HEIGHT = 1500;
+    const PADDING = 500;
+
+    if (elements.length === 0) {
+      return { width: MIN_WIDTH, height: MIN_HEIGHT };
+    }
+
+    let maxX = 0;
+    let maxY = 0;
+
+    elements.forEach(el => {
+      const rightEdge = el.position.x + el.size.width;
+      const bottomEdge = el.position.y + el.size.height;
+      maxX = Math.max(maxX, rightEdge);
+      maxY = Math.max(maxY, bottomEdge);
+    });
+
+    return {
+      width: Math.max(MIN_WIDTH, maxX + PADDING),
+      height: Math.max(MIN_HEIGHT, maxY + PADDING)
+    };
+  }, [elements]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header - only show in standalone mode */}
@@ -426,12 +452,14 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       >
         <div
           ref={canvasRef}
-          className="relative min-h-full"
+          className="relative"
           style={{
             transform: `scale(${zoom})`,
             transformOrigin: 'top left',
-            width: `${100 / zoom}%`,
-            height: `${100 / zoom}%`,
+            width: canvasBounds.width,
+            height: canvasBounds.height,
+            minWidth: '100%',
+            minHeight: '100%',
           }}
           onClick={(e) => {
             // Deselect when clicking on canvas background
