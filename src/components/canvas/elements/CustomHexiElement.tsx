@@ -86,7 +86,10 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
     if (isMultiSelected) {
       onGroupDragProgress?.({ dx, dy });
     } else {
-      ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+      // Single element drag - clamp to prevent off-screen movement
+      const newX = Math.max(0, drag.current.x + dx);
+      const newY = Math.max(0, drag.current.y + dy);
+      ref.current.style.transform = `translate(${newX}px, ${newY}px)`;
     }
   };
 
