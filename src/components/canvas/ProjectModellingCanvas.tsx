@@ -286,13 +286,20 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     toast.success('Element deleted');
   }, []);
 
-  // Handle selecting an element (with Shift for multi-select)
-  const handleElementSelect = useCallback((id: string, shiftKey: boolean = false) => {
+  // Handle selecting an element (with Shift for multi-select, preserveIfSelected for drag start)
+  const handleElementSelect = useCallback((id: string, shiftKey: boolean = false, preserveIfSelected: boolean = false) => {
     if (shiftKey) {
+      // Shift-click: toggle element in selection
       setSelectedElementIds(prev => 
         prev.includes(id) ? prev.filter(eid => eid !== id) : [...prev, id]
       );
+    } else if (preserveIfSelected) {
+      // Drag start: preserve selection if clicking already-selected element
+      setSelectedElementIds(prev => 
+        prev.includes(id) ? prev : [id]
+      );
     } else {
+      // Normal click: single select
       setSelectedElementIds([id]);
     }
   }, []);
@@ -638,7 +645,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     }}
                     isSelected={isSelected}
                     isMultiSelected={isMultiSelected}
-                    onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
+                    onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
                     onDelete={() => handleElementDelete(element.id)}
@@ -658,7 +665,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
               } as any}
               isSelected={isSelected}
               isMultiSelected={isMultiSelected}
-              onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
+              onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
               onUpdate={(updates) => {
                 if (updates.position) {
                   handleElementUpdate(element.id, { position: updates.position });
@@ -681,7 +688,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     data={element.data}
                     isSelected={isSelected}
                     isMultiSelected={isMultiSelected}
-                    onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
+                    onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
@@ -769,7 +776,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     data={element.data}
                     isSelected={isSelected}
                     isMultiSelected={isMultiSelected}
-                    onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
+                    onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
                     onResize={(newSize) => handleElementUpdate(element.id, { size: newSize })}

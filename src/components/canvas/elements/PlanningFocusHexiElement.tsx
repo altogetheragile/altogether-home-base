@@ -7,7 +7,7 @@ interface PlanningFocusHexiElementProps {
   element: CanvasElement;
   isSelected: boolean;
   isMultiSelected?: boolean;
-  onSelect: (e?: React.MouseEvent) => void;
+  onSelect: (e?: React.MouseEvent, preserveIfSelected?: boolean) => void;
   onUpdate: (updates: Partial<CanvasElement>) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
   onDelete: () => void;
@@ -32,7 +32,7 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
       x: e.clientX - element.position.x,
       y: e.clientY - element.position.y,
     });
-    onSelect(e);
+    onSelect(e, true);
   };
 
   const handleMouseMove = (e: MouseEvent) => {
