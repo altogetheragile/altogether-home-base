@@ -351,9 +351,19 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                         slug: itemData.slug,
                         icon: itemData.icon,
                         emoji: itemData.emoji,
-                        activity_domain: itemData.activity_domain,
-                        planning_focus: itemData.planning_focus,
-                        category: itemData.category,
+                        // Use correct property names expected by KnowledgeItemHexiElement
+                        activity_domains: itemData.activity_domain ? {
+                          color: itemData.activity_domain.color,
+                          name: itemData.activity_domain.name,
+                        } : undefined,
+                        planning_focuses: itemData.planning_focus ? {
+                          color: itemData.planning_focus.color,
+                          name: itemData.planning_focus.name,
+                        } : undefined,
+                        knowledge_categories: itemData.category ? {
+                          color: itemData.category.color,
+                          name: itemData.category.name,
+                        } : undefined,
                       };
 
                       if (convertAllMatching) {
