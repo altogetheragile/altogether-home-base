@@ -110,6 +110,7 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
         willChange: 'transform',
         backfaceVisibility: 'hidden',
         pointerEvents: 'auto',
+        outline: 'none',
       }}
       onMouseDown={handleMouseDown}
       onClick={onSelect}

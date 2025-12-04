@@ -130,7 +130,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
       <div
         ref={ref}
         className="absolute select-none cursor-move"
-        style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h, willChange: 'transform', backfaceVisibility: 'hidden' }}
+        style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h, willChange: 'transform', backfaceVisibility: 'hidden', outline: 'none' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
