@@ -40,6 +40,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [zoom, setZoom] = useState(1);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [hasSyncedKB, setHasSyncedKB] = useState(false);
+  const [hasRefreshedKB, setHasRefreshedKB] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -123,6 +124,101 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
 
     syncCustomHexisWithKB();
   }, [artifactId, projectId, elements.length, hasSyncedKB]);
+
+  // Auto-refresh knowledge items with latest KB data on load
+  useEffect(() => {
+    const refreshKnowledgeItemData = async () => {
+      if (!artifactId || !projectId || elements.length === 0 || hasRefreshedKB) return;
+
+      // Get all knowledge-item elements that have a KB id
+      const knowledgeItemElements = elements.filter(
+        e => e.type === 'knowledge-item' && e.data.id
+      );
+      
+      if (knowledgeItemElements.length === 0) {
+        setHasRefreshedKB(true);
+        return;
+      }
+
+      const itemIds = knowledgeItemElements.map(e => e.data.id);
+
+      // Fetch latest data from KB
+      const { data: latestItems, error } = await supabase
+        .from('knowledge_items')
+        .select(`
+          id, name, slug, icon, emoji,
+          activity_domains (id, name, color),
+          planning_focuses (id, name, color),
+          knowledge_categories (id, name, color)
+        `)
+        .in('id', itemIds);
+
+      if (error || !latestItems) {
+        setHasRefreshedKB(true);
+        return;
+      }
+
+      // Create map for quick lookup
+      const latestItemMap = new Map(latestItems.map(item => [item.id, item]));
+
+      // Update elements with latest KB data
+      let hasChanges = false;
+      const updatedElements = elements.map(el => {
+        if (el.type === 'knowledge-item' && el.data.id && latestItemMap.has(el.data.id)) {
+          const latest = latestItemMap.get(el.data.id)!;
+          
+          // Handle both array and object returns from Supabase join
+          const latestCategory = Array.isArray(latest.knowledge_categories) 
+            ? latest.knowledge_categories[0] 
+            : latest.knowledge_categories;
+          const latestDomain = Array.isArray(latest.activity_domains) 
+            ? latest.activity_domains[0] 
+            : latest.activity_domains;
+          const latestFocus = Array.isArray(latest.planning_focuses) 
+            ? latest.planning_focuses[0] 
+            : latest.planning_focuses;
+          
+          // Check if category/domain/focus data differs
+          const needsUpdate = 
+            el.data.knowledge_categories?.id !== latestCategory?.id ||
+            el.data.activity_domains?.id !== latestDomain?.id ||
+            el.data.planning_focuses?.id !== latestFocus?.id;
+          
+          if (needsUpdate) {
+            hasChanges = true;
+            return {
+              ...el,
+              data: {
+                ...el.data,
+                knowledge_categories: latestCategory,
+                activity_domains: latestDomain,
+                planning_focuses: latestFocus,
+              }
+            };
+          }
+        }
+        return el;
+      });
+
+      setHasRefreshedKB(true);
+
+      if (hasChanges) {
+        setElements(updatedElements);
+        // Auto-save the refresh
+        try {
+          await updateArtifact.mutateAsync({
+            id: artifactId,
+            updates: { data: { elements: updatedElements } }
+          });
+          toast.success('Canvas synced with Knowledge Base');
+        } catch (error) {
+          console.error('KB refresh save failed:', error);
+        }
+      }
+    };
+
+    refreshKnowledgeItemData();
+  }, [artifactId, projectId, elements.length, hasRefreshedKB]);
 
   const handleAddKnowledgeItem = useCallback((itemId: string, itemData: any) => {
     const newElement: CanvasElement = {
