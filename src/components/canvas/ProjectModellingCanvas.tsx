@@ -47,6 +47,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [marqueeStart, setMarqueeStart] = useState({ x: 0, y: 0 });
   const [marqueeEnd, setMarqueeEnd] = useState({ x: 0, y: 0 });
   
+  // Group drag state for real-time movement
+  const [isDraggingGroup, setIsDraggingGroup] = useState(false);
+  const [groupDragDelta, setGroupDragDelta] = useState({ dx: 0, dy: 0 });
+  
   const canvasRef = useRef<HTMLDivElement>(null);
   const wasMarqueeSelectingRef = useRef(false);
   const navigate = useNavigate();
@@ -305,8 +309,26 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     }
   }, []);
 
-  // Handle group movement when dragging a selected element
+  // Handle group drag start (for real-time movement visualization)
+  const handleGroupDragStart = useCallback(() => {
+    if (selectedElementIds.length > 1) {
+      setIsDraggingGroup(true);
+      setGroupDragDelta({ dx: 0, dy: 0 });
+    }
+  }, [selectedElementIds.length]);
+
+  // Handle group drag progress (real-time visual update)
+  const handleGroupDragProgress = useCallback((delta: { dx: number; dy: number }) => {
+    if (selectedElementIds.length > 1) {
+      setGroupDragDelta(delta);
+    }
+  }, [selectedElementIds.length]);
+
+  // Handle group movement when dragging a selected element ends
   const handleGroupMove = useCallback((draggedId: string, delta: { dx: number; dy: number }) => {
+    setIsDraggingGroup(false);
+    setGroupDragDelta({ dx: 0, dy: 0 });
+    
     setElements(prev => prev.map(el => {
       if (selectedElementIds.includes(el.id)) {
         return {
@@ -320,6 +342,17 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       return el;
     }));
   }, [selectedElementIds]);
+
+  // Calculate visual position (applies group drag delta during drag)
+  const getVisualPosition = useCallback((element: CanvasElement) => {
+    if (isDraggingGroup && selectedElementIds.includes(element.id)) {
+      return {
+        x: element.position.x + groupDragDelta.dx,
+        y: element.position.y + groupDragDelta.dy,
+      };
+    }
+    return element.position;
+  }, [isDraggingGroup, groupDragDelta, selectedElementIds]);
 
   // Helper to check if element is in selection box
   const isElementInSelectionBox = useCallback((element: CanvasElement, box: { left: number; top: number; right: number; bottom: number }) => {
@@ -634,7 +667,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     key={element.id}
                     id={element.id}
                     knowledgeItemId={element.data.id || element.id}
-                    position={element.position}
+                    position={getVisualPosition(element)}
                     size={element.size}
                     data={{
                       name: element.data.name || 'Unknown',
@@ -653,6 +686,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
+                    onGroupDragStart={handleGroupDragStart}
+                    onGroupDragProgress={handleGroupDragProgress}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
                     artifactId={artifactId}
@@ -667,6 +702,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                 ...element,
                 type: 'planningFocus' as const,
                 content: element.data,
+                position: getVisualPosition(element),
               } as any}
               isSelected={isSelected}
               isMultiSelected={isMultiSelected}
@@ -680,6 +716,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                 }
               }}
               onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
+              onGroupDragStart={handleGroupDragStart}
+              onGroupDragProgress={handleGroupDragProgress}
               onDelete={() => handleElementDelete(element.id)}
             />
           );
@@ -688,7 +726,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                   <CustomHexiElement
                     key={element.id}
                     id={element.id}
-                    position={element.position}
+                    position={getVisualPosition(element)}
                     size={element.size}
                     data={element.data}
                     isSelected={isSelected}
@@ -696,6 +734,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
+                    onGroupDragStart={handleGroupDragStart}
+                    onGroupDragProgress={handleGroupDragProgress}
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
@@ -776,7 +816,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                   <StickyNoteElement
                     key={element.id}
                     id={element.id}
-                    position={element.position}
+                    position={getVisualPosition(element)}
                     size={element.size}
                     data={element.data}
                     isSelected={isSelected}
@@ -784,6 +824,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
+                    onGroupDragStart={handleGroupDragStart}
+                    onGroupDragProgress={handleGroupDragProgress}
                     onResize={(newSize) => handleElementUpdate(element.id, { size: newSize })}
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}

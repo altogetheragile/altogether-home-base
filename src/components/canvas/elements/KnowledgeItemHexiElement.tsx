@@ -27,6 +27,8 @@ export interface KnowledgeItemHexiElementProps {
   onSelect?: (e?: React.PointerEvent | React.MouseEvent, preserveIfSelected?: boolean) => void;
   onMove?: (position: { x: number; y: number }) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
+  onGroupDragStart?: () => void;
+  onGroupDragProgress?: (delta: { dx: number; dy: number }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   artifactId?: string;
@@ -44,6 +46,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   onSelect,
   onMove,
   onMoveGroup,
+  onGroupDragStart,
+  onGroupDragProgress,
   onDelete,
   onDuplicate,
   artifactId,
@@ -84,6 +88,10 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     drag.current = { px: e.clientX, py: e.clientY, x, y };
     // Pass true to preserve selection if this element is already selected (for group drag)
     onSelect?.(e, true);
+    // Notify canvas that group drag is starting
+    if (isMultiSelected) {
+      onGroupDragStart?.();
+    }
     e.stopPropagation();
   };
 
@@ -91,7 +99,14 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     if (!drag.current || !ref.current) return;
     const dx = e.clientX - drag.current.px;
     const dy = e.clientY - drag.current.py;
-    ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+    
+    if (isMultiSelected) {
+      // During group drag, notify canvas to update all elements visually
+      onGroupDragProgress?.({ dx, dy });
+    } else {
+      // Single element drag - update local transform
+      ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+    }
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
@@ -126,8 +141,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         onPointerUp={onPointerUp}
         data-element-id={id}
       >
-        {/* Floating toolbar when selected */}
-        {isSelected && (
+        {/* Floating toolbar when selected (hide during multi-select) */}
+        {isSelected && !isMultiSelected && (
           <HexiFloatingToolbar
             onView={handleView}
             onEdit={isAdmin ? handleEdit : undefined}
