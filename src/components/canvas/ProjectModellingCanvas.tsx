@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Save } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import type { KBItemData } from './elements/SaveToKBDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CanvasElement {
   id: string;
@@ -38,11 +39,90 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [hasSyncedKB, setHasSyncedKB] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
   const { updateArtifact } = useProjectArtifactMutations();
+
+  // Auto-sync custom hexis that match existing KB items on load
+  useEffect(() => {
+    const syncCustomHexisWithKB = async () => {
+      if (!artifactId || !projectId || elements.length === 0 || hasSyncedKB) return;
+
+      // Get all custom-hexi labels
+      const customHexiLabels = elements
+        .filter(e => e.type === 'custom-hexi')
+        .map(e => e.data.label);
+
+      if (customHexiLabels.length === 0) {
+        setHasSyncedKB(true);
+        return;
+      }
+
+      // Query KB for matching items
+      const { data: matchingKBItems, error } = await supabase
+        .from('knowledge_items')
+        .select(`
+          id, name, slug, icon, emoji,
+          activity_domains (id, name, color),
+          planning_focuses (id, name, color),
+          knowledge_categories (id, name, color)
+        `)
+        .in('name', customHexiLabels);
+
+      if (error || !matchingKBItems || matchingKBItems.length === 0) {
+        setHasSyncedKB(true);
+        return;
+      }
+
+      // Create a map of name -> KB item data
+      const kbItemMap = new Map(matchingKBItems.map(item => [item.name, item]));
+
+      // Convert matching custom-hexis to knowledge-items
+      let hasChanges = false;
+      const updatedElements = elements.map(el => {
+        if (el.type === 'custom-hexi' && kbItemMap.has(el.data.label)) {
+          const kbItem = kbItemMap.get(el.data.label)!;
+          hasChanges = true;
+          return {
+            ...el,
+            type: 'knowledge-item' as const,
+            data: {
+              id: kbItem.id,
+              name: kbItem.name,
+              slug: kbItem.slug,
+              icon: kbItem.icon,
+              emoji: kbItem.emoji,
+              activity_domains: kbItem.activity_domains,
+              planning_focuses: kbItem.planning_focuses,
+              knowledge_categories: kbItem.knowledge_categories,
+            },
+          };
+        }
+        return el;
+      });
+
+      setHasSyncedKB(true);
+
+      if (hasChanges) {
+        setElements(updatedElements);
+        // Auto-save the conversion
+        try {
+          await updateArtifact.mutateAsync({
+            id: artifactId,
+            updates: { data: { elements: updatedElements } }
+          });
+          toast.success('Synced canvas with Knowledge Base');
+        } catch (error) {
+          console.error('Auto-sync save failed:', error);
+        }
+      }
+    };
+
+    syncCustomHexisWithKB();
+  }, [artifactId, projectId, elements.length, hasSyncedKB]);
 
   const handleAddKnowledgeItem = useCallback((itemId: string, itemData: any) => {
     const newElement: CanvasElement = {
