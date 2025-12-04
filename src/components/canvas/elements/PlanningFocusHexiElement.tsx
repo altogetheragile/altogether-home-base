@@ -56,11 +56,11 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
       // During group drag, notify canvas to update all elements visually
       onGroupDragProgress?.({ dx, dy });
     } else {
-      // Single element drag - update position directly
+      // Single element drag - clamp to prevent off-screen movement
       onUpdate({
         position: {
-          x: initialPosition.x + dx,
-          y: initialPosition.y + dy,
+          x: Math.max(0, initialPosition.x + dx),
+          y: Math.max(0, initialPosition.y + dy),
         },
       });
     }

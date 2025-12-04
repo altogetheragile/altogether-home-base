@@ -282,7 +282,20 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   }, [elements]);
 
   const handleElementUpdate = useCallback((id: string, updates: Partial<CanvasElement>) => {
-    setElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el));
+    setElements(prev => prev.map(el => {
+      if (el.id === id) {
+        let newUpdates = { ...updates };
+        // Clamp position to prevent off-screen movement
+        if (newUpdates.position) {
+          newUpdates.position = {
+            x: Math.max(0, newUpdates.position.x),
+            y: Math.max(0, newUpdates.position.y),
+          };
+        }
+        return { ...el, ...newUpdates };
+      }
+      return el;
+    }));
   }, []);
 
   const handleElementDelete = useCallback((id: string) => {
@@ -317,31 +330,62 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     }
   }, [selectedElementIds.length]);
 
-  // Handle group drag progress (real-time visual update)
+  // Handle group drag progress (real-time visual update with boundary clamping)
   const handleGroupDragProgress = useCallback((delta: { dx: number; dy: number }) => {
     if (selectedElementIds.length > 1) {
-      setGroupDragDelta(delta);
+      // Find minimum positions to prevent visual dragging past bounds
+      let minX = Infinity;
+      let minY = Infinity;
+      elements.forEach(el => {
+        if (selectedElementIds.includes(el.id)) {
+          minX = Math.min(minX, el.position.x);
+          minY = Math.min(minY, el.position.y);
+        }
+      });
+      
+      // Clamp delta during drag preview
+      const clampedDelta = {
+        dx: Math.max(delta.dx, -minX),
+        dy: Math.max(delta.dy, -minY),
+      };
+      setGroupDragDelta(clampedDelta);
     }
-  }, [selectedElementIds.length]);
+  }, [selectedElementIds, elements]);
 
   // Handle group movement when dragging a selected element ends
   const handleGroupMove = useCallback((draggedId: string, delta: { dx: number; dy: number }) => {
     setIsDraggingGroup(false);
     setGroupDragDelta({ dx: 0, dy: 0 });
     
+    // Find minimum positions to determine max allowed negative delta
+    let minX = Infinity;
+    let minY = Infinity;
+    elements.forEach(el => {
+      if (selectedElementIds.includes(el.id)) {
+        minX = Math.min(minX, el.position.x);
+        minY = Math.min(minY, el.position.y);
+      }
+    });
+    
+    // Clamp delta so no element goes below 0
+    const clampedDelta = {
+      dx: Math.max(delta.dx, -minX),
+      dy: Math.max(delta.dy, -minY),
+    };
+    
     setElements(prev => prev.map(el => {
       if (selectedElementIds.includes(el.id)) {
         return {
           ...el,
           position: {
-            x: el.position.x + delta.dx,
-            y: el.position.y + delta.dy,
+            x: el.position.x + clampedDelta.dx,
+            y: el.position.y + clampedDelta.dy,
           },
         };
       }
       return el;
     }));
-  }, [selectedElementIds]);
+  }, [selectedElementIds, elements]);
 
   // Calculate visual position (applies group drag delta during drag)
   const getVisualPosition = useCallback((element: CanvasElement) => {

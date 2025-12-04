@@ -104,8 +104,10 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
       // During group drag, notify canvas to update all elements visually
       onGroupDragProgress?.({ dx, dy });
     } else {
-      // Single element drag - update local transform
-      ref.current.style.transform = `translate(${drag.current.x+dx}px, ${drag.current.y+dy}px)`;
+      // Single element drag - clamp to prevent off-screen movement
+      const newX = Math.max(0, drag.current.x + dx);
+      const newY = Math.max(0, drag.current.y + dy);
+      ref.current.style.transform = `translate(${newX}px, ${newY}px)`;
     }
   };
 
