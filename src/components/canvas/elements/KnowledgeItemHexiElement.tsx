@@ -128,9 +128,11 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             strokeLinecap="round"
           />
 
-          {/* Category indicator - mini hexagon centered above label */}
-          <polygon 
-            points={`${w/2-10},${h/2-35} ${w/2+10},${h/2-35} ${w/2+17},${h/2-23} ${w/2+10},${h/2-11} ${w/2-10},${h/2-11} ${w/2-17},${h/2-23}`}
+          {/* Category indicator - small circle centered above label */}
+          <circle 
+            cx={w/2}
+            cy={h/2 - 23}
+            r={8}
             fill={categoryColor}
             className="drop-shadow-sm"
           />
@@ -159,16 +161,16 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
               <div 
                 className="absolute cursor-pointer"
                 style={{ 
-                  left: w/2 - 17, 
+                  left: w/2 - 12, 
                   top: h/2 - 35, 
-                  width: 34, 
+                  width: 24, 
                   height: 24,
                   zIndex: 10
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
               />
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs font-medium">
+            <TooltipContent side="top" className="text-xs font-medium z-[9999]">
               {data.category_name || 'Uncategorized'}
             </TooltipContent>
           </Tooltip>
