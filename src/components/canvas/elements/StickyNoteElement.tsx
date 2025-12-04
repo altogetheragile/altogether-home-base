@@ -165,7 +165,29 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
             </Button>
           </div>
         )}
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
+        <svg 
+          width={w} 
+          height={h} 
+          viewBox={`0 0 ${w} ${h}`} 
+          xmlns="http://www.w3.org/2000/svg" 
+          style={{ 
+            overflow: 'visible',
+            filter: isSelected 
+              ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 4px rgba(59, 130, 246, 1))' 
+              : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+          }}
+        >
+          {/* Selection ring */}
+          {isSelected && (
+            <polygon
+              points={hexPoints(w, h)}
+              fill="none"
+              stroke="#3B82F6"
+              strokeWidth={2}
+              strokeDasharray="6 3"
+              transform={`translate(${w/2}, ${h/2}) scale(1.08) translate(${-w/2}, ${-h/2})`}
+            />
+          )}
 
           {/* Hex shape */}
           <polygon 
@@ -173,6 +195,18 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
             fill={colors.fill} 
             stroke="none"
           />
+          
+          {/* Selection corner dots */}
+          {isSelected && (
+            <g className="selection-handles">
+              <circle cx={w/2} cy={4} r={4} fill="#3B82F6" />
+              <circle cx={w - 8} cy={h * 0.25 + 4} r={4} fill="#3B82F6" />
+              <circle cx={w - 8} cy={h * 0.75 - 4} r={4} fill="#3B82F6" />
+              <circle cx={w/2} cy={h - 4} r={4} fill="#3B82F6" />
+              <circle cx={8} cy={h * 0.75 - 4} r={4} fill="#3B82F6" />
+              <circle cx={8} cy={h * 0.25 + 4} r={4} fill="#3B82F6" />
+            </g>
+          )}
 
           {/* Text content */}
           {!isEditing && (
