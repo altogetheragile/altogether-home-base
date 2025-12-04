@@ -24,7 +24,7 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered, MessageCircle, LayoutGrid } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -83,9 +83,9 @@ const KnowledgeDetail = () => {
             <h1 className="text-2xl font-bold mb-2">Knowledge Item Not Found</h1>
             <p className="text-muted-foreground mb-6">The item you're looking for doesn't exist.</p>
             <Button asChild>
-              <Link to="/knowledge">
+              <Link to={fromProjectModel ? "/project-modelling" : "/knowledge"}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Knowledge Base
+                Back
               </Link>
             </Button>
           </div>
@@ -102,7 +102,14 @@ const KnowledgeDetail = () => {
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="border-b bg-muted/20">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to={fromProjectModel ? "/project-modelling" : "/knowledge"} className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Link>
+            </Button>
+            <div className="h-5 w-px bg-border/60" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -116,15 +123,6 @@ const KnowledgeDetail = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            
-            {fromProjectModel && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/project-modelling" className="flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4" />
-                  Return to Project Model
-                </Link>
-              </Button>
-            )}
           </div>
         </div>
 
