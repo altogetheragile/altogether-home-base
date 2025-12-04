@@ -36,11 +36,17 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   projectId 
 }) => {
   const [elements, setElements] = useState<CanvasElement[]>(initialData?.elements || []);
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [hasSyncedKB, setHasSyncedKB] = useState(false);
   const [hasRefreshedKB, setHasRefreshedKB] = useState(false);
+  
+  // Marquee selection state
+  const [isMarqueeSelecting, setIsMarqueeSelecting] = useState(false);
+  const [marqueeStart, setMarqueeStart] = useState({ x: 0, y: 0 });
+  const [marqueeEnd, setMarqueeEnd] = useState({ x: 0, y: 0 });
+  
   const canvasRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -276,9 +282,124 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
 
   const handleElementDelete = useCallback((id: string) => {
     setElements(prev => prev.filter(el => el.id !== id));
-    if (selectedElementId === id) setSelectedElementId(null);
+    setSelectedElementIds(prev => prev.filter(eid => eid !== id));
     toast.success('Element deleted');
-  }, [selectedElementId]);
+  }, []);
+
+  // Handle selecting an element (with Shift for multi-select)
+  const handleElementSelect = useCallback((id: string, shiftKey: boolean = false) => {
+    if (shiftKey) {
+      setSelectedElementIds(prev => 
+        prev.includes(id) ? prev.filter(eid => eid !== id) : [...prev, id]
+      );
+    } else {
+      setSelectedElementIds([id]);
+    }
+  }, []);
+
+  // Handle group movement when dragging a selected element
+  const handleGroupMove = useCallback((draggedId: string, delta: { dx: number; dy: number }) => {
+    setElements(prev => prev.map(el => {
+      if (selectedElementIds.includes(el.id)) {
+        return {
+          ...el,
+          position: {
+            x: el.position.x + delta.dx,
+            y: el.position.y + delta.dy,
+          },
+        };
+      }
+      return el;
+    }));
+  }, [selectedElementIds]);
+
+  // Helper to check if element is in selection box
+  const isElementInSelectionBox = useCallback((element: CanvasElement, box: { left: number; top: number; right: number; bottom: number }) => {
+    const { x, y } = element.position;
+    const { width, height } = element.size;
+    return (
+      x < box.right && x + width > box.left &&
+      y < box.bottom && y + height > box.top
+    );
+  }, []);
+
+  // Marquee selection handlers
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only start marquee if clicking directly on canvas background
+    if (e.target !== e.currentTarget) return;
+    if (e.button !== 0) return;
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
+    
+    setIsMarqueeSelecting(true);
+    setMarqueeStart({ x, y });
+    setMarqueeEnd({ x, y });
+    
+    // Clear selection unless shift is held
+    if (!e.shiftKey) {
+      setSelectedElementIds([]);
+    }
+  }, [zoom]);
+
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isMarqueeSelecting) return;
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
+    setMarqueeEnd({ x, y });
+  }, [isMarqueeSelecting, zoom]);
+
+  const handleCanvasMouseUp = useCallback((e: React.MouseEvent) => {
+    if (!isMarqueeSelecting) return;
+    
+    const box = {
+      left: Math.min(marqueeStart.x, marqueeEnd.x),
+      top: Math.min(marqueeStart.y, marqueeEnd.y),
+      right: Math.max(marqueeStart.x, marqueeEnd.x),
+      bottom: Math.max(marqueeStart.y, marqueeEnd.y),
+    };
+    
+    // Only select if marquee has some size (avoid click-only selecting nothing)
+    const marqueeWidth = box.right - box.left;
+    const marqueeHeight = box.bottom - box.top;
+    
+    if (marqueeWidth > 5 || marqueeHeight > 5) {
+      const newSelected = elements
+        .filter(el => isElementInSelectionBox(el, box))
+        .map(el => el.id);
+      
+      if (e.shiftKey) {
+        setSelectedElementIds(prev => [...new Set([...prev, ...newSelected])]);
+      } else {
+        setSelectedElementIds(newSelected);
+      }
+    }
+    
+    setIsMarqueeSelecting(false);
+  }, [isMarqueeSelecting, marqueeStart, marqueeEnd, elements, isElementInSelectionBox]);
+
+  // Keyboard shortcut for select all
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault();
+        setSelectedElementIds(elements.map(el => el.id));
+      }
+      if (e.key === 'Escape') {
+        setSelectedElementIds([]);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [elements]);
 
   const handleDuplicateElement = useCallback((id: string) => {
     const element = elements.find(el => el.id === id);
@@ -444,11 +565,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       {/* Canvas Area */}
       <div 
         className="flex-1 overflow-auto bg-muted/30"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setSelectedElementId(null);
-          }
-        }}
       >
         <div
           ref={canvasRef}
@@ -461,13 +577,29 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             minWidth: '100%',
             minHeight: '100%',
           }}
+          onMouseDown={handleCanvasMouseDown}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseUp={handleCanvasMouseUp}
+          onMouseLeave={() => setIsMarqueeSelecting(false)}
           onClick={(e) => {
             // Deselect when clicking on canvas background
-            if (e.target === e.currentTarget) {
-              setSelectedElementId(null);
+            if (e.target === e.currentTarget && !isMarqueeSelecting) {
+              setSelectedElementIds([]);
             }
           }}
         >
+          {/* Marquee selection box */}
+          {isMarqueeSelecting && (
+            <div
+              className="absolute border-2 border-primary bg-primary/10 pointer-events-none z-[2000]"
+              style={{
+                left: Math.min(marqueeStart.x, marqueeEnd.x),
+                top: Math.min(marqueeStart.y, marqueeEnd.y),
+                width: Math.abs(marqueeEnd.x - marqueeStart.x),
+                height: Math.abs(marqueeEnd.y - marqueeStart.y),
+              }}
+            />
+          )}
           {elements.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center text-muted-foreground max-w-md">
@@ -480,7 +612,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           )}
           
           {elements.map((element) => {
-            const isSelected = selectedElementId === element.id;
+            const isSelected = selectedElementIds.includes(element.id);
+            const isMultiSelected = selectedElementIds.length > 1 && isSelected;
             
             switch (element.type) {
               case 'knowledge-item':
@@ -504,8 +637,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                       emoji: element.data.emoji,
                     }}
                     isSelected={isSelected}
-                    onSelect={() => setSelectedElementId(element.id)}
+                    isMultiSelected={isMultiSelected}
+                    onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
+                    onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
                     artifactId={artifactId}
@@ -522,7 +657,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                 content: element.data,
               } as any}
               isSelected={isSelected}
-              onSelect={() => setSelectedElementId(element.id)}
+              isMultiSelected={isMultiSelected}
+              onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
               onUpdate={(updates) => {
                 if (updates.position) {
                   handleElementUpdate(element.id, { position: updates.position });
@@ -531,6 +667,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                   handleElementUpdate(element.id, { data: updates.content });
                 }
               }}
+              onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
               onDelete={() => handleElementDelete(element.id)}
             />
           );
@@ -543,8 +680,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     size={element.size}
                     data={element.data}
                     isSelected={isSelected}
-                    onSelect={() => setSelectedElementId(element.id)}
+                    isMultiSelected={isMultiSelected}
+                    onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
+                    onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
@@ -557,7 +696,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                         slug: itemData.slug,
                         icon: itemData.icon,
                         emoji: itemData.emoji,
-                        // Use correct property names expected by KnowledgeItemHexiElement
                         activity_domains: itemData.activity_domain ? {
                           color: itemData.activity_domain.color,
                           name: itemData.activity_domain.name,
@@ -575,7 +713,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                       let updatedElements: CanvasElement[];
 
                       if (convertAllMatching) {
-                        // Find all custom-hexi elements with the same label and convert them all
                         const matchingLabel = el.data.label;
                         
                         updatedElements = elements.map(e => {
@@ -592,7 +729,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                         setElements(updatedElements);
                         toast.success(`Saved "${itemData.name}" and converted all matching hexis!`);
                       } else {
-                        // Convert only this element
                         updatedElements = elements.map(e => {
                           if (e.id === el.id) {
                             return {
@@ -608,7 +744,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                         toast.success(`"${itemData.name}" saved and converted to KB item!`);
                       }
 
-                      // Auto-save to persist the type conversion
                       if (artifactId && projectId) {
                         updateArtifact.mutateAsync({
                           id: artifactId,
@@ -633,8 +768,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     size={element.size}
                     data={element.data}
                     isSelected={isSelected}
-                    onSelect={() => setSelectedElementId(element.id)}
+                    isMultiSelected={isMultiSelected}
+                    onSelect={(e) => handleElementSelect(element.id, e?.shiftKey ?? false)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
+                    onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
                     onResize={(newSize) => handleElementUpdate(element.id, { size: newSize })}
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}

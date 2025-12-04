@@ -12,9 +12,11 @@ interface StickyNoteElementProps {
     color?: string;
   };
   isSelected?: boolean;
-  onSelect?: () => void;
+  isMultiSelected?: boolean;
+  onSelect?: (e?: React.PointerEvent | React.MouseEvent) => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
+  onMoveGroup?: (delta: { dx: number; dy: number }) => void;
   onContentChange?: (data: { text: string; color?: string }) => void;
   onDelete?: () => void;
 }
@@ -25,8 +27,10 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
   size,
   data,
   isSelected,
+  isMultiSelected,
   onSelect,
   onMove,
+  onMoveGroup,
   onContentChange,
   onDelete,
 }) => {
@@ -54,7 +58,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
     if (e.button !== 0 || isEditing) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { px: e.clientX, py: e.clientY, x, y };
-    onSelect?.();
+    onSelect?.(e);
     e.stopPropagation();
   };
 
@@ -76,9 +80,13 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
       setEditText(data.text);
       setTimeout(() => textareaRef.current?.focus(), 0);
     } else {
-      const nx = Math.round(drag.current.x + dx);
-      const ny = Math.round(drag.current.y + dy);
-      onMove?.({ x: nx, y: ny });
+      if (isMultiSelected && onMoveGroup) {
+        onMoveGroup({ dx, dy });
+      } else {
+        const nx = Math.round(drag.current.x + dx);
+        const ny = Math.round(drag.current.y + dy);
+        onMove?.({ x: nx, y: ny });
+      }
     }
     
     drag.current = null;
