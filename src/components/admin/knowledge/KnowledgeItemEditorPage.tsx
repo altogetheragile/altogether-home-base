@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { knowledgeItemSchema, knowledgeItemDefaults, type KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 import { useCreateKnowledgeItem, useUpdateKnowledgeItem, type KnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
@@ -87,6 +87,8 @@ const stepConfigs = [
 
 export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: KnowledgeItemEditorPageProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('from');
   const { toast } = useToast();
   
   // State management
@@ -450,6 +452,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
           isEditing={isEditing}
           itemName={knowledgeItem?.name}
           currentStep={stepConfigs[currentStep]?.title}
+          returnTo={returnTo}
         />
 
         {/* Compact Header */}

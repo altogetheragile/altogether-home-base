@@ -8,22 +8,25 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
-import { ChevronRight, Database, Edit3, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChevronRight, Database, Edit3, Plus, LayoutGrid } from 'lucide-react';
 
 interface KnowledgeBreadcrumbProps {
   isEditing: boolean;
   itemName?: string;
   currentStep?: string;
+  returnTo?: string | null;
 }
 
 export const KnowledgeBreadcrumb: React.FC<KnowledgeBreadcrumbProps> = ({
   isEditing,
   itemName,
-  currentStep
+  currentStep,
+  returnTo
 }) => {
   return (
     <div className="bg-muted/30 border-b">
-      <div className="container mx-auto px-6 py-3">
+      <div className="container mx-auto px-6 py-3 flex items-center justify-between">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -65,10 +68,19 @@ export const KnowledgeBreadcrumb: React.FC<KnowledgeBreadcrumbProps> = ({
                     {currentStep}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
-              </>
-            )}
-          </BreadcrumbList>
-        </Breadcrumb>
+            </>
+          )}
+        </BreadcrumbList>
+      </Breadcrumb>
+      
+      {returnTo === 'project-model' && (
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/project-modelling" className="flex items-center gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            Return to Project Model
+          </Link>
+        </Button>
+      )}
       </div>
     </div>
   );

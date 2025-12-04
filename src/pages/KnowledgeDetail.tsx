@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useKnowledgeItemBySlug } from "@/hooks/useKnowledgeItems";
@@ -24,13 +24,15 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered, MessageCircle } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered, MessageCircle, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const KnowledgeDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const fromProjectModel = searchParams.get('from') === 'project-model';
   const { data: item, isLoading, error } = useKnowledgeItemBySlug(slug!);
   const { data: useCases } = useKnowledgeUseCases(item?.id);
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
@@ -100,7 +102,7 @@ const KnowledgeDetail = () => {
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="border-b bg-muted/20">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -114,6 +116,15 @@ const KnowledgeDetail = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+            
+            {fromProjectModel && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/project-modelling" className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  Return to Project Model
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
