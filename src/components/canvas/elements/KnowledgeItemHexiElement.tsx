@@ -128,16 +128,23 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             strokeLinecap="round"
           />
 
-          {/* Category indicator with tooltip */}
-          <foreignObject x={w/2 - 12} y={h/2 - 37} width={24} height={24} style={{ overflow: 'visible' }}>
+          {/* Category indicator - mini hexagon with tooltip */}
+          <foreignObject x={w/2 - 14} y={h/2 - 38} width={28} height={26} style={{ overflow: 'visible' }}>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div
-                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm cursor-pointer"
-                    style={{ backgroundColor: categoryColor }}
+                  <svg 
+                    width={28} 
+                    height={24} 
+                    viewBox="0 0 28 24" 
+                    className="cursor-pointer drop-shadow-sm"
                     onPointerDown={(e) => e.stopPropagation()}
-                  />
+                  >
+                    <polygon 
+                      points="7,0 21,0 28,12 21,24 7,24 0,12" 
+                      fill={categoryColor}
+                    />
+                  </svg>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs font-medium">
                   {data.category_name || 'Uncategorized'}
