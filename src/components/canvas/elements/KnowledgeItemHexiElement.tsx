@@ -133,18 +133,22 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <svg 
-                    width={28} 
-                    height={24} 
-                    viewBox="0 0 28 24" 
-                    className="cursor-pointer drop-shadow-sm"
+                  <div 
+                    className="cursor-pointer"
                     onPointerDown={(e) => e.stopPropagation()}
                   >
-                    <polygon 
-                      points="7,0 21,0 28,12 21,24 7,24 0,12" 
-                      fill={categoryColor}
-                    />
-                  </svg>
+                    <svg 
+                      width={28} 
+                      height={24} 
+                      viewBox="0 0 28 24" 
+                      className="drop-shadow-sm"
+                    >
+                      <polygon 
+                        points="7,0 21,0 28,12 21,24 7,24 0,12" 
+                        fill={categoryColor}
+                      />
+                    </svg>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs font-medium">
                   {data.category_name || 'Uncategorized'}
