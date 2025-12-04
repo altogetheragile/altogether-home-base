@@ -24,7 +24,7 @@ export interface KnowledgeItemHexiElementProps {
   };
   isSelected?: boolean;
   isMultiSelected?: boolean;
-  onSelect?: (e?: React.PointerEvent | React.MouseEvent) => void;
+  onSelect?: (e?: React.PointerEvent | React.MouseEvent, preserveIfSelected?: boolean) => void;
   onMove?: (position: { x: number; y: number }) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
   onDelete?: () => void;
@@ -82,7 +82,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     if (e.button !== 0) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { px: e.clientX, py: e.clientY, x, y };
-    onSelect?.(e);
+    // Pass true to preserve selection if this element is already selected (for group drag)
+    onSelect?.(e, true);
     e.stopPropagation();
   };
 

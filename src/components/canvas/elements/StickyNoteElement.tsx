@@ -13,7 +13,7 @@ interface StickyNoteElementProps {
   };
   isSelected?: boolean;
   isMultiSelected?: boolean;
-  onSelect?: (e?: React.PointerEvent | React.MouseEvent) => void;
+  onSelect?: (e?: React.PointerEvent | React.MouseEvent, preserveIfSelected?: boolean) => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
@@ -58,7 +58,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
     if (e.button !== 0 || isEditing) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { px: e.clientX, py: e.clientY, x, y };
-    onSelect?.(e);
+    onSelect?.(e, true);
     e.stopPropagation();
   };
 
