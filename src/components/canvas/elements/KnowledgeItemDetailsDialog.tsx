@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface KnowledgeItemDetailsDialogProps {
   isOpen: boolean;
@@ -32,13 +33,20 @@ interface KnowledgeItemDetailsDialogProps {
 export const KnowledgeItemDetailsDialog: React.FC<KnowledgeItemDetailsDialogProps> = ({
   isOpen,
   onClose,
+  knowledgeItemId,
   knowledgeItemData,
   onRemove,
 }) => {
   const navigate = useNavigate();
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
 
   const handleViewFullDetails = () => {
     navigate(`/knowledge/${knowledgeItemData.slug}`);
+  };
+
+  const handleEditInAdmin = () => {
+    navigate(`/admin/knowledge/items/${knowledgeItemId}/edit`);
   };
 
   return (
@@ -107,9 +115,15 @@ export const KnowledgeItemDetailsDialog: React.FC<KnowledgeItemDetailsDialogProp
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
+            {isAdmin && (
+              <Button variant="secondary" onClick={handleEditInAdmin}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
             <Button onClick={handleViewFullDetails}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View Full Details
+              <Eye className="h-4 w-4 mr-2" />
+              View
             </Button>
           </div>
         </DialogFooter>
