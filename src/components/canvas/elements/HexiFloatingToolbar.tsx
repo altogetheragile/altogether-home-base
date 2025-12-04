@@ -1,22 +1,26 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Move, Pencil, Copy, Trash2, BookmarkPlus } from 'lucide-react';
+import { Move, Eye, Pencil, Copy, Trash2, BookmarkPlus } from 'lucide-react';
 
 export interface HexiFloatingToolbarProps {
+  onView?: () => void;
   onEdit?: () => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
   onSaveToKB?: () => void;
+  showView?: boolean;
   showEdit?: boolean;
   showDuplicate?: boolean;
   showSaveToKB?: boolean;
 }
 
 export const HexiFloatingToolbar: React.FC<HexiFloatingToolbarProps> = ({
+  onView,
   onEdit,
   onDuplicate,
   onDelete,
   onSaveToKB,
+  showView = true,
   showEdit = true,
   showDuplicate = true,
   showSaveToKB = false,
@@ -31,6 +35,21 @@ export const HexiFloatingToolbar: React.FC<HexiFloatingToolbarProps> = ({
       >
         <Move className="h-3 w-3" />
       </Button>
+
+      {showView && onView && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 w-7 p-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onView();
+          }}
+          title="View"
+        >
+          <Eye className="h-3 w-3" />
+        </Button>
+      )}
       
       {showEdit && onEdit && (
         <Button
