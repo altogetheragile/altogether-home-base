@@ -48,6 +48,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [marqueeEnd, setMarqueeEnd] = useState({ x: 0, y: 0 });
   
   const canvasRef = useRef<HTMLDivElement>(null);
+  const wasMarqueeSelectingRef = useRef(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
@@ -366,6 +367,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const handleCanvasMouseUp = useCallback((e: React.MouseEvent) => {
     if (!isMarqueeSelecting) return;
     
+    // Mark that we just finished marquee selecting to prevent onClick from clearing selection
+    wasMarqueeSelectingRef.current = true;
+    setTimeout(() => { wasMarqueeSelectingRef.current = false; }, 0);
+    
     const box = {
       left: Math.min(marqueeStart.x, marqueeEnd.x),
       top: Math.min(marqueeStart.y, marqueeEnd.y),
@@ -589,8 +594,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           onMouseUp={handleCanvasMouseUp}
           onMouseLeave={() => setIsMarqueeSelecting(false)}
           onClick={(e) => {
-            // Deselect when clicking on canvas background
-            if (e.target === e.currentTarget && !isMarqueeSelecting) {
+            // Deselect when clicking on canvas background (but not after marquee selection)
+            if (e.target === e.currentTarget && !isMarqueeSelecting && !wasMarqueeSelectingRef.current) {
               setSelectedElementIds([]);
             }
           }}
