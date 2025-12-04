@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { KnowledgeItemDetailsDialog } from './KnowledgeItemDetailsDialog';
+import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { hexPoints, wrapLines } from '../hex-utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUserRole } from '@/hooks/useUserRole';
 
 export interface KnowledgeItemHexiElementProps {
   id: string;
@@ -44,8 +45,18 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   const { width: w = 140, height: h = 121 } = size;
   
   const ref = useRef<HTMLDivElement>(null);
-  const [showDetails, setShowDetails] = useState(false);
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+  const navigate = useNavigate();
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
+
+  const handleView = () => {
+    navigate(`/knowledge/${data.slug}`);
+  };
+
+  const handleEdit = () => {
+    navigate(`/admin/knowledge/items/${knowledgeItemId}/edit`);
+  };
 
   const stroke = data.domain_color ?? "#8B5CF6";
   const fill = `${(data.domain_color ?? "#8B5CF6")}30`;
@@ -99,10 +110,12 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         {/* Floating toolbar when selected */}
         {isSelected && (
           <HexiFloatingToolbar
-            onEdit={() => setShowDetails(true)}
+            onView={handleView}
+            onEdit={isAdmin ? handleEdit : undefined}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
-            showEdit={true}
+            showView={true}
+            showEdit={isAdmin}
             showDuplicate={true}
           />
         )}
@@ -176,17 +189,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           </Tooltip>
         </TooltipProvider>
       </div>
-
-      <KnowledgeItemDetailsDialog
-        isOpen={showDetails}
-        onClose={() => setShowDetails(false)}
-        knowledgeItemId={knowledgeItemId}
-        knowledgeItemData={data}
-        onRemove={() => {
-          setShowDetails(false);
-          onDelete?.();
-        }}
-      />
     </>
   );
 };
