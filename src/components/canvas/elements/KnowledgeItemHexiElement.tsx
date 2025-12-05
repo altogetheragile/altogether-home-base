@@ -169,17 +169,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           }} 
           shapeRendering="geometricPrecision"
         >
-          {/* Selection ring */}
-          {isSelected && (
-            <polygon
-              points={hexPoints(w, h)}
-              fill="none"
-              stroke="#3B82F6"
-              strokeWidth={2}
-              strokeDasharray="6 3"
-              transform={`translate(${w/2}, ${h/2}) scale(1.08) translate(${-w/2}, ${-h/2})`}
-            />
-          )}
           
           {/* hex shape */}
           <polygon 
@@ -191,17 +180,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             strokeLinecap="round"
           />
           
-          {/* Selection corner dots */}
-          {isSelected && (
-            <g className="selection-handles">
-              <circle cx={w/2} cy={4} r={4} fill="#3B82F6" />
-              <circle cx={w - 8} cy={h * 0.25 + 4} r={4} fill="#3B82F6" />
-              <circle cx={w - 8} cy={h * 0.75 - 4} r={4} fill="#3B82F6" />
-              <circle cx={w/2} cy={h - 4} r={4} fill="#3B82F6" />
-              <circle cx={8} cy={h * 0.75 - 4} r={4} fill="#3B82F6" />
-              <circle cx={8} cy={h * 0.25 + 4} r={4} fill="#3B82F6" />
-            </g>
-          )}
 
           {/* Category indicator - small circle centered above label */}
           <circle 
