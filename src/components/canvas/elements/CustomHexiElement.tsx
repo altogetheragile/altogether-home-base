@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { hexPoints, wrapLines } from '../hex-utils';
+import { hexPoints, wrapLines, getLightTint } from '../hex-utils';
 import { CustomHexiEditorDialog } from './CustomHexiEditorDialog';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { SaveToKBDialog, KBItemData } from './SaveToKBDialog';
@@ -66,7 +66,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
   const stroke = data.borderColor ?? data.color ?? "#8B5CF6";
-  const fill = data.fillColor ?? `${(data.color ?? "#8B5CF6")}30`;
+  const fill = data.fillColor || getLightTint(data.color ?? "#8B5CF6", 0.2);
   const labelLines = wrapLines(data.label || "New Hexagon");
 
   const onPointerDown = (e: React.PointerEvent) => {

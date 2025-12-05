@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
-import { hexPoints, wrapLines } from '../hex-utils';
+import { hexPoints, wrapLines, getLightTint } from '../hex-utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserRole } from '@/hooks/useUserRole';
 
@@ -76,18 +76,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     if (artifactId) params.set('artifactId', artifactId);
     if (projectId) params.set('projectId', projectId);
     navigate(`/admin/knowledge/items/${knowledgeItemId}/edit?${params.toString()}`);
-  };
-
-  // Convert hex color to opaque light tint (mix with white)
-  const getLightTint = (hexColor: string, tintPercent: number = 0.15) => {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const newR = Math.round(r * tintPercent + 255 * (1 - tintPercent));
-    const newG = Math.round(g * tintPercent + 255 * (1 - tintPercent));
-    const newB = Math.round(b * tintPercent + 255 * (1 - tintPercent));
-    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
   };
 
   const stroke = data.domain_color ?? "#8B5CF6";
