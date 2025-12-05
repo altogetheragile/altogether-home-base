@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2, Copy } from 'lucide-react';
 import { HexiColorPalette } from './HexiColorPalette';
+import { getLightTint } from '../hex-utils';
 import { HexiIconSelector } from './HexiIconSelector';
 import {
   AlertDialog,
@@ -113,7 +114,7 @@ export const CustomHexiEditorDialog: React.FC<CustomHexiEditorDialogProps> = ({
             <div className="space-y-2">
               <Label>Fill Color</Label>
               <HexiColorPalette
-                selectedColor={formData.fillColor ?? `${formData.color}30`}
+                selectedColor={formData.fillColor ?? getLightTint(formData.color ?? "#8B5CF6", 0.2)}
                 onColorChange={(color) => setFormData({ ...formData, fillColor: color })}
                 allowCustom
               />

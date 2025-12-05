@@ -30,6 +30,27 @@ export const getLightTint = (hexColor: string, tintPercent: number = 0.2): strin
   return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
 };
 
+// Ensure a fill color is opaque - handles transparent 8-char hex codes
+export const ensureOpaqueFill = (fillColor: string | undefined, baseColor?: string): string => {
+  if (!fillColor) return getLightTint(baseColor ?? "#8B5CF6", 0.2);
+  
+  const hex = fillColor.replace('#', '');
+  
+  // If it's an 8-character hex (RRGGBBAA format with transparency)
+  if (hex.length === 8 && /^[0-9A-Fa-f]{8}$/.test(hex)) {
+    const rgbOnly = hex.substring(0, 6);
+    return getLightTint('#' + rgbOnly, 0.2);
+  }
+  
+  // If it's already a valid 6-char opaque hex, return as-is
+  if (hex.length === 6 && /^[0-9A-Fa-f]{6}$/.test(hex)) {
+    return fillColor;
+  }
+  
+  // Fallback: derive from base color
+  return getLightTint(baseColor ?? "#8B5CF6", 0.2);
+};
+
 export const hexPoints = (w: number, h: number) => {
   // Proper flat-top regular hexagon for 140×121 base with slight inset to avoid stroke clipping
   const m = 2; // padding to keep stroke within viewBox
