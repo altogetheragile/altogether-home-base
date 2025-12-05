@@ -34,7 +34,25 @@ export const getLightTint = (hexColor: string, tintPercent: number = 0.2): strin
 export const ensureOpaqueFill = (fillColor: string | undefined, baseColor?: string): string => {
   if (!fillColor) return getLightTint(baseColor ?? "#8B5CF6", 0.2);
   
-  const hex = fillColor.replace('#', '');
+  const colorStr = fillColor.trim();
+  if (colorStr === '') return getLightTint(baseColor ?? "#8B5CF6", 0.2);
+  
+  // Handle rgba() or rgb() format - extract RGB and ignore alpha
+  const rgbaMatch = colorStr.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (rgbaMatch) {
+    const r = parseInt(rgbaMatch[1]);
+    const g = parseInt(rgbaMatch[2]);
+    const b = parseInt(rgbaMatch[3]);
+    const hexColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    return getLightTint(hexColor, 0.2);
+  }
+  
+  let hex = colorStr.replace('#', '');
+  
+  // Handle shorthand hex (e.g., "ABC" -> "AABBCC")
+  if (hex.length === 3 && /^[0-9A-Fa-f]{3}$/.test(hex)) {
+    hex = hex.split('').map(c => c + c).join('');
+  }
   
   // If it's an 8-character hex (RRGGBBAA format with transparency)
   if (hex.length === 8 && /^[0-9A-Fa-f]{8}$/.test(hex)) {
@@ -44,7 +62,7 @@ export const ensureOpaqueFill = (fillColor: string | undefined, baseColor?: stri
   
   // If it's already a valid 6-char opaque hex, return as-is
   if (hex.length === 6 && /^[0-9A-Fa-f]{6}$/.test(hex)) {
-    return fillColor;
+    return '#' + hex;
   }
   
   // Fallback: derive from base color
