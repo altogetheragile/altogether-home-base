@@ -131,9 +131,9 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
         viewBox={`0 0 ${width} ${height}`}
         style={{
           overflow: 'visible',
-          filter: isSelected 
-            ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 4px rgba(59, 130, 246, 1))' 
-            : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+        filter: (isSelected && !isMultiSelected)
+          ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 4px rgba(59, 130, 246, 1))' 
+          : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
         }}
       >
         
