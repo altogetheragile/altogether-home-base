@@ -727,6 +727,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     }}
                     isSelected={isSelected}
                     isMultiSelected={isMultiSelected}
+                    isMarqueeSelecting={isMarqueeSelecting}
                     onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
@@ -750,6 +751,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
               } as any}
               isSelected={isSelected}
               isMultiSelected={isMultiSelected}
+              isMarqueeSelecting={isMarqueeSelecting}
               onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
               onUpdate={(updates) => {
                 if (updates.position) {
@@ -775,6 +777,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     data={element.data}
                     isSelected={isSelected}
                     isMultiSelected={isMultiSelected}
+                    isMarqueeSelecting={isMarqueeSelecting}
                     onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
@@ -865,6 +868,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     data={element.data}
                     isSelected={isSelected}
                     isMultiSelected={isMultiSelected}
+                    isMarqueeSelecting={isMarqueeSelecting}
                     onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
                     onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
                     onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
