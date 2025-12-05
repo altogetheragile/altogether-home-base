@@ -13,6 +13,7 @@ interface StickyNoteElementProps {
   };
   isSelected?: boolean;
   isMultiSelected?: boolean;
+  isMarqueeSelecting?: boolean;
   onSelect?: (e?: React.PointerEvent | React.MouseEvent, preserveIfSelected?: boolean) => void;
   onResize?: (size: { width: number; height: number }) => void;
   onMove?: (position: { x: number; y: number }) => void;
@@ -30,6 +31,7 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
   data,
   isSelected,
   isMultiSelected,
+  isMarqueeSelecting,
   onSelect,
   onMove,
   onMoveGroup,
@@ -172,9 +174,9 @@ export const StickyNoteElement: React.FC<StickyNoteElementProps> = ({
           xmlns="http://www.w3.org/2000/svg" 
           style={{ 
             overflow: 'visible',
-          filter: (isSelected && !isMultiSelected)
-            ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 4px rgba(59, 130, 246, 1))' 
-            : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+            filter: (isSelected && !isMultiSelected && !isMarqueeSelecting)
+              ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 4px rgba(59, 130, 246, 1))' 
+              : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
           }}
         >
 
