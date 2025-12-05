@@ -78,8 +78,20 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     navigate(`/admin/knowledge/items/${knowledgeItemId}/edit?${params.toString()}`);
   };
 
+  // Convert hex color to opaque light tint (mix with white)
+  const getLightTint = (hexColor: string, tintPercent: number = 0.15) => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const newR = Math.round(r * tintPercent + 255 * (1 - tintPercent));
+    const newG = Math.round(g * tintPercent + 255 * (1 - tintPercent));
+    const newB = Math.round(b * tintPercent + 255 * (1 - tintPercent));
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  };
+
   const stroke = data.domain_color ?? "#8B5CF6";
-  const fill = `${(data.domain_color ?? "#8B5CF6")}30`;
+  const fill = getLightTint(data.domain_color ?? "#8B5CF6", 0.2);
   const categoryColor = data.category_color ?? "#6B7280";
 
   const lines = wrapLines(data.name);
