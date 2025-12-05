@@ -67,6 +67,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
 
   const stroke = data.borderColor ?? data.color ?? "#8B5CF6";
   const fill = ensureOpaqueFill(data.fillColor, data.color);
+  console.log('CustomHexi fill debug:', { label: data.label, inputFillColor: data.fillColor, inputColor: data.color, outputFill: fill });
   const labelLines = wrapLines(data.label || "New Hexagon");
 
   const onPointerDown = (e: React.PointerEvent) => {
