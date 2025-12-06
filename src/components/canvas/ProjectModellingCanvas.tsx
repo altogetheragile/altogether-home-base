@@ -415,7 +415,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     if (e.button !== 0) return;
     
     // Focus canvas for keyboard events
-    canvasRef.current?.focus();
+    canvasRef.current?.focus({ preventScroll: true });
     
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -682,7 +682,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             // Deselect when clicking on canvas background (but not after marquee selection)
             if (e.target === e.currentTarget && !isMarqueeSelecting && !wasMarqueeSelectingRef.current) {
               setSelectedElementIds([]);
-              canvasRef.current?.focus();
+              canvasRef.current?.focus({ preventScroll: true });
             }
           }}
         >
