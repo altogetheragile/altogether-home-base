@@ -2,18 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  slug: string;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface BacklogItem {
   id: string;
+  project_id: string | null;
   product_id: string | null;
   title: string;
   description: string | null;
@@ -33,65 +24,24 @@ export interface BacklogItem {
 export type BacklogItemInsert = Omit<BacklogItem, 'id' | 'created_at' | 'updated_at'>;
 export type BacklogItemUpdate = Partial<BacklogItemInsert>;
 
-export const useProducts = () => {
+export const useBacklogItems = (projectId?: string) => {
   return useQuery({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data as Product[];
-    },
-  });
-};
-
-export const useBacklogItems = (productId?: string) => {
-  return useQuery({
-    queryKey: ['backlog-items', productId],
+    queryKey: ['backlog-items', projectId],
     queryFn: async () => {
       let query = supabase
         .from('backlog_items')
         .select('*')
         .order('backlog_position', { ascending: true });
       
-      if (productId) {
-        query = query.eq('product_id', productId);
+      if (projectId) {
+        query = query.eq('project_id', projectId);
       }
       
       const { data, error } = await query;
       if (error) throw error;
       return data as BacklogItem[];
     },
-  });
-};
-
-export const useCreateProduct = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (product: { name: string; description?: string; slug: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      const { data, error } = await supabase
-        .from('products')
-        .insert({ ...product, created_by: user?.id })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data as Product;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast({ title: 'Product created successfully' });
-    },
-    onError: (error) => {
-      toast({ title: 'Failed to create product', description: error.message, variant: 'destructive' });
-    },
+    enabled: !!projectId,
   });
 };
 
@@ -103,11 +53,11 @@ export const useCreateBacklogItem = () => {
     mutationFn: async (item: Partial<BacklogItemInsert>) => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get max position
+      // Get max position for this project
       const { data: maxPosData } = await supabase
         .from('backlog_items')
         .select('backlog_position')
-        .eq('product_id', item.product_id || '')
+        .eq('project_id', item.project_id || '')
         .order('backlog_position', { ascending: false })
         .limit(1);
       

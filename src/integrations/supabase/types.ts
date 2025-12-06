@@ -286,6 +286,7 @@ export type Database = {
           id: string
           priority: string | null
           product_id: string | null
+          project_id: string | null
           source: string | null
           status: string | null
           tags: string[] | null
@@ -303,6 +304,7 @@ export type Database = {
           id?: string
           priority?: string | null
           product_id?: string | null
+          project_id?: string | null
           source?: string | null
           status?: string | null
           tags?: string[] | null
@@ -320,6 +322,7 @@ export type Database = {
           id?: string
           priority?: string | null
           product_id?: string | null
+          project_id?: string | null
           source?: string | null
           status?: string | null
           tags?: string[] | null
@@ -333,6 +336,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlog_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
