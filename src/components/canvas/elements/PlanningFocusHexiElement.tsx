@@ -115,7 +115,6 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
         outline: 'none',
       }}
       onMouseDown={handleMouseDown}
-      onClick={onSelect}
     >
       {/* Unified floating toolbar (hide during multi-select) */}
       {isSelected && !isMultiSelected && (

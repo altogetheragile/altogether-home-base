@@ -657,7 +657,8 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       >
         <div
           ref={canvasRef}
-          className="relative"
+          className="relative outline-none"
+          tabIndex={0}
           style={{
             transform: `scale(${zoom})`,
             transformOrigin: 'top left',
