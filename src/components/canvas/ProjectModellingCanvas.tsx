@@ -659,7 +659,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
 
       {/* Canvas Area */}
       <div 
-        className="flex-1 overflow-auto bg-muted/30 p-6"
+        className="flex-1 overflow-auto bg-muted/30"
       >
         <div
           ref={canvasRef}
@@ -668,10 +668,11 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           style={{
             transform: `scale(${zoom})`,
             transformOrigin: 'top left',
-            width: canvasBounds.width,
-            height: canvasBounds.height,
+            width: canvasBounds.width + 48,
+            height: canvasBounds.height + 48,
             minWidth: '100%',
             minHeight: '100%',
+            padding: '24px',
           }}
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
