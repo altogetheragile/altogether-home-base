@@ -1,4 +1,5 @@
 import React from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,35 +33,37 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <AuthProvider>
-            <Routes>
-              {/* Public Routes */}
-              {PublicRoutes()}
-              
-              {/* Protected User Routes */}
-              {ProtectedUserRoutes()}
-              
-              {/* Admin Routes */}
-              {AdminRoutes()}
-              
-              {/* Dynamic CMS Routes */}
-              {DynamicRoutes()}
-              
-              {/* 404 Fallback */}
-              {FallbackRoutes()}
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
+  <HelmetProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <AuthProvider>
+              <Routes>
+                {/* Public Routes */}
+                {PublicRoutes()}
+                
+                {/* Protected User Routes */}
+                {ProtectedUserRoutes()}
+                
+                {/* Admin Routes */}
+                {AdminRoutes()}
+                
+                {/* Dynamic CMS Routes */}
+                {DynamicRoutes()}
+                
+                {/* 404 Fallback */}
+                {FallbackRoutes()}
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  </HelmetProvider>
 );
 
 export default App;
