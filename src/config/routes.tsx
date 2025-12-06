@@ -37,6 +37,7 @@ const ProjectModellingCanvas = lazy(() => import('@/pages/ProjectModellingCanvas
 const Contact = lazy(() => import('@/pages/Contact'));
 const AccountSecurity = lazy(() => import('@/pages/AccountSecurity'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const ProductBacklog = lazy(() => import('@/pages/ProductBacklog'));
 
 // Protected Project Pages
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
@@ -168,6 +169,11 @@ export const PublicRoutes = () => {
     <Route path="/account/security" element={
       <Suspense fallback={<LoadingFallback />}>
         <AccountSecurity />
+      </Suspense>
+    } />
+    <Route path="/backlog" element={
+      <Suspense fallback={<LoadingFallback />}>
+        <ProductBacklog />
       </Suspense>
     } />
     </>
