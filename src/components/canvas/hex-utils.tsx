@@ -60,9 +60,9 @@ export const ensureOpaqueFill = (fillColor: string | undefined, baseColor?: stri
     return getLightTint('#' + rgbOnly, 0.2);
   }
   
-  // If it's already a valid 6-char opaque hex, return as-is
+  // If it's a valid 6-char opaque hex, return a pale tint of it
   if (hex.length === 6 && /^[0-9A-Fa-f]{6}$/.test(hex)) {
-    return '#' + hex;
+    return getLightTint('#' + hex, 0.2);
   }
   
   // Fallback: derive from base color
