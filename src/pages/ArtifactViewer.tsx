@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, Save } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
+import { BacklogList } from '@/components/backlog/BacklogList';
 import { toast } from 'sonner';
 
 export default function ArtifactViewer() {
@@ -109,6 +110,13 @@ export default function ArtifactViewer() {
               projectId={projectId}
             />
           </React.Suspense>
+        );
+      case 'product-backlog':
+        const backlogItems = artifact.data?.items || [];
+        return (
+          <div className="max-w-4xl mx-auto">
+            <BacklogList items={backlogItems} />
+          </div>
         );
       case 'canvas':
       case 'user_story':
