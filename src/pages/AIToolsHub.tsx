@@ -3,7 +3,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList } from "lucide-react";
 
 const AIToolsHub = () => {
   const tools = [
@@ -30,6 +30,14 @@ const AIToolsHub = () => {
       icon: LayoutTemplate,
       route: "/project-modelling",
       badge: "Brainstorm",
+    },
+    {
+      id: "product-backlog",
+      name: "Product Backlog",
+      description: "Capture, prioritize, and manage your product backlog. Track enhancements, bugs, and ideas with drag-and-drop ordering.",
+      icon: ClipboardList,
+      route: "/backlog",
+      badge: "Prioritize",
     },
   ];
 

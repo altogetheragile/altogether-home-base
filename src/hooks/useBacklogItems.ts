@@ -1,0 +1,205 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BacklogItem {
+  id: string;
+  product_id: string | null;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  backlog_position: number;
+  estimated_value: number | null;
+  estimated_effort: number | null;
+  source: string | null;
+  target_release: string | null;
+  tags: string[] | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type BacklogItemInsert = Omit<BacklogItem, 'id' | 'created_at' | 'updated_at'>;
+export type BacklogItemUpdate = Partial<BacklogItemInsert>;
+
+export const useProducts = () => {
+  return useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Product[];
+    },
+  });
+};
+
+export const useBacklogItems = (productId?: string) => {
+  return useQuery({
+    queryKey: ['backlog-items', productId],
+    queryFn: async () => {
+      let query = supabase
+        .from('backlog_items')
+        .select('*')
+        .order('backlog_position', { ascending: true });
+      
+      if (productId) {
+        query = query.eq('product_id', productId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as BacklogItem[];
+    },
+  });
+};
+
+export const useCreateProduct = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (product: { name: string; description?: string; slug: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase
+        .from('products')
+        .insert({ ...product, created_by: user?.id })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as Product;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({ title: 'Product created successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to create product', description: error.message, variant: 'destructive' });
+    },
+  });
+};
+
+export const useCreateBacklogItem = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (item: Partial<BacklogItemInsert>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get max position
+      const { data: maxPosData } = await supabase
+        .from('backlog_items')
+        .select('backlog_position')
+        .eq('product_id', item.product_id || '')
+        .order('backlog_position', { ascending: false })
+        .limit(1);
+      
+      const maxPosition = maxPosData?.[0]?.backlog_position ?? -1;
+      
+      const { data, error } = await supabase
+        .from('backlog_items')
+        .insert({
+          ...item,
+          created_by: user?.id,
+          backlog_position: maxPosition + 1,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as BacklogItem;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backlog-items'] });
+      toast({ title: 'Backlog item added' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to add item', description: error.message, variant: 'destructive' });
+    },
+  });
+};
+
+export const useUpdateBacklogItem = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: BacklogItemUpdate }) => {
+      const { data, error } = await supabase
+        .from('backlog_items')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as BacklogItem;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backlog-items'] });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to update item', description: error.message, variant: 'destructive' });
+    },
+  });
+};
+
+export const useDeleteBacklogItem = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('backlog_items')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backlog-items'] });
+      toast({ title: 'Item deleted' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to delete item', description: error.message, variant: 'destructive' });
+    },
+  });
+};
+
+export const useReorderBacklogItems = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (items: { id: string; backlog_position: number }[]) => {
+      const updates = items.map(item => 
+        supabase
+          .from('backlog_items')
+          .update({ backlog_position: item.backlog_position })
+          .eq('id', item.id)
+      );
+      
+      await Promise.all(updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backlog-items'] });
+    },
+  });
+};

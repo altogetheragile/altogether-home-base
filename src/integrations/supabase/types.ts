@@ -275,6 +275,68 @@ export type Database = {
         }
         Relationships: []
       }
+      backlog_items: {
+        Row: {
+          backlog_position: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          estimated_effort: number | null
+          estimated_value: number | null
+          id: string
+          priority: string | null
+          product_id: string | null
+          source: string | null
+          status: string | null
+          tags: string[] | null
+          target_release: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          backlog_position?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          estimated_effort?: number | null
+          estimated_value?: number | null
+          id?: string
+          priority?: string | null
+          product_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: string[] | null
+          target_release?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          backlog_position?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          estimated_effort?: number | null
+          estimated_value?: number | null
+          id?: string
+          priority?: string | null
+          product_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: string[] | null
+          target_release?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backlog_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_categories: {
         Row: {
           color: string | null
@@ -2231,6 +2293,36 @@ export type Database = {
           identifier?: string | null
           metadata?: Json | null
           timestamp?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
