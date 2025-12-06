@@ -10,21 +10,55 @@ import { Label } from '@/components/ui/label';
 import { 
   ClipboardList, 
   FolderOpen,
-  ArrowLeft
+  ArrowLeft,
+  Save,
+  Download
 } from 'lucide-react';
 import { BacklogQuickAdd } from '@/components/backlog/BacklogQuickAdd';
 import { BacklogList } from '@/components/backlog/BacklogList';
 import { useBacklogItems } from '@/hooks/useBacklogItems';
 import { useProjects } from '@/hooks/useProjects';
 import { supabase } from '@/integrations/supabase/client';
+import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
+import { exportToCSV } from '@/utils/exportUtils';
+import { toast } from 'sonner';
 
 const ProductBacklog: React.FC = () => {
   const navigate = useNavigate();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const { data: backlogItems = [], isLoading: itemsLoading } = useBacklogItems(selectedProjectId || undefined);
+
+  const handleExportBacklog = () => {
+    if (backlogItems.length === 0) {
+      toast.error('No backlog items to export');
+      return;
+    }
+
+    const exportData = backlogItems.map((item) => ({
+      Title: item.title,
+      Description: item.description || '',
+      Priority: item.priority || '',
+      Status: item.status || '',
+      'Estimated Value': item.estimated_value || '',
+      'Estimated Effort': item.estimated_effort || '',
+      Source: item.source || '',
+      'Target Release': item.target_release || '',
+      Tags: item.tags?.join(', ') || '',
+    }));
+
+    const projectName = selectedProject?.name || 'product-backlog';
+    exportToCSV(exportData, `${projectName}-backlog`);
+    toast.success('Backlog exported successfully');
+  };
+
+  const handleSaveComplete = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    toast.success('Backlog saved to project successfully');
+  };
 
   // Check authentication
   useEffect(() => {
@@ -109,6 +143,24 @@ const ProductBacklog: React.FC = () => {
               Capture and prioritize your product enhancements
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="default"
+              onClick={() => setSaveDialogOpen(true)}
+              disabled={backlogItems.length === 0}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save to Project
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleExportBacklog}
+              disabled={backlogItems.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </div>
 
         {/* Project Selector */}
@@ -178,6 +230,17 @@ const ProductBacklog: React.FC = () => {
       </main>
       
       <Footer />
+
+      <SaveToProjectDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        artifactType="product-backlog"
+        artifactName={selectedProject?.name ? `${selectedProject.name} - Backlog` : 'Product Backlog'}
+        artifactDescription="Product backlog items exported from the backlog tool"
+        artifactData={{ items: backlogItems }}
+        preselectedProjectId={selectedProjectId}
+        onSaveComplete={handleSaveComplete}
+      />
     </div>
   );
 };
