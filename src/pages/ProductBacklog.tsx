@@ -5,19 +5,17 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   ClipboardList, 
-  FolderOpen,
   ArrowLeft,
   Save,
-  Download
+  Download,
+  AlertTriangle
 } from 'lucide-react';
-import { BacklogQuickAdd } from '@/components/backlog/BacklogQuickAdd';
-import { BacklogList } from '@/components/backlog/BacklogList';
-import { useBacklogItems } from '@/hooks/useBacklogItems';
-import { useProjects } from '@/hooks/useProjects';
+import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd';
+import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
+import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
 import { supabase } from '@/integrations/supabase/client';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { exportToCSV } from '@/utils/exportUtils';
@@ -25,20 +23,31 @@ import { toast } from 'sonner';
 
 const ProductBacklog: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
-  const { data: projects = [], isLoading: projectsLoading } = useProjects();
-  const { data: backlogItems = [], isLoading: itemsLoading } = useBacklogItems(selectedProjectId || undefined);
+  const { 
+    items, 
+    addItem, 
+    updateItem, 
+    deleteItem, 
+    reorderItems, 
+    clearItems,
+    hasItems 
+  } = useLocalBacklogItems();
+
+  const handleAddItem = (input: LocalBacklogItemInput) => {
+    addItem(input);
+    toast.success('Item added to backlog');
+  };
 
   const handleExportBacklog = () => {
-    if (backlogItems.length === 0) {
+    if (items.length === 0) {
       toast.error('No backlog items to export');
       return;
     }
 
-    const exportData = backlogItems.map((item) => ({
+    const exportData = items.map((item) => ({
       Title: item.title,
       Description: item.description || '',
       Priority: item.priority || '',
@@ -50,14 +59,14 @@ const ProductBacklog: React.FC = () => {
       Tags: item.tags?.join(', ') || '',
     }));
 
-    const projectName = selectedProject?.name || 'product-backlog';
-    exportToCSV(exportData, `${projectName}-backlog`);
+    exportToCSV(exportData, 'product-backlog');
     toast.success('Backlog exported successfully');
   };
 
-  const handleSaveComplete = (projectId: string) => {
-    setSelectedProjectId(projectId);
+  const handleSaveComplete = () => {
+    clearItems();
     toast.success('Backlog saved to project successfully');
+    setSaveDialogOpen(false);
   };
 
   // Check authentication
@@ -74,15 +83,6 @@ const ProductBacklog: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  // Auto-select first project
-  useEffect(() => {
-    if (projects.length > 0 && !selectedProjectId) {
-      setSelectedProjectId(projects[0].id);
-    }
-  }, [projects, selectedProjectId]);
-
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
 
   if (isAuthenticated === null) {
     return (
@@ -147,7 +147,7 @@ const ProductBacklog: React.FC = () => {
             <Button 
               variant="default"
               onClick={() => setSaveDialogOpen(true)}
-              disabled={backlogItems.length === 0}
+              disabled={!hasItems}
             >
               <Save className="h-4 w-4 mr-2" />
               Save to Project
@@ -155,7 +155,7 @@ const ProductBacklog: React.FC = () => {
             <Button 
               variant="outline"
               onClick={handleExportBacklog}
-              disabled={backlogItems.length === 0}
+              disabled={!hasItems}
             >
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -163,70 +163,27 @@ const ProductBacklog: React.FC = () => {
           </div>
         </div>
 
-        {/* Project Selector */}
-        <Card className="mb-6">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 flex-1">
-                <FolderOpen className="h-5 w-5 text-muted-foreground" />
-                <Label className="text-sm font-medium">Project:</Label>
-                {projectsLoading ? (
-                  <div className="h-10 w-48 bg-muted animate-pulse rounded" />
-                ) : projects.length > 0 ? (
-                  <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                    <SelectTrigger className="w-[250px]">
-                      <SelectValue placeholder="Select a project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <span className="text-muted-foreground text-sm">No projects yet</span>
-                )}
-              </div>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-              >
-                Manage Projects
-              </Button>
-            </div>
-            
-            {selectedProject?.description && (
-              <p className="text-sm text-muted-foreground mt-2 ml-7">
-                {selectedProject.description}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Unsaved changes warning */}
+        {hasItems && (
+          <Alert variant="default" className="mb-6 border-amber-500/50 bg-amber-500/10">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-amber-700 dark:text-amber-300">
+              You have {items.length} unsaved backlog item{items.length !== 1 ? 's' : ''}. 
+              Click "Save to Project" to persist your work.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Main Content */}
-        {selectedProjectId ? (
-          <div className="space-y-6">
-            <BacklogQuickAdd projectId={selectedProjectId} />
-            <BacklogList items={backlogItems} isLoading={itemsLoading} />
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FolderOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Create a Project First</h3>
-              <p className="text-muted-foreground mb-4">
-                You need a project to start capturing backlog items.
-              </p>
-              <Button onClick={() => navigate('/dashboard')}>
-                Go to Dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <div className="space-y-6">
+          <LocalBacklogQuickAdd onAddItem={handleAddItem} />
+          <LocalBacklogList 
+            items={items} 
+            onUpdateItem={updateItem}
+            onDeleteItem={deleteItem}
+            onReorderItems={reorderItems}
+          />
+        </div>
       </main>
       
       <Footer />
@@ -235,10 +192,9 @@ const ProductBacklog: React.FC = () => {
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
         artifactType="product-backlog"
-        artifactName={selectedProject?.name ? `${selectedProject.name} - Backlog` : 'Product Backlog'}
+        artifactName="Product Backlog"
         artifactDescription="Product backlog items exported from the backlog tool"
-        artifactData={{ items: backlogItems }}
-        preselectedProjectId={selectedProjectId}
+        artifactData={{ items }}
         onSaveComplete={handleSaveComplete}
       />
     </div>
