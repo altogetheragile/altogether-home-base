@@ -34,6 +34,7 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
+    e.stopPropagation();
     setIsDragging(true);
     setDragStart({
       x: e.clientX,

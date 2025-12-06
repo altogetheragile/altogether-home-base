@@ -414,6 +414,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     if (e.target !== e.currentTarget) return;
     if (e.button !== 0) return;
     
+    // Focus canvas for keyboard events
+    canvasRef.current?.focus();
+    
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     
@@ -477,8 +480,11 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   // Keyboard shortcut for select all
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      console.log('Canvas keydown:', e.key, 'Cmd/Ctrl:', e.metaKey || e.ctrlKey);
+      
       if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
         e.preventDefault();
+        console.log('Select all triggered, elements:', elements.length);
         setSelectedElementIds(elements.map(el => el.id));
       }
       if (e.key === 'Escape') {
@@ -675,6 +681,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             // Deselect when clicking on canvas background (but not after marquee selection)
             if (e.target === e.currentTarget && !isMarqueeSelecting && !wasMarqueeSelectingRef.current) {
               setSelectedElementIds([]);
+              canvasRef.current?.focus();
             }
           }}
         >
