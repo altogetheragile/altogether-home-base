@@ -147,7 +147,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
           xmlns="http://www.w3.org/2000/svg" 
           style={{ 
             overflow: 'visible',
-            filter: (isSelected && !isMultiSelected && !isMarqueeSelecting)
+            filter: (isSelected && !isMarqueeSelecting)
               ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 4px rgba(59, 130, 246, 1))' 
               : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
           }}
