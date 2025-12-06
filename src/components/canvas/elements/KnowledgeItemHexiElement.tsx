@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
-import { hexPoints, wrapLines, getLightTint } from '../hex-utils';
+import { hexPoints, wrapLines, ensureOpaqueFill } from '../hex-utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserRole } from '@/hooks/useUserRole';
 
@@ -79,7 +79,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   };
 
   const stroke = data.domain_color ?? "#8B5CF6";
-  const fill = getLightTint(data.domain_color ?? "#8B5CF6", 0.2);
+  const fill = ensureOpaqueFill(data.domain_color, "#8B5CF6");
+  console.log('KnowledgeItemHexi fill debug:', { name: data.name, inputDomainColor: data.domain_color, outputFill: fill });
   const categoryColor = data.category_color ?? "#6B7280";
 
   const lines = wrapLines(data.name);
