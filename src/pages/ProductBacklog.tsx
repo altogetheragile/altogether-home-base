@@ -4,41 +4,27 @@ import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   ClipboardList, 
-  Plus, 
-  Package,
+  FolderOpen,
   ArrowLeft
 } from 'lucide-react';
 import { BacklogQuickAdd } from '@/components/backlog/BacklogQuickAdd';
 import { BacklogList } from '@/components/backlog/BacklogList';
-import { 
-  useProducts, 
-  useBacklogItems, 
-  useCreateProduct,
-  Product 
-} from '@/hooks/useBacklogItems';
+import { useBacklogItems } from '@/hooks/useBacklogItems';
+import { useProjects } from '@/hooks/useProjects';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const ProductBacklog: React.FC = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [selectedProductId, setSelectedProductId] = useState<string>('');
-  const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
-  const [newProductName, setNewProductName] = useState('');
-  const [newProductDescription, setNewProductDescription] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  const { data: products = [], isLoading: productsLoading } = useProducts();
-  const { data: backlogItems = [], isLoading: itemsLoading } = useBacklogItems(selectedProductId || undefined);
-  const createProduct = useCreateProduct();
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
+  const { data: backlogItems = [], isLoading: itemsLoading } = useBacklogItems(selectedProjectId || undefined);
 
   // Check authentication
   useEffect(() => {
@@ -55,36 +41,14 @@ const ProductBacklog: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Auto-select first product
+  // Auto-select first project
   useEffect(() => {
-    if (products.length > 0 && !selectedProductId) {
-      setSelectedProductId(products[0].id);
+    if (projects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(projects[0].id);
     }
-  }, [products, selectedProductId]);
+  }, [projects, selectedProjectId]);
 
-  const handleCreateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newProductName.trim()) return;
-
-    const slug = newProductName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    
-    try {
-      const result = await createProduct.mutateAsync({
-        name: newProductName,
-        description: newProductDescription || undefined,
-        slug,
-      });
-      
-      setSelectedProductId(result.id);
-      setNewProductName('');
-      setNewProductDescription('');
-      setIsCreateProductOpen(false);
-    } catch (error) {
-      // Error handled in hook
-    }
-  };
-
-  const selectedProduct = products.find(p => p.id === selectedProductId);
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
 
   if (isAuthenticated === null) {
     return (
@@ -147,105 +111,66 @@ const ProductBacklog: React.FC = () => {
           </div>
         </div>
 
-        {/* Product Selector */}
+        {/* Project Selector */}
         <Card className="mb-6">
           <CardContent className="py-4">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 flex-1">
-                <Package className="h-5 w-5 text-muted-foreground" />
-                <Label className="text-sm font-medium">Product:</Label>
-                {productsLoading ? (
+                <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                <Label className="text-sm font-medium">Project:</Label>
+                {projectsLoading ? (
                   <div className="h-10 w-48 bg-muted animate-pulse rounded" />
-                ) : products.length > 0 ? (
-                  <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                ) : projects.length > 0 ? (
+                  <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
                     <SelectTrigger className="w-[250px]">
-                      <SelectValue placeholder="Select a product" />
+                      <SelectValue placeholder="Select a project" />
                     </SelectTrigger>
                     <SelectContent>
-                      {products.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name}
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 ) : (
-                  <span className="text-muted-foreground text-sm">No products yet</span>
+                  <span className="text-muted-foreground text-sm">No projects yet</span>
                 )}
               </div>
               
-              <Dialog open={isCreateProductOpen} onOpenChange={setIsCreateProductOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Product
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Product</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateProduct} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Product Name</Label>
-                      <Input
-                        placeholder="e.g., Altogether Agile"
-                        value={newProductName}
-                        onChange={(e) => setNewProductName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Description (optional)</Label>
-                      <Textarea
-                        placeholder="Brief description of the product"
-                        value={newProductDescription}
-                        onChange={(e) => setNewProductDescription(e.target.value)}
-                        rows={3}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        type="button" 
-                        variant="ghost"
-                        onClick={() => setIsCreateProductOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={createProduct.isPending}>
-                        Create Product
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+              >
+                Manage Projects
+              </Button>
             </div>
             
-            {selectedProduct?.description && (
+            {selectedProject?.description && (
               <p className="text-sm text-muted-foreground mt-2 ml-7">
-                {selectedProduct.description}
+                {selectedProject.description}
               </p>
             )}
           </CardContent>
         </Card>
 
         {/* Main Content */}
-        {selectedProductId ? (
+        {selectedProjectId ? (
           <div className="space-y-6">
-            <BacklogQuickAdd productId={selectedProductId} />
+            <BacklogQuickAdd projectId={selectedProjectId} />
             <BacklogList items={backlogItems} isLoading={itemsLoading} />
           </div>
         ) : (
           <Card>
             <CardContent className="py-12 text-center">
-              <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Create Your First Product</h3>
+              <FolderOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Create a Project First</h3>
               <p className="text-muted-foreground mb-4">
-                Get started by creating a product to track its backlog items.
+                You need a project to start capturing backlog items.
               </p>
-              <Button onClick={() => setIsCreateProductOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Product
+              <Button onClick={() => navigate('/dashboard')}>
+                Go to Dashboard
               </Button>
             </CardContent>
           </Card>

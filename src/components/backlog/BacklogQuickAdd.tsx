@@ -8,7 +8,7 @@ import { Plus, Sparkles } from 'lucide-react';
 import { useCreateBacklogItem } from '@/hooks/useBacklogItems';
 
 interface BacklogQuickAddProps {
-  productId: string;
+  projectId: string;
 }
 
 const SOURCES = [
@@ -26,7 +26,7 @@ const PRIORITIES = [
   { value: 'low', label: 'Low' },
 ];
 
-export const BacklogQuickAdd: React.FC<BacklogQuickAddProps> = ({ productId }) => {
+export const BacklogQuickAdd: React.FC<BacklogQuickAddProps> = ({ projectId }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -40,7 +40,7 @@ export const BacklogQuickAdd: React.FC<BacklogQuickAddProps> = ({ productId }) =
     if (!title.trim()) return;
 
     await createItem.mutateAsync({
-      product_id: productId,
+      project_id: projectId,
       title: title.trim(),
       description: description.trim() || null,
       priority,
