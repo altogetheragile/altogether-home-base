@@ -659,7 +659,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
 
       {/* Canvas Area */}
       <div 
-        className="flex-1 overflow-auto bg-muted/30"
+        className="flex-1 overflow-auto bg-muted/30 p-6"
       >
         <div
           ref={canvasRef}
