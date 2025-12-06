@@ -3,11 +3,14 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Pencil, Save } from 'lucide-react';
+import { ArrowLeft, Pencil, Save, Download, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
-import { BacklogList } from '@/components/backlog/BacklogList';
+import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
+import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd';
+import { LocalBacklogItem, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
+import { exportToCSV } from '@/utils/exportUtils';
 import { toast } from 'sonner';
 
 export default function ArtifactViewer() {
@@ -17,26 +20,33 @@ export default function ArtifactViewer() {
   const { data: project, isLoading: isLoadingProject } = useProject(projectId);
   const { updateArtifact } = useProjectArtifactMutations();
   const bmcRef = useRef<BusinessModelCanvasRef>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState<any>(null);
+  
+  // BMC editing state
+  const [isEditingBMC, setIsEditingBMC] = useState(false);
+  const [editedBMCData, setEditedBMCData] = useState<any>(null);
+  
+  // Backlog editing state
+  const [isEditingBacklog, setIsEditingBacklog] = useState(false);
+  const [editedBacklogItems, setEditedBacklogItems] = useState<LocalBacklogItem[]>([]);
 
+  // BMC handlers
   const handleBMCDataChange = (newData: any) => {
-    setEditedData(newData);
+    setEditedBMCData(newData);
   };
 
-  const handleStartEdit = () => {
+  const handleStartEditBMC = () => {
     const originalBmcData = artifact?.data?.bmcData || artifact?.data;
-    setEditedData(originalBmcData);
-    setIsEditing(true);
+    setEditedBMCData(originalBmcData);
+    setIsEditingBMC(true);
   };
 
-  const handleSaveChanges = async () => {
-    if (!artifact || !editedData) return;
+  const handleSaveBMCChanges = async () => {
+    if (!artifact || !editedBMCData) return;
     
     try {
       const updatedArtifactData = {
         ...artifact.data,
-        bmcData: editedData,
+        bmcData: editedBMCData,
       };
       
       await updateArtifact.mutateAsync({
@@ -45,17 +55,121 @@ export default function ArtifactViewer() {
       });
       
       toast.success('Changes saved successfully');
-      setIsEditing(false);
-      setEditedData(null);
+      setIsEditingBMC(false);
+      setEditedBMCData(null);
     } catch (error) {
       toast.error('Failed to save changes');
       console.error('Error saving artifact:', error);
     }
   };
 
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditedData(null);
+  const handleCancelEditBMC = () => {
+    setIsEditingBMC(false);
+    setEditedBMCData(null);
+  };
+
+  // Backlog handlers
+  const handleStartEditBacklog = () => {
+    const items = artifact?.data?.items || [];
+    // Convert to LocalBacklogItem format with positions
+    const localItems: LocalBacklogItem[] = items.map((item: any, index: number) => ({
+      id: item.id || crypto.randomUUID(),
+      title: item.title,
+      description: item.description || null,
+      priority: item.priority || 'medium',
+      status: item.status || 'idea',
+      source: item.source || null,
+      estimated_value: item.estimated_value || null,
+      estimated_effort: item.estimated_effort || null,
+      tags: item.tags || null,
+      target_release: item.target_release || null,
+      backlog_position: item.backlog_position ?? index,
+    }));
+    setEditedBacklogItems(localItems);
+    setIsEditingBacklog(true);
+  };
+
+  const handleSaveBacklogChanges = async () => {
+    if (!artifact) return;
+    
+    try {
+      const updatedArtifactData = {
+        ...artifact.data,
+        items: editedBacklogItems,
+      };
+      
+      await updateArtifact.mutateAsync({
+        id: artifact.id,
+        updates: { data: updatedArtifactData }
+      });
+      
+      toast.success('Backlog saved successfully');
+      setIsEditingBacklog(false);
+      setEditedBacklogItems([]);
+    } catch (error) {
+      toast.error('Failed to save changes');
+      console.error('Error saving artifact:', error);
+    }
+  };
+
+  const handleCancelEditBacklog = () => {
+    setIsEditingBacklog(false);
+    setEditedBacklogItems([]);
+  };
+
+  const handleAddBacklogItem = (input: LocalBacklogItemInput) => {
+    const newItem: LocalBacklogItem = {
+      ...input,
+      id: crypto.randomUUID(),
+      backlog_position: editedBacklogItems.length,
+    };
+    setEditedBacklogItems(prev => [...prev, newItem]);
+  };
+
+  const handleUpdateBacklogItem = (id: string, updates: Partial<LocalBacklogItem>) => {
+    setEditedBacklogItems(prev => prev.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    ));
+  };
+
+  const handleDeleteBacklogItem = (id: string) => {
+    setEditedBacklogItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleReorderBacklogItems = (updates: { id: string; backlog_position: number }[]) => {
+    setEditedBacklogItems(prev => {
+      const newItems = [...prev];
+      updates.forEach(({ id, backlog_position }) => {
+        const index = newItems.findIndex(item => item.id === id);
+        if (index !== -1) {
+          newItems[index] = { ...newItems[index], backlog_position };
+        }
+      });
+      return newItems.sort((a, b) => a.backlog_position - b.backlog_position);
+    });
+  };
+
+  const handleExportBacklog = () => {
+    const items = artifact?.data?.items || [];
+    if (items.length === 0) {
+      toast.error('No backlog items to export');
+      return;
+    }
+
+    const exportData = items.map((item: any) => ({
+      Title: item.title,
+      Description: item.description || '',
+      Priority: item.priority || '',
+      Status: item.status || '',
+      'Estimated Value': item.estimated_value || '',
+      'Estimated Effort': item.estimated_effort || '',
+      Source: item.source || '',
+      'Target Release': item.target_release || '',
+      Tags: item.tags?.join(', ') || '',
+    }));
+
+    exportToCSV(exportData, `${artifact?.name || 'product-backlog'}`);
+    toast.success('Backlog exported successfully');
   };
 
   if (isLoadingArtifact || isLoadingProject) {
@@ -81,24 +195,21 @@ export default function ArtifactViewer() {
   const renderArtifactContent = () => {
     switch (artifact.artifact_type) {
       case 'bmc':
-        // Extract bmcData from the saved artifact structure
         const originalBmcData = artifact.data?.bmcData || artifact.data;
-        // Use editedData if available (during editing), otherwise use original
-        const bmcData = editedData || originalBmcData;
+        const bmcData = editedBMCData || originalBmcData;
         return (
           <div className="max-w-7xl mx-auto">
             <BusinessModelCanvas
               ref={bmcRef}
               data={bmcData}
               companyName={artifact.name}
-              isEditable={isEditing}
+              isEditable={isEditingBMC}
               showWatermark={false}
               onDataChange={handleBMCDataChange}
             />
           </div>
         );
       case 'project-model':
-        // Dynamically import and render the Project Modelling Canvas
         const ProjectModellingCanvas = React.lazy(() => 
           import('@/components/canvas/ProjectModellingCanvas').then(m => ({ default: m.ProjectModellingCanvas }))
         );
@@ -112,10 +223,42 @@ export default function ArtifactViewer() {
           </React.Suspense>
         );
       case 'product-backlog':
-        const backlogItems = artifact.data?.items || [];
+        if (isEditingBacklog) {
+          return (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <LocalBacklogQuickAdd onAddItem={handleAddBacklogItem} />
+              <LocalBacklogList 
+                items={editedBacklogItems}
+                onUpdateItem={handleUpdateBacklogItem}
+                onDeleteItem={handleDeleteBacklogItem}
+                onReorderItems={handleReorderBacklogItems}
+                isEditable={true}
+              />
+            </div>
+          );
+        }
+        const backlogItems: LocalBacklogItem[] = (artifact.data?.items || []).map((item: any, index: number) => ({
+          id: item.id || crypto.randomUUID(),
+          title: item.title,
+          description: item.description || null,
+          priority: item.priority || 'medium',
+          status: item.status || 'idea',
+          source: item.source || null,
+          estimated_value: item.estimated_value || null,
+          estimated_effort: item.estimated_effort || null,
+          tags: item.tags || null,
+          target_release: item.target_release || null,
+          backlog_position: item.backlog_position ?? index,
+        }));
         return (
           <div className="max-w-4xl mx-auto">
-            <BacklogList items={backlogItems} />
+            <LocalBacklogList 
+              items={backlogItems}
+              onUpdateItem={() => {}}
+              onDeleteItem={() => {}}
+              onReorderItems={() => {}}
+              isEditable={false}
+            />
           </div>
         );
       case 'canvas':
@@ -139,6 +282,70 @@ export default function ArtifactViewer() {
     }
   };
 
+  const renderHeaderActions = () => {
+    // BMC actions
+    if (artifact.artifact_type === 'bmc') {
+      if (isEditingBMC) {
+        return (
+          <>
+            <Button variant="outline" onClick={handleCancelEditBMC}>
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveBMCChanges}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </>
+        );
+      }
+      return (
+        <>
+          <Button variant="outline" onClick={handleStartEditBMC}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <BMCExportDialog
+            canvasRef={bmcRef}
+            companyName={artifact.name}
+          />
+        </>
+      );
+    }
+
+    // Product backlog actions
+    if (artifact.artifact_type === 'product-backlog') {
+      if (isEditingBacklog) {
+        return (
+          <>
+            <Button variant="outline" onClick={handleCancelEditBacklog}>
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveBacklogChanges}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </>
+        );
+      }
+      return (
+        <>
+          <Button variant="outline" onClick={handleStartEditBacklog}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button variant="outline" onClick={handleExportBacklog}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
@@ -149,29 +356,7 @@ export default function ArtifactViewer() {
               AltogetherAgile
             </Link>
             <div className="flex gap-2">
-              {artifact.artifact_type === 'bmc' && !isEditing && (
-                <Button variant="outline" onClick={handleStartEdit}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-              {isEditing && (
-                <>
-                  <Button variant="outline" onClick={handleCancelEdit}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveChanges}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </Button>
-                </>
-              )}
-              {artifact.artifact_type === 'bmc' && !isEditing && (
-                <BMCExportDialog
-                  canvasRef={bmcRef}
-                  companyName={artifact.name}
-                />
-              )}
+              {renderHeaderActions()}
             </div>
           </div>
           {/* Bottom row: Back button and title */}
