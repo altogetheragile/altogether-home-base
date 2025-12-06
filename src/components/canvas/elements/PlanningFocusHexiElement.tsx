@@ -102,6 +102,7 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
 
   return (
     <div
+      className="select-none"
       style={{
         position: 'absolute',
         left: element.position.x,
@@ -114,6 +115,8 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
         backfaceVisibility: 'hidden',
         pointerEvents: 'auto',
         outline: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
       }}
       onMouseDown={handleMouseDown}
     >
