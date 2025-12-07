@@ -17,7 +17,7 @@ export default function EditKnowledgeItem() {
         .from('knowledge_items')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
@@ -41,6 +41,17 @@ export default function EditKnowledgeItem() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive">Error loading knowledge item: {(error as Error).message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoading && !knowledgeItem) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl font-semibold text-foreground mb-2">Knowledge Item Not Found</p>
+          <p className="text-muted-foreground">The requested item does not exist or you don't have permission to view it.</p>
         </div>
       </div>
     );

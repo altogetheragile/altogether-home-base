@@ -80,7 +80,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
 
   const stroke = data.domain_color ?? "#8B5CF6";
   const fill = ensureOpaqueFill(data.domain_color, "#8B5CF6");
-  console.log('KnowledgeItemHexi fill debug:', { name: data.name, inputDomainColor: data.domain_color, outputFill: fill });
   const categoryColor = data.category_color ?? "#6B7280";
 
   const lines = wrapLines(data.name);
