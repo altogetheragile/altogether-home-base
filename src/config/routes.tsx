@@ -101,6 +101,7 @@ const AdminAuditLogs = lazy(() => import('@/pages/admin/AdminAuditLogs'));
 const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
 const AdminContacts = lazy(() => import('@/pages/admin/AdminContacts'));
 const AdminFeedback = lazy(() => import('@/pages/admin/AdminFeedback'));
+const PopulateBacklog = lazy(() => import('@/pages/admin/PopulateBacklog'));
 const AdminImports = lazy(() => import('@/pages/admin/AdminImports'));
 
 // Dynamic Pages
@@ -475,6 +476,11 @@ export const AdminRoutes = () => {
         <Route path="feedback" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminFeedback />
+          </Suspense>
+        } />
+        <Route path="populate-backlog" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <PopulateBacklog />
           </Suspense>
         } />
       </Route>
