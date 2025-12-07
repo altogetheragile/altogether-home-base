@@ -7,6 +7,7 @@ import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
 import { PlanningFocusHexiElement } from './elements/PlanningFocusHexiElement';
 import { CustomHexiElement } from './elements/CustomHexiElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
+import { ArtifactLinkHexiElement } from './elements/ArtifactLinkHexiElement';
 import { Toolbar } from './Toolbar';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
@@ -18,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface CanvasElement {
   id: string;
-  type: 'knowledge-item' | 'planning-focus' | 'custom-hexi' | 'sticky-note';
+  type: 'knowledge-item' | 'planning-focus' | 'custom-hexi' | 'sticky-note' | 'artifact-link';
   position: { x: number; y: number };
   size: { width: number; height: number };
   data: any;
@@ -265,6 +266,22 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     };
     setElements([...elements, newElement]);
     toast.success('Added Custom Hexi');
+  }, [elements]);
+
+  const handleAddArtifactLink = useCallback(() => {
+    const newElement: CanvasElement = {
+      id: crypto.randomUUID(),
+      type: 'artifact-link',
+      position: { x: 200 + elements.length * 20, y: 200 + elements.length * 20 },
+      size: { width: 140, height: 121 },
+      data: { 
+        linkType: 'placeholder',
+        label: 'Link...', 
+        color: '#9CA3AF',
+      },
+    };
+    setElements([...elements, newElement]);
+    toast.success('Added Artifact Link');
   }, [elements]);
 
   const handleAddElement = useCallback((type: string) => {
@@ -646,6 +663,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             onAddKnowledgeItem={handleAddKnowledgeItem}
             onAddPlanningFocus={handleAddPlanningFocus}
             onAddCustomHexi={handleAddCustomHexi}
+            onAddArtifactLink={handleAddArtifactLink}
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             onExport={handleExport}
@@ -886,6 +904,28 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onResize={(newSize) => handleElementUpdate(element.id, { size: newSize })}
                     onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
                     onDelete={() => handleElementDelete(element.id)}
+                  />
+                );
+              case 'artifact-link':
+                return (
+                  <ArtifactLinkHexiElement
+                    key={element.id}
+                    id={element.id}
+                    position={getVisualPosition(element)}
+                    size={element.size}
+                    data={element.data}
+                    isSelected={isSelected}
+                    isMultiSelected={isMultiSelected}
+                    isMarqueeSelecting={isMarqueeSelecting}
+                    projectId={projectId}
+                    onSelect={(e, preserveIfSelected) => handleElementSelect(element.id, e?.shiftKey ?? false, preserveIfSelected)}
+                    onMove={(newPos) => handleElementUpdate(element.id, { position: newPos })}
+                    onMoveGroup={(delta) => handleGroupMove(element.id, delta)}
+                    onGroupDragStart={handleGroupDragStart}
+                    onGroupDragProgress={handleGroupDragProgress}
+                    onContentChange={(newData) => handleElementUpdate(element.id, { data: newData })}
+                    onDelete={() => handleElementDelete(element.id)}
+                    onDuplicate={() => handleDuplicateElement(element.id)}
                   />
                 );
               default:

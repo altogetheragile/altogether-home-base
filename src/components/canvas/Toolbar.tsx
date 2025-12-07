@@ -7,7 +7,8 @@ import {
   Download,
   Hexagon,
   Layers,
-  Save
+  Save,
+  Link2
 } from 'lucide-react';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 import { PlanningFocusSelector } from './elements/PlanningFocusSelector';
@@ -24,6 +25,7 @@ interface ToolbarProps {
   onAddKnowledgeItem?: (itemId: string, itemData: any) => void;
   onAddCustomHexi?: () => void;
   onAddPlanningFocus?: (focusId: string, focusData: any) => void;
+  onAddArtifactLink?: () => void;
   existingKnowledgeItemIds?: string[];
   artifactId?: string;
   onSaveChanges?: () => void;
@@ -41,6 +43,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onAddKnowledgeItem,
   onAddCustomHexi,
   onAddPlanningFocus,
+  onAddArtifactLink,
   existingKnowledgeItemIds = [],
   artifactId,
   onSaveChanges,
@@ -92,6 +95,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         >
           <Hexagon className="h-4 w-4 mr-2" />
           Sticky Note
+        </Button>
+
+        {/* Artifact Link */}
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => onAddArtifactLink?.()}
+          title="Add Artifact Link"
+        >
+          <Link2 className="h-4 w-4 mr-2" />
+          Artifact Link
         </Button>
 
       <Separator orientation="vertical" className="h-6" />
