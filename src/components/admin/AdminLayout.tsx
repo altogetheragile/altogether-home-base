@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare, Database } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -164,6 +164,13 @@ const AdminLayout = () => {
       icon: Users,
       paths: ['/admin/users'],
       href: '/admin/users'
+    },
+    {
+      id: 'populate-backlog',
+      label: 'Populate Backlog',
+      icon: Database,
+      paths: ['/admin/populate-backlog'],
+      href: '/admin/populate-backlog'
     },
     {
       id: 'events',
