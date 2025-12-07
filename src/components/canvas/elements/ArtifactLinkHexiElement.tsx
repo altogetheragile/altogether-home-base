@@ -4,7 +4,47 @@ import { hexPoints, wrapLines, ensureOpaqueFill, getLightTint } from '../hex-uti
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { ArtifactLinkDialog } from './ArtifactLinkDialog';
 import { ArtifactLinkEditorDialog } from './ArtifactLinkEditorDialog';
-import * as LucideIcons from 'lucide-react';
+import { 
+  Plus, 
+  Link2, 
+  ExternalLink, 
+  File, 
+  FileText, 
+  Image, 
+  Video, 
+  Music, 
+  Table, 
+  Presentation,
+  LayoutGrid,
+  ListTodo,
+  BookOpen,
+  User,
+  Heart,
+  Route,
+  Hexagon,
+  type LucideIcon
+} from 'lucide-react';
+
+// Icon map for dynamic icon lookup
+const ICON_MAP: Record<string, LucideIcon> = {
+  Plus,
+  Link2,
+  ExternalLink,
+  File,
+  FileText,
+  Image,
+  Video,
+  Music,
+  Table,
+  Presentation,
+  LayoutGrid,
+  ListTodo,
+  BookOpen,
+  User,
+  Heart,
+  Route,
+  Hexagon,
+};
 
 export interface ArtifactLinkData {
   linkType: 'placeholder' | 'artifact' | 'file' | 'external';
@@ -144,7 +184,7 @@ export const ArtifactLinkHexiElement: React.FC<ArtifactLinkHexiElementProps> = (
   const isPlaceholder = data.linkType === 'placeholder';
 
   const iconName = getIconForLinkType(data);
-  const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.Link2;
+  const IconComponent = ICON_MAP[iconName] || Link2;
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (isMarqueeSelecting) return;
@@ -345,9 +385,9 @@ export const ArtifactLinkHexiElement: React.FC<ArtifactLinkHexiElementProps> = (
               <circle cx={0} cy={0} r={8} fill={borderColor} />
               <foreignObject x={-6} y={-6} width={12} height={12}>
                 <div className="flex items-center justify-center w-full h-full text-white">
-                  {data.linkType === 'artifact' && <LucideIcons.Link2 className="w-3 h-3" />}
-                  {data.linkType === 'file' && <LucideIcons.File className="w-3 h-3" />}
-                  {data.linkType === 'external' && <LucideIcons.ExternalLink className="w-3 h-3" />}
+                  {data.linkType === 'artifact' && <Link2 className="w-3 h-3" />}
+                  {data.linkType === 'file' && <File className="w-3 h-3" />}
+                  {data.linkType === 'external' && <ExternalLink className="w-3 h-3" />}
                 </div>
               </foreignObject>
             </g>
