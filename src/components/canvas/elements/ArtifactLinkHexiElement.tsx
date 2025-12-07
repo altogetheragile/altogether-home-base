@@ -241,8 +241,10 @@ export const ArtifactLinkHexiElement: React.FC<ArtifactLinkHexiElementProps> = (
     if (isDragging) return;
     e.stopPropagation();
     
-    // Double-click to open link
-    if (e.detail === 2) {
+    // Single-click on placeholder opens link dialog, double-click on linked items opens them
+    if (data.linkType === 'placeholder') {
+      setShowLinkDialog(true);
+    } else if (e.detail === 2) {
       handleOpen();
     }
   };
