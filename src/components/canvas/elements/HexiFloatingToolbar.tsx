@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Move, Eye, Pencil, Copy, Trash2, BookmarkPlus } from 'lucide-react';
+import { Move, Eye, Pencil, Copy, Trash2, BookmarkPlus, Link2 } from 'lucide-react';
 
 export interface HexiFloatingToolbarProps {
   onView?: () => void;
@@ -8,10 +8,13 @@ export interface HexiFloatingToolbarProps {
   onDuplicate?: () => void;
   onDelete?: () => void;
   onSaveToKB?: () => void;
+  onLinkResource?: () => void;
   showView?: boolean;
   showEdit?: boolean;
   showDuplicate?: boolean;
   showSaveToKB?: boolean;
+  showLinkResource?: boolean;
+  hasLinkedResource?: boolean;
 }
 
 export const HexiFloatingToolbar: React.FC<HexiFloatingToolbarProps> = ({
@@ -20,10 +23,13 @@ export const HexiFloatingToolbar: React.FC<HexiFloatingToolbarProps> = ({
   onDuplicate,
   onDelete,
   onSaveToKB,
+  onLinkResource,
   showView = true,
   showEdit = true,
   showDuplicate = true,
   showSaveToKB = false,
+  showLinkResource = false,
+  hasLinkedResource = false,
 }) => {
   return (
     <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card border rounded-md p-1 shadow-lg z-[9999]">
@@ -63,6 +69,21 @@ export const HexiFloatingToolbar: React.FC<HexiFloatingToolbarProps> = ({
           title="Edit"
         >
           <Pencil className="h-3 w-3" />
+        </Button>
+      )}
+
+      {showLinkResource && onLinkResource && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className={`h-7 w-7 p-0 ${hasLinkedResource ? 'text-primary' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onLinkResource();
+          }}
+          title={hasLinkedResource ? "Edit Linked Resource" : "Link Resource"}
+        >
+          <Link2 className="h-3 w-3" />
         </Button>
       )}
       

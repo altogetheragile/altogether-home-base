@@ -1,9 +1,12 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { hexPoints, wrapLines, ensureOpaqueFill } from '../hex-utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserRole } from '@/hooks/useUserRole';
+import { ArtifactLinkDialog } from './ArtifactLinkDialog';
+import type { ArtifactLinkData } from './ArtifactLinkHexiElement';
+import { Link2 } from 'lucide-react';
 
 export interface KnowledgeItemHexiElementProps {
   id: string;
@@ -21,6 +24,15 @@ export interface KnowledgeItemHexiElementProps {
     category_color?: string;
     icon?: string;
     emoji?: string;
+    // Linked resource data
+    linkedArtifactId?: string;
+    linkedArtifactType?: string;
+    linkedArtifactName?: string;
+    linkedFileUrl?: string;
+    linkedFileName?: string;
+    linkedExternalUrl?: string;
+    linkLabel?: string;
+    linkType?: 'artifact' | 'file' | 'external';
   };
   isSelected?: boolean;
   isMultiSelected?: boolean;
@@ -32,6 +44,7 @@ export interface KnowledgeItemHexiElementProps {
   onGroupDragProgress?: (delta: { dx: number; dy: number }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
+  onUpdateData?: (data: any) => void;
   artifactId?: string;
   projectId?: string;
 }
@@ -52,6 +65,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   onGroupDragProgress,
   onDelete,
   onDuplicate,
+  onUpdateData,
   artifactId,
   projectId,
 }) => {
@@ -63,6 +77,10 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
   const navigate = useNavigate();
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+
+  // Check if there's a linked resource
+  const hasLinkedResource = !!(data.linkedArtifactId || data.linkedFileUrl || data.linkedExternalUrl);
 
   const handleView = () => {
     const params = new URLSearchParams({ from: 'project-model' });
@@ -76,6 +94,38 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     if (artifactId) params.set('artifactId', artifactId);
     if (projectId) params.set('projectId', projectId);
     navigate(`/admin/knowledge/items/${knowledgeItemId}/edit?${params.toString()}`);
+  };
+
+  const handleLinkResource = () => {
+    setShowLinkDialog(true);
+  };
+
+  const handleSaveLink = (linkData: ArtifactLinkData) => {
+    if (onUpdateData) {
+      onUpdateData({
+        ...data,
+        linkedArtifactId: linkData.linkedArtifactId,
+        linkedArtifactType: linkData.artifactType,
+        linkedArtifactName: linkData.artifactName,
+        linkedFileUrl: linkData.fileUrl,
+        linkedFileName: linkData.fileName,
+        linkedExternalUrl: linkData.externalUrl,
+        linkLabel: linkData.label,
+        linkType: linkData.linkType === 'placeholder' ? undefined : linkData.linkType,
+      });
+    }
+    setShowLinkDialog(false);
+  };
+
+  const handleOpenLinkedResource = () => {
+    if (data.linkedArtifactId && data.linkedArtifactType) {
+      // Navigate to the artifact
+      navigate(`/projects/${projectId}/artifacts/${data.linkedArtifactId}`);
+    } else if (data.linkedFileUrl) {
+      window.open(data.linkedFileUrl, '_blank');
+    } else if (data.linkedExternalUrl) {
+      window.open(data.linkedExternalUrl, '_blank');
+    }
   };
 
   const stroke = data.domain_color ?? "#8B5CF6";
@@ -134,6 +184,19 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
+  // Build dialog data for ArtifactLinkDialog
+  const linkDialogData: ArtifactLinkData = {
+    linkType: data.linkType || 'placeholder',
+    label: data.linkLabel || 'Link...',
+    color: '#9CA3AF',
+    linkedArtifactId: data.linkedArtifactId,
+    artifactType: data.linkedArtifactType,
+    artifactName: data.linkedArtifactName,
+    fileUrl: data.linkedFileUrl,
+    fileName: data.linkedFileName,
+    externalUrl: data.linkedExternalUrl,
+  };
+
   return (
     <>
       <div
@@ -143,6 +206,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onDoubleClick={hasLinkedResource ? handleOpenLinkedResource : handleView}
         data-element-id={id}
       >
         {/* Floating toolbar when selected (hide during multi-select) */}
@@ -152,9 +216,12 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             onEdit={isAdmin ? handleEdit : undefined}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            onLinkResource={handleLinkResource}
             showView={true}
             showEdit={isAdmin}
             showDuplicate={true}
+            showLinkResource={true}
+            hasLinkedResource={hasLinkedResource}
           />
         )}
 
@@ -209,6 +276,22 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
 
         </svg>
 
+        {/* Linked resource indicator badge */}
+        {hasLinkedResource && (
+          <div 
+            className="absolute flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-md"
+            style={{
+              right: 4,
+              bottom: 8,
+              width: 20,
+              height: 20,
+            }}
+            title={data.linkLabel || 'Linked resource'}
+          >
+            <Link2 className="h-3 w-3" />
+          </div>
+        )}
+
         {/* Category tooltip trigger overlay */}
         <TooltipProvider>
           <Tooltip>
@@ -231,6 +314,15 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      {/* Link Resource Dialog */}
+      <ArtifactLinkDialog
+        isOpen={showLinkDialog}
+        onClose={() => setShowLinkDialog(false)}
+        data={linkDialogData}
+        projectId={projectId}
+        onSave={handleSaveLink}
+      />
     </>
   );
 };

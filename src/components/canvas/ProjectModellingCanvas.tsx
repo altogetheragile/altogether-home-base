@@ -784,6 +784,15 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                       category_name: element.data.knowledge_categories?.name,
                       icon: element.data.icon,
                       emoji: element.data.emoji,
+                      // Pass linked resource data
+                      linkedArtifactId: element.data.linkedArtifactId,
+                      linkedArtifactType: element.data.linkedArtifactType,
+                      linkedArtifactName: element.data.linkedArtifactName,
+                      linkedFileUrl: element.data.linkedFileUrl,
+                      linkedFileName: element.data.linkedFileName,
+                      linkedExternalUrl: element.data.linkedExternalUrl,
+                      linkLabel: element.data.linkLabel,
+                      linkType: element.data.linkType,
                     }}
                     isSelected={isSelected}
                     isMultiSelected={isMultiSelected}
@@ -795,6 +804,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                     onGroupDragProgress={handleGroupDragProgress}
                     onDelete={() => handleElementDelete(element.id)}
                     onDuplicate={() => handleDuplicateElement(element.id)}
+                    onUpdateData={(newData) => handleElementUpdate(element.id, { data: { ...element.data, ...newData } })}
                     artifactId={artifactId}
                     projectId={projectId}
                   />
