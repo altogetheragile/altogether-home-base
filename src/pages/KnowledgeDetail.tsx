@@ -150,7 +150,7 @@ const KnowledgeDetail = () => {
                       asChild
                       className="flex items-center gap-2"
                     >
-                      <Link to={`/admin/knowledge/items/edit/${item.id}`}>
+                      <Link to={`/admin/knowledge/items/${item.id}/edit`}>
                         <Settings className="h-4 w-4" />
                         Manage Images
                       </Link>
