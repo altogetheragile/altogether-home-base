@@ -142,72 +142,102 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     const refreshKnowledgeItemData = async () => {
       if (!artifactId || !projectId || elements.length === 0 || hasRefreshedKB) return;
 
-      // Get all knowledge-item elements that have a KB id
-      const knowledgeItemElements = elements.filter(
-        e => e.type === 'knowledge-item' && e.data.id
-      );
+      // Get all knowledge-item elements
+      const knowledgeItemElements = elements.filter(e => e.type === 'knowledge-item');
       
       if (knowledgeItemElements.length === 0) {
         setHasRefreshedKB(true);
         return;
       }
 
-      const itemIds = knowledgeItemElements.map(e => e.data.id);
+      // Separate elements with IDs vs those with only slugs (legacy elements)
+      const elementsWithId = knowledgeItemElements.filter(e => e.data.id);
+      const elementsWithSlugOnly = knowledgeItemElements.filter(e => !e.data.id && e.data.slug);
 
-      // Fetch latest data from KB
-      const { data: latestItems, error } = await supabase
-        .from('knowledge_items')
-        .select(`
-          id, name, slug, icon, emoji,
-          activity_domains (id, name, color),
-          planning_focuses (id, name, color),
-          knowledge_categories (id, name, color)
-        `)
-        .in('id', itemIds);
+      const itemIds = elementsWithId.map(e => e.data.id);
+      const slugs = elementsWithSlugOnly.map(e => e.data.slug);
 
-      if (error || !latestItems) {
+      // Fetch items by ID
+      let latestItems: any[] = [];
+      if (itemIds.length > 0) {
+        const { data, error } = await supabase
+          .from('knowledge_items')
+          .select(`
+            id, name, slug, icon, emoji,
+            activity_domains (id, name, color),
+            planning_focuses (id, name, color),
+            knowledge_categories (id, name, color)
+          `)
+          .in('id', itemIds);
+        if (!error && data) latestItems = [...latestItems, ...data];
+      }
+
+      // Fetch items by slug for legacy elements missing IDs
+      if (slugs.length > 0) {
+        const { data, error } = await supabase
+          .from('knowledge_items')
+          .select(`
+            id, name, slug, icon, emoji,
+            activity_domains (id, name, color),
+            planning_focuses (id, name, color),
+            knowledge_categories (id, name, color)
+          `)
+          .in('slug', slugs);
+        if (!error && data) latestItems = [...latestItems, ...data];
+      }
+
+      if (latestItems.length === 0) {
         setHasRefreshedKB(true);
         return;
       }
 
-      // Create map for quick lookup
-      const latestItemMap = new Map(latestItems.map(item => [item.id, item]));
+      // Create maps for quick lookup
+      const latestItemByIdMap = new Map(latestItems.map(item => [item.id, item]));
+      const latestItemBySlugMap = new Map(latestItems.map(item => [item.slug, item]));
 
-      // Update elements with latest KB data
+      // Update elements with latest KB data and add missing IDs
       let hasChanges = false;
       const updatedElements = elements.map(el => {
-        if (el.type === 'knowledge-item' && el.data.id && latestItemMap.has(el.data.id)) {
-          const latest = latestItemMap.get(el.data.id)!;
+        if (el.type !== 'knowledge-item') return el;
+
+        // Find the matching KB item by id or slug
+        let latest = el.data.id ? latestItemByIdMap.get(el.data.id) : null;
+        if (!latest && el.data.slug) {
+          latest = latestItemBySlugMap.get(el.data.slug);
+        }
+
+        if (!latest) return el;
           
-          // Handle both array and object returns from Supabase join
-          const latestCategory = Array.isArray(latest.knowledge_categories) 
-            ? latest.knowledge_categories[0] 
-            : latest.knowledge_categories;
-          const latestDomain = Array.isArray(latest.activity_domains) 
-            ? latest.activity_domains[0] 
-            : latest.activity_domains;
-          const latestFocus = Array.isArray(latest.planning_focuses) 
-            ? latest.planning_focuses[0] 
-            : latest.planning_focuses;
-          
-          // Check if category/domain/focus data differs
-          const needsUpdate = 
-            el.data.knowledge_categories?.id !== latestCategory?.id ||
-            el.data.activity_domains?.id !== latestDomain?.id ||
-            el.data.planning_focuses?.id !== latestFocus?.id;
-          
-          if (needsUpdate) {
-            hasChanges = true;
-            return {
-              ...el,
-              data: {
-                ...el.data,
-                knowledge_categories: latestCategory,
-                activity_domains: latestDomain,
-                planning_focuses: latestFocus,
-              }
-            };
-          }
+        // Handle both array and object returns from Supabase join
+        const latestCategory = Array.isArray(latest.knowledge_categories) 
+          ? latest.knowledge_categories[0] 
+          : latest.knowledge_categories;
+        const latestDomain = Array.isArray(latest.activity_domains) 
+          ? latest.activity_domains[0] 
+          : latest.activity_domains;
+        const latestFocus = Array.isArray(latest.planning_focuses) 
+          ? latest.planning_focuses[0] 
+          : latest.planning_focuses;
+        
+        // Check if we need to update (missing id, or category/domain/focus data differs)
+        const needsIdUpdate = !el.data.id && latest.id;
+        const needsDataUpdate = 
+          el.data.knowledge_categories?.id !== latestCategory?.id ||
+          el.data.activity_domains?.id !== latestDomain?.id ||
+          el.data.planning_focuses?.id !== latestFocus?.id;
+        
+        if (needsIdUpdate || needsDataUpdate) {
+          hasChanges = true;
+          return {
+            ...el,
+            data: {
+              ...el.data,
+              id: latest.id, // Ensure the KB id is stored
+              knowledge_categories: latestCategory,
+              activity_domains: latestDomain,
+              planning_focuses: latestFocus,
+            }
+          };
         }
         return el;
       });
@@ -238,7 +268,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       type: 'knowledge-item',
       position: { x: 200 + elements.length * 20, y: 200 + elements.length * 20 },
       size: { width: 140, height: 121 },
-      data: itemData,
+      data: {
+        ...itemData,
+        id: itemId, // Store the actual knowledge item database ID for edit links
+      },
     };
     setElements([...elements, newElement]);
     toast.success(`Added ${itemData.name || 'Knowledge Item'}`);
