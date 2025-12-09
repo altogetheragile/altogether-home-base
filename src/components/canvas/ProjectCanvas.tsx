@@ -191,6 +191,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       position: { x: 100, y: 100 },
       size: { width: 140, height: 121 },
       content: {
+        id: itemId, // Store the actual knowledge item database ID for edit links
         knowledgeItemId: itemId,
         name: itemData.name,
         slug: itemData.slug,
