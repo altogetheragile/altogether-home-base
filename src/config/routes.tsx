@@ -323,6 +323,11 @@ export const AdminRoutes = () => {
             <AdminKnowledgeItems />
           </Suspense>
         } />
+        <Route path="knowledge/items/:id/edit" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <EditKnowledgeItem />
+          </Suspense>
+        } />
         <Route path="knowledge/items/:knowledgeItemId/use-cases/new" element={
           <Suspense fallback={<LoadingFallback />}>
             <CreateKnowledgeUseCase />
