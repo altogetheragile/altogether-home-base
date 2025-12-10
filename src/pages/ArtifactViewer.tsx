@@ -367,8 +367,9 @@ export default function ArtifactViewer() {
               variant="ghost"
               size="sm"
               onClick={() => {
-                if (returnTo === 'project-model') {
-                  navigate(`/projects/${projectId}/model`);
+                const sourceArtifactId = searchParams.get('sourceArtifactId');
+                if (returnTo === 'project-model' && sourceArtifactId) {
+                  navigate(`/projects/${projectId}/artifacts/${sourceArtifactId}`);
                 } else {
                   navigate(`/projects/${projectId}`);
                 }
