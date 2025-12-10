@@ -10,10 +10,15 @@ import {
   Save,
   Link2,
   Undo2,
-  Redo2
+  Redo2,
+  Loader2,
+  Check,
+  AlertTriangle
 } from 'lucide-react';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 import { PlanningFocusSelector } from './elements/PlanningFocusSelector';
+
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 interface ToolbarProps {
   onAddElement: (type: string) => void;
@@ -35,6 +40,7 @@ interface ToolbarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  saveStatus?: SaveStatus;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -57,6 +63,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onRedo,
   canUndo = false,
   canRedo = false,
+  saveStatus = 'idle',
 }) => {
   const [showKnowledgeSelector, setShowKnowledgeSelector] = useState(false);
   const [showPlanningFocusSelector, setShowPlanningFocusSelector] = useState(false);
@@ -156,6 +163,30 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       </div>
 
       <Separator orientation="vertical" className="h-6" />
+
+      {/* Save Status Indicator */}
+      {artifactId && (
+        <div className="flex items-center gap-1 min-w-[80px]">
+          {saveStatus === 'saving' && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Saving...
+            </span>
+          )}
+          {saveStatus === 'saved' && (
+            <span className="text-xs text-green-600 flex items-center gap-1">
+              <Check className="h-3 w-3" />
+              Saved
+            </span>
+          )}
+          {saveStatus === 'error' && (
+            <span className="text-xs text-destructive flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Failed
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Action Buttons */}
       {artifactId ? (

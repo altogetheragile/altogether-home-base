@@ -8,7 +8,7 @@ import { PlanningFocusHexiElement } from './elements/PlanningFocusHexiElement';
 import { CustomHexiElement } from './elements/CustomHexiElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { ArtifactLinkHexiElement } from './elements/ArtifactLinkHexiElement';
-import { Toolbar } from './Toolbar';
+import { Toolbar, SaveStatus } from './Toolbar';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import type { KBItemData } from './elements/SaveToKBDialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface CanvasElement {
   id: string;
@@ -46,6 +47,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   // Undo/Redo history state
   const [history, setHistory] = useState<CanvasElement[][]>([initialData?.elements || []]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  
+  // Auto-save state
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Marquee selection state
   const [isMarqueeSelecting, setIsMarqueeSelecting] = useState(false);
@@ -650,18 +655,67 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     setSaveDialogOpen(true);
   };
 
+  // Auto-save with debounce
+  const performAutoSave = useDebouncedCallback(async (elementsToSave: CanvasElement[]) => {
+    if (!artifactId || !projectId) return;
+    
+    setSaveStatus('saving');
+    try {
+      await updateArtifact.mutateAsync({
+        id: artifactId,
+        updates: { data: { elements: elementsToSave } }
+      });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  }, 2000);
+
+  // Trigger auto-save on element changes
+  useEffect(() => {
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+      return;
+    }
+    
+    if (artifactId && projectId) {
+      performAutoSave(elements);
+    }
+  }, [elements, artifactId, projectId]);
+
+  // Flush pending auto-save on unmount
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      performAutoSave.flush();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      performAutoSave.flush();
+    };
+  }, [performAutoSave]);
+
   const handleSaveChanges = async () => {
     if (!artifactId || !projectId) return;
     
+    performAutoSave.cancel();
+    setSaveStatus('saving');
     try {
       await updateArtifact.mutateAsync({
         id: artifactId,
         updates: { data: { elements } }
       });
+      setSaveStatus('saved');
       toast.success('Changes saved successfully');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Error saving changes:', error);
+      setSaveStatus('error');
       toast.error('Failed to save changes');
+      setTimeout(() => setSaveStatus('idle'), 3000);
     }
   };
 
@@ -758,6 +812,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             onRedo={redo}
             canUndo={canUndo}
             canRedo={canRedo}
+            saveStatus={saveStatus}
           />
         </div>
       </div>
