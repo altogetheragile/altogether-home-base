@@ -76,30 +76,33 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent, targetArtifact: ProjectArtifact, typeArtifacts: ProjectArtifact[]) => {
+  const handleDrop = (e: React.DragEvent, targetArtifact: ProjectArtifact) => {
     e.preventDefault();
     
-    if (!draggedId || draggedType !== targetArtifact.artifact_type) {
+    if (!draggedId || draggedId === targetArtifact.id) {
       setDraggedId(null);
       setDraggedType(null);
       return;
     }
 
-    const draggedIndex = typeArtifacts.findIndex(a => a.id === draggedId);
-    const targetIndex = typeArtifacts.findIndex(a => a.id === targetArtifact.id);
+    // Sort all artifacts by display_order for global reordering
+    const sortedArtifacts = [...artifacts].sort((a, b) => a.display_order - b.display_order);
+    
+    const draggedIndex = sortedArtifacts.findIndex(a => a.id === draggedId);
+    const targetIndex = sortedArtifacts.findIndex(a => a.id === targetArtifact.id);
 
-    if (draggedIndex === targetIndex) {
+    if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedId(null);
       setDraggedType(null);
       return;
     }
 
-    // Reorder the artifacts
-    const newArtifacts = [...typeArtifacts];
+    // Reorder all artifacts
+    const newArtifacts = [...sortedArtifacts];
     const [draggedItem] = newArtifacts.splice(draggedIndex, 1);
     newArtifacts.splice(targetIndex, 0, draggedItem);
 
-    // Create updates with new display_order
+    // Create updates with new display_order for ALL artifacts
     const updates = newArtifacts.map((artifact, index) => ({
       id: artifact.id,
       display_order: index + 1,
@@ -224,7 +227,7 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
                   isDragging={draggedId === artifact.id}
                   onDragStart={(e) => handleDragStart(e, artifact)}
                   onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, artifact, typeArtifacts)}
+                  onDrop={(e) => handleDrop(e, artifact)}
                   onDragEnd={handleDragEnd}
                 />
               ))}
