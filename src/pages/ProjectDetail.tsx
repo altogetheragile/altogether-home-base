@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Sparkles, FileText, Hexagon } from 'lucide-react';
+import { ArrowLeft, Plus, Sparkles, FileText, Hexagon, ClipboardList } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,6 +94,10 @@ export default function ProjectDetail() {
                 <DropdownMenuItem onClick={() => navigate(`/project-modelling?projectId=${projectId}`)}>
                   <Hexagon className="h-4 w-4 mr-2" />
                   Project Model
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/backlog?projectId=${projectId}`)}>
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  Product Backlog
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

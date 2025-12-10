@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 
 const ProductBacklog: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const projectId = searchParams.get('projectId');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
@@ -130,7 +132,7 @@ const ProductBacklog: React.FC = () => {
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => navigate('/ai-tools')}
+            onClick={() => navigate(projectId ? `/projects/${projectId}` : '/ai-tools')}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -196,6 +198,7 @@ const ProductBacklog: React.FC = () => {
         artifactDescription="Product backlog items exported from the backlog tool"
         artifactData={{ items }}
         onSaveComplete={handleSaveComplete}
+        preselectedProjectId={projectId || undefined}
       />
     </div>
   );
