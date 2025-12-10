@@ -51,9 +51,9 @@ const getArtifactIcon = (type: string) => {
       return <Layout className="h-5 w-5 text-blue-500" />;
     case 'user_story':
       return <FileText className="h-5 w-5 text-green-500" />;
-    case 'project_model':
+    case 'project-model':
       return <Hexagon className="h-5 w-5 text-purple-500" />;
-    case 'backlog':
+    case 'product-backlog':
       return <ClipboardList className="h-5 w-5 text-orange-500" />;
     default:
       return <FileText className="h-5 w-5 text-muted-foreground" />;
@@ -68,9 +68,9 @@ const getArtifactTypeName = (type: string) => {
       return 'Canvas';
     case 'user_story':
       return 'User Story';
-    case 'project_model':
+    case 'project-model':
       return 'Project Model';
-    case 'backlog':
+    case 'product-backlog':
       return 'Product Backlog';
     default:
       return type;
