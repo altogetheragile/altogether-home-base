@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd';
 import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
-import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
+import { useLocalBacklogItems, LocalBacklogItemInput, LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
+import { useBacklogItems } from '@/hooks/useBacklogItems';
 import { supabase } from '@/integrations/supabase/client';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { exportToCSV } from '@/utils/exportUtils';
@@ -27,6 +28,10 @@ const ProductBacklog: React.FC = () => {
   const projectId = searchParams.get('projectId');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const hasInitialized = useRef(false);
+
+  // Fetch existing backlog items from database when projectId is provided
+  const { data: existingItems, isLoading: isLoadingItems } = useBacklogItems(projectId || undefined);
 
   const { 
     items, 
@@ -35,8 +40,30 @@ const ProductBacklog: React.FC = () => {
     deleteItem, 
     reorderItems, 
     clearItems,
-    hasItems 
+    hasItems,
+    setAllItems
   } = useLocalBacklogItems();
+
+  // Load existing backlog items from database when projectId is provided
+  useEffect(() => {
+    if (existingItems && existingItems.length > 0 && !hasInitialized.current) {
+      hasInitialized.current = true;
+      const localItems: LocalBacklogItem[] = existingItems.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        priority: item.priority,
+        status: item.status,
+        source: item.source,
+        estimated_value: item.estimated_value,
+        estimated_effort: item.estimated_effort,
+        tags: item.tags,
+        target_release: item.target_release,
+        backlog_position: item.backlog_position,
+      }));
+      setAllItems(localItems);
+    }
+  }, [existingItems, setAllItems]);
 
   const handleAddItem = (input: LocalBacklogItemInput) => {
     addItem(input);
@@ -86,7 +113,7 @@ const ProductBacklog: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null || (projectId && isLoadingItems)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
