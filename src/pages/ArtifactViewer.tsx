@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 export default function ArtifactViewer() {
   const { projectId, artifactId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('from');
   const { data: artifact, isLoading: isLoadingArtifact } = useProjectArtifact(artifactId);
   const { data: project, isLoading: isLoadingProject } = useProject(projectId);
   const { updateArtifact } = useProjectArtifactMutations();
@@ -364,10 +366,16 @@ export default function ArtifactViewer() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/projects/${projectId}`)}
+              onClick={() => {
+                if (returnTo === 'project-model') {
+                  navigate(`/projects/${projectId}/model`);
+                } else {
+                  navigate(`/projects/${projectId}`);
+                }
+              }}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Project
+              {returnTo === 'project-model' ? 'Back to Project Model' : 'Back to Project'}
             </Button>
             <Separator orientation="vertical" className="h-5" />
             <h1 className="text-xl font-semibold">{artifact.name}</h1>

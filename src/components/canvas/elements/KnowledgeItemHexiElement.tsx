@@ -119,8 +119,8 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
 
   const handleOpenLinkedResource = () => {
     if (data.linkedArtifactId && data.linkedArtifactType) {
-      // Navigate to the artifact
-      navigate(`/projects/${projectId}/artifacts/${data.linkedArtifactId}`);
+      // Navigate to the artifact with context for correct back navigation
+      navigate(`/projects/${projectId}/artifacts/${data.linkedArtifactId}?from=project-model`);
     } else if (data.linkedFileUrl) {
       window.open(data.linkedFileUrl, '_blank');
     } else if (data.linkedExternalUrl) {
