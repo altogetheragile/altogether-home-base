@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FolderOpen, Sparkles, Layout, FileText, Hexagon, ClipboardList } from 'lucide-react';
+import { FolderOpen, Sparkles } from 'lucide-react';
 import { ArtifactCard } from './ArtifactCard';
 import { ProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import {
@@ -29,7 +29,6 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [artifactToDelete, setArtifactToDelete] = useState<ProjectArtifact | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [draggedType, setDraggedType] = useState<string | null>(null);
 
   const handleDeleteArtifact = (artifactId: string) => {
     const artifact = artifacts.find(a => a.id === artifactId);
@@ -67,7 +66,6 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
 
   const handleDragStart = (e: React.DragEvent, artifact: ProjectArtifact) => {
     setDraggedId(artifact.id);
-    setDraggedType(artifact.artifact_type);
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -81,7 +79,6 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
     
     if (!draggedId || draggedId === targetArtifact.id) {
       setDraggedId(null);
-      setDraggedType(null);
       return;
     }
 
@@ -93,7 +90,6 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
 
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedId(null);
-      setDraggedType(null);
       return;
     }
 
@@ -129,61 +125,14 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
     });
 
     setDraggedId(null);
-    setDraggedType(null);
   };
 
   const handleDragEnd = () => {
     setDraggedId(null);
-    setDraggedType(null);
   };
 
-  // Group artifacts by type
-  const groupedArtifacts = artifacts.reduce((acc, artifact) => {
-    if (!acc[artifact.artifact_type]) {
-      acc[artifact.artifact_type] = [];
-    }
-    acc[artifact.artifact_type].push(artifact);
-    return acc;
-  }, {} as Record<string, ProjectArtifact[]>);
-
-  // Sort each group by display_order
-  Object.keys(groupedArtifacts).forEach(type => {
-    groupedArtifacts[type].sort((a, b) => a.display_order - b.display_order);
-  });
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'bmc':
-        return <Sparkles className="h-5 w-5" />;
-      case 'canvas':
-        return <Layout className="h-5 w-5" />;
-      case 'user_story':
-        return <FileText className="h-5 w-5" />;
-      case 'project_model':
-        return <Hexagon className="h-5 w-5" />;
-      case 'backlog':
-        return <ClipboardList className="h-5 w-5" />;
-      default:
-        return <FileText className="h-5 w-5" />;
-    }
-  };
-
-  const getTypeName = (type: string) => {
-    switch (type) {
-      case 'bmc':
-        return 'Business Model Canvases';
-      case 'canvas':
-        return 'Canvases';
-      case 'user_story':
-        return 'User Stories';
-      case 'project_model':
-        return 'Project Models';
-      case 'backlog':
-        return 'Product Backlogs';
-      default:
-        return type;
-    }
-  };
+  // Sort artifacts by display_order
+  const sortedArtifacts = [...artifacts].sort((a, b) => a.display_order - b.display_order);
 
   if (artifacts.length === 0) {
     return (
@@ -205,34 +154,23 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
 
   return (
     <>
-      <div className="space-y-8">
-        {Object.entries(groupedArtifacts).map(([type, typeArtifacts]) => (
-          <div key={type}>
-            <div className="flex items-center gap-2 mb-4">
-              {getTypeIcon(type)}
-              <h2 className="text-xl font-semibold">{getTypeName(type)}</h2>
-              <span className="text-sm text-muted-foreground">({typeArtifacts.length})</span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {typeArtifacts.map((artifact) => (
-                <ArtifactCard
-                  key={artifact.id}
-                  artifact={artifact}
-                  onDelete={handleDeleteArtifact}
-                  onOpen={handleOpenArtifact}
-                  onMove={handleMoveArtifact}
-                  onRename={handleRenameArtifact}
-                  isMoving={moveArtifact.isPending}
-                  isRenaming={updateArtifact.isPending}
-                  isDragging={draggedId === artifact.id}
-                  onDragStart={(e) => handleDragStart(e, artifact)}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, artifact)}
-                  onDragEnd={handleDragEnd}
-                />
-              ))}
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {sortedArtifacts.map((artifact) => (
+          <ArtifactCard
+            key={artifact.id}
+            artifact={artifact}
+            onDelete={handleDeleteArtifact}
+            onOpen={handleOpenArtifact}
+            onMove={handleMoveArtifact}
+            onRename={handleRenameArtifact}
+            isMoving={moveArtifact.isPending}
+            isRenaming={updateArtifact.isPending}
+            isDragging={draggedId === artifact.id}
+            onDragStart={(e) => handleDragStart(e, artifact)}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, artifact)}
+            onDragEnd={handleDragEnd}
+          />
         ))}
       </div>
 
