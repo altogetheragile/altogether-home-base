@@ -8,7 +8,9 @@ import {
   Hexagon,
   Layers,
   Save,
-  Link2
+  Link2,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { KnowledgeItemSelector } from './elements/KnowledgeItemSelector';
 import { PlanningFocusSelector } from './elements/PlanningFocusSelector';
@@ -29,6 +31,10 @@ interface ToolbarProps {
   existingKnowledgeItemIds?: string[];
   artifactId?: string;
   onSaveChanges?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -47,6 +53,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   existingKnowledgeItemIds = [],
   artifactId,
   onSaveChanges,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
 }) => {
   const [showKnowledgeSelector, setShowKnowledgeSelector] = useState(false);
   const [showPlanningFocusSelector, setShowPlanningFocusSelector] = useState(false);
@@ -105,8 +115,30 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           title="Add Artifact Link"
         >
           <Link2 className="h-4 w-4 mr-2" />
-          Artifact Link
+        Artifact Link
         </Button>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Undo/Redo */}
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={onUndo}
+        disabled={!canUndo}
+        title="Undo (Ctrl+Z)"
+      >
+        <Undo2 className="h-4 w-4" />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={onRedo}
+        disabled={!canRedo}
+        title="Redo (Ctrl+Shift+Z)"
+      >
+        <Redo2 className="h-4 w-4" />
+      </Button>
 
       <Separator orientation="vertical" className="h-6" />
 

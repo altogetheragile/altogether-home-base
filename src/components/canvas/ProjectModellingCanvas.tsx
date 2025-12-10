@@ -43,6 +43,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [hasSyncedKB, setHasSyncedKB] = useState(false);
   const [hasRefreshedKB, setHasRefreshedKB] = useState(false);
   
+  // Undo/Redo history state
+  const [history, setHistory] = useState<CanvasElement[][]>([initialData?.elements || []]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  
   // Marquee selection state
   const [isMarqueeSelecting, setIsMarqueeSelecting] = useState(false);
   const [marqueeStart, setMarqueeStart] = useState({ x: 0, y: 0 });
@@ -58,6 +62,39 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
   const { updateArtifact } = useProjectArtifactMutations();
+
+  // Undo/Redo computed values
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  // History-aware element update function
+  const updateElementsWithHistory = useCallback((newElements: CanvasElement[]) => {
+    setElements(newElements);
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(newElements);
+      return newHistory.slice(-50); // Keep last 50 states
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, 49));
+  }, [historyIndex]);
+
+  // Undo function
+  const undo = useCallback(() => {
+    if (canUndo) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setElements(history[newIndex]);
+    }
+  }, [canUndo, history, historyIndex]);
+
+  // Redo function
+  const redo = useCallback(() => {
+    if (canRedo) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setElements(history[newIndex]);
+    }
+  }, [canRedo, history, historyIndex]);
 
   // Auto-sync custom hexis that match existing KB items on load
   useEffect(() => {
@@ -273,9 +310,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         id: itemId, // Store the actual knowledge item database ID for edit links
       },
     };
-    setElements([...elements, newElement]);
+    updateElementsWithHistory([...elements, newElement]);
     toast.success(`Added ${itemData.name || 'Knowledge Item'}`);
-  }, [elements]);
+  }, [elements, updateElementsWithHistory]);
 
   const handleAddPlanningFocus = useCallback((focusId: string, focusData: any) => {
     const newElement: CanvasElement = {
@@ -285,9 +322,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       size: { width: 140, height: 121 },
       data: focusData,
     };
-    setElements([...elements, newElement]);
+    updateElementsWithHistory([...elements, newElement]);
     toast.success(`Added ${focusData.name || 'Planning Focus'}`);
-  }, [elements]);
+  }, [elements, updateElementsWithHistory]);
 
   const handleAddCustomHexi = useCallback(() => {
     const newElement: CanvasElement = {
@@ -297,9 +334,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       size: { width: 140, height: 121 },
       data: { label: 'New Hexi', color: '#4F46E5', icon: 'Lightbulb' },
     };
-    setElements([...elements, newElement]);
+    updateElementsWithHistory([...elements, newElement]);
     toast.success('Added Custom Hexi');
-  }, [elements]);
+  }, [elements, updateElementsWithHistory]);
 
   const handleAddArtifactLink = useCallback(() => {
     const newElement: CanvasElement = {
@@ -313,9 +350,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         color: '#9CA3AF',
       },
     };
-    setElements([...elements, newElement]);
+    updateElementsWithHistory([...elements, newElement]);
     toast.success('Added Artifact Link');
-  }, [elements]);
+  }, [elements, updateElementsWithHistory]);
 
   const handleAddElement = useCallback((type: string) => {
     if (type === 'sticky') {
@@ -326,10 +363,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         size: { width: 200, height: 200 },
         data: { text: 'New note', color: '#FFE066' },
       };
-      setElements([...elements, newElement]);
+      updateElementsWithHistory([...elements, newElement]);
       toast.success('Added Sticky Note');
     }
-  }, [elements]);
+  }, [elements, updateElementsWithHistory]);
 
   const handleElementUpdate = useCallback((id: string, updates: Partial<CanvasElement>) => {
     setElements(prev => prev.map(el => {
@@ -349,10 +386,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   }, []);
 
   const handleElementDelete = useCallback((id: string) => {
-    setElements(prev => prev.filter(el => el.id !== id));
+    updateElementsWithHistory(elements.filter(el => el.id !== id));
     setSelectedElementIds(prev => prev.filter(eid => eid !== id));
     toast.success('Element deleted');
-  }, []);
+  }, [elements, updateElementsWithHistory]);
 
   // Handle selecting an element (with Shift for multi-select, preserveIfSelected for drag start)
   const handleElementSelect = useCallback((id: string, shiftKey: boolean = false, preserveIfSelected: boolean = false) => {
@@ -423,7 +460,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       dy: Math.max(delta.dy, -minY),
     };
     
-    setElements(prev => prev.map(el => {
+    const updatedElements = elements.map(el => {
       if (selectedElementIds.includes(el.id)) {
         return {
           ...el,
@@ -434,8 +471,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         };
       }
       return el;
-    }));
-  }, [selectedElementIds, elements]);
+    });
+    updateElementsWithHistory(updatedElements);
+  }, [selectedElementIds, elements, updateElementsWithHistory]);
 
   // Calculate visual position (applies group drag delta during drag)
   const getVisualPosition = useCallback((element: CanvasElement) => {
@@ -527,16 +565,28 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     setIsMarqueeSelecting(false);
   }, [isMarqueeSelecting, marqueeStart, marqueeEnd, elements, isElementInSelectionBox]);
 
-  // Keyboard shortcut for select all
+  // Keyboard shortcuts for select all, escape, undo, redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      console.log('Canvas keydown:', e.key, 'Cmd/Ctrl:', e.metaKey || e.ctrlKey);
-      
+      // Undo: Ctrl/Cmd + Z (without Shift)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      // Redo: Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y
+      if ((e.metaKey || e.ctrlKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      // Select all: Ctrl/Cmd + A
       if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
         e.preventDefault();
-        console.log('Select all triggered, elements:', elements.length);
         setSelectedElementIds(elements.map(el => el.id));
+        return;
       }
+      // Escape: deselect
       if (e.key === 'Escape') {
         setSelectedElementIds([]);
       }
@@ -544,7 +594,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [elements]);
+  }, [elements, undo, redo]);
 
   const handleDuplicateElement = useCallback((id: string) => {
     const element = elements.find(el => el.id === id);
@@ -558,9 +608,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         y: element.position.y + 30 
       },
     };
-    setElements(prev => [...prev, newElement]);
+    updateElementsWithHistory([...elements, newElement]);
     toast.success('Element duplicated');
-  }, [elements]);
+  }, [elements, updateElementsWithHistory]);
 
   const handleZoomIn = useCallback(() => {
     setZoom(prev => Math.min(prev + 0.1, 2));
@@ -704,6 +754,10 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
             existingKnowledgeItemIds={existingItemIds}
             artifactId={artifactId}
             onSaveChanges={handleSaveChanges}
+            onUndo={undo}
+            onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
           />
         </div>
       </div>
