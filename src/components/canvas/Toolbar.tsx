@@ -69,13 +69,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [showPlanningFocusSelector, setShowPlanningFocusSelector] = useState(false);
   return (
     <>
-      <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
+      <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm overflow-x-auto max-w-full">
         {/* Add Knowledge Item */}
         <Button 
           variant="ghost" 
           size="sm"
           onClick={() => setShowKnowledgeSelector(true)}
           title="Add Knowledge Item"
+          className="flex-shrink-0"
         >
           <Hexagon className="h-4 w-4 mr-2" />
           Add Knowledge Item
@@ -87,6 +88,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="sm"
           onClick={() => setShowPlanningFocusSelector(true)}
           title="Planning Focus Hexi"
+          className="flex-shrink-0"
         >
           <Layers className="h-4 w-4 mr-2" />
           Planning Focus
@@ -98,6 +100,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="sm"
           onClick={() => onAddCustomHexi?.()}
           title="Custom Hexi"
+          className="flex-shrink-0"
         >
           <Hexagon className="h-4 w-4 mr-2" />
           Custom Hexi
@@ -109,6 +112,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="sm"
           onClick={() => onAddElement('sticky')}
           title="Sticky Note"
+          className="flex-shrink-0"
         >
           <Hexagon className="h-4 w-4 mr-2" />
           Sticky Note
@@ -120,9 +124,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="sm"
           onClick={() => onAddArtifactLink?.()}
           title="Add Artifact Link"
+          className="flex-shrink-0"
         >
           <Link2 className="h-4 w-4 mr-2" />
-        Artifact Link
+          Artifact Link
         </Button>
 
       <Separator orientation="vertical" className="h-6" />
