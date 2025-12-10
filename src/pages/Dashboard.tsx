@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import RegistrationsList from "@/components/dashboard/RegistrationsList";
 import { ProjectsList } from "@/components/dashboard/ProjectsList";
 import DashboardStats from "@/components/dashboard/DashboardStats";
+import RecentActivityList from "@/components/dashboard/RecentActivityList";
 import { useUserRegistrations } from "@/hooks/useUserRegistrations";
-import { Calendar, FolderKanban } from "lucide-react";
+import { Calendar, FolderKanban, Activity } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
@@ -39,7 +40,7 @@ const Dashboard = () => {
 
         {/* Main Content - Tabs */}
         <Tabs defaultValue={tab} className="mt-8">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="events" className="flex items-center space-x-2">
               <Calendar className="h-4 w-4" />
               <span>My Events</span>
@@ -47,6 +48,10 @@ const Dashboard = () => {
             <TabsTrigger value="projects" className="flex items-center space-x-2">
               <FolderKanban className="h-4 w-4" />
               <span>My Projects</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center space-x-2">
+              <Activity className="h-4 w-4" />
+              <span>Recent Activity</span>
             </TabsTrigger>
           </TabsList>
 
@@ -79,6 +84,21 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <ProjectsList />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>
+                  Your recent actions across events and projects
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RecentActivityList />
               </CardContent>
             </Card>
           </TabsContent>
