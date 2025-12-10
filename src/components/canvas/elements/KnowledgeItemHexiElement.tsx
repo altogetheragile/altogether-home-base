@@ -278,21 +278,6 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
 
         </svg>
 
-        {/* Linked resource indicator badge */}
-        {hasLinkedResource && (
-          <div 
-            className="absolute flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-md"
-            style={{
-              right: 4,
-              bottom: 8,
-              width: 20,
-              height: 20,
-            }}
-            title={data.linkLabel || 'Linked resource'}
-          >
-            <Link2 className="h-3 w-3" />
-          </div>
-        )}
 
         {/* Category tooltip trigger overlay */}
         <TooltipProvider>
