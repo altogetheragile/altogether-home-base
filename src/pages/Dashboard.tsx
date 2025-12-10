@@ -7,14 +7,14 @@ import { ProjectsList } from "@/components/dashboard/ProjectsList";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import RecentActivityList from "@/components/dashboard/RecentActivityList";
 import { useUserRegistrations } from "@/hooks/useUserRegistrations";
-import { Calendar, FolderKanban, Activity } from "lucide-react";
+import { Calendar, FolderKanban, Activity, BarChart3 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { data: registrations = [], isLoading: registrationsLoading } = useUserRegistrations();
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'events';
+  const tab = searchParams.get('tab') || 'overview';
 
   const upcomingRegistrations = registrations.filter(
     (reg) => reg.event && new Date(reg.event.start_date) > new Date()
@@ -35,12 +35,13 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <DashboardStats />
-
         {/* Main Content - Tabs */}
         <Tabs defaultValue={tab} className="mt-8">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <BarChart3 className="h-4 w-4" />
+              <span>Overview</span>
+            </TabsTrigger>
             <TabsTrigger value="events" className="flex items-center space-x-2">
               <Calendar className="h-4 w-4" />
               <span>My Events</span>
@@ -54,6 +55,11 @@ const Dashboard = () => {
               <span>Recent Activity</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="mt-6">
+            <DashboardStats />
+          </TabsContent>
 
           {/* Events Tab */}
           <TabsContent value="events" className="mt-6">
