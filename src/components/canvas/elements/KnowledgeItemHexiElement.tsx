@@ -206,7 +206,7 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onDoubleClick={hasLinkedResource ? handleOpenLinkedResource : handleView}
+        onDoubleClick={handleView}
         data-element-id={id}
       >
         {/* Floating toolbar when selected (hide during multi-select) */}
@@ -217,11 +217,13 @@ export const KnowledgeItemHexiElement: React.FC<KnowledgeItemHexiElementProps> =
             onDelete={onDelete}
             onDuplicate={onDuplicate}
             onLinkResource={handleLinkResource}
+            onOpenLinkedResource={hasLinkedResource ? handleOpenLinkedResource : undefined}
             showView={true}
             showEdit={isAdmin}
             showDuplicate={true}
             showLinkResource={true}
             hasLinkedResource={hasLinkedResource}
+            linkedResourceName={data.linkedArtifactName || data.linkedFileName || data.linkLabel}
           />
         )}
 
