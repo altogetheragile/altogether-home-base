@@ -194,22 +194,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       )}
 
       {/* Action Buttons */}
-      {artifactId ? (
-        <>
-          <Button size="sm" onClick={onSaveChanges} title="Save Changes">
-            <Save className="h-4 w-4 mr-2" />
-            Save Changes
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {artifactId ? (
+          <>
+            <Button size="sm" onClick={onSaveChanges} title="Save Changes">
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+            <Button variant="outline" size="sm" onClick={onExport} title="Export">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </>
+        ) : (
+          <Button variant="ghost" size="sm" onClick={onExport} title="Export">
+            <Download className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={onExport} title="Export">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </>
-      ) : (
-        <Button variant="ghost" size="sm" onClick={onExport} title="Export">
-          <Download className="h-4 w-4" />
-        </Button>
-      )}
+        )}
+      </div>
       </div>
 
       <KnowledgeItemSelector
