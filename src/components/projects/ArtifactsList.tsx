@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FolderOpen, Sparkles, Layout, FileText } from 'lucide-react';
+import { FolderOpen, Sparkles, Layout, FileText, Hexagon, ClipboardList } from 'lucide-react';
 import { ArtifactCard } from './ArtifactCard';
 import { ProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import {
@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ArtifactsListProps {
   artifacts: ProjectArtifact[];
@@ -23,9 +24,12 @@ interface ArtifactsListProps {
 
 export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, projectId }) => {
   const navigate = useNavigate();
-  const { deleteArtifact, moveArtifact, updateArtifact } = useProjectArtifactMutations();
+  const queryClient = useQueryClient();
+  const { deleteArtifact, moveArtifact, updateArtifact, reorderArtifacts } = useProjectArtifactMutations();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [artifactToDelete, setArtifactToDelete] = useState<ProjectArtifact | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [draggedType, setDraggedType] = useState<string | null>(null);
 
   const handleDeleteArtifact = (artifactId: string) => {
     const artifact = artifacts.find(a => a.id === artifactId);
@@ -61,6 +65,75 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
     updateArtifact.mutate({ id: artifactId, updates: { name, description } });
   };
 
+  const handleDragStart = (e: React.DragEvent, artifact: ProjectArtifact) => {
+    setDraggedId(artifact.id);
+    setDraggedType(artifact.artifact_type);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetArtifact: ProjectArtifact, typeArtifacts: ProjectArtifact[]) => {
+    e.preventDefault();
+    
+    if (!draggedId || draggedType !== targetArtifact.artifact_type) {
+      setDraggedId(null);
+      setDraggedType(null);
+      return;
+    }
+
+    const draggedIndex = typeArtifacts.findIndex(a => a.id === draggedId);
+    const targetIndex = typeArtifacts.findIndex(a => a.id === targetArtifact.id);
+
+    if (draggedIndex === targetIndex) {
+      setDraggedId(null);
+      setDraggedType(null);
+      return;
+    }
+
+    // Reorder the artifacts
+    const newArtifacts = [...typeArtifacts];
+    const [draggedItem] = newArtifacts.splice(draggedIndex, 1);
+    newArtifacts.splice(targetIndex, 0, draggedItem);
+
+    // Create updates with new display_order
+    const updates = newArtifacts.map((artifact, index) => ({
+      id: artifact.id,
+      display_order: index + 1,
+    }));
+
+    // Optimistically update the cache
+    queryClient.setQueryData(
+      ['project-artifacts', projectId],
+      (oldData: ProjectArtifact[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(artifact => {
+          const update = updates.find(u => u.id === artifact.id);
+          return update ? { ...artifact, display_order: update.display_order } : artifact;
+        }).sort((a, b) => a.display_order - b.display_order);
+      }
+    );
+
+    // Persist to database
+    reorderArtifacts.mutate(updates, {
+      onError: () => {
+        // Revert on error
+        queryClient.invalidateQueries({ queryKey: ['project-artifacts', projectId] });
+      },
+    });
+
+    setDraggedId(null);
+    setDraggedType(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDraggedType(null);
+  };
+
   // Group artifacts by type
   const groupedArtifacts = artifacts.reduce((acc, artifact) => {
     if (!acc[artifact.artifact_type]) {
@@ -70,6 +143,11 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
     return acc;
   }, {} as Record<string, ProjectArtifact[]>);
 
+  // Sort each group by display_order
+  Object.keys(groupedArtifacts).forEach(type => {
+    groupedArtifacts[type].sort((a, b) => a.display_order - b.display_order);
+  });
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'bmc':
@@ -78,6 +156,10 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
         return <Layout className="h-5 w-5" />;
       case 'user_story':
         return <FileText className="h-5 w-5" />;
+      case 'project_model':
+        return <Hexagon className="h-5 w-5" />;
+      case 'backlog':
+        return <ClipboardList className="h-5 w-5" />;
       default:
         return <FileText className="h-5 w-5" />;
     }
@@ -91,6 +173,10 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
         return 'Canvases';
       case 'user_story':
         return 'User Stories';
+      case 'project_model':
+        return 'Project Models';
+      case 'backlog':
+        return 'Product Backlogs';
       default:
         return type;
     }
@@ -135,6 +221,11 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
                   onRename={handleRenameArtifact}
                   isMoving={moveArtifact.isPending}
                   isRenaming={updateArtifact.isPending}
+                  isDragging={draggedId === artifact.id}
+                  onDragStart={(e) => handleDragStart(e, artifact)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, artifact, typeArtifacts)}
+                  onDragEnd={handleDragEnd}
                 />
               ))}
             </div>

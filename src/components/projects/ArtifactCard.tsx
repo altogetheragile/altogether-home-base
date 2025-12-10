@@ -10,7 +10,10 @@ import {
   ExternalLink,
   MoreHorizontal,
   FolderInput,
-  Pencil
+  Pencil,
+  GripVertical,
+  Hexagon,
+  ClipboardList
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -23,6 +26,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ProjectArtifact } from '@/hooks/useProjectArtifacts';
 import { MoveToProjectDialog } from './MoveToProjectDialog';
 import { RenameArtifactDialog } from './RenameArtifactDialog';
+import { cn } from '@/lib/utils';
 
 interface ArtifactCardProps {
   artifact: ProjectArtifact;
@@ -32,6 +36,11 @@ interface ArtifactCardProps {
   onRename?: (artifactId: string, name: string, description?: string) => void;
   isMoving?: boolean;
   isRenaming?: boolean;
+  isDragging?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
 }
 
 const getArtifactIcon = (type: string) => {
@@ -42,6 +51,10 @@ const getArtifactIcon = (type: string) => {
       return <Layout className="h-5 w-5 text-blue-500" />;
     case 'user_story':
       return <FileText className="h-5 w-5 text-green-500" />;
+    case 'project_model':
+      return <Hexagon className="h-5 w-5 text-purple-500" />;
+    case 'backlog':
+      return <ClipboardList className="h-5 w-5 text-orange-500" />;
     default:
       return <FileText className="h-5 w-5 text-muted-foreground" />;
   }
@@ -55,12 +68,29 @@ const getArtifactTypeName = (type: string) => {
       return 'Canvas';
     case 'user_story':
       return 'User Story';
+    case 'project_model':
+      return 'Project Model';
+    case 'backlog':
+      return 'Product Backlog';
     default:
       return type;
   }
 };
 
-export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, onOpen, onMove, onRename, isMoving, isRenaming }) => {
+export const ArtifactCard: React.FC<ArtifactCardProps> = ({ 
+  artifact, 
+  onDelete, 
+  onOpen, 
+  onMove, 
+  onRename, 
+  isMoving, 
+  isRenaming,
+  isDragging,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+}) => {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
 
@@ -76,8 +106,27 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
 
   return (
     <>
-    <Card className="hover:shadow-md transition-shadow group cursor-pointer" onClick={() => onOpen(artifact)}>
-      <CardHeader className="pb-3">
+    <Card 
+      className={cn(
+        "hover:shadow-md transition-all group cursor-pointer relative",
+        isDragging && "opacity-50 ring-2 ring-primary shadow-lg"
+      )}
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      onClick={() => onOpen(artifact)}
+    >
+      {/* Drag Handle */}
+      <div 
+        className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </div>
+      
+      <CardHeader className="pb-3 pl-8">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <div className="p-2 rounded-lg bg-muted flex-shrink-0">
@@ -156,7 +205,7 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
         </div>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="pl-8">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
             Created {formatDistanceToNow(new Date(artifact.created_at), { addSuffix: true })}

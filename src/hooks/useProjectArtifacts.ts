@@ -13,6 +13,7 @@ export interface ProjectArtifact {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
+  display_order: number;
 }
 
 export interface ProjectArtifactCreate {
@@ -28,6 +29,7 @@ export interface ProjectArtifactUpdate {
   description?: string;
   data?: any;
   project_id?: string;
+  display_order?: number;
 }
 
 export const useProjectArtifacts = (projectId?: string) => {
@@ -40,7 +42,7 @@ export const useProjectArtifacts = (projectId?: string) => {
         .from("project_artifacts")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
+        .order("display_order", { ascending: true });
 
       if (error) throw error;
       return data as ProjectArtifact[];
@@ -76,11 +78,25 @@ export const useProjectArtifactMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Get the max display_order for this type in the project
+      const { data: existingArtifacts } = await supabase
+        .from("project_artifacts")
+        .select("display_order")
+        .eq("project_id", artifact.project_id)
+        .eq("artifact_type", artifact.artifact_type)
+        .order("display_order", { ascending: false })
+        .limit(1);
+
+      const nextOrder = existingArtifacts && existingArtifacts.length > 0 
+        ? (existingArtifacts[0].display_order || 0) + 1 
+        : 1;
+
       const { data, error } = await supabase
         .from("project_artifacts")
         .insert({
           ...artifact,
           created_by: user.id,
+          display_order: nextOrder,
         })
         .select()
         .single();
@@ -172,10 +188,33 @@ export const useProjectArtifactMutations = () => {
     },
   });
 
+  const reorderArtifacts = useMutation({
+    mutationFn: async (updates: { id: string; display_order: number }[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      // Update each artifact's display_order
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("project_artifacts")
+          .update({ display_order: update.display_order, updated_by: user.id })
+          .eq("id", update.id);
+
+        if (error) throw error;
+      }
+      
+      return updates;
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to reorder artifacts: " + error.message);
+    },
+  });
+
   return {
     createArtifact,
     updateArtifact,
     deleteArtifact,
     moveArtifact,
+    reorderArtifacts,
   };
 };
