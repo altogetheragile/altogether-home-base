@@ -2370,6 +2370,7 @@ export type Database = {
           created_by: string | null
           data: Json
           description: string | null
+          display_order: number | null
           id: string
           name: string
           project_id: string
@@ -2382,6 +2383,7 @@ export type Database = {
           created_by?: string | null
           data?: Json
           description?: string | null
+          display_order?: number | null
           id?: string
           name: string
           project_id: string
@@ -2394,6 +2396,7 @@ export type Database = {
           created_by?: string | null
           data?: Json
           description?: string | null
+          display_order?: number | null
           id?: string
           name?: string
           project_id?: string
