@@ -6,8 +6,15 @@ import {
   ZoomOut,
   Download,
   StickyNote,
-  FileText
+  FileText,
+  Undo2,
+  Redo2,
+  Loader2,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
+
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 interface AIToolbarProps {
   onZoomIn: () => void;
@@ -16,6 +23,15 @@ interface AIToolbarProps {
   zoom: number;
   onStoryGenerated?: (storyData: any) => void;
   onAddElement: (type: string) => void;
+  // Undo/Redo
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  // Save status
+  saveStatus?: SaveStatus;
+  // Selection info
+  selectedCount?: number;
 }
 
 export const AIToolbar: React.FC<AIToolbarProps> = ({
@@ -25,54 +41,122 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
   zoom,
   onStoryGenerated,
   onAddElement,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  saveStatus = 'idle',
+  selectedCount = 0,
 }) => {
   return (
     <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
+      {/* Undo/Redo */}
+      {onUndo && onRedo && (
+        <>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Y)"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+          <Separator orientation="vertical" className="h-6" />
+        </>
+      )}
+
       {/* Generate User Story */}
       <Button 
         variant="ghost" 
         size="sm"
         onClick={() => onAddElement('story')}
-        title="Generate User Story"
+        title="Add User Story"
       >
         <FileText className="h-4 w-4 mr-2" />
-        Generate Story
+        Add Story
       </Button>
 
       <Separator orientation="vertical" className="h-6" />
 
-        {/* Sticky Note */}
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => onAddElement('sticky')}
-          title="Add Sticky Note"
-        >
-          <StickyNote className="h-4 w-4 mr-2" />
-          Sticky Note
+      {/* Sticky Note */}
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => onAddElement('sticky')}
+        title="Add Sticky Note"
+      >
+        <StickyNote className="h-4 w-4 mr-2" />
+        Sticky Note
+      </Button>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Zoom Controls */}
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="sm" onClick={onZoomOut}>
+          <ZoomOut className="h-4 w-4" />
         </Button>
+        <span className="text-sm text-muted-foreground min-w-[3rem] text-center">
+          {Math.round(zoom * 100)}%
+        </span>
+        <Button variant="ghost" size="sm" onClick={onZoomIn}>
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+      </div>
 
-        <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="h-6" />
 
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={onZoomOut}>
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground min-w-[3rem] text-center">
-            {Math.round(zoom * 100)}%
-          </span>
-          <Button variant="ghost" size="sm" onClick={onZoomIn}>
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <Separator orientation="vertical" className="h-6" />
-
-        {/* Export */}
+      {/* Export */}
       <Button variant="ghost" size="sm" onClick={onExport} title="Export">
         <Download className="h-4 w-4" />
       </Button>
+
+      {/* Selection count */}
+      {selectedCount > 1 && (
+        <>
+          <Separator orientation="vertical" className="h-6" />
+          <span className="text-sm text-muted-foreground">
+            {selectedCount} selected
+          </span>
+        </>
+      )}
+
+      {/* Save status indicator */}
+      {saveStatus !== 'idle' && (
+        <>
+          <Separator orientation="vertical" className="h-6" />
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            {saveStatus === 'saving' && (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>Saving...</span>
+              </>
+            )}
+            {saveStatus === 'saved' && (
+              <>
+                <Check className="h-3.5 w-3.5 text-green-500" />
+                <span>Saved</span>
+              </>
+            )}
+            {saveStatus === 'error' && (
+              <>
+                <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                <span>Save failed</span>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -1,11 +1,9 @@
-import React, { useState, useRef, useCallback } from 'react';
-import BaseCanvas, { CanvasData, CanvasElement, BaseCanvasRef } from './BaseCanvas';
-import { AIToolbar } from './AIToolbar';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { AIToolbar, SaveStatus } from './AIToolbar';
 import { Button } from '@/components/ui/button';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProjectMutations } from '@/hooks/useProjects';
-import { useCanvasMutations } from '@/hooks/useCanvas';
+import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
@@ -15,11 +13,26 @@ import { StickyNoteElement } from './elements/StickyNoteElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
 import { CanvasStoryEditDialog, StoryEditData } from './elements/CanvasStoryEditDialog';
+import { useDebouncedCallback } from 'use-debounce';
+import html2canvas from 'html2canvas';
+
+interface CanvasElement {
+  id: string;
+  type: 'bmc' | 'story' | 'sticky';
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  content: any;
+}
+
+interface CanvasData {
+  elements: CanvasElement[];
+}
 
 interface AIToolsCanvasProps {
   projectId?: string;
   projectName?: string;
   initialData?: CanvasData;
+  artifactId?: string;
   onSave?: (data: CanvasData) => void;
 }
 
@@ -27,16 +40,36 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   projectId,
   projectName,
   initialData,
+  artifactId,
   onSave,
 }) => {
-  const [canvasData, setCanvasData] = useState<CanvasData>(
-    initialData || { elements: [] }
-  );
+  // Element state
+  const [elements, setElements] = useState<CanvasElement[]>(initialData?.elements || []);
+  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
-  const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<CanvasElement | null>(null);
-  const canvasRef = useRef<BaseCanvasRef>(null);
+  
+  // Undo/Redo history
+  const [history, setHistory] = useState<CanvasElement[][]>([initialData?.elements || []]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  
+  // Auto-save state
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
+  // Marquee selection state
+  const [isMarqueeSelecting, setIsMarqueeSelecting] = useState(false);
+  const [marqueeStart, setMarqueeStart] = useState({ x: 0, y: 0 });
+  const [marqueeEnd, setMarqueeEnd] = useState({ x: 0, y: 0 });
+  
+  // Group drag state
+  const [isDraggingGroup, setIsDraggingGroup] = useState(false);
+  const [groupDragDelta, setGroupDragDelta] = useState({ dx: 0, dy: 0 });
+  
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const wasMarqueeSelectingRef = useRef(false);
+  
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
   
@@ -44,6 +77,40 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const { addItem: addBacklogItem } = useLocalBacklogItems();
+  const { updateArtifact } = useProjectArtifactMutations();
+
+  // Undo/Redo computed values
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  // History-aware element update function
+  const updateElementsWithHistory = useCallback((newElements: CanvasElement[]) => {
+    setElements(newElements);
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(newElements);
+      return newHistory.slice(-50);
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, 49));
+  }, [historyIndex]);
+
+  // Undo function
+  const undo = useCallback(() => {
+    if (canUndo) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setElements(history[newIndex]);
+    }
+  }, [canUndo, history, historyIndex]);
+
+  // Redo function
+  const redo = useCallback(() => {
+    if (canRedo) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setElements(history[newIndex]);
+    }
+  }, [canRedo, history, historyIndex]);
 
   const handleAddToBacklog = useCallback((storyData: any) => {
     const backlogItem: LocalBacklogItemInput = {
@@ -66,44 +133,11 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     });
   }, [addBacklogItem, toast]);
 
-  const handleDataChange = useCallback((data: CanvasData) => {
-    setCanvasData(data);
-    onSave?.(data);
-  }, [onSave]);
-
-  const handleAddStoryFromGenerator = useCallback((storyData: any) => {
-    const newElement: CanvasElement = {
-      id: crypto.randomUUID(),
-      type: 'story' as any,
-      position: { 
-        x: 100 + (canvasData.elements.length * 20), 
-        y: 100 + (canvasData.elements.length * 20) 
-      },
-      size: { width: 300, height: 200 },
-      content: storyData,
-    };
-
-    const updatedData = {
-      ...canvasData,
-      elements: [...canvasData.elements, newElement],
-    };
-    
-    handleDataChange(updatedData);
-    
-    toast({
-      title: "User Story Added to Canvas",
-      description: `${storyData.title} has been added to your canvas`,
-    });
-  }, [canvasData, handleDataChange, toast]);
-
   const handleAddElement = useCallback((type: string) => {
-    // Calculate element size
-    const elementWidth = type === 'bmc' ? 800 : type === 'story' ? 300 : 140;
-    const elementHeight = type === 'bmc' ? 600 : type === 'story' ? 200 : 121;
+    const elementWidth = type === 'bmc' ? 800 : type === 'story' ? 300 : 200;
+    const elementHeight = type === 'bmc' ? 600 : type === 'story' ? 180 : 200;
     
-    // Center the element in a typical viewport (assuming ~1200x700 canvas area)
-    // and offset slightly for multiple elements
-    const offset = canvasData.elements.length * 20;
+    const offset = elements.length * 20;
     const centerX = (1200 - elementWidth) / 2 + offset;
     const centerY = (700 - elementHeight) / 2 + offset;
     
@@ -114,25 +148,17 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         x: Math.max(50, centerX), 
         y: Math.max(50, centerY) 
       },
-      size: { 
-        width: elementWidth, 
-        height: elementHeight 
-      },
+      size: { width: elementWidth, height: elementHeight },
       content: getDefaultContent(type),
     };
 
-    const updatedData = {
-      ...canvasData,
-      elements: [...canvasData.elements, newElement],
-    };
-    
-    handleDataChange(updatedData);
+    updateElementsWithHistory([...elements, newElement]);
     
     toast({
       title: "Element Added",
       description: `${getElementDisplayName(type)} has been added to the canvas`,
     });
-  }, [canvasData, handleDataChange, toast]);
+  }, [elements, updateElementsWithHistory, toast]);
 
   const getDefaultContent = (type: string) => {
     switch (type) {
@@ -140,15 +166,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         return {
           companyName: 'New Company',
           bmcData: {
-            keyPartners: '',
-            keyActivities: '',
-            keyResources: '',
-            valuePropositions: '',
-            customerRelationships: '',
-            channels: '',
-            customerSegments: '',
-            costStructure: '',
-            revenueStreams: '',
+            keyPartners: '', keyActivities: '', keyResources: '',
+            valuePropositions: '', customerRelationships: '', channels: '',
+            customerSegments: '', costStructure: '', revenueStreams: '',
           }
         };
       case 'story':
@@ -160,10 +180,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           storyPoints: 0,
         };
       case 'sticky':
-        return {
-          text: 'New sticky note',
-          color: '#FFE066',
-        };
+        return { text: 'New note', color: '#FFE066' };
       default:
         return {};
     }
@@ -171,194 +188,362 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
 
   const getElementDisplayName = (type: string) => {
     switch (type) {
-      case 'bmc':
-        return 'Business Model Canvas';
-      case 'story':
-        return 'User Story';
-      case 'sticky':
-        return 'Sticky Note';
-      default:
-        return 'Element';
+      case 'bmc': return 'Business Model Canvas';
+      case 'story': return 'User Story';
+      case 'sticky': return 'Sticky Note';
+      default: return 'Element';
     }
   };
 
-  const handleZoomIn = useCallback(() => {
-    setZoom(prev => Math.min(prev * 1.2, 3));
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    setZoom(prev => Math.max(prev / 1.2, 0.3));
-  }, []);
-
-  const handleExport = useCallback(async () => {
-    try {
-      const dataUrl = await canvasRef.current?.exportCanvas({ format: 'png' });
-      if (dataUrl) {
-        const link = document.createElement('a');
-        link.download = `ai-tools-canvas-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-        
-        toast({
-          title: "Canvas Exported",
-          description: "Your canvas has been exported as PNG",
-        });
+  // Element handlers
+  const handleElementUpdate = useCallback((id: string, updates: Partial<CanvasElement>) => {
+    setElements(prev => prev.map(el => {
+      if (el.id === id) {
+        let newUpdates = { ...updates };
+        if (newUpdates.position) {
+          newUpdates.position = {
+            x: Math.max(0, newUpdates.position.x),
+            y: Math.max(0, newUpdates.position.y),
+          };
+        }
+        return { ...el, ...newUpdates };
       }
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Unable to export canvas",
-        variant: "destructive",
+      return el;
+    }));
+  }, []);
+
+  const handleElementDelete = useCallback((id: string) => {
+    updateElementsWithHistory(elements.filter(el => el.id !== id));
+    setSelectedElementIds(prev => prev.filter(eid => eid !== id));
+    toast({ title: 'Element deleted' });
+  }, [elements, updateElementsWithHistory, toast]);
+
+  const handleElementSelect = useCallback((id: string, shiftKey: boolean = false, preserveIfSelected: boolean = false) => {
+    if (shiftKey) {
+      setSelectedElementIds(prev => 
+        prev.includes(id) ? prev.filter(eid => eid !== id) : [...prev, id]
+      );
+    } else if (preserveIfSelected) {
+      setSelectedElementIds(prev => prev.includes(id) ? prev : [id]);
+    } else {
+      setSelectedElementIds([id]);
+    }
+  }, []);
+
+  const handleDuplicateElement = useCallback((id: string) => {
+    const element = elements.find(el => el.id === id);
+    if (!element) return;
+    
+    const newElement: CanvasElement = {
+      ...element,
+      id: crypto.randomUUID(),
+      position: { x: element.position.x + 30, y: element.position.y + 30 },
+    };
+    updateElementsWithHistory([...elements, newElement]);
+    toast({ title: 'Element duplicated' });
+  }, [elements, updateElementsWithHistory, toast]);
+
+  // Group drag handlers
+  const handleGroupDragStart = useCallback(() => {
+    if (selectedElementIds.length > 1) {
+      setIsDraggingGroup(true);
+      setGroupDragDelta({ dx: 0, dy: 0 });
+    }
+  }, [selectedElementIds.length]);
+
+  const handleGroupDragProgress = useCallback((delta: { dx: number; dy: number }) => {
+    if (selectedElementIds.length > 1) {
+      let minX = Infinity, minY = Infinity;
+      elements.forEach(el => {
+        if (selectedElementIds.includes(el.id)) {
+          minX = Math.min(minX, el.position.x);
+          minY = Math.min(minY, el.position.y);
+        }
       });
+      setGroupDragDelta({
+        dx: Math.max(delta.dx, -minX),
+        dy: Math.max(delta.dy, -minY),
+      });
+    }
+  }, [selectedElementIds, elements]);
+
+  const handleGroupMove = useCallback((draggedId: string, delta: { dx: number; dy: number }) => {
+    setIsDraggingGroup(false);
+    setGroupDragDelta({ dx: 0, dy: 0 });
+    
+    let minX = Infinity, minY = Infinity;
+    elements.forEach(el => {
+      if (selectedElementIds.includes(el.id)) {
+        minX = Math.min(minX, el.position.x);
+        minY = Math.min(minY, el.position.y);
+      }
+    });
+    
+    const clampedDelta = {
+      dx: Math.max(delta.dx, -minX),
+      dy: Math.max(delta.dy, -minY),
+    };
+    
+    const updatedElements = elements.map(el => {
+      if (selectedElementIds.includes(el.id)) {
+        return {
+          ...el,
+          position: {
+            x: el.position.x + clampedDelta.dx,
+            y: el.position.y + clampedDelta.dy,
+          },
+        };
+      }
+      return el;
+    });
+    updateElementsWithHistory(updatedElements);
+  }, [selectedElementIds, elements, updateElementsWithHistory]);
+
+  const getVisualPosition = useCallback((element: CanvasElement) => {
+    if (isDraggingGroup && selectedElementIds.includes(element.id)) {
+      return {
+        x: element.position.x + groupDragDelta.dx,
+        y: element.position.y + groupDragDelta.dy,
+      };
+    }
+    return element.position;
+  }, [isDraggingGroup, groupDragDelta, selectedElementIds]);
+
+  // Marquee selection
+  const isElementInSelectionBox = useCallback((element: CanvasElement, box: { left: number; top: number; right: number; bottom: number }) => {
+    const { x, y } = element.position;
+    const { width, height } = element.size;
+    return x < box.right && x + width > box.left && y < box.bottom && y + height > box.top;
+  }, []);
+
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.button !== 0) return;
+    
+    canvasRef.current?.focus({ preventScroll: true });
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
+    
+    setIsMarqueeSelecting(true);
+    setMarqueeStart({ x, y });
+    setMarqueeEnd({ x, y });
+    
+    if (!e.shiftKey) {
+      setSelectedElementIds([]);
+    }
+  }, [zoom]);
+
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isMarqueeSelecting) return;
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
+    setMarqueeEnd({ x, y });
+  }, [isMarqueeSelecting, zoom]);
+
+  const handleCanvasMouseUp = useCallback((e: React.MouseEvent) => {
+    if (!isMarqueeSelecting) return;
+    
+    wasMarqueeSelectingRef.current = true;
+    setTimeout(() => { wasMarqueeSelectingRef.current = false; }, 0);
+    
+    const box = {
+      left: Math.min(marqueeStart.x, marqueeEnd.x),
+      top: Math.min(marqueeStart.y, marqueeEnd.y),
+      right: Math.max(marqueeStart.x, marqueeEnd.x),
+      bottom: Math.max(marqueeStart.y, marqueeEnd.y),
+    };
+    
+    const marqueeWidth = box.right - box.left;
+    const marqueeHeight = box.bottom - box.top;
+    
+    if (marqueeWidth > 5 || marqueeHeight > 5) {
+      const newSelected = elements.filter(el => isElementInSelectionBox(el, box)).map(el => el.id);
+      
+      if (e.shiftKey) {
+        setSelectedElementIds(prev => [...new Set([...prev, ...newSelected])]);
+      } else {
+        setSelectedElementIds(newSelected);
+      }
+    }
+    
+    setIsMarqueeSelecting(false);
+  }, [isMarqueeSelecting, marqueeStart, marqueeEnd, elements, isElementInSelectionBox]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault();
+        setSelectedElementIds(elements.map(el => el.id));
+        return;
+      }
+      if (e.key === 'Escape') {
+        setSelectedElementIds([]);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [elements, undo, redo]);
+
+  // Zoom handlers
+  const handleZoomIn = useCallback(() => setZoom(prev => Math.min(prev + 0.1, 2)), []);
+  const handleZoomOut = useCallback(() => setZoom(prev => Math.max(prev - 0.1, 0.5)), []);
+
+  // Export
+  const handleExport = useCallback(async () => {
+    if (!canvasRef.current) return;
+    try {
+      toast({ title: 'Generating export...' });
+      const canvas = await html2canvas(canvasRef.current, { scale: 2, backgroundColor: '#ffffff' });
+      const link = document.createElement('a');
+      link.download = `ai-tools-canvas-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast({ title: 'Canvas exported!' });
+    } catch (error) {
+      toast({ title: 'Export failed', variant: 'destructive' });
     }
   }, [toast]);
 
+  // Auto-save
+  const performAutoSave = useDebouncedCallback(async (elementsToSave: CanvasElement[]) => {
+    if (!artifactId || !projectId) {
+      onSave?.({ elements: elementsToSave });
+      return;
+    }
+    
+    setSaveStatus('saving');
+    try {
+      await updateArtifact.mutateAsync({
+        id: artifactId,
+        updates: { data: { elements: elementsToSave } }
+      });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  }, 2000);
+
+  useEffect(() => {
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+      return;
+    }
+    performAutoSave(elements);
+  }, [elements]);
+
   const handleSaveToProject = () => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to save your canvas",
-        variant: "destructive"
-      });
+      toast({ title: "Authentication Required", description: "Please sign in to save", variant: "destructive" });
       navigate('/auth');
       return;
     }
-
     setSaveDialogOpen(true);
   };
 
-  const handleSaveComplete = (projectId: string, artifactId: string) => {
-    toast({
-      title: "🎉 Canvas Saved!",
-      description: "Your canvas has been saved to the project"
-    });
-    navigate(`/projects/${projectId}`);
+  const handleSaveComplete = (projId: string) => {
+    toast({ title: "Canvas Saved!", description: "Your canvas has been saved to the project" });
+    navigate(`/projects/${projId}`);
   };
 
+  // Canvas bounds
+  const canvasBounds = useMemo(() => {
+    const MIN_WIDTH = 2000, MIN_HEIGHT = 1500, PADDING = 500;
+    if (elements.length === 0) return { width: MIN_WIDTH, height: MIN_HEIGHT };
+    let maxX = 0, maxY = 0;
+    elements.forEach(el => {
+      maxX = Math.max(maxX, el.position.x + el.size.width);
+      maxY = Math.max(maxY, el.position.y + el.size.height);
+    });
+    return { width: Math.max(MIN_WIDTH, maxX + PADDING), height: Math.max(MIN_HEIGHT, maxY + PADDING) };
+  }, [elements]);
+
+  // Render element
   const renderElement = (element: CanvasElement) => {
-    const isSelected = selectedElements.includes(element.id);
-    
-    const handleSelect = () => {
-      console.log('Selecting element:', element.id);
-      setSelectedElements([element.id]);
-    };
-    const handleMove = (position: { x: number; y: number }) => {
-      const updatedElement = { ...element, position };
-      const updatedData = {
-        ...canvasData,
-        elements: canvasData.elements.map(el => 
-          el.id === element.id ? updatedElement : el
-        ),
-      };
-      handleDataChange(updatedData);
-    };
-    const handleResize = (size: { width: number; height: number }) => {
-      const updatedElement = { ...element, size };
-      const updatedData = {
-        ...canvasData,
-        elements: canvasData.elements.map(el => 
-          el.id === element.id ? updatedElement : el
-        ),
-      };
-      handleDataChange(updatedData);
+    const isSelected = selectedElementIds.includes(element.id);
+    const isMultiSelected = isSelected && selectedElementIds.length > 1;
+    const visualPosition = getVisualPosition(element);
+
+    const commonProps = {
+      key: element.id,
+      id: element.id,
+      position: visualPosition,
+      size: element.size,
+      isSelected,
+      isMultiSelected,
+      isMarqueeSelecting,
+      onSelect: (e?: React.PointerEvent, preserveIfSelected?: boolean) => 
+        handleElementSelect(element.id, e?.shiftKey || false, preserveIfSelected || false),
+      onMove: (pos: { x: number; y: number }) => handleElementUpdate(element.id, { position: pos }),
+      onMoveGroup: (delta: { dx: number; dy: number }) => handleGroupMove(element.id, delta),
+      onGroupDragStart: handleGroupDragStart,
+      onGroupDragProgress: handleGroupDragProgress,
+      onDelete: () => handleElementDelete(element.id),
+      onDuplicate: () => handleDuplicateElement(element.id),
     };
 
     switch (element.type) {
       case 'bmc':
         return (
           <BMCCanvasElement 
-            key={element.id}
-            id={element.id}
-            position={element.position}
-            size={element.size}
+            {...commonProps}
             data={element.content}
-            isSelected={isSelected}
-            onSelect={handleSelect}
-            onMove={handleMove}
-            onResize={handleResize}
             showWatermark={!user}
-            onContentChange={(newContent) => {
-              const updatedElement = { ...element, content: newContent };
-              const updatedData = {
-                ...canvasData,
-                elements: canvasData.elements.map(el => 
-                  el.id === element.id ? updatedElement : el
-                ),
-              };
-              handleDataChange(updatedData);
-            }}
-            onDelete={() => {
-              const updatedData = {
-                ...canvasData,
-                elements: canvasData.elements.filter(el => el.id !== element.id)
-              };
-              handleDataChange(updatedData);
-              setSelectedElements([]);
-            }}
+            onResize={(size) => handleElementUpdate(element.id, { size })}
+            onContentChange={(content) => handleElementUpdate(element.id, { content })}
           />
         );
       case 'story':
         return (
           <StoryCardElement 
-            key={element.id}
-            id={element.id}
-            position={element.position}
-            size={element.size}
+            {...commonProps}
             data={element.content}
-            isSelected={isSelected}
-            onSelect={handleSelect}
-            onMove={handleMove}
-            onResize={handleResize}
-            onContentChange={(newContent) => {
-              const updatedElement = { ...element, content: newContent };
-              const updatedData = {
-                ...canvasData,
-                elements: canvasData.elements.map(el => 
-                  el.id === element.id ? updatedElement : el
-                ),
-              };
-              handleDataChange(updatedData);
-            }}
-            onDelete={() => {
-              const updatedData = {
-                ...canvasData,
-                elements: canvasData.elements.filter(el => el.id !== element.id)
-              };
-              handleDataChange(updatedData);
-              setSelectedElements([]);
-            }}
-            onAddToBacklog={() => handleAddToBacklog(element.content)}
             onEdit={() => setEditingElement(element)}
+            onAddToBacklog={() => handleAddToBacklog(element.content)}
           />
         );
       case 'sticky':
         return (
           <StickyNoteElement 
-            key={element.id}
-            id={element.id}
-            position={element.position}
-            size={element.size}
+            {...commonProps}
             data={element.content}
-            isSelected={isSelected}
-            onSelect={handleSelect}
-            onMove={handleMove}
-            onResize={handleResize}
-            onContentChange={(newContent) => {
-              const updatedElement = { ...element, content: newContent };
-              const updatedData = {
-                ...canvasData,
-                elements: canvasData.elements.map(el => 
-                  el.id === element.id ? updatedElement : el
-                ),
-              };
-              handleDataChange(updatedData);
-            }}
+            onResize={(size) => handleElementUpdate(element.id, { size })}
+            onContentChange={(content) => handleElementUpdate(element.id, { content })}
           />
         );
       default:
         return null;
     }
   };
+
+  // Marquee box style
+  const marqueeStyle = isMarqueeSelecting ? {
+    left: Math.min(marqueeStart.x, marqueeEnd.x),
+    top: Math.min(marqueeStart.y, marqueeEnd.y),
+    width: Math.abs(marqueeEnd.x - marqueeStart.x),
+    height: Math.abs(marqueeEnd.y - marqueeStart.y),
+  } : null;
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -378,9 +563,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
           </Button>
           <div>
-            <h1 className="text-xl font-semibold">AI Tools Canvas</h1>
+            <h1 className="text-xl font-semibold">User Story Canvas</h1>
             <p className="text-sm text-muted-foreground">
-              Generate AI-powered Business Model Canvases and strategic frameworks
+              Create and organize user stories with drag-and-drop
             </p>
           </div>
         </div>
@@ -393,10 +578,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             </Button>
           )}
           {!user && (
-            <Button
-              onClick={() => navigate('/auth')}
-              variant="outline"
-            >
+            <Button onClick={() => navigate('/auth')} variant="outline">
               Sign In to Save
             </Button>
           )}
@@ -411,53 +593,76 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           onZoomOut={handleZoomOut}
           onExport={handleExport}
           zoom={zoom}
-          onStoryGenerated={handleAddStoryFromGenerator}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          saveStatus={saveStatus}
+          selectedCount={selectedElementIds.length}
         />
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 relative overflow-hidden">
-        <BaseCanvas
+      <div className="flex-1 relative overflow-auto bg-muted/30">
+        <div
           ref={canvasRef}
-          data={canvasData}
-          onDataChange={handleDataChange}
-          isEditable={true}
-          className="w-full h-full"
+          className="relative outline-none"
+          style={{ 
+            width: canvasBounds.width * zoom,
+            height: canvasBounds.height * zoom,
+            backgroundImage: 'radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)',
+            backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+          }}
+          tabIndex={0}
+          onMouseDown={handleCanvasMouseDown}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseUp={handleCanvasMouseUp}
         >
           <div 
-            className="relative w-full h-full"
+            className="relative"
             style={{ 
               transform: `scale(${zoom})`, 
               transformOrigin: 'top left',
+              width: canvasBounds.width,
+              height: canvasBounds.height,
             }}
           >
-            {canvasData.elements.map(renderElement)}
+            {elements.map(renderElement)}
             
-            {/* Empty State */}
-            {canvasData.elements.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center">
+            {/* Marquee selection box */}
+            {isMarqueeSelecting && marqueeStyle && (
+              <div
+                className="absolute border-2 border-primary bg-primary/10 pointer-events-none"
+                style={marqueeStyle}
+              />
+            )}
+            
+            {/* Empty state */}
+            {elements.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center max-w-md">
                   <h3 className="text-lg font-medium text-muted-foreground mb-2">
-                    Welcome to AI Tools Canvas
+                    Welcome to User Story Canvas
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Click "Generate BMC" to create AI-powered Business Model Canvases using strategic frameworks from our Knowledge Base. Add sticky notes for additional context.
+                    Click "Add Story" to create user stories. Drag to move, double-click to edit.
+                    Use marquee selection or Shift+click to select multiple elements.
                   </p>
                 </div>
               </div>
             )}
           </div>
-        </BaseCanvas>
+        </div>
       </div>
 
-      {/* Save to Project Dialog */}
+      {/* Save Dialog */}
       <SaveToProjectDialog
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
         artifactType="canvas"
         artifactName="User Story Canvas"
-        artifactDescription={`Canvas with ${canvasData.elements.length} elements`}
-        artifactData={canvasData}
+        artifactDescription={`Canvas with ${elements.length} elements`}
+        artifactData={{ elements }}
         preselectedProjectId={preselectedProjectId || undefined}
         onSaveComplete={handleSaveComplete}
       />
@@ -469,13 +674,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         data={editingElement?.content as StoryEditData}
         onSave={(newData) => {
           if (editingElement) {
-            const updatedData = {
-              ...canvasData,
-              elements: canvasData.elements.map((el) =>
-                el.id === editingElement.id ? { ...el, content: newData } : el
-              ),
-            };
-            handleDataChange(updatedData);
+            handleElementUpdate(editingElement.id, { content: newData });
             setEditingElement(null);
           }
         }}

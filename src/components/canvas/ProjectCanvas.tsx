@@ -379,7 +379,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
           <StoryCardElement 
             key={element.id} 
             {...commonProps} 
-            onContentChange={(content) => handleElementContentChange(element.id, content)}
             onDelete={() => handleElementDelete(element.id)}
           />
         );

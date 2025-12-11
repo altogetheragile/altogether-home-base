@@ -1,18 +1,17 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { FileText, ListPlus, Pencil } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import AIToolElement from './AIToolElement';
+import { FileText } from 'lucide-react';
+import { StoryFloatingToolbar } from './StoryFloatingToolbar';
 
 interface StoryData {
   title: string;
-  story: string;
+  story?: string;
+  description?: string;
   acceptanceCriteria?: string[];
   priority: string;
   storyPoints: number;
   epic?: string;
-  status: string;
+  status?: string;
 }
 
 interface StoryCardElementProps {
@@ -21,11 +20,15 @@ interface StoryCardElementProps {
   size: { width: number; height: number };
   data?: StoryData;
   isSelected?: boolean;
-  onSelect?: () => void;
-  onResize?: (size: { width: number; height: number }) => void;
+  isMultiSelected?: boolean;
+  isMarqueeSelecting?: boolean;
+  onSelect?: (e?: React.PointerEvent, preserveIfSelected?: boolean) => void;
   onMove?: (position: { x: number; y: number }) => void;
-  onContentChange?: (data: StoryData) => void;
+  onMoveGroup?: (delta: { dx: number; dy: number }) => void;
+  onGroupDragStart?: () => void;
+  onGroupDragProgress?: (delta: { dx: number; dy: number }) => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
   onEdit?: () => void;
   onAddToBacklog?: () => void;
 }
@@ -36,17 +39,23 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   size,
   data,
   isSelected,
+  isMultiSelected,
+  isMarqueeSelecting,
   onSelect,
-  onResize,
   onMove,
-  onContentChange,
+  onMoveGroup,
+  onGroupDragStart,
+  onGroupDragProgress,
   onDelete,
+  onDuplicate,
   onEdit,
   onAddToBacklog,
 }) => {
-  const handleUpdate = (element: any) => {
-    onMove?.(element.position);
-  };
+  const { x, y } = position;
+  const { width, height } = size;
+  
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
   const getPriorityColor = (priority?: string) => {
     switch (priority?.toLowerCase()) {
@@ -57,35 +66,106 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
     }
   };
 
-  const element = {
-    id,
-    type: 'story' as const,
-    position,
-    size,
-    content: data || {}
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    drag.current = { px: e.clientX, py: e.clientY, x, y };
+    onSelect?.(e, true);
+    if (isMultiSelected) {
+      onGroupDragStart?.();
+    }
+    e.stopPropagation();
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current || !ref.current) return;
+    const dx = e.clientX - drag.current.px;
+    const dy = e.clientY - drag.current.py;
+    
+    if (isMultiSelected) {
+      onGroupDragProgress?.({ dx, dy });
+    } else {
+      const newX = Math.max(0, drag.current.x + dx);
+      const newY = Math.max(0, drag.current.y + dy);
+      ref.current.style.transform = `translate(${newX}px, ${newY}px)`;
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    const dx = e.clientX - drag.current.px;
+    const dy = e.clientY - drag.current.py;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance >= 5) {
+      if (isMultiSelected && onMoveGroup) {
+        onMoveGroup({ dx, dy });
+      } else {
+        const nx = Math.round(Math.max(0, drag.current.x + dx));
+        const ny = Math.round(Math.max(0, drag.current.y + dy));
+        onMove?.({ x: nx, y: ny });
+      }
+    }
+    
+    drag.current = null;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+  };
+
+  const handleDoubleClick = () => {
+    onEdit?.();
   };
 
   return (
-    <AIToolElement
-      element={element}
-      isSelected={isSelected || false}
-      onSelect={onSelect || (() => {})}
-      onUpdate={handleUpdate}
-      onDelete={onDelete || (() => {})}
+    <div
+      ref={ref}
+      className="absolute select-none cursor-move"
+      style={{ 
+        transform: `translate(${x}px, ${y}px)`, 
+        width, 
+        height, 
+        zIndex: isSelected ? 1000 : 1,
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onDoubleClick={handleDoubleClick}
+      data-element-id={id}
     >
+      {/* Floating toolbar when selected (hide during multi-select) */}
+      {isSelected && !isMultiSelected && (
+        <StoryFloatingToolbar
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onDuplicate={onDuplicate}
+          onAddToBacklog={onAddToBacklog}
+        />
+      )}
+
       <div 
-        className="h-full bg-card border-2 border-border rounded-lg p-3 hover:border-primary/50 transition-colors cursor-pointer"
-        onClick={onEdit}
+        className={`h-full bg-card border-2 rounded-lg p-3 transition-all ${
+          isSelected && !isMarqueeSelecting
+            ? 'border-primary shadow-lg shadow-primary/20' 
+            : 'border-border hover:border-primary/50'
+        }`}
       >
         {data ? (
-          <div className="space-y-2">
+          <div className="space-y-2 h-full flex flex-col">
             {/* Title */}
             <h4 className="text-sm font-semibold line-clamp-2 leading-tight">
               {data.title}
             </h4>
 
+            {/* Description preview */}
+            {(data.story || data.description) && (
+              <p className="text-xs text-muted-foreground line-clamp-2 flex-1">
+                {data.story || data.description}
+              </p>
+            )}
+
             {/* Metadata */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-auto">
               <div className="flex items-center gap-2">
                 {data.priority && (
                   <Badge 
@@ -95,55 +175,21 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
                     {data.priority}
                   </Badge>
                 )}
-                {data.storyPoints && (
+                {data.storyPoints > 0 && (
                   <span className="text-xs text-muted-foreground">
                     {data.storyPoints} pts
                   </span>
                 )}
               </div>
             </div>
-
-            {/* Action buttons - show when selected */}
-            {isSelected && (
-              <div className="flex gap-2 mt-2">
-                {onEdit && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit();
-                    }}
-                  >
-                    <Pencil className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                )}
-                {onAddToBacklog && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddToBacklog();
-                    }}
-                  >
-                    <ListPlus className="h-3 w-3 mr-1" />
-                    Add to Backlog
-                  </Button>
-                )}
-              </div>
-            )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
             <FileText className="h-6 w-6 mb-1 opacity-50" />
-            <p className="text-xs">Click to create story</p>
+            <p className="text-xs">Double-click to edit</p>
           </div>
         )}
       </div>
-    </AIToolElement>
+    </div>
   );
 };
