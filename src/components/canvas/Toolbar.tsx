@@ -69,7 +69,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [showPlanningFocusSelector, setShowPlanningFocusSelector] = useState(false);
   return (
     <>
-      <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm overflow-x-auto max-w-full">
+      <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
         {/* Add Knowledge Item */}
         <Button 
           variant="ghost" 
@@ -167,8 +167,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         </Button>
       </div>
 
-      <Separator orientation="vertical" className="h-6" />
-
       {/* Save Status Indicator */}
       {artifactId && (
         <div className="flex items-center gap-1 min-w-[80px]">
@@ -194,20 +192,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1">
         {artifactId ? (
           <>
-            <Button size="sm" onClick={onSaveChanges} title="Save Changes">
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
+            <Button size="icon" variant="ghost" onClick={onSaveChanges} title="Save Changes">
+              <Save className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={onExport} title="Export">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+            <Button variant="ghost" size="icon" onClick={onExport} title="Export">
+              <Download className="h-4 w-4" />
             </Button>
           </>
         ) : (
-          <Button variant="ghost" size="sm" onClick={onExport} title="Export">
+          <Button variant="ghost" size="icon" onClick={onExport} title="Export">
             <Download className="h-4 w-4" />
           </Button>
         )}
