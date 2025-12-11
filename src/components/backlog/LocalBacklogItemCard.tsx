@@ -1,11 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -20,8 +16,6 @@ import {
   Trash2, 
   ArrowUp, 
   ArrowDown,
-  Check,
-  X
 } from 'lucide-react';
 import { LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
 import { cn } from '@/lib/utils';
@@ -31,6 +25,7 @@ interface LocalBacklogItemCardProps {
   index: number;
   onUpdate: (updates: Partial<LocalBacklogItem>) => void;
   onDelete: () => void;
+  onEdit: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   isDragging?: boolean;
@@ -60,221 +55,20 @@ const sourceLabels: Record<string, string> = {
   ai_suggestion: 'AI Suggestion',
 };
 
-const SOURCES = [
-  { value: 'user_feedback', label: 'User Feedback' },
-  { value: 'development', label: 'Development' },
-  { value: 'bug_fix', label: 'Bug Fix' },
-  { value: 'enhancement', label: 'Enhancement' },
-  { value: 'ai_suggestion', label: 'AI Suggestion' },
-];
-
-const PRIORITIES = [
-  { value: 'critical', label: 'Critical' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
-
-const STATUSES = [
-  { value: 'idea', label: 'Idea' },
-  { value: 'refined', label: 'Refined' },
-  { value: 'ready', label: 'Ready' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'done', label: 'Done' },
-];
-
 export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
   item,
   index,
   onUpdate,
   onDelete,
+  onEdit,
   onMoveUp,
   onMoveDown,
   isDragging,
   isEditable = true,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(item.title);
-  const [editDescription, setEditDescription] = useState(item.description || '');
-  const [editPriority, setEditPriority] = useState(item.priority);
-  const [editStatus, setEditStatus] = useState(item.status);
-  const [editSource, setEditSource] = useState(item.source || 'enhancement');
-  const [editValue, setEditValue] = useState(item.estimated_value?.toString() || '');
-  const [editEffort, setEditEffort] = useState(item.estimated_effort?.toString() || '');
-  const [editTargetRelease, setEditTargetRelease] = useState(item.target_release || '');
-  const [editTags, setEditTags] = useState(item.tags?.join(', ') || '');
-
-  const handleStartEdit = () => {
-    setEditTitle(item.title);
-    setEditDescription(item.description || '');
-    setEditPriority(item.priority);
-    setEditStatus(item.status);
-    setEditSource(item.source || 'enhancement');
-    setEditValue(item.estimated_value?.toString() || '');
-    setEditEffort(item.estimated_effort?.toString() || '');
-    setEditTargetRelease(item.target_release || '');
-    setEditTags(item.tags?.join(', ') || '');
-    setIsEditing(true);
-  };
-
-  const handleSave = () => {
-    onUpdate({
-      title: editTitle,
-      description: editDescription || null,
-      priority: editPriority,
-      status: editStatus,
-      source: editSource,
-      estimated_value: editValue ? Number(editValue) : null,
-      estimated_effort: editEffort ? Number(editEffort) : null,
-      target_release: editTargetRelease || null,
-      tags: editTags.trim() ? editTags.split(',').map(t => t.trim()).filter(Boolean) : null,
-    });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-  };
-
   const handleStatusChange = (newStatus: string) => {
     onUpdate({ status: newStatus });
   };
-
-  if (isEditing) {
-    return (
-      <Card className="border-primary">
-        <CardContent className="p-4 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="editTitle">Title *</Label>
-            <Input
-              id="editTitle"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              autoFocus
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="editDescription">Description</Label>
-            <Textarea
-              id="editDescription"
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              placeholder="Description"
-              rows={2}
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select value={editPriority} onValueChange={setEditPriority}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={editStatus} onValueChange={setEditStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Source</Label>
-              <Select value={editSource} onValueChange={setEditSource}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="editValue">Estimated Value</Label>
-              <Input
-                id="editValue"
-                type="number"
-                placeholder="Business value"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                min="0"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="editEffort">Estimated Effort</Label>
-              <Input
-                id="editEffort"
-                type="number"
-                placeholder="Story points"
-                value={editEffort}
-                onChange={(e) => setEditEffort(e.target.value)}
-                min="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="editTargetRelease">Target Release</Label>
-              <Input
-                id="editTargetRelease"
-                placeholder="e.g., v1.0"
-                value={editTargetRelease}
-                onChange={(e) => setEditTargetRelease(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="editTags">Tags</Label>
-            <Input
-              id="editTags"
-              placeholder="Comma-separated tags"
-              value={editTags}
-              onChange={(e) => setEditTags(e.target.value)}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={handleCancel}>
-              <X className="h-4 w-4 mr-1" />
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={!editTitle.trim()}>
-              <Check className="h-4 w-4 mr-1" />
-              Save
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className={cn(
@@ -308,6 +102,11 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                   >
                     {item.status.replace('_', ' ')}
                   </Badge>
+                  {item.estimated_effort != null && (
+                    <Badge variant="secondary" className="text-xs">
+                      {item.estimated_effort} pts
+                    </Badge>
+                  )}
                   {item.target_release && (
                     <Badge variant="outline" className="text-xs">
                       {item.target_release}
@@ -322,6 +121,14 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                     {item.description}
                   </p>
                 )}
+
+                {item.acceptance_criteria && item.acceptance_criteria.length > 0 && (
+                  <div className="mt-2">
+                    <span className="text-xs text-muted-foreground">
+                      {item.acceptance_criteria.length} acceptance criteria
+                    </span>
+                  </div>
+                )}
                 
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
                   {item.source && (
@@ -329,9 +136,6 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                   )}
                   {item.estimated_value != null && (
                     <span>Value: {item.estimated_value}</span>
-                  )}
-                  {item.estimated_effort != null && (
-                    <span>Effort: {item.estimated_effort}</span>
                   )}
                   {item.tags && item.tags.length > 0 && (
                     <span className="flex gap-1 flex-wrap">
@@ -353,7 +157,7 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleStartEdit}>
+                    <DropdownMenuItem onClick={onEdit}>
                       <Pencil className="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>

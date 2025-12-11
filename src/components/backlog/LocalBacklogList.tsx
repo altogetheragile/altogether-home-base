@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter } from 'lucide-react';
+import { UnifiedStoryEditDialog } from '@/components/stories/UnifiedStoryEditDialog';
+import { UnifiedStoryData } from '@/types/story';
 
 interface LocalBacklogListProps {
   items: LocalBacklogItem[];
@@ -42,6 +44,10 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  
+  // Dialog state
+  const [editingItem, setEditingItem] = useState<LocalBacklogItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const filteredItems = items.filter((item) => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
@@ -110,6 +116,51 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
       backlog_position: idx,
     }));
     onReorderItems(updates);
+  };
+
+  const handleEdit = (item: LocalBacklogItem) => {
+    setEditingItem(item);
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = (data: UnifiedStoryData) => {
+    if (editingItem) {
+      onUpdateItem(editingItem.id, {
+        title: data.title,
+        description: data.description,
+        acceptance_criteria: data.acceptance_criteria,
+        priority: data.priority || 'medium',
+        status: data.status || 'idea',
+        source: data.source,
+        estimated_value: data.estimated_value,
+        estimated_effort: data.story_points || data.estimated_effort,
+        target_release: data.target_release,
+        tags: data.tags,
+        user_story_id: data.user_story_id,
+      });
+    }
+    setIsDialogOpen(false);
+    setEditingItem(null);
+  };
+
+  // Convert LocalBacklogItem to UnifiedStoryData for the dialog
+  const getDialogData = (item: LocalBacklogItem | null): Partial<UnifiedStoryData> | undefined => {
+    if (!item) return undefined;
+    return {
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      acceptance_criteria: item.acceptance_criteria,
+      priority: item.priority as any,
+      status: item.status,
+      source: item.source,
+      estimated_value: item.estimated_value,
+      story_points: item.estimated_effort, // Map effort to story points
+      estimated_effort: item.estimated_effort,
+      target_release: item.target_release,
+      tags: item.tags,
+      user_story_id: item.user_story_id,
+    };
   };
 
   return (
@@ -182,6 +233,7 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
                 index={index}
                 onUpdate={(updates) => onUpdateItem(item.id, updates)}
                 onDelete={() => onDeleteItem(item.id)}
+                onEdit={() => handleEdit(item)}
                 onMoveUp={isEditable && index > 0 ? () => handleMoveUp(index) : undefined}
                 onMoveDown={isEditable && index < filteredItems.length - 1 ? () => handleMoveDown(index) : undefined}
                 isDragging={draggedIndex === index}
@@ -191,6 +243,18 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
           ))}
         </div>
       )}
+
+      {/* Unified Edit Dialog */}
+      <UnifiedStoryEditDialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setEditingItem(null);
+        }}
+        data={getDialogData(editingItem)}
+        onSave={handleSave}
+        mode="backlog"
+      />
     </div>
   );
 };
