@@ -4,6 +4,7 @@ export interface LocalBacklogItem {
   id: string;
   title: string;
   description: string | null;
+  acceptance_criteria: string[] | null;
   priority: string;
   status: string;
   source: string | null;
@@ -12,6 +13,7 @@ export interface LocalBacklogItem {
   tags: string[] | null;
   target_release: string | null;
   backlog_position: number;
+  user_story_id?: string | null;
 }
 
 export type LocalBacklogItemInput = Omit<LocalBacklogItem, 'id' | 'backlog_position'>;
