@@ -156,6 +156,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         estimated_effort: storyData.storyPoints || null,
         tags: null,
         target_release: null,
+        acceptance_criteria: storyData.acceptanceCriteria || null,
       });
     } catch (error) {
       // Error toast is handled by the hook
