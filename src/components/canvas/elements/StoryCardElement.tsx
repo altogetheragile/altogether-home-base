@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, ListPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AIToolElement from './AIToolElement';
 
@@ -26,6 +27,7 @@ interface StoryCardElementProps {
   onContentChange?: (data: StoryData) => void;
   onDelete?: () => void;
   onEdit?: () => void;
+  onAddToBacklog?: () => void;
 }
 
 export const StoryCardElement: React.FC<StoryCardElementProps> = ({
@@ -40,6 +42,7 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   onContentChange,
   onDelete,
   onEdit,
+  onAddToBacklog,
 }) => {
   const handleUpdate = (element: any) => {
     onMove?.(element.position);
@@ -99,6 +102,22 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Add to Backlog Button - show when selected */}
+            {isSelected && onAddToBacklog && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full mt-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToBacklog();
+                }}
+              >
+                <ListPlus className="h-3 w-3 mr-1" />
+                Add to Backlog
+              </Button>
+            )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">

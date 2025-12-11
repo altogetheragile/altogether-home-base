@@ -13,6 +13,7 @@ import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
+import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
 
 interface AIToolsCanvasProps {
   projectId?: string;
@@ -40,6 +41,28 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { addItem: addBacklogItem } = useLocalBacklogItems();
+
+  const handleAddToBacklog = useCallback((storyData: any) => {
+    const backlogItem: LocalBacklogItemInput = {
+      title: storyData.title || 'Untitled Story',
+      description: storyData.story || storyData.description || null,
+      priority: storyData.priority || 'medium',
+      status: 'new',
+      source: 'AI Tools Canvas',
+      estimated_value: null,
+      estimated_effort: storyData.storyPoints || null,
+      tags: null,
+      target_release: null,
+    };
+
+    addBacklogItem(backlogItem);
+    
+    toast({
+      title: "Added to Backlog",
+      description: `"${backlogItem.title}" has been added to your Product Backlog`,
+    });
+  }, [addBacklogItem, toast]);
 
   const handleDataChange = useCallback((data: CanvasData) => {
     setCanvasData(data);
@@ -304,6 +327,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
               handleDataChange(updatedData);
               setSelectedElements([]);
             }}
+            onAddToBacklog={() => handleAddToBacklog(element.content)}
           />
         );
       case 'sticky':
