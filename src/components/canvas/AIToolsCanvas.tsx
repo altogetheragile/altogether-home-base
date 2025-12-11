@@ -547,43 +547,45 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
-            AltogetherAgile
-          </Link>
-          <Separator orientation="vertical" className="h-6" />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(preselectedProjectId ? `/projects/${preselectedProjectId}` : '/ai-tools')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
-          </Button>
-          <div>
-            <h1 className="text-xl font-semibold">User Story Canvas</h1>
-            <p className="text-sm text-muted-foreground">
-              Create and organize user stories with drag-and-drop
-            </p>
+      {/* Header - only show in standalone mode */}
+      {!artifactId && (
+        <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+              AltogetherAgile
+            </Link>
+            <Separator orientation="vertical" className="h-6" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(preselectedProjectId ? `/projects/${preselectedProjectId}` : '/ai-tools')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold">User Story Canvas</h1>
+              <p className="text-sm text-muted-foreground">
+                Create and organize user stories with drag-and-drop
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {user && (
+              <Button onClick={handleSaveToProject}>
+                <Save className="h-4 w-4 mr-2" />
+                Save to Project
+              </Button>
+            )}
+            {!user && (
+              <Button onClick={() => navigate('/auth')} variant="outline">
+                Sign In to Save
+              </Button>
+            )}
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          {user && (
-            <Button onClick={handleSaveToProject}>
-              <Save className="h-4 w-4 mr-2" />
-              Save to Project
-            </Button>
-          )}
-          {!user && (
-            <Button onClick={() => navigate('/auth')} variant="outline">
-              Sign In to Save
-            </Button>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Toolbar */}
       <div className="border-b px-4 py-2 bg-card/50">
