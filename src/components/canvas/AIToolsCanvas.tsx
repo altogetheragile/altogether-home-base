@@ -346,8 +346,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   }, []);
 
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget) return;
     if (e.button !== 0) return;
+    
+    // Check if we clicked on an actual canvas element
+    const target = e.target as HTMLElement;
+    const clickedElement = target.closest('[data-element-id]');
+    if (clickedElement) return;
     
     canvasRef.current?.focus({ preventScroll: true });
     
