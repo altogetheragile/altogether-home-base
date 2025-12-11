@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
 import { cn } from '@/lib/utils';
+import { InlineEditableText } from '@/components/ui/InlineEditableText';
 
 interface LocalBacklogItemCardProps {
   item: LocalBacklogItem;
@@ -114,13 +115,19 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                   )}
                 </div>
                 
-                <h4 className="font-medium text-sm line-clamp-1">{item.title}</h4>
+                <InlineEditableText
+                  value={item.title}
+                  onSave={(title) => onUpdate({ title })}
+                  className="font-medium text-sm"
+                />
                 
-                {item.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {item.description}
-                  </p>
-                )}
+                <InlineEditableText
+                  value={item.description || ''}
+                  onSave={(description) => onUpdate({ description: description || null })}
+                  className="text-xs text-muted-foreground mt-1"
+                  multiline
+                  placeholder="Add description..."
+                />
 
                 {item.acceptance_criteria && item.acceptance_criteria.length > 0 && (
                   <div className="mt-2">

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { BacklogItem, useUpdateBacklogItem, useDeleteBacklogItem } from '@/hooks/useBacklogItems';
 import { cn } from '@/lib/utils';
+import { InlineEditableText } from '@/components/ui/InlineEditableText';
 
 interface BacklogItemCardProps {
   item: BacklogItem;
@@ -132,13 +133,21 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
                   </Badge>
                 </div>
                 
-                <h4 className="font-medium text-sm line-clamp-1">{item.title}</h4>
+                <InlineEditableText
+                  value={item.title}
+                  onSave={(title) => updateItem.mutate({ id: item.id, updates: { title } })}
+                  className="font-medium text-sm"
+                  isLoading={updateItem.isPending}
+                />
                 
-                {item.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {item.description}
-                  </p>
-                )}
+                <InlineEditableText
+                  value={item.description || ''}
+                  onSave={(description) => updateItem.mutate({ id: item.id, updates: { description: description || null } })}
+                  className="text-xs text-muted-foreground mt-1"
+                  multiline
+                  placeholder="Add description..."
+                  isLoading={updateItem.isPending}
+                />
                 
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                   {item.source && (
