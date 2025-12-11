@@ -84,11 +84,14 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
   const hasAcceptanceCriteria = item.acceptance_criteria && item.acceptance_criteria.length > 1;
 
   return (
-    <Card className={cn(
-      "transition-all hover:shadow-md",
-      isDragging && "shadow-lg ring-2 ring-primary",
-      parentTitle && "border-l-4 border-l-purple-400"
-    )}>
+    <Card 
+      className={cn(
+        "transition-all hover:shadow-md cursor-pointer",
+        isDragging && "shadow-lg ring-2 ring-primary",
+        parentTitle && "border-l-4 border-l-purple-400"
+      )}
+      onDoubleClick={onEdit}
+    >
       <CardContent className="p-3">
         <div className="flex items-start gap-2">
           <div 
@@ -133,21 +136,13 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
                   </Badge>
                 </div>
                 
-                <InlineEditableText
-                  value={item.title}
-                  onSave={(title) => updateItem.mutate({ id: item.id, updates: { title } })}
-                  className="font-medium text-sm"
-                  isLoading={updateItem.isPending}
-                />
+                <h4 className="font-medium text-sm">{item.title}</h4>
                 
-                <InlineEditableText
-                  value={item.description || ''}
-                  onSave={(description) => updateItem.mutate({ id: item.id, updates: { description: description || null } })}
-                  className="text-xs text-muted-foreground mt-1"
-                  multiline
-                  placeholder="Add description..."
-                  isLoading={updateItem.isPending}
-                />
+                {item.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {item.description}
+                  </p>
+                )}
                 
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                   {item.source && (
