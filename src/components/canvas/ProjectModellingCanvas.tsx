@@ -794,7 +794,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
 
       {/* Toolbar */}
       <div className="border-b bg-card">
-        <div className="px-4 py-2 overflow-x-auto">
+        <div className="px-4 py-2">
           <Toolbar
             onAddElement={handleAddElement}
             onAddKnowledgeItem={handleAddKnowledgeItem}
