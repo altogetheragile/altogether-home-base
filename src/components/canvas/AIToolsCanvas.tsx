@@ -11,7 +11,7 @@ import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
-import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
+import { useCreateBacklogItem } from '@/hooks/useBacklogItems';
 import { CanvasStoryEditDialog, StoryEditData } from './elements/CanvasStoryEditDialog';
 import { useDebouncedCallback } from 'use-debounce';
 import html2canvas from 'html2canvas';
@@ -76,7 +76,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { addItem: addBacklogItem } = useLocalBacklogItems();
+  const createBacklogItem = useCreateBacklogItem();
   const { updateArtifact } = useProjectArtifactMutations();
 
   // Undo/Redo computed values
@@ -112,26 +112,35 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     }
   }, [canRedo, history, historyIndex]);
 
-  const handleAddToBacklog = useCallback((storyData: any) => {
-    const backlogItem: LocalBacklogItemInput = {
-      title: storyData.title || 'Untitled Story',
-      description: storyData.story || storyData.description || null,
-      priority: storyData.priority || 'medium',
-      status: 'new',
-      source: 'AI Tools Canvas',
-      estimated_value: null,
-      estimated_effort: storyData.storyPoints || null,
-      tags: null,
-      target_release: null,
-    };
-
-    addBacklogItem(backlogItem);
+  const handleAddToBacklog = useCallback(async (storyData: any) => {
+    const targetProjectId = projectId || preselectedProjectId;
     
-    toast({
-      title: "Added to Backlog",
-      description: `"${backlogItem.title}" has been added to your Product Backlog`,
-    });
-  }, [addBacklogItem, toast]);
+    if (!targetProjectId) {
+      toast({
+        title: "Cannot Add to Backlog",
+        description: "This canvas is not associated with a project. Save it to a project first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await createBacklogItem.mutateAsync({
+        project_id: targetProjectId,
+        title: storyData.title || 'Untitled Story',
+        description: storyData.story || storyData.description || null,
+        priority: storyData.priority || 'Medium',
+        status: 'New',
+        source: 'User Story Canvas',
+        estimated_value: null,
+        estimated_effort: storyData.storyPoints || null,
+        tags: null,
+        target_release: null,
+      });
+    } catch (error) {
+      // Error toast is handled by the hook
+    }
+  }, [createBacklogItem, projectId, preselectedProjectId, toast]);
 
   const handleAddElement = useCallback((type: string) => {
     const elementWidth = type === 'bmc' ? 800 : type === 'story' ? 300 : 200;
