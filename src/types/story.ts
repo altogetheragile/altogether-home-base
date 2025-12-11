@@ -33,6 +33,10 @@ export interface UnifiedStoryData {
   // Links
   user_story_id?: string | null;
   epic_id?: string | null;
+  
+  // Parent-child relationship for split stories
+  parent_story_id?: string | null;
+  parent_item_id?: string | null;
 }
 
 export type UnifiedStoryMode = 'backlog' | 'story' | 'epic';

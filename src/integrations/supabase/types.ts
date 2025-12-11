@@ -285,6 +285,7 @@ export type Database = {
           estimated_effort: number | null
           estimated_value: number | null
           id: string
+          parent_item_id: string | null
           priority: string | null
           product_id: string | null
           project_id: string | null
@@ -305,6 +306,7 @@ export type Database = {
           estimated_effort?: number | null
           estimated_value?: number | null
           id?: string
+          parent_item_id?: string | null
           priority?: string | null
           product_id?: string | null
           project_id?: string | null
@@ -325,6 +327,7 @@ export type Database = {
           estimated_effort?: number | null
           estimated_value?: number | null
           id?: string
+          parent_item_id?: string | null
           priority?: string | null
           product_id?: string | null
           project_id?: string | null
@@ -337,6 +340,13 @@ export type Database = {
           user_story_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "backlog_items_parent_item_id_fkey"
+            columns: ["parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "backlog_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "backlog_items_product_id_fkey"
             columns: ["product_id"]
@@ -3180,6 +3190,7 @@ export type Database = {
           issue_type: string | null
           jira_issue_key: string | null
           non_functional_requirements: string[] | null
+          parent_story_id: string | null
           position: number | null
           priority: string | null
           problem_statement: string | null
@@ -3217,6 +3228,7 @@ export type Database = {
           issue_type?: string | null
           jira_issue_key?: string | null
           non_functional_requirements?: string[] | null
+          parent_story_id?: string | null
           position?: number | null
           priority?: string | null
           problem_statement?: string | null
@@ -3254,6 +3266,7 @@ export type Database = {
           issue_type?: string | null
           jira_issue_key?: string | null
           non_functional_requirements?: string[] | null
+          parent_story_id?: string | null
           position?: number | null
           priority?: string | null
           problem_statement?: string | null
@@ -3283,6 +3296,13 @@ export type Database = {
             columns: ["feature_id"]
             isOneToOne: false
             referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stories_parent_story_id_fkey"
+            columns: ["parent_story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
             referencedColumns: ["id"]
           },
           {

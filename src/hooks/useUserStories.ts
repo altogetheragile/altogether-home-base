@@ -20,6 +20,9 @@ export interface UserStory {
   jira_issue_key?: string;
   position?: number;
   
+  // Parent-child relationship for split stories
+  parent_story_id?: string;
+  
   // Rich metadata fields (Phase 1 enhancements)
   user_persona?: string;
   problem_statement?: string;
