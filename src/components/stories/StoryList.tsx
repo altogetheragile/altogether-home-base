@@ -5,19 +5,24 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, Edit, Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
-import { useUserStories, useEpics, useFeatures, useStoryMutations, type UserStory, type Epic, type Feature } from '@/hooks/useUserStories';
+import { useUserStories, useEpics, useFeatures, useStoryMutations, type UserStory, type Epic } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from './UserStoryClarifierDialog';
-import { StoryEditDialog } from './StoryEditDialog';
+import { UnifiedStoryEditDialog } from './UnifiedStoryEditDialog';
+import { UnifiedStoryData, UnifiedStoryMode } from '@/types/story';
+import { useToast } from '@/hooks/use-toast';
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   draft: 'bg-gray-500',
   ready: 'bg-blue-500',
   in_progress: 'bg-yellow-500',
   testing: 'bg-orange-500',
   done: 'bg-green-500',
+  active: 'bg-blue-500',
+  completed: 'bg-green-500',
+  cancelled: 'bg-gray-400',
 };
 
-const priorityColors = {
+const priorityColors: Record<string, string> = {
   low: 'bg-green-100 text-green-800',
   medium: 'bg-yellow-100 text-yellow-800',
   high: 'bg-orange-100 text-orange-800',
@@ -31,15 +36,16 @@ export function StoryList() {
   const [showClarifier, setShowClarifier] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingStory, setEditingStory] = useState<UserStory | Epic | null>(null);
-  const [editingType, setEditingType] = useState<'story' | 'epic'>('story');
+  const [editingType, setEditingType] = useState<UnifiedStoryMode>('story');
   const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(new Set());
 
   const { data: stories = [], isLoading: storiesLoading } = useUserStories();
   const { data: epics = [], isLoading: epicsLoading } = useEpics();
   const { data: features = [], isLoading: featuresLoading } = useFeatures();
-  const { deleteStory } = useStoryMutations();
+  const { deleteStory, updateStory, updateEpic } = useStoryMutations();
+  const { toast } = useToast();
 
-  const handleEditStory = (story: UserStory | Epic, type: 'story' | 'epic') => {
+  const handleEditStory = (story: UserStory | Epic, type: UnifiedStoryMode) => {
     setEditingStory(story);
     setEditingType(type);
     setShowEditDialog(true);
@@ -48,6 +54,46 @@ export function StoryList() {
   const handleCloseEditDialog = () => {
     setShowEditDialog(false);
     setEditingStory(null);
+  };
+
+  const handleSaveStory = async (data: UnifiedStoryData) => {
+    if (!editingStory) return;
+
+    try {
+      if (editingType === 'epic') {
+        await updateEpic.mutateAsync({
+          id: editingStory.id,
+          title: data.title,
+          description: data.description,
+          status: data.status as any,
+          theme: (editingStory as Epic).theme,
+        });
+      } else {
+        await updateStory.mutateAsync({
+          id: editingStory.id,
+          title: data.title,
+          description: data.description,
+          status: data.status as any,
+          priority: data.priority,
+          story_points: data.story_points,
+          acceptance_criteria: data.acceptance_criteria?.filter(c => c.trim()) || [],
+        });
+      }
+
+      toast({
+        title: "Success!",
+        description: `${editingType === 'epic' ? 'Epic' : 'Story'} updated successfully.`,
+      });
+      
+      handleCloseEditDialog();
+    } catch (error) {
+      console.error('Error updating:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleCriteriaExpansion = (storyId: string) => {
@@ -68,6 +114,34 @@ export function StoryList() {
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  // Convert story/epic to UnifiedStoryData for the dialog
+  const getDialogData = (): Partial<UnifiedStoryData> | undefined => {
+    if (!editingStory) return undefined;
+    
+    if (editingType === 'epic') {
+      const epic = editingStory as Epic;
+      return {
+        id: epic.id,
+        title: epic.title,
+        description: epic.description,
+        status: epic.status,
+        business_value: epic.business_objective,
+      };
+    } else {
+      const story = editingStory as UserStory;
+      return {
+        id: story.id,
+        title: story.title,
+        description: story.description,
+        status: story.status,
+        priority: story.priority,
+        story_points: story.story_points,
+        acceptance_criteria: story.acceptance_criteria,
+        epic_id: story.epic_id,
+      };
+    }
+  };
 
   if (storiesLoading || epicsLoading || featuresLoading) {
     return <div className="flex justify-center p-8">Loading stories...</div>;
@@ -263,11 +337,15 @@ export function StoryList() {
         onClose={() => setShowClarifier(false)} 
       />
       
-      <StoryEditDialog
-        isOpen={showEditDialog}
-        onClose={handleCloseEditDialog}
-        story={editingStory}
-        type={editingType}
+      <UnifiedStoryEditDialog
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          if (!open) handleCloseEditDialog();
+        }}
+        data={getDialogData()}
+        onSave={handleSaveStory}
+        mode={editingType}
+        isLoading={updateStory.isPending || updateEpic.isPending}
       />
     </div>
   );
