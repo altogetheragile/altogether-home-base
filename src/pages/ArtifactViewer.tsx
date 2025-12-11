@@ -265,15 +265,17 @@ export default function ArtifactViewer() {
         );
       case 'canvas':
       case 'user_story':
+        const AIToolsCanvas = React.lazy(() => 
+          import('@/components/canvas/AIToolsCanvas').then(m => ({ default: m.default }))
+        );
         return (
-          <div className="bg-muted p-8 rounded-lg">
-            <p className="text-muted-foreground">
-              Viewer for {artifact.artifact_type} artifacts coming soon...
-            </p>
-            <pre className="mt-4 p-4 bg-background rounded text-xs overflow-auto">
-              {JSON.stringify(artifact.data, null, 2)}
-            </pre>
-          </div>
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading canvas...</div>}>
+            <AIToolsCanvas 
+              initialData={artifact.data}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
         );
       default:
         return (
@@ -384,7 +386,7 @@ export default function ArtifactViewer() {
         </div>
       </div>
 
-      <div className={`container mx-auto px-4 ${artifact.artifact_type === 'project-model' ? 'py-0' : 'py-8'}`}>
+      <div className={`container mx-auto px-4 ${['project-model', 'canvas', 'user_story'].includes(artifact.artifact_type) ? 'py-0' : 'py-8'}`}>
         {renderArtifactContent()}
       </div>
     </div>
