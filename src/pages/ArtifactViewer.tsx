@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
+import { useBacklogItems } from '@/hooks/useBacklogItems';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil, Save, Download, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -20,6 +21,7 @@ export default function ArtifactViewer() {
   const returnTo = searchParams.get('from');
   const { data: artifact, isLoading: isLoadingArtifact } = useProjectArtifact(artifactId);
   const { data: project, isLoading: isLoadingProject } = useProject(projectId);
+  const { data: liveBacklogItems } = useBacklogItems(projectId);
   const { updateArtifact } = useProjectArtifactMutations();
   const bmcRef = useRef<BusinessModelCanvasRef>(null);
   
@@ -72,7 +74,8 @@ export default function ArtifactViewer() {
 
   // Backlog handlers
   const handleStartEditBacklog = () => {
-    const items = artifact?.data?.items || [];
+    // Use live database items instead of artifact snapshot
+    const items = liveBacklogItems || [];
     // Convert to LocalBacklogItem format with positions
     const localItems: LocalBacklogItem[] = items.map((item: any, index: number) => ({
       id: item.id || crypto.randomUUID(),
@@ -152,7 +155,8 @@ export default function ArtifactViewer() {
   };
 
   const handleExportBacklog = () => {
-    const items = artifact?.data?.items || [];
+    // Use live database items instead of artifact snapshot
+    const items = liveBacklogItems || [];
     if (items.length === 0) {
       toast.error('No backlog items to export');
       return;
@@ -239,7 +243,8 @@ export default function ArtifactViewer() {
             </div>
           );
         }
-        const backlogItems: LocalBacklogItem[] = (artifact.data?.items || []).map((item: any, index: number) => ({
+        // Use live database items instead of artifact snapshot
+        const backlogItems: LocalBacklogItem[] = (liveBacklogItems || []).map((item: any, index: number) => ({
           id: item.id || crypto.randomUUID(),
           title: item.title,
           description: item.description || null,
