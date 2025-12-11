@@ -9,7 +9,10 @@ export { ImpactEffortMatrix } from './ImpactEffortMatrix';
 export { AIGenerationButton } from './AIGenerationButton';
 export { EnhancedStoryCard } from './EnhancedStoryCard';
 
-// Legacy exports
-export { StoryEditDialog } from './StoryEditDialog';
+// Story editing
+export { UnifiedStoryEditDialog } from './UnifiedStoryEditDialog';
 export { StoryList } from './StoryList';
 export { UserStoryClarifierDialog } from './UserStoryClarifierDialog';
+
+// Tab components
+export * from './tabs';
