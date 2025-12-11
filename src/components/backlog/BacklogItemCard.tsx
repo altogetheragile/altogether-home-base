@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -18,8 +16,6 @@ import {
   Trash2, 
   ArrowUp, 
   ArrowDown,
-  Check,
-  X
 } from 'lucide-react';
 import { BacklogItem, useUpdateBacklogItem, useDeleteBacklogItem } from '@/hooks/useBacklogItems';
 import { cn } from '@/lib/utils';
@@ -31,6 +27,7 @@ interface BacklogItemCardProps {
   onMoveDown?: () => void;
   isDragging?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
+  onEdit?: () => void;
 }
 
 const priorityColors: Record<string, string> = {
@@ -63,30 +60,10 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
   onMoveDown,
   isDragging,
   dragHandleProps,
+  onEdit,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(item.title);
-  const [editDescription, setEditDescription] = useState(item.description || '');
-  
   const updateItem = useUpdateBacklogItem();
   const deleteItem = useDeleteBacklogItem();
-
-  const handleSave = async () => {
-    await updateItem.mutateAsync({
-      id: item.id,
-      updates: {
-        title: editTitle,
-        description: editDescription || null,
-      },
-    });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setEditTitle(item.title);
-    setEditDescription(item.description || '');
-    setIsEditing(false);
-  };
 
   const handleStatusChange = async (newStatus: string) => {
     await updateItem.mutateAsync({
@@ -94,37 +71,6 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
       updates: { status: newStatus },
     });
   };
-
-  if (isEditing) {
-    return (
-      <Card className="border-primary">
-        <CardContent className="p-4 space-y-3">
-          <Input
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            className="font-medium"
-            autoFocus
-          />
-          <Textarea
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            placeholder="Description"
-            rows={2}
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={handleCancel}>
-              <X className="h-4 w-4 mr-1" />
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSave}>
-              <Check className="h-4 w-4 mr-1" />
-              Save
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className={cn(
@@ -189,7 +135,7 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <DropdownMenuItem onClick={onEdit}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>

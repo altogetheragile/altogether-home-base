@@ -12,8 +12,28 @@ import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useCreateBacklogItem } from '@/hooks/useBacklogItems';
-import { CanvasStoryEditDialog, StoryEditData } from './elements/CanvasStoryEditDialog';
+import { UnifiedStoryEditDialog } from '@/components/stories';
+import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
+
+// Adapter to convert canvas story data to UnifiedStoryData
+const canvasToUnifiedData = (content: any): UnifiedStoryData => ({
+  title: content?.title || '',
+  description: content?.story || content?.description || '',
+  acceptance_criteria: content?.acceptanceCriteria || [],
+  priority: content?.priority || 'medium',
+  story_points: content?.storyPoints || null,
+});
+
+// Adapter to convert UnifiedStoryData back to canvas format
+const unifiedToCanvasData = (data: UnifiedStoryData) => ({
+  title: data.title,
+  story: data.description,
+  description: data.description,
+  acceptanceCriteria: data.acceptance_criteria || [],
+  priority: data.priority || 'medium',
+  storyPoints: data.story_points || 0,
+});
 import html2canvas from 'html2canvas';
 
 interface CanvasElement {
@@ -679,13 +699,15 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       />
 
       {/* Story Edit Dialog */}
-      <CanvasStoryEditDialog
+      <UnifiedStoryEditDialog
         open={!!editingElement && editingElement.type === 'story'}
         onOpenChange={(open) => !open && setEditingElement(null)}
-        data={editingElement?.content as StoryEditData}
+        data={editingElement ? canvasToUnifiedData(editingElement.content) : undefined}
+        mode="story"
+        title="Edit User Story"
         onSave={(newData) => {
           if (editingElement) {
-            handleElementUpdate(editingElement.id, { content: newData });
+            handleElementUpdate(editingElement.id, { content: unifiedToCanvasData(newData) });
             setEditingElement(null);
           }
         }}

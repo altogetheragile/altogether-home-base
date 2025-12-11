@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { BacklogItem, useReorderBacklogItems } from '@/hooks/useBacklogItems';
+import { BacklogItem, useReorderBacklogItems, useUpdateBacklogItem } from '@/hooks/useBacklogItems';
 import { BacklogItemCard } from './BacklogItemCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter } from 'lucide-react';
+import { UnifiedStoryEditDialog } from '@/components/stories';
+import { UnifiedStoryData } from '@/types/story';
 
 interface BacklogListProps {
   items: BacklogItem[];
@@ -28,13 +30,30 @@ const PRIORITY_FILTERS = [
   { value: 'low', label: 'Low' },
 ];
 
+// Convert BacklogItem to UnifiedStoryData
+const backlogToUnifiedData = (item: BacklogItem): UnifiedStoryData => ({
+  id: item.id,
+  title: item.title,
+  description: item.description,
+  acceptance_criteria: item.acceptance_criteria,
+  priority: (item.priority as any) || 'medium',
+  estimated_value: item.estimated_value,
+  estimated_effort: item.estimated_effort,
+  status: item.status,
+  source: item.source,
+  tags: item.tags,
+  target_release: item.target_release,
+});
+
 export const BacklogList: React.FC<BacklogListProps> = ({ items, isLoading }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
   
   const reorderItems = useReorderBacklogItems();
+  const updateItem = useUpdateBacklogItem();
 
   const filteredItems = items.filter((item) => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
@@ -71,7 +90,6 @@ export const BacklogList: React.FC<BacklogListProps> = ({ items, isLoading }) =>
     const [removed] = reorderedItems.splice(draggedIndex, 1);
     reorderedItems.splice(targetIndex, 0, removed);
 
-    // Update positions
     const updates = reorderedItems.map((item, idx) => ({
       id: item.id,
       backlog_position: idx,
@@ -103,6 +121,27 @@ export const BacklogList: React.FC<BacklogListProps> = ({ items, isLoading }) =>
       backlog_position: idx,
     }));
     reorderItems.mutate(updates);
+  };
+
+  const handleSaveEdit = async (data: UnifiedStoryData) => {
+    if (!editingItem) return;
+    
+    await updateItem.mutateAsync({
+      id: editingItem.id,
+      updates: {
+        title: data.title,
+        description: data.description || null,
+        acceptance_criteria: data.acceptance_criteria || null,
+        priority: data.priority,
+        estimated_value: data.estimated_value,
+        estimated_effort: data.estimated_effort,
+        status: data.status,
+        source: data.source,
+        tags: data.tags,
+        target_release: data.target_release,
+      },
+    });
+    setEditingItem(null);
   };
 
   if (isLoading) {
@@ -186,11 +225,23 @@ export const BacklogList: React.FC<BacklogListProps> = ({ items, isLoading }) =>
                 onMoveUp={index > 0 ? () => handleMoveUp(index) : undefined}
                 onMoveDown={index < filteredItems.length - 1 ? () => handleMoveDown(index) : undefined}
                 isDragging={draggedIndex === index}
+                onEdit={() => setEditingItem(item)}
               />
             </div>
           ))}
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <UnifiedStoryEditDialog
+        open={!!editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+        data={editingItem ? backlogToUnifiedData(editingItem) : undefined}
+        mode="backlog"
+        title="Edit Backlog Item"
+        onSave={handleSaveEdit}
+        isLoading={updateItem.isPending}
+      />
     </div>
   );
 };
