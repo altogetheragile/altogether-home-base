@@ -72,10 +72,13 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
   };
 
   return (
-    <Card className={cn(
-      "transition-all hover:shadow-md",
-      isDragging && "shadow-lg ring-2 ring-primary"
-    )}>
+    <Card 
+      className={cn(
+        "transition-all hover:shadow-md cursor-pointer",
+        isDragging && "shadow-lg ring-2 ring-primary"
+      )}
+      onDoubleClick={onEdit}
+    >
       <CardContent className="p-3">
         <div className="flex items-start gap-2">
           {isEditable && (
@@ -115,19 +118,13 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                   )}
                 </div>
                 
-                <InlineEditableText
-                  value={item.title}
-                  onSave={(title) => onUpdate({ title })}
-                  className="font-medium text-sm"
-                />
+                <h4 className="font-medium text-sm">{item.title}</h4>
                 
-                <InlineEditableText
-                  value={item.description || ''}
-                  onSave={(description) => onUpdate({ description: description || null })}
-                  className="text-xs text-muted-foreground mt-1"
-                  multiline
-                  placeholder="Add description..."
-                />
+                {item.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {item.description}
+                  </p>
+                )}
 
                 {item.acceptance_criteria && item.acceptance_criteria.length > 0 && (
                   <div className="mt-2">
