@@ -226,7 +226,11 @@ export function StoryList() {
           <h3 className="text-lg font-semibold">Epics</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {epics.map((epic) => (
-              <Card key={epic.id} className="border-l-4 border-l-purple-500">
+              <Card 
+                key={epic.id} 
+                className="border-l-4 border-l-purple-500 cursor-pointer hover:shadow-md transition-shadow"
+                onDoubleClick={() => handleEditStory(epic, 'epic')}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">{epic.title}</CardTitle>
@@ -272,7 +276,11 @@ export function StoryList() {
             const hasAcceptanceCriteria = story.acceptance_criteria && story.acceptance_criteria.length > 0;
             
             return (
-              <Card key={story.id} className={`border-l-4 ${story.parent_story_id ? 'border-l-purple-400' : 'border-l-blue-500'}`}>
+              <Card 
+                key={story.id} 
+                className={`border-l-4 cursor-pointer hover:shadow-md transition-shadow ${story.parent_story_id ? 'border-l-purple-400' : 'border-l-blue-500'}`}
+                onDoubleClick={() => handleEditStory(story, 'story')}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
