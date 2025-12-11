@@ -14,6 +14,7 @@ import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
+import { CanvasStoryEditDialog, StoryEditData } from './elements/CanvasStoryEditDialog';
 
 interface AIToolsCanvasProps {
   projectId?: string;
@@ -34,6 +35,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const [zoom, setZoom] = useState(1);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [editingElement, setEditingElement] = useState<CanvasElement | null>(null);
   const canvasRef = useRef<BaseCanvasRef>(null);
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
@@ -318,16 +320,15 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
               handleDataChange(updatedData);
             }}
             onDelete={() => {
-              console.log('Delete clicked for story element:', element.id);
               const updatedData = {
                 ...canvasData,
                 elements: canvasData.elements.filter(el => el.id !== element.id)
               };
-              console.log('Updated data:', updatedData);
               handleDataChange(updatedData);
               setSelectedElements([]);
             }}
             onAddToBacklog={() => handleAddToBacklog(element.content)}
+            onEdit={() => setEditingElement(element)}
           />
         );
       case 'sticky':
@@ -459,6 +460,25 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         artifactData={canvasData}
         preselectedProjectId={preselectedProjectId || undefined}
         onSaveComplete={handleSaveComplete}
+      />
+
+      {/* Story Edit Dialog */}
+      <CanvasStoryEditDialog
+        open={!!editingElement && editingElement.type === 'story'}
+        onOpenChange={(open) => !open && setEditingElement(null)}
+        data={editingElement?.content as StoryEditData}
+        onSave={(newData) => {
+          if (editingElement) {
+            const updatedData = {
+              ...canvasData,
+              elements: canvasData.elements.map((el) =>
+                el.id === editingElement.id ? { ...el, content: newData } : el
+              ),
+            };
+            handleDataChange(updatedData);
+            setEditingElement(null);
+          }
+        }}
       />
     </div>
   );
