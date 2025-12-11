@@ -6,8 +6,10 @@ export interface BacklogItem {
   id: string;
   project_id: string | null;
   product_id: string | null;
+  user_story_id: string | null;
   title: string;
   description: string | null;
+  acceptance_criteria: string[] | null;
   priority: string;
   status: string;
   backlog_position: number;

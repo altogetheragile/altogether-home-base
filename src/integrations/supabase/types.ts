@@ -277,6 +277,7 @@ export type Database = {
       }
       backlog_items: {
         Row: {
+          acceptance_criteria: string[] | null
           backlog_position: number | null
           created_at: string | null
           created_by: string | null
@@ -293,8 +294,10 @@ export type Database = {
           target_release: string | null
           title: string
           updated_at: string | null
+          user_story_id: string | null
         }
         Insert: {
+          acceptance_criteria?: string[] | null
           backlog_position?: number | null
           created_at?: string | null
           created_by?: string | null
@@ -311,8 +314,10 @@ export type Database = {
           target_release?: string | null
           title: string
           updated_at?: string | null
+          user_story_id?: string | null
         }
         Update: {
+          acceptance_criteria?: string[] | null
           backlog_position?: number | null
           created_at?: string | null
           created_by?: string | null
@@ -329,6 +334,7 @@ export type Database = {
           target_release?: string | null
           title?: string
           updated_at?: string | null
+          user_story_id?: string | null
         }
         Relationships: [
           {
@@ -343,6 +349,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_backlog_items_user_story"
+            columns: ["user_story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
             referencedColumns: ["id"]
           },
         ]

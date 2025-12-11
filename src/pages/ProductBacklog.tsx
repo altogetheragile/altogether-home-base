@@ -52,6 +52,7 @@ const ProductBacklog: React.FC = () => {
         id: item.id,
         title: item.title,
         description: item.description,
+        acceptance_criteria: item.acceptance_criteria,
         priority: item.priority,
         status: item.status,
         source: item.source,

@@ -45,6 +45,7 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ onAd
     onAddItem({
       title: title.trim(),
       description: description.trim() || null,
+      acceptance_criteria: null,
       priority,
       source,
       status: 'idea',
