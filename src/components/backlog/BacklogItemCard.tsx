@@ -16,6 +16,8 @@ import {
   Trash2, 
   ArrowUp, 
   ArrowDown,
+  Scissors,
+  GitBranch,
 } from 'lucide-react';
 import { BacklogItem, useUpdateBacklogItem, useDeleteBacklogItem } from '@/hooks/useBacklogItems';
 import { cn } from '@/lib/utils';
@@ -28,6 +30,9 @@ interface BacklogItemCardProps {
   isDragging?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
   onEdit?: () => void;
+  onSplit?: () => void;
+  parentTitle?: string;
+  childCount?: number;
 }
 
 const priorityColors: Record<string, string> = {
@@ -61,6 +66,9 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
   isDragging,
   dragHandleProps,
   onEdit,
+  onSplit,
+  parentTitle,
+  childCount,
 }) => {
   const updateItem = useUpdateBacklogItem();
   const deleteItem = useDeleteBacklogItem();
@@ -72,10 +80,13 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
     });
   };
 
+  const hasAcceptanceCriteria = item.acceptance_criteria && item.acceptance_criteria.length > 1;
+
   return (
     <Card className={cn(
       "transition-all hover:shadow-md",
-      isDragging && "shadow-lg ring-2 ring-primary"
+      isDragging && "shadow-lg ring-2 ring-primary",
+      parentTitle && "border-l-4 border-l-purple-400"
     )}>
       <CardContent className="p-3">
         <div className="flex items-start gap-2">
@@ -89,6 +100,20 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
+                {/* Parent/Child indicators */}
+                {parentTitle && (
+                  <div className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 mb-1">
+                    <GitBranch className="h-3 w-3" />
+                    <span>Child of: {parentTitle.substring(0, 25)}{parentTitle.length > 25 ? '...' : ''}</span>
+                  </div>
+                )}
+                {childCount && childCount > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-primary mb-1">
+                    <GitBranch className="h-3 w-3" />
+                    <span>{childCount} child {childCount === 1 ? 'item' : 'items'}</span>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs text-muted-foreground font-mono">
                     #{index + 1}
@@ -134,11 +159,17 @@ export const BacklogItemCard: React.FC<BacklogItemCardProps> = ({
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={onEdit}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
+                  {hasAcceptanceCriteria && (
+                    <DropdownMenuItem onClick={onSplit}>
+                      <Scissors className="h-4 w-4 mr-2" />
+                      Split by Criteria
+                    </DropdownMenuItem>
+                  )}
                   {onMoveUp && (
                     <DropdownMenuItem onClick={onMoveUp}>
                       <ArrowUp className="h-4 w-4 mr-2" />

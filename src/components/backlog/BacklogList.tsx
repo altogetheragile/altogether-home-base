@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter } from 'lucide-react';
 import { UnifiedStoryEditDialog } from '@/components/stories';
+import { SplitStoryDialog, SplitConfig } from '@/components/stories/SplitStoryDialog';
+import { useSplitBacklogItem } from '@/hooks/useSplitStory';
 import { UnifiedStoryData } from '@/types/story';
 
 interface BacklogListProps {
@@ -51,9 +53,21 @@ export const BacklogList: React.FC<BacklogListProps> = ({ items, isLoading }) =>
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
+  const [splittingItem, setSplittingItem] = useState<BacklogItem | null>(null);
   
   const reorderItems = useReorderBacklogItems();
   const updateItem = useUpdateBacklogItem();
+  const splitItem = useSplitBacklogItem();
+
+  // Helper functions for parent/child relationships
+  const getChildCount = (itemId: string) => items.filter(i => i.parent_item_id === itemId).length;
+  const getParentTitle = (parentId: string | null) => parentId ? items.find(i => i.id === parentId)?.title : undefined;
+
+  const handleSplit = async (config: SplitConfig) => {
+    if (!splittingItem) return;
+    await splitItem.mutateAsync({ parentItem: splittingItem, config });
+    setSplittingItem(null);
+  };
 
   const filteredItems = items.filter((item) => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
@@ -226,6 +240,9 @@ export const BacklogList: React.FC<BacklogListProps> = ({ items, isLoading }) =>
                 onMoveDown={index < filteredItems.length - 1 ? () => handleMoveDown(index) : undefined}
                 isDragging={draggedIndex === index}
                 onEdit={() => setEditingItem(item)}
+                onSplit={() => setSplittingItem(item)}
+                parentTitle={getParentTitle(item.parent_item_id)}
+                childCount={getChildCount(item.id)}
               />
             </div>
           ))}
@@ -241,6 +258,15 @@ export const BacklogList: React.FC<BacklogListProps> = ({ items, isLoading }) =>
         title="Edit Backlog Item"
         onSave={handleSaveEdit}
         isLoading={updateItem.isPending}
+      />
+
+      {/* Split Dialog */}
+      <SplitStoryDialog
+        open={!!splittingItem}
+        onOpenChange={(open) => !open && setSplittingItem(null)}
+        backlogItem={splittingItem}
+        onSplit={handleSplit}
+        isLoading={splitItem.isPending}
       />
     </div>
   );

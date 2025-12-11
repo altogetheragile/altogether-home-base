@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, ChevronDown, ChevronUp, Scissors, GitBranch } from 'lucide-react';
 import { useUserStories, useEpics, useFeatures, useStoryMutations, type UserStory, type Epic } from '@/hooks/useUserStories';
 import { UserStoryClarifierDialog } from './UserStoryClarifierDialog';
 import { UnifiedStoryEditDialog } from './UnifiedStoryEditDialog';
+import { SplitStoryDialog, SplitConfig } from './SplitStoryDialog';
+import { useSplitUserStory } from '@/hooks/useSplitStory';
 import { UnifiedStoryData, UnifiedStoryMode } from '@/types/story';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,12 +40,31 @@ export function StoryList() {
   const [editingStory, setEditingStory] = useState<UserStory | Epic | null>(null);
   const [editingType, setEditingType] = useState<UnifiedStoryMode>('story');
   const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(new Set());
+  const [splittingStory, setSplittingStory] = useState<UserStory | null>(null);
 
   const { data: stories = [], isLoading: storiesLoading } = useUserStories();
   const { data: epics = [], isLoading: epicsLoading } = useEpics();
   const { data: features = [], isLoading: featuresLoading } = useFeatures();
   const { deleteStory, updateStory, updateEpic } = useStoryMutations();
+  const splitStory = useSplitUserStory();
   const { toast } = useToast();
+
+  const handleSplitStory = async (config: SplitConfig) => {
+    if (!splittingStory) return;
+    await splitStory.mutateAsync({ parentStory: splittingStory, config });
+    setSplittingStory(null);
+  };
+
+  // Count child stories for display
+  const getChildCount = (storyId: string) => {
+    return stories.filter(s => s.parent_story_id === storyId).length;
+  };
+
+  // Get parent story title
+  const getParentTitle = (parentId?: string) => {
+    if (!parentId) return null;
+    return stories.find(s => s.id === parentId)?.title;
+  };
 
   const handleEditStory = (story: UserStory | Epic, type: UnifiedStoryMode) => {
     setEditingStory(story);
@@ -245,84 +266,116 @@ export function StoryList() {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">User Stories ({filteredStories.length})</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredStories.map((story) => (
-            <Card key={story.id} className="border-l-4 border-l-blue-500">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg leading-tight">
-                    {story.title.startsWith('As a') ? story.title : `As a user, I want ${story.title.toLowerCase()}`}
-                  </CardTitle>
-                  <div className="flex gap-1">
-                    <Badge variant="outline" className={`${statusColors[story.status]} text-white`}>
-                      {story.status}
-                    </Badge>
-                    <Badge className={priorityColors[story.priority]}>
-                      {story.priority}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {story.description && (
-                  <p className="text-sm text-muted-foreground mb-3">{story.description}</p>
-                )}
-                
-                <div className="flex justify-between items-center mb-3">
-                  <Badge variant="outline">{story.issue_type}</Badge>
-                  {story.story_points && (
-                    <Badge variant="secondary">{story.story_points} pts</Badge>
-                  )}
-                </div>
-
-                {story.acceptance_criteria && story.acceptance_criteria.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-sm font-medium mb-2">Acceptance Criteria:</p>
-                    <div className="space-y-1">
-                      {story.acceptance_criteria.slice(0, expandedCriteria.has(story.id) ? undefined : 2).map((criteria, index) => (
-                        <div key={index} className="text-sm p-2 bg-muted/50 rounded border-l-2 border-primary/30">
-                          {criteria}
+          {filteredStories.map((story) => {
+            const childCount = getChildCount(story.id);
+            const parentTitle = getParentTitle(story.parent_story_id);
+            const hasAcceptanceCriteria = story.acceptance_criteria && story.acceptance_criteria.length > 0;
+            
+            return (
+              <Card key={story.id} className={`border-l-4 ${story.parent_story_id ? 'border-l-purple-400' : 'border-l-blue-500'}`}>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      {/* Parent/Child indicators */}
+                      {parentTitle && (
+                        <div className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 mb-1">
+                          <GitBranch className="h-3 w-3" />
+                          <span>Child of: {parentTitle.substring(0, 30)}{parentTitle.length > 30 ? '...' : ''}</span>
                         </div>
-                      ))}
-                      {story.acceptance_criteria.length > 2 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleCriteriaExpansion(story.id)}
-                          className="text-xs text-muted-foreground h-auto p-1 hover:text-foreground"
-                        >
-                          {expandedCriteria.has(story.id) ? (
-                            <>
-                              <ChevronUp className="h-3 w-3 mr-1" />
-                              Show less
-                            </>
-                          ) : (
-                            <>
-                              <ChevronDown className="h-3 w-3 mr-1" />
-                              +{story.acceptance_criteria.length - 2} more criteria
-                            </>
-                          )}
-                        </Button>
                       )}
+                      {childCount > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-primary mb-1">
+                          <GitBranch className="h-3 w-3" />
+                          <span>{childCount} child {childCount === 1 ? 'story' : 'stories'}</span>
+                        </div>
+                      )}
+                      <CardTitle className="text-lg leading-tight">
+                        {story.title.startsWith('As a') ? story.title : `As a user, I want ${story.title.toLowerCase()}`}
+                      </CardTitle>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Badge variant="outline" className={`${statusColors[story.status]} text-white`}>
+                        {story.status}
+                      </Badge>
+                      <Badge className={priorityColors[story.priority]}>
+                        {story.priority}
+                      </Badge>
                     </div>
                   </div>
-                )}
+                </CardHeader>
+                <CardContent>
+                  {story.description && (
+                    <p className="text-sm text-muted-foreground mb-3">{story.description}</p>
+                  )}
+                  
+                  <div className="flex justify-between items-center mb-3">
+                    <Badge variant="outline">{story.issue_type}</Badge>
+                    {story.story_points && (
+                      <Badge variant="secondary">{story.story_points} pts</Badge>
+                    )}
+                  </div>
 
-                <div className="flex justify-end space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => handleEditStory(story, 'story')}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => deleteStory.mutate(story.id)}
-                    disabled={deleteStory.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  {hasAcceptanceCriteria && (
+                    <div className="mb-3">
+                      <p className="text-sm font-medium mb-2">Acceptance Criteria:</p>
+                      <div className="space-y-1">
+                        {story.acceptance_criteria!.slice(0, expandedCriteria.has(story.id) ? undefined : 2).map((criteria, index) => (
+                          <div key={index} className="text-sm p-2 bg-muted/50 rounded border-l-2 border-primary/30">
+                            {criteria}
+                          </div>
+                        ))}
+                        {story.acceptance_criteria!.length > 2 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleCriteriaExpansion(story.id)}
+                            className="text-xs text-muted-foreground h-auto p-1 hover:text-foreground"
+                          >
+                            {expandedCriteria.has(story.id) ? (
+                              <>
+                                <ChevronUp className="h-3 w-3 mr-1" />
+                                Show less
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-3 w-3 mr-1" />
+                                +{story.acceptance_criteria!.length - 2} more criteria
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-2">
+                    {/* Split button - only show if story has acceptance criteria */}
+                    {hasAcceptanceCriteria && story.acceptance_criteria!.length > 1 && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => setSplittingStory(story)}
+                        title="Split by Acceptance Criteria"
+                      >
+                        <Scissors className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => handleEditStory(story, 'story')}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => deleteStory.mutate(story.id)}
+                      disabled={deleteStory.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {filteredStories.length === 0 && (
@@ -346,6 +399,14 @@ export function StoryList() {
         onSave={handleSaveStory}
         mode={editingType}
         isLoading={updateStory.isPending || updateEpic.isPending}
+      />
+
+      <SplitStoryDialog
+        open={!!splittingStory}
+        onOpenChange={(open) => !open && setSplittingStory(null)}
+        story={splittingStory}
+        onSplit={handleSplitStory}
+        isLoading={splitStory.isPending}
       />
     </div>
   );
