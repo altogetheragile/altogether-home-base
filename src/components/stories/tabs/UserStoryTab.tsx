@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,13 @@ export function UserStoryTab({ data, onChange, mode }: UserStoryTabProps) {
     const current = data.acceptance_criteria || [];
     onChange({ acceptance_criteria: current.filter((_, i) => i !== index) });
   };
+
+  const autoResize = useCallback((element: HTMLTextAreaElement | null) => {
+    if (element) {
+      element.style.height = 'auto';
+      element.style.height = `${element.scrollHeight}px`;
+    }
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -102,11 +109,14 @@ export function UserStoryTab({ data, onChange, mode }: UserStoryTabProps) {
             {(data.acceptance_criteria || []).map((criteria, index) => (
               <div key={index} className="flex gap-2">
                 <Textarea
+                  ref={(el) => autoResize(el)}
                   value={criteria}
-                  onChange={(e) => updateAcceptanceCriteria(index, e.target.value)}
+                  onChange={(e) => {
+                    updateAcceptanceCriteria(index, e.target.value);
+                    autoResize(e.target as HTMLTextAreaElement);
+                  }}
                   placeholder="Given... When... Then..."
-                  rows={2}
-                  className="flex-1"
+                  className="flex-1 resize-none overflow-hidden min-h-[60px]"
                 />
                 <Button
                   type="button"
