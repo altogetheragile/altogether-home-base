@@ -59,18 +59,31 @@ interface ChildStoryConfig {
 
 // Generate a title from acceptance criteria text
 function generateTitleFromCriteria(criteria: string): string {
-  // Remove common prefixes like "Given", "When", "Then", bullet points, numbers
-  let title = criteria
-    .replace(/^[\s•\-\d.]+/, '')
-    .replace(/^(Given|When|Then|And|But)\s+/i, '')
+  // Split by bullet points or Gherkin transitions to get only the first part
+  const parts = criteria.split(/[•\n]|(?:\s+(?:when|then|and|but)\s+)/i);
+  
+  // Take just the first meaningful part
+  let title = parts[0]
+    .replace(/^[\s\-\d.]+/, '')
+    .replace(/^(given|when|then|and|but)\s+/i, '')
     .trim();
   
-  // Truncate if too long
-  if (title.length > 80) {
-    title = title.substring(0, 77) + '...';
+  // Convert to action noun (e.g., "I select X" → "Select X")
+  title = title
+    .replace(/^i\s+(select|enter|click|choose|view|see|am|have|can)\s+/i, '$1 ')
+    .replace(/^the system (must|should|will)\s+/i, '')
+    .replace(/^(must|should|will)\s+/i, '')
+    .trim();
+  
+  // Capitalize first letter
+  title = title.charAt(0).toUpperCase() + title.slice(1);
+  
+  // Truncate to 40 chars for compact card titles
+  if (title.length > 40) {
+    title = title.substring(0, 37) + '...';
   }
   
-  return title || criteria.substring(0, 80);
+  return title || criteria.substring(0, 40);
 }
 
 export function SplitStoryDialog({

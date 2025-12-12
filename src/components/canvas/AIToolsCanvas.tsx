@@ -747,13 +747,13 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           
           // Helper to format description as user story using parent's core statement
           const formatUserStoryDescription = (persona: string): string => {
-            // Extract "I want" from parent story description
+            // Extract "I want" from parent story description - greedy match until "so that"
             const parentDesc = parentContent?.story || parentContent?.description || '';
-            const wantMatch = parentDesc.match(/I want(?:\s+to)?\s+(.+?)(?:,\s*so that|$)/i);
+            const wantMatch = parentDesc.match(/I want(?:\s+to)?\s+(.+?)\s*,?\s*so that/i);
             const parentWant = wantMatch?.[1]?.trim() || parentContent?.title || 'complete this action';
             
-            // Extract "so that" benefit from parent
-            const benefitMatch = parentDesc.match(/so that\s+(.+?)(?:\.|$)/i);
+            // Extract "so that" benefit from parent - match until end of sentence or string
+            const benefitMatch = parentDesc.match(/so that\s+(.+?)(?:\.(?:\s|$)|$)/i);
             const benefit = benefitMatch?.[1]?.trim() || 'I can complete my task successfully';
             
             return `As a ${persona}, I want to ${parentWant.toLowerCase()}, so that ${benefit}`;
