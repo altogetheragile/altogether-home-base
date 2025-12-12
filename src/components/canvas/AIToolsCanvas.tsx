@@ -10,6 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
 import { StickyNoteElement } from './elements/StickyNoteElement';
+import { EpicCardElement } from './elements/EpicCardElement';
+import { FeatureCardElement } from './elements/FeatureCardElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useCreateBacklogItem } from '@/hooks/useBacklogItems';
 import { UnifiedStoryEditDialog } from '@/components/stories';
@@ -39,7 +41,7 @@ import html2canvas from 'html2canvas';
 
 interface CanvasElement {
   id: string;
-  type: 'bmc' | 'story' | 'sticky';
+  type: 'bmc' | 'story' | 'sticky' | 'epic' | 'feature';
   position: { x: number; y: number };
   size: { width: number; height: number };
   content: any;
@@ -175,8 +177,16 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   }, [createBacklogItem, projectId, preselectedProjectId, toast]);
 
   const handleAddElement = useCallback((type: string) => {
-    const elementWidth = type === 'bmc' ? 800 : type === 'story' ? 300 : 200;
-    const elementHeight = type === 'bmc' ? 600 : type === 'story' ? 180 : 200;
+    const getElementSize = (t: string) => {
+      switch (t) {
+        case 'bmc': return { width: 800, height: 600 };
+        case 'story': return { width: 300, height: 180 };
+        case 'epic': return { width: 300, height: 160 };
+        case 'feature': return { width: 300, height: 160 };
+        default: return { width: 200, height: 200 };
+      }
+    };
+    const { width: elementWidth, height: elementHeight } = getElementSize(type);
     
     const offset = elements.length * 20;
     const centerX = (1200 - elementWidth) / 2 + offset;
@@ -222,6 +232,20 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         };
       case 'sticky':
         return { text: 'New note', color: '#FFE066' };
+      case 'epic':
+        return {
+          title: 'New Epic',
+          description: 'Epic description...',
+          priority: 'medium',
+          status: 'New',
+        };
+      case 'feature':
+        return {
+          title: 'New Feature',
+          description: 'Feature description...',
+          priority: 'medium',
+          status: 'New',
+        };
       default:
         return {};
     }
@@ -232,6 +256,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       case 'bmc': return 'Business Model Canvas';
       case 'story': return 'User Story';
       case 'sticky': return 'Sticky Note';
+      case 'epic': return 'Epic';
+      case 'feature': return 'Feature';
       default: return 'Element';
     }
   };
@@ -577,6 +603,22 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             data={element.content}
             onResize={(size) => handleElementUpdate(element.id, { size })}
             onContentChange={(content) => handleElementUpdate(element.id, { content })}
+          />
+        );
+      case 'epic':
+        return (
+          <EpicCardElement 
+            {...commonProps}
+            data={element.content}
+            onEdit={() => setEditingElement(element)}
+          />
+        );
+      case 'feature':
+        return (
+          <FeatureCardElement 
+            {...commonProps}
+            data={element.content}
+            onEdit={() => setEditingElement(element)}
           />
         );
       default:
