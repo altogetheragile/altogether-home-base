@@ -105,6 +105,15 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
+  // Clean up stale selections when elements change
+  useEffect(() => {
+    const elementIds = new Set(elements.map(el => el.id));
+    setSelectedElementIds(prev => {
+      const filtered = prev.filter(id => elementIds.has(id));
+      return filtered.length !== prev.length ? filtered : prev;
+    });
+  }, [elements]);
+
   // History-aware element update function
   const updateElementsWithHistory = useCallback((newElements: CanvasElement[]) => {
     setElements(newElements);
