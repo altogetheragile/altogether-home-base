@@ -745,18 +745,36 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           const allCriteria = parentContent?.acceptanceCriteria || [];
           const parentPersona = parentContent?.user_persona || 'user';
           
-          // Helper to format description as user story using parent's core statement
-          const formatUserStoryDescription = (persona: string): string => {
-            // Extract "I want" from parent story description - greedy match until "so that"
-            const parentDesc = parentContent?.story || parentContent?.description || '';
-            const wantMatch = parentDesc.match(/I want(?:\s+to)?\s+(.+?)\s*,?\s*so that/i);
-            const parentWant = wantMatch?.[1]?.trim() || parentContent?.title || 'complete this action';
+          // Helper to format description as user story using child's title as "I want"
+          const formatUserStoryDescription = (persona: string, childTitle: string): string => {
+            // Use the child's title as the "I want" clause
+            let want = childTitle.toLowerCase();
             
-            // Extract "so that" benefit from parent - match until end of sentence or string
-            const benefitMatch = parentDesc.match(/so that\s+(.+?)(?:\.(?:\s|$)|$)/i);
-            const benefit = benefitMatch?.[1]?.trim() || 'I can complete my task successfully';
+            // Make it grammatically correct
+            if (want.match(/^(secure|valid|new|online|payment)/i)) {
+              want = `a ${want}`;
+            } else if (want.match(/displayed|shown|visible/i)) {
+              want = `see ${want}`;
+            }
             
-            return `As a ${persona}, I want to ${parentWant.toLowerCase()}, so that ${benefit}`;
+            // Generate a contextual "so that" benefit based on keywords in the child title
+            let benefit = 'I can complete my task successfully';
+            
+            if (childTitle.match(/secure|security|protect/i)) {
+              benefit = 'I can pay safely online';
+            } else if (childTitle.match(/option|select|choose|display/i)) {
+              benefit = 'I can select the best option for me';
+            } else if (childTitle.match(/valid|error|check/i)) {
+              benefit = 'errors are caught before submission';
+            } else if (childTitle.match(/confirm|receipt|success/i)) {
+              benefit = 'I know my transaction was successful';
+            } else if (childTitle.match(/card|payment/i)) {
+              benefit = 'I can complete my purchase';
+            } else if (childTitle.match(/form|field|input|enter/i)) {
+              benefit = 'I can provide the required information';
+            }
+            
+            return `As a ${persona}, I want ${want}, so that ${benefit}`;
           };
           
           config.childStories.forEach((child, index) => {
@@ -765,9 +783,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             const criteriaText = allCriteria[child.criteriaIndex] || '';
             const persona = config.inheritPersona ? parentPersona : 'user';
             
-            // Format description using parent's "I want" and "so that" clauses
+            // Format description using child's title as "I want" and contextual benefit
             const description = config.formatAsUserStory 
-              ? formatUserStoryDescription(persona)
+              ? formatUserStoryDescription(persona, child.title)
               : criteriaText;
             
             const newElement: CanvasElement = {
