@@ -790,9 +790,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             const criteriaText = allCriteria[child.criteriaIndex] || '';
             const persona = config.inheritPersona ? parentPersona : 'user';
             
-            // Format description based on config
+            // Format description based on config - use child.title (clean) not criteriaText (raw)
             const description = config.formatAsUserStory 
-              ? formatUserStoryDescription(criteriaText, persona)
+              ? formatUserStoryDescription(child.title, persona)
               : criteriaText;
             
             const newElement: CanvasElement = {
