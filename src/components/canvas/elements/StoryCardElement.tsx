@@ -31,6 +31,7 @@ interface StoryCardElementProps {
   onDuplicate?: () => void;
   onEdit?: () => void;
   onAddToBacklog?: () => void;
+  onSplit?: () => void;
 }
 
 export const StoryCardElement: React.FC<StoryCardElementProps> = ({
@@ -50,6 +51,7 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   onDuplicate,
   onEdit,
   onAddToBacklog,
+  onSplit,
 }) => {
   const { x, y } = position;
   const { width, height } = size;
@@ -140,6 +142,8 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
           onDelete={onDelete}
           onDuplicate={onDuplicate}
           onAddToBacklog={onAddToBacklog}
+          onSplit={onSplit}
+          canSplit={(data?.acceptanceCriteria?.length || 0) >= 2}
         />
       )}
 

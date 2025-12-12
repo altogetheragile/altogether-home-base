@@ -18,12 +18,22 @@ import { Scissors, GitBranch, AlertCircle } from 'lucide-react';
 import { UserStory } from '@/hooks/useUserStories';
 import { BacklogItem } from '@/hooks/useBacklogItems';
 
+// Minimal type for canvas stories that don't have full BacklogItem structure
+interface CanvasStoryItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  acceptance_criteria?: string[] | null;
+  priority?: string | null;
+}
+
 interface SplitStoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   story?: UserStory | null;
   backlogItem?: BacklogItem | null;
-  onSplit: (config: SplitConfig) => Promise<void>;
+  canvasItem?: CanvasStoryItem | null;
+  onSplit: (config: SplitConfig) => Promise<void> | void;
   isLoading?: boolean;
 }
 
@@ -62,6 +72,7 @@ export function SplitStoryDialog({
   onOpenChange,
   story,
   backlogItem,
+  canvasItem,
   onSplit,
   isLoading = false,
 }: SplitStoryDialogProps) {
@@ -69,8 +80,8 @@ export function SplitStoryDialog({
   const [inheritPriority, setInheritPriority] = useState(true);
   const [childStories, setChildStories] = useState<ChildStoryConfig[]>([]);
 
-  // Get the item being split (story or backlog item)
-  const item = story || backlogItem;
+  // Get the item being split (story, backlog item, or canvas item)
+  const item = story || backlogItem || canvasItem;
   const acceptanceCriteria = item?.acceptance_criteria || [];
   const parentTitle = item?.title || '';
   const parentId = item?.id || '';

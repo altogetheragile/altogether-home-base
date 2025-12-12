@@ -13,6 +13,7 @@ import { StickyNoteElement } from './elements/StickyNoteElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useCreateBacklogItem } from '@/hooks/useBacklogItems';
 import { UnifiedStoryEditDialog } from '@/components/stories';
+import { SplitStoryDialog } from '@/components/stories/SplitStoryDialog';
 import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -69,6 +70,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const [zoom, setZoom] = useState(1);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<CanvasElement | null>(null);
+  const [splittingElement, setSplittingElement] = useState<CanvasElement | null>(null);
   
   // Undo/Redo history
   const [history, setHistory] = useState<CanvasElement[][]>([initialData?.elements || []]);
@@ -267,6 +269,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     const newElement: CanvasElement = {
       ...element,
       id: crypto.randomUUID(),
+      content: JSON.parse(JSON.stringify(element.content)),
       position: { x: element.position.x + 30, y: element.position.y + 30 },
     };
     updateElementsWithHistory([...elements, newElement]);
@@ -555,6 +558,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             data={element.content}
             onEdit={() => setEditingElement(element)}
             onAddToBacklog={() => handleAddToBacklog(element.content)}
+            onSplit={() => setSplittingElement(element)}
           />
         );
       case 'sticky':
@@ -716,6 +720,61 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             setEditingElement(null);
           }
         }}
+      />
+
+      {/* Split Story Dialog */}
+      <SplitStoryDialog
+        open={!!splittingElement}
+        onOpenChange={(open) => !open && setSplittingElement(null)}
+        canvasItem={splittingElement ? {
+          id: splittingElement.id,
+          title: splittingElement.content?.title || '',
+          description: splittingElement.content?.story || splittingElement.content?.description || null,
+          acceptance_criteria: splittingElement.content?.acceptanceCriteria || [],
+          priority: splittingElement.content?.priority || 'medium',
+        } : null}
+        onSplit={(config) => {
+          if (!splittingElement) return;
+          
+          const newElements: CanvasElement[] = [];
+          const parentContent = splittingElement.content;
+          const allCriteria = parentContent?.acceptanceCriteria || [];
+          
+          config.childStories.forEach((child, index) => {
+            if (!child.enabled) return;
+            
+            const criteriaText = allCriteria[child.criteriaIndex] || '';
+            const newElement: CanvasElement = {
+              id: crypto.randomUUID(),
+              type: 'story',
+              position: {
+                x: splittingElement.position.x + 320 + (index % 3) * 320,
+                y: splittingElement.position.y + Math.floor(index / 3) * 200,
+              },
+              size: { width: 300, height: 180 },
+              content: {
+                title: child.title,
+                story: criteriaText,
+                description: criteriaText,
+                acceptanceCriteria: [criteriaText],
+                priority: config.inheritPriority ? parentContent?.priority : 'medium',
+                storyPoints: 0,
+              },
+            };
+            newElements.push(newElement);
+          });
+          
+          if (newElements.length > 0) {
+            updateElementsWithHistory([...elements, ...newElements]);
+            toast({
+              title: 'Story Split',
+              description: `Created ${newElements.length} new stories from acceptance criteria`,
+            });
+          }
+          
+          setSplittingElement(null);
+        }}
+        isLoading={false}
       />
     </div>
   );
