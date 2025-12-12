@@ -745,43 +745,18 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           const allCriteria = parentContent?.acceptanceCriteria || [];
           const parentPersona = parentContent?.user_persona || 'user';
           
-          // Helper to format description as user story
-          const formatUserStoryDescription = (criteriaText: string, persona: string): string => {
-            // Clean up the criteria text - strip bullets, numbers, and Gherkin keywords
-            let cleanCriteria = criteriaText
-              .replace(/^[\s•\-\d.]+/, '')
-              .replace(/^(given|when|then|and|but)\s+/gi, '')
-              .trim();
-            
-            // Transform condition-style text to desire-style
-            cleanCriteria = cleanCriteria
-              .replace(/^the system (must|should|will)\s+/i, 'have the system ')
-              .replace(/^(must|should|will)\s+/i, '')
-              .replace(/^i\s+(can|am able to)\s+/i, '')
-              .replace(/^no raw card data is stored.*/i, 'have my card data stored securely')
-              .trim();
-            
-            // Try to get benefit from parent's "so that" clause
+          // Helper to format description as user story using parent's core statement
+          const formatUserStoryDescription = (persona: string): string => {
+            // Extract "I want" from parent story description
             const parentDesc = parentContent?.story || parentContent?.description || '';
-            const parentBenefitMatch = parentDesc.match(/so that\s+(.+?)(?:\.|$)/i);
-            let benefit = parentBenefitMatch?.[1]?.trim();
+            const wantMatch = parentDesc.match(/I want(?:\s+to)?\s+(.+?)(?:,\s*so that|$)/i);
+            const parentWant = wantMatch?.[1]?.trim() || parentContent?.title || 'complete this action';
             
-            // If no parent benefit, derive from context based on keywords
-            if (!benefit) {
-              if (cleanCriteria.match(/secur|protect|encrypt|pci|compliant/i)) {
-                benefit = 'my data is protected';
-              } else if (cleanCriteria.match(/validat/i)) {
-                benefit = 'errors are prevented';
-              } else if (cleanCriteria.match(/display|show|view/i)) {
-                benefit = 'I have the information I need';
-              } else if (cleanCriteria.match(/payment|card|pay/i)) {
-                benefit = 'I can shop online with confidence';
-              } else {
-                benefit = 'I can complete my task successfully';
-              }
-            }
+            // Extract "so that" benefit from parent
+            const benefitMatch = parentDesc.match(/so that\s+(.+?)(?:\.|$)/i);
+            const benefit = benefitMatch?.[1]?.trim() || 'I can complete my task successfully';
             
-            return `As a ${persona}, I want to ${cleanCriteria.toLowerCase()}, so that ${benefit}`;
+            return `As a ${persona}, I want to ${parentWant.toLowerCase()}, so that ${benefit}`;
           };
           
           config.childStories.forEach((child, index) => {
@@ -790,9 +765,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             const criteriaText = allCriteria[child.criteriaIndex] || '';
             const persona = config.inheritPersona ? parentPersona : 'user';
             
-            // Format description based on config - use child.title (clean) not criteriaText (raw)
+            // Format description using parent's "I want" and "so that" clauses
             const description = config.formatAsUserStory 
-              ? formatUserStoryDescription(child.title, persona)
+              ? formatUserStoryDescription(persona)
               : criteriaText;
             
             const newElement: CanvasElement = {
