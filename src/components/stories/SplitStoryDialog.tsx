@@ -154,7 +154,7 @@ export function SplitStoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scissors className="h-5 w-5" />
@@ -165,7 +165,7 @@ export function SplitStoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[calc(80vh-180px)] pr-4">
+        <ScrollArea className="h-[60vh] pr-4">
           {/* Parent Story Info */}
           <div className="p-3 bg-muted/50 rounded-lg mb-4">
             <div className="flex items-center gap-2 mb-1">
