@@ -165,7 +165,7 @@ export function SplitStoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <ScrollArea className="flex-1 max-h-[calc(80vh-180px)] pr-4">
           {/* Parent Story Info */}
           <div className="p-3 bg-muted/50 rounded-lg mb-4">
             <div className="flex items-center gap-2 mb-1">
@@ -198,49 +198,47 @@ export function SplitStoryDialog({
               </div>
 
               {/* Criteria List */}
-              <ScrollArea className="h-[300px] pr-4">
-                <div className="space-y-3">
-                  {acceptanceCriteria.map((criteria, index) => {
-                    const childConfig = childStories[index];
-                    const isEnabled = childConfig?.enabled || false;
+              <div className="space-y-3">
+                {acceptanceCriteria.map((criteria, index) => {
+                  const childConfig = childStories[index];
+                  const isEnabled = childConfig?.enabled || false;
 
-                    return (
-                      <div
-                        key={index}
-                        className={`p-3 rounded-lg border transition-colors ${
-                          isEnabled 
-                            ? 'border-primary bg-primary/5' 
-                            : 'border-border hover:border-muted-foreground/50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={isEnabled}
-                            onCheckedChange={() => handleToggleCriteria(index)}
-                            className="mt-1"
-                          />
-                          <div className="flex-1 space-y-2">
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {criteria}
-                            </p>
-                            {isEnabled && (
-                              <div className="space-y-1">
-                                <Label className="text-xs">Child Story Title</Label>
-                                <Input
-                                  value={childConfig?.title || ''}
-                                  onChange={(e) => handleTitleChange(index, e.target.value)}
-                                  placeholder="Enter story title"
-                                  className="h-8 text-sm"
-                                />
-                              </div>
-                            )}
-                          </div>
+                  return (
+                    <div
+                      key={index}
+                      className={`p-3 rounded-lg border transition-colors ${
+                        isEnabled 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-muted-foreground/50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={isEnabled}
+                          onCheckedChange={() => handleToggleCriteria(index)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 space-y-2">
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {criteria}
+                          </p>
+                          {isEnabled && (
+                            <div className="space-y-1">
+                              <Label className="text-xs">Child Story Title</Label>
+                              <Input
+                                value={childConfig?.title || ''}
+                                onChange={(e) => handleTitleChange(index, e.target.value)}
+                                placeholder="Enter story title"
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+                    </div>
+                  );
+                })}
+              </div>
 
               {/* Options */}
               <div className="mt-4 space-y-3 pt-4 border-t">
@@ -298,7 +296,7 @@ export function SplitStoryDialog({
               </div>
             </>
           )}
-        </div>
+        </ScrollArea>
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Badge variant="secondary" className="mr-auto">
