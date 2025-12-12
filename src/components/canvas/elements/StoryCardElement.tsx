@@ -12,6 +12,9 @@ interface StoryData {
   storyPoints: number;
   epic?: string;
   status?: string;
+  user_persona?: string;
+  tags?: string[];
+  source?: string;
 }
 
 interface StoryCardElementProps {

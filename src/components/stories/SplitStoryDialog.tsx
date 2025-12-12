@@ -25,6 +25,10 @@ interface CanvasStoryItem {
   description?: string | null;
   acceptance_criteria?: string[] | null;
   priority?: string | null;
+  user_persona?: string | null;
+  tags?: string[] | null;
+  epic?: string | null;
+  source?: string | null;
 }
 
 interface SplitStoryDialogProps {
@@ -43,6 +47,8 @@ export interface SplitConfig {
   childStories: ChildStoryConfig[];
   removeFromParent: boolean;
   inheritPriority: boolean;
+  inheritPersona: boolean;
+  formatAsUserStory: boolean;
 }
 
 interface ChildStoryConfig {
@@ -78,6 +84,8 @@ export function SplitStoryDialog({
 }: SplitStoryDialogProps) {
   const [removeFromParent, setRemoveFromParent] = useState(false);
   const [inheritPriority, setInheritPriority] = useState(true);
+  const [inheritPersona, setInheritPersona] = useState(true);
+  const [formatAsUserStory, setFormatAsUserStory] = useState(true);
   const [childStories, setChildStories] = useState<ChildStoryConfig[]>([]);
 
   // Get the item being split (story, backlog item, or canvas item)
@@ -137,6 +145,8 @@ export function SplitStoryDialog({
       childStories: childStories.filter(c => c.enabled),
       removeFromParent,
       inheritPriority,
+      inheritPersona,
+      formatAsUserStory,
     };
 
     await onSplit(config);
@@ -234,6 +244,32 @@ export function SplitStoryDialog({
 
               {/* Options */}
               <div className="mt-4 space-y-3 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Format as User Story</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Format description as "As a [persona], I want..., so that..."
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formatAsUserStory}
+                    onCheckedChange={setFormatAsUserStory}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Inherit Persona</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Child stories will use the parent's persona
+                    </p>
+                  </div>
+                  <Switch
+                    checked={inheritPersona}
+                    onCheckedChange={setInheritPersona}
+                  />
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Inherit Priority</Label>

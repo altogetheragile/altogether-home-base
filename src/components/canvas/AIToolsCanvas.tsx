@@ -732,6 +732,10 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           description: splittingElement.content?.story || splittingElement.content?.description || null,
           acceptance_criteria: splittingElement.content?.acceptanceCriteria || [],
           priority: splittingElement.content?.priority || 'medium',
+          user_persona: splittingElement.content?.user_persona || null,
+          tags: splittingElement.content?.tags || null,
+          epic: splittingElement.content?.epic || null,
+          source: splittingElement.content?.source || null,
         } : null}
         onSplit={(config) => {
           if (!splittingElement) return;
@@ -739,11 +743,35 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           const newElements: CanvasElement[] = [];
           const parentContent = splittingElement.content;
           const allCriteria = parentContent?.acceptanceCriteria || [];
+          const parentPersona = parentContent?.user_persona || 'user';
+          
+          // Helper to format description as user story
+          const formatUserStoryDescription = (criteriaText: string, persona: string): string => {
+            // Clean up the criteria text
+            const cleanCriteria = criteriaText
+              .replace(/^[\s•\-\d.]+/, '')
+              .replace(/^(Given|When|Then|And|But)\s+/i, '')
+              .trim();
+            
+            // Extract or generate a benefit from context
+            const parentDesc = parentContent?.story || parentContent?.description || '';
+            const benefitMatch = parentDesc.match(/so that\s+(.+?)(?:\.|$)/i);
+            const benefit = benefitMatch?.[1]?.trim() || 'the user experience is improved';
+            
+            return `As a ${persona}, I want to ${cleanCriteria.toLowerCase()}, so that ${benefit}`;
+          };
           
           config.childStories.forEach((child, index) => {
             if (!child.enabled) return;
             
             const criteriaText = allCriteria[child.criteriaIndex] || '';
+            const persona = config.inheritPersona ? parentPersona : 'user';
+            
+            // Format description based on config
+            const description = config.formatAsUserStory 
+              ? formatUserStoryDescription(criteriaText, persona)
+              : criteriaText;
+            
             const newElement: CanvasElement = {
               id: crypto.randomUUID(),
               type: 'story',
@@ -754,11 +782,16 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
               size: { width: 300, height: 180 },
               content: {
                 title: child.title,
-                story: criteriaText,
-                description: criteriaText,
+                story: description,
+                description: description,
                 acceptanceCriteria: [criteriaText],
                 priority: config.inheritPriority ? parentContent?.priority : 'medium',
                 storyPoints: 0,
+                // Inherit additional fields
+                user_persona: config.inheritPersona ? parentContent?.user_persona : undefined,
+                tags: parentContent?.tags || undefined,
+                epic: parentContent?.epic || undefined,
+                source: parentContent?.source || 'Split from parent',
               },
             };
             newElements.push(newElement);
