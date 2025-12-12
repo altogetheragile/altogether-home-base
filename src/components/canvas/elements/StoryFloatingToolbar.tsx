@@ -1,12 +1,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Copy, ListPlus } from 'lucide-react';
+import { Pencil, Trash2, Copy, ListPlus, Scissors } from 'lucide-react';
 
 interface StoryFloatingToolbarProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onAddToBacklog?: () => void;
+  onSplit?: () => void;
+  canSplit?: boolean;
 }
 
 export const StoryFloatingToolbar: React.FC<StoryFloatingToolbarProps> = ({
@@ -14,6 +16,8 @@ export const StoryFloatingToolbar: React.FC<StoryFloatingToolbarProps> = ({
   onDelete,
   onDuplicate,
   onAddToBacklog,
+  onSplit,
+  canSplit,
 }) => {
   return (
     <div 
@@ -51,6 +55,17 @@ export const StoryFloatingToolbar: React.FC<StoryFloatingToolbarProps> = ({
           title="Add to Backlog"
         >
           <ListPlus className="h-3.5 w-3.5" />
+        </Button>
+      )}
+      {onSplit && canSplit && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={onSplit}
+          title="Split by Criteria"
+        >
+          <Scissors className="h-3.5 w-3.5" />
         </Button>
       )}
       {onDelete && (
