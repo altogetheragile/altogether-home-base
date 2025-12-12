@@ -75,15 +75,35 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
         </>
       )}
 
-      {/* Generate User Story */}
+      {/* Add Elements */}
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => onAddElement('epic')}
+        title="Add Epic"
+      >
+        <FileText className="h-4 w-4 mr-2 text-purple-500" />
+        Epic
+      </Button>
+
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => onAddElement('feature')}
+        title="Add Feature"
+      >
+        <FileText className="h-4 w-4 mr-2 text-blue-500" />
+        Feature
+      </Button>
+
       <Button 
         variant="ghost" 
         size="sm"
         onClick={() => onAddElement('story')}
         title="Add User Story"
       >
-        <FileText className="h-4 w-4 mr-2" />
-        Add Story
+        <FileText className="h-4 w-4 mr-2 text-green-500" />
+        Story
       </Button>
 
       <Separator orientation="vertical" className="h-6" />
@@ -96,7 +116,7 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
         title="Add Sticky Note"
       >
         <StickyNote className="h-4 w-4 mr-2" />
-        Sticky Note
+        Note
       </Button>
 
       <Separator orientation="vertical" className="h-6" />

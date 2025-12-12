@@ -3,6 +3,7 @@
 export type StoryPriority = 'critical' | 'high' | 'medium' | 'low';
 export type StoryStatus = 'idea' | 'draft' | 'refined' | 'ready' | 'in_progress' | 'testing' | 'done';
 export type EpicStatus = 'draft' | 'active' | 'completed' | 'cancelled';
+export type ItemType = 'epic' | 'feature' | 'story';
 
 export interface UnifiedStoryData {
   // Core (required)
@@ -10,6 +11,9 @@ export interface UnifiedStoryData {
   title: string;
   description?: string | null;
   acceptance_criteria?: string[] | null;
+  
+  // Item type for hierarchy
+  item_type?: ItemType;
   
   // Estimation
   story_points?: number | null;
@@ -42,6 +46,12 @@ export interface UnifiedStoryData {
 export type UnifiedStoryMode = 'backlog' | 'story' | 'epic';
 
 export const FIBONACCI_POINTS = [1, 2, 3, 5, 8, 13, 21] as const;
+
+export const ITEM_TYPES: { value: ItemType; label: string; icon: string; color: string }[] = [
+  { value: 'epic', label: 'Epic', icon: 'Layers', color: 'bg-purple-500 text-white' },
+  { value: 'feature', label: 'Feature', icon: 'Puzzle', color: 'bg-blue-500 text-white' },
+  { value: 'story', label: 'Story', icon: 'FileText', color: 'bg-green-500 text-white' },
+];
 
 export const PRIORITIES: { value: StoryPriority; label: string; color: string }[] = [
   { value: 'critical', label: 'Critical', color: 'bg-destructive text-destructive-foreground' },
@@ -80,3 +90,17 @@ export const SOURCES: { value: string; label: string }[] = [
   { value: 'enhancement', label: 'Enhancement' },
   { value: 'ai_suggestion', label: 'AI Suggestion' },
 ];
+
+// Helper to get allowed child types
+export const getChildItemTypes = (parentType: ItemType): ItemType[] => {
+  switch (parentType) {
+    case 'epic': return ['feature', 'story'];
+    case 'feature': return ['story'];
+    case 'story': return [];
+  }
+};
+
+// Helper to check if an item can have children
+export const canHaveChildren = (itemType: ItemType): boolean => {
+  return itemType !== 'story';
+};

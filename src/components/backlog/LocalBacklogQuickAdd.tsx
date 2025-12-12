@@ -5,11 +5,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Sparkles } from 'lucide-react';
-import { LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
+import { LocalBacklogItemInput, LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
 import { Label } from '@/components/ui/label';
+import { ItemType } from '@/types/story';
+import { StoryTypeSelector } from './StoryTypeSelector';
+import { ParentSelector } from './ParentSelector';
 
 interface LocalBacklogQuickAddProps {
   onAddItem: (item: LocalBacklogItemInput) => void;
+  potentialParents?: LocalBacklogItem[];
 }
 
 const SOURCES = [
@@ -27,7 +31,10 @@ const PRIORITIES = [
   { value: 'low', label: 'Low' },
 ];
 
-export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ onAddItem }) => {
+export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ 
+  onAddItem,
+  potentialParents = [],
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -37,6 +44,8 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ onAd
   const [estimatedEffort, setEstimatedEffort] = useState('');
   const [targetRelease, setTargetRelease] = useState('');
   const [tags, setTags] = useState('');
+  const [itemType, setItemType] = useState<ItemType>('story');
+  const [parentId, setParentId] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +62,8 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ onAd
       estimated_effort: estimatedEffort ? Number(estimatedEffort) : null,
       tags: tags.trim() ? tags.split(',').map(t => t.trim()).filter(Boolean) : null,
       target_release: targetRelease.trim() || null,
+      item_type: itemType,
+      parent_item_id: parentId || null,
     });
 
     setTitle('');
@@ -63,7 +74,17 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ onAd
     setEstimatedEffort('');
     setTargetRelease('');
     setTags('');
+    setItemType('story');
+    setParentId(null);
     setIsExpanded(false);
+  };
+
+  // Reset parent when item type changes (epics can't have parents)
+  const handleItemTypeChange = (type: ItemType) => {
+    setItemType(type);
+    if (type === 'epic') {
+      setParentId(null);
+    }
   };
 
   if (!isExpanded) {
@@ -83,11 +104,30 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ onAd
     <Card className="border-primary/50">
       <CardContent className="p-4">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Type and Parent Selection */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <StoryTypeSelector value={itemType} onChange={handleItemTypeChange} />
+            </div>
+            {itemType !== 'epic' && potentialParents.length > 0 && (
+              <div className="space-y-2">
+                <Label>Parent (optional)</Label>
+                <ParentSelector
+                  value={parentId}
+                  onChange={setParentId}
+                  potentialParents={potentialParents}
+                  childType={itemType}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
-              placeholder="What needs to be done?"
+              placeholder={`What ${itemType} needs to be done?`}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
@@ -196,7 +236,7 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ onAd
             </Button>
             <Button type="submit" disabled={!title.trim()}>
               <Sparkles className="h-4 w-4 mr-2" />
-              Add Item
+              Add {itemType.charAt(0).toUpperCase() + itemType.slice(1)}
             </Button>
           </div>
         </form>

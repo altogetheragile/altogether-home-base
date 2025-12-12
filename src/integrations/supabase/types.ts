@@ -285,6 +285,7 @@ export type Database = {
           estimated_effort: number | null
           estimated_value: number | null
           id: string
+          item_type: string | null
           parent_item_id: string | null
           priority: string | null
           product_id: string | null
@@ -306,6 +307,7 @@ export type Database = {
           estimated_effort?: number | null
           estimated_value?: number | null
           id?: string
+          item_type?: string | null
           parent_item_id?: string | null
           priority?: string | null
           product_id?: string | null
@@ -327,6 +329,7 @@ export type Database = {
           estimated_effort?: number | null
           estimated_value?: number | null
           id?: string
+          item_type?: string | null
           parent_item_id?: string | null
           priority?: string | null
           product_id?: string | null
