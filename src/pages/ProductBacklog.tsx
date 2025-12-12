@@ -53,14 +53,16 @@ const ProductBacklog: React.FC = () => {
         title: item.title,
         description: item.description,
         acceptance_criteria: item.acceptance_criteria,
-        priority: item.priority,
-        status: item.status,
+        priority: item.priority || 'medium',
+        status: item.status || 'idea',
         source: item.source,
         estimated_value: item.estimated_value,
         estimated_effort: item.estimated_effort,
         tags: item.tags,
         target_release: item.target_release,
-        backlog_position: item.backlog_position,
+        backlog_position: item.backlog_position || 0,
+        item_type: (item as any).item_type || 'story',
+        parent_item_id: item.parent_item_id || null,
       }));
       setAllItems(localItems);
     }
@@ -206,12 +208,13 @@ const ProductBacklog: React.FC = () => {
 
         {/* Main Content */}
         <div className="space-y-6">
-          <LocalBacklogQuickAdd onAddItem={handleAddItem} />
+          <LocalBacklogQuickAdd onAddItem={handleAddItem} potentialParents={items} />
           <LocalBacklogList 
             items={items} 
             onUpdateItem={updateItem}
             onDeleteItem={deleteItem}
             onReorderItems={reorderItems}
+            onAddItem={handleAddItem}
           />
         </div>
       </main>

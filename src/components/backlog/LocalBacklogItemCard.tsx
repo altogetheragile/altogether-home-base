@@ -7,7 +7,10 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
   GripVertical, 
@@ -16,10 +19,14 @@ import {
   Trash2, 
   ArrowUp, 
   ArrowDown,
+  Plus,
+  Scissors,
+  ChevronRight,
 } from 'lucide-react';
 import { LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
 import { cn } from '@/lib/utils';
-import { InlineEditableText } from '@/components/ui/InlineEditableText';
+import { StoryTypeBadge } from './StoryTypeSelector';
+import { canHaveChildren, getChildItemTypes } from '@/types/story';
 
 interface LocalBacklogItemCardProps {
   item: LocalBacklogItem;
@@ -31,6 +38,12 @@ interface LocalBacklogItemCardProps {
   onMoveDown?: () => void;
   isDragging?: boolean;
   isEditable?: boolean;
+  childrenCount?: number;
+  onAddChild?: () => void;
+  onSplitByCriteria?: () => void;
+  indentLevel?: number;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const priorityColors: Record<string, string> = {
@@ -66,18 +79,30 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
   onMoveDown,
   isDragging,
   isEditable = true,
+  childrenCount = 0,
+  onAddChild,
+  onSplitByCriteria,
+  indentLevel = 0,
+  isExpanded,
+  onToggleExpand,
 }) => {
   const handleStatusChange = (newStatus: string) => {
     onUpdate({ status: newStatus });
   };
 
+  const canAddChildren = canHaveChildren(item.item_type);
+  const childTypes = getChildItemTypes(item.item_type);
+  const canSplit = (item.acceptance_criteria?.length || 0) >= 2;
+
   return (
     <Card 
       className={cn(
         "transition-all hover:shadow-md cursor-pointer",
-        isDragging && "shadow-lg ring-2 ring-primary"
+        isDragging && "shadow-lg ring-2 ring-primary",
+        indentLevel > 0 && "ml-6 border-l-2 border-l-primary/30"
       )}
       onDoubleClick={onEdit}
+      style={{ marginLeft: indentLevel * 24 }}
     >
       <CardContent className="p-3">
         <div className="flex items-start gap-2">
@@ -87,6 +112,24 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
             </div>
           )}
           
+          {/* Expand/collapse for items with children */}
+          {childrenCount > 0 && onToggleExpand && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand();
+              }}
+            >
+              <ChevronRight className={cn(
+                "h-4 w-4 transition-transform",
+                isExpanded && "rotate-90"
+              )} />
+            </Button>
+          )}
+          
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
@@ -94,6 +137,7 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                   <span className="text-xs text-muted-foreground font-mono">
                     #{index + 1}
                   </span>
+                  <StoryTypeBadge type={item.item_type} />
                   <Badge 
                     variant="secondary" 
                     className={cn("text-xs", priorityColors[item.priority])}
@@ -114,6 +158,11 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                   {item.target_release && (
                     <Badge variant="outline" className="text-xs">
                       {item.target_release}
+                    </Badge>
+                  )}
+                  {childrenCount > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {childrenCount} children
                     </Badge>
                   )}
                 </div>
@@ -165,6 +214,25 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                       <Pencil className="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
+                    
+                    {/* Add Child - only for epics and features */}
+                    {canAddChildren && onAddChild && (
+                      <DropdownMenuItem onClick={onAddChild}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Child {childTypes.length === 1 ? childTypes[0] : ''}
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {/* Split by Criteria - for items with 2+ ACs */}
+                    {canSplit && onSplitByCriteria && (
+                      <DropdownMenuItem onClick={onSplitByCriteria}>
+                        <Scissors className="h-4 w-4 mr-2" />
+                        Split by Criteria
+                      </DropdownMenuItem>
+                    )}
+                    
+                    <DropdownMenuSeparator />
+                    
                     {onMoveUp && (
                       <DropdownMenuItem onClick={onMoveUp}>
                         <ArrowUp className="h-4 w-4 mr-2" />
@@ -178,18 +246,26 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleStatusChange('idea')}>
-                      Mark as Idea
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleStatusChange('refined')}>
-                      Mark as Refined
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleStatusChange('ready')}>
-                      Mark as Ready
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleStatusChange('done')}>
-                      Mark as Done
-                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>Set Status</DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={() => handleStatusChange('idea')}>
+                          Idea
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('refined')}>
+                          Refined
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('ready')}>
+                          Ready
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
+                          In Progress
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('done')}>
+                          Done
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={onDelete}

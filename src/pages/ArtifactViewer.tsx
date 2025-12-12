@@ -90,6 +90,8 @@ export default function ArtifactViewer() {
       tags: item.tags || null,
       target_release: item.target_release || null,
       backlog_position: item.backlog_position ?? index,
+      item_type: item.item_type || 'story',
+      parent_item_id: item.parent_item_id || null,
     }));
     setEditedBacklogItems(localItems);
     setIsEditingBacklog(true);
@@ -258,6 +260,8 @@ export default function ArtifactViewer() {
           tags: item.tags || null,
           target_release: item.target_release || null,
           backlog_position: item.backlog_position ?? index,
+          item_type: item.item_type || 'story',
+          parent_item_id: item.parent_item_id || null,
         }));
         return (
           <div className="max-w-4xl mx-auto">
