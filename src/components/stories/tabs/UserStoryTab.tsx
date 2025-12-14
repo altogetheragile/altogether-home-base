@@ -38,6 +38,21 @@ export function UserStoryTab({ data, onChange, mode }: UserStoryTabProps) {
 
   return (
     <div className="space-y-4">
+      {/* Story Number */}
+      <div className="space-y-2">
+        <Label htmlFor="storyNumber">Story Number</Label>
+        <Input
+          id="storyNumber"
+          value={(data as any).storyNumber || ''}
+          onChange={(e) => onChange({ storyNumber: e.target.value } as any)}
+          placeholder="e.g., 1.1.1"
+          className="font-mono"
+        />
+        <p className="text-xs text-muted-foreground">
+          Hierarchical number (e.g., 1.0 for epic, 1.1 for feature, 1.1.1 for story)
+        </p>
+      </div>
+
       {/* Title */}
       <div className="space-y-2">
         <Label htmlFor="title">

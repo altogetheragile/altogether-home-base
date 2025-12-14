@@ -10,6 +10,7 @@ interface StoryData {
   acceptanceCriteria?: string[];
   priority: string;
   storyPoints: number;
+  storyNumber?: string;
   epic?: string;
   status?: string;
   user_persona?: string;
@@ -159,6 +160,19 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
       >
         {data ? (
           <div className="space-y-2 h-full flex flex-col">
+            {/* Type indicator + Story Number */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Story</span>
+              </div>
+              {data.storyNumber && (
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {data.storyNumber}
+                </Badge>
+              )}
+            </div>
+
             {/* Title */}
             <h4 className="text-sm font-semibold line-clamp-2 leading-tight">
               {data.title}
