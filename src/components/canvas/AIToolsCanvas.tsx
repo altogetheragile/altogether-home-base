@@ -67,7 +67,7 @@ interface AIToolsCanvasProps {
 
 // Standard size for all card types
 const CARD_SIZE = { width: 300, height: 180 };
-const COMPACT_CARD_SIZE = { width: 200, height: 80 };
+const COMPACT_CARD_SIZE = { width: 240, height: 100 };
 
 const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   projectId,
@@ -275,6 +275,53 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       setElements(history[newIndex]);
     }
   }, [canRedo, history, historyIndex]);
+
+  // Reposition elements to prevent overlapping when expanding
+  const repositionElementsToPreventOverlap = useCallback((currentElements: CanvasElement[]) => {
+    const cardSize = CARD_SIZE;
+    const padding = 20;
+    const startX = 60;
+    const startY = 60;
+    const maxWidth = 1800;
+    
+    let currentX = startX;
+    let currentY = startY;
+    let rowMaxHeight = 0;
+    
+    const repositionedElements = currentElements.map((el) => {
+      // Only reposition story/epic/feature cards, not sticky notes or bmc
+      if (!['story', 'epic', 'feature'].includes(el.type)) {
+        return el;
+      }
+      
+      // Check if we need to wrap to next row
+      if (currentX + cardSize.width > maxWidth) {
+        currentX = startX;
+        currentY += rowMaxHeight + padding;
+        rowMaxHeight = 0;
+      }
+      
+      const newPosition = { x: currentX, y: currentY };
+      currentX += cardSize.width + padding;
+      rowMaxHeight = Math.max(rowMaxHeight, cardSize.height);
+      
+      return { ...el, position: newPosition };
+    });
+    
+    return repositionedElements;
+  }, []);
+
+  // Toggle compact view with repositioning on expand
+  const handleToggleCompactView = useCallback(() => {
+    const newCompact = !isCompactView;
+    setIsCompactView(newCompact);
+    
+    // When expanding (going from compact to full), reposition cards to prevent overlap
+    if (!newCompact) {
+      const repositioned = repositionElementsToPreventOverlap(elements);
+      updateElementsWithHistory(repositioned);
+    }
+  }, [isCompactView, elements, repositionElementsToPreventOverlap, updateElementsWithHistory]);
 
   const handleAddToBacklog = useCallback(async (storyData: any) => {
     const targetProjectId = projectId || preselectedProjectId;
@@ -1148,7 +1195,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           onRenumberChildren={handleRenumberChildren}
           canRenumberChildren={canRenumberChildren}
           isCompactView={isCompactView}
-          onToggleCompactView={() => setIsCompactView(!isCompactView)}
+          onToggleCompactView={handleToggleCompactView}
         />
       </div>
 
