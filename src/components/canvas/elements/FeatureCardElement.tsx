@@ -20,6 +20,7 @@ interface FeatureCardElementProps {
   isSelected?: boolean;
   isMultiSelected?: boolean;
   isMarqueeSelecting?: boolean;
+  isCompact?: boolean;
   onSelect?: (e?: React.PointerEvent, preserveIfSelected?: boolean) => void;
   onMove?: (position: { x: number; y: number }) => void;
   onMoveGroup?: (delta: { dx: number; dy: number }) => void;
@@ -39,6 +40,7 @@ export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
   isSelected,
   isMultiSelected,
   isMarqueeSelecting,
+  isCompact = false,
   onSelect,
   onMove,
   onMoveGroup,
@@ -143,60 +145,77 @@ export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
       )}
 
       <div 
-        className={`h-full min-h-[160px] bg-card border-2 rounded-lg p-3 transition-all flex flex-col ${
+        className={`h-full bg-card border-2 rounded-lg p-3 transition-all flex flex-col ${
+          isCompact ? 'min-h-0' : 'min-h-[160px]'
+        } ${
           isSelected && !isMarqueeSelecting
             ? 'border-primary shadow-lg shadow-primary/20' 
             : 'border-border hover:border-primary/50'
         }`}
       >
         {data ? (
-          <div className="flex flex-col h-full">
-            {/* Header row - fixed height */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Puzzle className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Feature</span>
-              </div>
+          isCompact ? (
+            // Compact view - just story number and title
+            <div className="flex flex-col h-full justify-center">
               {data.storyNumber && (
-                <Badge variant="secondary" className="font-mono text-xs">
+                <Badge variant="secondary" className="font-mono text-xs mb-1 self-start">
                   {data.storyNumber}
                 </Badge>
               )}
+              <h4 className="text-sm font-semibold line-clamp-2 leading-tight">
+                {data.title}
+              </h4>
             </div>
-
-            {/* Title - allow 2 lines */}
-            <h4 className="text-sm font-semibold line-clamp-2 leading-tight mb-2">
-              {data.title}
-            </h4>
-
-            {/* Description - flex grow */}
-            <div className="flex-1 min-h-[32px]">
-              {data.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {data.description}
-                </p>
-              )}
-            </div>
-
-            {/* Footer - fixed at bottom */}
-            <div className="flex items-center justify-between mt-auto pt-2">
-              <div className="flex items-center gap-2">
-                {data.priority && (
-                  <Badge 
-                    variant={getPriorityColor(data.priority)}
-                    className="text-xs px-2 py-0.5"
-                  >
-                    {data.priority}
-                  </Badge>
-                )}
-                {data.status && (
-                  <Badge variant="outline" className="text-xs px-2 py-0.5">
-                    {data.status}
+          ) : (
+            // Expanded view - full details
+            <div className="flex flex-col h-full">
+              {/* Header row - fixed height */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Puzzle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Feature</span>
+                </div>
+                {data.storyNumber && (
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {data.storyNumber}
                   </Badge>
                 )}
               </div>
+
+              {/* Title - allow 2 lines */}
+              <h4 className="text-sm font-semibold line-clamp-2 leading-tight mb-2">
+                {data.title}
+              </h4>
+
+              {/* Description - flex grow */}
+              <div className="flex-1 min-h-[32px]">
+                {data.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {data.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Footer - fixed at bottom */}
+              <div className="flex items-center justify-between mt-auto pt-2">
+                <div className="flex items-center gap-2">
+                  {data.priority && (
+                    <Badge 
+                      variant={getPriorityColor(data.priority)}
+                      className="text-xs px-2 py-0.5"
+                    >
+                      {data.priority}
+                    </Badge>
+                  )}
+                  {data.status && (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5">
+                      {data.status}
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          )
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
             <Puzzle className="h-6 w-6 mb-1 opacity-50" />

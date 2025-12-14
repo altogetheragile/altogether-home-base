@@ -67,6 +67,7 @@ interface AIToolsCanvasProps {
 
 // Standard size for all card types
 const CARD_SIZE = { width: 300, height: 180 };
+const COMPACT_CARD_SIZE = { width: 200, height: 80 };
 
 const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   projectId,
@@ -91,6 +92,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
+  // Compact view state
+  const [isCompactView, setIsCompactView] = useState(false);
   
   // Marquee selection state
   const [isMarqueeSelecting, setIsMarqueeSelecting] = useState(false);
@@ -997,14 +1001,20 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     const isMultiSelected = isSelected && selectedElementIds.length > 1;
     const visualPosition = getVisualPosition(element);
 
+    // Determine card size based on compact view
+    const cardSize = isCompactView && ['epic', 'feature', 'story'].includes(element.type) 
+      ? COMPACT_CARD_SIZE 
+      : element.size;
+
     const commonProps = {
       key: element.id,
       id: element.id,
       position: visualPosition,
-      size: element.size,
+      size: cardSize,
       isSelected,
       isMultiSelected,
       isMarqueeSelecting,
+      isCompact: isCompactView,
       onSelect: (e?: React.PointerEvent, preserveIfSelected?: boolean) => 
         handleElementSelect(element.id, e?.shiftKey || false, preserveIfSelected || false),
       onMove: (pos: { x: number; y: number }) => handleElementUpdate(element.id, { position: pos }),
@@ -1137,6 +1147,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           canAssignToParent={canAssignToParent}
           onRenumberChildren={handleRenumberChildren}
           canRenumberChildren={canRenumberChildren}
+          isCompactView={isCompactView}
+          onToggleCompactView={() => setIsCompactView(!isCompactView)}
         />
       </div>
 

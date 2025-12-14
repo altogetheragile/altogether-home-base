@@ -14,6 +14,8 @@ import {
   AlertCircle,
   FolderInput,
   ListOrdered,
+  Minimize2,
+  Maximize2,
 } from 'lucide-react';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -40,6 +42,9 @@ interface AIToolbarProps {
   // Renumber children
   onRenumberChildren?: () => void;
   canRenumberChildren?: boolean;
+  // Compact view
+  isCompactView?: boolean;
+  onToggleCompactView?: () => void;
 }
 
 export const AIToolbar: React.FC<AIToolbarProps> = ({
@@ -59,6 +64,8 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
   canAssignToParent = false,
   onRenumberChildren,
   canRenumberChildren = false,
+  isCompactView = false,
+  onToggleCompactView,
 }) => {
   return (
     <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
@@ -145,6 +152,30 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
           <ZoomIn className="h-4 w-4" />
         </Button>
       </div>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Compact/Expanded View Toggle */}
+      {onToggleCompactView && (
+        <div className="flex items-center gap-1">
+          <Button 
+            variant={isCompactView ? "default" : "ghost"} 
+            size="sm"
+            onClick={onToggleCompactView}
+            title="Compact View"
+          >
+            <Minimize2 className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant={!isCompactView ? "default" : "ghost"} 
+            size="sm"
+            onClick={onToggleCompactView}
+            title="Expanded View"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <Separator orientation="vertical" className="h-6" />
 
