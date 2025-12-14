@@ -16,26 +16,30 @@ import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useCreateBacklogItem } from '@/hooks/useBacklogItems';
 import { UnifiedStoryEditDialog } from '@/components/stories';
 import { SplitStoryDialog } from '@/components/stories/SplitStoryDialog';
+import { EpicEditDialog } from './EpicEditDialog';
+import { FeatureEditDialog } from './FeatureEditDialog';
 import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
 
 // Adapter to convert canvas story data to UnifiedStoryData
-const canvasToUnifiedData = (content: any): UnifiedStoryData => ({
+const canvasToUnifiedData = (content: any): UnifiedStoryData & { storyNumber?: string } => ({
   title: content?.title || '',
   description: content?.story || content?.description || '',
   acceptance_criteria: content?.acceptanceCriteria || [],
   priority: content?.priority || 'medium',
   story_points: content?.storyPoints || null,
+  storyNumber: content?.storyNumber || '',
 });
 
 // Adapter to convert UnifiedStoryData back to canvas format
-const unifiedToCanvasData = (data: UnifiedStoryData) => ({
+const unifiedToCanvasData = (data: UnifiedStoryData & { storyNumber?: string }) => ({
   title: data.title,
   story: data.description,
   description: data.description,
   acceptanceCriteria: data.acceptance_criteria || [],
   priority: data.priority || 'medium',
   storyPoints: data.story_points || 0,
+  storyNumber: data.storyNumber || '',
 });
 import html2canvas from 'html2canvas';
 
@@ -229,6 +233,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           acceptanceCriteria: [],
           priority: 'medium',
           storyPoints: 0,
+          storyNumber: '',
         };
       case 'sticky':
         return { text: 'New note', color: '#FFE066' };
@@ -238,6 +243,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           description: 'Epic description...',
           priority: 'medium',
           status: 'New',
+          storyNumber: '',
         };
       case 'feature':
         return {
@@ -245,6 +251,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           description: 'Feature description...',
           priority: 'medium',
           status: 'New',
+          storyNumber: '',
         };
       default:
         return {};
@@ -767,7 +774,33 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         title="Edit User Story"
         onSave={(newData) => {
           if (editingElement) {
-            handleElementUpdate(editingElement.id, { content: unifiedToCanvasData(newData) });
+            handleElementUpdate(editingElement.id, { content: unifiedToCanvasData(newData as any) });
+            setEditingElement(null);
+          }
+        }}
+      />
+
+      {/* Epic Edit Dialog */}
+      <EpicEditDialog
+        open={!!editingElement && editingElement.type === 'epic'}
+        onOpenChange={(open) => !open && setEditingElement(null)}
+        data={editingElement?.type === 'epic' ? editingElement.content : undefined}
+        onSave={(newData) => {
+          if (editingElement) {
+            handleElementUpdate(editingElement.id, { content: newData });
+            setEditingElement(null);
+          }
+        }}
+      />
+
+      {/* Feature Edit Dialog */}
+      <FeatureEditDialog
+        open={!!editingElement && editingElement.type === 'feature'}
+        onOpenChange={(open) => !open && setEditingElement(null)}
+        data={editingElement?.type === 'feature' ? editingElement.content : undefined}
+        onSave={(newData) => {
+          if (editingElement) {
+            handleElementUpdate(editingElement.id, { content: newData });
             setEditingElement(null);
           }
         }}

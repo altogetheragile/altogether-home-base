@@ -9,6 +9,7 @@ interface FeatureData {
   priority?: string;
   status?: string;
   user_value?: string;
+  storyNumber?: string;
 }
 
 interface FeatureCardElementProps {
@@ -138,18 +139,25 @@ export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
       )}
 
       <div 
-        className={`h-full bg-blue-50 dark:bg-blue-950/30 border-2 border-l-4 border-l-blue-500 rounded-lg p-3 transition-all ${
+        className={`h-full bg-card border-2 rounded-lg p-3 transition-all ${
           isSelected && !isMarqueeSelecting
-            ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
-            : 'border-blue-200 dark:border-blue-800 hover:border-blue-400'
+            ? 'border-primary shadow-lg shadow-primary/20' 
+            : 'border-border hover:border-primary/50'
         }`}
       >
         {data ? (
           <div className="space-y-2 h-full flex flex-col">
-            {/* Type badge */}
-            <div className="flex items-center gap-2">
-              <Puzzle className="h-4 w-4 text-blue-500" />
-              <span className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Feature</span>
+            {/* Type indicator + Story Number */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Puzzle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Feature</span>
+              </div>
+              {data.storyNumber && (
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {data.storyNumber}
+                </Badge>
+              )}
             </div>
 
             {/* Title */}
@@ -185,7 +193,7 @@ export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-            <Puzzle className="h-6 w-6 mb-1 text-blue-400 opacity-50" />
+            <Puzzle className="h-6 w-6 mb-1 opacity-50" />
             <p className="text-xs">Double-click to edit</p>
           </div>
         )}

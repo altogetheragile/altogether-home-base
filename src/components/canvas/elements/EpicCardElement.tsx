@@ -9,6 +9,7 @@ interface EpicData {
   priority?: string;
   status?: string;
   theme?: string;
+  storyNumber?: string;
 }
 
 interface EpicCardElementProps {
@@ -138,18 +139,25 @@ export const EpicCardElement: React.FC<EpicCardElementProps> = ({
       )}
 
       <div 
-        className={`h-full bg-purple-50 dark:bg-purple-950/30 border-2 border-l-4 border-l-purple-500 rounded-lg p-3 transition-all ${
+        className={`h-full bg-card border-2 rounded-lg p-3 transition-all ${
           isSelected && !isMarqueeSelecting
-            ? 'border-purple-500 shadow-lg shadow-purple-500/20' 
-            : 'border-purple-200 dark:border-purple-800 hover:border-purple-400'
+            ? 'border-primary shadow-lg shadow-primary/20' 
+            : 'border-border hover:border-primary/50'
         }`}
       >
         {data ? (
           <div className="space-y-2 h-full flex flex-col">
-            {/* Type badge */}
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-purple-500" />
-              <span className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide">Epic</span>
+            {/* Type indicator + Story Number */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Epic</span>
+              </div>
+              {data.storyNumber && (
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {data.storyNumber}
+                </Badge>
+              )}
             </div>
 
             {/* Title */}
@@ -185,7 +193,7 @@ export const EpicCardElement: React.FC<EpicCardElementProps> = ({
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-            <Layers className="h-6 w-6 mb-1 text-purple-400 opacity-50" />
+            <Layers className="h-6 w-6 mb-1 opacity-50" />
             <p className="text-xs">Double-click to edit</p>
           </div>
         )}
