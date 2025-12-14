@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Copy, ListPlus, Scissors } from 'lucide-react';
+import { TypeChangeDropdown } from './TypeChangeDropdown';
 
 interface StoryFloatingToolbarProps {
   onEdit?: () => void;
@@ -9,6 +10,7 @@ interface StoryFloatingToolbarProps {
   onAddToBacklog?: () => void;
   onSplit?: () => void;
   canSplit?: boolean;
+  onChangeType?: (newType: 'epic' | 'feature' | 'story') => void;
 }
 
 export const StoryFloatingToolbar: React.FC<StoryFloatingToolbarProps> = ({
@@ -18,6 +20,7 @@ export const StoryFloatingToolbar: React.FC<StoryFloatingToolbarProps> = ({
   onAddToBacklog,
   onSplit,
   canSplit,
+  onChangeType,
 }) => {
   return (
     <div 
@@ -34,6 +37,9 @@ export const StoryFloatingToolbar: React.FC<StoryFloatingToolbarProps> = ({
         >
           <Pencil className="h-3.5 w-3.5" />
         </Button>
+      )}
+      {onChangeType && (
+        <TypeChangeDropdown currentType="story" onChangeType={onChangeType} />
       )}
       {onDuplicate && (
         <Button

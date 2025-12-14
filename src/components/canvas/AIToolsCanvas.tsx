@@ -20,6 +20,8 @@ import { EpicEditDialog } from './EpicEditDialog';
 import { FeatureEditDialog } from './FeatureEditDialog';
 import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
+import { useStoryNumbering } from '@/hooks/useStoryNumbering';
+import html2canvas from 'html2canvas';
 
 // Adapter to convert canvas story data to UnifiedStoryData
 const canvasToUnifiedData = (content: any): UnifiedStoryData & { storyNumber?: string } => ({
@@ -41,7 +43,6 @@ const unifiedToCanvasData = (data: UnifiedStoryData & { storyNumber?: string }) 
   storyPoints: data.story_points || 0,
   storyNumber: data.storyNumber || '',
 });
-import html2canvas from 'html2canvas';
 
 interface CanvasElement {
   id: string;
@@ -62,6 +63,9 @@ interface AIToolsCanvasProps {
   artifactId?: string;
   onSave?: (data: CanvasData) => void;
 }
+
+// Standard size for all card types
+const CARD_SIZE = { width: 300, height: 180 };
 
 const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   projectId,
@@ -106,6 +110,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const navigate = useNavigate();
   const createBacklogItem = useCreateBacklogItem();
   const { updateArtifact } = useProjectArtifactMutations();
+  
+  // Story numbering hook
+  const { getNextNumber, getChildNumbers } = useStoryNumbering(elements);
 
   // Undo/Redo computed values
   const canUndo = historyIndex > 0;
@@ -184,9 +191,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     const getElementSize = (t: string) => {
       switch (t) {
         case 'bmc': return { width: 800, height: 600 };
-        case 'story': return { width: 300, height: 180 };
-        case 'epic': return { width: 300, height: 160 };
-        case 'feature': return { width: 300, height: 160 };
+        case 'story': return CARD_SIZE;
+        case 'epic': return CARD_SIZE;
+        case 'feature': return CARD_SIZE;
         default: return { width: 200, height: 200 };
       }
     };
@@ -196,6 +203,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     const centerX = (1200 - elementWidth) / 2 + offset;
     const centerY = (700 - elementHeight) / 2 + offset;
     
+    // Auto-generate story number for epic/feature/story
+    let autoNumber = '';
+    if (type === 'epic' || type === 'feature' || type === 'story') {
+      autoNumber = getNextNumber(type as 'epic' | 'feature' | 'story');
+    }
+    
     const newElement: CanvasElement = {
       id: crypto.randomUUID(),
       type: type as any,
@@ -204,7 +217,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         y: Math.max(50, centerY) 
       },
       size: { width: elementWidth, height: elementHeight },
-      content: getDefaultContent(type),
+      content: getDefaultContent(type, autoNumber),
     };
 
     updateElementsWithHistory([...elements, newElement]);
@@ -213,9 +226,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       title: "Element Added",
       description: `${getElementDisplayName(type)} has been added to the canvas`,
     });
-  }, [elements, updateElementsWithHistory, toast]);
+  }, [elements, updateElementsWithHistory, toast, getNextNumber]);
 
-  const getDefaultContent = (type: string) => {
+  const getDefaultContent = (type: string, storyNumber: string = '') => {
     switch (type) {
       case 'bmc':
         return {
@@ -233,7 +246,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           acceptanceCriteria: [],
           priority: 'medium',
           storyPoints: 0,
-          storyNumber: '',
+          storyNumber,
         };
       case 'sticky':
         return { text: 'New note', color: '#FFE066' };
@@ -243,7 +256,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           description: 'Epic description...',
           priority: 'medium',
           status: 'New',
-          storyNumber: '',
+          storyNumber,
         };
       case 'feature':
         return {
@@ -251,7 +264,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           description: 'Feature description...',
           priority: 'medium',
           status: 'New',
-          storyNumber: '',
+          storyNumber,
         };
       default:
         return {};
@@ -308,15 +321,72 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     const element = elements.find(el => el.id === id);
     if (!element) return;
     
+    // Generate new story number for duplicated element
+    let autoNumber = '';
+    if (element.type === 'epic' || element.type === 'feature' || element.type === 'story') {
+      autoNumber = getNextNumber(element.type);
+    }
+    
     const newElement: CanvasElement = {
       ...element,
       id: crypto.randomUUID(),
-      content: JSON.parse(JSON.stringify(element.content)),
+      content: {
+        ...JSON.parse(JSON.stringify(element.content)),
+        storyNumber: autoNumber,
+      },
       position: { x: element.position.x + 30, y: element.position.y + 30 },
     };
     updateElementsWithHistory([...elements, newElement]);
     toast({ title: 'Element duplicated' });
-  }, [elements, updateElementsWithHistory, toast]);
+  }, [elements, updateElementsWithHistory, toast, getNextNumber]);
+
+  // Change element type
+  const handleChangeType = useCallback((id: string, newType: 'epic' | 'feature' | 'story') => {
+    const element = elements.find(el => el.id === id);
+    if (!element) return;
+    
+    // Generate new story number for the new type
+    const newNumber = getNextNumber(newType);
+    
+    // Migrate content
+    const oldContent = element.content || {};
+    const newContent = {
+      title: oldContent.title || `New ${newType.charAt(0).toUpperCase() + newType.slice(1)}`,
+      description: oldContent.description || oldContent.story || '',
+      priority: oldContent.priority || 'medium',
+      status: oldContent.status || 'New',
+      storyNumber: newNumber,
+      // Story-specific fields
+      ...(newType === 'story' ? {
+        story: oldContent.description || oldContent.story || '',
+        acceptanceCriteria: oldContent.acceptanceCriteria || [],
+        storyPoints: oldContent.storyPoints || 0,
+      } : {}),
+      // Epic-specific fields
+      ...(newType === 'epic' ? {
+        theme: oldContent.theme || '',
+      } : {}),
+      // Feature-specific fields
+      ...(newType === 'feature' ? {
+        user_value: oldContent.user_value || '',
+      } : {}),
+    };
+    
+    const updatedElements = elements.map(el => {
+      if (el.id === id) {
+        return {
+          ...el,
+          type: newType,
+          size: CARD_SIZE,
+          content: newContent,
+        };
+      }
+      return el;
+    });
+    
+    updateElementsWithHistory(updatedElements);
+    toast({ title: `Converted to ${newType.charAt(0).toUpperCase() + newType.slice(1)}` });
+  }, [elements, updateElementsWithHistory, toast, getNextNumber]);
 
   // Group drag handlers
   const handleGroupDragStart = useCallback(() => {
@@ -601,6 +671,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             onEdit={() => setEditingElement(element)}
             onAddToBacklog={() => handleAddToBacklog(element.content)}
             onSplit={() => setSplittingElement(element)}
+            onChangeType={(newType) => handleChangeType(element.id, newType)}
           />
         );
       case 'sticky':
@@ -618,6 +689,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             {...commonProps}
             data={element.content}
             onEdit={() => setEditingElement(element)}
+            onChangeType={(newType) => handleChangeType(element.id, newType)}
           />
         );
       case 'feature':
@@ -626,6 +698,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             {...commonProps}
             data={element.content}
             onEdit={() => setEditingElement(element)}
+            onChangeType={(newType) => handleChangeType(element.id, newType)}
           />
         );
       default:
@@ -828,6 +901,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           const parentContent = splittingElement.content;
           const allCriteria = parentContent?.acceptanceCriteria || [];
           const parentPersona = parentContent?.user_persona || 'user';
+          const parentNumber = parentContent?.storyNumber || '';
+          
+          // Get child story numbers
+          const enabledCount = config.childStories.filter(c => c.enabled).length;
+          const childNumbers = getChildNumbers(parentNumber, enabledCount);
+          let childNumberIndex = 0;
           
           // Helper to format description as user story using child's title as "I want"
           const formatUserStoryDescription = (persona: string, childTitle: string): string => {
@@ -879,7 +958,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
                 x: splittingElement.position.x + 320 + (index % 3) * 320,
                 y: splittingElement.position.y + Math.floor(index / 3) * 200,
               },
-              size: { width: 300, height: 180 },
+              size: CARD_SIZE,
               content: {
                 title: child.title,
                 story: description,
@@ -887,6 +966,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
                 acceptanceCriteria: [criteriaText],
                 priority: config.inheritPriority ? parentContent?.priority : 'medium',
                 storyPoints: 0,
+                storyNumber: childNumbers[childNumberIndex++] || '',
                 // Inherit additional fields
                 user_persona: config.inheritPersona ? parentContent?.user_persona : undefined,
                 tags: parentContent?.tags || undefined,

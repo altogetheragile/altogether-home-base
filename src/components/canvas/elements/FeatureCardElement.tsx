@@ -28,6 +28,7 @@ interface FeatureCardElementProps {
   onDelete?: () => void;
   onDuplicate?: () => void;
   onEdit?: () => void;
+  onChangeType?: (newType: 'epic' | 'feature' | 'story') => void;
 }
 
 export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
@@ -46,6 +47,7 @@ export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
   onDelete,
   onDuplicate,
   onEdit,
+  onChangeType,
 }) => {
   const { x, y } = position;
   const { width, height } = size;
@@ -135,20 +137,22 @@ export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          currentType="feature"
+          onChangeType={onChangeType}
         />
       )}
 
       <div 
-        className={`h-full bg-card border-2 rounded-lg p-3 transition-all ${
+        className={`h-full min-h-[160px] bg-card border-2 rounded-lg p-3 transition-all flex flex-col ${
           isSelected && !isMarqueeSelecting
             ? 'border-primary shadow-lg shadow-primary/20' 
             : 'border-border hover:border-primary/50'
         }`}
       >
         {data ? (
-          <div className="space-y-2 h-full flex flex-col">
-            {/* Type indicator + Story Number */}
-            <div className="flex items-center justify-between">
+          <div className="flex flex-col h-full">
+            {/* Header row - fixed height */}
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Puzzle className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Feature</span>
@@ -160,20 +164,22 @@ export const FeatureCardElement: React.FC<FeatureCardElementProps> = ({
               )}
             </div>
 
-            {/* Title */}
-            <h4 className="text-sm font-semibold line-clamp-2 leading-tight">
+            {/* Title - allow 2 lines */}
+            <h4 className="text-sm font-semibold line-clamp-2 leading-tight mb-2">
               {data.title}
             </h4>
 
-            {/* Description preview */}
-            {data.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2 flex-1">
-                {data.description}
-              </p>
-            )}
+            {/* Description - flex grow */}
+            <div className="flex-1 min-h-[32px]">
+              {data.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {data.description}
+                </p>
+              )}
+            </div>
 
-            {/* Metadata */}
-            <div className="flex items-center justify-between mt-auto">
+            {/* Footer - fixed at bottom */}
+            <div className="flex items-center justify-between mt-auto pt-2">
               <div className="flex items-center gap-2">
                 {data.priority && (
                   <Badge 

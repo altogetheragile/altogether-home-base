@@ -36,6 +36,7 @@ interface StoryCardElementProps {
   onEdit?: () => void;
   onAddToBacklog?: () => void;
   onSplit?: () => void;
+  onChangeType?: (newType: 'epic' | 'feature' | 'story') => void;
 }
 
 export const StoryCardElement: React.FC<StoryCardElementProps> = ({
@@ -56,6 +57,7 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
   onEdit,
   onAddToBacklog,
   onSplit,
+  onChangeType,
 }) => {
   const { x, y } = position;
   const { width, height } = size;
@@ -148,20 +150,21 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
           onAddToBacklog={onAddToBacklog}
           onSplit={onSplit}
           canSplit={(data?.acceptanceCriteria?.length || 0) >= 2}
+          onChangeType={onChangeType}
         />
       )}
 
       <div 
-        className={`h-full bg-card border-2 rounded-lg p-3 transition-all ${
+        className={`h-full min-h-[160px] bg-card border-2 rounded-lg p-3 transition-all flex flex-col ${
           isSelected && !isMarqueeSelecting
             ? 'border-primary shadow-lg shadow-primary/20' 
             : 'border-border hover:border-primary/50'
         }`}
       >
         {data ? (
-          <div className="space-y-2 h-full flex flex-col">
-            {/* Type indicator + Story Number */}
-            <div className="flex items-center justify-between">
+          <div className="flex flex-col h-full">
+            {/* Header row - fixed height */}
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Story</span>
@@ -173,20 +176,22 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
               )}
             </div>
 
-            {/* Title */}
-            <h4 className="text-sm font-semibold line-clamp-2 leading-tight">
+            {/* Title - allow 2 lines */}
+            <h4 className="text-sm font-semibold line-clamp-2 leading-tight mb-2">
               {data.title}
             </h4>
 
-            {/* Description preview */}
-            {(data.story || data.description) && (
-              <p className="text-xs text-muted-foreground line-clamp-2 flex-1">
-                {data.story || data.description}
-              </p>
-            )}
+            {/* Description - flex grow */}
+            <div className="flex-1 min-h-[32px]">
+              {(data.story || data.description) && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {data.story || data.description}
+                </p>
+              )}
+            </div>
 
-            {/* Metadata */}
-            <div className="flex items-center justify-between mt-auto">
+            {/* Footer - fixed at bottom */}
+            <div className="flex items-center justify-between mt-auto pt-2">
               <div className="flex items-center gap-2">
                 {data.priority && (
                   <Badge 
