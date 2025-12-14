@@ -547,7 +547,15 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       // Calculate new numbers for direct children and cascade to their descendants
       allChildren.forEach((child, index) => {
         const oldNumber = child.content?.storyNumber || '';
-        const newNumber = `${parentNumber}.${index + 1}`;
+        // Epic format is X.0, so children should be X.1, X.2, etc. (not X.0.1)
+        // Feature format is X.Y, so children should be X.Y.1, X.Y.2, etc.
+        let newNumber: string;
+        if (parentType === 'epic') {
+          const epicParts = parentNumber.split('.');
+          newNumber = `${epicParts[0]}.${index + 1}`;
+        } else {
+          newNumber = `${parentNumber}.${index + 1}`;
+        }
         
         if (oldNumber && oldNumber !== newNumber) {
           numberUpdates.set(oldNumber, newNumber);
