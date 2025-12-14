@@ -504,7 +504,16 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     toast({ title: `Converted to ${newType.charAt(0).toUpperCase() + newType.slice(1)}` });
   }, [elements, updateElementsWithHistory, toast, getNextNumber]);
 
-  // Assign to parent handler
+  // Helper to find all descendants of an element by storyNumber prefix
+  const findDescendants = useCallback((parentNumber: string, elementList: CanvasElement[]) => {
+    if (!parentNumber) return [];
+    return elementList.filter(el => {
+      const elNumber = el.content?.storyNumber || '';
+      return elNumber.startsWith(parentNumber + '.');
+    });
+  }, []);
+
+  // Assign to parent handler with cascading renumbering
   const handleAssignToParent = useCallback((parentId: string, parentType: 'epic' | 'feature', renumberChildren: boolean) => {
     const parent = elements.find(el => el.id === parentId);
     if (!parent) return;
@@ -512,15 +521,15 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     const parentNumber = parent.content?.storyNumber || '';
     const selectedElements = elements.filter(el => selectedElementIds.includes(el.id));
     
-    let updatedElements: CanvasElement[];
+    // Build a map of old number -> new number for all affected elements
+    const numberUpdates = new Map<string, string>();
     
     if (renumberChildren) {
-      // Get ALL existing children under this parent (not in selection)
+      // Get ALL existing direct children under this parent (not in selection)
       const existingChildren = elements.filter(el => {
         if (selectedElementIds.includes(el.id)) return false;
         const elNumber = el.content?.storyNumber || '';
         if (!elNumber || !parentNumber) return false;
-        // Check if this element's number starts with parent number
         return elNumber.startsWith(parentNumber + '.') && 
                elNumber.split('.').length === parentNumber.split('.').length + 1;
       });
@@ -535,37 +544,35 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         return numA.localeCompare(numB, undefined, { numeric: true });
       });
       
-      // Create a map of id -> new number
-      const newNumbers = new Map<string, string>();
+      // Calculate new numbers for direct children and cascade to their descendants
       allChildren.forEach((child, index) => {
-        newNumbers.set(child.id, `${parentNumber}.${index + 1}`);
+        const oldNumber = child.content?.storyNumber || '';
+        const newNumber = `${parentNumber}.${index + 1}`;
+        
+        if (oldNumber && oldNumber !== newNumber) {
+          numberUpdates.set(oldNumber, newNumber);
+          
+          // Find all descendants of this child and update their numbers
+          const descendants = findDescendants(oldNumber, elements);
+          descendants.forEach(desc => {
+            const descOldNumber = desc.content?.storyNumber || '';
+            const suffix = descOldNumber.substring(oldNumber.length);
+            const descNewNumber = newNumber + suffix;
+            numberUpdates.set(descOldNumber, descNewNumber);
+          });
+        } else if (!oldNumber) {
+          // Element had no number, just needs the new one
+          numberUpdates.set(child.id, newNumber); // Use id as key for new elements
+        }
       });
       
-      // Update all elements
-      updatedElements = elements.map(el => {
-        const newNumber = newNumbers.get(el.id);
-        if (newNumber) {
-          return {
-            ...el,
-            content: {
-              ...el.content,
-              storyNumber: newNumber,
-              parentEpicId: parentType === 'epic' ? parentId : (el.content?.parentEpicId || undefined),
-              parentFeatureId: parentType === 'feature' ? parentId : undefined,
-            },
-          };
-        }
-        return el;
-      });
     } else {
-      // Original behavior: append to highest existing number
+      // Append to highest existing number, but still cascade descendants
       const usedNumbers = new Set<string>();
       
-      updatedElements = elements.map(el => {
-        if (!selectedElementIds.includes(el.id)) return el;
-        
+      selectedElements.forEach(el => {
         const childType = el.type as 'feature' | 'story';
-        if (childType !== 'feature' && childType !== 'story') return el;
+        if (childType !== 'feature' && childType !== 'story') return;
         
         let newNumber = getNextChildNumberUnderParent(parentNumber, parentType, childType);
         
@@ -577,17 +584,52 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         }
         usedNumbers.add(newNumber);
         
+        const oldNumber = el.content?.storyNumber || '';
+        if (oldNumber) {
+          numberUpdates.set(oldNumber, newNumber);
+          
+          // Cascade to descendants
+          const descendants = findDescendants(oldNumber, elements);
+          descendants.forEach(desc => {
+            const descOldNumber = desc.content?.storyNumber || '';
+            const suffix = descOldNumber.substring(oldNumber.length);
+            const descNewNumber = newNumber + suffix;
+            numberUpdates.set(descOldNumber, descNewNumber);
+          });
+        } else {
+          numberUpdates.set(el.id, newNumber);
+        }
+      });
+    }
+    
+    // Apply all number updates
+    const updatedElements = elements.map(el => {
+      const elNumber = el.content?.storyNumber || '';
+      const newNumber = numberUpdates.get(elNumber) || numberUpdates.get(el.id);
+      
+      if (selectedElementIds.includes(el.id)) {
+        // This is a directly assigned element
+        return {
+          ...el,
+          content: {
+            ...el.content,
+            storyNumber: newNumber || elNumber,
+            parentEpicId: parentType === 'epic' ? parentId : (el.content?.parentEpicId || undefined),
+            parentFeatureId: parentType === 'feature' ? parentId : undefined,
+          },
+        };
+      } else if (newNumber) {
+        // This is a descendant that needs renumbering
         return {
           ...el,
           content: {
             ...el.content,
             storyNumber: newNumber,
-            parentEpicId: parentType === 'epic' ? parentId : (el.content?.parentEpicId || undefined),
-            parentFeatureId: parentType === 'feature' ? parentId : undefined,
           },
         };
-      });
-    }
+      }
+      return el;
+    });
     
     updateElementsWithHistory(updatedElements);
     setSelectedElementIds([]);
@@ -596,9 +638,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     toast({ 
       title: `Assigned ${count} item${count > 1 ? 's' : ''} to ${parentNumber}`,
     });
-  }, [elements, selectedElementIds, getNextChildNumberUnderParent, updateElementsWithHistory, toast]);
+  }, [elements, selectedElementIds, getNextChildNumberUnderParent, findDescendants, updateElementsWithHistory, toast]);
 
-  // Renumber children under selected Epic/Feature
+  // Renumber children under selected Epic/Feature with cascading
   const handleRenumberChildren = useCallback(() => {
     if (selectedElementIds.length !== 1) return;
     
@@ -624,15 +666,30 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       return numA.localeCompare(numB, undefined, { numeric: true });
     });
     
-    // Create new numbers map
-    const newNumbers = new Map<string, string>();
+    // Build map of old number -> new number, including cascading to descendants
+    const numberUpdates = new Map<string, string>();
     children.forEach((child, index) => {
-      newNumbers.set(child.id, `${parentNumber}.${index + 1}`);
+      const oldNumber = child.content?.storyNumber || '';
+      const newNumber = `${parentNumber}.${index + 1}`;
+      
+      if (oldNumber !== newNumber) {
+        numberUpdates.set(oldNumber, newNumber);
+        
+        // Cascade to all descendants
+        const descendants = findDescendants(oldNumber, elements);
+        descendants.forEach(desc => {
+          const descOldNumber = desc.content?.storyNumber || '';
+          const suffix = descOldNumber.substring(oldNumber.length);
+          const descNewNumber = newNumber + suffix;
+          numberUpdates.set(descOldNumber, descNewNumber);
+        });
+      }
     });
     
     // Update elements
     const updatedElements = elements.map(el => {
-      const newNumber = newNumbers.get(el.id);
+      const elNumber = el.content?.storyNumber || '';
+      const newNumber = numberUpdates.get(elNumber);
       if (newNumber) {
         return {
           ...el,
@@ -647,7 +704,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     
     updateElementsWithHistory(updatedElements);
     toast({ title: `Renumbered ${children.length} children under ${parentNumber}` });
-  }, [elements, selectedElementIds, updateElementsWithHistory, toast]);
+  }, [elements, selectedElementIds, findDescendants, updateElementsWithHistory, toast]);
 
   // Check if can renumber children (single epic/feature selected with children)
   const canRenumberChildren = useMemo(() => {
