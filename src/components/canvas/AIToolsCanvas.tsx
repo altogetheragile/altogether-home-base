@@ -127,6 +127,120 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     });
   }, [elements]);
 
+  // Migration: Fix existing card sizes and generate story numbers on initial load
+  useEffect(() => {
+    if (!isInitialLoad || elements.length === 0) return;
+    
+    let needsMigration = false;
+    const cardTypes = ['story', 'epic', 'feature'];
+    
+    // Check if any elements need migration
+    elements.forEach(el => {
+      if (cardTypes.includes(el.type)) {
+        // Check for wrong size
+        if (el.size.width !== CARD_SIZE.width || el.size.height !== CARD_SIZE.height) {
+          needsMigration = true;
+        }
+        // Check for missing story number
+        if (!el.content?.storyNumber || el.content.storyNumber.trim() === '') {
+          needsMigration = true;
+        }
+      }
+    });
+    
+    if (!needsMigration) return;
+    
+    // Generate next numbers for each type
+    const usedNumbers = {
+      epic: new Set<string>(),
+      feature: new Set<string>(),
+      story: new Set<string>(),
+    };
+    
+    // Collect existing numbers first
+    elements.forEach(el => {
+      if (cardTypes.includes(el.type) && el.content?.storyNumber?.trim()) {
+        usedNumbers[el.type as 'epic' | 'feature' | 'story'].add(el.content.storyNumber.trim());
+      }
+    });
+    
+    // Track counters for generating new numbers
+    let epicCounter = 0;
+    let featureCounters: Record<number, number> = {};
+    let storyCounters: Record<string, number> = {};
+    
+    // Find highest existing numbers
+    usedNumbers.epic.forEach(num => {
+      const match = num.match(/^(\d+)\.0$/);
+      if (match) epicCounter = Math.max(epicCounter, parseInt(match[1], 10));
+    });
+    
+    usedNumbers.feature.forEach(num => {
+      const match = num.match(/^(\d+)\.(\d+)$/);
+      if (match && parseInt(match[2], 10) > 0) {
+        const epicNum = parseInt(match[1], 10);
+        featureCounters[epicNum] = Math.max(featureCounters[epicNum] || 0, parseInt(match[2], 10));
+      }
+    });
+    
+    usedNumbers.story.forEach(num => {
+      const match = num.match(/^(\d+)\.(\d+)\.(\d+)$/);
+      if (match) {
+        const key = `${match[1]}.${match[2]}`;
+        storyCounters[key] = Math.max(storyCounters[key] || 0, parseInt(match[3], 10));
+      }
+    });
+    
+    // Migrate elements
+    const migratedElements = elements.map(el => {
+      if (!cardTypes.includes(el.type)) return el;
+      
+      const migrated = { ...el };
+      
+      // Fix size
+      if (el.size.width !== CARD_SIZE.width || el.size.height !== CARD_SIZE.height) {
+        migrated.size = { ...CARD_SIZE };
+      }
+      
+      // Generate story number if missing
+      if (!el.content?.storyNumber || el.content.storyNumber.trim() === '') {
+        let newNumber = '';
+        
+        if (el.type === 'epic') {
+          epicCounter++;
+          newNumber = `${epicCounter}.0`;
+        } else if (el.type === 'feature') {
+          const latestEpic = epicCounter || 1;
+          featureCounters[latestEpic] = (featureCounters[latestEpic] || 0) + 1;
+          newNumber = `${latestEpic}.${featureCounters[latestEpic]}`;
+        } else if (el.type === 'story') {
+          const latestEpic = epicCounter || 1;
+          const latestFeature = featureCounters[latestEpic] || 1;
+          const key = `${latestEpic}.${latestFeature}`;
+          storyCounters[key] = (storyCounters[key] || 0) + 1;
+          newNumber = `${latestEpic}.${latestFeature}.${storyCounters[key]}`;
+        }
+        
+        migrated.content = { ...el.content, storyNumber: newNumber };
+      }
+      
+      return migrated;
+    });
+    
+    // Only update if something changed
+    const hasChanges = migratedElements.some((el, i) => 
+      el.size !== elements[i].size || el.content !== elements[i].content
+    );
+    
+    if (hasChanges) {
+      setElements(migratedElements);
+      // Update history with migrated state
+      setHistory([migratedElements]);
+      setHistoryIndex(0);
+      console.log('Canvas elements migrated: sizes and story numbers updated');
+    }
+  }, [isInitialLoad, elements]);
+
   // History-aware element update function
   const updateElementsWithHistory = useCallback((newElements: CanvasElement[]) => {
     setElements(newElements);
