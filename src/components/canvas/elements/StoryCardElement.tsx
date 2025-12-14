@@ -157,11 +157,11 @@ export const StoryCardElement: React.FC<StoryCardElementProps> = ({
       )}
 
       <div 
-        className={`h-full bg-card border-2 rounded-lg p-3 transition-all flex flex-col ${
+        className={`h-full bg-card border-2 border-l-4 border-l-green-500 rounded-lg p-3 transition-all flex flex-col ${
           isCompact ? 'min-h-0' : 'min-h-[160px]'
         } ${
           isSelected && !isMarqueeSelecting
-            ? 'border-primary shadow-lg shadow-primary/20' 
+            ? 'border-primary border-l-green-500 shadow-lg shadow-primary/20' 
             : 'border-border hover:border-primary/50'
         }`}
       >
