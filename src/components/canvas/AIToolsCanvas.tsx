@@ -959,6 +959,13 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         data={editingElement ? canvasToUnifiedData(editingElement.content) : undefined}
         mode="story"
         title="Edit User Story"
+        currentType="story"
+        onChangeType={(newType) => {
+          if (editingElement) {
+            handleChangeType(editingElement.id, newType);
+            setEditingElement(null);
+          }
+        }}
         onSave={(newData) => {
           if (editingElement) {
             handleElementUpdate(editingElement.id, { content: unifiedToCanvasData(newData as any) });
@@ -972,6 +979,13 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         open={!!editingElement && editingElement.type === 'epic'}
         onOpenChange={(open) => !open && setEditingElement(null)}
         data={editingElement?.type === 'epic' ? editingElement.content : undefined}
+        currentType="epic"
+        onChangeType={(newType) => {
+          if (editingElement) {
+            handleChangeType(editingElement.id, newType);
+            setEditingElement(null);
+          }
+        }}
         onSave={(newData) => {
           if (editingElement) {
             handleElementUpdate(editingElement.id, { content: newData });
@@ -985,6 +999,13 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         open={!!editingElement && editingElement.type === 'feature'}
         onOpenChange={(open) => !open && setEditingElement(null)}
         data={editingElement?.type === 'feature' ? editingElement.content : undefined}
+        currentType="feature"
+        onChangeType={(newType) => {
+          if (editingElement) {
+            handleChangeType(editingElement.id, newType);
+            setEditingElement(null);
+          }
+        }}
         onSave={(newData) => {
           if (editingElement) {
             handleElementUpdate(editingElement.id, { content: newData });

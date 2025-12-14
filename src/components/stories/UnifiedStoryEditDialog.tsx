@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Calculator, Activity } from 'lucide-react';
+import { FileText, Calculator, Activity, Layers, Puzzle } from 'lucide-react';
 import { UnifiedStoryData, UnifiedStoryMode } from '@/types/story';
 import { UserStoryTab } from './tabs/UserStoryTab';
 import { EstimationTab } from './tabs/EstimationTab';
 import { TrackingTab } from './tabs/TrackingTab';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type ElementType = 'epic' | 'feature' | 'story';
 
 export interface UnifiedStoryEditDialogProps {
   open: boolean;
@@ -16,6 +20,8 @@ export interface UnifiedStoryEditDialogProps {
   mode?: UnifiedStoryMode;
   isLoading?: boolean;
   title?: string;
+  currentType?: ElementType;
+  onChangeType?: (newType: ElementType) => void;
 }
 
 const defaultData: UnifiedStoryData = {
@@ -46,6 +52,8 @@ export function UnifiedStoryEditDialog({
   mode = 'backlog',
   isLoading = false,
   title: customTitle,
+  currentType = 'story',
+  onChangeType,
 }: UnifiedStoryEditDialogProps) {
   const [formData, setFormData] = useState<UnifiedStoryData>({ ...defaultData, ...data });
   const [activeTab, setActiveTab] = useState('story');
@@ -61,6 +69,12 @@ export function UnifiedStoryEditDialog({
       setActiveTab('story');
     }
   }, [open, data, mode]);
+
+  const typeOptions: { value: ElementType; label: string; icon: React.ReactNode }[] = [
+    { value: 'epic', label: 'Epic', icon: <Layers className="h-4 w-4" /> },
+    { value: 'feature', label: 'Feature', icon: <Puzzle className="h-4 w-4" /> },
+    { value: 'story', label: 'Story', icon: <FileText className="h-4 w-4" /> },
+  ];
 
   const handleChange = (updates: Partial<UnifiedStoryData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -117,6 +131,31 @@ export function UnifiedStoryEditDialog({
           </TabsList>
 
           <div className="overflow-y-auto mt-4 pr-1 max-h-[calc(90vh-220px)]">
+            {/* Type Selector - only show when onChangeType is provided */}
+            {onChangeType && (
+              <div className="space-y-2 mb-4">
+                <Label htmlFor="type">Type</Label>
+                <Select
+                  value={currentType}
+                  onValueChange={(value) => onChangeType(value as ElementType)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {typeOptions.map(({ value, label, icon }) => (
+                      <SelectItem key={value} value={value}>
+                        <span className="flex items-center gap-2">
+                          {icon}
+                          {label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <TabsContent value="story" className="mt-0">
               <UserStoryTab data={formData} onChange={handleChange} mode={mode} />
             </TabsContent>
