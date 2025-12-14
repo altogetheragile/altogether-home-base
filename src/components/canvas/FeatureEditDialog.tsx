@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Layers, Puzzle, FileText } from 'lucide-react';
+
+type ElementType = 'epic' | 'feature' | 'story';
 
 interface FeatureData {
   title: string;
@@ -20,6 +23,8 @@ interface FeatureEditDialogProps {
   onOpenChange: (open: boolean) => void;
   data?: FeatureData;
   onSave: (data: FeatureData) => void;
+  currentType?: ElementType;
+  onChangeType?: (newType: ElementType) => void;
 }
 
 const defaultData: FeatureData = {
@@ -31,7 +36,7 @@ const defaultData: FeatureData = {
   storyNumber: '',
 };
 
-export function FeatureEditDialog({ open, onOpenChange, data, onSave }: FeatureEditDialogProps) {
+export function FeatureEditDialog({ open, onOpenChange, data, onSave, currentType = 'feature', onChangeType }: FeatureEditDialogProps) {
   const [formData, setFormData] = useState<FeatureData>({ ...defaultData, ...data });
 
   useEffect(() => {
@@ -51,6 +56,12 @@ export function FeatureEditDialog({ open, onOpenChange, data, onSave }: FeatureE
 
   const isValid = formData.title?.trim();
 
+  const typeOptions: { value: ElementType; label: string; icon: React.ReactNode }[] = [
+    { value: 'epic', label: 'Epic', icon: <Layers className="h-4 w-4" /> },
+    { value: 'feature', label: 'Feature', icon: <Puzzle className="h-4 w-4" /> },
+    { value: 'story', label: 'Story', icon: <FileText className="h-4 w-4" /> },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -59,6 +70,31 @@ export function FeatureEditDialog({ open, onOpenChange, data, onSave }: FeatureE
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Type Selector */}
+          {onChangeType && (
+            <div className="space-y-2">
+              <Label htmlFor="type">Type</Label>
+              <Select
+                value={currentType}
+                onValueChange={(value) => onChangeType(value as ElementType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {typeOptions.map(({ value, label, icon }) => (
+                    <SelectItem key={value} value={value}>
+                      <span className="flex items-center gap-2">
+                        {icon}
+                        {label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Story Number */}
           <div className="space-y-2">
             <Label htmlFor="storyNumber">Story Number</Label>
