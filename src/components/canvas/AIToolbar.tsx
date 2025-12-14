@@ -154,12 +154,14 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
       </Button>
 
       {/* Selection count and assign button */}
-      {selectedCount > 1 && (
+      {(selectedCount > 1 || canAssignToParent) && (
         <>
           <Separator orientation="vertical" className="h-6" />
-          <span className="text-sm text-muted-foreground">
-            {selectedCount} selected
-          </span>
+          {selectedCount > 1 && (
+            <span className="text-sm text-muted-foreground">
+              {selectedCount} selected
+            </span>
+          )}
           {onAssignToParent && canAssignToParent && (
             <Button 
               variant="outline" 
