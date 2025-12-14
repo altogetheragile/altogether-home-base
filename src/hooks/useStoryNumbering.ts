@@ -170,9 +170,71 @@ export function useStoryNumbering(elements: CanvasElement[]) {
     return Array.from({ length: count }, (_, i) => `1.1.${i + 1}`);
   }, [getExistingNumbers]);
 
+  // Get next child number for a specific parent (for bulk assignment)
+  const getNextChildNumberUnderParent = useCallback((
+    parentNumber: string, 
+    parentType: 'epic' | 'feature',
+    childType: 'feature' | 'story'
+  ): string => {
+    const numbers = getExistingNumbers();
+    const parts = parentNumber.split('.');
+    
+    if (parentType === 'epic' && childType === 'feature') {
+      // Parent is epic (X.0), child is feature -> X.Y
+      const x = parts[0];
+      let maxY = 0;
+      numbers.feature.forEach(num => {
+        const match = num.match(/^(\d+)\.(\d+)$/);
+        if (match && match[1] === x && parseInt(match[2], 10) > 0) {
+          maxY = Math.max(maxY, parseInt(match[2], 10));
+        }
+      });
+      return `${x}.${maxY + 1}`;
+    }
+    
+    if (parentType === 'epic' && childType === 'story') {
+      // Parent is epic (X.0), child is story -> X.1.Z (under first feature of epic)
+      const x = parts[0];
+      // Find highest feature number under this epic
+      let maxFeature = 1;
+      numbers.feature.forEach(num => {
+        const match = num.match(/^(\d+)\.(\d+)$/);
+        if (match && match[1] === x && parseInt(match[2], 10) > 0) {
+          maxFeature = Math.max(maxFeature, parseInt(match[2], 10));
+        }
+      });
+      // Find highest story number under that feature
+      let maxZ = 0;
+      numbers.story.forEach(num => {
+        const match = num.match(/^(\d+)\.(\d+)\.(\d+)$/);
+        if (match && match[1] === x && match[2] === String(maxFeature)) {
+          maxZ = Math.max(maxZ, parseInt(match[3], 10));
+        }
+      });
+      return `${x}.${maxFeature}.${maxZ + 1}`;
+    }
+    
+    if (parentType === 'feature' && childType === 'story') {
+      // Parent is feature (X.Y), child is story -> X.Y.Z
+      const x = parts[0];
+      const y = parts[1];
+      let maxZ = 0;
+      numbers.story.forEach(num => {
+        const match = num.match(/^(\d+)\.(\d+)\.(\d+)$/);
+        if (match && match[1] === x && match[2] === y) {
+          maxZ = Math.max(maxZ, parseInt(match[3], 10));
+        }
+      });
+      return `${x}.${y}.${maxZ + 1}`;
+    }
+    
+    return '1.1.1';
+  }, [getExistingNumbers]);
+
   return {
     getNextNumber,
     getChildNumbers,
     getExistingNumbers,
+    getNextChildNumberUnderParent,
   };
 }

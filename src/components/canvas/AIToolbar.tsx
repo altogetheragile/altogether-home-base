@@ -12,6 +12,7 @@ import {
   Loader2,
   Check,
   AlertCircle,
+  FolderInput,
 } from 'lucide-react';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -32,6 +33,9 @@ interface AIToolbarProps {
   saveStatus?: SaveStatus;
   // Selection info
   selectedCount?: number;
+  // Assign to parent
+  onAssignToParent?: () => void;
+  canAssignToParent?: boolean;
 }
 
 export const AIToolbar: React.FC<AIToolbarProps> = ({
@@ -47,6 +51,8 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
   canRedo = false,
   saveStatus = 'idle',
   selectedCount = 0,
+  onAssignToParent,
+  canAssignToParent = false,
 }) => {
   return (
     <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
@@ -141,13 +147,24 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
         <Download className="h-4 w-4" />
       </Button>
 
-      {/* Selection count */}
+      {/* Selection count and assign button */}
       {selectedCount > 1 && (
         <>
           <Separator orientation="vertical" className="h-6" />
           <span className="text-sm text-muted-foreground">
             {selectedCount} selected
           </span>
+          {onAssignToParent && canAssignToParent && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={onAssignToParent}
+              title="Assign selected items to a parent Epic or Feature"
+            >
+              <FolderInput className="h-4 w-4 mr-2" />
+              Assign to Parent
+            </Button>
+          )}
         </>
       )}
 

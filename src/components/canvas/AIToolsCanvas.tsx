@@ -18,6 +18,7 @@ import { UnifiedStoryEditDialog } from '@/components/stories';
 import { SplitStoryDialog } from '@/components/stories/SplitStoryDialog';
 import { EpicEditDialog } from './EpicEditDialog';
 import { FeatureEditDialog } from './FeatureEditDialog';
+import { AssignToParentDialog } from './AssignToParentDialog';
 import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
 import { useStoryNumbering } from '@/hooks/useStoryNumbering';
@@ -81,6 +82,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<CanvasElement | null>(null);
   const [splittingElement, setSplittingElement] = useState<CanvasElement | null>(null);
+  const [assignToParentOpen, setAssignToParentOpen] = useState(false);
   
   // Undo/Redo history
   const [history, setHistory] = useState<CanvasElement[][]>([initialData?.elements || []]);
@@ -112,7 +114,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const { updateArtifact } = useProjectArtifactMutations();
   
   // Story numbering hook
-  const { getNextNumber, getChildNumbers } = useStoryNumbering(elements);
+  const { getNextNumber, getChildNumbers, getNextChildNumberUnderParent } = useStoryNumbering(elements);
 
   // Undo/Redo computed values
   const canUndo = historyIndex > 0;
@@ -502,6 +504,75 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     toast({ title: `Converted to ${newType.charAt(0).toUpperCase() + newType.slice(1)}` });
   }, [elements, updateElementsWithHistory, toast, getNextNumber]);
 
+  // Assign to parent handler
+  const handleAssignToParent = useCallback((parentId: string, parentType: 'epic' | 'feature') => {
+    const parent = elements.find(el => el.id === parentId);
+    if (!parent) return;
+    
+    const parentNumber = parent.content?.storyNumber || '';
+    const selectedElements = elements.filter(el => selectedElementIds.includes(el.id));
+    
+    // Track used numbers to avoid duplicates within this batch
+    const usedNumbers = new Set<string>();
+    
+    const updatedElements = elements.map(el => {
+      if (!selectedElementIds.includes(el.id)) return el;
+      
+      // Determine child type based on element type
+      const childType = el.type as 'feature' | 'story';
+      if (childType !== 'feature' && childType !== 'story') return el;
+      
+      // Get next available number under parent
+      let newNumber = getNextChildNumberUnderParent(parentNumber, parentType, childType);
+      
+      // Make sure we don't reuse a number we've already assigned in this batch
+      while (usedNumbers.has(newNumber)) {
+        const parts = newNumber.split('.');
+        const lastPart = parseInt(parts[parts.length - 1], 10);
+        parts[parts.length - 1] = String(lastPart + 1);
+        newNumber = parts.join('.');
+      }
+      usedNumbers.add(newNumber);
+      
+      return {
+        ...el,
+        content: {
+          ...el.content,
+          storyNumber: newNumber,
+          parentEpicId: parentType === 'epic' ? parentId : (el.content?.parentEpicId || undefined),
+          parentFeatureId: parentType === 'feature' ? parentId : undefined,
+        },
+      };
+    });
+    
+    updateElementsWithHistory(updatedElements);
+    setSelectedElementIds([]);
+    
+    const count = selectedElements.length;
+    toast({ 
+      title: `Assigned ${count} item${count > 1 ? 's' : ''} to ${parentNumber}`,
+    });
+  }, [elements, selectedElementIds, getNextChildNumberUnderParent, updateElementsWithHistory, toast]);
+
+  // Check if selected items can be assigned to a parent
+  const canAssignToParent = useMemo(() => {
+    if (selectedElementIds.length === 0) return false;
+    
+    const selectedElements = elements.filter(el => selectedElementIds.includes(el.id));
+    // Can't assign if any epics are selected
+    if (selectedElements.some(el => el.type === 'epic')) return false;
+    // Need at least one story or feature selected
+    if (!selectedElements.some(el => el.type === 'story' || el.type === 'feature')) return false;
+    
+    // Check if there are any valid parents on the canvas
+    const selectedIds = new Set(selectedElementIds);
+    const hasValidParent = elements.some(el => 
+      (el.type === 'epic' || el.type === 'feature') && !selectedIds.has(el.id)
+    );
+    
+    return hasValidParent;
+  }, [elements, selectedElementIds]);
+
   // Group drag handlers
   const handleGroupDragStart = useCallback(() => {
     if (selectedElementIds.length > 1) {
@@ -884,6 +955,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           canRedo={canRedo}
           saveStatus={saveStatus}
           selectedCount={selectedElementIds.length}
+          onAssignToParent={() => setAssignToParentOpen(true)}
+          canAssignToParent={canAssignToParent}
         />
       </div>
 
@@ -1123,6 +1196,15 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           setSplittingElement(null);
         }}
         isLoading={false}
+      />
+
+      {/* Assign to Parent Dialog */}
+      <AssignToParentDialog
+        open={assignToParentOpen}
+        onOpenChange={setAssignToParentOpen}
+        selectedElements={elements.filter(el => selectedElementIds.includes(el.id))}
+        allElements={elements}
+        onAssign={handleAssignToParent}
       />
     </div>
   );
