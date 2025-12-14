@@ -505,45 +505,89 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   }, [elements, updateElementsWithHistory, toast, getNextNumber]);
 
   // Assign to parent handler
-  const handleAssignToParent = useCallback((parentId: string, parentType: 'epic' | 'feature') => {
+  const handleAssignToParent = useCallback((parentId: string, parentType: 'epic' | 'feature', renumberChildren: boolean) => {
     const parent = elements.find(el => el.id === parentId);
     if (!parent) return;
     
     const parentNumber = parent.content?.storyNumber || '';
     const selectedElements = elements.filter(el => selectedElementIds.includes(el.id));
     
-    // Track used numbers to avoid duplicates within this batch
-    const usedNumbers = new Set<string>();
+    let updatedElements: CanvasElement[];
     
-    const updatedElements = elements.map(el => {
-      if (!selectedElementIds.includes(el.id)) return el;
+    if (renumberChildren) {
+      // Get ALL existing children under this parent (not in selection)
+      const existingChildren = elements.filter(el => {
+        if (selectedElementIds.includes(el.id)) return false;
+        const elNumber = el.content?.storyNumber || '';
+        if (!elNumber || !parentNumber) return false;
+        // Check if this element's number starts with parent number
+        return elNumber.startsWith(parentNumber + '.') && 
+               elNumber.split('.').length === parentNumber.split('.').length + 1;
+      });
       
-      // Determine child type based on element type
-      const childType = el.type as 'feature' | 'story';
-      if (childType !== 'feature' && childType !== 'story') return el;
+      // Combine existing children with newly assigned items
+      const allChildren = [...existingChildren, ...selectedElements];
       
-      // Get next available number under parent
-      let newNumber = getNextChildNumberUnderParent(parentNumber, parentType, childType);
+      // Sort by current number for consistent ordering
+      allChildren.sort((a, b) => {
+        const numA = a.content?.storyNumber || '999';
+        const numB = b.content?.storyNumber || '999';
+        return numA.localeCompare(numB, undefined, { numeric: true });
+      });
       
-      // Make sure we don't reuse a number we've already assigned in this batch
-      while (usedNumbers.has(newNumber)) {
-        const parts = newNumber.split('.');
-        const lastPart = parseInt(parts[parts.length - 1], 10);
-        parts[parts.length - 1] = String(lastPart + 1);
-        newNumber = parts.join('.');
-      }
-      usedNumbers.add(newNumber);
+      // Create a map of id -> new number
+      const newNumbers = new Map<string, string>();
+      allChildren.forEach((child, index) => {
+        newNumbers.set(child.id, `${parentNumber}.${index + 1}`);
+      });
       
-      return {
-        ...el,
-        content: {
-          ...el.content,
-          storyNumber: newNumber,
-          parentEpicId: parentType === 'epic' ? parentId : (el.content?.parentEpicId || undefined),
-          parentFeatureId: parentType === 'feature' ? parentId : undefined,
-        },
-      };
-    });
+      // Update all elements
+      updatedElements = elements.map(el => {
+        const newNumber = newNumbers.get(el.id);
+        if (newNumber) {
+          return {
+            ...el,
+            content: {
+              ...el.content,
+              storyNumber: newNumber,
+              parentEpicId: parentType === 'epic' ? parentId : (el.content?.parentEpicId || undefined),
+              parentFeatureId: parentType === 'feature' ? parentId : undefined,
+            },
+          };
+        }
+        return el;
+      });
+    } else {
+      // Original behavior: append to highest existing number
+      const usedNumbers = new Set<string>();
+      
+      updatedElements = elements.map(el => {
+        if (!selectedElementIds.includes(el.id)) return el;
+        
+        const childType = el.type as 'feature' | 'story';
+        if (childType !== 'feature' && childType !== 'story') return el;
+        
+        let newNumber = getNextChildNumberUnderParent(parentNumber, parentType, childType);
+        
+        while (usedNumbers.has(newNumber)) {
+          const parts = newNumber.split('.');
+          const lastPart = parseInt(parts[parts.length - 1], 10);
+          parts[parts.length - 1] = String(lastPart + 1);
+          newNumber = parts.join('.');
+        }
+        usedNumbers.add(newNumber);
+        
+        return {
+          ...el,
+          content: {
+            ...el.content,
+            storyNumber: newNumber,
+            parentEpicId: parentType === 'epic' ? parentId : (el.content?.parentEpicId || undefined),
+            parentFeatureId: parentType === 'feature' ? parentId : undefined,
+          },
+        };
+      });
+    }
     
     updateElementsWithHistory(updatedElements);
     setSelectedElementIds([]);
@@ -553,6 +597,75 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       title: `Assigned ${count} item${count > 1 ? 's' : ''} to ${parentNumber}`,
     });
   }, [elements, selectedElementIds, getNextChildNumberUnderParent, updateElementsWithHistory, toast]);
+
+  // Renumber children under selected Epic/Feature
+  const handleRenumberChildren = useCallback(() => {
+    if (selectedElementIds.length !== 1) return;
+    
+    const parentId = selectedElementIds[0];
+    const parent = elements.find(el => el.id === parentId);
+    if (!parent || (parent.type !== 'epic' && parent.type !== 'feature')) return;
+    
+    const parentNumber = parent.content?.storyNumber || '';
+    if (!parentNumber) return;
+    
+    // Find all direct children
+    const children = elements.filter(el => {
+      const elNumber = el.content?.storyNumber || '';
+      if (!elNumber) return false;
+      return elNumber.startsWith(parentNumber + '.') && 
+             elNumber.split('.').length === parentNumber.split('.').length + 1;
+    });
+    
+    // Sort by current number
+    children.sort((a, b) => {
+      const numA = a.content?.storyNumber || '999';
+      const numB = b.content?.storyNumber || '999';
+      return numA.localeCompare(numB, undefined, { numeric: true });
+    });
+    
+    // Create new numbers map
+    const newNumbers = new Map<string, string>();
+    children.forEach((child, index) => {
+      newNumbers.set(child.id, `${parentNumber}.${index + 1}`);
+    });
+    
+    // Update elements
+    const updatedElements = elements.map(el => {
+      const newNumber = newNumbers.get(el.id);
+      if (newNumber) {
+        return {
+          ...el,
+          content: {
+            ...el.content,
+            storyNumber: newNumber,
+          },
+        };
+      }
+      return el;
+    });
+    
+    updateElementsWithHistory(updatedElements);
+    toast({ title: `Renumbered ${children.length} children under ${parentNumber}` });
+  }, [elements, selectedElementIds, updateElementsWithHistory, toast]);
+
+  // Check if can renumber children (single epic/feature selected with children)
+  const canRenumberChildren = useMemo(() => {
+    if (selectedElementIds.length !== 1) return false;
+    
+    const parent = elements.find(el => el.id === selectedElementIds[0]);
+    if (!parent || (parent.type !== 'epic' && parent.type !== 'feature')) return false;
+    
+    const parentNumber = parent.content?.storyNumber || '';
+    if (!parentNumber) return false;
+    
+    // Check if there are any children
+    return elements.some(el => {
+      const elNumber = el.content?.storyNumber || '';
+      return elNumber.startsWith(parentNumber + '.') && 
+             elNumber.split('.').length === parentNumber.split('.').length + 1;
+    });
+  }, [elements, selectedElementIds]);
 
   // Check if selected items can be assigned to a parent
   const canAssignToParent = useMemo(() => {
@@ -957,6 +1070,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           selectedCount={selectedElementIds.length}
           onAssignToParent={() => setAssignToParentOpen(true)}
           canAssignToParent={canAssignToParent}
+          onRenumberChildren={handleRenumberChildren}
+          canRenumberChildren={canRenumberChildren}
         />
       </div>
 

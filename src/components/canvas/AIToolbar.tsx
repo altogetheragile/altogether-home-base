@@ -13,6 +13,7 @@ import {
   Check,
   AlertCircle,
   FolderInput,
+  ListOrdered,
 } from 'lucide-react';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -36,6 +37,9 @@ interface AIToolbarProps {
   // Assign to parent
   onAssignToParent?: () => void;
   canAssignToParent?: boolean;
+  // Renumber children
+  onRenumberChildren?: () => void;
+  canRenumberChildren?: boolean;
 }
 
 export const AIToolbar: React.FC<AIToolbarProps> = ({
@@ -53,6 +57,8 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
   selectedCount = 0,
   onAssignToParent,
   canAssignToParent = false,
+  onRenumberChildren,
+  canRenumberChildren = false,
 }) => {
   return (
     <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
@@ -165,6 +171,22 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
               Assign to Parent
             </Button>
           )}
+        </>
+      )}
+
+      {/* Renumber children button - shows when single epic/feature selected */}
+      {selectedCount === 1 && onRenumberChildren && canRenumberChildren && (
+        <>
+          <Separator orientation="vertical" className="h-6" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onRenumberChildren}
+            title="Renumber all children under this Epic/Feature"
+          >
+            <ListOrdered className="h-4 w-4 mr-2" />
+            Renumber Children
+          </Button>
         </>
       )}
 

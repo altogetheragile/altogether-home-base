@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Layers, Puzzle, FolderInput } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CanvasElement {
   id: string;
@@ -27,7 +28,7 @@ interface AssignToParentDialogProps {
   onOpenChange: (open: boolean) => void;
   selectedElements: CanvasElement[];
   allElements: CanvasElement[];
-  onAssign: (parentId: string, parentType: 'epic' | 'feature') => void;
+  onAssign: (parentId: string, parentType: 'epic' | 'feature', renumberChildren: boolean) => void;
 }
 
 export const AssignToParentDialog: React.FC<AssignToParentDialogProps> = ({
@@ -38,6 +39,7 @@ export const AssignToParentDialog: React.FC<AssignToParentDialogProps> = ({
   onAssign,
 }) => {
   const [selectedParentId, setSelectedParentId] = useState<string>('');
+  const [renumberChildren, setRenumberChildren] = useState<boolean>(true);
 
   // Determine what types of parents are valid based on selection
   const selectedTypes = useMemo(() => {
@@ -104,8 +106,9 @@ export const AssignToParentDialog: React.FC<AssignToParentDialogProps> = ({
 
   const handleAssign = () => {
     if (selectedParent) {
-      onAssign(selectedParent.id, selectedParent.type);
+      onAssign(selectedParent.id, selectedParent.type, renumberChildren);
       setSelectedParentId('');
+      setRenumberChildren(true);
       onOpenChange(false);
     }
   };
@@ -113,6 +116,7 @@ export const AssignToParentDialog: React.FC<AssignToParentDialogProps> = ({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setSelectedParentId('');
+      setRenumberChildren(true);
     }
     onOpenChange(newOpen);
   };
@@ -148,6 +152,21 @@ export const AssignToParentDialog: React.FC<AssignToParentDialogProps> = ({
                 {featureCount} {featureCount === 1 ? 'Feature' : 'Features'}
               </Badge>
             )}
+          </div>
+
+          {/* Renumber checkbox */}
+          <div className="flex items-center space-x-2 pb-2 border-b border-border">
+            <Checkbox
+              id="renumber-children"
+              checked={renumberChildren}
+              onCheckedChange={(checked) => setRenumberChildren(checked === true)}
+            />
+            <Label
+              htmlFor="renumber-children"
+              className="text-sm cursor-pointer"
+            >
+              Renumber all children (start from .1)
+            </Label>
           </div>
 
           {parentOptions.length === 0 ? (
