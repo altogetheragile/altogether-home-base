@@ -908,6 +908,45 @@ export type Database = {
         }
         Relationships: []
       }
+      decision_levels: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       epics: {
         Row: {
           business_objective: string | null
@@ -1467,6 +1506,39 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_item_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          knowledge_item_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          knowledge_item_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          knowledge_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_categories_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_item_comments: {
         Row: {
           content: string
@@ -1495,6 +1567,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "knowledge_item_comments_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_item_decision_levels: {
+        Row: {
+          created_at: string
+          decision_level_id: string
+          knowledge_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision_level_id: string
+          knowledge_item_id: string
+        }
+        Update: {
+          created_at?: string
+          decision_level_id?: string
+          knowledge_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_decision_levels_decision_level_id_fkey"
+            columns: ["decision_level_id"]
+            isOneToOne: false
+            referencedRelation: "decision_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_decision_levels_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_item_domains: {
+        Row: {
+          created_at: string
+          domain_id: string
+          knowledge_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          knowledge_item_id: string
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          knowledge_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_domains_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "activity_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_domains_knowledge_item_id_fkey"
             columns: ["knowledge_item_id"]
             isOneToOne: false
             referencedRelation: "knowledge_items"

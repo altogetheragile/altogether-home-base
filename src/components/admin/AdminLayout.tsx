@@ -97,16 +97,10 @@ const AdminLayout = () => {
       description: 'View content analytics'
     },
     {
-      label: 'Classifications',
-      href: '/admin/knowledge/classifications',
-      icon: FolderOpen,
-      description: 'Manage categories, focuses, and domains'
-    },
-    {
-      label: 'Tags',
-      href: '/admin/knowledge/tags',
-      icon: Tag,
-      description: 'Manage content tags'
+      label: 'Taxonomy',
+      href: '/admin/knowledge/taxonomy',
+      icon: Layers,
+      description: 'Manage decision levels, categories, domains, and tags'
     },
     {
       label: 'Learning Paths',
