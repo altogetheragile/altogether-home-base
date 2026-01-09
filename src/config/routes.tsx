@@ -119,6 +119,15 @@ export const PublicRoutes = () => {
           </Suspense>
         </SiteSettingsRouteGuard>
       } />
+      <Route path="/knowledge/new" element={
+        <SiteSettingsRouteGuard feature="knowledge">
+          <ProtectedRoute requiredRole="admin">
+            <Suspense fallback={<LoadingFallback />}>
+              <KnowledgeDetail />
+            </Suspense>
+          </ProtectedRoute>
+        </SiteSettingsRouteGuard>
+      } />
       <Route path="/knowledge/:slug" element={
         <SiteSettingsRouteGuard feature="knowledge">
           <Suspense fallback={<LoadingFallback />}>

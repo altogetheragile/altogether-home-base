@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { useKnowledgeItemBySlug, useUpdateKnowledgeItem } from "@/hooks/useKnowledgeItems";
+import { useKnowledgeItemBySlug, useUpdateKnowledgeItem, useCreateKnowledgeItem } from "@/hooks/useKnowledgeItems";
 import { useKnowledgeUseCases } from "@/hooks/useKnowledgeUseCases";
 import { useKnowledgeItemTemplates } from "@/hooks/useKnowledgeItemTemplates";
 import { useKnowledgeItemUnifiedAssets } from "@/hooks/useUnifiedAssetManager";
@@ -30,7 +30,7 @@ import {
 import { 
   ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, 
   ExternalLink, Calendar, Pencil, ListOrdered, MessageCircle, ImagePlus,
-  X, Save, Loader2, Settings2, ChevronDown, ChevronUp
+  X, Save, Loader2, Settings2, ChevronDown, ChevronUp, Plus
 } from "lucide-react";
 import { format } from "date-fns";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -55,11 +55,16 @@ interface FormData {
 
 const KnowledgeDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fromProjectModel = searchParams.get('from') === 'project-model';
   const artifactId = searchParams.get('artifactId');
   const projectId = searchParams.get('projectId');
   const { toast } = useToast();
+  
+  // Detect if this is the "new" route
+  const isNewItem = location.pathname === '/knowledge/new';
   
   // Determine back URL based on context
   const backUrl = fromProjectModel && artifactId && projectId
@@ -67,7 +72,9 @@ const KnowledgeDetail = () => {
     : fromProjectModel
     ? '/project-modelling'
     : '/knowledge';
-  const { data: item, isLoading, error } = useKnowledgeItemBySlug(slug!);
+  
+  // Only fetch if we have a slug (not creating new)
+  const { data: item, isLoading, error } = useKnowledgeItemBySlug(isNewItem ? '' : slug!);
   const { data: useCases } = useKnowledgeUseCases(item?.id);
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
@@ -80,11 +87,12 @@ const KnowledgeDetail = () => {
   const isAdmin = userRole === 'admin';
   const visibility = useVisibleClassifications();
 
-  // Edit mode state
-  const [isEditMode, setIsEditMode] = useState(false);
+  // Edit mode state - start in edit mode if creating new
+  const [isEditMode, setIsEditMode] = useState(isNewItem);
   const [isSaving, setIsSaving] = useState(false);
   const [classificationOpen, setClassificationOpen] = useState(false);
   const updateKnowledgeItem = useUpdateKnowledgeItem();
+  const createKnowledgeItem = useCreateKnowledgeItem();
 
   // Form setup
   const form = useForm<FormData>({
@@ -100,9 +108,22 @@ const KnowledgeDetail = () => {
     }
   });
 
-  // Initialize form when item loads or edit mode activates
+  // Initialize form when item loads or edit mode activates (for existing items)
+  // For new items, form starts empty
   useEffect(() => {
-    if (item && isEditMode) {
+    if (isNewItem) {
+      // Keep form with empty defaults for new item
+      form.reset({
+        id: '',
+        name: '',
+        description: '',
+        background: '',
+        decision_level_ids: [],
+        category_ids: [],
+        domain_ids: [],
+        tag_ids: [],
+      });
+    } else if (item && isEditMode) {
       form.reset({
         id: item.id,
         name: item.name || '',
@@ -114,7 +135,7 @@ const KnowledgeDetail = () => {
         tag_ids: item.tags?.map(t => t.id) || [],
       });
     }
-  }, [item, isEditMode, form]);
+  }, [item, isEditMode, form, isNewItem]);
 
   const filteredMediaAssets = (mediaAssets || []).filter((asset: any) => !asset.is_template);
   const imageAssets = filteredMediaAssets.filter((asset: any) => asset.type === 'image');
@@ -130,32 +151,80 @@ const KnowledgeDetail = () => {
   };
 
   const handleCancelEdit = () => {
-    setIsEditMode(false);
-    form.reset();
+    if (isNewItem) {
+      // Navigate back to knowledge list when canceling new item
+      navigate('/knowledge');
+    } else {
+      setIsEditMode(false);
+      form.reset();
+    }
+  };
+
+  // Generate slug from name
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 100);
   };
 
   const handleSave = async () => {
-    if (!item?.id) return;
+    const formValues = form.getValues();
+    
+    // Validate name is required
+    if (!formValues.name?.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter a name for the knowledge item",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSaving(true);
     try {
-      const formValues = form.getValues();
-      await updateKnowledgeItem.mutateAsync({
-        id: item.id,
-        name: formValues.name,
-        description: formValues.description,
-        background: formValues.background,
-        decision_level_ids: formValues.decision_level_ids,
-        category_ids: formValues.category_ids,
-        domain_ids: formValues.domain_ids,
-        tag_ids: formValues.tag_ids,
-      });
-      
-      toast({
-        title: "Changes saved",
-        description: "Knowledge item updated successfully",
-      });
-      setIsEditMode(false);
+      if (isNewItem) {
+        // Create new knowledge item
+        const slug = generateSlug(formValues.name);
+        const newItem = await createKnowledgeItem.mutateAsync({
+          name: formValues.name,
+          slug: slug,
+          description: formValues.description,
+          background: formValues.background,
+          decision_level_ids: formValues.decision_level_ids,
+          category_ids: formValues.category_ids,
+          domain_ids: formValues.domain_ids,
+          tag_ids: formValues.tag_ids,
+          is_published: true,
+        });
+        
+        toast({
+          title: "Knowledge item created",
+          description: "Your new knowledge item has been created successfully",
+        });
+        
+        // Navigate to the newly created item
+        navigate(`/knowledge/${newItem.slug}`);
+      } else if (item?.id) {
+        // Update existing item
+        await updateKnowledgeItem.mutateAsync({
+          id: item.id,
+          name: formValues.name,
+          description: formValues.description,
+          background: formValues.background,
+          decision_level_ids: formValues.decision_level_ids,
+          category_ids: formValues.category_ids,
+          domain_ids: formValues.domain_ids,
+          tag_ids: formValues.tag_ids,
+        });
+        
+        toast({
+          title: "Changes saved",
+          description: "Knowledge item updated successfully",
+        });
+        setIsEditMode(false);
+      }
     } catch (error: any) {
       console.error('Error saving:', error);
       toast({
@@ -168,7 +237,8 @@ const KnowledgeDetail = () => {
     }
   };
 
-  if (isLoading) {
+  // Show loading only for existing items
+  if (!isNewItem && isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navigation />
@@ -187,7 +257,8 @@ const KnowledgeDetail = () => {
     );
   }
 
-  if (error || !item) {
+  // Show error only for existing items that fail to load
+  if (!isNewItem && (error || !item)) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navigation />
@@ -234,7 +305,7 @@ const KnowledgeDetail = () => {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>{item.name}</BreadcrumbPage>
+                    <BreadcrumbPage>{isNewItem ? 'New Knowledge Item' : item?.name}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -242,8 +313,17 @@ const KnowledgeDetail = () => {
               {/* Edit Mode Indicator */}
               {isEditMode && (
                 <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary">
-                  <Pencil className="h-3 w-3 mr-1" />
-                  Editing
+                  {isNewItem ? (
+                    <>
+                      <Plus className="h-3 w-3 mr-1" />
+                      Creating
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Editing
+                    </>
+                  )}
                 </Badge>
               )}
             </div>
@@ -263,10 +343,10 @@ const KnowledgeDetail = () => {
                         placeholder="Knowledge Item Name"
                       />
                     ) : (
-                      <h1 className="text-3xl font-bold flex-1">{item.name}</h1>
+                      <h1 className="text-3xl font-bold flex-1">{item?.name || 'Untitled'}</h1>
                     )}
                     
-                    {isAdmin && !isEditMode && (
+                    {isAdmin && !isEditMode && !isNewItem && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -287,7 +367,7 @@ const KnowledgeDetail = () => {
                       rows={3}
                     />
                   ) : (
-                    item.description && (
+                    item?.description && (
                       <p className="text-muted-foreground mb-6 leading-relaxed">
                         {item.description}
                       </p>
@@ -313,7 +393,7 @@ const KnowledgeDetail = () => {
                   ) : (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {/* Categories (multi) */}
-                      {visibility.categories && item.categories?.map((category) => (
+                      {visibility.categories && item?.categories?.map((category) => (
                         <Badge 
                           key={category.id}
                           variant="outline" 
@@ -328,7 +408,7 @@ const KnowledgeDetail = () => {
                         </Badge>
                       ))}
                       {/* Decision Levels (multi) */}
-                      {visibility.decisionLevels && item.decision_levels?.map((level) => (
+                      {visibility.decisionLevels && item?.decision_levels?.map((level) => (
                         <Badge 
                           key={level.id}
                           variant="outline"
@@ -343,7 +423,7 @@ const KnowledgeDetail = () => {
                         </Badge>
                       ))}
                       {/* Activity Domains (multi) */}
-                      {visibility.activityDomains && item.domains?.map((domain) => (
+                      {visibility.activityDomains && item?.domains?.map((domain) => (
                         <Badge 
                           key={domain.id}
                           variant="outline"
@@ -360,18 +440,20 @@ const KnowledgeDetail = () => {
                     </div>
                   )}
 
-                  {/* Metadata */}
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      Last updated: {format(new Date(item.updated_at), 'MMMM d, yyyy')}
-                    </span>
-                    {item.source && (
+                  {/* Metadata - only show for existing items */}
+                  {!isNewItem && item && (
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3" />
-                        Source: {item.source}
+                        Last updated: {format(new Date(item.updated_at), 'MMMM d, yyyy')}
                       </span>
-                    )}
-                  </div>
+                      {item.source && (
+                        <span className="flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" />
+                          Source: {item.source}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Column - Templates & Tools Card */}
@@ -501,7 +583,7 @@ const KnowledgeDetail = () => {
                         />
                       </div>
                     ) : (
-                      item.background ? (
+                      item?.background ? (
                         <div 
                           className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-a:underline prose-img:rounded-lg prose-img:shadow-md"
                           dangerouslySetInnerHTML={{ __html: item.background }}
@@ -514,7 +596,12 @@ const KnowledgeDetail = () => {
 
                   {/* Use Cases Tab */}
                   <TabsContent value="use-cases" className="mt-6">
-                    {isEditMode && isAdmin ? (
+                    {isNewItem ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Save the knowledge item first to add use cases.</p>
+                      </div>
+                    ) : isEditMode && isAdmin ? (
                       <UseCasesSection />
                     ) : (
                       useCases && useCases.length > 0 ? (
@@ -629,7 +716,12 @@ const KnowledgeDetail = () => {
 
                   {/* How-To Tab */}
                   <TabsContent value="how-to" className="mt-6">
-                    {isEditMode && isAdmin ? (
+                    {isNewItem ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <ListOrdered className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Save the knowledge item first to add steps.</p>
+                      </div>
+                    ) : isEditMode && isAdmin ? (
                       <HowToSection knowledgeItemId={item?.id} />
                     ) : (
                       steps && steps.length > 0 ? (
@@ -671,7 +763,7 @@ const KnowledgeDetail = () => {
                         <p className="text-muted-foreground mb-4">
                           No media available for this item
                         </p>
-                        {isAdmin && (
+                        {isAdmin && item && (
                           <Button asChild variant="default" className="flex items-center gap-2 mx-auto">
                             <Link to={`/admin/media?attachTo=${item.id}`}>
                               <ImagePlus className="h-4 w-4" />
@@ -718,7 +810,13 @@ const KnowledgeDetail = () => {
 
                   {/* Comments Tab */}
                   <TabsContent value="comments" className="mt-6">
-                    <KnowledgeItemComments knowledgeItemId={item.id} />
+                    {item ? (
+                      <KnowledgeItemComments knowledgeItemId={item.id} />
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        Save the knowledge item first to add comments.
+                      </p>
+                    )}
                   </TabsContent>
 
                   <ImageLightbox
@@ -754,8 +852,17 @@ const KnowledgeDetail = () => {
           <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg z-50">
             <div className="container mx-auto px-4 py-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                <Pencil className="h-4 w-4 inline mr-2" />
-                You're editing this knowledge item
+                {isNewItem ? (
+                  <>
+                    <Plus className="h-4 w-4 inline mr-2" />
+                    Creating a new knowledge item
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="h-4 w-4 inline mr-2" />
+                    You're editing this knowledge item
+                  </>
+                )}
               </p>
               <div className="flex gap-2">
                 <Button 
@@ -775,7 +882,7 @@ const KnowledgeDetail = () => {
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}
-                  Save Changes
+                  {isNewItem ? 'Create Knowledge Item' : 'Save Changes'}
                 </Button>
               </div>
             </div>
