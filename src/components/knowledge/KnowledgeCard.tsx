@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { KnowledgeItem } from "@/hooks/useKnowledgeItems";
-import { Eye, Heart, MessageCircle, ChevronRight } from "lucide-react";
+import { Eye, Heart, MessageCircle, ChevronRight, Pencil } from "lucide-react";
 import { useKnowledgeItemLikes } from "@/hooks/useKnowledgeItemLikes";
 import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisibleClassifications } from "@/hooks/useClassificationConfig";
+import { useUserRole } from "@/hooks/useUserRole";
 import { cn } from "@/lib/utils";
 
 interface KnowledgeCardProps {
@@ -20,6 +21,8 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
   const { likeCount, hasLiked, toggleLike, isLoading } = useKnowledgeItemLikes(item.id);
   const { commentCount } = useKnowledgeItemComments(item.id);
   const visibility = useVisibleClassifications();
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
   
   // Get primary category color for card background
   const primaryCategoryColor = item.categories?.[0]?.color || '#3B82F6';
@@ -51,7 +54,19 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
           <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-snug line-clamp-2 flex-1">
             {item.name}
           </CardTitle>
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {isAdmin && (
+              <Link
+                to={`/admin/knowledge/items/${item.id}/edit?returnTo=knowledge&slug=${item.slug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="relative z-10 p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Edit knowledge item"
+              >
+                <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
+              </Link>
+            )}
+            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
         </div>
         
         <div className="flex flex-wrap gap-1.5">

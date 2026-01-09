@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { KnowledgeCard } from "@/components/knowledge/KnowledgeCard";
@@ -6,11 +7,14 @@ import KnowledgeFilter from "@/components/knowledge/KnowledgeFilter";
 import { useKnowledgeItems } from "@/hooks/useKnowledgeItems";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Knowledge = () => {
   const { settings } = useSiteSettings();
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
@@ -64,7 +68,9 @@ const Knowledge = () => {
 
       <div className="container mx-auto px-4 py-4">
         <div className="space-y-4">
-          <KnowledgeFilter
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <KnowledgeFilter
             searchQuery={searchQuery}
             onSearchChange={handleSearch}
             selectedCategory={selectedCategory}
@@ -73,9 +79,19 @@ const Knowledge = () => {
             onDomainChange={setSelectedDomain}
             selectedDecisionLevel={selectedDecisionLevel}
             onDecisionLevelChange={setSelectedDecisionLevel}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-          />
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+              />
+            </div>
+            {isAdmin && (
+              <Button asChild size="sm">
+                <Link to="/admin/knowledge/items/new?returnTo=knowledge">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Link>
+              </Button>
+            )}
+          </div>
 
           <div>
             {isLoading ? (
