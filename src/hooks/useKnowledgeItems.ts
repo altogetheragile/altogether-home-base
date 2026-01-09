@@ -45,6 +45,29 @@ const retryWithBackoff = async <T>(
   throw new Error('Max retries exceeded');
 };
 
+// Whitelist of valid knowledge_items table columns
+// This ensures we ONLY send columns that exist in the database
+const KNOWLEDGE_ITEM_COLUMNS = [
+  'name', 'slug', 'description', 'background', 'source', 'author',
+  'publication_year', 'reference_url', 'icon', 'emoji',
+  'is_published', 'is_featured', 'has_ai_support', 'view_count',
+  'category_id', 'domain_id', 'planning_focus_id', 'primary_publication_id',
+  'learning_value_summary', 'key_terminology', 'common_pitfalls',
+  'evidence_sources', 'related_techniques',
+  'created_by', 'updated_by'
+] as const;
+
+// Helper to pick only valid columns from input data
+const pickKnowledgeItemColumns = (data: Record<string, any>): Record<string, any> => {
+  const result: Record<string, any> = {};
+  for (const key of KNOWLEDGE_ITEM_COLUMNS) {
+    if (key in data) {
+      result[key] = data[key];
+    }
+  }
+  return result;
+};
+
 // Taxonomy item types
 export interface DecisionLevel {
   id: string;
@@ -457,17 +480,10 @@ export const useCreateKnowledgeItem = () => {
       // Extract taxonomy IDs
       const { decision_level_ids, category_ids, domain_ids, tag_ids, ...itemData } = data;
       
-      // Remove derived array properties that don't exist in the database
-      // These come from junction table JOINs, not actual columns
-      const {
-        decision_levels,
-        categories,
-        domains,
-        tags,
-        ...cleanItemData
-      } = itemData as any;
+      // Use whitelist to pick only valid database columns
+      const cleanItemData = pickKnowledgeItemColumns(itemData);
       
-      // Transform data for knowledge_items table
+      // Transform data for knowledge_items table (handle empty strings)
       const transformedData = {
         ...cleanItemData,
         category_id: cleanItemData.category_id === '' ? null : cleanItemData.category_id,
@@ -475,6 +491,8 @@ export const useCreateKnowledgeItem = () => {
         domain_id: cleanItemData.domain_id === '' ? null : cleanItemData.domain_id,
         primary_publication_id: cleanItemData.primary_publication_id === '' || cleanItemData.primary_publication_id === undefined ? null : cleanItemData.primary_publication_id,
       };
+      
+      console.log('💾 Creating with whitelisted data:', transformedData);
       
       // Retry the create operation for network errors
       return retryWithBackoff(async () => {
@@ -592,15 +610,8 @@ export const useUpdateKnowledgeItem = () => {
       // Extract taxonomy IDs
       const { decision_level_ids, category_ids, domain_ids, tag_ids, ...itemData } = data;
       
-      // Remove derived array properties that don't exist in the database
-      // These come from junction table JOINs, not actual columns
-      const {
-        decision_levels,
-        categories,
-        domains,
-        tags,
-        ...cleanItemData
-      } = itemData as any;
+      // Use whitelist to pick only valid database columns
+      const cleanItemData = pickKnowledgeItemColumns(itemData);
       
       // Transform data to handle empty strings and invalid values
       const transformedData = {
@@ -611,7 +622,7 @@ export const useUpdateKnowledgeItem = () => {
         primary_publication_id: cleanItemData.primary_publication_id === '' || cleanItemData.primary_publication_id === undefined ? null : cleanItemData.primary_publication_id,
       };
 
-      console.log('💾 Sending data to Supabase:', transformedData);
+      console.log('💾 Sending whitelisted data to Supabase:', transformedData);
 
       // Retry the update operation for network errors
       return retryWithBackoff(async () => {
