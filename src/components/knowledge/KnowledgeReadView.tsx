@@ -9,6 +9,7 @@ import {
   MessageCircle, Link2, Download
 } from 'lucide-react';
 import type { KnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { KnowledgeItemComments } from './KnowledgeItemComments';
 import {
   DecisionSummaryCard,
   UseCaseGuidanceCard,
@@ -21,6 +22,7 @@ import {
 
 interface KnowledgeReadViewProps {
   item: KnowledgeItem;
+  knowledgeItemId?: string;
   steps?: Array<{ id: string; title: string; description?: string }>;
   relatedItems?: Array<{ id: string; name: string; slug: string }>;
   useCases?: Array<{
@@ -54,6 +56,7 @@ interface KnowledgeReadViewProps {
 
 export const KnowledgeReadView: React.FC<KnowledgeReadViewProps> = ({ 
   item, 
+  knowledgeItemId,
   steps,
   relatedItems,
   useCases,
@@ -88,8 +91,8 @@ export const KnowledgeReadView: React.FC<KnowledgeReadViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Column (2/3 on desktop) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Sticky Decision Summary Card */}
-          <DecisionSummaryCard item={item} className="lg:sticky lg:top-4 z-10" />
+          {/* Decision Summary Card */}
+          <DecisionSummaryCard item={item} />
 
           {/* Tabbed Content */}
           <Tabs defaultValue="overview" className="w-full">
@@ -412,19 +415,23 @@ export const KnowledgeReadView: React.FC<KnowledgeReadViewProps> = ({
               )}
             </TabsContent>
 
-            {/* Comments Tab - placeholder, actual comments managed by parent */}
+            {/* Comments Tab - now renders actual comments */}
             <TabsContent value="comments" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Discussion</CardTitle>
-                  <CardDescription>Comments and improvements.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-center py-8">
-                    Comments are displayed below.
-                  </p>
-                </CardContent>
-              </Card>
+              {knowledgeItemId ? (
+                <KnowledgeItemComments knowledgeItemId={knowledgeItemId} />
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Discussion</CardTitle>
+                    <CardDescription>Comments and improvements.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground text-center py-8">
+                      No comments available.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>
