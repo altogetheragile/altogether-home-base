@@ -35,6 +35,13 @@ const getItemTypeColor = (type?: string): string => {
   return colors[type || 'technique'] || colors.technique;
 };
 
+// Extract first sentence from text
+const getFirstSentence = (text?: string): string => {
+  if (!text) return '';
+  const match = text.match(/^[^.!?]+[.!?]/);
+  return match ? match[0].trim() : text.length > 150 ? text.substring(0, 150) + '...' : text;
+};
+
 export const ItemHero: React.FC<ItemHeroProps> = ({ item }) => {
   const itemType = (item as any).item_type || 'technique';
 
@@ -53,10 +60,10 @@ export const ItemHero: React.FC<ItemHeroProps> = ({ item }) => {
         {item.name}
       </h1>
       
-      {/* Short Summary / Description (1 sentence max ideal) */}
+      {/* Short Summary - first sentence only */}
       {item.description && (
         <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
-          {item.description}
+          {getFirstSentence(item.description)}
         </p>
       )}
     </div>
