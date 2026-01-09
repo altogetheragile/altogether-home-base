@@ -54,7 +54,12 @@ const KNOWLEDGE_ITEM_COLUMNS = [
   'category_id', 'domain_id', 'planning_focus_id', 'primary_publication_id',
   'learning_value_summary', 'key_terminology', 'common_pitfalls',
   'evidence_sources', 'related_techniques',
-  'created_by', 'updated_by'
+  'created_by', 'updated_by',
+  // NEW: Enhanced Read/Edit view fields
+  'item_type', 'why_it_exists', 'typical_output',
+  'what_good_looks_like', 'decisions_supported', 'decision_boundaries',
+  'governance_value', 'use_this_when', 'avoid_when',
+  'inspect_adapt_signals', 'maturity_indicators'
 ] as const;
 
 // Helper to pick only valid columns from input data
@@ -68,13 +73,15 @@ const pickKnowledgeItemColumns = (data: Record<string, any>): Record<string, any
   return result;
 };
 
-// Taxonomy item types
+// Taxonomy item types with primary/rationale support
 export interface DecisionLevel {
   id: string;
   name: string;
   slug: string;
   color: string | null;
   description: string | null;
+  is_primary?: boolean;
+  rationale?: string | null;
 }
 
 export interface KnowledgeCategory {
@@ -83,6 +90,8 @@ export interface KnowledgeCategory {
   slug: string;
   color: string | null;
   description: string | null;
+  is_primary?: boolean;
+  rationale?: string | null;
 }
 
 export interface ActivityDomain {
@@ -91,6 +100,8 @@ export interface ActivityDomain {
   slug: string;
   color: string | null;
   description: string | null;
+  is_primary?: boolean;
+  rationale?: string | null;
 }
 
 export interface KnowledgeTag {
@@ -119,6 +130,19 @@ export interface KnowledgeItem {
   icon?: string;
   emoji?: string;
   
+  // NEW: Item type and governance fields
+  item_type?: string;
+  why_it_exists?: string;
+  typical_output?: string;
+  what_good_looks_like?: string[];
+  decisions_supported?: string[];
+  decision_boundaries?: string;
+  governance_value?: string;
+  use_this_when?: string[];
+  avoid_when?: string[];
+  inspect_adapt_signals?: string[];
+  maturity_indicators?: string[];
+  
   // Enhanced fields
   common_pitfalls?: string[];
   evidence_sources?: string[];
@@ -134,7 +158,7 @@ export interface KnowledgeItem {
   planning_focus_id?: string;
   domain_id?: string;
   
-  // NEW: Multi-select taxonomy arrays
+  // Multi-select taxonomy arrays (with primary/rationale support)
   decision_levels: DecisionLevel[];
   categories: KnowledgeCategory[];
   domains: ActivityDomain[];
@@ -220,21 +244,34 @@ export interface KnowledgeItem {
 }
 
 // Transform raw database response to KnowledgeItem with taxonomy arrays
+// Now includes is_primary and rationale from junction tables
 const transformKnowledgeItem = (raw: any): KnowledgeItem => {
-  // Extract decision levels from junction table
+  // Extract decision levels from junction table with is_primary/rationale
   const decision_levels: DecisionLevel[] = (raw.knowledge_item_decision_levels || [])
-    .map((jt: any) => jt.decision_levels)
-    .filter(Boolean);
+    .map((jt: any) => ({
+      ...jt.decision_levels,
+      is_primary: jt.is_primary || false,
+      rationale: jt.rationale || null,
+    }))
+    .filter((item: any) => item.id);
 
-  // Extract categories from junction table
+  // Extract categories from junction table with is_primary/rationale
   const categories: KnowledgeCategory[] = (raw.knowledge_item_categories || [])
-    .map((jt: any) => jt.knowledge_categories)
-    .filter(Boolean);
+    .map((jt: any) => ({
+      ...jt.knowledge_categories,
+      is_primary: jt.is_primary || false,
+      rationale: jt.rationale || null,
+    }))
+    .filter((item: any) => item.id);
 
-  // Extract domains from junction table
+  // Extract domains from junction table with is_primary/rationale
   const domains: ActivityDomain[] = (raw.knowledge_item_domains || [])
-    .map((jt: any) => jt.activity_domains)
-    .filter(Boolean);
+    .map((jt: any) => ({
+      ...jt.activity_domains,
+      is_primary: jt.is_primary || false,
+      rationale: jt.rationale || null,
+    }))
+    .filter((item: any) => item.id);
 
   // Extract tags from junction table
   const tags: KnowledgeTag[] = (raw.knowledge_item_tags || [])
@@ -270,14 +307,19 @@ export const useKnowledgeItems = (params?: {
           id, name, slug, description, is_published, is_featured, view_count,
           emoji, icon, created_at, updated_at, background,
           learning_value_summary, common_pitfalls,
+          item_type, use_this_when, avoid_when, decisions_supported,
+          what_good_looks_like, typical_output,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
+            is_primary, rationale,
             decision_levels (id, name, slug, color, description)
           ),
           knowledge_item_categories (
+            is_primary, rationale,
             knowledge_categories (id, name, slug, color, description)
           ),
           knowledge_item_domains (
+            is_primary, rationale,
             activity_domains (id, name, slug, color, description)
           ),
           knowledge_use_cases (id, case_type, title, summary)
@@ -380,14 +422,20 @@ export const useKnowledgeItemById = (id: string) => {
           emoji, icon, created_at, updated_at, background, source,
           learning_value_summary, common_pitfalls, evidence_sources, related_techniques,
           key_terminology, primary_publication_id,
+          item_type, why_it_exists, typical_output,
+          what_good_looks_like, decisions_supported, decision_boundaries, governance_value,
+          use_this_when, avoid_when, inspect_adapt_signals, maturity_indicators,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
+            is_primary, rationale,
             decision_levels (id, name, slug, color, description)
           ),
           knowledge_item_categories (
+            is_primary, rationale,
             knowledge_categories (id, name, slug, color, description)
           ),
           knowledge_item_domains (
+            is_primary, rationale,
             activity_domains (id, name, slug, color, description)
           ),
           knowledge_item_tags (
@@ -414,15 +462,21 @@ export const useKnowledgeItemBySlug = (slug: string) => {
         .select(`
           id, name, slug, description, is_published, is_featured, view_count,
           emoji, icon, created_at, updated_at, background, source,
-          learning_value_summary, common_pitfalls,
+          learning_value_summary, common_pitfalls, related_techniques,
+          item_type, why_it_exists, typical_output,
+          what_good_looks_like, decisions_supported, decision_boundaries, governance_value,
+          use_this_when, avoid_when, inspect_adapt_signals, maturity_indicators,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
+            is_primary, rationale,
             decision_levels (id, name, slug, color, description)
           ),
           knowledge_item_categories (
+            is_primary, rationale,
             knowledge_categories (id, name, slug, color, description)
           ),
           knowledge_item_domains (
+            is_primary, rationale,
             activity_domains (id, name, slug, color, description)
           ),
           knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
