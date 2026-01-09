@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
-import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
+import { useDecisionLevels } from '@/hooks/useDecisionLevels';
 import { useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -78,7 +78,7 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
   const [description, setDescription] = useState(data.notes || '');
   const [categoryId, setCategoryId] = useState<string>('');
   const [domainId, setDomainId] = useState<string>('');
-  const [planningFocusId, setPlanningFocusId] = useState<string>('');
+  const [decisionLevelId, setDecisionLevelId] = useState<string>('');
   const [isPublished, setIsPublished] = useState(true);
   const [convertToKB, setConvertToKB] = useState(true);
   const [convertAllMatching, setConvertAllMatching] = useState(false);
@@ -87,7 +87,7 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
 
   const { data: categories, isLoading: loadingCategories } = useKnowledgeCategories();
   const { data: domains, isLoading: loadingDomains } = useActivityDomains();
-  const { data: planningFocuses, isLoading: loadingFocuses } = usePlanningFocuses();
+  const { data: decisionLevels, isLoading: loadingDecisionLevels } = useDecisionLevels();
   const createKnowledgeItem = useCreateKnowledgeItem();
 
   // Debounced check for existing items
@@ -141,10 +141,10 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
   const handleUseExisting = async () => {
     if (!existingItem) return;
 
-    // Look up the existing item's related data for colors
+    // Look up the existing item's related data for colors (use first match for backwards compat)
     const selectedDomain = domains?.find(d => d.id === existingItem.domain_id);
     const selectedCategory = categories?.find(c => c.id === existingItem.category_id);
-    const selectedFocus = planningFocuses?.find(f => f.id === existingItem.planning_focus_id);
+    const selectedDecisionLevel = decisionLevels?.find(l => l.id === existingItem.planning_focus_id);
 
     toast.success('Linked to existing Knowledge Item!', {
       action: {
@@ -163,10 +163,10 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
         name: selectedDomain.name, 
         color: selectedDomain.color || '#6B7280' 
       } : undefined,
-      planning_focus: selectedFocus ? { 
-        id: selectedFocus.id, 
-        name: selectedFocus.name, 
-        color: selectedFocus.color || '#6B7280' 
+      planning_focus: selectedDecisionLevel ? { 
+        id: selectedDecisionLevel.id, 
+        name: selectedDecisionLevel.name, 
+        color: selectedDecisionLevel.color || '#6B7280' 
       } : undefined,
       category: selectedCategory ? { 
         id: selectedCategory.id, 
@@ -190,9 +190,10 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
         name: name.trim(),
         slug,
         description: description.trim() || null,
-        category_id: categoryId || null,
-        domain_id: domainId || null,
-        planning_focus_id: planningFocusId || null,
+        // Use new array-based taxonomy
+        category_ids: categoryId ? [categoryId] : [],
+        domain_ids: domainId ? [domainId] : [],
+        decision_level_ids: decisionLevelId ? [decisionLevelId] : [],
         is_published: isPublished,
         is_featured: false,
         icon: data.icon || null,
@@ -202,7 +203,7 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
       // Look up selected items to get their full data including colors
       const selectedDomain = domains?.find(d => d.id === domainId);
       const selectedCategory = categories?.find(c => c.id === categoryId);
-      const selectedFocus = planningFocuses?.find(f => f.id === planningFocusId);
+      const selectedDecisionLevel = decisionLevels?.find(l => l.id === decisionLevelId);
 
       toast.success('Knowledge Item created successfully!', {
         action: {
@@ -221,10 +222,10 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
           name: selectedDomain.name, 
           color: selectedDomain.color || '#6B7280' 
         } : undefined,
-        planning_focus: selectedFocus ? { 
-          id: selectedFocus.id, 
-          name: selectedFocus.name, 
-          color: selectedFocus.color || '#6B7280' 
+        planning_focus: selectedDecisionLevel ? { 
+          id: selectedDecisionLevel.id, 
+          name: selectedDecisionLevel.name, 
+          color: selectedDecisionLevel.color || '#6B7280' 
         } : undefined,
         category: selectedCategory ? { 
           id: selectedCategory.id, 
@@ -239,7 +240,7 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
     }
   };
 
-  const isLoading = loadingCategories || loadingDomains || loadingFocuses;
+  const isLoading = loadingCategories || loadingDomains || loadingDecisionLevels;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -327,15 +328,15 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="focus">Planning Focus</Label>
-            <Select value={planningFocusId} onValueChange={setPlanningFocusId}>
+            <Label htmlFor="decisionLevel">Decision Level</Label>
+            <Select value={decisionLevelId} onValueChange={setDecisionLevelId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select planning focus..." />
+                <SelectValue placeholder="Select decision level..." />
               </SelectTrigger>
               <SelectContent>
-                {planningFocuses?.map((focus) => (
-                  <SelectItem key={focus.id} value={focus.id}>
-                    {focus.name}
+                {decisionLevels?.map((level) => (
+                  <SelectItem key={level.id} value={level.id}>
+                    {level.name}
                   </SelectItem>
                 ))}
               </SelectContent>
