@@ -88,7 +88,8 @@ const stepConfigs = [
 export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: KnowledgeItemEditorPageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnTo = searchParams.get('from');
+  const returnTo = searchParams.get('returnTo') || searchParams.get('from');
+  const returnSlug = searchParams.get('slug');
   const artifactId = searchParams.get('artifactId');
   const projectId = searchParams.get('projectId');
   const { toast } = useToast();
@@ -295,19 +296,27 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     // }
   }, [performAutoSave]); // Simplified dependencies
 
+  // Get return URL based on context
+  const getReturnUrl = () => {
+    if (returnTo === 'knowledge') {
+      return returnSlug ? `/knowledge/${returnSlug}` : '/knowledge';
+    }
+    if (returnTo === 'project-model' && artifactId && projectId) {
+      return `/projects/${projectId}/artifacts/${artifactId}`;
+    }
+    if (returnTo === 'project-model') {
+      return '/project-modelling';
+    }
+    return '/admin/knowledge/items';
+  };
+
   // Navigation handlers
   const handleBack = () => {
     if (form.formState.isDirty) {
       const shouldLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
       if (!shouldLeave) return;
     }
-    // Navigate back to the specific canvas if we have context, otherwise fallback
-    const backUrl = returnTo === 'project-model' && artifactId && projectId
-      ? `/projects/${projectId}/artifacts/${artifactId}`
-      : returnTo === 'project-model'
-      ? '/project-modelling'
-      : '/admin/knowledge/items';
-    navigate(backUrl);
+    navigate(getReturnUrl());
   };
 
   const handleStepChange = (step: number) => {
@@ -363,7 +372,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       // Only navigate away if explicitly requested
       if (shouldNavigateAway) {
         console.log('🚪 Navigating away as requested');
-        navigate('/admin/knowledge/items');
+        navigate(getReturnUrl());
       } else {
         console.log('✅ Save completed, staying on page');
       }

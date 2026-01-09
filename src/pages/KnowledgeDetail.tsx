@@ -24,7 +24,7 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, ImagePlus, Settings, ListOrdered, MessageCircle } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, ExternalLink, Calendar, Pencil, ListOrdered, MessageCircle, ImagePlus } from "lucide-react";
 import { format } from "date-fns";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -150,9 +150,9 @@ const KnowledgeDetail = () => {
                       asChild
                       className="flex items-center gap-2"
                     >
-                      <Link to={`/admin/knowledge/items/${item.id}/edit`}>
-                        <Settings className="h-4 w-4" />
-                        Manage Images
+                      <Link to={`/admin/knowledge/items/${item.id}/edit?returnTo=knowledge&slug=${item.slug}`}>
+                        <Pencil className="h-4 w-4" />
+                        Edit
                       </Link>
                     </Button>
                   )}
