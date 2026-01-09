@@ -241,42 +241,27 @@ export const useKnowledgeItems = (params?: {
   return useQuery({
     queryKey: ['knowledge-items', params],
     queryFn: async () => {
-      let query = supabase
-        .from('knowledge_items')
-        .select(`
-          *,
-          knowledge_categories (id, name, slug, color, description),
-          planning_focuses (id, name, slug, color, display_order, description),
-          activity_domains (id, name, slug, color, description),
-          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary),
-          knowledge_item_tags (
-            knowledge_tags (id, name, slug)
-          ),
-          knowledge_item_decision_levels (
-            decision_levels (id, name, slug, color, description)
-          ),
-          knowledge_item_categories (
-            knowledge_categories (id, name, slug, color, description)
-          ),
-          knowledge_item_domains (
-            activity_domains (id, name, slug, color, description)
-          ),
-          publications (
-            id, title, publication_type, url, publication_year, publisher,
-            publication_authors (
-              authors (id, name)
-            )
-          ),
-          knowledge_item_references (
-            id, reference_type, page_reference, excerpt,
-            publications (
-              id, title, publication_type, url,
-              publication_authors (
-                authors (id, name)
-              )
-            )
-          )
-        `);
+      console.log('🔍 useKnowledgeItems: Starting query with params:', params);
+      
+      try {
+        let query = supabase
+          .from('knowledge_items')
+          .select(`
+            id, name, slug, description, is_published, is_featured, view_count,
+            emoji, icon, created_at, updated_at, background,
+            learning_value_summary, common_pitfalls,
+            category_id, domain_id, planning_focus_id,
+            knowledge_item_decision_levels (
+              decision_levels (id, name, slug, color, description)
+            ),
+            knowledge_item_categories (
+              knowledge_categories (id, name, slug, color, description)
+            ),
+            knowledge_item_domains (
+              activity_domains (id, name, slug, color, description)
+            ),
+            knowledge_use_cases (id, case_type, title, summary)
+          `);
 
       // Only filter by published status if not explicitly requesting unpublished items
       if (!params?.showUnpublished) {
@@ -357,11 +342,28 @@ export const useKnowledgeItems = (params?: {
         query = query.limit(params.limit);
       }
 
+      console.log('🔍 useKnowledgeItems: Executing main query...');
       const { data, error } = await query;
-      if (error) throw error;
+      
+      // Debug logging
+      console.log('Knowledge Items Query:', {
+        params,
+        resultCount: data?.length ?? 0,
+        error: error?.message,
+        firstItem: data?.[0]?.name
+      });
+      
+      if (error) {
+        console.error('Knowledge Items Query Error:', error);
+        throw error;
+      }
       
       // Transform each item to include taxonomy arrays
       return (data || []).map(transformKnowledgeItem);
+      } catch (err) {
+        console.error('🔴 useKnowledgeItems: Caught error:', err);
+        throw err;
+      }
     },
   });
 };
