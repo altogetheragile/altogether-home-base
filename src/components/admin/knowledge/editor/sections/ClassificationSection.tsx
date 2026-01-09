@@ -1,32 +1,41 @@
 import { useFormContext } from 'react-hook-form';
-import { FolderOpen, Layers, Target, Sparkles } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FolderOpen, Layers, Target, Sparkles, Tag } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
+import { useDecisionLevels } from '@/hooks/useDecisionLevels';
+import { useKnowledgeTags } from '@/hooks/useKnowledgeTags';
 import { useVisibleClassifications } from '@/hooks/useClassificationConfig';
+import { MultiSelectClassification } from '../MultiSelectClassification';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
 export const ClassificationSection: React.FC = () => {
   const form = useFormContext<KnowledgeItemFormData>();
-  const { data: categories } = useKnowledgeCategories();
-  const { data: planningFocuses } = usePlanningFocuses();
-  const { data: domains } = useActivityDomains();
+  const { data: categories, isLoading: categoriesLoading } = useKnowledgeCategories();
+  const { data: decisionLevels, isLoading: levelsLoading } = useDecisionLevels();
+  const { data: domains, isLoading: domainsLoading } = useActivityDomains();
+  const { data: tags, isLoading: tagsLoading } = useKnowledgeTags();
   const visibility = useVisibleClassifications();
 
-  const watchedValues = form.watch(['category_id', 'planning_focus_id', 'domain_id']);
-  const [categoryId, focusId, domainId] = watchedValues;
+  // Watch the array fields
+  const decisionLevelIds = form.watch('decision_level_ids') || [];
+  const categoryIds = form.watch('category_ids') || [];
+  const domainIds = form.watch('domain_ids') || [];
+  const tagIds = form.watch('tag_ids') || [];
 
-  const selectedCategory = categories?.find(c => c.id === categoryId);
-  const selectedFocus = planningFocuses?.find(l => l.id === focusId);
-  const selectedDomain = domains?.find(d => d.id === domainId);
+  // Get selected items for summary
+  const selectedDecisionLevels = decisionLevels?.filter(l => decisionLevelIds.includes(l.id)) || [];
+  const selectedCategories = categories?.filter(c => categoryIds.includes(c.id)) || [];
+  const selectedDomains = domains?.filter(d => domainIds.includes(d.id)) || [];
+  const selectedTags = tags?.filter(t => tagIds.includes(t.id)) || [];
+
+  const hasAnySelection = selectedDecisionLevels.length > 0 || selectedCategories.length > 0 || 
+                          selectedDomains.length > 0 || selectedTags.length > 0;
 
   // Count visible classifications for grid layout
-  const visibleCount = [visibility.categories, visibility.planningFocuses, visibility.activityDomains].filter(Boolean).length;
-  const gridCols = visibleCount === 1 ? 'grid-cols-1' : visibleCount === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3';
+  const visibleCount = [visibility.categories, visibility.planningFocuses, visibility.activityDomains, true].filter(Boolean).length;
+  const gridCols = visibleCount <= 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-2 xl:grid-cols-4';
 
   return (
     <div className="space-y-8">
@@ -38,217 +47,60 @@ export const ClassificationSection: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Classification & Organization</h2>
-            <p className="text-muted-foreground">Categorize and organize this knowledge item for better discoverability</p>
+            <p className="text-muted-foreground">
+              Select multiple classifications across each dimension for better discoverability
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Classification Cards */}
+      {/* Classification Cards - Multi-Select */}
       <div className={`grid grid-cols-1 ${gridCols} gap-6`}>
-        {visibility.categories && (
-          <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
-                <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
-                  <FolderOpen className="h-4 w-4 text-primary" />
-                </div>
-                {visibility.getLabel('categories')}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Choose the primary category that best describes this knowledge item
-              </CardDescription>
-            </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="category_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="h-10 border-border/60 focus:border-primary transition-colors">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover/95 backdrop-blur-sm">
-                        {categories?.filter(category => category.id && category.id.trim() !== '')?.map((category) => (
-                          <SelectItem key={category.id} value={category.id} className="hover:bg-accent/50">
-                            <div className="flex items-center gap-3">
-                              <div 
-                                className="w-3 h-3 rounded-full border border-white/20"
-                                style={{ backgroundColor: category.color }}
-                              />
-                              <span className="font-medium">{category.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {selectedCategory && (
-              <div className="p-3 bg-muted/30 rounded-lg border border-border/30">
-                <Badge 
-                  variant="secondary"
-                  className="mb-2 font-medium"
-                  style={{ 
-                    backgroundColor: `${selectedCategory.color}15`, 
-                    color: selectedCategory.color,
-                    borderColor: `${selectedCategory.color}30`
-                  }}
-                >
-                  {selectedCategory.name}
-                </Badge>
-                {selectedCategory.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {selectedCategory.description}
-                  </p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        )}
-
+        {/* Decision Levels (replaces Planning Focus) */}
         {visibility.planningFocuses && (
-          <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
-                <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
-                  <Layers className="h-4 w-4 text-primary" />
-                </div>
-                {visibility.getLabel('planning-focuses')}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Select the planning layer where this knowledge item is most applicable
-              </CardDescription>
-            </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="planning_focus_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="h-10 border-border/60 focus:border-primary transition-colors">
-                        <SelectValue placeholder="Select a planning focus" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover/95 backdrop-blur-sm">
-                        {planningFocuses
-                          ?.filter(focus => focus.id && focus.id.trim() !== '')
-                          ?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
-                          ?.map((focus) => (
-                          <SelectItem key={focus.id} value={focus.id} className="hover:bg-accent/50">
-                            <div className="flex items-center gap-3">
-                              <div 
-                                className="w-3 h-3 rounded-full border border-white/20"
-                                style={{ backgroundColor: focus.color }}
-                              />
-                              <span className="font-medium">{focus.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {selectedFocus && (
-              <div className="p-3 bg-muted/30 rounded-lg border border-border/30">
-                <Badge 
-                  variant="outline"
-                  className="mb-2 font-medium"
-                  style={{ 
-                    borderColor: selectedFocus.color, 
-                    color: selectedFocus.color 
-                  }}
-                >
-                  {selectedFocus.name}
-                </Badge>
-                {selectedFocus.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {selectedFocus.description}
-                  </p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <MultiSelectClassification
+            title={visibility.getLabel('planning-focuses') || 'Decision Level'}
+            description="Select the decision levels where this knowledge applies"
+            icon={<Layers className="h-4 w-4 text-primary" />}
+            fieldName="decision_level_ids"
+            items={decisionLevels || []}
+            isLoading={levelsLoading}
+          />
         )}
 
-        {visibility.activityDomains && (
-          <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
-                <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
-                  <Target className="h-4 w-4 text-primary" />
-                </div>
-                {visibility.getLabel('activity-domains')}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Choose the domain where this knowledge is most relevant
-              </CardDescription>
-            </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="domain_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="h-10 border-border/60 focus:border-primary transition-colors">
-                        <SelectValue placeholder="Select an activity domain" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover/95 backdrop-blur-sm">
-                        {domains?.filter(domain => domain.id && domain.id.trim() !== '')?.map((domain) => (
-                          <SelectItem key={domain.id} value={domain.id} className="hover:bg-accent/50">
-                            <div className="flex items-center gap-3">
-                              <div 
-                                className="w-3 h-3 rounded-full border border-white/20"
-                                style={{ backgroundColor: domain.color }}
-                              />
-                              <span className="font-medium">{domain.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {selectedDomain && (
-              <div className="p-3 bg-muted/30 rounded-lg border border-border/30">
-                <Badge 
-                  variant="outline"
-                  className="mb-2 font-medium"
-                  style={{ 
-                    borderColor: selectedDomain.color, 
-                    color: selectedDomain.color 
-                  }}
-                >
-                  {selectedDomain.name}
-                </Badge>
-                {selectedDomain.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {selectedDomain.description}
-                  </p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Categories */}
+        {visibility.categories && (
+          <MultiSelectClassification
+            title={visibility.getLabel('categories') || 'Categories'}
+            description="Choose categories that describe this knowledge item"
+            icon={<FolderOpen className="h-4 w-4 text-primary" />}
+            fieldName="category_ids"
+            items={categories || []}
+            isLoading={categoriesLoading}
+          />
         )}
+
+        {/* Activity Domains */}
+        {visibility.activityDomains && (
+          <MultiSelectClassification
+            title={visibility.getLabel('activity-domains') || 'Activity Domains'}
+            description="Select the domains where this knowledge is relevant"
+            icon={<Target className="h-4 w-4 text-primary" />}
+            fieldName="domain_ids"
+            items={domains || []}
+            isLoading={domainsLoading}
+          />
+        )}
+
+        {/* Tags */}
+        <MultiSelectClassification
+          title="Tags"
+          description="Add tags for additional categorization and search"
+          icon={<Tag className="h-4 w-4 text-primary" />}
+          fieldName="tag_ids"
+          items={tags || []}
+          isLoading={tagsLoading}
+        />
       </div>
 
       {/* Classification Summary */}
@@ -259,66 +111,123 @@ export const ClassificationSection: React.FC = () => {
             Classification Summary
           </CardTitle>
           <CardDescription>
-            Review your selected classifications for this knowledge item
+            Review all selected classifications for this knowledge item
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
-            {selectedCategory && (
-              <Badge 
-                variant="secondary"
-                className="px-3 py-1.5 font-medium text-sm"
-                style={{ 
-                  backgroundColor: `${selectedCategory.color}15`, 
-                  color: selectedCategory.color,
-                  borderColor: `${selectedCategory.color}30`
-                }}
-              >
-                <FolderOpen className="h-3 w-3 mr-1.5" />
-                {selectedCategory.name}
-              </Badge>
-            )}
-            {selectedFocus && (
-              <Badge 
-                variant="outline"
-                className="px-3 py-1.5 font-medium text-sm"
-                style={{ 
-                  borderColor: selectedFocus.color, 
-                  color: selectedFocus.color 
-                }}
-              >
-                <Layers className="h-3 w-3 mr-1.5" />
-                {selectedFocus.name}
-              </Badge>
-            )}
-            {selectedDomain && (
-              <Badge 
-                variant="outline"
-                className="px-3 py-1.5 font-medium text-sm"
-                style={{ 
-                  borderColor: selectedDomain.color, 
-                  color: selectedDomain.color 
-                }}
-              >
-                <Target className="h-3 w-3 mr-1.5" />
-                {selectedDomain.name}
-              </Badge>
-            )}
-            {!selectedCategory && !selectedFocus && !selectedDomain && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                  <Sparkles className="h-3 w-3" />
-                </div>
-                <p className="text-sm">No classifications selected yet</p>
+          {!hasAnySelection ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                <Sparkles className="h-3 w-3" />
               </div>
-            )}
-          </div>
-          
-          {(selectedCategory || selectedFocus || selectedDomain) && (
+              <p className="text-sm">No classifications selected yet</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Decision Levels */}
+              {selectedDecisionLevels.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Layers className="h-3 w-3" />
+                    Decision Levels
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDecisionLevels.map((level) => (
+                      <Badge
+                        key={level.id}
+                        variant="outline"
+                        className="px-3 py-1.5 font-medium text-sm"
+                        style={{
+                          borderColor: level.color || undefined,
+                          color: level.color || undefined,
+                        }}
+                      >
+                        {level.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Categories */}
+              {selectedCategories.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <FolderOpen className="h-3 w-3" />
+                    Categories
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCategories.map((category) => (
+                      <Badge
+                        key={category.id}
+                        variant="secondary"
+                        className="px-3 py-1.5 font-medium text-sm"
+                        style={{
+                          backgroundColor: category.color ? `${category.color}15` : undefined,
+                          color: category.color || undefined,
+                          borderColor: category.color ? `${category.color}30` : undefined,
+                        }}
+                      >
+                        {category.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Domains */}
+              {selectedDomains.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Target className="h-3 w-3" />
+                    Activity Domains
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDomains.map((domain) => (
+                      <Badge
+                        key={domain.id}
+                        variant="outline"
+                        className="px-3 py-1.5 font-medium text-sm"
+                        style={{
+                          borderColor: domain.color || undefined,
+                          color: domain.color || undefined,
+                        }}
+                      >
+                        {domain.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
+              {selectedTags.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Tag className="h-3 w-3" />
+                    Tags
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTags.map((tag) => (
+                      <Badge
+                        key={tag.id}
+                        variant="secondary"
+                        className="px-3 py-1.5 text-sm"
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasAnySelection && (
             <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
               <p className="text-xs text-primary/80 leading-relaxed">
-                These classifications help users discover your content through search and filtering. 
-                They also enable automatic recommendations and related content suggestions.
+                These classifications help users discover your content through search and filtering.
+                Multiple selections enable more flexible categorization and improved recommendations.
               </p>
             </div>
           )}
