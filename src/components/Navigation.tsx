@@ -125,20 +125,7 @@ const Navigation = () => {
                 </Link>
               )}
               
-              {/* Dashboard Link - Only show for authenticated users */}
-              {SHOW_DASHBOARD && user && (
-                <Link
-                  to="/dashboard"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/dashboard")
-                      ? "text-primary bg-accent"
-                      : "text-muted-foreground hover:text-primary hover:bg-accent"
-                  }`}
-                >
-                  Dashboard
-                </Link>
-               )}
-              </div>
+            </div>
 
             {/* Auth Section */}
             {loading ? (
@@ -146,21 +133,26 @@ const Navigation = () => {
             ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span>{user.email}</span>
-                    {userRole === 'admin' && <Shield className="h-3 w-3 text-primary" />}
+                  <Button variant="ghost" size="icon" className="relative">
+                    <User className="h-5 w-5" />
+                    {userRole === 'admin' && (
+                      <Shield className="h-3 w-3 text-primary absolute -bottom-0.5 -right-0.5" />
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {SHOW_DASHBOARD && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/dashboard">
-                          <LayoutDashboard className="h-4 w-4 mr-2" />
-                          My Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground truncate">
+                    {user.email}
+                  </div>
+                  <DropdownMenuSeparator />
+                  {SHOW_DASHBOARD && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard">
+                        <LayoutDashboard className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                     <DropdownMenuItem asChild>
                       <Link to="/account/security">
                         <Shield className="h-4 w-4 mr-2" />
@@ -288,20 +280,6 @@ const Navigation = () => {
                 </Link>
               )}
               
-              {/* Dashboard Link - Mobile */}
-              {SHOW_DASHBOARD && user && (
-                <Link
-                  to="/dashboard"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isActive("/dashboard")
-                      ? "text-primary bg-accent"
-                      : "text-muted-foreground hover:text-primary hover:bg-accent"
-                  }`}
-                >
-                  Dashboard
-                </Link>
-              )}
                
                {/* Mobile Auth Section */}
                <div className="border-t border-border pt-2 mt-2">
