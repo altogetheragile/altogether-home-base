@@ -336,338 +336,58 @@ const KnowledgeDetail = () => {
           {/* Main Content Area */}
           <div className="bg-background">
             <div className="container mx-auto px-4 py-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Main Content */}
-                <div className="lg:col-span-2">
-                  {/* Edit Button for View Mode */}
-                  {isAdmin && !isEditMode && !isNewItem && (
-                    <div className="flex justify-end mb-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleEnterEditMode}
-                        className="flex items-center gap-2"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Read View or Edit View */}
-                  {isEditMode ? (
-                    <KnowledgeEditView isNewItem={isNewItem} knowledgeItemId={item?.id} />
-                  ) : item ? (
-                    <KnowledgeReadView 
-                      item={item} 
-                      steps={steps}
-                    />
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <p>Loading...</p>
-                    </div>
-                  )}
+              {/* Edit Button for View Mode */}
+              {isAdmin && !isEditMode && !isNewItem && (
+                <div className="flex justify-end mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEnterEditMode}
+                    className="flex items-center gap-2"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </Button>
                 </div>
+              )}
 
-                {/* Right Column - Templates & Tools Card */}
-                <div className="lg:col-span-1">
-                  <Card className="bg-orange-50/30 border-orange-200 sticky top-4">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2 text-orange-900">
-                        <FileText className="h-4 w-4 text-orange-600" />
-                        Templates & Tools
-                      </CardTitle>
-                      <CardDescription className="text-xs text-orange-700">
-                        Ready-to-use templates and practical tools
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {templates && templates.length > 0 ? (
-                        templates.map((assoc: any) => (
-                          <div key={assoc.id} className="space-y-3 pb-4 border-b border-orange-200 last:border-0 last:pb-0">
-                            <div className="flex items-start gap-2">
-                              <FileText className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-sm text-orange-900 mb-1">
-                                  {assoc.template?.title || 'Untitled Template'}
-                                </h4>
-                                {assoc.template?.description && (
-                                  <p className="text-xs text-orange-700 line-clamp-2">
-                                    {assoc.template.description}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            {assoc.template?.pdf_url && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="w-full bg-orange-600 hover:bg-orange-700"
-                                asChild
-                              >
-                                <a 
-                                  href={assoc.template.pdf_url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                >
-                                  <Download className="mr-2 h-3 w-3" />
-                                  Download Template
-                                </a>
-                              </Button>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-orange-700/70 italic">
-                          No templates available yet for this knowledge item.
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Metadata Card - only for existing items */}
-                  {!isNewItem && item && !isEditMode && (
-                    <Card className="mt-4">
-                      <CardContent className="pt-4">
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <span>Last updated:</span>
-                            <span className="font-medium">{format(new Date(item.updated_at), 'MMM d, yyyy')}</span>
-                          </div>
-                          {item.source && (
-                            <div className="flex items-center gap-2">
-                              <ExternalLink className="w-3 h-3" />
-                              <span>Source: {item.source}</span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+              {/* Read View or Edit View - ReadView now handles its own 2-column layout */}
+              {isEditMode ? (
+                <KnowledgeEditView isNewItem={isNewItem} knowledgeItemId={item?.id} />
+              ) : item ? (
+                <KnowledgeReadView 
+                  item={item} 
+                  steps={steps}
+                  useCases={useCases}
+                  templates={templates as any}
+                  mediaAssets={filteredMediaAssets as any}
+                  commentCount={commentCount}
+                  onImageClick={openLightbox}
+                />
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <p>Loading...</p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Additional Content Tabs - Only show when not in edit mode */}
+          {/* Comments Section - Only show when not in edit mode */}
           {!isEditMode && item && (
             <div className="container mx-auto px-4 py-8 border-t">
-              <Tabs defaultValue="background" className="w-full">
-                <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-                  <TabsTrigger 
-                    value="background" 
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Background
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="use-cases"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-                  >
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Use Cases
-                    {useCases && useCases.length > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {useCases.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="how-to"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-                  >
-                    <ListOrdered className="mr-2 h-4 w-4" />
-                    How-To
-                    {steps && steps.length > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {steps.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="images"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-                  >
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    Media
-                    {filteredMediaAssets.length > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {filteredMediaAssets.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="comments"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Comments
-                    {commentCount > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {commentCount}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Background Tab */}
-                <TabsContent value="background" className="mt-6">
-                  {item.background ? (
-                    <div 
-                      className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-a:underline prose-img:rounded-lg prose-img:shadow-md"
-                      dangerouslySetInnerHTML={{ __html: item.background }}
-                    />
-                  ) : (
-                    <p className="text-muted-foreground">No background information available.</p>
-                  )}
-                </TabsContent>
-
-                {/* Use Cases Tab */}
-                <TabsContent value="use-cases" className="mt-6">
-                  {useCases && useCases.length > 0 ? (
-                    <div className="space-y-4">
-                      {useCases.map((useCase) => (
-                        <div key={useCase.id} className="border rounded-lg p-6 space-y-4 bg-muted/20">
-                          {useCase.title && (
-                            <h4 className="text-base font-semibold">{useCase.title}</h4>
-                          )}
-                          {useCase.summary && (
-                            <p className="text-muted-foreground">{useCase.summary}</p>
-                          )}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            {useCase.what && (
-                              <div className="space-y-1">
-                                <div className="text-xs font-bold text-primary uppercase tracking-wider">What</div>
-                                <p className="text-sm">{useCase.what}</p>
-                              </div>
-                            )}
-                            {useCase.why && (
-                              <div className="space-y-1">
-                                <div className="text-xs font-bold text-primary uppercase tracking-wider">Why</div>
-                                <p className="text-sm">{useCase.why}</p>
-                              </div>
-                            )}
-                            {useCase.when_used && (
-                              <div className="space-y-1">
-                                <div className="text-xs font-bold text-primary uppercase tracking-wider">When</div>
-                                <p className="text-sm">{useCase.when_used}</p>
-                              </div>
-                            )}
-                            {useCase.who && (
-                              <div className="space-y-1">
-                                <div className="text-xs font-bold text-primary uppercase tracking-wider">Who</div>
-                                <p className="text-sm">{useCase.who}</p>
-                              </div>
-                            )}
-                            {useCase.how && (
-                              <div className="space-y-1">
-                                <div className="text-xs font-bold text-primary uppercase tracking-wider">How</div>
-                                <p className="text-sm">{useCase.how}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-8">No use cases available yet.</p>
-                  )}
-                </TabsContent>
-
-                {/* How-To Tab */}
-                <TabsContent value="how-to" className="mt-6">
-                  {steps && steps.length > 0 ? (
-                    <div className="space-y-4">
-                      {steps.map((step, index) => (
-                        <div key={step.id} className="flex gap-4">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1 pt-1">
-                            <h4 className="font-semibold mb-1">{step.title}</h4>
-                            {step.description && (
-                              <p className="text-sm text-muted-foreground">{step.description}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-8">No step-by-step instructions available.</p>
-                  )}
-                </TabsContent>
-
-                {/* Media Tab */}
-                <TabsContent value="images" className="mt-6">
-                  {filteredMediaAssets.length === 0 ? (
-                    <div className="text-center py-12">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-4">
-                        No media available for this item
-                      </p>
-                      {isAdmin && item && (
-                        <Button asChild variant="default" className="flex items-center gap-2 mx-auto">
-                          <Link to={`/admin/media?attachTo=${item.id}`}>
-                            <ImagePlus className="h-4 w-4" />
-                            Attach Media
-                          </Link>
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {filteredMediaAssets.map((asset: any, index: number) => (
-                        <div 
-                          key={asset.id} 
-                          className="relative aspect-video rounded-lg overflow-hidden border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => asset.type === 'image' && openLightbox(imageAssets.findIndex((img: any) => img.id === asset.id))}
-                        >
-                          {asset.type === 'image' ? (
-                            <img
-                              src={asset.url}
-                              alt={asset.title || asset.file_name || 'Knowledge item media'}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : asset.type === 'video' ? (
-                            <video
-                              src={asset.url}
-                              className="w-full h-full object-cover"
-                              controls
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full bg-muted">
-                              <FileText className="h-12 w-12 text-muted-foreground" />
-                            </div>
-                          )}
-                          {asset.title && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                              <p className="text-white text-sm font-medium">{asset.title}</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Comments Tab */}
-                <TabsContent value="comments" className="mt-6">
-                  <KnowledgeItemComments knowledgeItemId={item.id} />
-                </TabsContent>
-
-                <ImageLightbox
-                  images={imageAssets.map((asset: any) => ({
-                    url: asset.url,
-                    title: asset.title,
-                    description: asset.description,
-                  }))}
-                  currentIndex={lightboxIndex}
-                  open={lightboxOpen}
-                  onOpenChange={setLightboxOpen}
-                  onNavigate={setLightboxIndex}
-                />
-              </Tabs>
+              <KnowledgeItemComments knowledgeItemId={item.id} />
+              
+              <ImageLightbox
+                images={imageAssets.map((asset: any) => ({
+                  url: asset.url,
+                  title: asset.title,
+                  description: asset.description,
+                }))}
+                currentIndex={lightboxIndex}
+                open={lightboxOpen}
+                onOpenChange={setLightboxOpen}
+                onNavigate={setLightboxIndex}
+              />
             </div>
           )}
 
