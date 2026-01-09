@@ -387,14 +387,10 @@ export const useKnowledgeItemBySlug = (slug: string) => {
       const { data, error } = await supabase
         .from('knowledge_items')
         .select(`
-          *,
-          knowledge_categories (id, name, slug, color),
-          planning_focuses (id, name, slug, color, display_order),
-          activity_domains (id, name, slug, color),
-          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary),
-          knowledge_item_tags (
-            knowledge_tags (id, name, slug)
-          ),
+          id, name, slug, description, is_published, is_featured, view_count,
+          emoji, icon, created_at, updated_at, background, source,
+          learning_value_summary, common_pitfalls,
+          category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
             decision_levels (id, name, slug, color, description)
           ),
@@ -404,21 +400,7 @@ export const useKnowledgeItemBySlug = (slug: string) => {
           knowledge_item_domains (
             activity_domains (id, name, slug, color, description)
           ),
-          publications (
-            id, title, publication_type, url, publication_year, publisher,
-            publication_authors (
-              authors (id, name)
-            )
-          ),
-          knowledge_item_references (
-            id, reference_type, page_reference, excerpt,
-            publications (
-              id, title, publication_type, url,
-              publication_authors (
-                authors (id, name)
-              )
-            )
-          )
+          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
         `)
         .eq('slug', slug)
         .eq('is_published', true)
