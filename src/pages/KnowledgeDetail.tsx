@@ -356,7 +356,7 @@ const KnowledgeDetail = () => {
 
                   {/* Read View or Edit View */}
                   {isEditMode ? (
-                    <KnowledgeEditView isNewItem={isNewItem} />
+                    <KnowledgeEditView isNewItem={isNewItem} knowledgeItemId={item?.id} />
                   ) : item ? (
                     <KnowledgeReadView 
                       item={item} 
