@@ -356,7 +356,8 @@ const KnowledgeDetail = () => {
                 <KnowledgeEditView isNewItem={isNewItem} knowledgeItemId={item?.id} />
               ) : item ? (
                 <KnowledgeReadView 
-                  item={item} 
+                  item={item}
+                  knowledgeItemId={item.id}
                   steps={steps}
                   useCases={useCases}
                   templates={templates as any}
@@ -372,23 +373,19 @@ const KnowledgeDetail = () => {
             </div>
           </div>
 
-          {/* Comments Section - Only show when not in edit mode */}
+          {/* ImageLightbox - Only show when not in edit mode */}
           {!isEditMode && item && (
-            <div className="container mx-auto px-4 py-8 border-t">
-              <KnowledgeItemComments knowledgeItemId={item.id} />
-              
-              <ImageLightbox
-                images={imageAssets.map((asset: any) => ({
-                  url: asset.url,
-                  title: asset.title,
-                  description: asset.description,
-                }))}
-                currentIndex={lightboxIndex}
-                open={lightboxOpen}
-                onOpenChange={setLightboxOpen}
-                onNavigate={setLightboxIndex}
-              />
-            </div>
+            <ImageLightbox
+              images={imageAssets.map((asset: any) => ({
+                url: asset.url,
+                title: asset.title,
+                description: asset.description,
+              }))}
+              currentIndex={lightboxIndex}
+              open={lightboxOpen}
+              onOpenChange={setLightboxOpen}
+              onNavigate={setLightboxIndex}
+            />
           )}
 
           {/* Back Button - Only show when not editing */}
