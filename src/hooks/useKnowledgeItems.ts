@@ -457,13 +457,23 @@ export const useCreateKnowledgeItem = () => {
       // Extract taxonomy IDs
       const { decision_level_ids, category_ids, domain_ids, tag_ids, ...itemData } = data;
       
+      // Remove derived array properties that don't exist in the database
+      // These come from junction table JOINs, not actual columns
+      const {
+        decision_levels,
+        categories,
+        domains,
+        tags,
+        ...cleanItemData
+      } = itemData as any;
+      
       // Transform data for knowledge_items table
       const transformedData = {
-        ...itemData,
-        category_id: itemData.category_id === '' ? null : itemData.category_id,
-        planning_focus_id: itemData.planning_focus_id === '' ? null : itemData.planning_focus_id,
-        domain_id: itemData.domain_id === '' ? null : itemData.domain_id,
-        primary_publication_id: itemData.primary_publication_id === '' || itemData.primary_publication_id === undefined ? null : itemData.primary_publication_id,
+        ...cleanItemData,
+        category_id: cleanItemData.category_id === '' ? null : cleanItemData.category_id,
+        planning_focus_id: cleanItemData.planning_focus_id === '' ? null : cleanItemData.planning_focus_id,
+        domain_id: cleanItemData.domain_id === '' ? null : cleanItemData.domain_id,
+        primary_publication_id: cleanItemData.primary_publication_id === '' || cleanItemData.primary_publication_id === undefined ? null : cleanItemData.primary_publication_id,
       };
       
       // Retry the create operation for network errors
@@ -582,13 +592,23 @@ export const useUpdateKnowledgeItem = () => {
       // Extract taxonomy IDs
       const { decision_level_ids, category_ids, domain_ids, tag_ids, ...itemData } = data;
       
+      // Remove derived array properties that don't exist in the database
+      // These come from junction table JOINs, not actual columns
+      const {
+        decision_levels,
+        categories,
+        domains,
+        tags,
+        ...cleanItemData
+      } = itemData as any;
+      
       // Transform data to handle empty strings and invalid values
       const transformedData = {
-        ...itemData,
-        category_id: itemData.category_id === '' ? null : itemData.category_id,
-        planning_focus_id: itemData.planning_focus_id === '' ? null : itemData.planning_focus_id,
-        domain_id: itemData.domain_id === '' ? null : itemData.domain_id,
-        primary_publication_id: itemData.primary_publication_id === '' || itemData.primary_publication_id === undefined ? null : itemData.primary_publication_id,
+        ...cleanItemData,
+        category_id: cleanItemData.category_id === '' ? null : cleanItemData.category_id,
+        planning_focus_id: cleanItemData.planning_focus_id === '' ? null : cleanItemData.planning_focus_id,
+        domain_id: cleanItemData.domain_id === '' ? null : cleanItemData.domain_id,
+        primary_publication_id: cleanItemData.primary_publication_id === '' || cleanItemData.primary_publication_id === undefined ? null : cleanItemData.primary_publication_id,
       };
 
       console.log('💾 Sending data to Supabase:', transformedData);
