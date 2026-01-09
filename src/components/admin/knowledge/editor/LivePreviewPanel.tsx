@@ -23,9 +23,16 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({
 }) => {
   const formValues = form.watch();
   
-  const selectedCategory = categories.find(c => c.id === formValues.category_id);
-  const selectedFocus = planningLayers.find(l => l.id === formValues.planning_focus_id);
-  const selectedDomain = domains.find(d => d.id === formValues.domain_id);
+  // Support both new multi-select IDs and legacy single IDs
+  const selectedCategories = categories.filter(c => 
+    formValues.category_ids?.includes(c.id) || c.id === formValues.category_id
+  );
+  const selectedDecisionLevels = planningLayers.filter(l => 
+    formValues.decision_level_ids?.includes(l.id) || l.id === formValues.planning_focus_id
+  );
+  const selectedDomains = domains.filter(d => 
+    formValues.domain_ids?.includes(d.id) || d.id === formValues.domain_id
+  );
 
   return (
     <div className={cn("sticky top-32 h-fit", className)}>
@@ -83,44 +90,47 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({
           <div className="space-y-2">
             <h4 className="text-sm font-medium">Classification</h4>
             <div className="flex flex-wrap gap-2">
-              {selectedCategory && (
+              {selectedCategories.map(category => (
                 <Badge
+                  key={category.id}
                   variant="secondary"
                   style={{ 
-                    backgroundColor: `${selectedCategory.color}15`, 
-                    color: selectedCategory.color,
-                    borderColor: `${selectedCategory.color}30`
+                    backgroundColor: `${category.color}15`, 
+                    color: category.color,
+                    borderColor: `${category.color}30`
                   }}
                   className="text-xs"
                 >
-                  {selectedCategory.name}
+                  {category.name}
                 </Badge>
-              )}
-              {selectedFocus && (
+              ))}
+              {selectedDecisionLevels.map(level => (
                 <Badge
+                  key={level.id}
                   variant="outline"
                   style={{ 
-                    borderColor: selectedFocus.color, 
-                    color: selectedFocus.color 
+                    borderColor: level.color, 
+                    color: level.color 
                   }}
                   className="text-xs"
                 >
-                  {selectedFocus.name}
+                  {level.name}
                 </Badge>
-              )}
-              {selectedDomain && (
+              ))}
+              {selectedDomains.map(domain => (
                 <Badge
+                  key={domain.id}
                   variant="outline"
                   style={{ 
-                    borderColor: selectedDomain.color, 
-                    color: selectedDomain.color 
+                    borderColor: domain.color, 
+                    color: domain.color 
                   }}
                   className="text-xs"
                 >
-                  {selectedDomain.name}
+                  {domain.name}
                 </Badge>
-              )}
-              {!selectedCategory && !selectedFocus && !selectedDomain && (
+              ))}
+              {selectedCategories.length === 0 && selectedDecisionLevels.length === 0 && selectedDomains.length === 0 && (
                 <span className="text-xs text-muted-foreground italic">No classification</span>
               )}
             </div>
