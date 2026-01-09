@@ -176,7 +176,7 @@ const KnowledgeDetail = () => {
     
     setIsSaving(true);
     try {
-      // Build the data object with all fields
+      // Build the data object with all fields including primary/rationale
       const itemData = {
         name: formValues.name,
         slug: formValues.slug || generateSlug(formValues.name),
@@ -195,6 +195,13 @@ const KnowledgeDetail = () => {
         category_ids: formValues.category_ids,
         domain_ids: formValues.domain_ids,
         tag_ids: formValues.tag_ids,
+        // Primary classification support
+        primary_decision_level_id: formValues.primary_decision_level_id,
+        primary_category_id: formValues.primary_category_id,
+        primary_domain_id: formValues.primary_domain_id,
+        decision_level_rationale: formValues.decision_level_rationale,
+        category_rationale: formValues.category_rationale,
+        domain_rationale: formValues.domain_rationale,
         is_published: true,
       };
 
