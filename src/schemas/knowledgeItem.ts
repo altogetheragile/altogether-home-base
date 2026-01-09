@@ -16,7 +16,13 @@ export const knowledgeItemSchema = z.object({
     z.string().uuid().optional().nullable()
   ),
   
-  // Classification - preprocess empty strings to null for UUID fields
+  // NEW: Multi-select taxonomy arrays (primary)
+  decision_level_ids: z.array(z.string().uuid()).default([]),
+  category_ids: z.array(z.string().uuid()).default([]),
+  domain_ids: z.array(z.string().uuid()).default([]),
+  tag_ids: z.array(z.string().uuid()).default([]),
+  
+  // Legacy single FK fields (deprecated - kept for backwards compatibility)
   category_id: z.preprocess(
     (val) => val === '' ? null : val,
     z.string().uuid().optional().nullable()
@@ -44,16 +50,23 @@ export const knowledgeItemSchema = z.object({
 
 export type KnowledgeItemFormData = z.infer<typeof knowledgeItemSchema>;
 
-export const knowledgeItemDefaults = {
+export const knowledgeItemDefaults: KnowledgeItemFormData = {
   name: '',
   slug: '',
   description: '',
   background: '',
   source: '',
-  primary_publication_id: '',
-  category_id: '',
-  planning_focus_id: '',
-  domain_id: '',
+  primary_publication_id: null,
+  // NEW: Multi-select arrays
+  decision_level_ids: [],
+  category_ids: [],
+  domain_ids: [],
+  tag_ids: [],
+  // Legacy single FK fields
+  category_id: null,
+  planning_focus_id: null,
+  domain_id: null,
+  // Enhanced fields
   common_pitfalls: [],
   evidence_sources: [],
   related_techniques: [],

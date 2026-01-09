@@ -138,16 +138,28 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   useEffect(() => {
     if (knowledgeItem && (!formInitialized || (!isEditing && knowledgeItem.id !== form.getValues('id'))) && !userIsTyping) {
       console.log('🔧 Initializing form with knowledge item data');
+      
+      // Extract IDs from the new multi-select arrays
+      const decisionLevelIds = (knowledgeItem.decision_levels || []).map(l => l.id);
+      const categoryIds = (knowledgeItem.categories || []).map(c => c.id);
+      const domainIds = (knowledgeItem.domains || []).map(d => d.id);
+      const tagIds = (knowledgeItem.tags || []).map(t => t.id);
+      
       const safeKnowledgeItem = {
         ...formDefaults,
         ...knowledgeItem,
+        // NEW: Multi-select taxonomy arrays (extract IDs from objects)
+        decision_level_ids: decisionLevelIds,
+        category_ids: categoryIds,
+        domain_ids: domainIds,
+        tag_ids: tagIds,
         // Ensure arrays are properly initialized with fallbacks
         common_pitfalls: Array.isArray(knowledgeItem.common_pitfalls) ? knowledgeItem.common_pitfalls : [],
         evidence_sources: Array.isArray(knowledgeItem.evidence_sources) ? knowledgeItem.evidence_sources : [],
         related_techniques: Array.isArray(knowledgeItem.related_techniques) ? knowledgeItem.related_techniques : [],
         key_terminology: typeof knowledgeItem.key_terminology === 'object' && knowledgeItem.key_terminology !== null 
           ? knowledgeItem.key_terminology : {},
-        // Ensure optional fields have proper fallbacks
+        // Legacy optional fields have proper fallbacks
         category_id: knowledgeItem.category_id || '',
         planning_focus_id: knowledgeItem.planning_focus_id || '',
         domain_id: knowledgeItem.domain_id || '',
