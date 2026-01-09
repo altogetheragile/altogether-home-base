@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Search, FolderOpen, Layers, Target, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, FolderOpen, Layers, Target, Tag, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,38 +19,35 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { useClassificationConfig, useUpdateClassificationConfig } from '@/hooks/useClassificationConfig';
 
-type ClassificationType = 'categories' | 'planning-focuses' | 'activity-domains';
+type TaxonomyType = 'decision-levels' | 'categories' | 'domains' | 'tags';
 
-interface Classification {
+interface TaxonomyItem {
   id: string;
   name: string;
   slug: string;
   description?: string;
-  color: string;
+  color?: string;
   display_order?: number;
   full_description?: string;
+  usage_count?: number;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
-const AdminClassifications = () => {
+const AdminTaxonomy = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<ClassificationType>('planning-focuses');
+  const [activeTab, setActiveTab] = useState<TaxonomyType>('decision-levels');
   const [showForm, setShowForm] = useState(false);
-  const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [viewingItem, setViewingItem] = useState<Classification | null>(null);
-  const [editingItem, setEditingItem] = useState<Classification | null>(null);
+  const [viewingItem, setViewingItem] = useState<TaxonomyItem | null>(null);
+  const [editingItem, setEditingItem] = useState<TaxonomyItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -60,29 +57,32 @@ const AdminClassifications = () => {
     color: '#3B82F6',
     display_order: 0,
   });
-  const { data: configs } = useClassificationConfig();
-  const updateConfig = useUpdateClassificationConfig();
 
-  const getTableName = (type: ClassificationType) => {
+  const getTableName = (type: TaxonomyType) => {
     switch (type) {
+      case 'decision-levels': return 'decision_levels';
       case 'categories': return 'knowledge_categories';
-      case 'planning-focuses': return 'planning_focuses';
-      case 'activity-domains': return 'activity_domains';
+      case 'domains': return 'activity_domains';
+      case 'tags': return 'knowledge_tags';
     }
   };
 
-  const getQueryKey = (type: ClassificationType) => `admin-${type}`;
+  const getQueryKey = (type: TaxonomyType) => `admin-taxonomy-${type}`;
 
   const { data: items, isLoading } = useQuery({
     queryKey: [getQueryKey(activeTab)],
     queryFn: async () => {
+      const tableName = getTableName(activeTab);
+      const orderColumn = activeTab === 'tags' ? 'name' : 
+                         activeTab === 'domains' ? 'name' : 'display_order';
+      
       const { data, error } = await supabase
-        .from(getTableName(activeTab))
+        .from(tableName)
         .select('*')
-        .order(activeTab !== 'activity-domains' ? 'display_order' : 'name');
+        .order(orderColumn);
       
       if (error) throw error;
-      return data as Classification[];
+      return data as TaxonomyItem[];
     },
   });
 
@@ -146,14 +146,18 @@ const AdminClassifications = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const submitData = { ...formData };
+    const submitData: any = { name: formData.name, slug: formData.slug };
     
-    // Only include relevant fields for each type
-    if (activeTab !== 'activity-domains') {
-      delete submitData.full_description;
+    // Add fields based on type
+    if (activeTab !== 'tags') {
+      submitData.description = formData.description;
+      submitData.color = formData.color;
     }
-    if (activeTab === 'activity-domains') {
-      delete submitData.display_order;
+    if (activeTab === 'decision-levels' || activeTab === 'categories') {
+      submitData.display_order = formData.display_order;
+    }
+    if (activeTab === 'domains') {
+      submitData.full_description = formData.full_description;
     }
 
     if (editingItem) {
@@ -163,7 +167,7 @@ const AdminClassifications = () => {
     }
   };
 
-  const handleView = (item: Classification) => {
+  const handleView = (item: TaxonomyItem) => {
     setViewingItem(item);
     setShowViewDialog(true);
   };
@@ -184,7 +188,7 @@ const AdminClassifications = () => {
     }
   };
 
-  const handleEdit = (item: Classification, e: React.MouseEvent) => {
+  const handleEdit = (item: TaxonomyItem, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingItem(item);
     setFormData({
@@ -198,7 +202,7 @@ const AdminClassifications = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (item: Classification, e: React.MouseEvent) => {
+  const handleDelete = (item: TaxonomyItem, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
       deleteMutation.mutate(item.id);
@@ -210,44 +214,48 @@ const AdminClassifications = () => {
     item.slug?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getTabConfig = (type: ClassificationType) => {
+  const getTabConfig = (type: TaxonomyType) => {
     switch (type) {
+      case 'decision-levels':
+        return {
+          label: 'Decision Levels',
+          icon: Layers,
+          description: 'Strategic, Coordination, Teams, or General focus areas',
+          addLabel: 'Add Decision Level',
+          hasOrder: true,
+          hasColor: true,
+        };
       case 'categories':
         return {
           label: 'Categories',
           icon: FolderOpen,
-          description: 'Organize knowledge items into categories',
-          addLabel: 'Add Category'
+          description: 'Use-case categories for knowledge items',
+          addLabel: 'Add Category',
+          hasOrder: true,
+          hasColor: true,
         };
-      case 'planning-focuses':
-        return {
-          label: 'Planning Focuses',
-          icon: Layers,
-          description: 'Define different planning focus areas',
-          addLabel: 'Add Planning Focus'
-        };
-      case 'activity-domains':
+      case 'domains':
         return {
           label: 'Domains of Interest',
           icon: Target,
-          description: 'Manage activity domains and areas of interest',
-          addLabel: 'Add Domain'
+          description: 'Value Ownership, Delivery Enablement, Solution Delivery',
+          addLabel: 'Add Domain',
+          hasOrder: false,
+          hasColor: true,
+        };
+      case 'tags':
+        return {
+          label: 'Tags',
+          icon: Tag,
+          description: 'Free-form tags for flexible categorization',
+          addLabel: 'Add Tag',
+          hasOrder: false,
+          hasColor: false,
         };
     }
   };
 
   const tabConfig = getTabConfig(activeTab);
-
-  // Get visible tabs based on configuration
-  const visibleTabs = configs?.filter(c => c.is_visible).sort((a, b) => a.display_order - b.display_order) || [];
-  const getTabType = (type: string): ClassificationType => {
-    const mapping: Record<string, ClassificationType> = {
-      'categories': 'categories',
-      'planning-focuses': 'planning-focuses',
-      'activity-domains': 'activity-domains'
-    };
-    return mapping[type] || 'categories';
-  };
 
   if (isLoading) {
     return <div className="p-8">Loading...</div>;
@@ -260,35 +268,30 @@ const AdminClassifications = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center space-x-2">
-                <FolderOpen className="h-6 w-6" />
-                <span>Classifications Management</span>
+                <Layers className="h-6 w-6" />
+                <span>Taxonomy Management</span>
               </CardTitle>
               <CardDescription>
-                Manage all classification systems for knowledge items in one place
+                Manage all classification dimensions: Decision Levels, Categories, Domains, and Tags
               </CardDescription>
             </div>
-            <Button onClick={() => setShowConfigDialog(true)} variant="outline" size="sm">
-              <Settings className="w-4 h-4 mr-2" />
-              Configure Visibility
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ClassificationType)}>
-            <TabsList className={`grid w-full grid-cols-${visibleTabs.length}`}>
-              {visibleTabs.map(config => {
-                const tabType = getTabType(config.classification_type);
-                const tabConfigInfo = getTabConfig(tabType);
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TaxonomyType)}>
+            <TabsList className="grid w-full grid-cols-4">
+              {(['decision-levels', 'categories', 'domains', 'tags'] as TaxonomyType[]).map(type => {
+                const config = getTabConfig(type);
                 return (
-                  <TabsTrigger key={config.id} value={tabType} className="flex items-center space-x-2">
-                    <tabConfigInfo.icon className="h-4 w-4" />
-                    <span>{config.custom_label || tabConfigInfo.label}</span>
+                  <TabsTrigger key={type} value={type} className="flex items-center space-x-2">
+                    <config.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{config.label}</span>
                   </TabsTrigger>
                 );
               })}
             </TabsList>
 
-            {(['categories', 'planning-focuses', 'activity-domains'] as ClassificationType[]).map((type) => (
+            {(['decision-levels', 'categories', 'domains', 'tags'] as TaxonomyType[]).map((type) => (
               <TabsContent key={type} value={type} className="mt-6">
                 <div className="flex justify-between items-center mb-6">
                   <div>
@@ -310,7 +313,7 @@ const AdminClassifications = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder={`Search ${type}...`}
+                      placeholder={`Search ${getTabConfig(type).label.toLowerCase()}...`}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -322,10 +325,11 @@ const AdminClassifications = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {type !== 'activity-domains' && <TableHead>Order</TableHead>}
+                        {getTabConfig(type).hasOrder && <TableHead>Order</TableHead>}
                         <TableHead>Name</TableHead>
                         <TableHead>Slug</TableHead>
-                        <TableHead>Color</TableHead>
+                        {getTabConfig(type).hasColor && <TableHead>Color</TableHead>}
+                        {type === 'tags' && <TableHead>Usage</TableHead>}
                         <TableHead>Description</TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
@@ -337,22 +341,27 @@ const AdminClassifications = () => {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleView(item)}
                         >
-                          {type !== 'activity-domains' && (
+                          {getTabConfig(type).hasOrder && (
                             <TableCell className="font-medium">{item.display_order}</TableCell>
                           )}
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell className="text-muted-foreground">{item.slug}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <div 
-                                className="w-4 h-4 rounded" 
-                                style={{ backgroundColor: item.color }}
-                              />
-                              <Badge style={{ backgroundColor: item.color + '20', color: item.color }}>
-                                {item.color}
-                              </Badge>
-                            </div>
-                          </TableCell>
+                          {getTabConfig(type).hasColor && (
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <div 
+                                  className="w-4 h-4 rounded" 
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <Badge style={{ backgroundColor: (item.color || '#3B82F6') + '20', color: item.color }}>
+                                  {item.color}
+                                </Badge>
+                              </div>
+                            </TableCell>
+                          )}
+                          {type === 'tags' && (
+                            <TableCell>{item.usage_count || 0}</TableCell>
+                          )}
                           <TableCell className="max-w-xs truncate">{item.description || '-'}</TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
@@ -376,8 +385,11 @@ const AdminClassifications = () => {
                       ))}
                       {filteredItems?.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={type !== 'activity-domains' ? 6 : 5} className="text-center py-8 text-muted-foreground">
-                            {searchTerm ? `No ${type} found matching your search.` : `No ${type} created yet.`}
+                          <TableCell 
+                            colSpan={getTabConfig(type).hasOrder ? (getTabConfig(type).hasColor ? 7 : 6) : (type === 'tags' ? 6 : 5)} 
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            {searchTerm ? `No ${getTabConfig(type).label.toLowerCase()} found matching your search.` : `No ${getTabConfig(type).label.toLowerCase()} created yet.`}
                           </TableCell>
                         </TableRow>
                       )}
@@ -407,29 +419,37 @@ const AdminClassifications = () => {
               <Label className="text-muted-foreground">Slug</Label>
               <p className="mt-1 font-mono text-sm">{viewingItem?.slug}</p>
             </div>
-            <div>
-              <Label className="text-muted-foreground">Color</Label>
-              <div className="flex items-center space-x-3 mt-1">
-                <div 
-                  className="w-8 h-8 rounded border" 
-                  style={{ backgroundColor: viewingItem?.color }}
-                />
-                <Badge style={{ backgroundColor: (viewingItem?.color || '') + '20', color: viewingItem?.color }}>
-                  {viewingItem?.color}
-                </Badge>
+            {tabConfig.hasColor && viewingItem?.color && (
+              <div>
+                <Label className="text-muted-foreground">Color</Label>
+                <div className="flex items-center space-x-3 mt-1">
+                  <div 
+                    className="w-8 h-8 rounded border" 
+                    style={{ backgroundColor: viewingItem?.color }}
+                  />
+                  <Badge style={{ backgroundColor: (viewingItem?.color || '') + '20', color: viewingItem?.color }}>
+                    {viewingItem?.color}
+                  </Badge>
+                </div>
               </div>
-            </div>
-            {activeTab !== 'activity-domains' && (
+            )}
+            {tabConfig.hasOrder && (
               <div>
                 <Label className="text-muted-foreground">Display Order</Label>
                 <p className="mt-1">{viewingItem?.display_order}</p>
+              </div>
+            )}
+            {activeTab === 'tags' && (
+              <div>
+                <Label className="text-muted-foreground">Usage Count</Label>
+                <p className="mt-1">{viewingItem?.usage_count || 0}</p>
               </div>
             )}
             <div>
               <Label className="text-muted-foreground">Description</Label>
               <p className="mt-1 text-sm">{viewingItem?.description || 'No description'}</p>
             </div>
-            {activeTab === 'activity-domains' && viewingItem?.full_description && (
+            {activeTab === 'domains' && viewingItem?.full_description && (
               <div>
                 <Label className="text-muted-foreground">Full Description</Label>
                 <p className="mt-1 text-sm whitespace-pre-wrap">{viewingItem.full_description}</p>
@@ -440,10 +460,12 @@ const AdminClassifications = () => {
                 <Label className="text-muted-foreground">Created</Label>
                 <p className="mt-1">{new Date(viewingItem?.created_at || '').toLocaleDateString()}</p>
               </div>
-              <div>
-                <Label className="text-muted-foreground">Updated</Label>
-                <p className="mt-1">{new Date(viewingItem?.updated_at || '').toLocaleDateString()}</p>
-              </div>
+              {viewingItem?.updated_at && (
+                <div>
+                  <Label className="text-muted-foreground">Updated</Label>
+                  <p className="mt-1">{new Date(viewingItem.updated_at).toLocaleDateString()}</p>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -463,7 +485,8 @@ const AdminClassifications = () => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter name"
                 required
               />
             </div>
@@ -472,142 +495,80 @@ const AdminClassifications = () => {
               <Input
                 id="slug"
                 value={formData.slug}
-                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                placeholder="url-friendly-name"
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              />
-            </div>
-            {activeTab === 'activity-domains' && (
+            {tabConfig.hasColor && (
               <div>
-                <Label htmlFor="full_description">Full Description</Label>
-                <Textarea
-                  id="full_description"
-                  value={formData.full_description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, full_description: e.target.value }))}
-                />
+                <Label htmlFor="color">Color</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="color"
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-16 h-10 p-1"
+                  />
+                  <Input
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="flex-1"
+                    placeholder="#3B82F6"
+                  />
+                </div>
               </div>
             )}
-            {activeTab !== 'activity-domains' && (
+            {tabConfig.hasOrder && (
               <div>
                 <Label htmlFor="display_order">Display Order</Label>
                 <Input
                   id="display_order"
                   type="number"
                   value={formData.display_order}
-                  onChange={(e) => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
                 />
               </div>
             )}
-            <div>
-              <Label htmlFor="color">Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={formData.color}
-                onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
+            {activeTab !== 'tags' && (
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Enter description"
+                  rows={3}
+                />
+              </div>
+            )}
+            {activeTab === 'domains' && (
+              <div>
+                <Label htmlFor="full_description">Full Description</Label>
+                <Textarea
+                  id="full_description"
+                  value={formData.full_description}
+                  onChange={(e) => setFormData({ ...formData, full_description: e.target.value })}
+                  placeholder="Enter detailed description"
+                  rows={4}
+                />
+              </div>
+            )}
+            <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={handleCloseForm}>
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                 {editingItem ? 'Update' : 'Create'}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Configuration Dialog */}
-      <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Configure Classification Visibility</DialogTitle>
-            <DialogDescription>
-              Control which classification types are visible throughout the application
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6 mt-4">
-            {configs?.sort((a, b) => a.display_order - b.display_order).map(config => (
-              <Card key={config.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Switch
-                        checked={config.is_visible}
-                        onCheckedChange={(checked) => {
-                          updateConfig.mutate({
-                            id: config.id,
-                            updates: { is_visible: checked }
-                          });
-                        }}
-                      />
-                      <div>
-                        <CardTitle className="text-lg">
-                          {config.custom_label || config.classification_type}
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          {config.is_visible ? 'Visible in editor and filters' : 'Hidden from application'}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Badge variant={config.is_visible ? 'default' : 'secondary'}>
-                      {config.is_visible ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor={`label-${config.id}`}>Custom Label</Label>
-                      <Input
-                        id={`label-${config.id}`}
-                        value={config.custom_label || ''}
-                        onBlur={(e) => {
-                          if (e.target.value !== config.custom_label) {
-                            updateConfig.mutate({
-                              id: config.id,
-                              updates: { custom_label: e.target.value }
-                            });
-                          }
-                        }}
-                        placeholder="Enter custom label"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`order-${config.id}`}>Display Order</Label>
-                      <Input
-                        id={`order-${config.id}`}
-                        type="number"
-                        defaultValue={config.display_order}
-                        onBlur={(e) => {
-                          const newOrder = parseInt(e.target.value);
-                          if (newOrder !== config.display_order) {
-                            updateConfig.mutate({
-                              id: config.id,
-                              updates: { display_order: newOrder }
-                            });
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
-export default AdminClassifications;
+export default AdminTaxonomy;

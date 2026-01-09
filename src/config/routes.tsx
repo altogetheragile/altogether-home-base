@@ -68,11 +68,10 @@ const CreateKnowledgeItem = lazy(() => import('@/pages/admin/CreateKnowledgeItem
 const EditKnowledgeItem = lazy(() => import('@/pages/admin/EditKnowledgeItem'));
 const CreateKnowledgeUseCase = lazy(() => import('@/pages/admin/CreateKnowledgeUseCase'));
 const CreateKnowledgeTemplate = lazy(() => import('@/pages/admin/CreateKnowledgeTemplate'));
-const AdminKnowledgeTags = lazy(() => import('@/pages/admin/AdminKnowledgeTags'));
+const AdminTaxonomy = lazy(() => import('@/pages/admin/AdminTaxonomy'));
 const AdminKnowledgeLearningPaths = lazy(() => import('@/pages/admin/AdminKnowledgeLearningPaths'));
 const AdminKnowledgeAnalyticsRoute = lazy(() => import('@/pages/admin/AdminKnowledgeAnalyticsRoute'));
 const AdminKnowledgeTemplates = lazy(() => import('@/pages/admin/AdminKnowledgeTemplates'));
-const AdminClassifications = lazy(() => import('@/pages/admin/AdminClassifications'));
 const AdminKnowledgeImport = lazy(() => import('@/pages/admin/AdminKnowledgeImport'));
 const PreviewPage = lazy(() => import('@/components/admin/knowledge/PreviewPage').then(m => ({ default: m.PreviewPage })));
 
@@ -358,14 +357,9 @@ export const AdminRoutes = () => {
             <AdminKnowledgeAnalyticsRoute />
           </Suspense>
         } />
-        <Route path="knowledge/classifications" element={
+        <Route path="knowledge/taxonomy" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminClassifications />
-          </Suspense>
-        } />
-        <Route path="knowledge/tags" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminKnowledgeTags />
+            <AdminTaxonomy />
           </Suspense>
         } />
         <Route path="knowledge/learning-paths" element={
