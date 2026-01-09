@@ -307,7 +307,8 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     if (returnTo === 'project-model') {
       return '/project-modelling';
     }
-    return '/admin/knowledge/items';
+    // Default to Knowledge Base (no longer admin interface)
+    return '/knowledge';
   };
 
   // Navigation handlers

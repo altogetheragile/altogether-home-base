@@ -79,12 +79,6 @@ const AdminLayout = () => {
 
   const knowledgeItems = [
     {
-      label: 'Knowledge Items',
-      href: '/admin/knowledge/items',
-      icon: BookOpen,
-      description: 'Manage knowledge items'
-    },
-    {
       label: 'Assets',
       href: '/admin/assets',
       icon: Layers,
@@ -198,7 +192,7 @@ const AdminLayout = () => {
       label: 'Knowledge Base',
       icon: BookOpen,
       paths: ['/admin/knowledge', '/admin/assets'],
-      href: '/admin/knowledge/items',
+      href: '/admin/assets',
       items: knowledgeItems
     },
     {

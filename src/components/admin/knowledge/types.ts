@@ -1,6 +1,5 @@
-import { AdminKnowledgeItemsPage } from './AdminKnowledgeItemsPage';
+// Shared types for knowledge item components
 
-// Legacy filters type for backward compatibility
 export interface KnowledgeItemsFiltersType {
   search: string;
   categories: string[];
@@ -11,7 +10,3 @@ export interface KnowledgeItemsFiltersType {
   dateRange: { from?: Date; to?: Date };
   sortBy: 'recent' | 'alphabetical' | 'popularity' | 'views';
 }
-
-export const KnowledgeItemsDashboard = () => {
-  return <AdminKnowledgeItemsPage />;
-};
