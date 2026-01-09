@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
-import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
+import { useDecisionLevels } from '@/hooks/useDecisionLevels';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
 import { useVisibleClassifications } from '@/hooks/useClassificationConfig';
 import { format } from 'date-fns';
@@ -25,7 +25,7 @@ export const KnowledgeItemsFilters = ({
   onFiltersChange 
 }: KnowledgeItemsFiltersProps) => {
   const { data: categories } = useKnowledgeCategories();
-  const { data: planningFocuses } = usePlanningFocuses();
+  const { data: decisionLevels } = useDecisionLevels();
   const { data: domains } = useActivityDomains();
   const visibility = useVisibleClassifications();
 
@@ -53,10 +53,10 @@ export const KnowledgeItemsFilters = ({
     updateFilters({ categories: newCategories });
   };
 
-  const togglePlanningLayer = (layerId: string) => {
-    const newLayers = filters.planningLayers.includes(layerId)
-      ? filters.planningLayers.filter(id => id !== layerId)
-      : [...filters.planningLayers, layerId];
+  const toggleDecisionLevel = (levelId: string) => {
+    const newLayers = filters.planningLayers.includes(levelId)
+      ? filters.planningLayers.filter(id => id !== levelId)
+      : [...filters.planningLayers, levelId];
     updateFilters({ planningLayers: newLayers });
   };
 
@@ -210,11 +210,11 @@ export const KnowledgeItemsFilters = ({
 
       {visibility.categories && <Separator />}
 
-      {/* Planning Layers */}
-      {visibility.planningFocuses && (
+      {/* Decision Levels (was Planning Layers) */}
+      {visibility.decisionLevels && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">{visibility.getLabel('planning-focuses')}</Label>
+            <Label className="text-sm font-medium">{visibility.getLabel('decision-levels')}</Label>
             {filters.planningLayers.length > 0 && (
               <Button
                 variant="ghost"
@@ -228,23 +228,23 @@ export const KnowledgeItemsFilters = ({
           </div>
 
           <div className="space-y-2 max-h-48 overflow-y-auto">
-            {planningFocuses?.map((layer) => (
-              <div key={layer.id} className="flex items-center space-x-3">
+            {decisionLevels?.map((level) => (
+              <div key={level.id} className="flex items-center space-x-3">
                 <Checkbox
-                  id={`layer-${layer.id}`}
-                  checked={filters.planningLayers.includes(layer.id)}
-                  onCheckedChange={() => togglePlanningLayer(layer.id)}
+                  id={`level-${level.id}`}
+                  checked={filters.planningLayers.includes(level.id)}
+                  onCheckedChange={() => toggleDecisionLevel(level.id)}
                 />
                 <label
-                  htmlFor={`layer-${layer.id}`}
+                  htmlFor={`level-${level.id}`}
                   className="text-sm font-normal cursor-pointer flex-1"
                 >
                   <div className="flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: layer.color }}
+                      style={{ backgroundColor: level.color }}
                     />
-                    {layer.name}
+                    {level.name}
                   </div>
                 </label>
               </div>
@@ -253,7 +253,7 @@ export const KnowledgeItemsFilters = ({
         </div>
       )}
 
-      {visibility.planningFocuses && <Separator />}
+      {visibility.decisionLevels && <Separator />}
 
       {/* Domains */}
       {visibility.activityDomains && (

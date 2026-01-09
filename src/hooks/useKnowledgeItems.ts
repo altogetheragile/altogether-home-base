@@ -230,7 +230,8 @@ const transformKnowledgeItem = (raw: any): KnowledgeItem => {
 export const useKnowledgeItems = (params?: {
   search?: string;
   categoryId?: string;
-  layerId?: string;  // Now maps to decision_level_id
+  layerId?: string;  // Deprecated: use decisionLevelId
+  decisionLevelId?: string;  // NEW: Filter by decision level
   domainId?: string;
   featured?: boolean;
   limit?: number;
@@ -303,12 +304,13 @@ export const useKnowledgeItems = (params?: {
         }
       }
 
-      // Filter by decision level via junction table
-      if (params?.layerId) {
+      // Filter by decision level via junction table (supports both layerId and decisionLevelId)
+      const decisionLevelFilter = params?.decisionLevelId || params?.layerId;
+      if (decisionLevelFilter) {
         const { data: levelItems } = await supabase
           .from('knowledge_item_decision_levels')
           .select('knowledge_item_id')
-          .eq('decision_level_id', params.layerId);
+          .eq('decision_level_id', decisionLevelFilter);
         
         if (levelItems && levelItems.length > 0) {
           const itemIds = levelItems.map(l => l.knowledge_item_id);

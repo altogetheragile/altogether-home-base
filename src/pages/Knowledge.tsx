@@ -4,9 +4,6 @@ import Footer from "@/components/Footer";
 import { KnowledgeCard } from "@/components/knowledge/KnowledgeCard";
 import KnowledgeFilter from "@/components/knowledge/KnowledgeFilter";
 import { useKnowledgeItems } from "@/hooks/useKnowledgeItems";
-import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
-import { usePlanningFocuses } from "@/hooks/usePlanningFocuses";
-import { useActivityDomains } from "@/hooks/useActivityDomains";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
@@ -17,18 +14,14 @@ const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
-  const [selectedFocus, setSelectedFocus] = useState<string>("all");
+  const [selectedDecisionLevel, setSelectedDecisionLevel] = useState<string>("all");
   const [sortBy, setSortBy] = useState("alphabetical");
-  
-  const { data: categories } = useKnowledgeCategories();
-  const { data: domains } = useActivityDomains();
-  const { data: focuses } = usePlanningFocuses();
   
   const { data: knowledgeItems, isLoading } = useKnowledgeItems({
     search: searchQuery || undefined,
     categoryId: selectedCategory === "all" ? undefined : selectedCategory,
     domainId: selectedDomain === "all" ? undefined : selectedDomain,
-    layerId: selectedFocus === "all" ? undefined : selectedFocus,
+    decisionLevelId: selectedDecisionLevel === "all" ? undefined : selectedDecisionLevel,
     sortBy: sortBy
   });
 
@@ -40,12 +33,12 @@ const Knowledge = () => {
     setSearchQuery("");
     setSelectedCategory("all");
     setSelectedDomain("all");
-    setSelectedFocus("all");
+    setSelectedDecisionLevel("all");
     setSortBy("alphabetical");
   };
 
   const hasActiveFilters = searchQuery || selectedCategory !== "all" || 
-                          selectedDomain !== "all" || selectedFocus !== "all";
+                          selectedDomain !== "all" || selectedDecisionLevel !== "all";
 
   // Defensive check - should not be reached if routes are configured correctly
   if (!settings?.show_knowledge) {
@@ -78,8 +71,8 @@ const Knowledge = () => {
             onCategoryChange={setSelectedCategory}
             selectedDomain={selectedDomain}
             onDomainChange={setSelectedDomain}
-            selectedFocus={selectedFocus}
-            onFocusChange={setSelectedFocus}
+            selectedDecisionLevel={selectedDecisionLevel}
+            onDecisionLevelChange={setSelectedDecisionLevel}
             sortBy={sortBy}
             onSortChange={setSortBy}
           />

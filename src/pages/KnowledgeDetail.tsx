@@ -166,45 +166,51 @@ const KnowledgeDetail = () => {
 
                 {/* Classification Badges */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {visibility.categories && item.knowledge_categories && (
+                  {/* Categories (multi) */}
+                  {visibility.categories && item.categories?.map((category) => (
                     <Badge 
+                      key={category.id}
                       variant="outline" 
                       className="py-1.5 px-3"
                       style={{ 
-                        backgroundColor: item.knowledge_categories.color + '15',
-                        borderColor: item.knowledge_categories.color + '40',
-                        color: item.knowledge_categories.color
+                        backgroundColor: category.color + '15',
+                        borderColor: category.color + '40',
+                        color: category.color
                       }}
                     >
-                      {item.knowledge_categories.name}
+                      {category.name}
                     </Badge>
-                  )}
-                  {visibility.planningFocuses && item.planning_focuses && (
+                  ))}
+                  {/* Decision Levels (multi) */}
+                  {visibility.decisionLevels && item.decision_levels?.map((level) => (
                     <Badge 
+                      key={level.id}
                       variant="outline"
                       className="py-1.5 px-3"
                       style={{ 
-                        backgroundColor: item.planning_focuses.color + '15',
-                        borderColor: item.planning_focuses.color + '40',
-                        color: item.planning_focuses.color
+                        backgroundColor: level.color + '15',
+                        borderColor: level.color + '40',
+                        color: level.color
                       }}
                     >
-                      {item.planning_focuses.name}
+                      {level.name}
                     </Badge>
-                  )}
-                  {visibility.activityDomains && item.activity_domains && (
+                  ))}
+                  {/* Activity Domains (multi) */}
+                  {visibility.activityDomains && item.domains?.map((domain) => (
                     <Badge 
+                      key={domain.id}
                       variant="outline"
                       className="py-1.5 px-3"
                       style={{ 
-                        backgroundColor: item.activity_domains.color + '15',
-                        borderColor: item.activity_domains.color + '40',
-                        color: item.activity_domains.color
+                        backgroundColor: domain.color + '15',
+                        borderColor: domain.color + '40',
+                        color: domain.color
                       }}
                     >
-                      {item.activity_domains.name}
+                      {domain.name}
                     </Badge>
-                  )}
+                  ))}
                 </div>
 
                 {/* Metadata */}

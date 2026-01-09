@@ -38,27 +38,66 @@ export const KnowledgeItemsCards = ({
         .from('knowledge_items')
         .select(`
           *,
-          knowledge_categories (id, name, slug, color),
-          planning_focuses (id, name, slug, color, display_order),
-          activity_domains (id, name, slug, color),
+          knowledge_item_categories (
+            knowledge_categories (id, name, slug, color)
+          ),
+          knowledge_item_decision_levels (
+            decision_levels (id, name, slug, color)
+          ),
+          knowledge_item_domains (
+            activity_domains (id, name, slug, color)
+          ),
           knowledge_use_cases (id, case_type)
         `);
 
-      // Apply filters (same as table)
+      // Apply search filter
       if (filters.search) {
         query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
+      // Filter by categories via junction table
       if (filters.categories.length > 0) {
-        query = query.in('category_id', filters.categories);
+        const { data: categoryItems } = await supabase
+          .from('knowledge_item_categories')
+          .select('knowledge_item_id')
+          .in('category_id', filters.categories);
+        
+        if (categoryItems && categoryItems.length > 0) {
+          const itemIds = [...new Set(categoryItems.map(c => c.knowledge_item_id))];
+          query = query.in('id', itemIds);
+        } else {
+          return [];
+        }
       }
 
+      // Filter by decision levels
       if (filters.planningLayers.length > 0) {
-        query = query.in('planning_focus_id', filters.planningLayers);
+        const { data: levelItems } = await supabase
+          .from('knowledge_item_decision_levels')
+          .select('knowledge_item_id')
+          .in('decision_level_id', filters.planningLayers);
+        
+        if (levelItems && levelItems.length > 0) {
+          const itemIds = [...new Set(levelItems.map(l => l.knowledge_item_id))];
+          query = query.in('id', itemIds);
+        } else {
+          return [];
+        }
       }
 
+      // Filter by domains via junction table
       if (filters.domains.length > 0) {
-        query = query.in('domain_id', filters.domains);
+        const { data: domainItems } = await supabase
+          .from('knowledge_item_domains')
+          .select('knowledge_item_id')
+          .in('domain_id', filters.domains);
+        
+        if (domainItems && domainItems.length > 0) {
+          const itemIds = [...new Set(domainItems.map(d => d.knowledge_item_id))];
+          query = query.in('id', itemIds);
+        } else {
+          return [];
+        }
       }
 
       if (filters.status !== 'all') {
@@ -71,8 +110,6 @@ export const KnowledgeItemsCards = ({
           query = query.order('name', { ascending: true });
           break;
         case 'popularity':
-          query = query.order('view_count', { ascending: false });
-          break;
         case 'views':
           query = query.order('view_count', { ascending: false });
           break;
@@ -84,7 +121,14 @@ export const KnowledgeItemsCards = ({
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      // Transform to extract arrays from junction tables
+      return (data || []).map(item => ({
+        ...item,
+        categories: (item.knowledge_item_categories || []).map((jt: any) => jt.knowledge_categories).filter(Boolean),
+        decision_levels: (item.knowledge_item_decision_levels || []).map((jt: any) => jt.decision_levels).filter(Boolean),
+        domains: (item.knowledge_item_domains || []).map((jt: any) => jt.activity_domains).filter(Boolean),
+      }));
     },
   });
 
@@ -199,33 +243,35 @@ export const KnowledgeItemsCards = ({
                   </div>
                 </div>
 
-                {/* Classification badges */}
+                {/* Classification badges - now using arrays */}
                 <div className="flex flex-wrap gap-1.5">
-                  {item.knowledge_categories && (
+                  {item.categories?.slice(0, 2).map((category: any) => (
                     <Badge 
+                      key={category.id}
                       variant="secondary" 
                       className="text-xs px-2 py-0.5"
                       style={{ 
-                        backgroundColor: `${item.knowledge_categories.color}15`, 
-                        color: item.knowledge_categories.color,
-                        borderColor: `${item.knowledge_categories.color}30`
+                        backgroundColor: `${category.color}15`, 
+                        color: category.color,
+                        borderColor: `${category.color}30`
                       }}
                     >
-                      {item.knowledge_categories.name}
+                      {category.name}
                     </Badge>
-                  )}
-                  {item.planning_focuses && (
+                  ))}
+                  {item.decision_levels?.slice(0, 1).map((level: any) => (
                     <Badge 
+                      key={level.id}
                       variant="outline" 
                       className="text-xs px-2 py-0.5"
                       style={{ 
-                        borderColor: item.planning_focuses.color, 
-                        color: item.planning_focuses.color 
+                        borderColor: level.color, 
+                        color: level.color 
                       }}
                     >
-                      {item.planning_focuses.name}
+                      {level.name}
                     </Badge>
-                  )}
+                  ))}
                 </div>
 
                 {/* Stats */}
@@ -233,11 +279,11 @@ export const KnowledgeItemsCards = ({
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
                       <FileText className="h-3 w-3" />
-                      <span>{item.knowledge_use_cases?.filter(uc => uc.case_type === 'generic').length || 0}</span>
+                      <span>{item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'generic').length || 0}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Target className="h-3 w-3" />
-                      <span>{item.knowledge_use_cases?.filter(uc => uc.case_type === 'example').length || 0}</span>
+                      <span>{item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'example').length || 0}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <TrendingUp className="h-3 w-3" />

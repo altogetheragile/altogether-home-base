@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { useKnowledgeCategories } from "@/hooks/useKnowledgeCategories";
 import { useActivityDomains } from "@/hooks/useActivityDomains";
-import { usePlanningFocuses } from "@/hooks/usePlanningFocuses";
+import { useDecisionLevels } from "@/hooks/useDecisionLevels";
 import { useVisibleClassifications } from "@/hooks/useClassificationConfig";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -14,8 +14,8 @@ interface KnowledgeFilterProps {
   onCategoryChange: (value: string) => void;
   selectedDomain: string;
   onDomainChange: (value: string) => void;
-  selectedFocus: string;
-  onFocusChange: (value: string) => void;
+  selectedDecisionLevel: string;
+  onDecisionLevelChange: (value: string) => void;
   sortBy: string;
   onSortChange: (value: string) => void;
 }
@@ -27,28 +27,28 @@ const KnowledgeFilter = ({
   onCategoryChange,
   selectedDomain,
   onDomainChange,
-  selectedFocus,
-  onFocusChange,
+  selectedDecisionLevel,
+  onDecisionLevelChange,
   sortBy,
   onSortChange,
 }: KnowledgeFilterProps) => {
   const { data: categories } = useKnowledgeCategories();
   const { data: domains } = useActivityDomains();
-  const { data: focuses } = usePlanningFocuses();
+  const { data: decisionLevels } = useDecisionLevels();
   const visibility = useVisibleClassifications();
 
   const clearFilters = () => {
     onSearchChange("");
     if (visibility.categories) onCategoryChange("all");
     if (visibility.activityDomains) onDomainChange("all");
-    if (visibility.planningFocuses) onFocusChange("all");
+    if (visibility.decisionLevels) onDecisionLevelChange("all");
     onSortChange("recent");
   };
 
   const hasActiveFilters = searchQuery || 
     (visibility.categories && selectedCategory !== "all") || 
     (visibility.activityDomains && selectedDomain !== "all") || 
-    (visibility.planningFocuses && selectedFocus !== "all");
+    (visibility.decisionLevels && selectedDecisionLevel !== "all");
 
   return (
     <div className="space-y-3 mb-6">
@@ -119,16 +119,16 @@ const KnowledgeFilter = ({
           </Select>
         )}
 
-        {visibility.planningFocuses && (
-          <Select value={selectedFocus} onValueChange={onFocusChange}>
+        {visibility.decisionLevels && (
+          <Select value={selectedDecisionLevel} onValueChange={onDecisionLevelChange}>
             <SelectTrigger className="w-[180px] h-9">
-              <SelectValue placeholder={visibility.getLabel('planning-focuses')} />
+              <SelectValue placeholder={visibility.getLabel('decision-levels')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All {visibility.getLabel('planning-focuses')}</SelectItem>
-              {focuses?.map((focus) => (
-                <SelectItem key={focus.id} value={focus.id}>
-                  {focus.name}
+              <SelectItem value="all">All {visibility.getLabel('decision-levels')}</SelectItem>
+              {decisionLevels?.map((level) => (
+                <SelectItem key={level.id} value={level.id}>
+                  {level.name}
                 </SelectItem>
               ))}
             </SelectContent>
