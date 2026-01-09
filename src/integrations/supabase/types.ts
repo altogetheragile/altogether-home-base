@@ -1510,17 +1510,23 @@ export type Database = {
         Row: {
           category_id: string
           created_at: string
+          is_primary: boolean | null
           knowledge_item_id: string
+          rationale: string | null
         }
         Insert: {
           category_id: string
           created_at?: string
+          is_primary?: boolean | null
           knowledge_item_id: string
+          rationale?: string | null
         }
         Update: {
           category_id?: string
           created_at?: string
+          is_primary?: boolean | null
           knowledge_item_id?: string
+          rationale?: string | null
         }
         Relationships: [
           {
@@ -1578,17 +1584,23 @@ export type Database = {
         Row: {
           created_at: string
           decision_level_id: string
+          is_primary: boolean | null
           knowledge_item_id: string
+          rationale: string | null
         }
         Insert: {
           created_at?: string
           decision_level_id: string
+          is_primary?: boolean | null
           knowledge_item_id: string
+          rationale?: string | null
         }
         Update: {
           created_at?: string
           decision_level_id?: string
+          is_primary?: boolean | null
           knowledge_item_id?: string
+          rationale?: string | null
         }
         Relationships: [
           {
@@ -1611,17 +1623,23 @@ export type Database = {
         Row: {
           created_at: string
           domain_id: string
+          is_primary: boolean | null
           knowledge_item_id: string
+          rationale: string | null
         }
         Insert: {
           created_at?: string
           domain_id: string
+          is_primary?: boolean | null
           knowledge_item_id: string
+          rationale?: string | null
         }
         Update: {
           created_at?: string
           domain_id?: string
+          is_primary?: boolean | null
           knowledge_item_id?: string
+          rationale?: string | null
         }
         Relationships: [
           {
@@ -1719,6 +1737,48 @@ export type Database = {
             columns: ["publication_id"]
             isOneToOne: false
             referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_item_relationships: {
+        Row: {
+          created_at: string
+          id: string
+          knowledge_item_id: string
+          position: number | null
+          related_item_id: string
+          relationship_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          knowledge_item_id: string
+          position?: number | null
+          related_item_id: string
+          relationship_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          knowledge_item_id?: string
+          position?: number | null
+          related_item_id?: string
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_relationships_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_relationships_related_item_id_fkey"
+            columns: ["related_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1855,22 +1915,29 @@ export type Database = {
       knowledge_items: {
         Row: {
           author: string | null
+          avoid_when: string[] | null
           background: string | null
           category_id: string | null
           common_pitfalls: string[] | null
           created_at: string
           created_by: string | null
+          decision_boundaries: string | null
+          decisions_supported: string[] | null
           description: string | null
           domain_id: string | null
           emoji: string | null
           evidence_sources: string[] | null
+          governance_value: string | null
           has_ai_support: boolean | null
           icon: string | null
           id: string
+          inspect_adapt_signals: string[] | null
           is_featured: boolean | null
           is_published: boolean | null
+          item_type: string | null
           key_terminology: Json | null
           learning_value_summary: string | null
+          maturity_indicators: string[] | null
           name: string
           planning_focus_id: string | null
           primary_publication_id: string | null
@@ -1879,28 +1946,39 @@ export type Database = {
           related_techniques: string[] | null
           slug: string
           source: string | null
+          typical_output: string | null
           updated_at: string
           updated_by: string | null
+          use_this_when: string[] | null
           view_count: number | null
+          what_good_looks_like: string[] | null
+          why_it_exists: string | null
         }
         Insert: {
           author?: string | null
+          avoid_when?: string[] | null
           background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
           created_at?: string
           created_by?: string | null
+          decision_boundaries?: string | null
+          decisions_supported?: string[] | null
           description?: string | null
           domain_id?: string | null
           emoji?: string | null
           evidence_sources?: string[] | null
+          governance_value?: string | null
           has_ai_support?: boolean | null
           icon?: string | null
           id?: string
+          inspect_adapt_signals?: string[] | null
           is_featured?: boolean | null
           is_published?: boolean | null
+          item_type?: string | null
           key_terminology?: Json | null
           learning_value_summary?: string | null
+          maturity_indicators?: string[] | null
           name: string
           planning_focus_id?: string | null
           primary_publication_id?: string | null
@@ -1909,28 +1987,39 @@ export type Database = {
           related_techniques?: string[] | null
           slug: string
           source?: string | null
+          typical_output?: string | null
           updated_at?: string
           updated_by?: string | null
+          use_this_when?: string[] | null
           view_count?: number | null
+          what_good_looks_like?: string[] | null
+          why_it_exists?: string | null
         }
         Update: {
           author?: string | null
+          avoid_when?: string[] | null
           background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
           created_at?: string
           created_by?: string | null
+          decision_boundaries?: string | null
+          decisions_supported?: string[] | null
           description?: string | null
           domain_id?: string | null
           emoji?: string | null
           evidence_sources?: string[] | null
+          governance_value?: string | null
           has_ai_support?: boolean | null
           icon?: string | null
           id?: string
+          inspect_adapt_signals?: string[] | null
           is_featured?: boolean | null
           is_published?: boolean | null
+          item_type?: string | null
           key_terminology?: Json | null
           learning_value_summary?: string | null
+          maturity_indicators?: string[] | null
           name?: string
           planning_focus_id?: string | null
           primary_publication_id?: string | null
@@ -1939,9 +2028,13 @@ export type Database = {
           related_techniques?: string[] | null
           slug?: string
           source?: string | null
+          typical_output?: string | null
           updated_at?: string
           updated_by?: string | null
+          use_this_when?: string[] | null
           view_count?: number | null
+          what_good_looks_like?: string[] | null
+          why_it_exists?: string | null
         }
         Relationships: [
           {
