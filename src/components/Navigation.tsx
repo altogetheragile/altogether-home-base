@@ -133,11 +133,8 @@ const Navigation = () => {
             ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative">
+                  <Button variant="ghost" size="icon">
                     <User className="h-5 w-5" />
-                    {userRole === 'admin' && (
-                      <Shield className="h-3 w-3 text-primary absolute -bottom-0.5 -right-0.5" />
-                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
