@@ -241,27 +241,24 @@ export const useKnowledgeItems = (params?: {
   return useQuery({
     queryKey: ['knowledge-items', params],
     queryFn: async () => {
-      console.log('🔍 useKnowledgeItems: Starting query with params:', params);
-      
-      try {
-        let query = supabase
-          .from('knowledge_items')
-          .select(`
-            id, name, slug, description, is_published, is_featured, view_count,
-            emoji, icon, created_at, updated_at, background,
-            learning_value_summary, common_pitfalls,
-            category_id, domain_id, planning_focus_id,
-            knowledge_item_decision_levels (
-              decision_levels (id, name, slug, color, description)
-            ),
-            knowledge_item_categories (
-              knowledge_categories (id, name, slug, color, description)
-            ),
-            knowledge_item_domains (
-              activity_domains (id, name, slug, color, description)
-            ),
-            knowledge_use_cases (id, case_type, title, summary)
-          `);
+      let query = supabase
+        .from('knowledge_items')
+        .select(`
+          id, name, slug, description, is_published, is_featured, view_count,
+          emoji, icon, created_at, updated_at, background,
+          learning_value_summary, common_pitfalls,
+          category_id, domain_id, planning_focus_id,
+          knowledge_item_decision_levels (
+            decision_levels (id, name, slug, color, description)
+          ),
+          knowledge_item_categories (
+            knowledge_categories (id, name, slug, color, description)
+          ),
+          knowledge_item_domains (
+            activity_domains (id, name, slug, color, description)
+          ),
+          knowledge_use_cases (id, case_type, title, summary)
+        `);
 
       // Only filter by published status if not explicitly requesting unpublished items
       if (!params?.showUnpublished) {
@@ -275,7 +272,6 @@ export const useKnowledgeItems = (params?: {
 
       // Filter by category via junction table
       if (params?.categoryId) {
-        // Use inner join filter on junction table
         const { data: categoryItems } = await supabase
           .from('knowledge_item_categories')
           .select('knowledge_item_id')
@@ -285,11 +281,11 @@ export const useKnowledgeItems = (params?: {
           const itemIds = categoryItems.map(c => c.knowledge_item_id);
           query = query.in('id', itemIds);
         } else {
-          return []; // No items match this category
+          return [];
         }
       }
 
-      // Filter by decision level via junction table (supports both layerId and decisionLevelId)
+      // Filter by decision level via junction table
       const decisionLevelFilter = params?.decisionLevelId || params?.layerId;
       if (decisionLevelFilter) {
         const { data: levelItems } = await supabase
@@ -301,7 +297,7 @@ export const useKnowledgeItems = (params?: {
           const itemIds = levelItems.map(l => l.knowledge_item_id);
           query = query.in('id', itemIds);
         } else {
-          return []; // No items match this decision level
+          return [];
         }
       }
 
@@ -316,7 +312,7 @@ export const useKnowledgeItems = (params?: {
           const itemIds = domainItems.map(d => d.knowledge_item_id);
           query = query.in('id', itemIds);
         } else {
-          return []; // No items match this domain
+          return [];
         }
       }
 
@@ -342,28 +338,10 @@ export const useKnowledgeItems = (params?: {
         query = query.limit(params.limit);
       }
 
-      console.log('🔍 useKnowledgeItems: Executing main query...');
       const { data, error } = await query;
+      if (error) throw error;
       
-      // Debug logging
-      console.log('Knowledge Items Query:', {
-        params,
-        resultCount: data?.length ?? 0,
-        error: error?.message,
-        firstItem: data?.[0]?.name
-      });
-      
-      if (error) {
-        console.error('Knowledge Items Query Error:', error);
-        throw error;
-      }
-      
-      // Transform each item to include taxonomy arrays
       return (data || []).map(transformKnowledgeItem);
-      } catch (err) {
-        console.error('🔴 useKnowledgeItems: Caught error:', err);
-        throw err;
-      }
     },
   });
 };
