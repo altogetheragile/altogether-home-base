@@ -54,42 +54,42 @@ export const MultiSelectClassification: React.FC<MultiSelectClassificationProps>
   });
 
   return (
-    <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group h-full">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base flex items-center gap-2 group-hover:text-primary transition-colors">
-          <div className="p-1.5 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors">
+    <Card className="shadow-sm border-border/50 hover:shadow-md transition-all duration-200 group h-full flex flex-col">
+      <CardHeader className="pb-3 shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 group-hover:text-primary transition-colors">
+          <div className="p-1 bg-primary/10 rounded-md group-hover:bg-primary/20 transition-colors shrink-0">
             {icon}
           </div>
-          {title}
+          <span className="truncate">{title}</span>
           {selectedIds.length > 0 && (
-            <Badge variant="secondary" className="ml-auto text-xs">
+            <Badge variant="secondary" className="ml-auto text-xs shrink-0">
               {selectedIds.length} selected
             </Badge>
           )}
         </CardTitle>
-        <CardDescription className="text-sm">
+        <CardDescription className="text-xs line-clamp-2">
           {description}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex-1 flex flex-col min-h-0 pt-0">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+          <div className="flex items-center justify-center py-6">
+            <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground text-sm">
+          <div className="text-center py-4 text-muted-foreground text-xs">
             No items available
           </div>
         ) : (
-          <ScrollArea className="max-h-[280px] pr-4">
-            <div className="space-y-2">
+          <ScrollArea className="flex-1 h-[200px] -mx-2 px-2">
+            <div className="space-y-1.5 pb-2">
               {sortedItems.map((item) => {
                 const isSelected = selectedIds.includes(item.id);
                 return (
                   <label
                     key={item.id}
                     className={cn(
-                      "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                      "flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-all text-sm",
                       isSelected
                         ? "border-primary/50 bg-primary/5"
                         : "border-border/50 hover:border-border hover:bg-muted/30"
@@ -98,31 +98,31 @@ export const MultiSelectClassification: React.FC<MultiSelectClassificationProps>
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(checked) => handleToggle(item.id, checked as boolean)}
-                      className="mt-0.5"
+                      className="mt-0.5 h-4 w-4"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {item.color && (
                           <div
-                            className="w-3 h-3 rounded-full border border-white/20 shrink-0"
+                            className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0"
                             style={{ backgroundColor: item.color }}
                           />
                         )}
                         <span className={cn(
-                          "font-medium text-sm",
+                          "font-medium text-xs leading-tight",
                           isSelected && "text-primary"
                         )}>
                           {item.name}
                         </span>
                       </div>
                       {item.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
                           {item.description}
                         </p>
                       )}
                     </div>
                     {isSelected && (
-                      <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                     )}
                   </label>
                 );
@@ -133,13 +133,13 @@ export const MultiSelectClassification: React.FC<MultiSelectClassificationProps>
 
         {/* Selected Items Summary */}
         {selectedItems.length > 0 && (
-          <div className="pt-3 border-t border-border/30">
-            <div className="flex flex-wrap gap-2">
+          <div className="pt-2 mt-2 border-t border-border/30 shrink-0">
+            <div className="flex flex-wrap gap-1">
               {selectedItems.map((item) => (
                 <Badge
                   key={item.id}
                   variant="secondary"
-                  className="text-xs cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  className="text-[10px] px-1.5 py-0.5 cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors"
                   style={item.color ? {
                     backgroundColor: `${item.color}15`,
                     color: item.color,
@@ -148,7 +148,7 @@ export const MultiSelectClassification: React.FC<MultiSelectClassificationProps>
                   onClick={() => handleToggle(item.id, false)}
                 >
                   {item.name}
-                  <span className="ml-1 opacity-60">×</span>
+                  <span className="ml-0.5 opacity-60">×</span>
                 </Badge>
               ))}
             </div>
