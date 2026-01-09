@@ -85,7 +85,7 @@ const Knowledge = () => {
             </div>
             {isAdmin && (
               <Button asChild size="sm">
-                <Link to="/admin/knowledge/items/new?returnTo=knowledge">
+                <Link to="/knowledge/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Add
                 </Link>
