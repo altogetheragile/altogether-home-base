@@ -56,31 +56,71 @@ export const KnowledgeItemsTable = ({
   const { data: items, isLoading } = useQuery({
     queryKey: ['admin-knowledge-items-table', filters],
     queryFn: async () => {
+      // Build base query with junction tables
       let query = supabase
         .from('knowledge_items')
         .select(`
           *,
-          knowledge_categories (id, name, slug, color),
-          planning_focuses (id, name, slug, color, display_order),
-          activity_domains (id, name, slug, color),
+          knowledge_item_categories (
+            knowledge_categories (id, name, slug, color)
+          ),
+          knowledge_item_decision_levels (
+            decision_levels (id, name, slug, color)
+          ),
+          knowledge_item_domains (
+            activity_domains (id, name, slug, color)
+          ),
           knowledge_use_cases (id, case_type)
         `);
 
-      // Apply filters
+      // Apply search filter
       if (filters.search) {
         query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
+      // Filter by categories via junction table
       if (filters.categories.length > 0) {
-        query = query.in('category_id', filters.categories);
+        const { data: categoryItems } = await supabase
+          .from('knowledge_item_categories')
+          .select('knowledge_item_id')
+          .in('category_id', filters.categories);
+        
+        if (categoryItems && categoryItems.length > 0) {
+          const itemIds = [...new Set(categoryItems.map(c => c.knowledge_item_id))];
+          query = query.in('id', itemIds);
+        } else {
+          return [];
+        }
       }
 
+      // Filter by decision levels (was planningLayers)
       if (filters.planningLayers.length > 0) {
-        query = query.in('planning_focus_id', filters.planningLayers);
+        const { data: levelItems } = await supabase
+          .from('knowledge_item_decision_levels')
+          .select('knowledge_item_id')
+          .in('decision_level_id', filters.planningLayers);
+        
+        if (levelItems && levelItems.length > 0) {
+          const itemIds = [...new Set(levelItems.map(l => l.knowledge_item_id))];
+          query = query.in('id', itemIds);
+        } else {
+          return [];
+        }
       }
 
+      // Filter by domains via junction table
       if (filters.domains.length > 0) {
-        query = query.in('domain_id', filters.domains);
+        const { data: domainItems } = await supabase
+          .from('knowledge_item_domains')
+          .select('knowledge_item_id')
+          .in('domain_id', filters.domains);
+        
+        if (domainItems && domainItems.length > 0) {
+          const itemIds = [...new Set(domainItems.map(d => d.knowledge_item_id))];
+          query = query.in('id', itemIds);
+        } else {
+          return [];
+        }
       }
 
       if (filters.status !== 'all') {
@@ -93,8 +133,6 @@ export const KnowledgeItemsTable = ({
           query = query.order('name', { ascending: true });
           break;
         case 'popularity':
-          query = query.order('view_count', { ascending: false });
-          break;
         case 'views':
           query = query.order('view_count', { ascending: false });
           break;
@@ -106,7 +144,14 @@ export const KnowledgeItemsTable = ({
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      // Transform to extract arrays from junction tables
+      return (data || []).map(item => ({
+        ...item,
+        categories: (item.knowledge_item_categories || []).map((jt: any) => jt.knowledge_categories).filter(Boolean),
+        decision_levels: (item.knowledge_item_decision_levels || []).map((jt: any) => jt.decision_levels).filter(Boolean),
+        domains: (item.knowledge_item_domains || []).map((jt: any) => jt.activity_domains).filter(Boolean),
+      }));
     },
   });
 
@@ -183,17 +228,19 @@ export const KnowledgeItemsTable = ({
         is_published: false,
         is_featured: false,
         view_count: 0,
-        // Remove ID and timestamps
         id: undefined,
         created_at: undefined,
         updated_at: undefined,
         created_by: undefined,
         updated_by: undefined,
-        // Remove relations
-        knowledge_categories: undefined,
-        planning_focuses: undefined,
-        activity_domains: undefined,
-        knowledge_use_cases: undefined
+        // Remove junction table data
+        knowledge_item_categories: undefined,
+        knowledge_item_decision_levels: undefined,
+        knowledge_item_domains: undefined,
+        knowledge_use_cases: undefined,
+        categories: undefined,
+        decision_levels: undefined,
+        domains: undefined
       };
 
       await createKnowledgeItem.mutateAsync(duplicatedItem);
@@ -249,7 +296,6 @@ export const KnowledgeItemsTable = ({
   }
 
   const allSelected = items?.length > 0 && selectedItems.length === items.length;
-  const someSelected = selectedItems.length > 0 && selectedItems.length < (items?.length || 0);
 
   return (
     <div className="bg-card rounded border">
@@ -293,8 +339,8 @@ export const KnowledgeItemsTable = ({
 
               <TableCell className="py-2 text-right">
                 <span className="text-xs text-muted-foreground">
-                  {item.knowledge_use_cases?.filter(uc => uc.case_type === 'generic').length || 0}/
-                  {item.knowledge_use_cases?.filter(uc => uc.case_type === 'example').length || 0}
+                  {item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'generic').length || 0}/
+                  {item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'example').length || 0}
                 </span>
               </TableCell>
 

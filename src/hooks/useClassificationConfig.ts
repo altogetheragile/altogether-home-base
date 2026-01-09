@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface ClassificationConfig {
   id: string;
-  classification_type: 'categories' | 'planning-focuses' | 'activity-domains';
+  classification_type: 'categories' | 'planning-focuses' | 'activity-domains' | 'decision-levels';
   is_visible: boolean;
   display_order: number;
   custom_label: string | null;
@@ -78,11 +78,21 @@ export const useVisibleClassifications = () => {
   
   return {
     categories: configs?.find(c => c.classification_type === 'categories')?.is_visible ?? true,
+    // Keep planningFocuses for backward compatibility but also add decisionLevels
     planningFocuses: configs?.find(c => c.classification_type === 'planning-focuses')?.is_visible ?? true,
+    decisionLevels: configs?.find(c => c.classification_type === 'decision-levels')?.is_visible ?? true,
     activityDomains: configs?.find(c => c.classification_type === 'activity-domains')?.is_visible ?? true,
     getLabel: (type: string) => {
       const config = configs?.find(c => c.classification_type === type);
-      return config?.custom_label || type;
+      if (config?.custom_label) return config.custom_label;
+      // Default labels
+      const defaultLabels: Record<string, string> = {
+        'categories': 'Categories',
+        'decision-levels': 'Decision Levels',
+        'activity-domains': 'Activity Domains',
+        'planning-focuses': 'Planning Focuses'
+      };
+      return defaultLabels[type] || type;
     },
   };
 };

@@ -21,8 +21,8 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
   const { commentCount } = useKnowledgeItemComments(item.id);
   const visibility = useVisibleClassifications();
   
-  const categoryColor = item.knowledge_categories?.color || '#3B82F6';
-  const domainColor = item.activity_domains?.color || '#10B981';
+  // Get primary category color for card background
+  const primaryCategoryColor = item.categories?.[0]?.color || '#3B82F6';
   
   const handleLikeClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -33,10 +33,8 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
   // Get first use case title or summary
   const useCase = item.knowledge_use_cases?.[0]?.title || item.knowledge_use_cases?.[0]?.summary || 'General application';
   
-  // Get up to 3 tags - safely handle undefined
-  const tags = Array.isArray(item.knowledge_item_tags)
-    ? item.knowledge_item_tags.slice(0, 3).map(tag => tag.knowledge_tags.name)
-    : [];
+  // Get up to 3 tags from the new tags array
+  const tags = (item.tags || []).slice(0, 3).map(tag => tag.name);
   
   // Author - only show if available
   const authorName = item.author;
@@ -45,7 +43,7 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
     <Card 
       className="group border-border hover:shadow-lg transition-all duration-200 overflow-hidden h-full flex flex-col relative"
       style={{
-        backgroundColor: `${categoryColor}08`,
+        backgroundColor: `${primaryCategoryColor}08`,
       }}
     >
       <CardHeader className="flex-none pb-2 space-y-2">
@@ -57,31 +55,35 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
         </div>
         
         <div className="flex flex-wrap gap-1.5">
-          {visibility.categories && item.knowledge_categories && (
+          {/* Categories (multi) */}
+          {visibility.categories && item.categories?.map((category) => (
             <Badge 
+              key={category.id}
               variant="secondary"
               className="text-xs"
               style={{ 
-                backgroundColor: `${categoryColor}20`,
-                color: categoryColor,
-                borderColor: `${categoryColor}30`
+                backgroundColor: `${category.color}20`,
+                color: category.color,
+                borderColor: `${category.color}30`
               }}
             >
-              {item.knowledge_categories.name}
+              {category.name}
             </Badge>
-          )}
-          {visibility.activityDomains && item.activity_domains && (
+          ))}
+          {/* Activity Domains (multi) */}
+          {visibility.activityDomains && item.domains?.map((domain) => (
             <Badge 
+              key={domain.id}
               variant="outline"
               className="text-xs"
               style={{
-                borderColor: domainColor,
-                color: domainColor
+                borderColor: domain.color,
+                color: domain.color
               }}
             >
-              {item.activity_domains.name}
+              {domain.name}
             </Badge>
-          )}
+          ))}
         </div>
         
         {item.description && (
