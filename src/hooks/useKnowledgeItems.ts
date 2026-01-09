@@ -517,6 +517,14 @@ export interface KnowledgeItemInput {
   domain_ids?: string[];
   tag_ids?: string[];
   
+  // Primary classification support (Phase 3)
+  primary_decision_level_id?: string | null;
+  primary_category_id?: string | null;
+  primary_domain_id?: string | null;
+  decision_level_rationale?: string | null;
+  category_rationale?: string | null;
+  domain_rationale?: string | null;
+  
   // Legacy single FK fields (still supported for backwards compatibility)
   category_id?: string;
   planning_focus_id?: string;
@@ -531,8 +539,13 @@ export const useCreateKnowledgeItem = () => {
     mutationFn: async (data: KnowledgeItemInput) => {
       console.log('🚀 useCreateKnowledgeItem: Starting creation with data:', JSON.stringify(data, null, 2));
       
-      // Extract taxonomy IDs
-      const { decision_level_ids, category_ids, domain_ids, tag_ids, ...itemData } = data;
+      // Extract taxonomy IDs and primary/rationale fields
+      const { 
+        decision_level_ids, category_ids, domain_ids, tag_ids,
+        primary_decision_level_id, primary_category_id, primary_domain_id,
+        decision_level_rationale, category_rationale, domain_rationale,
+        ...itemData 
+      } = data;
       
       // Use whitelist to pick only valid database columns
       const cleanItemData = pickKnowledgeItemColumns(itemData);
@@ -570,7 +583,12 @@ export const useCreateKnowledgeItem = () => {
         if (decision_level_ids && decision_level_ids.length > 0) {
           junctionInserts.push(
             supabase.from('knowledge_item_decision_levels').insert(
-              decision_level_ids.map(id => ({ knowledge_item_id: itemId, decision_level_id: id }))
+              decision_level_ids.map(id => ({ 
+                knowledge_item_id: itemId, 
+                decision_level_id: id,
+                is_primary: id === primary_decision_level_id,
+                rationale: id === primary_decision_level_id ? decision_level_rationale : null,
+              }))
             )
           );
         }
@@ -578,7 +596,12 @@ export const useCreateKnowledgeItem = () => {
         if (category_ids && category_ids.length > 0) {
           junctionInserts.push(
             supabase.from('knowledge_item_categories').insert(
-              category_ids.map(id => ({ knowledge_item_id: itemId, category_id: id }))
+              category_ids.map(id => ({ 
+                knowledge_item_id: itemId, 
+                category_id: id,
+                is_primary: id === primary_category_id,
+                rationale: id === primary_category_id ? category_rationale : null,
+              }))
             )
           );
         }
@@ -586,7 +609,12 @@ export const useCreateKnowledgeItem = () => {
         if (domain_ids && domain_ids.length > 0) {
           junctionInserts.push(
             supabase.from('knowledge_item_domains').insert(
-              domain_ids.map(id => ({ knowledge_item_id: itemId, domain_id: id }))
+              domain_ids.map(id => ({ 
+                knowledge_item_id: itemId, 
+                domain_id: id,
+                is_primary: id === primary_domain_id,
+                rationale: id === primary_domain_id ? domain_rationale : null,
+              }))
             )
           );
         }
@@ -661,8 +689,13 @@ export const useUpdateKnowledgeItem = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: KnowledgeItemInput & { id: string }) => {
-      // Extract taxonomy IDs
-      const { decision_level_ids, category_ids, domain_ids, tag_ids, ...itemData } = data;
+      // Extract taxonomy IDs and primary/rationale fields
+      const { 
+        decision_level_ids, category_ids, domain_ids, tag_ids,
+        primary_decision_level_id, primary_category_id, primary_domain_id,
+        decision_level_rationale, category_rationale, domain_rationale,
+        ...itemData 
+      } = data;
       
       // Use whitelist to pick only valid database columns
       const cleanItemData = pickKnowledgeItemColumns(itemData);
@@ -697,12 +730,17 @@ export const useUpdateKnowledgeItem = () => {
         const junctionUpdates = [];
         
         if (decision_level_ids !== undefined) {
-          // Delete existing and insert new
+          // Delete existing and insert new with is_primary/rationale
           junctionUpdates.push(
             supabase.from('knowledge_item_decision_levels').delete().eq('knowledge_item_id', id).then(() => 
               decision_level_ids.length > 0 
                 ? supabase.from('knowledge_item_decision_levels').insert(
-                    decision_level_ids.map(dlId => ({ knowledge_item_id: id, decision_level_id: dlId }))
+                    decision_level_ids.map(dlId => ({ 
+                      knowledge_item_id: id, 
+                      decision_level_id: dlId,
+                      is_primary: dlId === primary_decision_level_id,
+                      rationale: dlId === primary_decision_level_id ? decision_level_rationale : null,
+                    }))
                   )
                 : Promise.resolve({ error: null })
             )
@@ -714,7 +752,12 @@ export const useUpdateKnowledgeItem = () => {
             supabase.from('knowledge_item_categories').delete().eq('knowledge_item_id', id).then(() =>
               category_ids.length > 0
                 ? supabase.from('knowledge_item_categories').insert(
-                    category_ids.map(catId => ({ knowledge_item_id: id, category_id: catId }))
+                    category_ids.map(catId => ({ 
+                      knowledge_item_id: id, 
+                      category_id: catId,
+                      is_primary: catId === primary_category_id,
+                      rationale: catId === primary_category_id ? category_rationale : null,
+                    }))
                   )
                 : Promise.resolve({ error: null })
             )
@@ -726,7 +769,12 @@ export const useUpdateKnowledgeItem = () => {
             supabase.from('knowledge_item_domains').delete().eq('knowledge_item_id', id).then(() =>
               domain_ids.length > 0
                 ? supabase.from('knowledge_item_domains').insert(
-                    domain_ids.map(domId => ({ knowledge_item_id: id, domain_id: domId }))
+                    domain_ids.map(domId => ({ 
+                      knowledge_item_id: id, 
+                      domain_id: domId,
+                      is_primary: domId === primary_domain_id,
+                      rationale: domId === primary_domain_id ? domain_rationale : null,
+                    }))
                   )
                 : Promise.resolve({ error: null })
             )
