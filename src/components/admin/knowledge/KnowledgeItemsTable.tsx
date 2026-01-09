@@ -33,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
+import { KnowledgeItemsFiltersType } from './types';
 import { useDeleteKnowledgeItem, useUpdateKnowledgeItem, useCreateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';

@@ -63,7 +63,7 @@ const EditInstructor = lazy(() => import('@/pages/admin/EditInstructor'));
 const AdminLocations = lazy(() => import('@/pages/admin/AdminLocations'));
 
 // Admin Pages - Knowledge Management
-const AdminKnowledgeItems = lazy(() => import('@/pages/admin/AdminKnowledgeItems'));
+
 const CreateKnowledgeItem = lazy(() => import('@/pages/admin/CreateKnowledgeItem'));
 const EditKnowledgeItem = lazy(() => import('@/pages/admin/EditKnowledgeItem'));
 const CreateKnowledgeUseCase = lazy(() => import('@/pages/admin/CreateKnowledgeUseCase'));
@@ -317,11 +317,6 @@ export const AdminRoutes = () => {
         } />
         
         {/* Knowledge Management */}
-        <Route path="knowledge/items" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminKnowledgeItems />
-          </Suspense>
-        } />
         <Route path="knowledge/items/:id/edit" element={
           <Suspense fallback={<LoadingFallback />}>
             <EditKnowledgeItem />

@@ -26,10 +26,10 @@ const AdminDashboard = () => {
               New Event
             </Button>
           </Link>
-          <Link to="/admin/knowledge/items/new">
+          <Link to="/knowledge">
             <Button variant="outline">
               <Plus className="h-4 w-4 mr-2" />
-              New Knowledge Item
+              Manage Knowledge
             </Button>
           </Link>
         </div>

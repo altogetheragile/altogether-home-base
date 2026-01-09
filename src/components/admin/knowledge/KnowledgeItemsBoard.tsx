@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { KnowledgeItemsFiltersType } from './KnowledgeItemsDashboard';
+import { KnowledgeItemsFiltersType } from './types';
 import { formatDistanceToNow } from 'date-fns';
 
 interface KnowledgeItemsBoardProps {
