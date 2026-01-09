@@ -1,29 +1,12 @@
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { KnowledgeItemEditorPage } from '@/components/admin/knowledge/KnowledgeItemEditorPage';
-import type { KnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useKnowledgeItemById } from '@/hooks/useKnowledgeItems';
 
 export default function EditKnowledgeItem() {
   const { id } = useParams<{ id: string }>();
 
-  // Fetch the actual knowledge item if editing
-  const { data: knowledgeItem, isLoading, error } = useQuery({
-    queryKey: ['knowledge-item', id],
-    queryFn: async (): Promise<KnowledgeItem | null> => {
-      if (!id) return null;
-      
-      const { data, error } = await supabase
-        .from('knowledge_items')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
+  // Use the standardized hook that fetches all taxonomy data
+  const { data: knowledgeItem, isLoading, error } = useKnowledgeItemById(id || '');
 
   if (isLoading) {
     return (

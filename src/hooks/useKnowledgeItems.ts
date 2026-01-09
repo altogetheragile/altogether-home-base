@@ -353,13 +353,11 @@ export const useKnowledgeItemById = (id: string) => {
       const { data, error } = await supabase
         .from('knowledge_items')
         .select(`
-          id, name, slug, description,
-          knowledge_categories (id, name, color),
-          activity_domains (id, name, color),
-          planning_focuses (id, name, color),
-          knowledge_item_tags (
-            knowledge_tags (id, name, slug)
-          ),
+          id, name, slug, description, is_published, is_featured, view_count,
+          emoji, icon, created_at, updated_at, background, source,
+          learning_value_summary, common_pitfalls, evidence_sources, related_techniques,
+          key_terminology, primary_publication_id,
+          category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
             decision_levels (id, name, slug, color, description)
           ),
@@ -368,7 +366,11 @@ export const useKnowledgeItemById = (id: string) => {
           ),
           knowledge_item_domains (
             activity_domains (id, name, slug, color, description)
-          )
+          ),
+          knowledge_item_tags (
+            knowledge_tags (id, name, slug)
+          ),
+          knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
         `)
         .eq('id', id)
         .single();
