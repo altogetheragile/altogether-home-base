@@ -321,7 +321,6 @@ const AdminEventBlueprints: React.FC = () => {
                   <TableHead>Blueprint</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Difficulty</TableHead>
-                  <TableHead>Target Audience</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -345,14 +344,11 @@ const AdminEventBlueprints: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getDifficultyColor(blueprint.difficulty_rating)}>
-                        {blueprint.difficulty_rating || 'intermediate'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {blueprint.target_audience || 'Not specified'}
-                      </div>
+                      {blueprint.difficulty_rating ? (
+                        <Badge className={getDifficultyColor(blueprint.difficulty_rating)}>
+                          {blueprint.difficulty_rating}
+                        </Badge>
+                      ) : '—'}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

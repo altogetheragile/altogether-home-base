@@ -27,6 +27,7 @@ const AdminLayout = lazy(() => import('@/components/admin/AdminLayout'));
 // Public Pages
 const EventDetail = lazy(() => import('@/pages/EventDetail'));
 const KnowledgeDetail = lazy(() => import('@/pages/KnowledgeDetail'));
+const Technique = lazy(() => import('@/pages/Technique'));
 const Testimonials = lazy(() => import('@/pages/Testimonials'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
@@ -69,7 +70,6 @@ const EditKnowledgeItem = lazy(() => import('@/pages/admin/EditKnowledgeItem'));
 const CreateKnowledgeUseCase = lazy(() => import('@/pages/admin/CreateKnowledgeUseCase'));
 const CreateKnowledgeTemplate = lazy(() => import('@/pages/admin/CreateKnowledgeTemplate'));
 const AdminTaxonomy = lazy(() => import('@/pages/admin/AdminTaxonomy'));
-const AdminKnowledgeLearningPaths = lazy(() => import('@/pages/admin/AdminKnowledgeLearningPaths'));
 const AdminKnowledgeAnalyticsRoute = lazy(() => import('@/pages/admin/AdminKnowledgeAnalyticsRoute'));
 const AdminKnowledgeTemplates = lazy(() => import('@/pages/admin/AdminKnowledgeTemplates'));
 const AdminKnowledgeImport = lazy(() => import('@/pages/admin/AdminKnowledgeImport'));
@@ -131,7 +131,7 @@ export const PublicRoutes = () => {
       <Route path="/knowledge/:slug" element={
         <SiteSettingsRouteGuard feature="knowledge">
           <Suspense fallback={<LoadingFallback />}>
-            <KnowledgeDetail />
+            <Technique />
           </Suspense>
         </SiteSettingsRouteGuard>
       } />
@@ -366,11 +366,6 @@ export const AdminRoutes = () => {
             <AdminTaxonomy />
           </Suspense>
         } />
-        <Route path="knowledge/learning-paths" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminKnowledgeLearningPaths />
-          </Suspense>
-        } />
         <Route path="knowledge/import" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminKnowledgeImport />
@@ -521,21 +516,16 @@ export const DynamicRoutes = () => {
   // Special page components - must be defined BEFORE catch-all
   const Knowledge = lazy(() => import('@/pages/Knowledge'));
   const Events = lazy(() => import('@/pages/Events'));
+  const Coaching = lazy(() => import('@/pages/Coaching'));
   const Blog = lazy(() => import('@/pages/Blog'));
 
   return (
     <>
-      {/* Home Page */}
+      {/* Home Page — renders the new designed homepage directly */}
       <Route path="/" element={
-        <ErrorBoundary fallback={
-          <Suspense fallback={<LoadingFallback />}>
-            <Home />
-          </Suspense>
-        }>
-          <Suspense fallback={<LoadingFallback />}>
-            <DynamicPageRenderer />
-          </Suspense>
-        </ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <Home />
+        </Suspense>
       } />
       
       {/* Special Pages - Always defined, guarded by SiteSettingsRouteGuard */}
@@ -559,6 +549,14 @@ export const DynamicRoutes = () => {
         </SiteSettingsRouteGuard>
       } />
       
+      <Route path="/coaching" element={
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Coaching />
+          </Suspense>
+        </ErrorBoundary>
+      } />
+
       <Route path="/blog" element={
         <SiteSettingsRouteGuard feature="blog">
           <ErrorBoundary>

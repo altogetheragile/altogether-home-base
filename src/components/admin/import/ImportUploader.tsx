@@ -14,7 +14,6 @@ const targetEntities = [
   { value: 'instructors', label: 'Instructors' },
   { value: 'categories', label: 'Categories' },
   { value: 'tags', label: 'Tags' },
-  { value: 'learning_paths', label: 'Learning Paths' },
 ];
 
 export const ImportUploader: React.FC = () => {

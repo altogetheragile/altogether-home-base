@@ -152,34 +152,33 @@ export const ContentAnalyticsDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Popular Searches */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Popular Searches</CardTitle>
-            <CardDescription>Most common search queries</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analytics?.popularSearches?.map((search, index) => (
-                <div key={search.query} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="w-6 h-6 rounded-full p-0 flex items-center justify-center text-xs">
-                      {index + 1}
-                    </Badge>
-                    <span className="text-sm font-medium">"{search.query}"</span>
+        {/* Popular Searches — only show when there's data */}
+        {analytics?.popularSearches && analytics.popularSearches.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Popular Searches</CardTitle>
+              <CardDescription>Most common search queries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {analytics.popularSearches.map((search, index) => (
+                  <div key={search.query} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="w-6 h-6 rounded-full p-0 flex items-center justify-center text-xs">
+                        {index + 1}
+                      </Badge>
+                      <span className="text-sm font-medium">"{search.query}"</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Search className="h-3 w-3" />
+                      {search.count}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Search className="h-3 w-3" />
-                    {search.count}
-                  </div>
-                </div>
-              ))}
-              {!analytics?.popularSearches?.length && (
-                <p className="text-sm text-muted-foreground">No search data available</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Failed Searches */}
         <Card>
@@ -219,15 +218,16 @@ export const ContentAnalyticsDashboard = () => {
             <CardDescription>Content engagement overview</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={analytics?.topViewed?.slice(0, 8) || []}>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={analytics?.topViewed?.slice(0, 8) || []} margin={{ bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 12 }}
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11 }}
                   angle={-45}
                   textAnchor="end"
-                  height={80}
+                  height={100}
+                  interval={0}
                 />
                 <YAxis />
                 <Tooltip />

@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileSpreadsheet, CheckCircle, AlertCircle } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Info, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/fileParser';
 import { useCreateDataImport, useCreateStagingData } from '@/hooks/useDataImports';
@@ -245,10 +246,11 @@ const KnowledgeBaseImportManager: React.FC = () => {
                 <Upload className="h-5 w-5 text-muted-foreground" />
               </div>
               
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Please ensure your Excel file contains the required columns: Knowledge Item, Category, Planning Focus, and Domain of Interest.
+              <Alert className="border-blue-200 bg-blue-50">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertTitle className="text-blue-900">Required columns</AlertTitle>
+                <AlertDescription className="text-blue-800">
+                  Your Excel file must contain these columns: <strong>Knowledge Item</strong>, <strong>Category</strong>, <strong>Planning Focus</strong>, and <strong>Domain of Interest</strong>. See the Column Mapping Reference below for all supported columns.
                 </AlertDescription>
               </Alert>
             </div>
@@ -300,25 +302,36 @@ const KnowledgeBaseImportManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Column Mapping Reference */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Column Mapping Reference</CardTitle>
-          <CardDescription>
-            How Excel columns map to Knowledge Base fields
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {Object.entries(KB_COLUMN_MAPPING).map(([excel, db]) => (
-              <div key={excel} className="flex justify-between p-2 bg-gray-50 rounded">
-                <span className="font-mono text-blue-600">{excel}</span>
-                <span className="text-muted-foreground">→ {db}</span>
+      {/* Column Mapping Reference — collapsed by default */}
+      <Collapsible>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Column Mapping Reference</CardTitle>
+                  <CardDescription>
+                    How Excel columns map to Knowledge Base fields
+                  </CardDescription>
+                </div>
+                <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {Object.entries(KB_COLUMN_MAPPING).map(([excel, db]) => (
+                  <div key={excel} className="flex justify-between p-2 bg-gray-50 rounded">
+                    <span className="font-mono text-blue-600">{excel}</span>
+                    <span className="text-muted-foreground">→ {db}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };

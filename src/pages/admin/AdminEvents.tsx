@@ -174,7 +174,7 @@ const AdminEvents = () => {
 
               return (
                 <TableRow key={eventId}>
-                  <TableCell className="font-medium max-w-[200px]">
+                  <TableCell className="font-medium max-w-[300px]">
                     <span className="block truncate" title={title}>{title}</span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{formattedDate}</TableCell>

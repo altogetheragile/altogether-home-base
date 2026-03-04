@@ -181,9 +181,8 @@ const AdminEventCategories = () => {
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
+                          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
-                            Delete
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

@@ -1,6 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Route, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare, Database } from 'lucide-react';
-import Navigation from '@/components/Navigation';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare, Database, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import AccessDenied from '@/components/AccessDenied';
@@ -95,12 +94,6 @@ const AdminLayout = () => {
       href: '/admin/knowledge/taxonomy',
       icon: Layers,
       description: 'Manage decision levels, categories, domains, and tags'
-    },
-    {
-      label: 'Learning Paths',
-      href: '/admin/knowledge/learning-paths',
-      icon: Route,
-      description: 'Create structured learning journeys'
     },
     {
       label: 'Imports',
@@ -228,20 +221,29 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
       <div className="max-w-7xl mx-auto">
         {/* Admin Header */}
         <div className="bg-white shadow-sm border-b">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Settings className="h-6 w-6 text-primary" />
-                <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+                <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+                  <Settings className="h-6 w-6 text-primary" />
+                  <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+                </Link>
               </div>
-              
+
               {/* User Role Info */}
               <div className="flex items-center space-x-4">
+                <a
+                  href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-1 text-sm text-gray-600 hover:text-primary transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>View Site</span>
+                </a>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -292,7 +294,7 @@ const AdminLayout = () => {
 
           {/* Items Grid - Only show items for active tab (skip for dashboard and users) */}
           {activeTab !== 'dashboard' && activeTab !== 'users' && (
-            <div className="px-6 py-3">
+            <div className="px-6 py-3 overflow-x-auto">
               <div className="flex gap-2">
                 {(() => {
                   // Get items for active tab
@@ -320,7 +322,7 @@ const AdminLayout = () => {
                         <TooltipTrigger asChild>
                           <Link
                             to={item.href}
-                            className={`group flex flex-1 items-center justify-center p-1.5 bg-white rounded-md border ${
+                            className={`group flex flex-shrink-0 min-w-[80px] flex-1 items-center justify-center p-1.5 bg-white rounded-md border ${
                               isActive(item.href) 
                                 ? 'border-primary/40 bg-primary/5' 
                                 : 'border-gray-200'
