@@ -5,7 +5,6 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Navigate } from 'react-router-dom';
 import AccessDenied from '@/components/AccessDenied';
 import { supabase } from '@/integrations/supabase/client';
-import { resetAuthState } from '@/utils/authDebug';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -58,41 +57,6 @@ const ProtectedRoute = ({ children, requiredRole, requireAAL2 = false }: Protect
     checkAal();
     return () => { cancelled = true; };
   }, [requireAAL2, user]);
-  // Debug logging for loading states
-  console.log('🔍 ProtectedRoute Debug:', {
-    loading,
-    roleLoading,
-    requireAAL2,
-    aalLoading,
-    aalLevel,
-    userRole,
-    userId: user?.id,
-    userEmail: user?.email,
-    timestamp: new Date().toISOString()
-  });
-
-  // Add session debugging
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('🔍 ProtectedRoute Session Check:', {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          sessionUserId: session?.user?.id,
-          sessionUserEmail: session?.user?.email,
-          sessionError: error,
-          accessToken: session?.access_token ? 'present' : 'missing'
-        });
-      } catch (err) {
-        console.error('❌ ProtectedRoute Session Error:', err);
-      }
-    };
-    
-    if (user) {
-      checkSession();
-    }
-  }, [user]);
 
   // Early redirect for unauthenticated users - no need to show loading
   if (!loading && !user) {
@@ -112,18 +76,6 @@ const ProtectedRoute = ({ children, requiredRole, requireAAL2 = false }: Protect
         <div className="text-center space-y-4">
           <div data-testid="loading-spinner" className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="text-gray-600">Checking {loadingReasons.join(', ')}...</p>
-          {process.env.NODE_ENV === 'development' && (
-            <div className="text-xs text-gray-400 max-w-md space-y-2">
-              <p>Debug: loading={String(loading)}, roleLoading={String(roleLoading)}</p>
-              <p>User: {user?.email || 'none'}, Role: {userRole || 'none'}</p>
-              <button 
-                onClick={resetAuthState}
-                className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
-              >
-                Reset Auth State
-              </button>
-            </div>
-          )}
         </div>
       </div>
     );

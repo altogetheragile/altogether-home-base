@@ -38,71 +38,18 @@ const AdminDashboard = () => {
       {/* Stats Cards */}
       <AdminStatsCards stats={stats} isLoading={isLoading} />
 
-      {/* Content Grid */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Recent Activity Feed */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Admin Activity</CardTitle>
-            <CardDescription>
-              Latest actions performed by administrators
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RecentActivityFeed />
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats Summary */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Content Overview</CardTitle>
-            <CardDescription>
-              Summary of your content distribution
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-muted animate-pulse rounded" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Published Events</p>
-                    <p className="text-xs text-muted-foreground">Active listings</p>
-                  </div>
-                  <div className="text-2xl font-bold">{stats?.totalEvents || 0}</div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Knowledge Items</p>
-                    <p className="text-xs text-muted-foreground">Published articles</p>
-                  </div>
-                  <div className="text-2xl font-bold">{stats?.totalKnowledgeItems || 0}</div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Total Users</p>
-                    <p className="text-xs text-muted-foreground">Registered accounts</p>
-                  </div>
-                  <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Event Registrations</p>
-                    <p className="text-xs text-muted-foreground">All time</p>
-                  </div>
-                  <div className="text-2xl font-bold">{stats?.totalRegistrations || 0}</div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Recent Activity Feed */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Admin Activity</CardTitle>
+          <CardDescription>
+            Latest actions performed by administrators
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RecentActivityFeed />
+        </CardContent>
+      </Card>
 
       {/* Additional Quick Links */}
       <Card>

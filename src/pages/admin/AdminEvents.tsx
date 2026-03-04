@@ -135,8 +135,8 @@ const AdminEvents = () => {
         </Link>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="min-w-[800px]">
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
@@ -174,8 +174,10 @@ const AdminEvents = () => {
 
               return (
                 <TableRow key={eventId}>
-                  <TableCell className="font-medium">{title}</TableCell>
-                  <TableCell>{formattedDate}</TableCell>
+                  <TableCell className="font-medium max-w-[200px]">
+                    <span className="block truncate" title={title}>{title}</span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">{formattedDate}</TableCell>
                   <TableCell>{instructorName}</TableCell>
                   <TableCell>{locationName}</TableCell>
                   <TableCell>

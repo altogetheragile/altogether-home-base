@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 
 interface LogEntry {
   id: string;
@@ -56,6 +65,11 @@ interface AuthLog {
 const AdminLogs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState('application');
+  const [appPage, setAppPage] = useState(1);
+  const [dbPage, setDbPage] = useState(1);
+  const [authPage, setAuthPage] = useState(1);
+  const logsPageSize = 25;
 
   // Fetch database logs from Supabase analytics
   const { data: databaseLogs, isLoading: dbLoading, refetch: refetchDbLogs } = useQuery({
@@ -163,6 +177,58 @@ const AdminLogs = () => {
     }
   };
 
+  const renderPagination = (currentPage: number, setCurrentPage: (p: number) => void, totalItems: number) => {
+    const totalPages = Math.ceil(totalItems / logsPageSize);
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex items-center justify-between mt-4">
+        <p className="text-sm text-muted-foreground">
+          Showing {(currentPage - 1) * logsPageSize + 1}–{Math.min(currentPage * logsPageSize, totalItems)} of {totalItems}
+        </p>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .reduce<(number | 'ellipsis')[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('ellipsis');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, i) =>
+                item === 'ellipsis' ? (
+                  <PaginationItem key={`ellipsis-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={item}>
+                    <PaginationLink
+                      isActive={currentPage === item}
+                      onClick={() => setCurrentPage(item as number)}
+                      className="cursor-pointer"
+                    >
+                      {item}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    );
+  };
+
   const filteredApplicationLogs = (applicationLogs || []).filter(log => {
     const matchesSearch = log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          log.source.toLowerCase().includes(searchTerm.toLowerCase());
@@ -220,14 +286,14 @@ const AdminLogs = () => {
                 <Input
                   placeholder="Search logs..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => { setSearchTerm(e.target.value); setAppPage(1); setDbPage(1); setAuthPage(1); }}
                   className="pl-10"
                 />
               </div>
             </div>
             <select
               value={selectedLevel}
-              onChange={(e) => setSelectedLevel(e.target.value)}
+              onChange={(e) => { setSelectedLevel(e.target.value); setAppPage(1); }}
               className="px-3 py-2 border border-input rounded-md bg-background"
             >
               <option value="all">All Levels</option>
@@ -245,7 +311,7 @@ const AdminLogs = () => {
       </Card>
 
       {/* Log Tabs */}
-      <Tabs defaultValue="application" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setAppPage(1); setDbPage(1); setAuthPage(1); }} className="space-y-4">
         <TooltipProvider>
           <TabsList className="flex w-full h-auto min-h-[48px] p-1 gap-1">
             <Tooltip>
@@ -291,45 +357,48 @@ const AdminLogs = () => {
                     No logs found matching your criteria
                   </div>
                 ) : (
-                  filteredApplicationLogs.map((log) => (
-                    <div key={log.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3 flex-1">
-                          {getLevelIcon(log.level)}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <Badge variant={getLevelBadgeVariant(log.level) as any}>
-                                {log.level.toUpperCase()}
-                              </Badge>
-                              <Badge variant="outline">{log.source}</Badge>
-                              <span className="text-sm text-muted-foreground">
-                                {format(new Date(log.timestamp), 'MMM dd, yyyy HH:mm:ss')}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium text-foreground mb-2">
-                              {log.message}
-                            </p>
-                            {log.data?.userEmail && (
-                              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                <User className="h-3 w-3" />
-                                <span>{log.data.userEmail}</span>
+                  <>
+                    {filteredApplicationLogs.slice((appPage - 1) * logsPageSize, appPage * logsPageSize).map((log) => (
+                      <div key={log.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-3 flex-1">
+                            {getLevelIcon(log.level)}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <Badge variant={getLevelBadgeVariant(log.level) as any}>
+                                  {log.level.toUpperCase()}
+                                </Badge>
+                                <Badge variant="outline">{log.source}</Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(log.timestamp), 'MMM dd, yyyy HH:mm:ss')}
+                                </span>
                               </div>
-                            )}
-                            {log.data && (
-                              <details className="mt-2">
-                                <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                                  View Details
-                                </summary>
-                                <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto">
-                                  {JSON.stringify(log.data, null, 2)}
-                                </pre>
-                              </details>
-                            )}
+                              <p className="text-sm font-medium text-foreground mb-2">
+                                {log.message}
+                              </p>
+                              {log.data?.userEmail && (
+                                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                  <User className="h-3 w-3" />
+                                  <span>{log.data.userEmail}</span>
+                                </div>
+                              )}
+                              {log.data && (
+                                <details className="mt-2">
+                                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                                    View Details
+                                  </summary>
+                                  <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto">
+                                    {JSON.stringify(log.data, null, 2)}
+                                  </pre>
+                                </details>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    {renderPagination(appPage, setAppPage, filteredApplicationLogs.length)}
+                  </>
                 )}
               </div>
             </CardContent>
@@ -351,29 +420,32 @@ const AdminLogs = () => {
                     No database logs available
                   </div>
                 ) : (
-                  databaseLogs.map((log) => (
-                    <div key={log.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-start space-x-3">
-                        {getLevelIcon(log.error_severity)}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Badge variant={getLevelBadgeVariant(log.error_severity) as any}>
-                              {log.error_severity}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(Number(log.timestamp) / 1000), 'MMM dd, yyyy HH:mm:ss')}
-                            </span>
+                  <>
+                    {databaseLogs.slice((dbPage - 1) * logsPageSize, dbPage * logsPageSize).map((log) => (
+                      <div key={log.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          {getLevelIcon(log.error_severity)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <Badge variant={getLevelBadgeVariant(log.error_severity) as any}>
+                                {log.error_severity}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(Number(log.timestamp) / 1000), 'MMM dd, yyyy HH:mm:ss')}
+                              </span>
+                            </div>
+                            <p className="text-sm font-medium text-foreground">
+                              {log.event_message}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Instance: {log.identifier}
+                            </p>
                           </div>
-                          <p className="text-sm font-medium text-foreground">
-                            {log.event_message}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Instance: {log.identifier}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    {renderPagination(dbPage, setDbPage, databaseLogs.length)}
+                  </>
                 )}
               </div>
             </CardContent>
@@ -395,39 +467,42 @@ const AdminLogs = () => {
                     No auth logs available
                   </div>
                 ) : (
-                  authLogs.map((log) => (
-                    <div key={log.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-start space-x-3">
-                        {getLevelIcon(log.level)}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Badge variant={getLevelBadgeVariant(log.level) as any}>
-                              {log.level.toUpperCase()}
-                            </Badge>
-                            {log.status && (
-                              <Badge variant="outline">Status: {log.status}</Badge>
+                  <>
+                    {authLogs.slice((authPage - 1) * logsPageSize, authPage * logsPageSize).map((log) => (
+                      <div key={log.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          {getLevelIcon(log.level)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <Badge variant={getLevelBadgeVariant(log.level) as any}>
+                                {log.level.toUpperCase()}
+                              </Badge>
+                              {log.status && (
+                                <Badge variant="outline">Status: {log.status}</Badge>
+                              )}
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(Number(log.timestamp) / 1000), 'MMM dd, yyyy HH:mm:ss')}
+                              </span>
+                            </div>
+                            <p className="text-sm font-medium text-foreground">
+                              {log.msg || log.event_message}
+                            </p>
+                            {log.path && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Path: {log.path}
+                              </p>
                             )}
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(Number(log.timestamp) / 1000), 'MMM dd, yyyy HH:mm:ss')}
-                            </span>
+                            {log.error && (
+                              <p className="text-xs text-red-600 mt-1">
+                                Error: {log.error}
+                              </p>
+                            )}
                           </div>
-                          <p className="text-sm font-medium text-foreground">
-                            {log.msg || log.event_message}
-                          </p>
-                          {log.path && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Path: {log.path}
-                            </p>
-                          )}
-                          {log.error && (
-                            <p className="text-xs text-red-600 mt-1">
-                              Error: {log.error}
-                            </p>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    {renderPagination(authPage, setAuthPage, authLogs.length)}
+                  </>
                 )}
               </div>
             </CardContent>

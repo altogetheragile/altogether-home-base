@@ -1,10 +1,11 @@
 import { useRecentAdminActions } from "@/hooks/useAdminAudit";
 import { formatDistanceToNow } from "date-fns";
-import { 
-  Eye, 
-  Plus, 
-  Edit, 
-  Trash, 
+import { Link } from "react-router-dom";
+import {
+  Eye,
+  Plus,
+  Edit,
+  Trash,
   FileText,
   Calendar,
   BookOpen,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const RecentActivityFeed = () => {
   const { data: recentActions = [], isLoading } = useRecentAdminActions(10);
@@ -40,6 +42,14 @@ const RecentActivityFeed = () => {
     if (table.includes('knowledge')) return BookOpen;
     if (table.includes('profile') || table.includes('user')) return User;
     return FileText;
+  };
+
+  const getTargetLink = (table: string, targetId: string | null): string | null => {
+    if (!targetId) return null;
+    if (table.includes('event')) return `/admin/events/${targetId}/edit`;
+    if (table.includes('knowledge')) return `/admin/knowledge/${targetId}`;
+    if (table.includes('profile') || table.includes('user')) return `/admin/users/${targetId}`;
+    return null;
   };
 
   const getActionColor = (action: string) => {
@@ -91,40 +101,62 @@ const RecentActivityFeed = () => {
   }
 
   return (
-    <div className="space-y-4">
-      {recentActions.map((action) => {
-        const ActionIcon = getActionIcon(action.action);
-        const TableIcon = getTableIcon(action.target_table);
-        
-        return (
-          <div 
-            key={action.id} 
-            className="flex items-start space-x-3 pb-3 border-b border-border last:border-0 last:pb-0"
-          >
-            <div className={`p-2 rounded-full ${getActionColor(action.action)}`}>
-              <ActionIcon className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <TableIcon className="h-3 w-3 text-muted-foreground" />
-                <p className="text-sm font-medium capitalize">
-                  {formatActionText(action.action, action.target_table)}
-                </p>
+    <TooltipProvider>
+      <div className="space-y-4">
+        {recentActions.map((action) => {
+          const ActionIcon = getActionIcon(action.action);
+          const TableIcon = getTableIcon(action.target_table);
+          const link = getTargetLink(action.target_table, action.target_id);
+
+          const content = (
+            <div
+              className={`flex items-start space-x-3 pb-3 border-b border-border last:border-0 last:pb-0 ${link ? 'hover:bg-muted/50 rounded-md -mx-2 px-2 py-2 transition-colors cursor-pointer' : ''}`}
+            >
+              <div className={`p-2 rounded-full ${getActionColor(action.action)}`}>
+                <ActionIcon className="h-4 w-4" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(action.created_at), { addSuffix: true })}
-              </p>
-              {action.target_id && (
-                <p className="text-xs text-muted-foreground mt-1 font-mono truncate">
-                  ID: {action.target_id.slice(0, 8)}...
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <TableIcon className="h-3 w-3 text-muted-foreground" />
+                  <p className="text-sm font-medium capitalize">
+                    {formatActionText(action.action, action.target_table)}
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(action.created_at), { addSuffix: true })}
                 </p>
+                {action.metadata?.admin_email && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    by {action.metadata.admin_email}
+                  </p>
+                )}
+              </div>
+              {action.target_id && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Shield className="h-3 w-3 text-primary flex-shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-mono text-xs">{action.target_id}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {!action.target_id && (
+                <Shield className="h-3 w-3 text-primary flex-shrink-0" />
               )}
             </div>
-            <Shield className="h-3 w-3 text-primary flex-shrink-0" />
-          </div>
-        );
-      })}
-    </div>
+          );
+
+          return link ? (
+            <Link key={action.id} to={link} className="block no-underline text-inherit">
+              {content}
+            </Link>
+          ) : (
+            <div key={action.id}>{content}</div>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 };
 

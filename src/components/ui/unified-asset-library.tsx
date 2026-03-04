@@ -328,7 +328,7 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate">{asset.title || 'Untitled'}</h4>
+                            <h4 className="font-medium truncate" title={asset.title || 'Untitled'}>{asset.title || 'Untitled'}</h4>
                             {asset.description && (
                               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {asset.description}

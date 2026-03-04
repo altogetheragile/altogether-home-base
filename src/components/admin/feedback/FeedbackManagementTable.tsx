@@ -20,6 +20,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCourseFeedback, useBulkApproveFeedback, useUpdateFeedback, useDeleteFeedback } from "@/hooks/useCourseFeedback";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { CheckCircle, XCircle, Star, Trash2, Edit, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 
@@ -27,6 +36,8 @@ const FeedbackManagementTable = () => {
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const { data: feedback, isLoading } = useCourseFeedback({
     isApproved: approvalFilter === "all" ? undefined : approvalFilter === "approved",
@@ -36,12 +47,15 @@ const FeedbackManagementTable = () => {
   const updateMutation = useUpdateFeedback();
   const deleteMutation = useDeleteFeedback();
 
-  const filteredFeedback = feedback?.filter(f => 
+  const filteredFeedback = feedback?.filter(f =>
     f.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.comment.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  const totalPages = Math.ceil(filteredFeedback.length / pageSize);
+  const paginatedFeedback = filteredFeedback.slice((page - 1) * pageSize, page * pageSize);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds(prev => 
@@ -76,10 +90,10 @@ const FeedbackManagementTable = () => {
           <Input
             placeholder="Search feedback..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
             className="max-w-sm"
           />
-          <Select value={approvalFilter} onValueChange={setApprovalFilter}>
+          <Select value={approvalFilter} onValueChange={(v) => { setApprovalFilter(v); setPage(1); }}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -112,7 +126,7 @@ const FeedbackManagementTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFeedback.map((item) => (
+            {paginatedFeedback.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
                   <Checkbox
@@ -193,6 +207,53 @@ const FeedbackManagementTable = () => {
             ))}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filteredFeedback.length)} of {filteredFeedback.length}
+            </p>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className={page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                  .reduce<(number | 'ellipsis')[]>((acc, p, i, arr) => {
+                    if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('ellipsis');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, i) =>
+                    item === 'ellipsis' ? (
+                      <PaginationItem key={`ellipsis-${i}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={item}>
+                        <PaginationLink
+                          isActive={page === item}
+                          onClick={() => setPage(item as number)}
+                          className="cursor-pointer"
+                        >
+                          {item}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    className={page === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
