@@ -240,8 +240,8 @@ const Technique: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>{item.title} — Altogether Agile Knowledge Base</title>
-        <meta name="description" content={item.description || `Learn about ${item.title} — a practical agile technique from the Altogether Agile knowledge base.`} />
+        <title>{item.name} — Altogether Agile Knowledge Base</title>
+        <meta name="description" content={item.description || `Learn about ${item.name} — a practical agile technique from the Altogether Agile knowledge base.`} />
       </Helmet>
       <ResponsiveStyles />
 
