@@ -2860,6 +2860,7 @@ export type Database = {
           show_protected_projects: boolean | null
           show_recommendations: boolean | null
           show_testimonial_company: boolean | null
+          show_testimonial_first_name_only: boolean | null
           show_testimonial_name: boolean | null
           show_testimonial_rating_header: boolean | null
           social_facebook: string | null
@@ -2891,6 +2892,7 @@ export type Database = {
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
           show_testimonial_company?: boolean | null
+          show_testimonial_first_name_only?: boolean | null
           show_testimonial_name?: boolean | null
           show_testimonial_rating_header?: boolean | null
           social_facebook?: string | null
@@ -2922,6 +2924,7 @@ export type Database = {
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
           show_testimonial_company?: boolean | null
+          show_testimonial_first_name_only?: boolean | null
           show_testimonial_name?: boolean | null
           show_testimonial_rating_header?: boolean | null
           social_facebook?: string | null
