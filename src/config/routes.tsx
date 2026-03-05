@@ -517,6 +517,7 @@ export const DynamicRoutes = () => {
   const Knowledge = lazy(() => import('@/pages/Knowledge'));
   const Events = lazy(() => import('@/pages/Events'));
   const Coaching = lazy(() => import('@/pages/Coaching'));
+  const AboutPage = lazy(() => import('@/pages/About'));
   const Blog = lazy(() => import('@/pages/Blog'));
 
   return (
@@ -553,6 +554,14 @@ export const DynamicRoutes = () => {
         <ErrorBoundary>
           <Suspense fallback={<LoadingFallback />}>
             <Coaching />
+          </Suspense>
+        </ErrorBoundary>
+      } />
+
+      <Route path="/about" element={
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <AboutPage />
           </Suspense>
         </ErrorBoundary>
       } />

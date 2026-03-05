@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
 
 // ─── Mobile detection hook ──────────────────────────────────────────────────
 const useIsMobile = () => {
@@ -121,7 +123,7 @@ const IllustrationSpot = ({ bg, height = 280 }: { bg: string; height?: number })
         <path d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220ZM128,144a56,56,0,1,0-56-56A56.06,56.06,0,0,0,128,144Zm0,16c-30.67,0-58.7,12.36-79.49,34H207.49C186.7,172.36,158.67,160,128,160Z"/>
       </svg>
     </div>
-    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Illustration placeholder</div>
+    {/* label hidden for production */}
   </div>
 );
 
@@ -199,12 +201,6 @@ const credentials = [
   { label: 'University Lecturer', desc: 'Part-time visiting lecturer at the University of Westminster' },
 ];
 
-const testimonials = [
-  { quote: "Alun helped me see what I actually wanted from my next move — not what I thought I should want. That clarity made all the difference.", name: 'Rachel T.', role: 'Programme Manager · Financial Services' },
-  { quote: "The team coaching completely changed how we run our retros. We stopped going through the motions and started having real conversations.", name: 'Marcus H.', role: 'Scrum Master · Healthcare Tech' },
-  { quote: "I'd been avoiding a difficult conversation with my line manager for months. Two sessions in, I'd had it — and it went better than I imagined.", name: 'Priya L.', role: 'Senior BA · Public Sector' },
-];
-
 // ─── Component ──────────────────────────────────────────────────────────────
 const Coaching: React.FC = () => {
   const isMobile = useIsMobile();
@@ -260,6 +256,10 @@ const Coaching: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+      <Helmet>
+        <title>Coaching — Altogether Agile</title>
+        <meta name="description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
+      </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
@@ -436,21 +436,7 @@ const Coaching: React.FC = () => {
       </div>
 
       {/* ─── TESTIMONIALS ─── */}
-      <div className="aa-section-pad" style={{ background: p.white }}>
-        <SectionHeading label="Client feedback" title="What people say." />
-        <div className="aa-three-col">
-          {testimonials.map((t, i) => (
-            <div key={i} style={{ background: p.skyTeal, borderRadius: 14, padding: 24 }}>
-              <div style={{ color: p.orange, fontSize: 32, fontWeight: 800, lineHeight: 1, marginBottom: 12 }}>"</div>
-              <div style={{ color: p.body, fontSize: 14, lineHeight: 1.75, marginBottom: 20 }}>{t.quote}</div>
-              <div style={{ borderTop: `1px solid ${p.paleTeal}`, paddingTop: 14 }}>
-                <div style={{ color: p.deepTeal, fontWeight: 700, fontSize: 13 }}>{t.name}</div>
-                <div style={{ color: p.muted, fontSize: 12 }}>{t.role}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <HomepageStrip />
 
       {/* ─── CHEMISTRY SESSION ─── */}
       <div style={{ background: p.deepTeal, padding: isMobile ? '40px 20px' : '56px 48px' }}>
@@ -569,6 +555,7 @@ const Coaching: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+            <Link to="/testimonials" style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
           </div>
           <div>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>

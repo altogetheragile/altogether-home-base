@@ -35,6 +35,7 @@ export interface SiteSettings {
   show_dashboard: boolean | null;
   show_recommendations: boolean | null;
   show_testimonial_name: boolean | null;
+  show_testimonial_first_name_only: boolean | null;
   show_testimonial_company: boolean | null;
   show_testimonial_rating_header: boolean | null;
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useKnowledgeItems, KnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -142,7 +143,7 @@ const TechniqueImage = ({ category, index, imageUrl }: { category: string; index
       <div style={{ position: 'absolute', bottom: -24, right: -24, width: 110, height: 110, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
       <div style={{ position: 'absolute', bottom: -8, right: -8, width: 70, height: 70, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
       <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 800 }}>{index + 1}</div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Illustration</div>
+      {/* label hidden for production */}
     </div>
   );
 };
@@ -169,7 +170,7 @@ const NAV_LINKS = [
   { label: 'Events', to: '/events' },
   { label: 'Knowledge Base', to: '/knowledge' },
   { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/testimonials' },
+  { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
 
@@ -214,6 +215,10 @@ const Knowledge: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+      <Helmet>
+        <title>Knowledge Base — Altogether Agile</title>
+        <meta name="description" content="Explore 80+ agile techniques, frameworks, and practices. Practical guides for Scrum, Kanban, facilitation, and team coaching." />
+      </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
@@ -462,6 +467,7 @@ const Knowledge: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+            <Link to="/testimonials" style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
           </div>
           <div>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>

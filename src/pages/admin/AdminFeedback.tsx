@@ -9,7 +9,7 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 const AdminFeedback = () => {
   const { settings, updateSettings } = useSiteSettings();
 
-  const handleToggle = (field: 'show_testimonial_name' | 'show_testimonial_company' | 'show_testimonial_rating_header', value: boolean) => {
+  const handleToggle = (field: 'show_testimonial_name' | 'show_testimonial_first_name_only' | 'show_testimonial_company' | 'show_testimonial_rating_header', value: boolean) => {
     updateSettings({ [field]: value });
   };
 
@@ -46,6 +46,20 @@ const AdminFeedback = () => {
                   id="show-name"
                   checked={settings?.show_testimonial_name ?? true}
                   onCheckedChange={(checked) => handleToggle('show_testimonial_name', checked)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="first-name-only">First Name Only</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Show only first names instead of full names
+                  </p>
+                </div>
+                <Switch
+                  id="first-name-only"
+                  checked={settings?.show_testimonial_first_name_only ?? false}
+                  onCheckedChange={(checked) => handleToggle('show_testimonial_first_name_only', checked)}
+                  disabled={!(settings?.show_testimonial_name ?? true)}
                 />
               </div>
               <div className="flex items-center justify-between">

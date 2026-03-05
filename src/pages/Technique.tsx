@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useKnowledgeItemBySlug, useKnowledgeItems, KnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useKnowledgeItemSteps } from '@/hooks/useKnowledgeItemSteps';
 import { useKnowledgeUseCases } from '@/hooks/useKnowledgeUseCases';
@@ -157,7 +158,7 @@ const NAV_LINKS = [
   { label: 'Events', to: '/events' },
   { label: 'Knowledge Base', to: '/knowledge' },
   { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/testimonials' },
+  { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
 
@@ -238,6 +239,10 @@ const Technique: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+      <Helmet>
+        <title>{item.title} — Altogether Agile Knowledge Base</title>
+        <meta name="description" content={item.description || `Learn about ${item.title} — a practical agile technique from the Altogether Agile knowledge base.`} />
+      </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
@@ -431,7 +436,7 @@ const Technique: React.FC = () => {
                   <div style={{ width: 48, height: 48, borderRadius: 12, background: p.lightTeal, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Icons.ImagePlaceholder />
                   </div>
-                  <div style={{ color: p.midTeal, fontWeight: 700, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Illustration placeholder</div>
+                  {/* label hidden for production */}
                 </div>
               )}
             </div>
@@ -574,6 +579,7 @@ const Technique: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+            <Link to="/testimonials" style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
           </div>
           <div>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>

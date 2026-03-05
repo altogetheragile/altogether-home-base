@@ -8,13 +8,15 @@ import { useState } from "react";
 interface TestimonialCardProps {
   feedback: CourseFeedback;
   showName?: boolean;
+  firstNameOnly?: boolean;
   showCompany?: boolean;
   showRating?: boolean;
 }
 
-const TestimonialCard = ({ 
+const TestimonialCard = ({
   feedback,
   showName = true,
+  firstNameOnly = false,
   showCompany = true,
   showRating = true
 }: TestimonialCardProps) => {
@@ -55,7 +57,7 @@ const TestimonialCard = ({
               {showName && (
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-lg">
-                    {feedback.first_name} {feedback.last_name}
+                    {firstNameOnly ? feedback.first_name : `${feedback.first_name} ${feedback.last_name}`}
                   </h3>
                   {feedback.source === 'linkedin' && (
                     <Linkedin className="w-4 h-4 text-blue-600" />

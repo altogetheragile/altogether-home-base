@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useEvents, EventData } from '@/hooks/useEvents';
 import { useAuth } from '@/contexts/AuthContext';
+import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
 
 // ─── Mobile detection hook ──────────────────────────────────────────────────
 const useIsMobile = () => {
@@ -144,11 +146,7 @@ const TeamIllustration = ({ height = 180, bg = '#D9F2F2', count = 3, label }: {
   const skinTones = ['#FDDBB4', '#D4956A', '#8D5524', '#FDDBB4', '#C68642'];
   return (
     <div style={{ height, background: bg, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px 16px', position: 'relative', overflow: 'hidden' }}>
-      {label && (
-        <div style={{ position: 'absolute', top: 12, left: 0, right: 0, textAlign: 'center', color: '#007A7A', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-          Illustration &middot; {label}
-        </div>
-      )}
+      {/* label hidden for production */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 16 }}>
         {Array.from({ length: count }).map((_, i) => {
           const h = heights[i % heights.length];
@@ -173,7 +171,7 @@ const IllustrationSpot = ({ height = 180, label, bg = '#D9F2F2', style = {} }: {
       <ellipse cx="24" cy="36" rx="14" ry="8" fill="#007A7A" opacity="0.35" />
       <circle cx="24" cy="16" r="5" fill="#004D4D" opacity="0.4" />
     </svg>
-    <div style={{ color: '#007A7A', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center', padding: '0 16px' }}>{label}</div>
+    {/* label hidden for production */}
   </div>
 );
 
@@ -224,7 +222,7 @@ const NAV_LINKS = [
   { label: 'Events', to: '/events' },
   { label: 'Knowledge Base', to: '/knowledge' },
   { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/testimonials' },
+  { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
 
@@ -240,6 +238,10 @@ const Home: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF' }}>
+      <Helmet>
+        <title>Altogether Agile — Agile Coaching & Training</title>
+        <meta name="description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience." />
+      </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
@@ -362,6 +364,9 @@ const Home: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* ─── TESTIMONIALS STRIP ─── */}
+      <HomepageStrip />
 
       {/* ─── EVENTS (live Supabase data) ─── */}
       <div className="aa-section-pad" style={{ background: '#F0FAFA' }}>
@@ -567,13 +572,14 @@ const Home: React.FC = () => {
               { label: 'Events', to: '/events' },
               { label: 'Knowledge Base', to: '/knowledge' },
               { label: 'Coaching', to: '/coaching' },
-              { label: 'About', to: '/testimonials' },
+              { label: 'About', to: '/about' },
               { label: 'Contact', to: '/contact' },
             ].map((link) => (
               <Link key={link.label} to={link.to} style={{ display: 'block', color: '#B2DFDF', fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>
                 {link.label}
               </Link>
             ))}
+            <Link to="/testimonials" style={{ display: 'block', color: '#B2DFDF', fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
           </div>
           <div>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
