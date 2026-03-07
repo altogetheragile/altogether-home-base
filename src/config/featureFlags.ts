@@ -21,19 +21,19 @@ export const featureFlags = {
    * Enable admin routes and functionality
    * Requires admin role and AAL2 authentication
    */
-  adminRoutes: import.meta.env.VITE_ENABLE_ADMIN === 'true',
+  adminRoutes: import.meta.env.VITE_ENABLE_ADMIN !== 'false',
 
   /**
    * Enable protected project routes (Canvas, BMC)
    * Requires user authentication
    */
-  protectedProjects: import.meta.env.VITE_ENABLE_PROJECTS === 'true',
+  protectedProjects: import.meta.env.VITE_ENABLE_PROJECTS !== 'false',
 
   /**
    * Enable dynamic CMS pages
    * Allows rendering pages from the database
    */
-  dynamicPages: import.meta.env.VITE_ENABLE_CMS === 'true',
+  dynamicPages: import.meta.env.VITE_ENABLE_CMS !== 'false',
   
   /**
    * Enable beta features for testing
