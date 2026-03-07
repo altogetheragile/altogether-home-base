@@ -1,18 +1,17 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { SITE_URL } from "@/config/featureFlags";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import BlogFilter from "@/components/blog/BlogFilter";
-import { BlogCard } from "@/components/blog/BlogCard";
-import { UnifiedContentCard } from "@/components/content/UnifiedContentCard";
-import { useBlogPosts } from "@/hooks/useBlogPosts";
+import { useBlogPosts, type BlogPost } from "@/hooks/useBlogPosts";
 import { useBlogCategories } from "@/hooks/useBlogCategories";
 import { useBlogTags } from "@/hooks/useBlogTags";
-import { adaptBlogPostToUnifiedContent } from "@/utils/contentAdapters";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { X, Search, Trophy, BookOpen } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { format } from "date-fns";
 
 const Blog = () => {
   const { settings } = useSiteSettings();
@@ -20,17 +19,17 @@ const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>("all");
   const [selectedTag, setSelectedTag] = useState<string | undefined>("all");
   const [sortBy, setSortBy] = useState("newest");
-  
+
   const { data: categories } = useBlogCategories();
   const { data: popularTags } = useBlogTags(20);
-  
+
   const { data: filteredPosts, isLoading: postsLoading } = useBlogPosts({
     search: searchQuery,
     categoryId: selectedCategory === "all" ? undefined : selectedCategory,
     tag: selectedTag === "all" ? undefined : selectedTag,
     sortBy: sortBy,
   });
-  
+
   const { data: featuredPosts } = useBlogPosts({ featured: true, limit: 3 });
 
   const handleSearch = (value: string) => {
@@ -44,17 +43,16 @@ const Blog = () => {
     setSortBy("newest");
   };
 
-  // Defensive check - should not be reached if routes are configured correctly
+  const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedTag !== "all";
+
   if (!settings?.show_blog) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md px-4">
-            <h1 className="text-2xl font-bold mb-2">Feature Unavailable</h1>
-            <p className="text-muted-foreground">
-              This feature is currently disabled.
-            </p>
+            <h1 style={{ color: '#004D4D', fontSize: 24, fontWeight: 800 }}>Feature Unavailable</h1>
+            <p style={{ color: '#6B7280', marginTop: 8 }}>This feature is currently disabled.</p>
           </div>
         </div>
         <Footer />
@@ -63,137 +61,286 @@ const Blog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
+      <Helmet>
+        <title>Blog — Altogether Agile</title>
+        <meta name="description" content="Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation." />
+        <link rel="canonical" href={`${SITE_URL}/blog`} />
+      </Helmet>
       <Navigation />
-      
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto text-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Agile Insights & Resources
-            </h1>
-            <p className="text-base text-muted-foreground mb-4">
-              Expert insights, practical tips, and thought leadership on agile methodologies, 
-              team dynamics, and organizational transformation.
-            </p>
 
-            {/* Compact Stats */}
-            <div className="flex justify-center gap-6">
-              <div className="text-center">
-                <div className="text-lg font-bold text-primary">{filteredPosts?.length || 0}</div>
-                <div className="text-xs text-muted-foreground">Blog Posts</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-primary">{categories?.length || 0}</div>
-                <div className="text-xs text-muted-foreground">Categories</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-primary">{popularTags?.length || 0}</div>
-                <div className="text-xs text-muted-foreground">Tags</div>
-              </div>
-            </div>
-          </div>
+      {/* Hero header */}
+      <div style={{ background: 'linear-gradient(135deg, #004D4D 0%, #006666 100%)', padding: '48px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+          <h1 style={{ color: '#FFFFFF', fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
+            Agile Insights &amp; Resources
+          </h1>
+          <p style={{ color: '#D9F2F2', fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
+            Expert insights, practical tips, and thought leadership on agile methodologies,
+            team dynamics, and organisational transformation.
+          </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
-          {/* Search and Filter Bar */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <h2 className="text-xl font-semibold">
-              {searchQuery || selectedCategory !== "all" || selectedTag !== "all" 
-                ? "Search Results" 
-                : "All Posts"
-              }
-            </h2>
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search posts..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          <BlogFilter
-            searchQuery={searchQuery}
-            onSearchChange={handleSearch}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-            selectedTag={selectedTag}
-            onTagChange={setSelectedTag}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-          />
-
-          {/* Featured Posts - Only show when no filters are active */}
-          {!searchQuery && selectedCategory === "all" && selectedTag === "all" && featuredPosts && featuredPosts.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                Featured Posts
-              </h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {featuredPosts.map((post) => (
-                  <UnifiedContentCard 
-                    key={post.id} 
-                    content={adaptBlogPostToUnifiedContent(post)} 
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* All Posts */}
-          <div className="space-y-4">
-            {postsLoading ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="h-48 w-full" />
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                  </div>
-                ))}
-              </div>
-            ) : filteredPosts && filteredPosts.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredPosts.map((post) => (
-                  <UnifiedContentCard 
-                    key={post.id} 
-                    content={adaptBlogPostToUnifiedContent(post)} 
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-muted-foreground mb-2">No blog posts found</h3>
-                <p className="text-sm text-muted-foreground">
-                  {searchQuery || selectedCategory !== "all" || selectedTag !== "all"
-                    ? "Try adjusting your search criteria"
-                    : "No blog posts have been published yet"
-                  }
-                </p>
-                {(searchQuery || selectedCategory !== "all" || selectedTag !== "all") && (
-                  <Button variant="outline" onClick={clearFilters} className="mt-4">
-                    Clear filters
-                  </Button>
-                )}
-              </div>
-            )}
+      {/* Category filter pills */}
+      {categories && categories.length > 0 && (
+        <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '16px 24px' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={() => setSelectedCategory("all")}
+              aria-pressed={selectedCategory === "all"}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 20,
+                border: 'none',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: selectedCategory === "all" ? '#004D4D' : '#F0FAFA',
+                color: selectedCategory === "all" ? '#FFFFFF' : '#004D4D',
+              }}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                aria-pressed={selectedCategory === cat.id}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 20,
+                  border: 'none',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: selectedCategory === cat.id ? '#004D4D' : '#F0FAFA',
+                  color: selectedCategory === cat.id ? '#FFFFFF' : '#004D4D',
+                }}
+              >
+                {cat.name}
+              </button>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* Main content */}
+      <div style={{ flex: 1, maxWidth: 1100, margin: '0 auto', padding: '32px 24px', width: '100%' }}>
+
+        {/* Search bar + filter */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', marginBottom: 24 }}>
+          <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: 360 }}>
+            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#9CA3AF' }} />
+            <input
+              type="text"
+              placeholder="Search posts..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px 10px 36px',
+                borderRadius: 8,
+                border: '1px solid #D1D5DB',
+                fontSize: 14,
+                outline: 'none',
+                background: '#FFFFFF',
+              }}
+            />
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: '1px solid #D1D5DB',
+                background: '#FFFFFF',
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#6B7280',
+                cursor: 'pointer',
+              }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        {/* Featured posts */}
+        {!hasActiveFilters && featuredPosts && featuredPosts.length > 0 && (
+          <div style={{ marginBottom: 40 }}>
+            <h2 style={{ color: '#004D4D', fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Featured</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
+              {featuredPosts.map((post) => (
+                <BlogCardStyled key={post.id} post={post} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* All posts */}
+        {postsLoading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} style={{ background: '#FFFFFF', borderRadius: 14, overflow: 'hidden' }}>
+                <Skeleton style={{ height: 180, width: '100%' }} />
+                <div style={{ padding: 20 }}>
+                  <Skeleton style={{ height: 14, width: 80, marginBottom: 12 }} />
+                  <Skeleton style={{ height: 22, width: '85%', marginBottom: 8 }} />
+                  <Skeleton style={{ height: 14, width: '100%', marginBottom: 6 }} />
+                  <Skeleton style={{ height: 14, width: '70%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredPosts && filteredPosts.length > 0 ? (
+          <>
+            {hasActiveFilters && (
+              <p style={{ color: '#6B7280', fontSize: 14, marginBottom: 16 }}>
+                {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''} found
+              </p>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
+              {filteredPosts.map((post) => (
+                <BlogCardStyled key={post.id} post={post} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '64px 0' }}>
+            <BookOpen style={{ width: 48, height: 48, color: '#9CA3AF', margin: '0 auto 16px' }} />
+            <h3 style={{ color: '#004D4D', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No blog posts found</h3>
+            <p style={{ color: '#6B7280', fontSize: 15 }}>
+              {hasActiveFilters
+                ? "Try adjusting your search criteria"
+                : "No blog posts have been published yet"}
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                style={{
+                  marginTop: 16,
+                  padding: '10px 24px',
+                  borderRadius: 8,
+                  border: '1px solid #D1D5DB',
+                  background: '#FFFFFF',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#004D4D',
+                  cursor: 'pointer',
+                }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <Footer />
     </div>
   );
 };
+
+/* ── Card component for the blog grid ── */
+const BlogCardStyled = ({ post }: { post: BlogPost }) => (
+  <Link
+    to={`/blog/${post.slug}`}
+    style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+  >
+    <div
+      style={{
+        background: '#FFFFFF',
+        borderRadius: 14,
+        overflow: 'hidden',
+        border: '1px solid #E5E7EB',
+        transition: 'box-shadow 0.2s, transform 0.2s',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,77,77,0.10)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.transform = 'none';
+      }}
+    >
+      {/* Image */}
+      {post.featured_image_url ? (
+        <div style={{ height: 180, overflow: 'hidden' }}>
+          <img
+            src={post.featured_image_url}
+            alt={post.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
+      ) : (
+        <div style={{ height: 180, background: 'linear-gradient(135deg, #F0FAFA, #D9F2F2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <BookOpen style={{ width: 32, height: 32, color: '#007A7A' }} />
+        </div>
+      )}
+
+      {/* Body */}
+      <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Category tag */}
+        {post.blog_categories && (
+          <span style={{
+            display: 'inline-block',
+            alignSelf: 'flex-start',
+            background: post.blog_categories.color || '#F0FAFA',
+            color: '#004D4D',
+            fontSize: 11,
+            fontWeight: 700,
+            padding: '3px 10px',
+            borderRadius: 20,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: 10,
+          }}>
+            {post.blog_categories.name}
+          </span>
+        )}
+
+        {/* Title */}
+        <h3 style={{ color: '#004D4D', fontSize: 18, fontWeight: 700, lineHeight: 1.3, margin: '0 0 8px' }}>
+          {post.title}
+        </h3>
+
+        {/* Excerpt */}
+        {post.excerpt && (
+          <p style={{
+            color: '#6B7280',
+            fontSize: 14,
+            lineHeight: 1.6,
+            margin: '0 0 12px',
+            flex: 1,
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>
+            {post.excerpt}
+          </p>
+        )}
+
+        {/* Meta */}
+        <div style={{ color: '#9CA3AF', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto' }}>
+          {post.published_at && (
+            <span>{format(new Date(post.published_at), 'dd MMM yyyy')}</span>
+          )}
+          {post.estimated_reading_time && post.estimated_reading_time > 0 && (
+            <span>· {post.estimated_reading_time} min read</span>
+          )}
+        </div>
+      </div>
+    </div>
+  </Link>
+);
 
 export default Blog;

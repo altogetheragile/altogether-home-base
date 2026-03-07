@@ -49,7 +49,6 @@ export const useOptimisticMutation = <TData, TVariables>({
         queryClient.setQueryData(queryKey, context.previousData);
       }
       
-      console.error('Mutation error:', error);
       toast({
         title: "Error",
         description: errorMessage,

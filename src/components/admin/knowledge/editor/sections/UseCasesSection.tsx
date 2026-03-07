@@ -17,21 +17,19 @@ export const UseCasesSection = () => {
     // Trigger form submission to save current progress
     return new Promise<void>((resolve) => {
       form.handleSubmit((data) => {
-        console.log('Saving knowledge item from use cases section:', data);
+
         resolve();
       })();
     });
   };
 
   const handleAddUseCase = (type: 'generic' | 'example' = 'generic') => {
-    console.log('Add use case triggered with type:', type);
     // Open the form with the specified type
     setEditingUseCase({ case_type: type } as any);
     setIsEditDialogOpen(true);
   };
 
   const handleEditUseCase = (useCase: KnowledgeUseCase) => {
-    console.log('Edit use case triggered:', useCase);
     setEditingUseCase(useCase);
     setIsEditDialogOpen(true);
   };

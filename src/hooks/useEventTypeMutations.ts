@@ -16,7 +16,7 @@ export const useCreateEventType = () => {
         .single();
 
       if (error) {
-        console.error('Error creating event type:', error);
+
         throw error;
       }
 
@@ -43,7 +43,7 @@ export const useUpdateEventType = () => {
         .single();
 
       if (error) {
-        console.error('Error updating event type:', error);
+
         throw error;
       }
 
@@ -64,7 +64,7 @@ export const useDeleteEventType = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting event type:', error);
+
         throw error;
       }
 

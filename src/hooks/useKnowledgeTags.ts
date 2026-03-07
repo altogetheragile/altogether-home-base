@@ -32,7 +32,7 @@ export const useCreateKnowledgeTag = () => {
   return useMutation({
     mutationFn: async (data: Partial<KnowledgeTag>) => {
       const { data: result, error } = await supabase
-        .from('knowledge_tags')
+        .from('knowledge_tags' as any)
         .insert([data])
         .select()
         .single();

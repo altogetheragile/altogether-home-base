@@ -16,7 +16,6 @@ export const useCreateLevel = () => {
         .single();
 
       if (error) {
-        console.error('Error creating level:', error);
         throw error;
       }
 
@@ -43,7 +42,6 @@ export const useUpdateLevel = () => {
         .single();
 
       if (error) {
-        console.error('Error updating level:', error);
         throw error;
       }
 
@@ -64,7 +62,6 @@ export const useDeleteLevel = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting level:', error);
         throw error;
       }
 

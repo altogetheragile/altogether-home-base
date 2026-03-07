@@ -28,12 +28,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🔧 Setting up auth state listener...');
-    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔐 Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -45,24 +42,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Check for existing session once on mount
   useEffect(() => {
-    console.log('🔍 Checking for existing session...');
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('📋 Initial session check result:', {
-        hasSession: !!session,
-        hasUser: !!session?.user,
-        sessionUserId: session?.user?.id,
-        sessionUserEmail: session?.user?.email,
-        sessionError: error,
-        accessToken: session?.access_token ? 'present' : 'missing'
-      });
-      
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setSession(session);
         setUser(session.user);
       }
       setLoading(false);
-    }).catch((error) => {
-      console.error('❌ Session check failed:', error);
+    }).catch(() => {
       setLoading(false);
     });
   }, []);
@@ -91,38 +77,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log('🚀 Starting sign in process...');
-
     // Clean up any existing auth state to avoid limbo sessions
     try {
       cleanupAuthState();
       try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
     } catch {}
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    
-    console.log('🔐 Sign in result:', {
-      success: !error,
-      hasSession: !!data?.session,
-      hasAccessToken: !!data?.session?.access_token,
-      userEmail: data?.user?.email,
-      error: error?.message
-    });
-    
-    if (!error && data?.session) {
-      console.log('✅ Sign in successful, session established');
-      // Auth state listener will handle state updates
-    }
-    
+
     return { data, error };
   };
 
   const signOut = async () => {
-    console.log('🚪 Starting sign out process...');
-
     try {
       // Proactively clear local state/storage
       cleanupAuthState();
@@ -133,12 +102,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Attempt global sign-out to invalidate all refresh tokens
       try {
         await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        console.warn('Sign out warning:', err);
-      }
-    } catch (error) {
-      console.error('❌ Sign out error:', error);
-    } finally {
+      } catch {}
+    } catch {} finally {
       // Force hard redirect to ensure a clean app state
       window.location.href = '/auth';
     }

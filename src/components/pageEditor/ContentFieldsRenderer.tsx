@@ -55,14 +55,11 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
       const fileName = `${blockType}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      console.log(`Starting background image upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) for ${blockType} block`);
-
       const { error: uploadError } = await supabase.storage
         .from('hero-backgrounds')
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -71,11 +68,9 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
         .getPublicUrl(filePath);
 
       if (!publicUrl) {
-        console.error('Failed to get public URL for background image:', filePath);
         throw new Error('Failed to get public URL for uploaded background image');
       }
 
-      console.log(`Background image upload successful: ${publicUrl}`);
       onContentChange('backgroundImage', publicUrl);
       toast({
         title: "Upload Successful",
@@ -85,16 +80,6 @@ export const ContentFieldsRenderer: React.FC<ContentFieldsRendererProps> = ({
       const errorMessage = error?.message || 'Unknown error occurred';
       const errorCode = error?.error || error?.code || 'UNKNOWN';
       
-      console.error('Background image upload error details:', {
-        message: errorMessage,
-        code: errorCode,
-        fileName: file.name,
-        fileSize: file.size,
-        blockType,
-        bucket: 'hero-backgrounds',
-        error
-      });
-
       let userFriendlyMessage = "Failed to upload background image.";
       
       if (errorMessage.includes('The resource already exists')) {

@@ -5,6 +5,7 @@ import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Youtube, Github } from 'lucide-react';
+import LogoFull from '@/components/LogoFull';
 
 const Footer = () => {
   const { settings } = useSiteSettings();
@@ -24,10 +25,12 @@ const Footer = () => {
     { label: 'Home', url: '/', show: true },
     { label: 'Events', url: '/events', show: settings?.show_events ?? false },
     { label: 'Knowledge Base', url: '/knowledge', show: settings?.show_knowledge ?? false },
+    { label: 'Coaching', url: '/coaching', show: settings?.show_coaching ?? true },
+    { label: 'About', url: '/about', show: settings?.show_about ?? true },
     { label: 'Blog', url: '/blog', show: settings?.show_blog ?? false },
-    { label: 'Testimonials', url: '/testimonials', show: true },
     { label: 'Contact', url: '/contact', show: settings?.show_contact ?? true },
-    { label: 'AI Tools', url: '/ai-tools', show: settings?.show_ai_tools ?? true },
+    { label: 'Testimonials', url: '/testimonials', show: settings?.show_testimonials ?? true },
+    { label: 'AI Tools', url: '/ai-tools', show: settings?.show_ai_tools ?? false },
     { label: 'Dashboard', url: '/dashboard', show: (settings?.show_dashboard ?? true) && !!user },
     { label: 'Admin Panel', url: '/admin/events', show: !!user && userRole === 'admin' },
   ];
@@ -39,9 +42,9 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-semibold text-primary mb-4">
-              {settings?.company_name || 'AltogetherAgile'}
-            </h3>
+            <div className="mb-4">
+              <LogoFull height={32} />
+            </div>
             <p className="text-muted-foreground">
               {settings?.company_description || 'Empowering teams and organizations through agile transformation and coaching.'}
             </p>
@@ -112,10 +115,15 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        <div className="border-t border-border mt-8 pt-8 text-center">
-          <p className="text-muted-foreground text-sm">
+        <div className="border-t border-border mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-muted-foreground">
+          <p>
             © {new Date().getFullYear()} {settings?.company_name || 'AltogetherAgile'}. {settings?.copyright_text || 'All rights reserved.'}
           </p>
+          <div className="flex gap-6">
+            <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-primary transition-colors">Terms &amp; Conditions</Link>
+            <Link to="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link>
+          </div>
         </div>
       </div>
     </footer>

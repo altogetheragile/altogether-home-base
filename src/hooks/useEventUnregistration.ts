@@ -41,7 +41,6 @@ export const useEventUnregistration = () => {
         description: "You have been unregistered from the event.",
       });
     } catch (error) {
-      console.error('Unregistration error:', error);
       toast({
         title: "Unregistration failed",
         description: error instanceof Error ? error.message : "Failed to unregister from event",

@@ -59,7 +59,7 @@ export const useAssociateTemplate = () => {
       });
     },
     onError: (error) => {
-      console.error('Error associating template:', error);
+
       toast({
         title: "Error",
         description: "Failed to associate template",
@@ -91,7 +91,7 @@ export const useRemoveTemplateAssociation = () => {
       });
     },
     onError: (error) => {
-      console.error('Error removing template association:', error);
+
       toast({
         title: "Error",
         description: "Failed to remove template association",
@@ -137,7 +137,7 @@ export const useUpdateTemplateAssociation = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating template association:', error);
+
       toast({
         title: "Error",
         description: "Failed to update template association",

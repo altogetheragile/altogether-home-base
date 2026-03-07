@@ -7,11 +7,10 @@ export const useEventTypes = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_types')
-        .select('*')
+        .select('id, name')
         .order('name');
 
       if (error) {
-        console.error('Error fetching event types:', error);
         throw error;
       }
 

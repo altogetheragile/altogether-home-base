@@ -37,7 +37,7 @@ export const useCreateDecisionLevel = () => {
   return useMutation({
     mutationFn: async (data: Partial<DecisionLevel>) => {
       const { data: result, error } = await supabase
-        .from('decision_levels')
+        .from('decision_levels' as any)
         .insert([data])
         .select()
         .single();

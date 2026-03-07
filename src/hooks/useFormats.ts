@@ -8,11 +8,10 @@ export const useFormats = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('formats')
-        .select('*')
+        .select('id, name')
         .order('name');
 
       if (error) {
-        console.error('Error fetching formats:', error);
         throw error;
       }
 

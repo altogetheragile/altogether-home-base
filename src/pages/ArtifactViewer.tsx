@@ -63,7 +63,6 @@ export default function ArtifactViewer() {
       setEditedBMCData(null);
     } catch (error) {
       toast.error('Failed to save changes');
-      console.error('Error saving artifact:', error);
     }
   };
 
@@ -116,7 +115,6 @@ export default function ArtifactViewer() {
       setEditedBacklogItems([]);
     } catch (error) {
       toast.error('Failed to save changes');
-      console.error('Error saving artifact:', error);
     }
   };
 

@@ -49,18 +49,18 @@ const AdminLocations = () => {
   const updateMutation = useUpdateLocation();
   const deleteMutation = useDeleteLocation();
 
-  const handleCreate = (data: { name: string; address: string; virtual_url: string }) => {
-    createMutation.mutate(data, {
+  const handleCreate = (data: { name: string; address: string; virtual_url?: string }) => {
+    createMutation.mutate({ ...data, virtual_url: data.virtual_url || '' }, {
       onSuccess: () => {
         setIsCreateDialogOpen(false);
       },
     });
   };
 
-  const handleEdit = (data: { name: string; address: string; virtual_url: string }) => {
+  const handleEdit = (data: { name: string; address: string; virtual_url?: string }) => {
     if (editingLocation) {
       updateMutation.mutate(
-        { id: editingLocation.id, data },
+        { id: editingLocation.id, data: { ...data, virtual_url: data.virtual_url || '' } },
         {
           onSuccess: () => {
             setEditingLocation(null);

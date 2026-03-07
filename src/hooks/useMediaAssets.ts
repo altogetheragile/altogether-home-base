@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export interface MediaAsset {
   id: string;
@@ -80,7 +80,6 @@ export const useMediaAssetMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error creating media asset:', error);
       toast({
         title: "Error",
         description: "Failed to create media asset",
@@ -112,7 +111,6 @@ export const useMediaAssetMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating media asset:', error);
       toast({
         title: "Error",
         description: "Failed to update media asset",
@@ -138,7 +136,6 @@ export const useMediaAssetMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error deleting media asset:', error);
       toast({
         title: "Error",
         description: "Failed to delete media asset",
@@ -268,7 +265,6 @@ export const useKnowledgeItemMediaMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating knowledge item media:', error);
       toast({
         title: "Error",
         description: "Failed to update knowledge item media",

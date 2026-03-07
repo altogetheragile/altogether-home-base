@@ -35,6 +35,7 @@ export const useLogSearch = () => {
       if (error) throw error;
       return data;
     },
+    onError: () => { /* silently fail – analytics only */ },
   });
 };
 

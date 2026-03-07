@@ -92,13 +92,13 @@ export const useCreateDataImport = () => {
   return useMutation({
     mutationFn: async (importData: Partial<DataImport>) => {
       const { data, error } = await supabase
-        .from('data_imports')
+        .from('data_imports' as any)
         .insert([importData])
         .select()
         .single();
       
       if (error) throw error;
-      return data as DataImport;
+      return data as unknown as DataImport;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['data_imports'] });
@@ -186,12 +186,12 @@ export const useCreateStagingData = () => {
   return useMutation({
     mutationFn: async (stagingRows: Partial<StagingData>[]) => {
       const { data, error } = await supabase
-        .from('staging_data')
+        .from('staging_data' as any)
         .insert(stagingRows)
         .select();
       
       if (error) throw error;
-      return data as StagingData[];
+      return data as unknown as StagingData[];
     },
     onSuccess: (_, variables) => {
       const importId = variables[0]?.import_id;

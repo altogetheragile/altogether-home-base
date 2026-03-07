@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const processKnowledgeImport = async (importId: string) => {
-  console.log('🚀 Starting knowledge import processing...');
+  // console.log('🚀 Starting knowledge import processing...');
   
   try {
     // Get staging data
@@ -15,11 +15,11 @@ export const processKnowledgeImport = async (importId: string) => {
     if (stagingError) throw stagingError;
 
     if (!stagingData || stagingData.length === 0) {
-      console.log('❌ No staging data to process');
+      // console.log('❌ No staging data to process');
       return { success: false, message: 'No data to process' };
     }
 
-    console.log(`📊 Processing ${stagingData.length} knowledge items...`);
+    // console.log(`📊 Processing ${stagingData.length} knowledge items...`);
 
     const fieldMappings = {
       name: 'Knowledge Item',
@@ -52,7 +52,7 @@ export const processKnowledgeImport = async (importId: string) => {
 
     for (const stagingRow of stagingData) {
       try {
-        console.log(`📝 Processing row ${stagingRow.row_number}: ${stagingRow.raw_data['Knowledge Item']}`);
+        // console.log(`📝 Processing row ${stagingRow.row_number}: ${stagingRow.raw_data['Knowledge Item']}`);
         
         const mappedData: any = {
           content_type: 'technique',
@@ -185,10 +185,10 @@ export const processKnowledgeImport = async (importId: string) => {
           .eq('id', stagingRow.id);
 
         processed++;
-        console.log(`✅ Successfully processed: ${mappedData.name}`);
+        // console.log(`✅ Successfully processed: ${mappedData.name}`);
         
       } catch (error) {
-        console.error(`❌ Error processing row ${stagingRow.row_number}:`, error);
+        // console.error(`❌ Error processing row ${stagingRow.row_number}:`, error);
         
         // Update staging row as failed
         await supabase
@@ -213,7 +213,7 @@ export const processKnowledgeImport = async (importId: string) => {
       })
       .eq('id', importId);
 
-    console.log(`🎉 Import completed: ${processed} successful, ${errors} errors`);
+    // console.log(`🎉 Import completed: ${processed} successful, ${errors} errors`);
     
     return {
       success: true,
@@ -223,7 +223,7 @@ export const processKnowledgeImport = async (importId: string) => {
     };
 
   } catch (error) {
-    console.error('💥 Import processing failed:', error);
+    // console.error('💥 Import processing failed:', error);
     
     // Update import as failed
     await supabase
@@ -247,8 +247,8 @@ export const processKnowledgeImport = async (importId: string) => {
 // Auto-run the processing
 processKnowledgeImport('350bf975-21e2-4e12-8352-cf4a87178228')
   .then(result => {
-    console.log('📋 Final result:', result);
+    // console.log('📋 Final result:', result);
   })
   .catch(error => {
-    console.error('🚨 Processing script error:', error);
+    // console.error('🚨 Processing script error:', error);
   });

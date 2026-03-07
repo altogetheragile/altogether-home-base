@@ -77,7 +77,7 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions = true
       
       onCancel();
     } catch (error) {
-      console.error('Form submission error:', error);
+
       toast({
         title: "Error",
         description: `Failed to ${editingItem ? 'update' : 'create'} ${title.toLowerCase()}.`,

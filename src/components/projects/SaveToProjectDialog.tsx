@@ -61,14 +61,12 @@ export const SaveToProjectDialog = ({
           return;
         }
 
-        console.log("[SaveToProject] Creating new project...");
         const newProject = await createProject.mutateAsync({
           name: newProjectName,
           description: newProjectDescription || undefined,
           color_theme: newProjectColor,
         });
         projectId = newProject.id;
-        console.log("[SaveToProject] Project created:", projectId);
       }
 
       if (!projectId) {
@@ -77,7 +75,6 @@ export const SaveToProjectDialog = ({
       }
 
       // Create artifact
-      console.log("[SaveToProject] Creating artifact...");
       const artifact = await createArtifact.mutateAsync({
         project_id: projectId,
         artifact_type: artifactType,
@@ -85,8 +82,6 @@ export const SaveToProjectDialog = ({
         description: artifactDescription,
         data: artifactData,
       });
-      console.log("[SaveToProject] Artifact created:", artifact.id);
-
       // Close dialog and reset form
       onOpenChange(false);
       resetForm();
@@ -95,7 +90,6 @@ export const SaveToProjectDialog = ({
       onSaveComplete?.(projectId, artifact.id);
       
     } catch (error) {
-      console.error("[SaveToProject] Error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to save to project");
     }
   };

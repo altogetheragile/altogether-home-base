@@ -1,5 +1,6 @@
 
 import React, { Component, ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +26,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
   handleReset = () => {
@@ -52,7 +53,7 @@ class ErrorBoundary extends Component<Props, State> {
                 An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.
               </p>
               
-              {this.state.error && (
+              {this.state.error && import.meta.env.DEV && (
                 <details className="text-left text-sm bg-gray-100 p-3 rounded">
                   <summary className="cursor-pointer font-medium">Error Details</summary>
                   <pre className="mt-2 whitespace-pre-wrap">{this.state.error.message}</pre>

@@ -52,7 +52,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
   const { data: knowledgeItems = [] } = useQuery({
     queryKey: ['knowledge-items-for-template-upload', knowledgeItemSearch],
     queryFn: async () => {
-      console.log('🔍 Fetching Knowledge Items for template upload dialog...');
       let q = supabase
         .from('knowledge_items')
         .select('id, name, is_published')
@@ -65,11 +64,9 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
 
       const { data, error } = await q;
       if (error) {
-        console.error('❌ Error fetching Knowledge Items:', error);
         throw error;
       }
       
-      console.log(`✅ Fetched ${data?.length || 0} Knowledge Items for dropdown`);
       return data || [];
     },
   });
@@ -141,7 +138,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
 
     // Check for existing template with same title BEFORE uploading
     if (existingTemplate) {
-      console.log('⚠️ Version conflict detected:', existingTemplate);
       setCustomVersion(suggestedVersion || '1.1');
       setVersionConflictOpen(true);
       return;
@@ -155,9 +151,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
     setUploading(true);
 
     try {
-      console.log('🚀 Starting template upload process...');
-      console.log('📋 Upload parameters:', { version, replaceExisting, title: formData.title, type: templateType });
-      
       let publicUrl: string;
       let uploadedPath: string;
       
@@ -165,15 +158,12 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
         // Use already uploaded file
         publicUrl = pendingUpload.publicUrl;
         uploadedPath = pendingUpload.uploadedUrl;
-        console.log('📁 Using pre-uploaded file:', uploadedPath);
       } else {
         // Upload new file
         const fileExt = file!.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `templates/${fileName}`;
 
-        console.log(`📁 Uploading file to: ${filePath}`);
-        
         // Use knowledge-base bucket for all template types
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('knowledge-base')
@@ -183,7 +173,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           });
 
         if (uploadError) {
-          console.error('❌ File upload error:', uploadError);
           throw new Error(`Failed to upload file: ${uploadError.message}`);
         }
 
@@ -194,8 +183,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
         publicUrl = newPublicUrl;
         uploadedPath = uploadData.path;
       }
-
-      console.log('✅ File ready:', publicUrl);
 
       // Prepare template data based on type
       // Map file type to logical template type
@@ -240,19 +227,9 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
         };
       }
 
-      console.log('📝 Creating template record with data:', {
-        ...templateData,
-        file_size: `${file!.size} bytes`,
-        tags_count: templateData.tags.length
-      });
-
       const template = await createTemplate.mutateAsync(templateData);
-      console.log('✅ Template created successfully:', template);
-      
       // Associate with knowledge items (only for new templates)
       if (!replaceExisting && formData.knowledgeItemIds.length > 0) {
-        console.log(`🔗 Associating template ${template.id} with ${formData.knowledgeItemIds.length} knowledge items`);
-        
         try {
           // Create associations for all selected knowledge items
           const associationPromises = formData.knowledgeItemIds.map((knowledgeItemId, index) =>
@@ -264,9 +241,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           );
           
           await Promise.all(associationPromises);
-          console.log('✅ Template associated with all knowledge items successfully');
         } catch (associationError) {
-          console.warn('⚠️ Failed to associate template with some knowledge items:', associationError);
           // Don't fail the entire upload for association errors
         }
       }
@@ -274,15 +249,12 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       completeUpload();
 
     } catch (error) {
-      console.error('❌ Upload process error:', error);
-      
       // Clean up uploaded file if template creation failed
       if (pendingUpload) {
-        console.log('🗑️ Cleaning up uploaded file due to error...');
         supabase.storage
           .from('knowledge-base')
           .remove([pendingUpload.uploadedUrl])
-          .catch(console.error);
+          .catch(() => {});
       }
       
       // Show user-friendly error message
@@ -295,8 +267,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
 
   const completeUpload = () => {
     toast.success("Template uploaded successfully!");
-    console.log('🎉 Upload process completed successfully');
-    
     // Reset form
     setFile(null);
     setTemplateType('pdf');
@@ -336,9 +306,9 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       supabase.storage
         .from('knowledge-base')
         .remove([pendingUpload.uploadedUrl])
-        .catch(console.error);
+        .catch(() => {});
     }
-    
+
     setPendingUpload(null);
     setVersionConflictOpen(false);
     setUploading(false);

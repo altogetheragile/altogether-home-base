@@ -34,11 +34,10 @@ const AccountSecurity = () => {
 
   const refreshFactors = async () => {
     try {
-      const { data, error } = await (supabase as any).auth.mfa.listFactors();
+      const { data, error } = await supabase.auth.mfa.listFactors();
       if (error) throw error;
       setFactors(data?.all ?? []);
     } catch (err: any) {
-      console.error(err);
     }
   };
 
@@ -46,7 +45,7 @@ const AccountSecurity = () => {
     setLoading(true);
     try {
       // Check existing factors first to avoid "factor already exists" errors
-      const { data: factorsData, error: listErr } = await (supabase as any).auth.mfa.listFactors();
+      const { data: factorsData, error: listErr } = await supabase.auth.mfa.listFactors();
       if (listErr) throw listErr;
       const allFactors = factorsData?.all ?? [];
       const verifiedTotp = allFactors.find((f: any) => (f.type === "totp" || f.factor_type === "totp") && (f.status === "verified" || f.factor_status === "verified"));
@@ -59,23 +58,23 @@ const AccountSecurity = () => {
 
       if (pendingTotp) {
         setFactorId(pendingTotp.id);
-        setUri(pendingTotp.totp?.uri || null);
+        setUri((pendingTotp as any).totp?.uri || null);
         setEnrolling(true);
         // Ensure a fresh challenge exists for verification
-        const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: pendingTotp.id });
+        const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId: pendingTotp.id });
         if (chErr) throw chErr;
         setChallengeId(chData?.id || null);
         toast({ title: "Continue setup", description: "Enter the 6‑digit code from your authenticator app." });
         return;
       }
 
-      const { data, error } = await (supabase as any).auth.mfa.enroll({ factorType: "totp", friendlyName: `Authenticator ${Date.now()}` });
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Authenticator ${Date.now()}` });
       if (error) throw error;
       setFactorId(data.id);
       setUri(data.totp?.uri || null);
       setEnrolling(true);
       // Create a challenge for this new factor (required by API before verify)
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: data.id });
+      const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId: data.id });
       if (chErr) throw chErr;
       setChallengeId(chData?.id || null);
       toast({ title: "MFA enrollment started", description: "Scan the QR with your authenticator app." });
@@ -100,14 +99,13 @@ const AccountSecurity = () => {
 
       let cid = challengeId;
       if (!cid) {
-        const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+        const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
         if (chErr) throw chErr;
         cid = chData?.id || null;
         setChallengeId(cid);
       }
 
-      console.log("🔐 Verifying MFA", { factorId, cid });
-      const { error } = await (supabase as any).auth.mfa.verify({ factorId, challengeId: cid, code: oneTimeCode });
+      const { error } = await supabase.auth.mfa.verify({ factorId, challengeId: cid!, code: oneTimeCode });
       if (error) throw error;
 
       toast({ title: "Two‑factor enabled", description: "MFA is now active on your account." });
@@ -120,11 +118,10 @@ const AccountSecurity = () => {
     } catch (err: any) {
       const msg = String(err?.message || "");
       const status = err?.status;
-      console.warn("⚠️ MFA verify failed", { status, msg });
 
       if (status === 422 || /challenge/i.test(msg) || /expired/i.test(msg) || /not found/i.test(msg)) {
         try {
-          const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+          const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
           if (!chErr) {
             const newCid = chData?.id || null;
             setChallengeId(newCid);
@@ -144,7 +141,7 @@ const AccountSecurity = () => {
   const disableFactor = async (id: string) => {
     setLoading(true);
     try {
-      const { error } = await (supabase as any).auth.mfa.unenroll({ factorId: id });
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: id });
       if (error) throw error;
       toast({ title: "MFA disabled", description: "The selected factor has been removed." });
       await refreshFactors();
@@ -166,7 +163,7 @@ const AccountSecurity = () => {
     }
     setLoading(true);
     try {
-      const { error } = await (supabase as any).auth.mfa.unenroll({ factorId });
+      const { error } = await supabase.auth.mfa.unenroll({ factorId });
       if (error) throw error;
       toast({ title: "Setup reset", description: "Pending MFA setup removed." });
       await refreshFactors();
@@ -186,7 +183,7 @@ const AccountSecurity = () => {
     if (!factorId) return;
     setLoading(true);
     try {
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId });
+      const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
       if (chErr) throw chErr;
       setChallengeId(chData?.id || null);
       toast({ title: "Challenge refreshed", description: "Enter a new 6‑digit code from your app." });
@@ -200,13 +197,13 @@ const AccountSecurity = () => {
   const forceResetMfa = async () => {
     setLoading(true);
     try {
-      const { data, error } = await (supabase as any).auth.mfa.listFactors();
+      const { data, error } = await supabase.auth.mfa.listFactors();
       if (error) throw error;
       const all = data?.all ?? [];
       const totps = all.filter((f: any) => (f.type === 'totp' || f.factor_type === 'totp'));
       let removed = 0;
       for (const f of totps) {
-        const { error: uerr } = await (supabase as any).auth.mfa.unenroll({ factorId: f.id });
+        const { error: uerr } = await supabase.auth.mfa.unenroll({ factorId: f.id });
         if (!uerr) removed++;
       }
       toast({ title: "MFA reset", description: `Removed ${removed} TOTP factor(s).` });
@@ -227,20 +224,19 @@ const AccountSecurity = () => {
   const testMfaNow = async () => {
     setLoading(true);
     try {
-      const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
-      console.log('🔎 Current AAL:', aalData);
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (aalData?.currentLevel === 'aal2') {
         toast({ title: 'Already verified', description: 'Your session is already at AAL2.' });
         return;
       }
-      const { data: lf } = await (supabase as any).auth.mfa.listFactors();
+      const { data: lf } = await supabase.auth.mfa.listFactors();
       const all = lf?.all ?? [];
       const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
       if (!verifiedTotp) {
         toast({ title: 'No verified TOTP', description: 'Enable MFA first, then try again.', variant: 'destructive' });
         return;
       }
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: verifiedTotp.id });
+      const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId: verifiedTotp.id });
       if (chErr) throw chErr;
       setStepUpFactorId(verifiedTotp.id);
       setStepUpChallengeId(chData?.id || null);
@@ -269,7 +265,7 @@ const AccountSecurity = () => {
       }
       const payload: any = { factorId: stepUpFactorId, code };
       if (stepUpChallengeId) payload.challengeId = stepUpChallengeId;
-      const { error } = await (supabase as any).auth.mfa.verify(payload);
+      const { error } = await supabase.auth.mfa.verify(payload);
       if (error) throw error;
       toast({ title: 'Session verified', description: 'Your session is now at AAL2.' });
       setStepUpFactorId(null);

@@ -39,7 +39,6 @@ export const useEventRegistrations = (eventId?: string) => {
         .order('registered_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching registrations:', error);
         throw error;
       }
 
@@ -67,7 +66,6 @@ export const useEventRegistrations = (eventId?: string) => {
         .in('id', userIds);
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
         throw profilesError;
       }
 
@@ -143,7 +141,6 @@ export const useDeleteRegistration = (eventId?: string) => {
       });
     },
     onError: (error: any) => {
-      console.error('Delete registration error:', error);
       toast({
         title: 'Failed to delete registration',
         description: error?.message || 'Please try again.',

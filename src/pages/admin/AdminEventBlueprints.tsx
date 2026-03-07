@@ -59,7 +59,7 @@ const AdminEventBlueprints: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_templates')
-        .select('*')
+        .select('id, title, description, duration_days, target_audience, difficulty_rating')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -70,8 +70,7 @@ const AdminEventBlueprints: React.FC = () => {
   // Create blueprint mutation
   const createBlueprint = useMutation({
     mutationFn: async (blueprintData: Partial<EventBlueprint>) => {
-      const { data, error } = await supabase
-        .from('event_templates')
+      const { data, error } = await (supabase.from as any)('event_templates')
         .insert({
           ...blueprintData,
           created_by: (await supabase.auth.getUser()).data.user?.id
@@ -87,8 +86,7 @@ const AdminEventBlueprints: React.FC = () => {
       toast.success('Event blueprint created successfully');
       handleCloseDialog();
     },
-    onError: (error) => {
-      console.error('Error creating blueprint:', error);
+    onError: () => {
       toast.error('Failed to create event blueprint');
     }
   });
@@ -114,8 +112,7 @@ const AdminEventBlueprints: React.FC = () => {
       toast.success('Event blueprint updated successfully');
       handleCloseDialog();
     },
-    onError: (error) => {
-      console.error('Error updating blueprint:', error);
+    onError: () => {
       toast.error('Failed to update event blueprint');
     }
   });
@@ -134,8 +131,7 @@ const AdminEventBlueprints: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['event-blueprints'] });
       toast.success('Event blueprint deleted successfully');
     },
-    onError: (error) => {
-      console.error('Error deleting blueprint:', error);
+    onError: () => {
       toast.error('Failed to delete event blueprint');
     }
   });

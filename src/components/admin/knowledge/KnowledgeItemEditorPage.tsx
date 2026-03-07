@@ -138,8 +138,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   // Initialize form with existing data - only on first load or significant changes
   useEffect(() => {
     if (knowledgeItem && (!formInitialized || (!isEditing && knowledgeItem.id !== form.getValues('id'))) && !userIsTyping) {
-      console.log('🔧 Initializing form with knowledge item data');
-      
       // Extract IDs from the new multi-select arrays
       const decisionLevelIds = (knowledgeItem.decision_levels || []).map(l => l.id);
       const categoryIds = (knowledgeItem.categories || []).map(c => c.id);
@@ -183,7 +181,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       if (target.matches('input, textarea, [contenteditable]')) {
-        console.log('📝 User started typing');
         setUserIsTyping(true);
         
         // Clear any existing timeout
@@ -192,13 +189,11 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     };
     
     const handleInput = () => {
-      console.log('📝 User is typing');
       setUserIsTyping(true);
       
       // Clear any existing timeout and set a new one
       clearTimeout(typingTimeout);
       typingTimeout = setTimeout(() => {
-        console.log('📝 User stopped typing');
         setUserIsTyping(false);
       }, 1000); // User considered "stopped typing" after 1 second of inactivity
     };
@@ -206,8 +201,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     const handleFocusOut = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       if (target.matches('input, textarea, [contenteditable]')) {
-        console.log('📝 User left field');
-        
         // Set a short timeout to allow for quick field switches
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
@@ -234,29 +227,19 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   // const debouncedFormValues = useDebounce(formValues, 5000);
 
   const performAutoSave = useCallback(async (data: KnowledgeItemFormData) => {
-    console.log('🚫 Auto-save disabled temporarily for debugging');
     return;
 
     // More strict conditions to prevent infinite loops
     if (!form.formState.isDirty || !isEditing || !knowledgeItem?.id || userIsTyping || autoSaveStatus === 'saving') {
-      console.log('🚫 Auto-save skipped:', { 
-        isDirty: form.formState.isDirty, 
-        isEditing, 
-        hasId: !!knowledgeItem?.id, 
-        userIsTyping,
-        status: autoSaveStatus
-      });
       return;
     }
 
     // Prevent auto-save if we just saved recently (cooldown period)
     if (lastAutoSave && Date.now() - lastAutoSave.getTime() < 2000) {
-      console.log('🚫 Auto-save skipped: cooldown period active');
       return;
     }
 
     try {
-      console.log('💾 Starting auto-save');
       setAutoSaveStatus('saving');
       setLastAutoSave(new Date());
       
@@ -267,16 +250,12 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       
       setLastSaved(new Date());
       setAutoSaveStatus('saved');
-      console.log('✅ Auto-save completed');
-      
       // Clear saved status after a delay
       setTimeout(() => {
         setAutoSaveStatus('idle');
       }, 2000);
     } catch (error) {
       setAutoSaveStatus('error');
-      console.error('❌ Auto-save failed:', error);
-      
       // Clear error status after a delay
       setTimeout(() => {
         setAutoSaveStatus('idle');
@@ -286,7 +265,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
 
   useEffect(() => {
     // TEMPORARILY DISABLE AUTO-SAVE
-    console.log('🚫 Auto-save useEffect disabled for debugging');
     return;
     
     // Only auto-save if form is dirty, user has stopped typing, and we're not already saving
@@ -338,8 +316,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
 
   // Save handler with improved error handling and debugging
   const handleSave = async (shouldNavigateAway = false) => {
-    console.log('🔍 handleSave called with shouldNavigateAway:', shouldNavigateAway);
-    
     const isValid = await form.trigger();
     if (!isValid) {
       toast({
@@ -354,13 +330,11 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     
     try {
       if (isEditing && knowledgeItem?.id) {
-        console.log('🔄 Updating knowledge item...');
         await updateMutation.mutateAsync({
           id: knowledgeItem.id,
           ...data,
         });
       } else {
-        console.log('➕ Creating new knowledge item...');
         await createMutation.mutateAsync(data);
       }
       
@@ -368,29 +342,23 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       
       // Reset form dirty state - mark current values as the new clean baseline
       form.reset(form.getValues());
-      console.log('🧹 Form dirty state reset - isDirty:', form.formState.isDirty);
-      
       // Only navigate away if explicitly requested
       if (shouldNavigateAway) {
-        console.log('🚪 Navigating away as requested');
         navigate(getReturnUrl());
       } else {
-        console.log('✅ Save completed, staying on page');
       }
     } catch (error) {
       // Error handling is now done in the mutation hooks with better messages
-      console.error('❌ Save failed in component:', error);
+
     }
   };
 
   // Separate handlers for clarity
   const handleSaveOnly = async () => {
-    console.log('💾 Save Only button clicked');
     await handleSave(false);
   };
 
   const handleSaveAndClose = async () => {
-    console.log('💾🚪 Save and Close button clicked');
     await handleSave(true);
   };
 

@@ -79,7 +79,6 @@ export const PageEditor: React.FC = () => {
       
       // Ensure required fields are present
       if (!blockData.type) {
-        console.error('Block type is required');
         return;
       }
       

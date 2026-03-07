@@ -28,7 +28,6 @@ export const KnowledgeItemPublication = ({ formData, onFormChange }: KnowledgeIt
   const handleCreatePublication = async () => {
     // This would create a new publication and select it
     // For now, we'll just show a placeholder
-    console.log('Creating publication:', newPublication);
     setShowNewPublication(false);
     setNewPublication({ title: '', publication_type: 'website', url: '', publication_year: new Date().getFullYear() });
   };

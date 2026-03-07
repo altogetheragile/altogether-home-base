@@ -16,7 +16,6 @@ export const useCreateFormat = () => {
         .single();
 
       if (error) {
-        console.error('Error creating format:', error);
         throw error;
       }
 
@@ -43,7 +42,6 @@ export const useUpdateFormat = () => {
         .single();
 
       if (error) {
-        console.error('Error updating format:', error);
         throw error;
       }
 
@@ -64,7 +62,6 @@ export const useDeleteFormat = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting format:', error);
         throw error;
       }
 

@@ -27,7 +27,7 @@ export const contactFormSchema = z.object({
     .min(10, { message: "Message must be at least 10 characters" })
     .max(2000, { message: "Message must be less than 2000 characters" }),
   
-  enquiry_type: z.enum(["general", "support", "partnership", "feedback"]),
+  enquiry_type: z.enum(["general", "training", "coaching", "partnership", "feedback"]),
   
   preferred_contact_method: z.enum(["email", "phone"]).optional(),
   

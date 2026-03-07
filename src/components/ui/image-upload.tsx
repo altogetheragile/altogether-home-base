@@ -59,14 +59,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       const fileExt = file.name.split('.').pop();
       const fileName = `${path}${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-      console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucket}/${fileName}`);
-
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, file);
 
       if (uploadError) {
-        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -75,11 +72,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         .getPublicUrl(fileName);
 
       if (!publicUrl) {
-        console.error('Failed to get public URL for file:', fileName);
         throw new Error('Failed to get public URL for uploaded file');
       }
 
-      console.log(`Upload successful: ${publicUrl}`);
       onChange(publicUrl);
       toast({
         title: "Upload Successful",
@@ -89,15 +84,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       const errorMessage = error?.message || 'Unknown error occurred';
       const errorCode = error?.error || error?.code || 'UNKNOWN';
       
-      console.error('Upload error details:', {
-        message: errorMessage,
-        code: errorCode,
-        fileName: file.name,
-        fileSize: file.size,
-        bucket,
-        error
-      });
-
       let userFriendlyMessage = "Failed to upload image.";
       
       if (errorMessage.includes('The resource already exists')) {

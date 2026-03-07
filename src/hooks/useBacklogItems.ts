@@ -68,7 +68,7 @@ export const useCreateBacklogItem = () => {
       const maxPosition = maxPosData?.[0]?.backlog_position ?? -1;
       
       const { data, error } = await supabase
-        .from('backlog_items')
+        .from('backlog_items' as any)
         .insert({
           ...item,
           created_by: user?.id,
@@ -78,7 +78,7 @@ export const useCreateBacklogItem = () => {
         .single();
       
       if (error) throw error;
-      return data as BacklogItem;
+      return data as unknown as BacklogItem;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backlog-items'] });

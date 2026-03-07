@@ -12,7 +12,7 @@ import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { data: registrations = [], isLoading: registrationsLoading } = useUserRegistrations();
+  const { data: registrations = [], isLoading: registrationsLoading, isError: registrationsError, refetch: refetchRegistrations } = useUserRegistrations();
   const [searchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'overview';
 
@@ -71,10 +71,22 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RegistrationsList 
-                  registrations={registrations} 
-                  isLoading={registrationsLoading} 
-                />
+                {registrationsError ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-4">
+                    <p className="text-muted-foreground">Failed to load registrations. Please try again.</p>
+                    <button
+                      onClick={() => refetchRegistrations()}
+                      className="px-4 py-2 rounded bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : (
+                  <RegistrationsList
+                    registrations={registrations}
+                    isLoading={registrationsLoading}
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>

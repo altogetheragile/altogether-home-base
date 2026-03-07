@@ -100,7 +100,7 @@ export const KnowledgeItemUseCases = ({
         description: `Successfully converted to ${newType} use case.`,
       });
     } catch (error) {
-      console.error('Error converting use case:', error);
+
       toast({
         title: "Conversion Failed",
         description: "Failed to convert use case. Please try again.",
@@ -118,7 +118,7 @@ export const KnowledgeItemUseCases = ({
         });
         setUseCaseToDelete(null);
       } catch (error) {
-        console.error('Error deleting use case:', error);
+
       }
     }
   };

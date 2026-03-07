@@ -36,6 +36,10 @@ const AIToolsHub = lazy(() => import('@/pages/AIToolsHub'));
 const BMCGenerator = lazy(() => import('@/pages/BMCGenerator'));
 const ProjectModellingCanvas = lazy(() => import('@/pages/ProjectModellingCanvas'));
 const Contact = lazy(() => import('@/pages/Contact'));
+const BlogPost = lazy(() => import('@/pages/BlogPost'));
+const Terms = lazy(() => import('@/pages/Terms'));
+const CookiePolicy = lazy(() => import('@/pages/CookiePolicy'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
 const AccountSecurity = lazy(() => import('@/pages/AccountSecurity'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ProductBacklog = lazy(() => import('@/pages/ProductBacklog'));
@@ -96,6 +100,10 @@ const AdminLogsDatabaseRoute = lazy(() => import('@/pages/admin/AdminLogsDatabas
 const AdminLogsAuthRoute = lazy(() => import('@/pages/admin/AdminLogsAuthRoute'));
 const AdminAuditLogs = lazy(() => import('@/pages/admin/AdminAuditLogs'));
 
+// Admin Pages - Blog Management
+const AdminBlog = lazy(() => import('@/pages/admin/AdminBlog'));
+const AdminBlogPost = lazy(() => import('@/pages/admin/AdminBlogPost'));
+
 // Admin Pages - Content Moderation & Data
 const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
 const AdminContacts = lazy(() => import('@/pages/admin/AdminContacts'));
@@ -114,9 +122,11 @@ export const PublicRoutes = () => {
     <>
       <Route path="/events/:id" element={
         <SiteSettingsRouteGuard feature="events">
-          <Suspense fallback={<LoadingFallback />}>
-            <EventDetail />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <EventDetail />
+            </Suspense>
+          </ErrorBoundary>
         </SiteSettingsRouteGuard>
       } />
       <Route path="/knowledge/new" element={
@@ -130,55 +140,92 @@ export const PublicRoutes = () => {
       } />
       <Route path="/knowledge/:slug" element={
         <SiteSettingsRouteGuard feature="knowledge">
-          <Suspense fallback={<LoadingFallback />}>
-            <Technique />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <Technique />
+            </Suspense>
+          </ErrorBoundary>
         </SiteSettingsRouteGuard>
       } />
     <Route path="/testimonials" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <Testimonials />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <Testimonials />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/auth" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <Auth />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <Auth />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/auth/reset" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <ResetPassword />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <ResetPassword />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/ai-tools" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <AIToolsHub />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <AIToolsHub />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/user-story-canvas" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <AIToolsCanvas />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <AIToolsCanvas />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/bmc-generator" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <BMCGenerator />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <BMCGenerator />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/project-modelling" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <ProjectModellingCanvas />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <ProjectModellingCanvas />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/contact" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <Contact />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/terms" element={
       <Suspense fallback={<LoadingFallback />}>
-        <Contact />
+        <Terms />
+      </Suspense>
+    } />
+    <Route path="/cookies" element={
+      <Suspense fallback={<LoadingFallback />}>
+        <CookiePolicy />
+      </Suspense>
+    } />
+    <Route path="/privacy" element={
+      <Suspense fallback={<LoadingFallback />}>
+        <Privacy />
       </Suspense>
     } />
     <Route path="/account/security" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <AccountSecurity />
-      </Suspense>
+      <ProtectedRoute>
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <AccountSecurity />
+          </Suspense>
+        </ErrorBoundary>
+      </ProtectedRoute>
     } />
     <Route path="/backlog" element={
       <Suspense fallback={<LoadingFallback />}>
@@ -303,6 +350,23 @@ export const AdminRoutes = () => {
           </Suspense>
         } />
         
+        {/* Blog Management */}
+        <Route path="blog" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminBlog />
+          </Suspense>
+        } />
+        <Route path="blog/new" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminBlogPost />
+          </Suspense>
+        } />
+        <Route path="blog/:id" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminBlogPost />
+          </Suspense>
+        } />
+
         {/* Instructors & Locations */}
         <Route path="instructors" element={
           <Suspense fallback={<LoadingFallback />}>
@@ -571,6 +635,16 @@ export const DynamicRoutes = () => {
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Blog />
+            </Suspense>
+          </ErrorBoundary>
+        </SiteSettingsRouteGuard>
+      } />
+
+      <Route path="/blog/:slug" element={
+        <SiteSettingsRouteGuard feature="blog">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <BlogPost />
             </Suspense>
           </ErrorBoundary>
         </SiteSettingsRouteGuard>

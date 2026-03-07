@@ -68,7 +68,6 @@ export const ContentBlockRenderer: React.FC<ContentBlockRendererProps> = ({
         );
       }
     } catch (error) {
-      console.error('ContentBlockRenderer error:', error, { blockId: block.id, type: block.type });
       return (
         <div className="py-4 px-6 bg-destructive/10 rounded-lg border border-destructive">
           <p className="text-destructive">Failed to render this content block</p>

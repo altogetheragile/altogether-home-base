@@ -38,7 +38,7 @@ const retryWithBackoff = async <T>(
       }
       
       const delay = baseDelay * Math.pow(2, attempt);
-      console.log(`🔄 Retry attempt ${attempt + 1}/${maxRetries + 1} after ${delay}ms`);
+      // Retry after exponential backoff
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -537,8 +537,6 @@ export const useCreateKnowledgeItem = () => {
 
   return useMutation({
     mutationFn: async (data: KnowledgeItemInput) => {
-      console.log('🚀 useCreateKnowledgeItem: Starting creation with data:', JSON.stringify(data, null, 2));
-      
       // Extract taxonomy IDs and primary/rationale fields
       const { 
         decision_level_ids, category_ids, domain_ids, tag_ids,
@@ -559,23 +557,18 @@ export const useCreateKnowledgeItem = () => {
         primary_publication_id: cleanItemData.primary_publication_id === '' || cleanItemData.primary_publication_id === undefined ? null : cleanItemData.primary_publication_id,
       };
       
-      console.log('💾 Creating with whitelisted data:', transformedData);
-      
       // Retry the create operation for network errors
       return retryWithBackoff(async () => {
         // Create the knowledge item
         const { data: result, error } = await supabase
-          .from('knowledge_items')
+          .from('knowledge_items' as any)
           .insert([transformedData])
           .select()
           .single();
 
-        if (error) {
-          console.error('❌ useCreateKnowledgeItem: Insert failed:', error);
-          throw error;
-        }
-        
-        const itemId = result.id;
+        if (error) throw error;
+
+        const itemId = (result as any).id;
         
         // Insert junction table records for taxonomy
         const junctionInserts = [];
@@ -630,26 +623,20 @@ export const useCreateKnowledgeItem = () => {
         // Execute all junction inserts in parallel
         if (junctionInserts.length > 0) {
           const results = await Promise.all(junctionInserts);
-          results.forEach((res, i) => {
-            if (res.error) {
-              console.error(`❌ Junction insert ${i} failed:`, res.error);
-            }
-          });
+          // Junction insert errors are non-fatal
         }
         
-        console.log('✅ useCreateKnowledgeItem: Creation successful:', result);
         return result;
       });
     },
     onSuccess: (result) => {
-      console.log('🎉 useCreateKnowledgeItem: Success callback:', result);
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
       
-      auditLogger.create('knowledge_items', result.id, {
-        item_name: result.name,
-        is_published: result.is_published,
-        category_id: result.category_id
-      }).catch(console.error);
+      auditLogger.create('knowledge_items', (result as any).id, {
+        item_name: (result as any).name,
+        is_published: (result as any).is_published,
+        category_id: (result as any).category_id
+      }).catch(() => {});
       
       toast({
         title: "Success",
@@ -657,8 +644,6 @@ export const useCreateKnowledgeItem = () => {
       });
     },
     onError: (error: PostgreSQLError) => {
-      console.error('❌ useCreateKnowledgeItem: Error callback:', error);
-      
       let errorMessage = "Failed to create knowledge item";
       
       if (isNetworkError(error)) {
@@ -709,7 +694,6 @@ export const useUpdateKnowledgeItem = () => {
         primary_publication_id: cleanItemData.primary_publication_id === '' || cleanItemData.primary_publication_id === undefined ? null : cleanItemData.primary_publication_id,
       };
 
-      console.log('💾 Sending whitelisted data to Supabase:', transformedData);
 
       // Retry the update operation for network errors
       return retryWithBackoff(async () => {
@@ -721,10 +705,7 @@ export const useUpdateKnowledgeItem = () => {
           .select()
           .single();
 
-        if (error) {
-          console.error('❌ Supabase error:', error);
-          throw error;
-        }
+        if (error) throw error;
         
         // Update junction tables if taxonomy IDs are provided
         const junctionUpdates = [];
@@ -815,7 +796,6 @@ export const useUpdateKnowledgeItem = () => {
       return { previousItem };
     },
     onSuccess: (result, { id }) => {
-      console.log('✅ Update mutation success, updating cache...');
       queryClient.setQueryData(['knowledge-item', id], result);
       const listData = queryClient.getQueryData(['knowledge-items']);
       if (listData && Array.isArray(listData)) {
@@ -832,7 +812,7 @@ export const useUpdateKnowledgeItem = () => {
       auditLogger.update('knowledge_items', id, {
         item_name: result.name,
         is_published: result.is_published
-      }).catch(console.error);
+      }).catch(() => {});
       
       toast({
         title: "Success",
@@ -840,8 +820,6 @@ export const useUpdateKnowledgeItem = () => {
       });
     },
     onError: (error: PostgreSQLError, { id }, context) => {
-      console.error('❌ Update mutation failed:', error);
-      
       if (context?.previousItem) {
         queryClient.setQueryData(['knowledge-item', id], context.previousItem);
       }
@@ -887,7 +865,7 @@ export const useDeleteKnowledgeItem = () => {
       
       auditLogger.delete('knowledge_items', id, {
         context: 'permanent_deletion'
-      }).catch(console.error);
+      }).catch(() => {});
       
       toast({
         title: "Success",

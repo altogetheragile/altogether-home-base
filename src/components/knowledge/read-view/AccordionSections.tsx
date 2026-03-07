@@ -1,4 +1,5 @@
 import React from 'react';
+import DOMPurify from 'dompurify';
 import {
   Accordion,
   AccordionContent,
@@ -46,7 +47,7 @@ export const AccordionSections: React.FC<AccordionSectionsProps> = ({
           <AccordionContent>
             <div 
               className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: background }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(background) }}
             />
           </AccordionContent>
         </AccordionItem>

@@ -29,7 +29,7 @@ export function useChildStories(parentStoryId?: string) {
         .order('position', { ascending: true });
       
       if (error) throw error;
-      return data as UserStory[];
+      return data as unknown as UserStory[];
     },
     enabled: !!parentStoryId,
   });

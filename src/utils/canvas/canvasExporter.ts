@@ -43,7 +43,7 @@ export const exportCanvas = async (
       return canvas.toDataURL('image/png');
     }
   } catch (error) {
-    console.error('Export failed:', error);
+
     throw new Error('Failed to export canvas');
   } finally {
     element.classList.remove('exporting');

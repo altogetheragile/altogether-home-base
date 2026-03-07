@@ -169,44 +169,33 @@ const techniques = [
 ];
 
 export async function populateTestData() {
-  console.log('Starting test data population...');
-
   try {
     // 1. Insert categories
-    console.log('Inserting categories...');
-    const { data: categoriesData, error: categoriesError } = await supabase
-      .from('knowledge_categories')
+    const { data: categoriesData, error: categoriesError } = await (supabase.from as any)('knowledge_categories')
       .upsert(categories, { onConflict: 'slug' })
       .select();
 
     if (categoriesError) throw categoriesError;
-    console.log(`Inserted ${categoriesData.length} categories`);
 
     // 2. Insert tags
-    console.log('Inserting tags...');
-    const { data: tagsData, error: tagsError } = await supabase
-      .from('knowledge_tags')
+    const { data: tagsData, error: tagsError } = await (supabase.from as any)('knowledge_tags')
       .upsert(tags, { onConflict: 'slug' })
       .select();
 
     if (tagsError) throw tagsError;
-    console.log(`Inserted ${tagsData.length} tags`);
 
     // 3. Insert techniques
-    console.log('Inserting techniques...');
     for (const technique of techniques) {
       const { category_slug, tag_slugs, ...techniqueData } = technique;
-      
+
       // Find category ID
       const category = categoriesData.find(c => c.slug === category_slug);
       if (!category) {
-        console.warn(`Category not found for slug: ${category_slug}`);
         continue;
       }
 
       // Insert technique
-      const { data: techniqueResult, error: techniqueError } = await supabase
-        .from('knowledge_techniques')
+      const { data: techniqueResult, error: techniqueError } = await (supabase.from as any)('knowledge_techniques')
         .upsert({
           ...techniqueData,
           category_id: category.id
@@ -215,7 +204,6 @@ export async function populateTestData() {
         .single();
 
       if (techniqueError) {
-        console.error(`Error inserting technique ${technique.name}:`, techniqueError);
         continue;
       }
 
@@ -223,22 +211,17 @@ export async function populateTestData() {
       for (const tagSlug of tag_slugs) {
         const tag = tagsData.find(t => t.slug === tagSlug);
         if (tag) {
-          await supabase
-            .from('knowledge_technique_tags')
+          await (supabase.from as any)('knowledge_technique_tags')
             .upsert({
               technique_id: techniqueResult.id,
               tag_id: tag.id
             }, { onConflict: 'technique_id,tag_id' });
         }
       }
-
-      console.log(`Inserted technique: ${technique.name}`);
     }
 
     // 4. Add some examples
-    console.log('Adding examples...');
-    const examplesTechnique = await supabase
-      .from('knowledge_techniques')
+    const examplesTechnique = await (supabase.from as any)('knowledge_techniques')
       .select('id')
       .eq('slug', 'swot-analysis')
       .single();
@@ -268,17 +251,14 @@ export async function populateTestData() {
       ];
 
       for (const example of examples) {
-        await supabase
-          .from('knowledge_examples')
+        await (supabase.from as any)('knowledge_examples')
           .upsert(example, { onConflict: 'technique_id,position' });
       }
     }
 
-    console.log('Test data population completed successfully!');
     return { success: true, message: 'Test data populated successfully' };
 
   } catch (error) {
-    console.error('Error populating test data:', error);
     return { success: false, error };
   }
 }

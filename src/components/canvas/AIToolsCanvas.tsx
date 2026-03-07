@@ -243,7 +243,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       // Update history with migrated state
       setHistory([migratedElements]);
       setHistoryIndex(0);
-      console.log('Canvas elements migrated: sizes and story numbers updated');
     }
   }, [isInitialLoad, elements]);
 
@@ -1096,11 +1095,11 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         );
       case 'sticky':
         return (
-          <StickyNoteElement 
-            {...commonProps}
+          <StickyNoteElement
+            {...commonProps as any}
             data={element.content}
-            onResize={(size) => handleElementUpdate(element.id, { size })}
-            onContentChange={(content) => handleElementUpdate(element.id, { content })}
+            onResize={(size: { width: number; height: number }) => handleElementUpdate(element.id, { size })}
+            onContentChange={(content: { text: string; color?: string }) => handleElementUpdate(element.id, { content })}
           />
         );
       case 'epic':

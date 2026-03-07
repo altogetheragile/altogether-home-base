@@ -133,7 +133,7 @@ export const useSubmitFeedback = () => {
   return useMutation({
     mutationFn: async (feedback: Partial<CourseFeedback>) => {
       const { data, error } = await supabase
-        .from('course_feedback')
+        .from('course_feedback' as any)
         .insert({
           ...feedback,
           created_by: (await supabase.auth.getUser()).data.user?.id,
@@ -157,7 +157,6 @@ export const useSubmitFeedback = () => {
         description: "Failed to submit feedback. Please try again.",
         variant: "destructive",
       });
-      console.error('Feedback submission error:', error);
     },
   });
 };
@@ -194,7 +193,6 @@ export const useUpdateFeedback = () => {
         description: "Failed to update feedback. Please try again.",
         variant: "destructive",
       });
-      console.error('Feedback update error:', error);
     },
   });
 };
@@ -225,7 +223,6 @@ export const useDeleteFeedback = () => {
         description: "Failed to delete feedback. Please try again.",
         variant: "destructive",
       });
-      console.error('Feedback delete error:', error);
     },
   });
 };
@@ -259,7 +256,6 @@ export const useBulkApproveFeedback = () => {
         description: "Failed to approve feedback. Please try again.",
         variant: "destructive",
       });
-      console.error('Bulk approve error:', error);
     },
   });
 };

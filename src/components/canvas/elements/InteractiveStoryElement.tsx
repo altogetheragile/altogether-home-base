@@ -97,7 +97,6 @@ export const InteractiveStoryElement: React.FC<InteractiveStoryElementProps> = (
         description: "Your user story is ready for review"
       });
     } catch (error) {
-      console.error('Error generating story:', error);
       toast({
         title: "Generation Failed",
         description: "Unable to generate user story. Please try again.",

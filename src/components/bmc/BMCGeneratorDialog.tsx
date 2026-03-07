@@ -16,7 +16,7 @@ import BusinessModelCanvas, { BusinessModelCanvasRef } from './BusinessModelCanv
 import BMCExportDialog from './BMCExportDialog';
 import { Badge } from '@/components/ui/badge';
 
-const DEFAULT_BMC_TEMPLATE_URL = "https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf";
+const DEFAULT_BMC_TEMPLATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf`;
 
 interface BMCData {
   keyPartners: string | string[];
@@ -113,7 +113,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
           .maybeSingle();
 
         if (error || !data?.knowledge_templates) {
-          console.log('[BMC] Using default template fallback');
           setBmcTemplate({ url: DEFAULT_BMC_TEMPLATE_URL, title: "Business Model Canvas (Default)" });
           setUsingDefaultTemplate(true);
           toast({
@@ -142,7 +141,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
           setUsingDefaultTemplate(true);
         }
       } catch (error) {
-        console.error('[BMC] Error fetching template:', error);
         setBmcTemplate({ url: DEFAULT_BMC_TEMPLATE_URL, title: "Business Model Canvas (Default)" });
         setUsingDefaultTemplate(true);
       }
@@ -214,7 +212,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
         revenueStreams: normalizeSection(pick(bmcData, 'revenueStreams', 'revenue_streams')),
       };
     } catch (error) {
-      console.error('[BMC] Normalization error:', error);
       toast({
         title: "Data processing error",
         description: "Failed to process BMC data. Please try regenerating.",
@@ -251,16 +248,12 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     setIsGenerating(true);
     setGeneratedBMC(null);
     setFilledPdfUrl(null);
-    
+
     try {
-      console.log('[BMC] Starting generation request...');
-      console.log('[BMC] Form data:', formData);
-      
       // Add timeout to detect hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        console.error('[BMC] Request timeout after 60 seconds');
       }, 60000); // 60 second timeout
       
       const { data, error } = await supabase.functions.invoke('generate-business-model-canvas', {
@@ -277,13 +270,9 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       });
       
       clearTimeout(timeoutId);
-      console.log('[BMC] Edge function response received:', { data, error });
 
       if (error) {
-        console.error('[BMC] Edge function error:', error);
-        
         if (error.message?.includes('Failed to send a request') && retryCount < 2) {
-          console.log(`[BMC] Retrying... (attempt ${retryCount + 1}/2)`);
           await new Promise(resolve => setTimeout(resolve, 800));
           return generateBMC(retryCount + 1);
         }
@@ -292,15 +281,12 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       }
 
       const raw = typeof data === "string" ? JSON.parse(data) : data;
-      console.log('[BMC] Parsed response:', raw);
-      
+
       if (!raw?.success) {
-        console.error('[BMC] Generation failed:', raw?.error);
         throw new Error(raw?.error || 'AI failed to generate BMC. Please try again.');
       }
 
       const bmcData = raw.data;
-      console.log('[BMC] ✅ BMC data extracted:', bmcData);
       const normalizedBMC = normalizeBMCData(bmcData);
       setGeneratedBMC(bmcData);
       setCompanyName(formData.companyName);
@@ -335,8 +321,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
         description: "Your strategic Business Model Canvas is ready for review and export"
       });
     } catch (error) {
-      console.error('[BMC] ❌ Generation error:', error);
-      
       let errorMessage = 'Unknown error occurred';
       let errorTitle = 'Generation Failed';
       
@@ -367,7 +351,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
 
   const fillPDFWithData = async (bmcDataArrays: any, retryCount = 0) => {
     if (!bmcTemplate?.url) {
-      console.error('[BMC] No template URL available');
       toast({
         title: "Template error",
         description: "No template available for PDF generation",
@@ -377,8 +360,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     }
 
     setIsFillingPdf(true);
-    console.log('[BMC] Filling PDF with data...');
-    console.log('[BMC] Template URL:', bmcTemplate.url);
 
     try {
       const { data: pdfData, error: pdfError } = await supabase.functions.invoke(
@@ -393,10 +374,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       );
 
       if (pdfError) {
-        console.error('[BMC] PDF fill error:', pdfError);
-        
         if (pdfError.message?.includes('Failed to send a request') && retryCount < 2) {
-          console.log(`[BMC] Retrying PDF fill... (attempt ${retryCount + 1}/2)`);
           await new Promise(resolve => setTimeout(resolve, 800));
           return fillPDFWithData(bmcDataArrays, retryCount + 1);
         }
@@ -405,7 +383,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       }
 
       if (pdfData?.pdfDataUrl) {
-        console.log('[BMC] ✅ PDF filled successfully');
         setFilledPdfUrl(pdfData.pdfDataUrl);
         toast({
           title: "PDF created",
@@ -413,7 +390,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
         });
       }
     } catch (error: any) {
-      console.error('[BMC] ❌ PDF fill error:', error);
       toast({
         title: "PDF generation failed",
         description: error.message || "Could not create PDF from template",
@@ -508,7 +484,6 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       setIsOpen(false);
       
     } catch (error) {
-      console.error('Error saving BMC as project:', error);
       toast({
         title: "Save Failed",
         description: "Unable to save BMC as project. Please try again.",

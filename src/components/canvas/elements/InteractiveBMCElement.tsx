@@ -106,7 +106,6 @@ export const InteractiveBMCElement: React.FC<InteractiveBMCElementProps> = ({
         description: "Your Business Model Canvas is ready"
       });
     } catch (error) {
-      console.error('Error generating BMC:', error);
       toast({
         title: "Generation Failed",
         description: "Unable to generate BMC. Please try again.",

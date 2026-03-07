@@ -59,7 +59,7 @@ export const useBlogPosts = (options: UseBlogPostsOptions = {}) => {
             slug,
             color
           ),
-          blog_post_tags!inner (
+          blog_post_tags (
             blog_tags (
               id,
               name,
@@ -139,7 +139,7 @@ export const useBlogPost = (slug: string) => {
             slug,
             color
           ),
-          blog_post_tags!inner (
+          blog_post_tags (
             blog_tags (
               id,
               name,

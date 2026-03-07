@@ -59,7 +59,6 @@ export const useCreateKnowledgeUseCase = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error creating use case:', error);
       toast({
         title: 'Error Creating Use Case',
         description: error.message || 'You may not have permission to create use cases for this item.',
@@ -93,7 +92,6 @@ export const useUpdateKnowledgeUseCase = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error updating use case:', error);
       toast({
         title: 'Error Updating Use Case',
         description: error.message || 'You may not have permission to update this use case.',
@@ -125,7 +123,6 @@ export const useDeleteKnowledgeUseCase = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error deleting use case:', error);
       toast({
         title: 'Error Deleting Use Case',
         description: error.message || 'You may not have permission to delete this use case.',

@@ -41,7 +41,7 @@ const AdminKnowledgeCategories = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('knowledge_categories')
-        .select('*')
+        .select('id, name, slug, description, color, display_order')
         .order('display_order');
       
       if (error) throw error;

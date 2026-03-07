@@ -37,7 +37,7 @@ export const useCreatePlanningFocus = () => {
   return useMutation({
     mutationFn: async (data: Partial<PlanningFocus>) => {
       const { data: result, error } = await supabase
-        .from('planning_focuses')
+        .from('planning_focuses' as any)
         .insert([data])
         .select()
         .single();

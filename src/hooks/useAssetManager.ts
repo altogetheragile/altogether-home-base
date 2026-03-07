@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export interface Asset {
   id: string;
@@ -69,7 +69,6 @@ export const useAssetMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error creating asset:', error);
       toast({
         title: "Error",
         description: "Failed to create asset",
@@ -101,7 +100,6 @@ export const useAssetMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating asset:', error);
       toast({
         title: "Error",
         description: "Failed to update asset",
@@ -127,7 +125,6 @@ export const useAssetMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error deleting asset:', error);
       toast({
         title: "Error",
         description: "Failed to delete asset",
@@ -246,7 +243,6 @@ export const useKnowledgeItemAssetMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating knowledge item assets:', error);
       toast({
         title: "Error",
         description: "Failed to update knowledge item assets",

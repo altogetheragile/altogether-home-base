@@ -155,7 +155,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
       });
 
     } catch (error) {
-      console.error('Import error:', error);
+
       toast({
         title: "Import Failed",
         description: error instanceof Error ? error.message : 'An unexpected error occurred',

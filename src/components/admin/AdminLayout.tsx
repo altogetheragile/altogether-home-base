@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare, Database, ExternalLink } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare, Database, ExternalLink, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import AccessDenied from '@/components/AccessDenied';
@@ -160,6 +160,13 @@ const AdminLayout = () => {
       paths: ['/admin/events', '/admin/event-blueprints', '/admin/instructors', '/admin/locations', '/admin/event-categories', '/admin/event-types', '/admin/levels', '/admin/formats'],
       href: '/admin/events',
       items: eventsItems
+    },
+    {
+      id: 'blog',
+      label: 'Blog',
+      icon: FileText,
+      paths: ['/admin/blog'],
+      href: '/admin/blog'
     },
     {
       id: 'feedback',

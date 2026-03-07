@@ -32,6 +32,9 @@ export interface SiteSettings {
   show_admin_routes: boolean | null;
   show_protected_projects: boolean | null;
   show_dynamic_pages: boolean | null;
+  show_coaching: boolean | null;
+  show_about: boolean | null;
+  show_testimonials: boolean | null;
   show_dashboard: boolean | null;
   show_recommendations: boolean | null;
   show_testimonial_name: boolean | null;
@@ -54,7 +57,7 @@ export const useSiteSettings = () => {
         .single();
 
       if (error) throw error;
-      return data as SiteSettings;
+      return data as unknown as SiteSettings;
     },
   });
 
@@ -63,7 +66,7 @@ export const useSiteSettings = () => {
       // 1. Update site_settings table
       const { data: settingsData, error: settingsError } = await supabase
         .from('site_settings')
-        .update(updates)
+        .update(updates as any)
         .eq('id', SETTINGS_ID)
         .select()
         .single();
@@ -137,7 +140,7 @@ export const useSiteSettings = () => {
         description: 'Failed to update settings. Please try again.',
         variant: 'destructive',
       });
-      console.error('Error updating settings:', error);
+
     },
   });
 

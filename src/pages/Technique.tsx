@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { useKnowledgeItemBySlug, useKnowledgeItems, KnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useKnowledgeItemSteps } from '@/hooks/useKnowledgeItemSteps';
 import { useKnowledgeUseCases } from '@/hooks/useKnowledgeUseCases';
 import { useKnowledgeItemUnifiedAssets } from '@/hooks/useUnifiedAssetManager';
 import { useViewTracking } from '@/hooks/useViewTracking';
-import { useAuth } from '@/contexts/AuthContext';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 // ─── Mobile detection hook ──────────────────────────────────────────────────
 const useIsMobile = () => {
@@ -43,24 +45,16 @@ const categoryColours: Record<string, { solid: string; pill: string; bg: string 
 // ─── Responsive CSS classes ─────────────────────────────────────────────────
 const ResponsiveStyles = () => (
   <style>{`
-    .aa-nav-links { display: flex; }
-    .aa-hamburger { display: none; }
-    .aa-mobile-menu { display: none; }
-    .aa-mobile-menu.open { display: flex; }
     .aa-technique-layout { display: grid; grid-template-columns: 1fr 300px; gap: 48px; align-items: start; }
     .aa-sticky-sidebar { position: sticky; top: 80px; }
     .aa-when-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .aa-related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .aa-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
 
     @media (max-width: 767px) {
-      .aa-nav-links { display: none; }
-      .aa-hamburger { display: flex; align-items: center; justify-content: center; }
       .aa-technique-layout { grid-template-columns: 1fr; }
       .aa-sticky-sidebar { position: static; }
       .aa-when-grid { grid-template-columns: 1fr; }
       .aa-related-grid { grid-template-columns: 1fr; }
-      .aa-footer-grid { grid-template-columns: 1fr; gap: 32px; }
     }
   `}</style>
 );
@@ -109,26 +103,6 @@ const Icons = {
   ),
 };
 
-// ─── Two-colour wordmark ────────────────────────────────────────────────────
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-    <span style={{
-      color: light ? '#fff' : p.deepTeal,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Altogether</span>
-    <span style={{
-      color: p.orange,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Agile</span>
-  </div>
-);
-
 // ─── Section heading ────────────────────────────────────────────────────────
 const SectionHeading = ({ label, title }: { label: string; title: string }) => (
   <div style={{ marginBottom: 24 }}>
@@ -153,21 +127,10 @@ function getDomains(item: KnowledgeItem): string[] {
   return (item.domains || []).map((d) => d.name);
 }
 
-// ─── Nav links ──────────────────────────────────────────────────────────────
-const NAV_LINKS = [
-  { label: 'Events', to: '/events' },
-  { label: 'Knowledge Base', to: '/knowledge' },
-  { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
-
 // ─── Main Component ─────────────────────────────────────────────────────────
 const Technique: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const isMobile = useIsMobile();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { user } = useAuth();
 
   const { data: item, isLoading, error } = useKnowledgeItemBySlug(slug || '');
   const { data: steps } = useKnowledgeItemSteps(item?.id);
@@ -242,74 +205,15 @@ const Technique: React.FC = () => {
       <Helmet>
         <title>{item.name} — Altogether Agile Knowledge Base</title>
         <meta name="description" content={item.description || `Learn about ${item.name} — a practical agile technique from the Altogether Agile knowledge base.`} />
+        <meta property="og:title" content={item.name} />
+        <meta property="og:description" content={item.description || `Learn about ${item.name} — a practical agile technique.`} />
+        <meta property="og:type" content="article" />
+        {slug && <link rel="canonical" href={`${SITE_URL}/knowledge/${slug}`} />}
       </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
-      <div style={{ background: p.white, borderBottom: `1px solid ${p.paleTeal}`, position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <LogoFull height={38} />
-          </Link>
-          <div className="aa-nav-links" style={{ gap: 32 }}>
-            {NAV_LINKS.map((nav) => (
-              <Link
-                key={nav.label}
-                to={nav.to}
-                style={{
-                  color: nav.label === 'Knowledge Base' ? p.orange : p.body,
-                  fontWeight: nav.label === 'Knowledge Base' ? 700 : 500,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  borderBottom: nav.label === 'Knowledge Base' ? `2px solid ${p.orange}` : 'none',
-                  paddingBottom: 2,
-                  textDecoration: 'none',
-                }}
-              >{nav.label}</Link>
-            ))}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {user ? (
-              <Link to="/dashboard" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Dashboard
-              </Link>
-            ) : (
-              <Link to="/auth" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Sign In
-              </Link>
-            )}
-            <button
-              className="aa-hamburger"
-              onClick={() => setMenuOpen((o) => !o)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: p.deepTeal }}
-            >
-              {menuOpen
-                ? <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
-                : <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>
-              }
-            </button>
-          </div>
-        </div>
-        <div className={`aa-mobile-menu${menuOpen ? ' open' : ''}`} style={{ flexDirection: 'column', background: p.white, borderTop: `1px solid ${p.paleTeal}`, padding: '8px 0 16px' }}>
-          {NAV_LINKS.map((nav) => (
-            <Link
-              key={nav.label}
-              to={nav.to}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'block',
-                color: nav.label === 'Knowledge Base' ? p.orange : p.body,
-                fontSize: 16,
-                fontWeight: nav.label === 'Knowledge Base' ? 700 : 500,
-                padding: '14px 20px',
-                cursor: 'pointer',
-                borderBottom: `1px solid ${p.paleTeal}`,
-                textDecoration: 'none',
-              }}
-            >{nav.label}</Link>
-          ))}
-        </div>
-      </div>
+      <Navigation />
 
       {/* ─── HERO BAND ─── */}
       <div style={{ background: '#006666', padding: isMobile ? '40px 20px 36px' : '56px 48px 48px' }}>
@@ -525,9 +429,9 @@ const Technique: React.FC = () => {
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>
                 Want to practise this technique with your team? Book a free chemistry session to talk through how it applies to your context.
               </p>
-              <Link to="/contact" style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}>
-                <Icons.Chat />Book a chemistry session
-              </Link>
+              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}>
+                <Icons.Chat />Book a Chemistry Session
+              </a>
             </div>
 
           </div>
@@ -566,31 +470,7 @@ const Technique: React.FC = () => {
       )}
 
       {/* ─── FOOTER ─── */}
-      <div style={{ background: p.deepTeal, padding: isMobile ? '40px 20px 24px' : '48px 48px 32px' }}>
-        <div className="aa-footer-grid">
-          <div>
-            <div style={{ marginBottom: 16 }}><LogoFull height={38} light /></div>
-            <div style={{ color: p.lightTeal, fontSize: 14, lineHeight: 1.75, maxWidth: 300 }}>Agile training, coaching and facilitation — grounded in 25 years of real experience. Based in London, working everywhere.</div>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Links</div>
-            {NAV_LINKS.map((link) => (
-              <Link key={link.label} to={link.to} style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>
-                {link.label}
-              </Link>
-            ))}
-            <Link to="/testimonials" style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
-            <div style={{ color: p.lightTeal, fontSize: 13, marginBottom: 8 }}>info@altogetheragile.com</div>
-            <div style={{ color: p.lightTeal, fontSize: 13 }}>London, England</div>
-          </div>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>
-          &copy; 2026 Altogether Agile. All rights reserved.
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

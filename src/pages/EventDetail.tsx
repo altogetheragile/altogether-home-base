@@ -1,5 +1,7 @@
 
 import { useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { SITE_URL } from "@/config/featureFlags";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useEvent } from "@/hooks/useEvent";
@@ -38,8 +40,16 @@ const EventDetail = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Helmet>
+        <title>{event.title} — Altogether Agile</title>
+        {event.description && <meta name="description" content={event.description.slice(0, 160)} />}
+        <meta property="og:title" content={event.title} />
+        {event.description && <meta property="og:description" content={event.description.slice(0, 160)} />}
+        <meta property="og:type" content="event" />
+        <link rel="canonical" href={`${SITE_URL}/events/${id}`} />
+      </Helmet>
       <Navigation />
-      
+
       <div className="flex-1">
         <EventDetailBreadcrumb />
 

@@ -1,13 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { SITE_URL } from '@/config/featureFlags';
 import TestimonialCard from '@/components/feedback/TestimonialCard';
 import { useCourseFeedback, useFeedbackStats } from '@/hooks/useCourseFeedback';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const p = {
   deepTeal: '#004D4D',
@@ -19,56 +22,23 @@ const p = {
   textLight: '#B2DFDF',
 };
 
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
-};
-
 const ResponsiveStyles = () => (
   <style>{`
-    .aa-nav-links { display: flex; }
-    .aa-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
     .aa-section-pad { padding: 64px 48px; }
-    .aa-hamburger { display: none; }
     .aa-testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     @media (max-width: 1023px) { .aa-testimonials-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 767px) {
-      .aa-hamburger { display: block !important; }
-      .aa-nav-links { display: none; }
-      .aa-footer-grid { grid-template-columns: 1fr; gap: 32px; }
       .aa-section-pad { padding: 40px 20px; }
       .aa-testimonials-grid { grid-template-columns: 1fr; }
     }
   `}</style>
 );
 
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-    <span style={{ color: light ? '#fff' : p.deepTeal, fontWeight: 800, fontSize: height * 0.48, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Altogether</span>
-    <span style={{ color: p.orange, fontWeight: 800, fontSize: height * 0.48, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Agile</span>
-  </div>
-);
-
-const NAV_LINKS = [
-  { label: 'Events', to: '/events' },
-  { label: 'Knowledge Base', to: '/knowledge' },
-  { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
-
 const Testimonials: React.FC = () => {
   const isMobile = useIsMobile();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState('all');
-  const { user } = useAuth();
 
   const { data: feedback, isLoading } = useCourseFeedback({ isApproved: true });
   const { data: stats } = useFeedbackStats();
@@ -99,37 +69,12 @@ const Testimonials: React.FC = () => {
       <Helmet>
         <title>Testimonials — Altogether Agile</title>
         <meta name="description" content="Read what professionals say about Altogether Agile's courses, coaching, and training programmes." />
+        <link rel="canonical" href={`${SITE_URL}/testimonials`} />
       </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
-      <nav style={{ background: '#FFFFFF', borderBottom: `1px solid ${p.lightTeal}`, padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64, position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link to="/"><LogoFull height={38} /></Link>
-        <div className="aa-nav-links" style={{ gap: 32 }}>
-          {NAV_LINKS.map((item) => (
-            <Link key={item.label} to={item.to} style={{ color: p.text, fontSize: 13, fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}>{item.label}</Link>
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {user ? (
-            <Link to="/dashboard" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>Dashboard</Link>
-          ) : (
-            <Link to="/auth" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>Sign In</Link>
-          )}
-          <button className="aa-hamburger" onClick={() => setMenuOpen((v) => !v)} style={{ background: 'none', border: 'none', color: p.deepTeal, fontSize: 24, cursor: 'pointer', padding: 4, lineHeight: 1 }} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
-            {menuOpen ? '\u2715' : '\u2630'}
-          </button>
-        </div>
-      </nav>
-      {menuOpen && (
-        <div style={{ background: '#FFFFFF', borderBottom: `1px solid ${p.lightTeal}`, position: 'sticky', top: 64, zIndex: 99 }}>
-          {NAV_LINKS.map((item, i) => (
-            <Link key={item.label} to={item.to} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '14px 20px', color: p.text, fontSize: 15, fontWeight: 500, textDecoration: 'none', borderBottom: i < NAV_LINKS.length - 1 ? `1px solid ${p.lightTeal}` : 'none' }}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      )}
+      <Navigation />
 
       {/* ─── HERO ─── */}
       <div className="aa-section-pad" style={{ background: p.paleTeal, textAlign: 'center' }}>
@@ -204,37 +149,7 @@ const Testimonials: React.FC = () => {
       </div>
 
       {/* ─── FOOTER ─── */}
-      <div style={{ background: p.deepTeal, padding: '48px 20px 32px' }}>
-        <div className="aa-footer-grid">
-          <div>
-            <div style={{ marginBottom: 16 }}><LogoFull height={40} light /></div>
-            <div style={{ color: p.textLight, fontSize: 14, lineHeight: 1.75, maxWidth: 300 }}>
-              Agile training, coaching and facilitation — grounded in 25 years of real experience. Based in London, working everywhere.
-            </div>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Links</div>
-            {[
-              { label: 'Events', to: '/events' },
-              { label: 'Knowledge Base', to: '/knowledge' },
-              { label: 'Coaching', to: '/coaching' },
-              { label: 'About', to: '/about' },
-              { label: 'Contact', to: '/contact' },
-            ].map((link) => (
-              <Link key={link.label} to={link.to} style={{ display: 'block', color: p.textLight, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>{link.label}</Link>
-            ))}
-            <Link to="/testimonials" style={{ display: 'block', color: p.textLight, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
-            <div style={{ color: p.textLight, fontSize: 13, marginBottom: 8 }}>info@altogetheragile.com</div>
-            <div style={{ color: p.textLight, fontSize: 13 }}>London, England</div>
-          </div>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, color: p.textLight, fontSize: 12, textAlign: 'center' }}>
-          &copy; 2026 Altogether Agile. All rights reserved.
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

@@ -23,7 +23,6 @@ export const useCreateLocation = () => {
         .single();
 
       if (error) {
-        console.error('Error creating location:', error);
         throw error;
       }
 
@@ -55,7 +54,6 @@ export const useUpdateLocation = () => {
         .single();
 
       if (error) {
-        console.error('Error updating location:', error);
         throw error;
       }
 
@@ -76,7 +74,6 @@ export const useDeleteLocation = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting location:', error);
         throw error;
       }
 

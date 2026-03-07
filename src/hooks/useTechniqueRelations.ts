@@ -23,7 +23,7 @@ export const useTechniqueRelations = (techniqueId: string) => {
     queryKey: ['technique-relations', techniqueId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('knowledge_item_relations')
+        .from('knowledge_item_relations' as any)
         .select(`
           *,
           knowledge_items!knowledge_item_relations_related_knowledge_item_id_fkey(
@@ -49,7 +49,7 @@ export const useCreateTechniqueRelation = () => {
   return useMutation({
     mutationFn: async (relationData: CreateRelationData) => {
       const { data, error } = await supabase
-        .from('knowledge_item_relations')
+        .from('knowledge_item_relations' as any)
         .insert({
           knowledge_item_id: relationData.source_technique_id,
           related_knowledge_item_id: relationData.related_technique_id,
@@ -73,7 +73,6 @@ export const useCreateTechniqueRelation = () => {
         description: "Failed to create technique relation. Please try again.",
         variant: "destructive",
       });
-      console.error('Relation creation error:', error);
     },
   });
 };
@@ -85,7 +84,7 @@ export const useDeleteTechniqueRelation = () => {
   return useMutation({
     mutationFn: async (relationId: string) => {
       const { error } = await supabase
-        .from('knowledge_item_relations')
+        .from('knowledge_item_relations' as any)
         .delete()
         .eq('id', relationId);
 
@@ -104,7 +103,6 @@ export const useDeleteTechniqueRelation = () => {
         description: "Failed to delete technique relation. Please try again.",
         variant: "destructive",
       });
-      console.error('Relation deletion error:', error);
     },
   });
 };

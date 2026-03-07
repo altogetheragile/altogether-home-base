@@ -16,12 +16,12 @@ export const useActivityFocus = () => {
     queryKey: ['activity-focus'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('activity_focus')
+        .from('activity_focus' as any)
         .select('*')
         .order('name');
 
       if (error) throw error;
-      return data as ActivityFocus[];
+      return data as unknown as ActivityFocus[];
     },
   });
 };

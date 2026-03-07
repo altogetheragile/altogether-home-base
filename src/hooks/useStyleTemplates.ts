@@ -21,7 +21,7 @@ export const useStyleTemplates = () => {
         .order('name');
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as StyleTemplate[];
     },
   });
 };
@@ -57,7 +57,6 @@ export const useCreateStyleTemplate = () => {
         description: 'Failed to save style template',
         variant: 'destructive',
       });
-      console.error('Error saving style template:', error);
     },
   });
 };
@@ -88,7 +87,6 @@ export const useDeleteStyleTemplate = () => {
         description: 'Failed to delete style template',
         variant: 'destructive',
       });
-      console.error('Error deleting style template:', error);
     },
   });
 };

@@ -56,7 +56,7 @@ export const useUserProgress = (techniqueId?: string) => {
         updated_at: new Date().toISOString(),
       };
 
-      if (status !== 'unread' && !progress?.started_at) {
+      if (status !== 'unread' && !(progress as any)?.started_at) {
         updateData.started_at = new Date().toISOString();
       }
 
@@ -65,7 +65,7 @@ export const useUserProgress = (techniqueId?: string) => {
       }
 
       if (timeSpent !== undefined) {
-        updateData.time_spent_seconds = (progress?.time_spent_seconds || 0) + timeSpent;
+        updateData.time_spent_seconds = ((progress as any)?.time_spent_seconds || 0) + timeSpent;
       }
 
       const { data, error } = await supabase
@@ -80,6 +80,7 @@ export const useUserProgress = (techniqueId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-progress'] });
     },
+    onError: () => { /* silently fail – non-critical */ },
   });
 
   return {

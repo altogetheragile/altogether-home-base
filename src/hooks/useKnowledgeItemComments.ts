@@ -31,10 +31,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
         .eq('knowledge_item_id', knowledgeItemId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching comments:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       const comments = (rawComments || []) as KnowledgeItemComment[];
 
@@ -50,7 +47,6 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
         .in('id', userIds as string[]);
 
       if (profilesError) {
-        console.warn('Could not fetch profiles (RLS restriction):', profilesError);
         // If profiles are restricted by RLS, fall back gracefully
         return comments;
       }
@@ -94,6 +90,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-item-comments', knowledgeItemId] });
     },
+    onError: () => { /* silently fail */ },
   });
 
   // Update comment mutation
@@ -115,6 +112,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-item-comments', knowledgeItemId] });
     },
+    onError: () => { /* silently fail */ },
   });
 
   // Delete comment mutation
@@ -133,6 +131,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-item-comments', knowledgeItemId] });
     },
+    onError: () => { /* silently fail */ },
   });
 
   return {

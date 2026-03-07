@@ -57,11 +57,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
 
   // Initialize canvas data
   useEffect(() => {
-    console.log('Canvas initialization:', { canvas: canvas?.id, isLoading, error: error?.message });
-    
     if (canvas?.data) {
-      console.log('Setting canvas data from existing canvas');
-      
       // Normalize hexagon sizes
       const normalized = {
         ...canvas.data,
@@ -83,7 +79,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       );
       
       if (hasChanges) {
-        console.log('Normalizing hexagon sizes');
         setCanvasData(normalized);
         // Save normalized data immediately
         if (canvas.id) {
@@ -93,7 +88,6 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         setCanvasData(canvas.data);
       }
     } else if (!canvas && !isLoading && !createCanvas.isPending && projectId) {
-      console.log('Creating new canvas for project:', projectId);
       // Create new canvas if none exists
       const initialData = { elements: [], metadata: {} };
       setCanvasData(initialData); // Set immediately for UI responsiveness
@@ -102,12 +96,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
         projectId,
         data: initialData
       }, {
-        onSuccess: (newCanvas) => {
-          console.log('Canvas created successfully:', newCanvas.id);
-        },
-        onError: (error) => {
-          console.error('Failed to create canvas:', error);
-        }
+        onSuccess: () => {},
+        onError: () => {}
       });
     }
   }, [canvas, isLoading, projectId]); // Removed createCanvas from dependency array
@@ -122,25 +112,11 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   });
 
   const handleDataChange = useCallback((newData: CanvasData) => {
-    console.log('Canvas data change:', { elements: newData.elements.length, canvasId: canvas?.id });
     setCanvasData(newData);
-    
+
     // Only update if canvas exists to prevent race conditions
     if (canvas?.id) {
-      console.log('Saving canvas data to database');
-      updateCanvas.mutate(
-        { projectId, data: newData },
-        {
-          onSuccess: () => {
-            console.log('Canvas data saved successfully');
-          },
-          onError: (error) => {
-            console.error('Failed to save canvas data:', error);
-          }
-        }
-      );
-    } else {
-      console.log('Canvas not available, skipping database save');
+      updateCanvas.mutate({ projectId, data: newData });
     }
   }, [updateCanvas, projectId, canvas?.id]);
 
@@ -151,11 +127,8 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   );
 
   const handleAddElement = (type: string) => {
-    console.log('Adding element of type:', type);
-    
     // Don't add elements if canvas creation is in progress
     if (createCanvas.isPending) {
-      console.warn('Cannot add element: canvas creation in progress');
       return;
     }
 
@@ -169,14 +142,11 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
       size: getDefaultSize(type),
     };
     
-    console.log('Created new element:', newElement.id);
-    
     const newData = {
       ...canvasData,
       elements: [...canvasData.elements, newElement],
     };
     
-    console.log('Updating canvas data with new element');
     setCanvasData(newData);
     
     // Save immediately for new elements

@@ -25,7 +25,5 @@ interface LegacyMediaUploadProps {
  * This component is maintained for backward compatibility only
  */
 export const LegacyMediaUpload: React.FC<LegacyMediaUploadProps> = (props) => {
-  console.warn('LegacyMediaUpload is deprecated. Please migrate to AssetLibrary component for better asset management.');
-  
   return <MediaUpload {...props} />;
 };

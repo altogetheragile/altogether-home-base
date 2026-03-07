@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -53,34 +53,34 @@ serve(async (req) => {
     switch (type) {
       case 'techniques':
         const { data: techniques } = await supabase
-          .from('knowledge_techniques')
+          .from('knowledge_items')
           .select(`
             name,
             slug,
-            summary,
             description,
-            difficulty_level,
-            estimated_reading_time,
             is_published,
+            is_featured,
             view_count,
+            item_type,
+            learning_value_summary,
             created_at,
-            knowledge_categories(name)
+            updated_at
           `)
           .order('created_at', { ascending: false });
-        
+
         data = techniques?.map(t => ({
           name: t.name,
           slug: t.slug,
-          summary: t.summary,
           description: t.description,
-          difficulty_level: t.difficulty_level,
-          estimated_reading_time: t.estimated_reading_time,
           is_published: t.is_published,
+          is_featured: t.is_featured,
           view_count: t.view_count || 0,
-          category: t.knowledge_categories?.name || '',
+          item_type: t.item_type || '',
+          learning_value_summary: t.learning_value_summary || '',
           created_at: t.created_at,
+          updated_at: t.updated_at,
         })) || [];
-        filename = 'knowledge_techniques';
+        filename = 'knowledge_items';
         break;
 
       case 'events':

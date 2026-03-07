@@ -43,7 +43,7 @@ export const usePage = (slug: string) => {
         .order('position');
 
       if (blocksError) {
-        console.error('Error fetching content blocks:', blocksError);
+
         // Return page with empty blocks rather than failing
         return { ...pageData, content_blocks: [] };
       }
@@ -51,7 +51,7 @@ export const usePage = (slug: string) => {
       // Combine and return
       return {
         ...pageData,
-        content_blocks: blocksData || []
+        content_blocks: (blocksData || []) as any
       };
     },
     enabled: !!slug,
@@ -84,13 +84,13 @@ export const usePageById = (id: string) => {
         .order('position');
 
       if (blocksError) {
-        console.error('Error fetching content blocks:', blocksError);
+
         return { ...pageData, content_blocks: [] };
       }
 
       return {
         ...pageData,
-        content_blocks: blocksData || []
+        content_blocks: (blocksData || []) as any
       };
     },
     enabled: !!id,

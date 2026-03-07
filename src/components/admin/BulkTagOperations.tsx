@@ -57,7 +57,7 @@ export const BulkTagOperations = ({
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-tags'] });
     },
     onError: (error) => {
-      console.error('Bulk operation failed:', error);
+
       toast({
         title: "Error",
         description: "Bulk operation failed. Please try again.",
@@ -83,7 +83,7 @@ export const BulkTagOperations = ({
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-tags'] });
     },
     onError: (error) => {
-      console.error('Import failed:', error);
+
       toast({
         title: "Error",
         description: "Import failed. Please check the file format and try again.",

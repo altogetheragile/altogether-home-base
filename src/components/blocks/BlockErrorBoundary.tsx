@@ -13,8 +13,7 @@ export class BlockErrorBoundary extends React.Component<
     return { hasError: true };
   }
   componentDidCatch(err: any, info: any) {
-    // eslint-disable-next-line no-console
-    console.error("BlockErrorBoundary", { err, info, blockId: this.props.blockId });
+    // Error caught by BlockErrorBoundary - will be reported via Sentry
   }
   render() {
     if (this.state.hasError) {

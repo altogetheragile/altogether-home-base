@@ -436,6 +436,7 @@ export type Database = {
       blog_posts: {
         Row: {
           author_id: string | null
+          category: string | null
           category_id: string | null
           content: string | null
           created_at: string | null
@@ -459,6 +460,7 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
+          category?: string | null
           category_id?: string | null
           content?: string | null
           created_at?: string | null
@@ -482,6 +484,7 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
+          category?: string | null
           category_id?: string | null
           content?: string | null
           created_at?: string | null
@@ -2849,9 +2852,11 @@ export type Database = {
           created_at: string | null
           id: string
           quick_links: Json | null
+          show_about: boolean | null
           show_admin_routes: boolean | null
           show_ai_tools: boolean | null
           show_blog: boolean | null
+          show_coaching: boolean | null
           show_contact: boolean | null
           show_dashboard: boolean | null
           show_dynamic_pages: boolean | null
@@ -2863,6 +2868,7 @@ export type Database = {
           show_testimonial_first_name_only: boolean | null
           show_testimonial_name: boolean | null
           show_testimonial_rating_header: boolean | null
+          show_testimonials: boolean | null
           social_facebook: string | null
           social_github: string | null
           social_linkedin: string | null
@@ -2881,9 +2887,11 @@ export type Database = {
           created_at?: string | null
           id?: string
           quick_links?: Json | null
+          show_about?: boolean | null
           show_admin_routes?: boolean | null
           show_ai_tools?: boolean | null
           show_blog?: boolean | null
+          show_coaching?: boolean | null
           show_contact?: boolean | null
           show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
@@ -2895,6 +2903,7 @@ export type Database = {
           show_testimonial_first_name_only?: boolean | null
           show_testimonial_name?: boolean | null
           show_testimonial_rating_header?: boolean | null
+          show_testimonials?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null
@@ -2913,9 +2922,11 @@ export type Database = {
           created_at?: string | null
           id?: string
           quick_links?: Json | null
+          show_about?: boolean | null
           show_admin_routes?: boolean | null
           show_ai_tools?: boolean | null
           show_blog?: boolean | null
+          show_coaching?: boolean | null
           show_contact?: boolean | null
           show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
@@ -2927,6 +2938,7 @@ export type Database = {
           show_testimonial_first_name_only?: boolean | null
           show_testimonial_name?: boolean | null
           show_testimonial_rating_header?: boolean | null
+          show_testimonials?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null

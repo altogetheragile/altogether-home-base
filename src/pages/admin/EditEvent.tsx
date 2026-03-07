@@ -67,7 +67,7 @@ const EditEvent = () => {
         auditLogger.view('events', data.id, {
           event_title: data.title,
           context: 'edit_page'
-        }).catch(console.error);
+        }).catch(() => {});
       }
       
       return data;
@@ -87,7 +87,7 @@ const EditEvent = () => {
         price_cents: event.price_cents || 0,
         currency: event.currency || 'usd',
         is_published: event.is_published || false,
-        capacity: event.capacity || '',
+        capacity: String(event.capacity || ''),
         registration_deadline: event.registration_deadline || '',
         time_zone: event.time_zone || '',
         meeting_link: event.meeting_link || '',
@@ -145,7 +145,7 @@ const EditEvent = () => {
         auditLogger.update('events', id, {
           event_title: data.title,
           is_published: data.is_published
-        }).catch(console.error);
+        }).catch(() => {});
       }
       
       toast({
@@ -155,7 +155,6 @@ const EditEvent = () => {
       navigate('/admin/events');
     },
     onError: (error) => {
-      console.error('Error updating event:', error);
       toast({
         title: "Error updating event",
         description: "Please try again or contact support.",

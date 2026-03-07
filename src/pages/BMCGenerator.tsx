@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
+import { SITE_URL } from '@/config/featureFlags';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -95,7 +97,6 @@ const BMCGenerator = () => {
     }
 
     setIsGenerating(true);
-    console.log('[BMC] Starting generation request...');
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-business-model-canvas', {
@@ -106,38 +107,21 @@ const BMCGenerator = () => {
           productService: formData.productService,
           businessStage: formData.businessStage,
           additionalContext: formData.additionalContext,
-          templateUrl: 'https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf'
+          templateUrl: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf`
         }
       });
 
       if (error) throw error;
-      
-      console.log('[BMC] Raw data received:', data);
-      
+
       // Unwrap { success, data } wrapper from edge function
       const raw = (data && typeof data === 'object' && 'data' in data) ? (data as any).data : data;
       
       // Normalize to ensure all fields are string arrays
       const bmcData = normalizeBmc(raw as Record<string, string | string[] | undefined>);
-      
-      console.log('[BMC] Normalized data lengths:', {
-        keyPartners: bmcData.keyPartners.length,
-        keyActivities: bmcData.keyActivities.length,
-        keyResources: bmcData.keyResources.length,
-        valuePropositions: bmcData.valuePropositions.length,
-        customerRelationships: bmcData.customerRelationships.length,
-        channels: bmcData.channels.length,
-        customerSegments: bmcData.customerSegments.length,
-        costStructure: bmcData.costStructure.length,
-        revenueStreams: bmcData.revenueStreams.length,
-      });
-      
+
       setGeneratedBMC(bmcData);
-      console.log('[BMC] ✅ BMC generated successfully');
-      
       toast.success('Business Model Canvas generated successfully!');
     } catch (error: any) {
-      console.error('[BMC] Generation error:', error);
       toast.error(error.message || 'Failed to generate BMC');
     } finally {
       setIsGenerating(false);
@@ -176,8 +160,13 @@ const BMCGenerator = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>Business Model Canvas Generator — Altogether Agile</title>
+        <meta name="description" content="Generate a comprehensive Business Model Canvas using AI. Fill in your company details and get a professional BMC instantly." />
+        <link rel="canonical" href={`${SITE_URL}/bmc-generator`} />
+      </Helmet>
       <Navigation />
-      
+
       {/* Header with back button */}
       <div className="border-b bg-background sticky top-16 z-40">
         <div className="container mx-auto px-4 py-4">

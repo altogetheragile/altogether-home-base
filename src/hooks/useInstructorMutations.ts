@@ -22,7 +22,6 @@ export const useCreateInstructor = () => {
         .single();
 
       if (error) {
-        console.error('Error creating instructor:', error);
         throw error;
       }
 
@@ -54,7 +53,6 @@ export const useUpdateInstructor = () => {
         .single();
 
       if (error) {
-        console.error('Error updating instructor:', error);
         throw error;
       }
 
@@ -75,7 +73,6 @@ export const useDeleteInstructor = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting instructor:', error);
         throw error;
       }
 

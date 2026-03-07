@@ -1,19 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@/contexts/AuthContext';
+import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { AboutSidebarQuotes } from '@/components/testimonials/TestimonialComponents';
-
-// ─── Mobile detection hook ──────────────────────────────────────────────────
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
-};
+import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ─── Palette ────────────────────────────────────────────────────────────────
 const p = {
@@ -31,14 +24,9 @@ const p = {
 // ─── Responsive CSS classes (media-query driven) ────────────────────────────
 const ResponsiveStyles = () => (
   <style>{`
-    .aa-nav-links { display: flex; }
-    .aa-hamburger { display: none; }
-    .aa-mobile-menu { display: none; }
-    .aa-mobile-menu.open { display: flex; }
     .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
     .aa-two-col-wide { display: grid; grid-template-columns: 1fr 340px; gap: 56px; align-items: start; }
     .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    .aa-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
     .aa-section-pad { padding: 64px 48px; }
     .aa-timeline-line { display: block; }
     .aa-feedback-row > div { flex-direction: row !important; gap: 24px !important; }
@@ -47,12 +35,9 @@ const ResponsiveStyles = () => (
 
     @media (max-width: 767px) {
       .aa-feedback-row > div { flex-direction: column !important; }
-      .aa-nav-links { display: none; }
-      .aa-hamburger { display: flex; align-items: center; justify-content: center; }
       .aa-two-col { grid-template-columns: 1fr; gap: 32px; }
       .aa-two-col-wide { grid-template-columns: 1fr; gap: 32px; }
       .aa-three-col { grid-template-columns: 1fr; }
-      .aa-footer-grid { grid-template-columns: 1fr; gap: 32px; }
       .aa-section-pad { padding: 40px 20px; }
     }
   `}</style>
@@ -82,26 +67,6 @@ const Icons = {
   ),
 };
 
-// ─── Two-colour wordmark ────────────────────────────────────────────────────
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-    <span style={{
-      color: light ? '#fff' : p.deepTeal,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Altogether</span>
-    <span style={{
-      color: p.orange,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Agile</span>
-  </div>
-);
-
 // ─── Section heading ────────────────────────────────────────────────────────
 const SectionHeading = ({ label, title, light = false }: { label: string; title: string; light?: boolean }) => (
   <div style={{ marginBottom: 28 }}>
@@ -110,16 +75,6 @@ const SectionHeading = ({ label, title, light = false }: { label: string; title:
   </div>
 );
 
-// ─── Nav links ──────────────────────────────────────────────────────────────
-const NAV_LINKS = [
-  { label: 'Events', to: '/events' },
-  { label: 'Knowledge Base', to: '/knowledge' },
-  { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
-
-const BOOKING_URL = 'https://calendly.com/altogetheragile/chemistry';
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const timeline = [
@@ -169,89 +124,25 @@ const credentials = [
   'AgileBA module author',
   'Management 3.0 Licensed Facilitator',
   'ICF-aligned coaching practice',
-  'STAR Manager Practitioner',
-  'Part-time visiting lecturer, University of Westminster',
+  'STAR Manager Trainer',
+  'Visiting Lecturer, University of Westminster',
 ];
 
 // ─── Component ──────────────────────────────────────────────────────────────
 const About: React.FC = () => {
   const isMobile = useIsMobile();
-  const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
         <title>About Alun — Altogether Agile</title>
         <meta name="description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and certified Scrum trainer." />
+        <link rel="canonical" href={`${SITE_URL}/about`} />
       </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
-      <div style={{ background: p.white, borderBottom: `1px solid ${p.paleTeal}`, position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <LogoFull height={38} />
-          </Link>
-          <div className="aa-nav-links" style={{ gap: 32 }}>
-            {NAV_LINKS.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                style={{
-                  color: item.label === 'About' ? p.orange : p.body,
-                  fontWeight: item.label === 'About' ? 700 : 500,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  borderBottom: item.label === 'About' ? `2px solid ${p.orange}` : 'none',
-                  paddingBottom: 2,
-                  textDecoration: 'none',
-                }}
-              >{item.label}</Link>
-            ))}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {user ? (
-              <Link to="/dashboard" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Dashboard
-              </Link>
-            ) : (
-              <Link to="/auth" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Sign In
-              </Link>
-            )}
-            <button
-              className="aa-hamburger"
-              onClick={() => setMenuOpen((o) => !o)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: p.deepTeal }}
-            >
-              {menuOpen
-                ? <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
-                : <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>
-              }
-            </button>
-          </div>
-        </div>
-        <div className={`aa-mobile-menu${menuOpen ? ' open' : ''}`} style={{ flexDirection: 'column', background: p.white, borderTop: `1px solid ${p.paleTeal}`, padding: '8px 0 16px' }}>
-          {NAV_LINKS.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'block',
-                color: item.label === 'About' ? p.orange : p.body,
-                fontSize: 16,
-                fontWeight: item.label === 'About' ? 700 : 500,
-                padding: '14px 20px',
-                cursor: 'pointer',
-                borderBottom: `1px solid ${p.paleTeal}`,
-                textDecoration: 'none',
-              }}
-            >{item.label}</Link>
-          ))}
-        </div>
-      </div>
+      <Navigation />
 
       {/* ─── HERO ─── */}
       <div style={{ background: '#006666', padding: isMobile ? '48px 20px 40px' : '72px 48px 60px' }}>
@@ -262,7 +153,7 @@ const About: React.FC = () => {
               25 years in.<br />Still learning.
             </h1>
             <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }}>
-              I'm Alun — founder of Altogether Agile, agile practitioner, trainer, coach, and occasional university lecturer. This page is about where I've come from, what I believe, and why I built this.
+              I'm Alun — founder of Altogether Agile, agile practitioner, trainer, coach, and Visiting Lecturer, University of Westminster. This page is about where I've come from, what I believe, and why I built this.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {['London-based', '25+ years experience', '1,500+ trained', 'ABC Assessor'].map((tag, i) => (
@@ -369,7 +260,7 @@ const About: React.FC = () => {
             Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches ceremonies without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.
           </p>
           <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }}>
-            Altogether Agile exists to close that gap.
+            Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one — and every session ends with something concrete enough to act on.
           </p>
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>
             Every course, every coaching conversation, and every technique in the knowledge base is designed to be immediately usable — not a concept to be filed away for later. That means real scenarios, honest facilitation, and a trainer who's been in the room for real.
@@ -433,53 +324,34 @@ const About: React.FC = () => {
           <div>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Work with Altogether Agile</div>
             <h2 style={{ color: '#fff', fontSize: isMobile ? 26 : 34, fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>Ready to work with someone who's been in the room?</h2>
-            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: 0 }}>Browse upcoming courses, explore the knowledge base, or book a free chemistry session to talk through what you need.</p>
+            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>Browse upcoming courses, explore the knowledge base, or book a free chemistry session to talk through what you need.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <a
+                href={BOOKING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
+              >
+                <Icons.Chat />Book a chemistry session
+              </a>
+              <Link to="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
+                Browse Events <Icons.ArrowRight />
+              </Link>
+              <Link to="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
+                Knowledge Base <Icons.ArrowRight />
+              </Link>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <a
-              href={BOOKING_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
-            >
-              <Icons.Chat />Book a chemistry session
-            </a>
-            <Link to="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
-              Browse Events <Icons.ArrowRight />
-            </Link>
-            <Link to="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
-              Knowledge Base <Icons.ArrowRight />
-            </Link>
-          </div>
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlunTabletPortrait />
+            </div>
+          )}
         </div>
       </div>
 
       {/* ─── FOOTER ─── */}
-      <div style={{ background: '#004D4D', padding: isMobile ? '40px 20px 24px' : '48px 48px 32px' }}>
-        <div className="aa-footer-grid">
-          <div>
-            <div style={{ marginBottom: 16 }}><LogoFull height={38} light /></div>
-            <div style={{ color: p.lightTeal, fontSize: 14, lineHeight: 1.75, maxWidth: 300 }}>Agile training, coaching and facilitation — grounded in 25 years of real experience. Based in London, working everywhere.</div>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Links</div>
-            {NAV_LINKS.map((link) => (
-              <Link key={link.label} to={link.to} style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>
-                {link.label}
-              </Link>
-            ))}
-            <Link to="/testimonials" style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
-            <div style={{ color: p.lightTeal, fontSize: 13, marginBottom: 8 }}>info@altogetheragile.com</div>
-            <div style={{ color: p.lightTeal, fontSize: 13 }}>London, England</div>
-          </div>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>
-          &copy; 2026 Altogether Agile. All rights reserved.
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

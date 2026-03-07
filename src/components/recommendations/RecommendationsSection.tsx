@@ -61,7 +61,6 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
           navigate('/testimonials');
           break;
         default:
-          console.warn('Unknown content type:', recommendation.content_type);
       }
     }
   };

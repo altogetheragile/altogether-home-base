@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList } from "lucide-react";
+import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
   const tools = [
@@ -43,6 +45,11 @@ const AIToolsHub = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>AI Tools Hub — Altogether Agile</title>
+        <meta name="description" content="Explore our collection of AI-powered tools designed to streamline your workflow and boost productivity." />
+        <link rel="canonical" href={`${SITE_URL}/ai-tools`} />
+      </Helmet>
       <Navigation />
       
       <main className="flex-grow">

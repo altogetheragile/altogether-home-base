@@ -79,7 +79,6 @@ export const useCreateKnowledgeTemplate = () => {
       });
     },
     onError: (error) => {
-      console.error('Error creating template:', error);
       toast({
         title: "Error",
         description: "Failed to create template",
@@ -137,7 +136,6 @@ export const useUpdateKnowledgeTemplate = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating template:', error);
       toast({
         title: "Error",
         description: "Failed to update template",
@@ -169,7 +167,6 @@ export const useDeleteKnowledgeTemplate = () => {
       });
     },
     onError: (error) => {
-      console.error('Error deleting template:', error);
       toast({
         title: "Error",
         description: "Failed to delete template",

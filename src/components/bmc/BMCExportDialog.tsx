@@ -35,13 +35,10 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
     setIsExporting(true);
     
     try {
-      console.log('🎯 Starting new export system...');
-      
       // Get BMC data - try from prop first, then from canvas ref
       let currentBmcData = bmcData;
-      
+
       if (!currentBmcData && canvasRef?.current) {
-        console.log('📊 Getting BMC data from canvas ref...');
         currentBmcData = canvasRef.current.getBMCData?.();
       }
       
@@ -54,8 +51,6 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         return;
       }
 
-      console.log('📋 BMC data to export:', currentBmcData);
-
       const options = {
         format,
         filename,
@@ -63,16 +58,12 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         companyName,
       };
       
-      console.log('⚙️ Export options:', options);
-
       // Use new BMC export utility
       const dataUrl = await exportBMC(currentBmcData, options);
       
       if (!dataUrl || dataUrl === 'data:,') {
         throw new Error('Export generated empty result');
       }
-      
-      console.log('✅ Export successful, downloading file...');
       
       // Download the file
       downloadBMC(dataUrl, filename, format);
@@ -83,7 +74,6 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
       });
       setIsOpen(false);
     } catch (error) {
-      console.error('❌ Export error:', error);
       toast({
         title: "Export Failed",
         description: `Failed to export Business Model Canvas: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -96,13 +86,10 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
 
   const handlePrint = async () => {
     try {
-      console.log('🖨️ Starting new print system...');
-      
       // Get BMC data - try from prop first, then from canvas ref
       let currentBmcData = bmcData;
-      
+
       if (!currentBmcData && canvasRef?.current) {
-        console.log('📊 Getting BMC data from canvas ref for print...');
         currentBmcData = canvasRef.current.getBMCData?.();
       }
       
@@ -115,8 +102,6 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         return;
       }
 
-      console.log('📋 BMC data to print:', currentBmcData);
-
       // Use new BMC print utility
       await printBMC(currentBmcData, companyName);
       
@@ -125,7 +110,6 @@ const BMCExportDialog: React.FC<BMCExportDialogProps> = ({ companyName, canvasRe
         description: "Print dialog has been opened in a new window.",
       });
     } catch (error) {
-      console.error('❌ Print error:', error);
       toast({
         title: "Print Failed",
         description: `Failed to open print dialog: ${error instanceof Error ? error.message : 'Unknown error'}`,

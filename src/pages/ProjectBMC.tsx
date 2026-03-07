@@ -66,7 +66,6 @@ const ProjectBMC = () => {
 
       toast.success('BMC saved successfully!');
     } catch (error) {
-      console.error('Error saving BMC:', error);
       toast.error('Failed to save BMC');
     } finally {
       setIsSaving(false);

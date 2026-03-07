@@ -8,11 +8,10 @@ export const useInstructors = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instructors')
-        .select('*')
+        .select('id, name')
         .order('name');
 
       if (error) {
-        console.error('Error fetching instructors:', error);
         throw error;
       }
 

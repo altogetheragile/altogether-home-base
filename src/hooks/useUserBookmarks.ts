@@ -52,6 +52,7 @@ export const useUserBookmarks = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-bookmarks'] });
     },
+    onError: () => { /* silently fail – non-critical */ },
   });
 
   const removeBookmarkMutation = useMutation({
@@ -69,6 +70,7 @@ export const useUserBookmarks = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-bookmarks'] });
     },
+    onError: () => { /* silently fail – non-critical */ },
   });
 
   const isBookmarked = (techniqueId: string) => {

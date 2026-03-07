@@ -7,11 +7,10 @@ export const useLevels = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('levels')
-        .select('*')
+        .select('id, name')
         .order('name');
 
       if (error) {
-        console.error('Error fetching levels:', error);
         throw error;
       }
 

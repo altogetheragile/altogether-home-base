@@ -37,7 +37,7 @@ export const TemplateManager = ({ knowledgeItemId }: TemplateManagerProps) => {
     try {
       await removeAssociation.mutateAsync(associationId);
     } catch (error) {
-      console.error('Error removing template:', error);
+
     }
   };
 

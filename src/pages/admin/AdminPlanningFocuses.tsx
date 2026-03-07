@@ -21,7 +21,7 @@ export default function AdminPlanningFocuses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('planning_focuses')
-        .select('*')
+        .select('id, name, slug, description, color, display_order')
         .order('display_order');
       
       if (error) throw error;

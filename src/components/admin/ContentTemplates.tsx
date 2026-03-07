@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -396,7 +397,7 @@ export const ContentTemplates = ({ onUseTemplate }: ContentTemplatesProps) => {
                         <h4 className="font-medium mb-2">Content Preview</h4>
                         <div 
                           className="prose prose-sm max-w-none text-sm prose-a:text-primary prose-a:underline"
-                          dangerouslySetInnerHTML={{ __html: template.fields.description }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(template.fields.description) }}
                         />
                       </div>
                       

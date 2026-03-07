@@ -23,7 +23,7 @@ export const usePDFTemplateOperations = () => {
     if (template.pdf_url) {
       // Increment usage count
       try {
-        await supabase
+        await (supabase as any)
           .rpc('increment_pdf_template_usage', { template_uuid: template.id });
         
         // Open download
@@ -35,8 +35,7 @@ export const usePDFTemplateOperations = () => {
         document.body.removeChild(link);
         
         toast.success('Template downloaded successfully');
-      } catch (error) {
-        console.error('Error tracking usage:', error);
+      } catch {
         // Still allow download even if tracking fails
         window.open(template.pdf_url, '_blank');
       }
@@ -61,8 +60,7 @@ export const usePDFTemplateOperations = () => {
         // Delete template record
         await deleteTemplate.mutateAsync(template.id);
         toast.success('Template deleted successfully');
-      } catch (error) {
-        console.error('Error deleting template:', error);
+      } catch {
         toast.error('Failed to delete template');
       }
     }

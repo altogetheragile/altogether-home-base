@@ -7,7 +7,7 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com',
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -21,6 +21,16 @@ interface ContactRequest {
   preferred_contact_method?: string;
 }
 
+// HTML-escape user input to prevent injection
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,13 +38,39 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { name, email, phone, subject, message, enquiry_type, preferred_contact_method }: ContactRequest = await req.json();
+    const body: ContactRequest = await req.json();
+
+    // Basic input validation
+    if (!body.name || !body.email || !body.subject || !body.message) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(body.email)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Escape all user input before interpolating into HTML
+    const name = escapeHtml(body.name);
+    const email = body.email; // Used as address, not in HTML
+    const phone = body.phone ? escapeHtml(body.phone) : '';
+    const subject = escapeHtml(body.subject);
+    const message = escapeHtml(body.message);
+    const enquiry_type = escapeHtml(body.enquiry_type);
+    const preferred_contact_method = body.preferred_contact_method ? escapeHtml(body.preferred_contact_method) : '';
 
     // Send email to admin
     const adminEmail = Deno.env.get("ADMIN_EMAIL") || "admin@altogetheragile.com";
     const companyName = Deno.env.get("COMPANY_NAME") || "Altogether Agile";
 
-    const emailResponse = await resend.emails.send({
+    await resend.emails.send({
       from: `${companyName} <noreply@altogetheragile.com>`,
       to: [adminEmail],
       replyTo: email,
@@ -43,7 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
         <h2>New Contact Form Submission</h2>
         <p><strong>Type:</strong> ${enquiry_type}</p>
         <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
         ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
         ${preferred_contact_method ? `<p><strong>Preferred Contact:</strong> ${preferred_contact_method}</p>` : ''}
         <p><strong>Subject:</strong> ${subject}</p>
@@ -52,22 +88,17 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Admin notification sent:", emailResponse);
-
-    // Send confirmation email to user
-    const confirmationResponse = await resend.emails.send({
+    // Send confirmation email to user — use only the escaped name, no other user content
+    await resend.emails.send({
       from: `${companyName} <noreply@altogetheragile.com>`,
       to: [email],
       subject: `Thank you for contacting ${companyName}`,
       html: `
         <h1>Thank you for contacting us, ${name}!</h1>
-        <p>We have received your message regarding: <strong>${subject}</strong></p>
-        <p>We will get back to you as soon as possible via your preferred contact method: ${preferred_contact_method || 'email'}.</p>
+        <p>We have received your message and will get back to you as soon as possible.</p>
         <p>Best regards,<br>The ${companyName} Team</p>
       `,
     });
-
-    console.log("Confirmation email sent:", confirmationResponse);
 
     return new Response(
       JSON.stringify({ success: true, message: "Email sent successfully" }),

@@ -108,7 +108,6 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
 
       return canvas.toDataURL('image/png');
     } catch (error) {
-      console.error('Export failed:', error);
       throw error;
     }
   };

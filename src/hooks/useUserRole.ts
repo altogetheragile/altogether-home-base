@@ -19,7 +19,7 @@ export const useUserRole = () => {
         .eq('user_id', user.id);
 
       if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
+        // Error fetching user roles - fall through to profile lookup
       }
 
       const roles = (rolesData || []).map(r => r.role);
@@ -35,7 +35,6 @@ export const useUserRole = () => {
         .maybeSingle();
 
       if (profileError) {
-        console.error('Error fetching profile role:', profileError);
         return 'user';
       }
 

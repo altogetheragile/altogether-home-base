@@ -29,8 +29,6 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
 
   useImperativeHandle(ref, () => ({
     exportCanvas: async (options = {}) => {
-      console.log('BusinessModelCanvas exportCanvas called with options:', options);
-      
       if (!canvasRef.current) {
         throw new Error('Canvas reference not available');
       }
@@ -40,7 +38,6 @@ const BusinessModelCanvas = forwardRef<BusinessModelCanvasRef, BusinessModelCanv
     getCanvasElement: () => {
       // Return the actual BMC canvas element, not the wrapper
       const canvasElement = containerRef.current?.querySelector('[data-canvas="true"]') as HTMLElement;
-      console.log('Getting BMC canvas element:', canvasElement);
       return canvasElement || containerRef.current;
     },
     setExportMode: (isExporting: boolean) => {

@@ -79,7 +79,6 @@ export default function CreateKnowledgeTemplate() {
         onError: (error) => {
           const errorMessage = error instanceof Error ? error.message : 'Failed to update template';
           toast.error(errorMessage);
-          console.error('Update error:', error);
         }
         }
       );
@@ -92,7 +91,6 @@ export default function CreateKnowledgeTemplate() {
         onError: (error) => {
           const errorMessage = error instanceof Error ? error.message : 'Failed to create template';
           toast.error(errorMessage);
-          console.error('Create error:', error);
         }
       });
     }

@@ -7,8 +7,6 @@ export const useEvent = (id: string) => {
   return useQuery({
     queryKey: ['event', id],
     queryFn: async () => {
-      console.log('Fetching event with ID:', id);
-      
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -52,16 +50,11 @@ export const useEvent = (id: string) => {
         .eq('is_published', true)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching event:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (!data) {
         throw new Error('Event not found');
       }
-
-      console.log('Raw event data from Supabase:', JSON.stringify(data, null, 2));
 
       // Map the data to transform arrays to single objects (same as useEvents)
       const mappedData: EventData = {
@@ -102,7 +95,6 @@ export const useEvent = (id: string) => {
         } : null,
       };
 
-      console.log('Mapped event data:', JSON.stringify(mappedData, null, 2));
       return mappedData;
     },
     enabled: !!id,

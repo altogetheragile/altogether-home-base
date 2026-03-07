@@ -117,11 +117,8 @@ const backlogItems = [
 ];
 
 export async function populateBacklogItems() {
-  console.log('Starting backlog items population...');
-  
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    console.error('User must be authenticated to populate backlog items');
     return { success: false, error: 'Not authenticated' };
   }
 
@@ -149,11 +146,8 @@ export async function populateBacklogItems() {
     .select();
 
   if (insertError) {
-    console.error('Failed to insert backlog items:', insertError);
     return { success: false, error: insertError.message };
   }
-
-  console.log(`Successfully inserted ${insertedItems?.length} backlog items`);
 
   // Update the project artifact to sync
   const { data: allItems } = await supabase
@@ -185,9 +179,7 @@ export async function populateBacklogItems() {
       .eq('id', ARTIFACT_ID);
 
     if (artifactError) {
-      console.error('Failed to update artifact:', artifactError);
-    } else {
-      console.log('Successfully synced project artifact');
+      // Failed to update artifact
     }
   }
 

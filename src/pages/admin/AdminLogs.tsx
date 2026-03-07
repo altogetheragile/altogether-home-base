@@ -78,17 +78,15 @@ const AdminLogs = () => {
       try {
         const { data, error } = await supabase
           .from('postgres_logs')
-          .select('*')
+          .select('id, timestamp, event_message, error_severity, identifier')
           .order('timestamp', { ascending: false })
           .limit(100);
         
         if (error) {
-          console.warn('Database logs query error:', error);
           return [];
         }
         return data as DatabaseLog[];
       } catch (error) {
-        console.warn('Failed to fetch database logs:', error);
         return [];
       }
     },
@@ -103,17 +101,15 @@ const AdminLogs = () => {
       try {
         const { data, error } = await supabase
           .from('auth_logs')
-          .select('*')
+          .select('id, timestamp, event_message, level, status, path, msg, error')
           .order('timestamp', { ascending: false })
           .limit(100);
         
         if (error) {
-          console.warn('Auth logs query error:', error);
           return [];
         }
-        return data as AuthLog[];
+        return data as unknown as AuthLog[];
       } catch (error) {
-        console.warn('Failed to fetch auth logs:', error);
         return [];
       }
     },
@@ -127,7 +123,7 @@ const AdminLogs = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('admin_logs')
-        .select('*')
+        .select('id, created_at, action, details')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -376,10 +372,10 @@ const AdminLogs = () => {
                               <p className="text-sm font-medium text-foreground mb-2">
                                 {log.message}
                               </p>
-                              {log.data?.userEmail && (
+                              {(log.data as any)?.userEmail && (
                                 <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                                   <User className="h-3 w-3" />
-                                  <span>{log.data.userEmail}</span>
+                                  <span>{(log.data as any).userEmail}</span>
                                 </div>
                               )}
                               {log.data && (

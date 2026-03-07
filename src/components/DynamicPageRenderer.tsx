@@ -57,17 +57,11 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
 
   // Page exists but is unpublished - NOBODY can view (including admins)
   if (!page.is_published) {
-    if (import.meta.env.DEV) {
-      console.log(`🔒 CMS page "${slug}" is unpublished - blocking access for all users`);
-    }
     return <PageNotFoundState />;
   }
 
   // Page is published but not in main menu - only admins can access
   if (page.show_in_main_menu === false && !isAdmin) {
-    if (import.meta.env.DEV) {
-      console.log(`🔒 CMS page "${slug}" is not in main menu and user is not admin - blocking access`);
-    }
     return <PageNotFoundState />;
   }
 

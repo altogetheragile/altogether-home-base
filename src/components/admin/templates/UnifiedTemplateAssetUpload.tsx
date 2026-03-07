@@ -153,7 +153,6 @@ export const UnifiedTemplateAssetUpload: React.FC<UnifiedTemplateAssetUploadProp
       onSuccess?.();
 
     } catch (error) {
-      console.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : 'Upload failed');
     } finally {
       setUploading(false);

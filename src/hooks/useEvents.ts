@@ -111,7 +111,6 @@ export const useEvents = () => {
         .order('start_date', { ascending: true });
 
       if (error) {
-        console.error('Error fetching events:', error);
         throw error;
       }
 

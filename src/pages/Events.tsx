@@ -1,21 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { EventCardQuote } from '@/components/testimonials/TestimonialComponents';
-
-// ─── Mobile detection hook ──────────────────────────────────────────────────
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
-};
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ─── Palette ────────────────────────────────────────────────────────────────
 const p = {
@@ -39,22 +31,14 @@ const categoryColours: Record<string, { solid: string; pill: string; light: stri
 // ─── Responsive CSS classes ─────────────────────────────────────────────────
 const ResponsiveStyles = () => (
   <style>{`
-    .aa-nav-links { display: flex; }
-    .aa-hamburger { display: none; }
-    .aa-mobile-menu { display: none; }
-    .aa-mobile-menu.open { display: flex; }
     .aa-events-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .aa-page-intro { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: end; }
-    .aa-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
     .aa-card-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .aa-bespoke { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; }
 
     @media (max-width: 767px) {
-      .aa-nav-links { display: none; }
-      .aa-hamburger { display: flex; align-items: center; justify-content: center; }
       .aa-events-grid { grid-template-columns: 1fr; }
       .aa-page-intro { grid-template-columns: 1fr; gap: 24px; }
-      .aa-footer-grid { grid-template-columns: 1fr; gap: 32px; }
       .aa-card-meta { grid-template-columns: 1fr; }
       .aa-bespoke { grid-template-columns: 1fr; }
     }
@@ -104,25 +88,6 @@ const Icons = {
     </svg>
   ),
 };
-
-// ─── Two-colour wordmark ────────────────────────────────────────────────────
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline' }}>
-    <span style={{ color: light ? '#fff' : p.deepTeal, fontWeight: 800, fontSize: height * 0.48, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Altogether</span>
-    <span style={{ color: p.orange, fontWeight: 800, fontSize: height * 0.48, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Agile</span>
-  </div>
-);
-
-// ─── Nav links ──────────────────────────────────────────────────────────────
-const NAV_LINKS = [
-  { label: 'Events', to: '/events' },
-  { label: 'Knowledge Base', to: '/knowledge' },
-  { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
-
-const BOOKING_URL = 'https://calendly.com/altogetheragile/chemistry';
 
 // ─── Fallback course catalogue ──────────────────────────────────────────────
 interface CourseItem {
@@ -367,12 +332,10 @@ const FILTERS = ['All', 'Course', 'Workshop', 'Masterclass'];
 // ─── Main component ─────────────────────────────────────────────────────────
 const Events: React.FC = () => {
   const isMobile = useIsMobile();
-  const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('All');
 
-  const { data: rawTemplates } = useCoursesCatalogue();
-  const { data: rawEvents } = useScheduledDates();
+  const { data: rawTemplates, isError: catalogueError, refetch: refetchCatalogue } = useCoursesCatalogue();
+  const { data: rawEvents, isError: eventsError, refetch: refetchEvents } = useScheduledDates();
 
   // Build the course list from Supabase data, or fallback
   const courses: CourseItem[] = useMemo(() => {
@@ -432,74 +395,12 @@ const Events: React.FC = () => {
       <Helmet>
         <title>Courses & Events — Altogether Agile</title>
         <meta name="description" content="Browse our catalogue of certified agile courses, workshops, and masterclasses. Scrum, Kanban, SAFe, and more." />
+        <link rel="canonical" href={`${SITE_URL}/events`} />
       </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
-      <div style={{ background: p.white, borderBottom: `1px solid ${p.paleTeal}`, position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <LogoFull height={38} />
-          </Link>
-          <div className="aa-nav-links" style={{ gap: 32 }}>
-            {NAV_LINKS.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                style={{
-                  color: item.label === 'Events' ? p.orange : p.body,
-                  fontWeight: item.label === 'Events' ? 700 : 500,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  borderBottom: item.label === 'Events' ? `2px solid ${p.orange}` : 'none',
-                  paddingBottom: 2,
-                  textDecoration: 'none',
-                }}
-              >{item.label}</Link>
-            ))}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {user ? (
-              <Link to="/dashboard" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Dashboard
-              </Link>
-            ) : (
-              <Link to="/auth" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Sign In
-              </Link>
-            )}
-            <button
-              className="aa-hamburger"
-              onClick={() => setMenuOpen((o) => !o)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: p.deepTeal }}
-            >
-              {menuOpen
-                ? <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
-                : <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>
-              }
-            </button>
-          </div>
-        </div>
-        <div className={`aa-mobile-menu${menuOpen ? ' open' : ''}`} style={{ flexDirection: 'column', background: p.white, borderTop: `1px solid ${p.paleTeal}`, padding: '8px 0 16px' }}>
-          {NAV_LINKS.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'block',
-                color: item.label === 'Events' ? p.orange : p.body,
-                fontSize: 16,
-                fontWeight: item.label === 'Events' ? 700 : 500,
-                padding: '14px 20px',
-                cursor: 'pointer',
-                borderBottom: `1px solid ${p.paleTeal}`,
-                textDecoration: 'none',
-              }}
-            >{item.label}</Link>
-          ))}
-        </div>
-      </div>
+      <Navigation />
 
       {/* ─── PAGE INTRO ─── */}
       <div style={{ background: '#006666', padding: isMobile ? '40px 20px 0' : '64px 48px 0' }}>
@@ -549,6 +450,7 @@ const Events: React.FC = () => {
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
+                aria-pressed={activeFilter === f}
                 style={{
                   background: 'none', border: 'none',
                   padding: '16px 24px',
@@ -570,11 +472,23 @@ const Events: React.FC = () => {
 
       {/* ─── COURSE GRID ─── */}
       <div style={{ background: p.skyTeal, padding: isMobile ? '32px 20px' : '48px 48px' }}>
-        <div className="aa-events-grid">
-          {filtered.map((course, i) => (
-            <CourseCard key={course.id} course={course} index={i} />
-          ))}
-        </div>
+        {(catalogueError || eventsError) ? (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: p.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: p.body }}>Failed to load courses. Please try again.</div>
+            <button
+              onClick={() => { refetchCatalogue(); refetchEvents(); }}
+              style={{ background: p.deepTeal, color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="aa-events-grid">
+            {filtered.map((course, i) => (
+              <CourseCard key={course.id} course={course} index={i} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ─── BESPOKE CTA ─── */}
@@ -600,31 +514,7 @@ const Events: React.FC = () => {
       </div>
 
       {/* ─── FOOTER ─── */}
-      <div style={{ background: '#004D4D', padding: isMobile ? '40px 20px 24px' : '48px 48px 32px' }}>
-        <div className="aa-footer-grid">
-          <div>
-            <div style={{ marginBottom: 16 }}><LogoFull height={38} light /></div>
-            <div style={{ color: p.lightTeal, fontSize: 14, lineHeight: 1.75, maxWidth: 300 }}>Agile training, coaching and facilitation — grounded in 25 years of real experience. Based in London, working everywhere.</div>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Links</div>
-            {NAV_LINKS.map((link) => (
-              <Link key={link.label} to={link.to} style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>
-                {link.label}
-              </Link>
-            ))}
-            <Link to="/testimonials" style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
-            <div style={{ color: p.lightTeal, fontSize: 13, marginBottom: 8 }}>info@altogetheragile.com</div>
-            <div style={{ color: p.lightTeal, fontSize: 13 }}>London, England</div>
-          </div>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>
-          &copy; 2026 Altogether Agile. All rights reserved.
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

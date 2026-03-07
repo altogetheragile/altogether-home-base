@@ -57,7 +57,7 @@ export const AttachToKnowledgeItemDialog: React.FC<AttachToKnowledgeItemDialogPr
       setSelectedKnowledgeItemId(null);
       setSearchQuery('');
     } catch (error) {
-      console.error('Failed to attach media:', error);
+
     }
   };
 

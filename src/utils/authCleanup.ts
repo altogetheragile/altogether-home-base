@@ -26,6 +26,6 @@ export const cleanupAuthState = () => {
     } catch {}
   } catch (err) {
     // Swallow errors – cleanup is best-effort
-    console.warn('Auth cleanup warning:', err);
+    // Auth cleanup warning suppressed
   }
 };

@@ -27,7 +27,7 @@ const AdminActivityDomains = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('activity_domains')
-        .select('*')
+        .select('id, name, slug, description, full_description, color')
         .order('name');
 
       if (error) throw error;
@@ -91,7 +91,6 @@ const AdminActivityDomains = () => {
       });
       refetch();
     } catch (error) {
-      console.error('Delete error:', error);
       toast({
         title: "Error",
         description: "Failed to delete activity domain.",

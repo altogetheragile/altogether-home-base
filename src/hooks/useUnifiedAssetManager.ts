@@ -96,7 +96,6 @@ export const useUnifiedAssetMutations = () => {
       toast.success("Asset created successfully");
     },
     onError: (error) => {
-      console.error('Error creating asset:', error);
       toast.error("Failed to create asset");
     }
   });
@@ -123,7 +122,6 @@ export const useUnifiedAssetMutations = () => {
       toast.success("Asset updated successfully");
     },
     onError: (error) => {
-      console.error('Error updating asset:', error);
       toast.error("Failed to update asset");
     }
   });
@@ -144,7 +142,6 @@ export const useUnifiedAssetMutations = () => {
       toast.success("Asset deleted successfully");
     },
     onError: (error) => {
-      console.error('Error deleting asset:', error);
       toast.error("Failed to delete asset");
     }
   });
@@ -237,7 +234,6 @@ export const useKnowledgeItemUnifiedAssetMutations = () => {
       toast.success("Knowledge item assets updated successfully");
     },
     onError: (error) => {
-      console.error('Error updating knowledge item assets:', error);
       toast.error("Failed to update knowledge item assets");
     }
   });

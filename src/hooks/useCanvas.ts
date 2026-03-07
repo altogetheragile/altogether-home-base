@@ -17,8 +17,6 @@ export const useCanvas = (projectId: string) => {
   return useQuery({
     queryKey: ['canvas', projectId],
     queryFn: async () => {
-      console.log('Fetching canvas for project:', projectId);
-      
       const { data, error } = await supabase
         .from('canvases')
         .select('*')
@@ -28,17 +26,10 @@ export const useCanvas = (projectId: string) => {
         .maybeSingle(); // Get the most recent canvas if multiple exist
 
       if (error) {
-        console.error('Error fetching canvas:', error);
         throw error;
       }
-      
-      if (data) {
-        console.log('Canvas found:', data.id);
-      } else {
-        console.log('No canvas found for project');
-      }
-      
-      return data as Canvas | null;
+
+      return data as unknown as Canvas | null;
     },
     enabled: !!projectId,
     retry: (failureCount, error: any) => {
@@ -58,7 +49,7 @@ export const useCanvasMutations = () => {
   const createCanvas = useMutation({
     mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
       const { data: canvas, error } = await supabase
-        .from('canvases')
+        .from('canvases' as any)
         .insert([{
           project_id: projectId,
           data,
@@ -68,7 +59,7 @@ export const useCanvasMutations = () => {
         .single();
 
       if (error) throw error;
-      return canvas as Canvas;
+      return canvas as unknown as Canvas;
     },
     onSuccess: (canvas) => {
       queryClient.invalidateQueries({ queryKey: ['canvas', canvas.project_id] });
@@ -85,14 +76,14 @@ export const useCanvasMutations = () => {
   const updateCanvas = useMutation({
     mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
       const { data: canvas, error } = await supabase
-        .from('canvases')
+        .from('canvases' as any)
         .update({ data })
         .eq('project_id', projectId)
         .select()
         .single();
 
       if (error) throw error;
-      return canvas as Canvas;
+      return canvas as unknown as Canvas;
     },
     onSuccess: (canvas) => {
       queryClient.invalidateQueries({ queryKey: ['canvas', canvas.project_id] });

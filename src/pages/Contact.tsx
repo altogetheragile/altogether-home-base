@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { SITE_URL, CONTACT_EMAIL, BOOKING_URL } from '@/config/featureFlags';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { contactFormSchema, ContactFormData } from '@/schemas/contactForm';
 import { useContactForm } from '@/hooks/useContactForm';
-import { useAuth } from '@/contexts/AuthContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ─── Palette ────────────────────────────────────────────────────────────────
 const p = {
@@ -25,42 +28,17 @@ const p = {
   textLight: '#B2DFDF',
 };
 
-// ─── Mobile detection hook ──────────────────────────────────────────────────
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
-};
-
 // ─── Responsive CSS classes ─────────────────────────────────────────────────
 const ResponsiveStyles = () => (
   <style>{`
-    .aa-nav-links { display: flex; }
     .aa-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
-    .aa-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
     .aa-section-pad { padding: 64px 48px; }
-    .aa-hamburger { display: none; }
 
     @media (max-width: 767px) {
-      .aa-hamburger { display: block !important; }
-      .aa-nav-links { display: none; }
       .aa-contact-grid { grid-template-columns: 1fr; }
-      .aa-footer-grid { grid-template-columns: 1fr; gap: 32px; }
       .aa-section-pad { padding: 40px 20px; }
     }
   `}</style>
-);
-
-// ─── Two-colour wordmark ────────────────────────────────────────────────────
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-    <span style={{ color: light ? '#fff' : p.deepTeal, fontWeight: 800, fontSize: height * 0.48, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Altogether</span>
-    <span style={{ color: p.orange, fontWeight: 800, fontSize: height * 0.48, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Agile</span>
-  </div>
 );
 
 // ─── Icons ──────────────────────────────────────────────────────────────────
@@ -82,19 +60,9 @@ const Icons = {
   ),
 };
 
-const NAV_LINKS = [
-  { label: 'Events', to: '/events' },
-  { label: 'Knowledge Base', to: '/knowledge' },
-  { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
-
 const Contact: React.FC = () => {
   const isMobile = useIsMobile();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const { user } = useAuth();
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
@@ -125,42 +93,12 @@ const Contact: React.FC = () => {
       <Helmet>
         <title>Contact — Altogether Agile</title>
         <meta name="description" content="Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session." />
+        <link rel="canonical" href={`${SITE_URL}/contact`} />
       </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
-      <nav style={{ background: '#FFFFFF', borderBottom: `1px solid ${p.lightTeal}`, padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64, position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link to="/"><LogoFull height={38} /></Link>
-        <div className="aa-nav-links" style={{ gap: 32 }}>
-          {NAV_LINKS.map((item) => {
-            const active = item.to === '/contact';
-            return (
-              <Link key={item.label} to={item.to} style={{ color: active ? p.orange : p.text, fontSize: 13, fontWeight: active ? 700 : 500, cursor: 'pointer', textDecoration: 'none', borderBottom: active ? `2px solid ${p.orange}` : '2px solid transparent', paddingBottom: 2 }}>
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {user ? (
-            <Link to="/dashboard" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>Dashboard</Link>
-          ) : (
-            <Link to="/auth" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>Sign In</Link>
-          )}
-          <button className="aa-hamburger" onClick={() => setMenuOpen((v) => !v)} style={{ background: 'none', border: 'none', color: p.deepTeal, fontSize: 24, cursor: 'pointer', padding: 4, lineHeight: 1 }} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
-            {menuOpen ? '\u2715' : '\u2630'}
-          </button>
-        </div>
-      </nav>
-      {menuOpen && (
-        <div style={{ background: '#FFFFFF', borderBottom: `1px solid ${p.lightTeal}`, position: 'sticky', top: 64, zIndex: 99 }}>
-          {NAV_LINKS.map((item, i) => (
-            <Link key={item.label} to={item.to} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '14px 20px', color: p.text, fontSize: 15, fontWeight: 500, textDecoration: 'none', borderBottom: i < NAV_LINKS.length - 1 ? `1px solid ${p.lightTeal}` : 'none' }}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      )}
+      <Navigation />
 
       {/* ─── HERO ─── */}
       <div className="aa-section-pad" style={{ background: p.paleTeal, textAlign: 'center' }}>
@@ -174,9 +112,9 @@ const Contact: React.FC = () => {
       <div className="aa-section-pad" style={{ background: '#fff' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center', marginBottom: 48 }}>
           {[
-            { icon: <Icons.Mail />, title: 'Email', detail: 'info@altogetheragile.com', href: 'mailto:info@altogetheragile.com' },
+            { icon: <Icons.Mail />, title: 'Email', detail: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
             { icon: <Icons.MapPin />, title: 'Location', detail: 'London, England', href: undefined },
-            { icon: <Icons.Calendar />, title: 'Book a Call', detail: 'Free 30-min chemistry session', href: 'https://calendly.com/altogetheragile/chemistry' },
+            { icon: <Icons.Calendar />, title: 'Book a Call', detail: 'Free 30-min chemistry session', href: BOOKING_URL },
           ].map((card) => (
             <div key={card.title} style={{ background: p.paleTeal, borderRadius: 12, padding: '28px 32px', textAlign: 'center', flex: '1 1 200px', maxWidth: 280 }}>
               <div style={{ color: p.midTeal, marginBottom: 12, display: 'flex', justifyContent: 'center' }}>{card.icon}</div>
@@ -307,37 +245,7 @@ const Contact: React.FC = () => {
       </div>
 
       {/* ─── FOOTER ─── */}
-      <div style={{ background: p.deepTeal, padding: '48px 20px 32px' }}>
-        <div className="aa-footer-grid">
-          <div>
-            <div style={{ marginBottom: 16 }}><LogoFull height={40} light /></div>
-            <div style={{ color: p.textLight, fontSize: 14, lineHeight: 1.75, maxWidth: 300 }}>
-              Agile training, coaching and facilitation — grounded in 25 years of real experience. Based in London, working everywhere.
-            </div>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Links</div>
-            {[
-              { label: 'Events', to: '/events' },
-              { label: 'Knowledge Base', to: '/knowledge' },
-              { label: 'Coaching', to: '/coaching' },
-              { label: 'About', to: '/about' },
-              { label: 'Contact', to: '/contact' },
-            ].map((link) => (
-              <Link key={link.label} to={link.to} style={{ display: 'block', color: p.textLight, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>{link.label}</Link>
-            ))}
-            <Link to="/testimonials" style={{ display: 'block', color: p.textLight, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
-            <div style={{ color: p.textLight, fontSize: 13, marginBottom: 8 }}>info@altogetheragile.com</div>
-            <div style={{ color: p.textLight, fontSize: 13 }}>London, England</div>
-          </div>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, color: p.textLight, fontSize: 12, textAlign: 'center' }}>
-          &copy; 2026 Altogether Agile. All rights reserved.
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

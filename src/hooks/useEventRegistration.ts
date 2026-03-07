@@ -37,7 +37,6 @@ export const useEventRegistration = () => {
         throw new Error('No checkout URL received');
       }
     } catch (error) {
-      console.error('Registration error:', error);
       toast({
         title: "Registration failed",
         description: error instanceof Error ? error.message : "Failed to start registration process",
@@ -61,8 +60,6 @@ export const useEventRegistration = () => {
         // Check if it's a rate limit error
         if (error.message?.includes('rate limit') && retryCount < maxRetries) {
           const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
-          console.log(`Rate limit hit, retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-          
           await new Promise(resolve => setTimeout(resolve, delay));
           return verifyPayment(sessionId, retryCount + 1);
         }
@@ -71,8 +68,6 @@ export const useEventRegistration = () => {
 
       return data;
     } catch (error) {
-      console.error('Payment verification error:', error);
-      
       if (retryCount >= maxRetries) {
         toast({
           title: "Payment verification failed",

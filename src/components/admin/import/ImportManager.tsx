@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, Eye, Trash2, Download, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useDataImports, useDeleteDataImport, DataImport } from '@/hooks/useDataImports';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { ImportUploader } from './ImportUploader';
 import { ImportPreview } from './ImportPreview';
 import { getFileSizeDisplay } from '@/utils/fileParser';
@@ -78,12 +79,18 @@ const ImportManager: React.FC = () => {
     setProcessingImports(prev => new Set([...prev, importRecord.id]));
 
     try {
+      // Get the user's session token for authenticated edge function call
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No active session. Please sign in again.');
+      }
+
       // Call the edge function to process the import
-      const response = await fetch(`https://wqaplkypnetifpqrungv.supabase.co/functions/v1/process-knowledge-import`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-knowledge-import`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxYXBsa3lwbmV0aWZwcXJ1bmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODg2OTUsImV4cCI6MjA2NDg2NDY5NX0.sE0cIatVX-tynJ7Z5dGp4L6f4-SA0s9KWU3WYtVoDzM'}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ importId: importRecord.id })
       });

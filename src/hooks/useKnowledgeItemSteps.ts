@@ -42,7 +42,7 @@ export const useCreateKnowledgeStep = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       const { data, error } = await supabase
-        .from('knowledge_item_steps')
+        .from('knowledge_item_steps' as any)
         .insert({
           ...step,
           created_by: user?.id,

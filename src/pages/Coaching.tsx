@@ -1,20 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@/contexts/AuthContext';
+import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { supabase } from '@/integrations/supabase/client';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
-
-// ─── Mobile detection hook ──────────────────────────────────────────────────
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
-};
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ─── Palette ────────────────────────────────────────────────────────────────
 const p = {
@@ -32,25 +24,17 @@ const p = {
 // ─── Responsive CSS classes (media-query driven) ────────────────────────────
 const ResponsiveStyles = () => (
   <style>{`
-    .aa-nav-links { display: flex; }
-    .aa-hamburger { display: none; }
-    .aa-mobile-menu { display: none; }
-    .aa-mobile-menu.open { display: flex; }
     .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
     .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .aa-service-layout { display: grid; grid-template-columns: 1fr 360px; gap: 56px; align-items: start; }
     .aa-creds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .aa-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
     .aa-section-pad { padding: 64px 48px; }
 
     @media (max-width: 767px) {
-      .aa-nav-links { display: none; }
-      .aa-hamburger { display: flex; align-items: center; justify-content: center; }
       .aa-two-col { grid-template-columns: 1fr; gap: 24px; }
       .aa-three-col { grid-template-columns: 1fr; }
       .aa-service-layout { grid-template-columns: 1fr; }
       .aa-creds-grid { grid-template-columns: 1fr 1fr; }
-      .aa-footer-grid { grid-template-columns: 1fr; gap: 32px; }
       .aa-section-pad { padding: 40px 20px; }
     }
   `}</style>
@@ -95,26 +79,6 @@ const Icons = {
   ),
 };
 
-// ─── Two-colour wordmark ────────────────────────────────────────────────────
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-    <span style={{
-      color: light ? '#fff' : p.deepTeal,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Altogether</span>
-    <span style={{
-      color: p.orange,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Agile</span>
-  </div>
-);
-
 // ─── Illustration placeholder ───────────────────────────────────────────────
 const IllustrationSpot = ({ bg, height = 280 }: { bg: string; height?: number }) => (
   <div style={{ background: bg, borderRadius: 16, height, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -134,15 +98,6 @@ const SectionHeading = ({ label, title, light = false }: { label: string; title:
     <h2 style={{ color: light ? '#fff' : p.deepTeal, fontSize: 28, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>{title}</h2>
   </div>
 );
-
-// ─── Nav links ──────────────────────────────────────────────────────────────
-const NAV_LINKS = [
-  { label: 'Events', to: '/events' },
-  { label: 'Knowledge Base', to: '/knowledge' },
-  { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const services = [
@@ -204,15 +159,34 @@ const credentials = [
 // ─── Component ──────────────────────────────────────────────────────────────
 const Coaching: React.FC = () => {
   const isMobile = useIsMobile();
-  const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', service: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+
+  const validateForm = (): boolean => {
+    const errors: { name?: string; email?: string; message?: string } = {};
+
+    if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters.';
+    }
+
+    const email = formData.email.trim();
+    if (!email.includes('@') || !email.includes('.')) {
+      errors.email = 'Please enter a valid email address.';
+    }
+
+    if (formData.message.trim().length < 10) {
+      errors.message = 'Message must be at least 10 characters.';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.message) return;
+    if (!validateForm()) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -244,7 +218,6 @@ const Coaching: React.FC = () => {
       } else {
         setSubmitError('Something went wrong. Please try again.');
       }
-      console.error('Coaching enquiry error:', err);
     } finally {
       setSubmitting(false);
     }
@@ -259,74 +232,12 @@ const Coaching: React.FC = () => {
       <Helmet>
         <title>Coaching — Altogether Agile</title>
         <meta name="description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
+        <link rel="canonical" href={`${SITE_URL}/coaching`} />
       </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
-      <div style={{ background: p.white, borderBottom: `1px solid ${p.paleTeal}`, position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <LogoFull height={38} />
-          </Link>
-          <div className="aa-nav-links" style={{ gap: 32 }}>
-            {NAV_LINKS.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                style={{
-                  color: item.label === 'Coaching' ? p.orange : p.body,
-                  fontWeight: item.label === 'Coaching' ? 700 : 500,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  borderBottom: item.label === 'Coaching' ? `2px solid ${p.orange}` : 'none',
-                  paddingBottom: 2,
-                  textDecoration: 'none',
-                }}
-              >{item.label}</Link>
-            ))}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {user ? (
-              <Link to="/dashboard" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Dashboard
-              </Link>
-            ) : (
-              <Link to="/auth" style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-                Sign In
-              </Link>
-            )}
-            <button
-              className="aa-hamburger"
-              onClick={() => setMenuOpen((o) => !o)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: p.deepTeal }}
-            >
-              {menuOpen
-                ? <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
-                : <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>
-              }
-            </button>
-          </div>
-        </div>
-        <div className={`aa-mobile-menu${menuOpen ? ' open' : ''}`} style={{ flexDirection: 'column', background: p.white, borderTop: `1px solid ${p.paleTeal}`, padding: '8px 0 16px' }}>
-          {NAV_LINKS.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'block',
-                color: item.label === 'Coaching' ? p.orange : p.body,
-                fontSize: 16,
-                fontWeight: item.label === 'Coaching' ? 700 : 500,
-                padding: '14px 20px',
-                cursor: 'pointer',
-                borderBottom: `1px solid ${p.paleTeal}`,
-                textDecoration: 'none',
-              }}
-            >{item.label}</Link>
-          ))}
-        </div>
-      </div>
+      <Navigation />
 
       {/* ─── HERO ─── */}
       <div style={{ background: '#006666', padding: isMobile ? '48px 20px 40px' : '72px 48px 60px' }}>
@@ -340,19 +251,20 @@ const Coaching: React.FC = () => {
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
             <a
-              href="https://calendly.com/altogetheragile/chemistry"
+              href={BOOKING_URL}
               target="_blank"
               rel="noopener noreferrer"
               style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
             >
               <Icons.Chat />Book a free chemistry session
             </a>
-            <span
+            <button
+              type="button"
               onClick={scrollToEnquiry}
-              style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ background: 'none', border: 'none', padding: 0, color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}
             >
               Jump to enquiry form <Icons.ArrowRight />
-            </span>
+            </button>
           </div>
         </div>
       </div>
@@ -457,7 +369,7 @@ const Coaching: React.FC = () => {
             <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>Book your chemistry session</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <a
-                href="https://calendly.com/altogetheragile/chemistry"
+                href={BOOKING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ background: p.orange, color: '#fff', border: 'none', padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
@@ -495,9 +407,15 @@ const Coaching: React.FC = () => {
                       type={field.type}
                       placeholder={field.placeholder}
                       value={formData[field.key]}
-                      onChange={(e) => setFormData((d) => ({ ...d, [field.key]: e.target.value }))}
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box' }}
+                      onChange={(e) => {
+                        setFormData((d) => ({ ...d, [field.key]: e.target.value }));
+                        if (validationErrors[field.key]) setValidationErrors((errs) => ({ ...errs, [field.key]: undefined }));
+                      }}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${validationErrors[field.key] ? '#DC2626' : p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box' }}
                     />
+                    {validationErrors[field.key] && (
+                      <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{validationErrors[field.key]}</div>
+                    )}
                   </div>
                 ))}
                 <div>
@@ -519,10 +437,16 @@ const Coaching: React.FC = () => {
                   <textarea
                     placeholder="Tell me a bit about what you're working through or what you're looking for..."
                     value={formData.message}
-                    onChange={(e) => setFormData((d) => ({ ...d, message: e.target.value }))}
+                    onChange={(e) => {
+                      setFormData((d) => ({ ...d, message: e.target.value }));
+                      if (validationErrors.message) setValidationErrors((errs) => ({ ...errs, message: undefined }));
+                    }}
                     rows={5}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${validationErrors.message ? '#DC2626' : p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }}
                   />
+                  {validationErrors.message && (
+                    <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{validationErrors.message}</div>
+                  )}
                 </div>
                 {submitError && (
                   <div style={{ color: '#DC2626', fontSize: 13, textAlign: 'center' }}>{submitError}</div>
@@ -542,31 +466,7 @@ const Coaching: React.FC = () => {
       </div>
 
       {/* ─── FOOTER ─── */}
-      <div style={{ background: '#004D4D', padding: isMobile ? '40px 20px 24px' : '48px 48px 32px' }}>
-        <div className="aa-footer-grid">
-          <div>
-            <div style={{ marginBottom: 16 }}><LogoFull height={38} light /></div>
-            <div style={{ color: p.lightTeal, fontSize: 14, lineHeight: 1.75, maxWidth: 300 }}>Agile training, coaching and facilitation — grounded in 25 years of real experience. Based in London, working everywhere.</div>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Links</div>
-            {NAV_LINKS.map((link) => (
-              <Link key={link.label} to={link.to} style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>
-                {link.label}
-              </Link>
-            ))}
-            <Link to="/testimonials" style={{ display: 'block', color: p.lightTeal, fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
-            <div style={{ color: p.lightTeal, fontSize: 13, marginBottom: 8 }}>info@altogetheragile.com</div>
-            <div style={{ color: p.lightTeal, fontSize: 13 }}>London, England</div>
-          </div>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>
-          &copy; 2026 Altogether Agile. All rights reserved.
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

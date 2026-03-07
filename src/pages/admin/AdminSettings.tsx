@@ -13,9 +13,12 @@ export default function AdminSettings() {
   const [localSettings, setLocalSettings] = useState({
     show_events: settings?.show_events ?? false,
     show_knowledge: settings?.show_knowledge ?? false,
+    show_coaching: settings?.show_coaching ?? true,
+    show_about: settings?.show_about ?? true,
     show_blog: settings?.show_blog ?? false,
     show_ai_tools: settings?.show_ai_tools ?? true,
     show_contact: settings?.show_contact ?? true,
+    show_testimonials: settings?.show_testimonials ?? true,
     show_dashboard: settings?.show_dashboard ?? true,
     show_admin_routes: settings?.show_admin_routes ?? true,
     show_protected_projects: settings?.show_protected_projects ?? true,
@@ -29,9 +32,12 @@ export default function AdminSettings() {
       setLocalSettings({
         show_events: settings.show_events ?? false,
         show_knowledge: settings.show_knowledge ?? false,
+        show_coaching: settings.show_coaching ?? true,
+        show_about: settings.show_about ?? true,
         show_blog: settings.show_blog ?? false,
         show_ai_tools: settings.show_ai_tools ?? true,
         show_contact: settings.show_contact ?? true,
+        show_testimonials: settings.show_testimonials ?? true,
         show_dashboard: settings.show_dashboard ?? true,
         show_admin_routes: settings.show_admin_routes ?? true,
         show_protected_projects: settings.show_protected_projects ?? true,
@@ -115,6 +121,34 @@ export default function AdminSettings() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
+              <Label htmlFor="show_coaching" className="text-base font-medium">Coaching</Label>
+              <p className="text-sm text-muted-foreground">Show coaching page in navigation</p>
+            </div>
+            <Switch
+              id="show_coaching"
+              checked={localSettings.show_coaching}
+              onCheckedChange={() => handleToggle('show_coaching')}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_about" className="text-base font-medium">About</Label>
+              <p className="text-sm text-muted-foreground">Show about page in navigation</p>
+            </div>
+            <Switch
+              id="show_about"
+              checked={localSettings.show_about}
+              onCheckedChange={() => handleToggle('show_about')}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
               <Label htmlFor="show_blog" className="text-base font-medium">Blog</Label>
               <p className="text-sm text-muted-foreground">
                 Controls navigation visibility AND page accessibility. When OFF: Page is hidden from navigation and non-admins cannot access it. When ON: Page appears in navigation and is publicly accessible.
@@ -152,6 +186,20 @@ export default function AdminSettings() {
               id="show_contact"
               checked={localSettings.show_contact}
               onCheckedChange={() => handleToggle('show_contact')}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_testimonials" className="text-base font-medium">Testimonials</Label>
+              <p className="text-sm text-muted-foreground">Show testimonials page in navigation</p>
+            </div>
+            <Switch
+              id="show_testimonials"
+              checked={localSettings.show_testimonials}
+              onCheckedChange={() => handleToggle('show_testimonials')}
             />
           </div>
 

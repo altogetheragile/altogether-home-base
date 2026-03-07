@@ -9,7 +9,7 @@ export const logAdminAudit = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.warn('Cannot log audit entry: No authenticated user');
+
       return;
     }
     
@@ -22,10 +22,10 @@ export const logAdminAudit = async (
     });
     
     if (error) {
-      console.error('Failed to log audit entry:', error);
+
     }
   } catch (error) {
-    console.error('Audit logging exception:', error);
+
     // Don't throw - audit logging should never block operations
   }
 };

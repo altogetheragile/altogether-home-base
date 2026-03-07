@@ -64,7 +64,6 @@ const AdminInstructors = () => {
           .eq('instructor_id', instructor.id);
 
         if (countError) {
-          console.error('Error counting events for instructor:', instructor.id, countError);
         }
 
         instructorsWithCounts.push({

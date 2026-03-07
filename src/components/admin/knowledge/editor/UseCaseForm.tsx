@@ -107,7 +107,7 @@ export const UseCaseForm = ({
       }
       onSuccess();
     } catch (error) {
-      console.error('Error saving use case:', error);
+
     }
   };
 

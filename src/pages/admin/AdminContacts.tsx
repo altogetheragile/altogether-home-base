@@ -17,7 +17,7 @@ const AdminContacts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contacts")
-        .select("*")
+        .select('id, submitted_at, full_name, email, phone, enquiry_type, subject, message, attachment_url, attachment_filename, status')
         .order("submitted_at", { ascending: false });
 
       if (error) throw error;
@@ -96,7 +96,7 @@ const AdminContacts = () => {
                       <TableCell className="text-sm">
                         {format(new Date(contact.submitted_at), "MMM dd, yyyy HH:mm")}
                       </TableCell>
-                      <TableCell className="font-medium">{contact.name}</TableCell>
+                      <TableCell className="font-medium">{contact.full_name}</TableCell>
                       <TableCell>
                         <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
                           {contact.email}

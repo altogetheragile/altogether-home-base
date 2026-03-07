@@ -88,7 +88,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       });
 
       if (error) {
-        console.error('Error analyzing story:', error);
         let errorMessage = "Failed to analyze story. Please try again.";
         
         if (error.message?.includes('Failed to send a request')) {
@@ -144,7 +143,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
           "Your story has been successfully analyzed.",
       });
     } catch (error) {
-      console.error('Error analyzing story:', error);
       let errorMessage = "An unexpected error occurred.";
       
       if (error instanceof Error) {
@@ -208,7 +206,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
         onClose();
       }
     } catch (error) {
-      console.error('Error creating story:', error);
     }
   };
 
@@ -221,7 +218,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       // Get existing canvas or create new one
       const { data: existingCanvas } = await supabase
         .from('canvases')
-        .select('*')
+        .select('id, data')
         .eq('project_id', selectedProjectId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -241,10 +238,11 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
         },
       };
 
-      const updatedData = existingCanvas 
+      const canvasData = existingCanvas?.data as any;
+      const updatedData = existingCanvas
         ? {
-            ...existingCanvas.data,
-            elements: [...(existingCanvas.data?.elements || []), newElement]
+            ...canvasData,
+            elements: [...(canvasData?.elements || []), newElement]
           }
         : {
             elements: [newElement],
@@ -268,7 +266,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
         description: "Your story has been added to the project canvas.",
       });
     } catch (error) {
-      console.error('Error saving story to canvas:', error);
       toast({
         title: "Failed to save to canvas",
         description: "Could not add the story to the canvas.",
@@ -557,7 +554,6 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       handleReset();
       onClose();
     } catch (error) {
-      console.error('Error creating bulk stories:', error);
     }
   };
 

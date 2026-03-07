@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useViewTracking = (techniqueId: string) => {
   const trackView = useMutation({
+    onError: () => { /* silently fail – analytics only */ },
     mutationFn: async () => {
       // Increment view count
       const { error } = await supabase.rpc('increment_knowledge_item_view_count', {

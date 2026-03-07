@@ -47,7 +47,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
 
   const handleBulkDelete = () => {
     // In real app, this would call mutation
-    console.log(`Delete ${selectedItems.length} ${type}`);
+    // TODO: call mutation to delete items
   };
 
   if (showImportManager) {

@@ -50,7 +50,6 @@ export const useUpdateUserRole = () => {
       toast.success('User role updated successfully');
     },
     onError: (error: Error) => {
-      console.error('Failed to update user role:', error);
       toast.error(error.message || 'Failed to update user role');
     },
   });

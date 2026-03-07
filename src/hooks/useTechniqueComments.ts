@@ -41,7 +41,7 @@ export const useTechniqueComments = (techniqueId: string) => {
       }
 
       const { data, error } = await supabase
-        .from('technique_comments')
+        .from('technique_comments' as any)
         .select(selectQuery)
         .eq('technique_id', techniqueId)
         .eq('is_approved', true)
@@ -50,39 +50,43 @@ export const useTechniqueComments = (techniqueId: string) => {
 
       if (error) throw error;
 
-      // Fetch replies for each comment
-      const commentsWithReplies = await Promise.all(
-        (data || []).map(async (comment: any) => {
-          const { data: replies, error: repliesError } = await supabase
-            .from('technique_comments')
-            .select(selectQuery)
-            .eq('parent_comment_id', comment.id)
-            .eq('is_approved', true)
-            .order('created_at', { ascending: true });
+      // Fetch all replies in a single query instead of N+1
+      const parentIds = (data || []).map((c: any) => c.id);
+      let allReplies: any[] = [];
 
-          if (repliesError) throw repliesError;
+      if (parentIds.length > 0) {
+        const { data: replies, error: repliesError } = await supabase
+          .from('technique_comments' as any)
+          .select(selectQuery)
+          .in('parent_comment_id', parentIds)
+          .eq('is_approved', true)
+          .order('created_at', { ascending: true });
 
-          return {
-            ...comment,
-            replies: replies || [],
-          };
-        })
-      );
+        if (repliesError) throw repliesError;
+        allReplies = replies || [];
+      }
+
+      // Group replies by parent
+      const repliesByParent = new Map<string, any[]>();
+      for (const reply of allReplies) {
+        const pid = reply.parent_comment_id;
+        if (!repliesByParent.has(pid)) repliesByParent.set(pid, []);
+        repliesByParent.get(pid)!.push(reply);
+      }
+
+      const commentsWithReplies = (data || []).map((comment: any) => ({
+        ...comment,
+        replies: repliesByParent.get(comment.id) || [],
+      }));
 
       return commentsWithReplies;
     },
-    enabled: (() => {
-      const isValid = !!techniqueId && 
-                     typeof techniqueId === 'string' && 
-                     techniqueId !== 'undefined' && 
-                     techniqueId !== 'null' && 
-                     techniqueId.length > 0 &&
-                     !techniqueId.includes('undefined');
-      if (!isValid) {
-        console.log('🚫 Blocking technique_comments API call - invalid techniqueId:', techniqueId, typeof techniqueId);
-      }
-      return isValid;
-    })(),
+    enabled: !!techniqueId &&
+             typeof techniqueId === 'string' &&
+             techniqueId !== 'undefined' &&
+             techniqueId !== 'null' &&
+             techniqueId.length > 0 &&
+             !techniqueId.includes('undefined'),
     // Prevent stale data from causing 400 errors
     staleTime: 0,
     retry: false,
@@ -96,20 +100,12 @@ export const useTechniqueComments = (techniqueId: string) => {
       content: string; 
       parentCommentId?: string 
     }) => {
-      console.log('🔐 Auth Debug - Adding comment mutation:', {
-        hasUser: !!user?.id,
-        userId: user?.id,
-        techniqueId,
-        contentLength: content.length
-      });
-
       if (!user?.id) {
-        console.error('❌ No user ID found when trying to add comment');
         throw new Error('No user');
       }
 
       const { data, error } = await supabase
-        .from('technique_comments')
+        .from('technique_comments' as any)
         .insert({
           technique_id: techniqueId,
           user_id: user.id,
@@ -119,17 +115,13 @@ export const useTechniqueComments = (techniqueId: string) => {
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ Comment insertion error:', error);
-        throw error;
-      }
-      
-      console.log('✅ Comment added successfully:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technique-comments', techniqueId] });
     },
+    onError: () => { /* silently fail */ },
   });
 
   const voteCommentMutation = useMutation({
@@ -185,13 +177,14 @@ export const useTechniqueComments = (techniqueId: string) => {
       const downvotes = votes?.filter(v => v.vote_type === 'down').length || 0;
 
       await supabase
-        .from('technique_comments')
+        .from('technique_comments' as any)
         .update({ upvotes, downvotes })
         .eq('id', commentId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technique-comments', techniqueId] });
     },
+    onError: () => { /* silently fail */ },
   });
 
   return {

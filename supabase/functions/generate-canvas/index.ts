@@ -82,8 +82,9 @@ const validateSpacing = (text: string): boolean => {
   return hasProperPeriodSpacing && hasProperCommaSpacing && noDoubleSpaces;
 };
 
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -313,10 +314,15 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Request received');
-    
+    // Verify authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing authorization' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { canvasType, analysisType, type, ...inputData } = await req.json();
-    console.log('Canvas type:', canvasType || type, 'Analysis type:', analysisType);
     
     let systemPrompt = '';
     let userPrompt = '';

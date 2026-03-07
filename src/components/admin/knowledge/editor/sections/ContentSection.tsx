@@ -8,7 +8,7 @@ import { MediaLibrary } from '@/components/ui/media-library';
 import { useKnowledgeItemMedia, useKnowledgeItemMediaMutations } from '@/hooks/useMediaAssets';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ContentSectionProps {
@@ -40,7 +40,7 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId 
       });
       refetch();
     } catch (error) {
-      console.error('Failed to update media:', error);
+
     }
   };
 

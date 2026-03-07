@@ -138,7 +138,7 @@ function parseArrayField(value: string): string[] | null {
 // Process the knowledge import
 export async function processKnowledgeImportNew(importId: string): Promise<{ success: boolean; message: string; details?: any }> {
   try {
-    console.log('🚀 Starting knowledge import process for import:', importId);
+    // console.log('🚀 Starting knowledge import process for import:', importId);
     
     // Get import record
     const { data: importRecord, error: importError } = await supabase
@@ -152,8 +152,8 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
     }
     
     // Get the field mappings from the import record
-    const fieldMappings = (importRecord.mapping_config?.field_mappings || {}) as Record<string, string>;
-    console.log('📋 Using field mappings:', fieldMappings);
+    const fieldMappings = ((importRecord.mapping_config as any)?.field_mappings || {}) as Record<string, string>;
+    // console.log('📋 Using field mappings:', fieldMappings);
     
     if (Object.keys(fieldMappings).length === 0) {
       throw new Error('No field mappings configured for this import');
@@ -172,7 +172,7 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
       return { success: false, message: 'No pending data found to process' };
     }
     
-    console.log(`📊 Processing ${stagingData.length} knowledge items`);
+    // console.log(`📊 Processing ${stagingData.length} knowledge items`);
     
     let processedCount = 0;
     let errorCount = 0;
@@ -182,7 +182,7 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
     for (const row of stagingData) {
       try {
         const rawData = row.raw_data as any;
-        console.log('🔍 Processing row with data:', Object.keys(rawData));
+        // console.log('🔍 Processing row with data:', Object.keys(rawData));
         
         // Map Excel data to KI fields using the configured mapping
         const kiData: any = {
@@ -200,7 +200,7 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           if (!excelCol) return; // Skip unmapped fields
           
           const value = rawData[excelCol];
-          console.log(`📝 Mapping ${excelCol} -> ${dbField}:`, value);
+          // console.log(`📝 Mapping ${excelCol} -> ${dbField}:`, value);
           
           if (value !== undefined && value !== null && value !== '') {
             // Handle array fields
@@ -294,13 +294,13 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
           .eq('id', row.id);
         
         processedCount++;
-        console.log(`✅ Processed KI: ${kiData.name}`);
+        // console.log(`✅ Processed KI: ${kiData.name}`);
         
       } catch (error) {
         errorCount++;
         const errorMsg = `Row ${row.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
         errors.push(errorMsg);
-        console.error('❌ Error processing row:', error);
+        // console.error('❌ Error processing row:', error);
         
         // Update staging data as failed
         await supabase
@@ -322,7 +322,7 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
         status,
         processed_at: new Date().toISOString(),
         processing_log: [
-          ...importRecord.processing_log || [],
+          ...(importRecord.processing_log as any[] || []),
           {
             timestamp: new Date().toISOString(),
             message: `Processed ${processedCount} items, ${errorCount} errors`,
@@ -333,7 +333,7 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
       .eq('id', importId);
     
     const message = `Successfully processed ${processedCount} knowledge items${errorCount > 0 ? ` with ${errorCount} errors` : ''}`;
-    console.log('🎉 Import completed:', message);
+    // console.log('🎉 Import completed:', message);
     
     return {
       success: true,
@@ -342,7 +342,7 @@ export async function processKnowledgeImportNew(importId: string): Promise<{ suc
     };
     
   } catch (error) {
-    console.error('💥 Import process failed:', error);
+    // console.error('💥 Import process failed:', error);
     
     // Update import status as failed
     await supabase

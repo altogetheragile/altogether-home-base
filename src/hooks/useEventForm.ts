@@ -155,7 +155,7 @@ export const useEventForm = () => {
         event_title: data.title,
         template_id: templateId,
         is_published: data.is_published
-      }).catch(console.error);
+      }).catch(() => {});
       
       toast({
         title: "Event created successfully",
@@ -164,7 +164,6 @@ export const useEventForm = () => {
       navigate('/admin/events');
     },
     onError: (error) => {
-      console.error('Error creating event:', error);
       toast({
         title: "Error creating event",
         description: "Please try again or contact support.",

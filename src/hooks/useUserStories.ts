@@ -102,7 +102,7 @@ export function useUserStories() {
         .order('position', { ascending: true });
       
       if (error) throw error;
-      return data as UserStory[];
+      return data as unknown as UserStory[];
     },
   });
 }
@@ -150,7 +150,7 @@ export function useUserStoriesByEpic(epicId?: string) {
         .order('position', { ascending: true });
       
       if (error) throw error;
-      return data as UserStory[];
+      return data as unknown as UserStory[];
     },
     enabled: !!epicId,
   });

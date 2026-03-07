@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
 
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Max-Age': '86400',
@@ -108,17 +109,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing authorization' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { bmcData, templateUrl, companyName, debug }: FillPDFRequest = await req.json();
-    console.log('[PDF Fill] Request received');
-    console.log('[PDF Fill] Company:', companyName);
-    console.log('[PDF Fill] Template URL:', templateUrl);
 
     if (!templateUrl) {
       throw new Error('Template URL is required');
     }
 
+    // Validate templateUrl to prevent SSRF — only allow Supabase storage URLs
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    if (!templateUrl.startsWith(supabaseUrl)) {
+      return new Response(JSON.stringify({ error: 'Invalid template URL' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Download the PDF template
-    console.log('[PDF Fill] Downloading template...');
     const templateResponse = await fetch(templateUrl);
     if (!templateResponse.ok) {
       console.error('[PDF Fill] Template download failed:', templateResponse.status, templateResponse.statusText);

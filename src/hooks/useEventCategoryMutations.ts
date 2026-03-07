@@ -16,7 +16,6 @@ export const useCreateEventCategory = () => {
         .single();
 
       if (error) {
-        console.error('Error creating event category:', error);
         throw error;
       }
 
@@ -43,7 +42,6 @@ export const useUpdateEventCategory = () => {
         .single();
 
       if (error) {
-        console.error('Error updating event category:', error);
         throw error;
       }
 
@@ -64,7 +62,6 @@ export const useDeleteEventCategory = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting event category:', error);
         throw error;
       }
 

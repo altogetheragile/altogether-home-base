@@ -108,7 +108,6 @@ export function StoryList() {
       
       handleCloseEditDialog();
     } catch (error) {
-      console.error('Error updating:', error);
       toast({
         title: "Error",
         description: "Failed to update. Please try again.",

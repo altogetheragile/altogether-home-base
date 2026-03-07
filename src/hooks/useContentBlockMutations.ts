@@ -10,13 +10,13 @@ export const useContentBlockMutations = () => {
   const createContentBlock = useMutation({
     mutationFn: async (data: ContentBlockCreate): Promise<ContentBlock> => {
       const { data: result, error } = await supabase
-        .from('content_blocks')
+        .from('content_blocks' as any)
         .insert([data])
         .select()
         .single();
 
       if (error) throw error;
-      return result;
+      return result as unknown as ContentBlock;
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['page-by-id', data.page_id] });
@@ -43,7 +43,6 @@ export const useContentBlockMutations = () => {
         description: 'Failed to add content block',
         variant: 'destructive',
       });
-      console.error('Error creating content block:', error);
     },
   });
 
@@ -51,14 +50,14 @@ export const useContentBlockMutations = () => {
     mutationFn: async (data: ContentBlockUpdate): Promise<ContentBlock> => {
       const { id, ...updateData } = data;
       const { data: result, error } = await supabase
-        .from('content_blocks')
+        .from('content_blocks' as any)
         .update(updateData)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return result;
+      return result as unknown as ContentBlock;
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['page-by-id', data.page_id] });
@@ -85,7 +84,6 @@ export const useContentBlockMutations = () => {
         description: 'Failed to update content block',
         variant: 'destructive',
       });
-      console.error('Error updating content block:', error);
     },
   });
 
@@ -127,13 +125,12 @@ export const useContentBlockMutations = () => {
         description: 'Failed to delete content block',
         variant: 'destructive',
       });
-      console.error('Error deleting content block:', error);
     },
   });
 
   const reorderContentBlocks = useMutation({
     mutationFn: async (blocks: { id: string; position: number }[]): Promise<void> => {
-      const { error } = await supabase.rpc('update_content_block_positions', {
+      const { error } = await (supabase.rpc as any)('update_content_block_positions', {
         block_updates: blocks
       });
 
@@ -162,7 +159,6 @@ export const useContentBlockMutations = () => {
         description: 'Failed to reorder content blocks',
         variant: 'destructive',
       });
-      console.error('Error reordering content blocks:', error);
     },
   });
 

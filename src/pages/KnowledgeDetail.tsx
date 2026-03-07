@@ -107,15 +107,15 @@ const KnowledgeDetail = () => {
         slug: item.slug || '',
         description: item.description || '',
         background: item.background || '',
-        item_type: (item as any).item_type || 'technique',
-        why_it_exists: (item as any).why_it_exists || '',
-        typical_output: (item as any).typical_output || '',
-        use_this_when: (item as any).use_this_when || [],
-        avoid_when: (item as any).avoid_when || [],
-        decisions_supported: (item as any).decisions_supported || [],
-        what_good_looks_like: (item as any).what_good_looks_like || [],
-        decision_boundaries: (item as any).decision_boundaries || '',
-        governance_value: (item as any).governance_value || '',
+        item_type: (item.item_type as 'technique') || 'technique',
+        why_it_exists: item.why_it_exists || '',
+        typical_output: item.typical_output || '',
+        use_this_when: item.use_this_when || [],
+        avoid_when: item.avoid_when || [],
+        decisions_supported: item.decisions_supported || [],
+        what_good_looks_like: item.what_good_looks_like || [],
+        decision_boundaries: item.decision_boundaries || '',
+        governance_value: item.governance_value || '',
         decision_level_ids: item.decision_levels?.map(d => d.id) || [],
         category_ids: item.categories?.map(c => c.id) || [],
         domain_ids: item.domains?.map(d => d.id) || [],
@@ -207,7 +207,7 @@ const KnowledgeDetail = () => {
 
       if (isNewItem) {
         // Create new knowledge item
-        const newItem = await createKnowledgeItem.mutateAsync(itemData);
+        const newItem: any = await createKnowledgeItem.mutateAsync(itemData);
         
         toast({
           title: "Knowledge item created",
@@ -230,7 +230,6 @@ const KnowledgeDetail = () => {
         setIsEditMode(false);
       }
     } catch (error: any) {
-      console.error('Error saving:', error);
       toast({
         title: "Error saving",
         description: error.message || "Failed to save changes",

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Trash2, Upload, Image, Video, FileText, ExternalLink, Plus, File, Archive } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from './use-toast';
+import { toast } from '@/hooks/use-toast';
 
 export interface AssetItem {
   id?: string;
@@ -55,14 +55,11 @@ export const AssetManager: React.FC<AssetManagerProps> = ({
       const filePath = fileName;
       const assetType = value[index]?.type || 'document';
 
-      console.log(`Starting ${assetType} upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucketName}/${filePath}`);
-
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -71,7 +68,6 @@ export const AssetManager: React.FC<AssetManagerProps> = ({
         .getPublicUrl(filePath);
 
       if (!publicUrl) {
-        console.error('Failed to get public URL for file:', filePath);
         throw new Error('Failed to get public URL for uploaded file');
       }
 
@@ -84,7 +80,6 @@ export const AssetManager: React.FC<AssetManagerProps> = ({
         original_filename: file.name
       };
 
-      console.log(`${assetType} upload successful: ${publicUrl}`);
       onChange(updatedAssets);
       toast({
         title: "Upload Successful",
@@ -94,17 +89,6 @@ export const AssetManager: React.FC<AssetManagerProps> = ({
       const errorMessage = error?.message || 'Unknown error occurred';
       const assetType = value[index]?.type || 'file';
       
-      console.error('Asset upload error details:', {
-        message: errorMessage,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        assetType,
-        bucketName,
-        index,
-        error
-      });
-
       let userFriendlyMessage = `Failed to upload ${assetType}.`;
       
       if (errorMessage.includes('The resource already exists')) {

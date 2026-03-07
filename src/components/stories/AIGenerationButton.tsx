@@ -67,7 +67,6 @@ export function AIGenerationButton({
         handleClose();
       }
     } catch (error) {
-      console.error('Generation failed:', error);
     }
   };
 

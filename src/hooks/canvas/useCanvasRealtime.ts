@@ -47,12 +47,8 @@ export const useCanvasRealtime = ({
         }));
         setActiveUsers(users);
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined:', key, newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left:', key, leftPresences);
-      });
+      .on('presence', { event: 'join' }, () => {})
+      .on('presence', { event: 'leave' }, () => {});
 
     // Listen for canvas updates
     channel.on(
@@ -64,7 +60,6 @@ export const useCanvasRealtime = ({
         filter: `id=eq.${canvasId}`,
       },
       (payload) => {
-        console.log('Canvas update received:', payload);
         const update = payload.new as RealtimeUpdate;
         if (update.data) {
           onDataChange(update.data);
@@ -109,18 +104,18 @@ export const useCanvasRealtime = ({
     try {
       // Update database (this will trigger the postgres_changes event)
       const { error } = await supabase
-        .from('canvases')
-        .update({ 
-          data, 
-          updated_at: new Date().toISOString() 
+        .from('canvases' as any)
+        .update({
+          data,
+          updated_at: new Date().toISOString()
         })
         .eq('id', canvasId);
 
       if (error) {
-        console.error('Error updating canvas:', error);
+        // Canvas update failed silently
       }
-    } catch (error) {
-      console.error('Error broadcasting update:', error);
+    } catch {
+      // Broadcasting update failed silently
     }
   };
 

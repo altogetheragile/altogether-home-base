@@ -171,7 +171,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           });
           toast.success('Synced canvas with Knowledge Base');
         } catch (error) {
-          console.error('Auto-sync save failed:', error);
         }
       }
     };
@@ -296,7 +295,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           });
           toast.success('Canvas synced with Knowledge Base');
         } catch (error) {
-          console.error('KB refresh save failed:', error);
         }
       }
     };
@@ -646,7 +644,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       pdf.save('project-model.pdf');
       toast.success('Export completed!');
     } catch (error) {
-      console.error('Export error:', error);
       toast.error('Failed to export canvas');
     }
   };
@@ -668,7 +665,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
-      console.error('Auto-save failed:', error);
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -712,7 +708,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
       toast.success('Changes saved successfully');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
-      console.error('Error saving changes:', error);
       setSaveStatus('error');
       toast.error('Failed to save changes');
       setTimeout(() => setSaveStatus('idle'), 3000);
@@ -1026,8 +1021,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
                         updateArtifact.mutateAsync({
                           id: artifactId,
                           updates: { data: { elements: updatedElements } }
-                        }).catch(error => {
-                          console.error('Auto-save failed:', error);
+                        }).catch(() => {
                           toast.error('Failed to auto-save conversion');
                         });
                       }

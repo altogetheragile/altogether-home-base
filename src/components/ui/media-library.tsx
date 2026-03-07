@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Trash2, Upload, Image, Video, FileText, ExternalLink, Plus, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from './use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useMediaAssets, useMediaAssetMutations, MediaAsset, MediaAssetInsert } from '@/hooks/useMediaAssets';
 
 interface MediaLibraryProps {
@@ -52,14 +52,11 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
-      console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucketName}/${filePath}`);
-
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -68,7 +65,6 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         .getPublicUrl(filePath);
 
       if (!publicUrl) {
-        console.error('Failed to get public URL for file:', filePath);
         throw new Error('Failed to get public URL for uploaded file');
       }
 
@@ -90,16 +86,12 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         description: ''
       });
 
-      console.log(`Upload successful: ${publicUrl}`);
-      
       // Call callback if provided (for auto-linking to knowledge item)
       if (onMediaUploaded && newAsset?.id) {
         onMediaUploaded(newAsset.id);
       }
     } catch (error: any) {
       const errorMessage = error?.message || 'Unknown error occurred';
-      console.error('Media upload error:', error);
-      
       toast({
         title: "Upload Failed",
         description: errorMessage,
@@ -139,7 +131,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         onMediaUploaded(newAsset.id);
       }
     } catch (error) {
-      console.error('Error creating media from URL:', error);
+
     }
   };
 

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Trash2, Upload, Image, Video, FileText, ExternalLink, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from './use-toast';
+import { toast } from '@/hooks/use-toast';
 
 export interface MediaItem {
   id?: string;
@@ -49,14 +49,11 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       const filePath = fileName;
       const mediaType = value[index]?.type || 'unknown';
 
-      console.log(`Starting ${mediaType} upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucketName}/${filePath}`);
-
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -65,7 +62,6 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         .getPublicUrl(filePath);
 
       if (!publicUrl) {
-        console.error('Failed to get public URL for file:', filePath);
         throw new Error('Failed to get public URL for uploaded file');
       }
 
@@ -75,7 +71,6 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         url: publicUrl
       };
 
-      console.log(`${mediaType} upload successful: ${publicUrl}`);
       onChange(updatedMedia);
       toast({
         title: "Upload Successful",
@@ -86,18 +81,6 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       const errorCode = error?.error || error?.code || 'UNKNOWN';
       const mediaType = value[index]?.type || 'file';
       
-      console.error('Media upload error details:', {
-        message: errorMessage,
-        code: errorCode,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        mediaType,
-        bucketName,
-        index,
-        error
-      });
-
       let userFriendlyMessage = `Failed to upload ${mediaType}.`;
       
       if (errorMessage.includes('The resource already exists')) {

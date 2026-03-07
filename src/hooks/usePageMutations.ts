@@ -49,7 +49,6 @@ export const usePageMutations = () => {
         description: 'Failed to create page',
         variant: 'destructive',
       });
-      console.error('Error creating page:', error);
     },
   });
 
@@ -84,7 +83,6 @@ export const usePageMutations = () => {
         description: 'Failed to update page',
         variant: 'destructive',
       });
-      console.error('Error updating page:', error);
     },
   });
 
@@ -110,7 +108,6 @@ export const usePageMutations = () => {
         description: 'Failed to delete page',
         variant: 'destructive',
       });
-      console.error('Error deleting page:', error);
     },
   });
 

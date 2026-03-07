@@ -45,6 +45,7 @@ export function useReportComment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comment-reports"] });
     },
+    onError: () => { /* silently fail – non-critical */ },
   });
 
   return {
@@ -123,6 +124,7 @@ export function useUpdateReportStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comment-reports"] });
     },
+    onError: () => { /* silently fail */ },
   });
 
   return {
@@ -148,6 +150,7 @@ export function useDeleteReportedComment() {
       queryClient.invalidateQueries({ queryKey: ["comment-reports"] });
       queryClient.invalidateQueries({ queryKey: ["knowledge-item-comments"] });
     },
+    onError: () => { /* silently fail */ },
   });
 
   return {

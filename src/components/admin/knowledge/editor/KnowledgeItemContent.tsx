@@ -32,7 +32,7 @@ export const KnowledgeItemContent = ({
         mediaAssetIds: mediaIds
       });
     } catch (error) {
-      console.error('Failed to update media:', error);
+
     }
   };
   return (

@@ -176,7 +176,7 @@ export default function AdminUsers() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <Avatar>
-                        <AvatarImage src={user.profile_image_url || undefined} />
+                        <AvatarImage src={(user as any).profile_image_url || undefined} />
                         <AvatarFallback>{initials}</AvatarFallback>
                       </Avatar>
                     </TableCell>

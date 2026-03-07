@@ -7,11 +7,10 @@ export const useEventCategories = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_categories')
-        .select('*')
+        .select('id, name')
         .order('name');
 
       if (error) {
-        console.error('Error fetching event categories:', error);
         throw error;
       }
 

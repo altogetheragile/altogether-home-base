@@ -183,7 +183,6 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
       
       toast.success("Asset uploaded successfully");
     } catch (error) {
-      console.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : "Upload failed");
     } finally {
       setIsUploading(false);
@@ -219,7 +218,6 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
       
       toast.success("Asset created successfully");
     } catch (error) {
-      console.error('Create error:', error);
       toast.error(error instanceof Error ? error.message : "Creation failed");
     }
   };
@@ -229,7 +227,6 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
       await deleteAsset.mutateAsync(assetId);
       toast.success("Asset deleted successfully");
     } catch (error) {
-      console.error('Delete error:', error);
       toast.error(error instanceof Error ? error.message : "Delete failed");
     }
   };

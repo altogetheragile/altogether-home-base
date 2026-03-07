@@ -67,6 +67,7 @@ export const useUpdateUserPreferences = () => {
       queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
       queryClient.invalidateQueries({ queryKey: ['recommendations'] });
     },
+    onError: () => { /* silently fail – non-critical */ },
   });
 };
 
@@ -291,7 +292,7 @@ export const useTrackInteraction = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const interactionScore = currentPrefs?.interaction_score || {};
+      const interactionScore = (currentPrefs as any)?.interaction_score || {};
       const key = `${contentType}_${interactionType}`;
       interactionScore[key] = (interactionScore[key] || 0) + value;
 
@@ -308,5 +309,6 @@ export const useTrackInteraction = () => {
       queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
       queryClient.invalidateQueries({ queryKey: ['recommendations'] });
     },
+    onError: () => { /* silently fail – analytics only */ },
   });
 };

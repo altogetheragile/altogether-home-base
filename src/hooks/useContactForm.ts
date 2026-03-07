@@ -73,7 +73,6 @@ export const useContactForm = () => {
       });
 
       if (emailError) {
-        console.error('Email notification failed:', emailError);
         // Don't throw - contact was saved successfully
       }
 
@@ -88,7 +87,6 @@ export const useContactForm = () => {
       } else {
         toast.error("Failed to send message. Please try again.");
       }
-      console.error('Contact form error:', error);
     },
   });
 };

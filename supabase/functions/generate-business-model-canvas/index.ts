@@ -3,8 +3,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.57.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Max-Age': '86400',
@@ -80,7 +81,14 @@ serve(async (req: Request) => {
   const headers = { "Content-Type": "application/json", ...corsHeaders };
 
   try {
-    console.log("[BMC] Checking OpenAI API key...");
+    // Verify authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing authorization' }), {
+        status: 401, headers,
+      });
+    }
+
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) {
       console.error("[BMC] CRITICAL: Missing OPENAI_API_KEY");
@@ -92,7 +100,7 @@ serve(async (req: Request) => {
         { status: 500, headers }
       );
     }
-    console.log("[BMC] OpenAI key found:", openaiKey.substring(0, 10) + "...");
+    // Key is present — proceed
 
     console.log("[BMC] Parsing request body...");
     let body;

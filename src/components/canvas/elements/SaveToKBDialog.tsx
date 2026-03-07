@@ -109,7 +109,6 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
       if (error) throw error;
       setExistingItem(existing);
     } catch (error) {
-      console.error('Error checking for existing item:', error);
     } finally {
       setCheckingDuplicate(false);
     }
@@ -186,7 +185,7 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
     try {
       const slug = generateSlug(name) + '-' + Date.now().toString(36);
       
-      const result = await createKnowledgeItem.mutateAsync({
+      const result: any = await createKnowledgeItem.mutateAsync({
         name: name.trim(),
         slug,
         description: description.trim() || null,
@@ -235,7 +234,6 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
       });
       onClose();
     } catch (error) {
-      console.error('Error creating knowledge item:', error);
       toast.error('Failed to create Knowledge Item');
     }
   };

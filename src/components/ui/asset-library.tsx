@@ -8,7 +8,7 @@ import { Badge } from './badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Trash2, Image, Video, FileText, ExternalLink, File, Archive, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from './use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useMediaAssets, useMediaAssetMutations, MediaAsset, MediaAssetInsert } from '@/hooks/useMediaAssets';
 
 interface AssetLibraryProps {
@@ -49,14 +49,11 @@ export const AssetLibrary: React.FC<AssetLibraryProps> = ({
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
-      console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucketName}/${filePath}`);
-
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Supabase storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -65,7 +62,6 @@ export const AssetLibrary: React.FC<AssetLibraryProps> = ({
         .getPublicUrl(filePath);
 
       if (!publicUrl) {
-        console.error('Failed to get public URL for file:', filePath);
         throw new Error('Failed to get public URL for uploaded file');
       }
 
@@ -87,11 +83,8 @@ export const AssetLibrary: React.FC<AssetLibraryProps> = ({
         description: ''
       });
 
-      console.log(`Upload successful: ${publicUrl}`);
     } catch (error: any) {
       const errorMessage = error?.message || 'Unknown error occurred';
-      console.error('Asset upload error:', error);
-      
       toast({
         title: "Upload Failed",
         description: errorMessage,
@@ -126,7 +119,7 @@ export const AssetLibrary: React.FC<AssetLibraryProps> = ({
         url: ''
       });
     } catch (error) {
-      console.error('Error creating asset from URL:', error);
+
     }
   };
 

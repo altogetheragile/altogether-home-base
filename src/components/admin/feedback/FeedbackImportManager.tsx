@@ -48,7 +48,7 @@ const FeedbackImportManager = () => {
         description: `Preview showing ${Math.min(10, jsonData.length)} of ${jsonData.length} rows`,
       });
     } catch (error) {
-      console.error('Error reading file:', error);
+
       toast({
         title: "Error",
         description: "Failed to read file. Please ensure it's a valid Excel file.",
@@ -119,7 +119,7 @@ const FeedbackImportManager = () => {
       setFile(null);
       setPreview([]);
     } catch (error) {
-      console.error('Import error:', error);
+
       toast({
         title: "Import failed",
         description: "Failed to import feedback. Please try again.",

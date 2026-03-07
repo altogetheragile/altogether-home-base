@@ -141,16 +141,11 @@ export const exportBMC = async (
     companyName
   } = options;
 
-  console.log('🎯 Starting BMC export with clean data:', data);
-  console.log('📋 Export options:', options);
-
   // Create clean export DOM
   const exportElement = createExportDOM(data, companyName);
   document.body.appendChild(exportElement);
 
   try {
-    console.log('📸 Capturing with html2canvas...');
-    
     // Capture with html2canvas
     const canvas = await html2canvas(exportElement, {
       backgroundColor: '#ffffff',
@@ -160,11 +155,6 @@ export const exportBMC = async (
       logging: false,
       width: 1200,
       height: 800,
-    });
-
-    console.log('✅ Canvas captured successfully:', {
-      width: canvas.width,
-      height: canvas.height
     });
 
     // Generate output based on format
@@ -178,11 +168,9 @@ export const exportBMC = async (
       dataUrl = canvas.toDataURL('image/png');
     }
 
-    console.log('📁 Export completed, data URL length:', dataUrl.length);
     return dataUrl;
 
   } catch (error) {
-    console.error('❌ Export failed:', error);
     throw new Error(`Failed to export BMC: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
     // Clean up
@@ -241,8 +229,6 @@ export const downloadBMC = (dataUrl: string, filename: string, format: string) =
  * Print BMC data
  */
 export const printBMC = async (data: BMCData, companyName?: string) => {
-  console.log('🖨️ Starting BMC print with data:', data);
-
   const exportElement = createExportDOM(data, companyName);
   document.body.appendChild(exportElement);
 
@@ -300,7 +286,6 @@ export const printBMC = async (data: BMCData, companyName?: string) => {
     };
 
   } catch (error) {
-    console.error('❌ Print failed:', error);
     throw new Error(`Failed to print BMC: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
     document.body.removeChild(exportElement);

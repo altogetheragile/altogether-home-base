@@ -73,10 +73,19 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.generate-business-model-canvas]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fill-bmc-pdf]
-verify_jwt = false
+verify_jwt = true
+
+[functions.generate-canvas]
+verify_jwt = true
+
+[functions.generate-user-story]
+verify_jwt = true
+
+[functions.process-knowledge-import]
+verify_jwt = true
 
 [functions.send-contact-email]
 verify_jwt = false

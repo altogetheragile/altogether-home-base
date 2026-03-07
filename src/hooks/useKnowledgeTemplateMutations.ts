@@ -34,12 +34,6 @@ export const useKnowledgeTemplateMutations = () => {
           .eq('id', existingId);
 
         if (error) {
-          console.error('❌ Database update error:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-          });
           throw new Error(`Failed to update template: ${error.message}`);
         }
         return { id: existingId };
@@ -65,13 +59,6 @@ export const useKnowledgeTemplateMutations = () => {
         });
 
       if (error) {
-        console.error('❌ Database insert error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        
         // Provide user-friendly error messages
         if (error.code === '23505' && error.message.includes('unique_template_title_version')) {
           throw new Error(`A template with title "${templateData.title}" and version "${version || '1.0'}" already exists. Please choose a different version number.`);
@@ -118,13 +105,6 @@ export const useKnowledgeTemplateMutations = () => {
         .single();
 
       if (error) {
-        console.error('❌ Database update error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        
         // Provide user-friendly error messages
         if (error.code === '23505' && error.message.includes('unique_template_title_version')) {
           throw new Error(`A template with title "${data.title}" and this version already exists. Please choose a different version number.`);

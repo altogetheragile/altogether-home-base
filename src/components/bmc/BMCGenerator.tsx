@@ -63,7 +63,6 @@ const BMCGenerator: React.FC = () => {
           });
         }
       } catch (err) {
-        console.error('Failed to restore BMC:', err);
       }
       sessionStorage.removeItem('bmc:resume');
     }
@@ -100,8 +99,6 @@ const BMCGenerator: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      console.log('Calling BMC generation with data:', formData);
-      
       const { data, error } = await supabase.functions.invoke('generate-business-model-canvas', {
         body: {
           companyName: formData.companyName,
@@ -114,18 +111,15 @@ const BMCGenerator: React.FC = () => {
       });
 
       if (error) {
-        console.error('[BMC] Edge function error:', error);
         throw new Error(error.message ?? 'Edge function failed');
       }
 
       const raw = typeof data === "string" ? JSON.parse(data) : data;
       if (!raw?.success) {
-        console.error('[BMC] LLM parsing failed:', raw?.error, raw?.raw?.slice?.(0, 400));
         throw new Error('AI response could not be parsed. Please try again.');
       }
 
       const bmcData = raw.data;
-      console.debug("[BMC] extracted BMC:", bmcData);
       setGeneratedBMC(bmcData);
       setCompanyName(formData.companyName);
       toast({
@@ -133,7 +127,6 @@ const BMCGenerator: React.FC = () => {
         description: "Your strategic Business Model Canvas is ready for review and export"
       });
     } catch (error) {
-      console.error('Error generating BMC:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Generation Failed",
@@ -159,7 +152,7 @@ const BMCGenerator: React.FC = () => {
   };
 
   const downloadBlankTemplate = () => {
-    const templateUrl = 'https://wqaplkypnetifpqrungv.supabase.co/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf';
+    const templateUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/pdf-templates/templates/988f2f19-fe29-49e4-971c-56c0dc9f872c.pdf`;
     window.open(templateUrl, '_blank');
   };
 
@@ -221,7 +214,6 @@ const BMCGenerator: React.FC = () => {
       navigate(`/projects/${projectResult.id}/bmc`);
       
     } catch (error) {
-      console.error('Error saving BMC as project:', error);
       toast({
         title: "Save Failed",
         description: "Unable to save BMC as project. Please try again.",
@@ -417,7 +409,6 @@ const BMCGenerator: React.FC = () => {
                         }));
                       }
                     } catch (err) {
-                      console.error('Failed to save BMC to sessionStorage:', err);
                     }
                     navigate('/auth');
                   }}

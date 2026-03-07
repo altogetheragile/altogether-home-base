@@ -1,48 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { useEvents, EventData } from '@/hooks/useEvents';
-import { useAuth } from '@/contexts/AuthContext';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
-
-// ─── Mobile detection hook ──────────────────────────────────────────────────
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
-};
+import AboutSection from '@/components/AboutSection';
+import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 // ─── Responsive CSS classes (media-query driven) ────────────────────────────
 const ResponsiveStyles = () => (
   <style>{`
-    .aa-nav-links { display: flex; }
-    .aa-hero-grid { display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: center; }
-    .aa-two-col-wide { display: grid; grid-template-columns: 380px 1fr; gap: 64px; align-items: center; }
-    .aa-two-col-right { display: grid; grid-template-columns: 1fr 300px; gap: 48px; align-items: center; }
-    .aa-two-col-left { display: grid; grid-template-columns: 280px 1fr; gap: 48px; align-items: start; }
-    .aa-two-col-cta { display: grid; grid-template-columns: 1fr 260px; gap: 48px; align-items: center; }
+    .aa-hero-grid { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; }
     .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .aa-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
     .aa-stats-bar { display: flex; align-items: stretch; justify-content: center; }
     .aa-section-pad { padding: 64px 48px; }
     .aa-hero-h1 { font-size: 50px; }
     .aa-hide-mobile { display: block; }
-    .aa-hamburger { display: none; }
 
     @media (max-width: 767px) {
-      .aa-hamburger { display: block !important; }
-      .aa-nav-links { display: none; }
       .aa-hero-grid { grid-template-columns: 1fr; }
-      .aa-two-col-wide { grid-template-columns: 1fr; }
-      .aa-two-col-right { grid-template-columns: 1fr; }
-      .aa-two-col-left { grid-template-columns: 1fr; }
-      .aa-two-col-cta { grid-template-columns: 1fr; }
       .aa-three-col { grid-template-columns: 1fr; }
-      .aa-footer-grid { grid-template-columns: 1fr; gap: 32px; }
       .aa-stats-bar { flex-wrap: wrap; }
       .aa-stats-bar > div { width: 50%; border-right: none !important; }
       .aa-section-pad { padding: 40px 20px; }
@@ -117,64 +98,6 @@ const Icons = {
   ),
 };
 
-// ─── Two-colour wordmark ────────────────────────────────────────────────────
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-    <span style={{
-      color: light ? '#fff' : '#004D4D',
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Altogether</span>
-    <span style={{
-      color: '#FF9715',
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Agile</span>
-  </div>
-);
-
-// ─── Illustration placeholders (styled divs, correct dimensions) ────────────
-const TeamIllustration = ({ height = 180, bg = '#D9F2F2', count = 3, label }: {
-  height?: number; bg?: string; count?: number; label?: string;
-}) => {
-  const heights = [100, 120, 108, 95, 115];
-  const colors = ['#004D4D', '#007A7A', '#FF9715', '#006060', '#338080'];
-  const skinTones = ['#FDDBB4', '#D4956A', '#8D5524', '#FDDBB4', '#C68642'];
-  return (
-    <div style={{ height, background: bg, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px 16px', position: 'relative', overflow: 'hidden' }}>
-      {/* label hidden for production */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 16 }}>
-        {Array.from({ length: count }).map((_, i) => {
-          const h = heights[i % heights.length];
-          return (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: skinTones[i % skinTones.length], marginBottom: 2 }} />
-              <div style={{ width: 36, height: h * 0.6, background: colors[i % colors.length], borderRadius: '8px 8px 0 0', opacity: 0.85 }} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-const IllustrationSpot = ({ height = 180, label, bg = '#D9F2F2', style = {} }: {
-  height?: number; label?: string; bg?: string; style?: React.CSSProperties;
-}) => (
-  <div style={{ height, background: bg, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, ...style }}>
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="16" r="8" fill="#007A7A" opacity="0.5" />
-      <ellipse cx="24" cy="36" rx="14" ry="8" fill="#007A7A" opacity="0.35" />
-      <circle cx="24" cy="16" r="5" fill="#004D4D" opacity="0.4" />
-    </svg>
-    {/* label hidden for production */}
-  </div>
-);
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function formatPrice(cents: number, currency: string): string {
   if (cents === 0) return 'Free';
@@ -218,19 +141,10 @@ function getTypeColor(name: string): string {
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────
-const NAV_LINKS = [
-  { label: 'Events', to: '/events' },
-  { label: 'Knowledge Base', to: '/knowledge' },
-  { label: 'Coaching', to: '/coaching' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
-
 const Home: React.FC = () => {
   const isMobile = useIsMobile();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { settings } = useSiteSettings();
   const { data: allEvents } = useEvents();
-  const { user } = useAuth();
 
   const events = (allEvents || [])
     .filter((e) => new Date(e.start_date) >= new Date())
@@ -241,106 +155,54 @@ const Home: React.FC = () => {
       <Helmet>
         <title>Altogether Agile — Agile Coaching & Training</title>
         <meta name="description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience." />
+        <link rel="canonical" href={`${SITE_URL}/`} />
       </Helmet>
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
-      <nav style={{ background: '#FFFFFF', borderBottom: '1px solid #D9F2F2', padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64, position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link to="/">
-          <LogoFull height={38} />
-        </Link>
-        <div className="aa-nav-links" style={{ gap: 32 }}>
-          {NAV_LINKS.map((item) => (
-            <Link key={item.label} to={item.to} style={{ color: '#374151', fontSize: 13, fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {user ? (
-            <Link to="/dashboard" style={{ background: '#FF9715', color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-              Dashboard
-            </Link>
-          ) : (
-            <Link to="/auth" style={{ background: '#FF9715', color: '#fff', border: 'none', padding: '9px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', textDecoration: 'none' }}>
-              Sign In
-            </Link>
-          )}
-          <button
-            className="aa-hamburger"
-            onClick={() => setMenuOpen((v) => !v)}
-            style={{ background: 'none', border: 'none', color: '#004D4D', fontSize: 24, cursor: 'pointer', padding: 4, lineHeight: 1 }}
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          >
-            {menuOpen ? '\u2715' : '\u2630'}
-          </button>
-        </div>
-      </nav>
-
-      {/* ─── MOBILE DROPDOWN ─── */}
-      {menuOpen && (
-        <div style={{ background: '#FFFFFF', borderBottom: '1px solid #D9F2F2', position: 'sticky', top: 64, zIndex: 99 }}>
-          {NAV_LINKS.map((item, i) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'block',
-                padding: '14px 20px',
-                color: '#374151',
-                fontSize: 15,
-                fontWeight: 500,
-                textDecoration: 'none',
-                borderBottom: i < NAV_LINKS.length - 1 ? '1px solid #D9F2F2' : 'none',
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      )}
+      <Navigation />
 
       {/* ─── HERO ─── */}
-      <div className="aa-section-pad" style={{ background: '#F0FAFA' }}>
-        <div className="aa-hero-grid">
-          <div>
-            <h1 className="aa-hero-h1" style={{ color: '#004D4D', fontWeight: 800, lineHeight: 1.15, margin: '0 0 20px' }}>
-              Agile training that<br />actually changes<br />how you work.
-            </h1>
-            <p style={{ color: '#374151', fontSize: 16, lineHeight: 1.7, margin: '0 0 32px', maxWidth: 480 }}>
-              Altogether Agile is built on 25 years of hands-on agile experience — delivering certified courses, practical coaching, and a library of 80+ techniques for teams who want real results, not just a certificate.
-            </p>
-            <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-              <Link to="/events" style={{ background: '#FF9715', color: '#fff', border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-                Browse Events <Icons.ArrowRight />
-              </Link>
-              <Link to="/knowledge" style={{ color: '#004D4D', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-                Knowledge Base <Icons.ArrowRight />
-              </Link>
-            </div>
-          </div>
-          <div className="aa-hide-mobile" style={{ position: 'relative' }}>
-            <TeamIllustration height={280} bg="#D9F2F2" count={4} label="Diverse team" />
-            <div style={{ position: 'absolute', bottom: -12, right: -12, background: '#FF9715', color: '#fff', borderRadius: 12, padding: '10px 16px', fontSize: 12, fontWeight: 700, boxShadow: '0 4px 16px rgba(255,151,21,0.35)' }}>
-              1,500+ practitioners trained
+      <div style={{ position: 'relative', minHeight: 560, overflow: 'visible', border: 'none', boxShadow: 'none' }}>
+        {/* Background image layer — extends through stats band */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: -80, backgroundImage: "url('/images/hero-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center 30%', backgroundRepeat: 'no-repeat', zIndex: 0 }} />
+        {/* Hero content */}
+        <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '48px 20px 80px' : '80px 48px 80px' }}>
+          <div className="aa-hero-grid">
+            <div>
+              <h1 className="aa-hero-h1" style={{ color: '#004D4D', fontWeight: 800, lineHeight: 1.4, margin: '0 0 20px' }}>
+                Work better together.<br />Accelerate time to Value.
+              </h1>
+              <p style={{ color: '#374151', fontSize: 16, lineHeight: 1.7, margin: '0 0 32px', maxWidth: 480 }}>
+                Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.
+              </p>
+              <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+                <Link to="/events" style={{ background: '#FF9715', color: '#FFFFFF', border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                  Browse Events <Icons.ArrowRight />
+                </Link>
+                {settings?.show_knowledge && (
+                  <Link to="/knowledge" style={{ color: '#004D4D', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                    Knowledge Base <Icons.ArrowRight />
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* ─── STATS BAR ─── */}
-      <div className="aa-stats-bar" style={{ background: '#FFFFFF', padding: '20px 48px', borderBottom: '1px solid #D9F2F2' }}>
+      <div className="aa-stats-bar" style={{ background: 'transparent', padding: '20px 48px', paddingTop: 60, position: 'relative', zIndex: 2 }}>
         {[
           { icon: <Icons.Users />, num: '1,500+', label: 'Practitioners trained' },
           { icon: <Icons.Books />, num: '80+', label: 'Agile techniques' },
-          { icon: <Icons.GraduationCap />, num: '12+', label: 'Certifications offered' },
+          { icon: <Icons.GraduationCap />, num: '12+', label: 'Frameworks covered' },
           { icon: <Icons.Star />, num: '4.9\u2605', label: 'Average rating' },
         ].map((stat, i) => (
-          <div key={i} style={{ textAlign: 'center', padding: '8px 40px', borderRight: i < 3 ? '1px solid #D9F2F2' : 'none' }}>
+          <div key={i} style={{ textAlign: 'center', padding: '8px 40px' }}>
             <div style={{ color: '#FF9715', display: 'flex', justifyContent: 'center', marginBottom: 4 }}>{stat.icon}</div>
             <div style={{ color: '#004D4D', fontSize: 22, fontWeight: 800 }}>{stat.num}</div>
-            <div style={{ color: '#6B7280', fontSize: 12 }}>{stat.label}</div>
+            <div style={{ color: '#004D4D', fontSize: 12, opacity: 0.7 }}>{stat.label}</div>
           </div>
         ))}
       </div>
@@ -381,9 +243,21 @@ const Home: React.FC = () => {
         </div>
 
         {events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#6B7280' }}>
-            <p style={{ fontSize: 16, fontWeight: 500, marginBottom: 4 }}>No upcoming events scheduled</p>
-            <p style={{ fontSize: 14 }}>Check back soon for new courses and workshops.</p>
+          <div style={{ textAlign: 'center', padding: '48px 24px', background: '#FFFFFF', borderRadius: 14 }}>
+            <div style={{ color: '#004D4D', fontSize: 40, marginBottom: 12 }}>📅</div>
+            <p style={{ color: '#004D4D', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+              New dates being scheduled now
+            </p>
+            <p style={{ color: '#6B7280', fontSize: 14, lineHeight: 1.6, marginBottom: 24, maxWidth: 360, margin: '0 auto 24px' }}>
+              Can't see the course you need? Get in touch and we'll let you know as soon as new dates are confirmed.
+            </p>
+            <Link to="/contact" style={{
+              background: '#FF9715', color: '#fff', padding: '12px 24px',
+              borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}>
+              Register your interest →
+            </Link>
           </div>
         ) : (
           <div className="aa-three-col">
@@ -432,53 +306,17 @@ const Home: React.FC = () => {
       </div>
 
       {/* ─── ABOUT ALUN ─── */}
-      <div className="aa-section-pad" style={{ background: '#FFFFFF' }}>
-        <div className="aa-two-col-wide">
-          <div style={{ position: 'relative' }}>
-            <TeamIllustration height={320} bg="#D9F2F2" count={1} label="Alun - founder photo" />
-            <div style={{ position: 'absolute', bottom: -16, left: -16, background: '#004D4D', color: '#fff', borderRadius: 12, padding: '12px 18px' }}>
-              <div style={{ fontSize: 11, color: '#B2DFDF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Credentials</div>
-              {['ABC Level-4 Specialist', 'Advanced Certified Scrum Master', 'ABC Assessor', 'University of Westminster Lecturer'].map((c, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#fff', marginBottom: 4 }}>
-                  <span style={{ color: '#FF9715' }}><Icons.CheckCircle /></span>{c}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#F0FAFA', color: '#007A7A', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 20, marginBottom: 20 }}>
-              <Icons.User />About Alun
-            </div>
-            <h2 style={{ color: '#004D4D', fontSize: 32, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.2 }}>
-              Train with someone<br />who's been in the room.
-            </h2>
-            <p style={{ color: '#374151', fontSize: 15, lineHeight: 1.75, margin: '0 0 16px' }}>
-              I'm Alun, founder of Altogether Agile. I've spent 25 years working in and around agile teams — as a practitioner, a coach, and a trainer. I've authored AgileBA modules for the Agile Business Consortium, assessed professional membership candidates as an ABC Assessor, and lectured at the University of Westminster.
-            </p>
-            <p style={{ color: '#374151', fontSize: 15, lineHeight: 1.75, margin: '0 0 28px' }}>
-              I started Altogether Agile because I believe good agile training should be grounded in real experience — not slides recycled from a manual. I've trained over 1,500 people across organisations of every size, and I still run every course myself.
-            </p>
-            <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-              <Link to="/contact" style={{ background: '#FF9715', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-                Book a chemistry session <Icons.ArrowRight />
-              </Link>
-              <Link to="/testimonials" style={{ color: '#004D4D', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-                Read more <Icons.ArrowRight />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AboutSection />
 
       {/* ─── KNOWLEDGE BASE ─── */}
-      <div className="aa-section-pad" style={{ background: '#004D4D' }}>
-        <div className="aa-two-col-right">
+      {settings?.show_knowledge && (
+        <div className="aa-section-pad" style={{ background: '#004D4D' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.1)', color: '#B2DFDF', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 20, marginBottom: 20 }}>
               <Icons.Books />Knowledge Base
             </div>
             <h2 style={{ color: '#fff', fontSize: 32, fontWeight: 800, margin: '0 0 12px' }}>80+ agile techniques,<br />ready to use</h2>
-            <p style={{ color: '#B2DFDF', fontSize: 16, margin: '0 0 24px', lineHeight: 1.6 }}>
+            <p style={{ color: '#B2DFDF', fontSize: 16, margin: '0 0 24px', lineHeight: 1.6, maxWidth: 560 }}>
               From Story Mapping to OKRs — every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
@@ -492,105 +330,38 @@ const Home: React.FC = () => {
               Browse Techniques <Icons.ArrowRight />
             </Link>
           </div>
-          <IllustrationSpot height={260} label="Person at knowledge base / library" bg="rgba(255,255,255,0.06)" style={{ border: '1px solid rgba(255,255,255,0.1)' }} />
         </div>
-      </div>
-
-      {/* ─── TESTIMONIALS ─── */}
-      <div className="aa-section-pad" style={{ background: '#FFFFFF' }}>
-        <div className="aa-two-col-left">
-          <div>
-            <h2 style={{ color: '#004D4D', fontSize: 32, fontWeight: 800, margin: '0 0 12px' }}>What our attendees say</h2>
-            <p style={{ color: '#6B7280', fontSize: 15, margin: '0 0 24px' }}>Real feedback from real practitioners</p>
-            <TeamIllustration height={180} bg="#F0FAFA" count={3} label="Team group" />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {[
-              { quote: 'The Scrum Master course gave me the confidence to lead my first sprint. Practical, well-paced, and genuinely useful.', name: 'Sarah Mitchell', role: 'Delivery Lead \u00b7 NHS', course: 'Scrum Master' },
-              { quote: 'I completed both the Agile Foundation and Practitioner courses. Excellent tutor with extensive knowledge and an adaptable approach.', name: 'James Thornton', role: 'Programme Manager \u00b7 HSBC', course: 'AgileBA' },
-              { quote: 'Despite covering a lot of content including prep for 2 exams, I thoroughly enjoyed the training and found it very engaging.', name: 'Priya Sharma', role: 'Senior Programme Officer \u00b7 Public Health', course: 'AgilePM' },
-            ].map((t, i) => (
-              <div key={i} style={{ background: '#F0FAFA', borderRadius: 14, padding: '18px 20px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#D9F2F2', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#007A7A' }}>
-                  <Icons.User />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ color: '#374151', fontSize: 13, lineHeight: 1.6, marginBottom: 8 }}>&ldquo;{t.quote}&rdquo;</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ color: '#004D4D', fontWeight: 700, fontSize: 12 }}>{t.name}</div>
-                      <div style={{ color: '#6B7280', fontSize: 11 }}>{t.role}</div>
-                    </div>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#D9F2F2', color: '#007A7A', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>
-                      <Icons.GraduationCap />{t.course}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* ─── CTA ─── */}
       <div className="aa-section-pad" style={{ background: '#FF9715' }}>
-        <div className="aa-two-col-cta">
-          <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 48, maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ flex: 1 }}>
             <h2 style={{ color: '#fff', fontSize: 36, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>
               Ready to work with someone<br />who's been in the room?
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.88)', fontSize: 16, margin: '0 0 28px', lineHeight: 1.6 }}>
+            <p style={{ color: 'rgba(255,255,255,0.88)', fontSize: 16, margin: '0 0 28px', lineHeight: 1.6, maxWidth: 560 }}>
               Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell — just a conversation.
             </p>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
               <Link to="/events" style={{ background: '#004D4D', color: '#fff', border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                 Browse Events <Icons.ArrowRight />
               </Link>
-              <Link to="/contact" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-                <Icons.Chat />Book a chemistry session
-              </Link>
+              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                <Icons.Chat />Book a Chemistry Session
+              </a>
             </div>
           </div>
-          <TeamIllustration height={160} bg="rgba(255,255,255,0.15)" count={3} label="Celebration scene" />
+          {!isMobile && (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <AlunTabletPortrait />
+            </div>
+          )}
         </div>
       </div>
 
       {/* ─── FOOTER ─── */}
-      <div style={{ background: '#004D4D', padding: '48px 20px 32px' }}>
-        <div className="aa-footer-grid">
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <LogoFull height={40} light />
-            </div>
-            <div style={{ color: '#B2DFDF', fontSize: 14, lineHeight: 1.75, maxWidth: 300 }}>
-              Agile training, coaching and facilitation — grounded in 25 years of real experience. Based in London, working everywhere.
-            </div>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Links</div>
-            {[
-              { label: 'Events', to: '/events' },
-              { label: 'Knowledge Base', to: '/knowledge' },
-              { label: 'Coaching', to: '/coaching' },
-              { label: 'About', to: '/about' },
-              { label: 'Contact', to: '/contact' },
-            ].map((link) => (
-              <Link key={link.label} to={link.to} style={{ display: 'block', color: '#B2DFDF', fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>
-                {link.label}
-              </Link>
-            ))}
-            <Link to="/testimonials" style={{ display: 'block', color: '#B2DFDF', fontSize: 13, marginBottom: 8, cursor: 'pointer', textDecoration: 'none' }}>Testimonials</Link>
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Get in Touch</div>
-            <div style={{ color: '#B2DFDF', fontSize: 13, marginBottom: 8 }}>info@altogetheragile.com</div>
-            <div style={{ color: '#B2DFDF', fontSize: 13 }}>London, England</div>
-          </div>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, color: '#B2DFDF', fontSize: 12, textAlign: 'center' }}>
-          &copy; 2026 Altogether Agile. All rights reserved.
-        </div>
-      </div>
+      <Footer />
 
     </div>
   );

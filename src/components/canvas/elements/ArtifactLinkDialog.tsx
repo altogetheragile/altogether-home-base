@@ -106,7 +106,6 @@ export const ArtifactLinkDialog: React.FC<ArtifactLinkDialogProps> = ({
       });
       toast.success('File uploaded successfully');
     } catch (error) {
-      console.error('Upload error:', error);
       toast.error('Failed to upload file');
     } finally {
       setIsUploading(false);

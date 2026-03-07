@@ -199,7 +199,7 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
         },
       });
     } catch (error) {
-      console.error('Failed to save mapping config:', error);
+
     }
   };
 

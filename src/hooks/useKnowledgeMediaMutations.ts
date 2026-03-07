@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export interface MediaItem {
   id?: string;
@@ -20,7 +20,7 @@ export const useKnowledgeMediaMutations = () => {
     mutationFn: async ({ techniqueId, mediaItems }: { techniqueId: string; mediaItems: MediaItem[] }) => {
       // First, delete existing media for this technique
       await supabase
-        .from('knowledge_media')
+        .from('knowledge_media' as any)
         .delete()
         .eq('technique_id', techniqueId);
 
@@ -37,7 +37,7 @@ export const useKnowledgeMediaMutations = () => {
         }));
 
         const { error } = await supabase
-          .from('knowledge_media')
+          .from('knowledge_media' as any)
           .insert(mediaToInsert);
 
         if (error) throw error;
@@ -53,7 +53,6 @@ export const useKnowledgeMediaMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating media:', error);
       toast({
         title: "Error",
         description: "Failed to update media",

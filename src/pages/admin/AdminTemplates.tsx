@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, FileText, Download, Trash2, Edit } from 'lucide-react';
@@ -14,6 +15,7 @@ import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutat
 import { toast } from 'sonner';
 
 const AdminTemplates = () => {
+  const navigate = useNavigate();
   const { data: templates = [], isLoading, error } = useKnowledgeTemplates();
   const {
     selectedTemplate,
@@ -95,7 +97,7 @@ const AdminTemplates = () => {
             Templates are now managed directly within Knowledge Items. Visit a specific knowledge item to upload and manage its templates.
           </p>
         </div>
-        <Button onClick={() => window.location.href = '/admin/knowledge/items'}>
+        <Button onClick={() => navigate('/admin/knowledge/items')}>
           Go to Knowledge Items
         </Button>
       </div>
@@ -261,7 +263,7 @@ const AdminTemplates = () => {
             }
           </p>
           {!searchTerm && filter === 'all' && (
-            <Button onClick={() => window.location.href = '/admin/knowledge/items'}>
+            <Button onClick={() => navigate('/admin/knowledge/items')}>
               <Plus className="h-4 w-4 mr-2" />
               Go to Knowledge Items
             </Button>

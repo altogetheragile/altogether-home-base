@@ -76,13 +76,11 @@ const Auth = () => {
         return;
       }
 
-      console.log('🔐 Using MFA factor:', { factorId: verifiedTotp.id });
       const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: verifiedTotp.id });
       if (chErr) throw chErr;
       const challengeId = chData?.id ?? chData?.challengeId ?? null;
       setMfaFactorId(verifiedTotp.id);
       setMfaChallengeId(challengeId);
-      console.log('🪪 MFA challenge created:', { challengeId });
       toast({ title: "MFA required", description: "Enter the 6‑digit code from your authenticator app." });
     } catch (err: any) {
       // Don't sign the user out on challenge errors
@@ -94,22 +92,13 @@ const Auth = () => {
 useEffect(() => {
   let cancelled = false;
   (async () => {
-    console.log('🔍 Auth useEffect: Starting navigation check', { 
-      hasUser: !!user, 
-      userEmail: user?.email, 
-      userId: user?.id,
-      mfaRequired 
-    });
-    
     if (!user || mfaRequired) {
-      console.log('❌ Auth useEffect: No user or MFA required, staying on auth page');
       return;
     }
 
     // If another part of the app requested MFA prompt, honor it
     const flag = sessionStorage.getItem('mfa:prompt');
     if (flag) {
-      console.log('🔍 Auth useEffect: MFA prompt flag found, starting MFA');
       sessionStorage.removeItem('mfa:prompt');
       await handleStartMfa();
       return;
@@ -118,10 +107,8 @@ useEffect(() => {
     try {
       const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
       const currentLevel = aalData?.currentLevel;
-      console.log('🔍 Auth useEffect: AAL level check', { currentLevel });
-      
+
       if (currentLevel === 'aal2') {
-        console.log('✅ Auth useEffect: AAL2 confirmed, navigating after auth');
         if (!cancelled) navigateAfterAuth();
         return;
       }
@@ -129,24 +116,15 @@ useEffect(() => {
       const { data: lf } = await (supabase as any).auth.mfa.listFactors();
       const all = lf?.all ?? [];
       const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
-      
-      console.log('🔍 Auth useEffect: MFA factors check', { 
-        totalFactors: all.length, 
-        hasVerifiedTotp: !!verifiedTotp 
-      });
-      
+
       if (verifiedTotp) {
-        console.log('🔍 Auth useEffect: Verified TOTP found, starting MFA challenge');
         await handleStartMfa(all);
         return;
       }
 
       // No verified TOTP → safe to redirect
-      console.log('✅ Auth useEffect: No TOTP factors, navigating after auth');
       if (!cancelled) navigateAfterAuth();
     } catch (err) {
-      console.warn('❌ Auth useEffect: AAL-aware redirect check failed:', err);
-      console.log('✅ Auth useEffect: Error occurred, navigating after auth anyway');
       if (!cancelled) navigateAfterAuth();
     }
   })();
@@ -167,7 +145,6 @@ useEffect(() => {
       const result = await signIn(email, password);
       
       if (!result) {
-        console.error('signIn returned undefined');
         toast({
           title: "Error signing in",
           description: "An unexpected error occurred",
@@ -207,20 +184,17 @@ useEffect(() => {
 
         // If we do have a session, check AAL and step up if needed
         const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
-        console.log('🔎 AAL after sign-in:', aalData);
         if (aalData?.currentLevel !== 'aal2') {
           const { data: lf } = await (supabase as any).auth.mfa.listFactors();
           const all = lf?.all ?? [];
           const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
           if (verifiedTotp) {
-            console.log('⚠️ Session not at AAL2, verified TOTP exists → starting challenge');
             await handleStartMfa(all);
             setLoading(false);
             return;
           }
         }
       } catch (aalErr) {
-        console.warn('AAL check/step-up skipped due to error:', aalErr);
       }
 
       toast({ title: "Welcome back!", description: "You have been signed in successfully." });
@@ -250,12 +224,9 @@ useEffect(() => {
       setMfaRequired(false);
       setMfaCode("");
       setMfaChallengeId(null);
-      // Log final AAL level after successful MFA verification
       try {
-        const { data: finalAal } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
-        console.log('🔎 Final AAL after MFA verify:', finalAal);
+        await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
       } catch (aalErr) {
-        console.warn('Failed to fetch final AAL after verify:', aalErr);
       }
       toast({ title: "MFA verified (AAL2)", description: "You're fully signed in." });
       navigateAfterAuth();
@@ -330,7 +301,6 @@ useEffect(() => {
       const result = await signUp(email, password, fullName);
       
       if (!result) {
-        console.error('signUp returned undefined');
         toast({
           title: "Error creating account",
           description: "An unexpected error occurred",

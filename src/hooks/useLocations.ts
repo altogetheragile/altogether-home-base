@@ -8,11 +8,10 @@ export const useLocations = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('*')
+        .select('id, name, address, virtual_url')
         .order('name');
 
       if (error) {
-        console.error('Error fetching locations:', error);
         throw error;
       }
 

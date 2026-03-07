@@ -49,7 +49,6 @@ export const PDFTemplateUpload = ({ onSuccess }: PDFTemplateUploadProps) => {
 const { data: knowledgeItems = [] } = useQuery({
     queryKey: ['knowledge-items-for-upload', knowledgeItemSearch],
     queryFn: async () => {
-      console.log('🔍 Fetching Knowledge Items for upload dialog...');
       let q = supabase
         .from('knowledge_items')
         .select('id, name, is_published')
@@ -62,11 +61,9 @@ const { data: knowledgeItems = [] } = useQuery({
 
       const { data, error } = await q;
       if (error) {
-        console.error('❌ Error fetching Knowledge Items:', error);
         throw error;
       }
-      
-      console.log(`✅ Fetched ${data?.length || 0} Knowledge Items for dropdown`);
+
       return data || [];
     },
   });
@@ -129,7 +126,6 @@ const handleSubmit = async (event: React.FormEvent) => {
 
     // Check for existing template with same title BEFORE uploading
     if (existingTemplate) {
-      console.log('⚠️ Version conflict detected:', existingTemplate);
       setCustomVersion(suggestedVersion || '1.1');
       setVersionConflictOpen(true);
       return;
@@ -143,9 +139,6 @@ const handleSubmit = async (event: React.FormEvent) => {
     setUploading(true);
 
     try {
-      console.log('🚀 Starting PDF template upload process...');
-      console.log('📋 Upload parameters:', { version, replaceExisting, title: formData.title });
-      
       let publicUrl: string;
       let uploadedPath: string;
       
@@ -153,15 +146,12 @@ const handleSubmit = async (event: React.FormEvent) => {
         // Use already uploaded file
         publicUrl = pendingUpload.publicUrl;
         uploadedPath = pendingUpload.uploadedUrl;
-        console.log('📁 Using pre-uploaded file:', uploadedPath);
       } else {
         // Upload new file
         const fileExt = file!.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `templates/${fileName}`;
 
-        console.log(`📁 Uploading file to: ${filePath}`);
-        
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('pdf-templates')
           .upload(filePath, file!, {
@@ -170,7 +160,6 @@ const handleSubmit = async (event: React.FormEvent) => {
           });
 
         if (uploadError) {
-          console.error('❌ File upload error:', uploadError);
           throw new Error(`Failed to upload file: ${uploadError.message}`);
         }
 
@@ -182,9 +171,7 @@ const handleSubmit = async (event: React.FormEvent) => {
         uploadedPath = uploadData.path;
       }
 
-      console.log('✅ File ready:', publicUrl);
-
-      // Validate and prepare template data  
+      // Validate and prepare template data
       const templateData = {
         title: formData.title.trim(),
         description: formData.description?.trim() || null,
@@ -200,19 +187,10 @@ const handleSubmit = async (event: React.FormEvent) => {
         existingId: replaceExisting ? existingTemplate?.id : undefined,
       };
 
-      console.log('📝 Creating template record with data:', {
-        ...templateData,
-        pdf_file_size: `${templateData.pdf_file_size} bytes`,
-        tags_count: templateData.tags.length
-      });
-
       const template = await createTemplate.mutateAsync(templateData);
-      console.log('✅ Template created successfully:', template);
       
       // Associate with knowledge item (only for new templates)
       if (!replaceExisting && formData.knowledgeItemId) {
-        console.log(`🔗 Associating template ${template.id} with knowledge item ${formData.knowledgeItemId}`);
-        
         try {
           await associateTemplate.mutateAsync({
             knowledgeItemId: formData.knowledgeItemId,
@@ -220,9 +198,7 @@ const handleSubmit = async (event: React.FormEvent) => {
             displayOrder: 0
           });
           
-          console.log('✅ Template associated with knowledge item successfully');
-        } catch (associationError) {
-          console.warn('⚠️ Failed to associate template with knowledge item:', associationError);
+        } catch {
           // Don't fail the entire upload for association errors
         }
       }
@@ -230,15 +206,12 @@ const handleSubmit = async (event: React.FormEvent) => {
       completeUpload();
 
     } catch (error) {
-      console.error('❌ Upload process error:', error);
-      
       // Clean up uploaded file if template creation failed
       if (pendingUpload) {
-        console.log('🗑️ Cleaning up uploaded file due to error...');
         supabase.storage
           .from('pdf-templates')
           .remove([pendingUpload.uploadedUrl])
-          .catch(console.error);
+          .catch(() => {});
       }
       
       // Show user-friendly error message
@@ -251,7 +224,6 @@ const handleSubmit = async (event: React.FormEvent) => {
 
   const completeUpload = () => {
     toast.success("PDF template uploaded successfully!");
-    console.log('🎉 Upload process completed successfully');
     
     // Reset form
     setFile(null);
@@ -291,9 +263,9 @@ const handleSubmit = async (event: React.FormEvent) => {
       supabase.storage
         .from('pdf-templates')
         .remove([pendingUpload.uploadedUrl])
-        .catch(console.error);
+        .catch(() => {});
     }
-    
+
     setPendingUpload(null);
     setVersionConflictOpen(false);
     setUploading(false);
@@ -388,7 +360,6 @@ const handleSubmit = async (event: React.FormEvent) => {
                           ?.filter((item) => 
                             item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
                           );
-                        console.log(`📋 Displaying ${filteredItems?.length || 0} filtered Knowledge Items in dropdown`);
                         return filteredItems?.map((item) => (
                           <CommandItem
                             key={item.id}
