@@ -89,7 +89,7 @@ const Contact: React.FC = () => {
       <Navigation />
 
       {/* ─── HERO ─── */}
-      <div className="aa-section-pad" style={{ background: p.paleTeal, textAlign: 'center' }}>
+      <div id="main-content" className="aa-section-pad" style={{ background: p.paleTeal, textAlign: 'center' }}>
         <h1 style={{ color: p.deepTeal, fontWeight: 800, fontSize: isMobile ? 34 : 44, lineHeight: 1.15, margin: '0 0 16px' }}>Get in Touch</h1>
         <p style={{ color: p.body, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
           Whether you have a question about our courses, want to discuss coaching, or just want to say hello — we'd love to hear from you.

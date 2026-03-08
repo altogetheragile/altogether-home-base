@@ -227,7 +227,7 @@ const Coaching: React.FC = () => {
       <Navigation />
 
       {/* ─── HERO ─── */}
-      <div style={{ background: '#006666', padding: isMobile ? '48px 20px 40px' : '72px 48px 60px' }}>
+      <div id="main-content" style={{ background: '#006666', padding: isMobile ? '48px 20px 40px' : '72px 48px 60px' }}>
         <div style={{ maxWidth: 680 }}>
           <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>Coaching</div>
           <h1 style={{ color: '#fff', fontSize: isMobile ? 34 : 50, fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>

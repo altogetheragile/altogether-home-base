@@ -146,7 +146,7 @@ const Home: React.FC = () => {
       <Navigation />
 
       {/* ─── HERO ─── */}
-      <div style={{ position: 'relative', minHeight: 560, overflow: 'visible', border: 'none', boxShadow: 'none' }}>
+      <div id="main-content" style={{ position: 'relative', minHeight: 560, overflow: 'visible', border: 'none', boxShadow: 'none' }}>
         {/* Background image layer — extends through stats band */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: -80, backgroundImage: "url('/images/hero-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center 30%', backgroundRepeat: 'no-repeat', zIndex: 0 }} />
         {/* Hero content */}

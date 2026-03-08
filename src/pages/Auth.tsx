@@ -341,7 +341,7 @@ useEffect(() => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
       
-      <div className="flex-1 flex items-center justify-center py-12">
+      <div id="main-content" className="flex-1 flex items-center justify-center py-12">
         <div className="w-full max-w-md">
           <Tabs defaultValue="signin" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">

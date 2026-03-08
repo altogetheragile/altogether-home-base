@@ -133,7 +133,7 @@ const About: React.FC = () => {
       <Navigation />
 
       {/* ─── HERO ─── */}
-      <div style={{ background: '#006666', padding: isMobile ? '48px 20px 40px' : '72px 48px 60px' }}>
+      <div id="main-content" style={{ background: '#006666', padding: isMobile ? '48px 20px 40px' : '72px 48px 60px' }}>
         <div className="aa-two-col" style={{ alignItems: 'center' }}>
           <div>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>About</div>

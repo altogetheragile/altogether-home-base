@@ -49,7 +49,7 @@ const Blog = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
-        <div className="flex-1 flex items-center justify-center">
+        <div id="main-content" className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md px-4">
             <h1 style={{ color: p.deepTeal, fontSize: 24, fontWeight: 800 }}>Feature Unavailable</h1>
             <p style={{ color: p.muted, marginTop: 8 }}>This feature is currently disabled.</p>
@@ -70,7 +70,7 @@ const Blog = () => {
       <Navigation />
 
       {/* Hero header */}
-      <div style={{ background: `linear-gradient(135deg, ${p.deepTeal} 0%, #006666 100%)`, padding: '48px 24px' }}>
+      <div id="main-content" style={{ background: `linear-gradient(135deg, ${p.deepTeal} 0%, #006666 100%)`, padding: '48px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
           <h1 style={{ color: p.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
             Agile Insights &amp; Resources

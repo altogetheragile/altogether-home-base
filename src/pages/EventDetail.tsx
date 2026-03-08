@@ -59,7 +59,7 @@ const EventDetail = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
-        <div className="flex-1"><EventDetailSkeleton /></div>
+        <div id="main-content" className="flex-1"><EventDetailSkeleton /></div>
         <Footer />
       </div>
     );
@@ -69,7 +69,7 @@ const EventDetail = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
-        <EventDetailError />
+        <div id="main-content"><EventDetailError /></div>
         <Footer />
       </div>
     );
@@ -169,7 +169,7 @@ const EventDetail = () => {
       <Navigation />
 
       {/* Hero */}
-      <div style={{ background: p.deepTeal, padding: "48px 0 40px" }}>
+      <div id="main-content" style={{ background: p.deepTeal, padding: "48px 0 40px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px" }}>
           <Link to="/events" style={{
             color: p.lightTeal,

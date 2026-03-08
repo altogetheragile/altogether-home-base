@@ -167,7 +167,7 @@ const Knowledge: React.FC = () => {
       <Navigation />
 
       {/* ─── PAGE INTRO ─── */}
-      <div style={{ background: '#006666', padding: isMobile ? '40px 20px 0' : '64px 48px 0' }}>
+      <div id="main-content" style={{ background: '#006666', padding: isMobile ? '40px 20px 0' : '64px 48px 0' }}>
         <div className="aa-page-intro" style={{ paddingBottom: isMobile ? 32 : 48, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>Knowledge Base</div>
