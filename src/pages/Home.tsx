@@ -113,7 +113,7 @@ const Icons = {
 const Home: React.FC = () => {
   const isMobile = useIsMobile();
   const { settings } = useSiteSettings();
-  const { data: courseCards } = useCourseCards();
+  const { data: courseCards, isLoading: coursesLoading, error: coursesError } = useCourseCards();
   const [carouselIndex, setCarouselIndex] = React.useState(0);
 
   const courses = courseCards || [];
@@ -220,6 +220,30 @@ const Home: React.FC = () => {
         </div>
 
         {/* Course carousel */}
+        {coursesLoading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }} className="aa-three-col">
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{
+                background: p.white, borderRadius: 14, padding: 24, minHeight: 220,
+                boxShadow: '0 2px 12px rgba(0,77,77,0.07)',
+              }}>
+                <div style={{ background: p.paleTeal, borderRadius: 20, width: 60, height: 16, marginBottom: 14 }} />
+                <div style={{ background: p.paleTeal, borderRadius: 8, width: '80%', height: 20, marginBottom: 14 }} />
+                <div style={{ background: p.skyTeal, borderRadius: 6, width: '100%', height: 14, marginBottom: 8 }} />
+                <div style={{ background: p.skyTeal, borderRadius: 6, width: '70%', height: 14 }} />
+              </div>
+            ))}
+          </div>
+        ) : coursesError ? (
+          <div style={{ textAlign: 'center', padding: '48px 24px', background: p.white, borderRadius: 14 }}>
+            <p style={{ color: p.deepTeal, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
+              Unable to load courses
+            </p>
+            <p style={{ color: p.muted, fontSize: 14 }}>
+              Please try refreshing the page.
+            </p>
+          </div>
+        ) : (
         <div style={{ position: 'relative' }}>
           {canPrev && (
             <button
@@ -323,6 +347,7 @@ const Home: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
 
         {/* View all CTA */}
         <div style={{ textAlign: 'center', marginTop: 32 }}>
