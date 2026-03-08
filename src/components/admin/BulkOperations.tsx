@@ -7,9 +7,10 @@ import ImportManager from './import/ImportManager';
 
 interface BulkOperationsProps {
   selectedItems: string[];
-  allItems: any[];
+  allItems: { id: string }[];
   onSelectAll: (checked: boolean) => void;
   type: 'events' | 'instructors' | 'locations' | 'templates';
+  onBulkDelete?: (ids: string[]) => void;
   showImportManager?: boolean;
   onToggleImportManager?: () => void;
 }
@@ -19,6 +20,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
   allItems,
   onSelectAll,
   type,
+  onBulkDelete,
   showImportManager = false,
   onToggleImportManager
 }) => {
@@ -45,8 +47,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
   };
 
   const handleBulkDelete = () => {
-    // In real app, this would call mutation
-    // TODO: call mutation to delete items
+    onBulkDelete?.(selectedItems);
   };
 
   if (showImportManager) {
@@ -81,14 +82,16 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDelete}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
+          {onBulkDelete && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          )}
         </div>
       )}
 
