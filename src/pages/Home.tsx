@@ -347,17 +347,13 @@ const Home: React.FC = () => {
                     </div>
                   )}
 
-                  {course.hasDatesAvailable ? (
+                  {course.hasDatesAvailable && (
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: 5,
                       background: '#007A7A', color: '#fff', fontSize: 11, fontWeight: 700,
                       padding: '4px 12px', borderRadius: 20, alignSelf: 'flex-start',
                     }}>
                       <Icons.Calendar /> Dates available
-                    </span>
-                  ) : (
-                    <span style={{ color: '#6B7280', fontSize: 12, fontStyle: 'italic' }}>
-                      No dates scheduled
                     </span>
                   )}
 
