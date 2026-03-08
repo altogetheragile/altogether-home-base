@@ -236,7 +236,7 @@ const CourseCard = ({ course, index }: { course: CourseItem; index: number }) =>
           </div>
         ) : (
           <div style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
-            Enquire to schedule
+            Dates TBC
           </div>
         )}
       </div>
@@ -252,7 +252,7 @@ const CourseCard = ({ course, index }: { course: CourseItem; index: number }) =>
         </div>
 
         {/* title */}
-        <div style={{ color: p.deepTeal, fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>{course.title}</div>
+        <Link to={hasDate ? `/events/${firstDate!.eventId}` : `/courses/${course.id}`} style={{ color: p.deepTeal, fontSize: 18, fontWeight: 800, lineHeight: 1.2, textDecoration: 'none', display: 'block' }}>{course.title}</Link>
 
         {/* description */}
         <div style={{ color: p.muted, fontSize: 13, lineHeight: 1.65 }}>{course.description}</div>
@@ -269,9 +269,11 @@ const CourseCard = ({ course, index }: { course: CourseItem; index: number }) =>
         </div>
 
         {/* for who */}
-        <div style={{ background: col.light, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: p.body, lineHeight: 1.5 }}>
-          <span style={{ fontWeight: 700, color: col.pill }}>For: </span>{course.forWho}
-        </div>
+        {course.forWho && (
+          <div style={{ background: col.light, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: p.body, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700, color: col.pill }}>For: </span>{course.forWho}
+          </div>
+        )}
 
         {/* learning objectives - expandable */}
         {course.objectives.length > 0 && (
@@ -297,29 +299,18 @@ const CourseCard = ({ course, index }: { course: CourseItem; index: number }) =>
 
         {/* divider + CTAs */}
         <div style={{ borderTop: `1px solid ${p.paleTeal}`, paddingTop: 14, marginTop: 4, display: 'flex', gap: 10, alignItems: 'center' }}>
-          {hasDate ? (
-            <>
-              <Link
-                to={`/events/${firstDate!.eventId}`}
-                style={{ background: p.orange, color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer', flex: 1, textDecoration: 'none', textAlign: 'center' }}
-              >
-                Enrol — {firstDate!.date}
-              </Link>
-              <Link
-                to="/contact"
-                style={{ background: 'none', border: `1px solid ${p.paleTeal}`, padding: '9px 14px', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer', color: p.deepTeal, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
-              >
-                <Icons.Chat />Enquire
-              </Link>
-            </>
-          ) : (
-            <Link
-              to="/contact"
-              style={{ background: p.deepTeal, color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}
-            >
-              <Icons.Chat />Enquire to schedule
-            </Link>
-          )}
+          <Link
+            to={hasDate ? `/events/${firstDate!.eventId}` : `/courses/${course.id}`}
+            style={{ background: p.deepTeal, color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer', flex: 1, textDecoration: 'none', textAlign: 'center' }}
+          >
+            View details
+          </Link>
+          <Link
+            to="/contact"
+            style={{ background: 'none', border: `1px solid ${p.paleTeal}`, padding: '9px 14px', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer', color: p.deepTeal, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+          >
+            <Icons.Chat />Enquire
+          </Link>
         </div>
       </div>
     </div>

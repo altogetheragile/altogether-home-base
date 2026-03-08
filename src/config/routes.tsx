@@ -57,6 +57,7 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminEvents = lazy(() => import('@/pages/admin/AdminEvents'));
 const CreateEvent = lazy(() => import('@/pages/admin/CreateEvent'));
 const EditEvent = lazy(() => import('@/pages/admin/EditEvent'));
+const AdminCourses = lazy(() => import('@/pages/admin/AdminCourses'));
 const AdminEventBlueprints = lazy(() => import('@/pages/admin/AdminEventBlueprints'));
 const AdminEventTypes = lazy(() => import('@/pages/admin/AdminEventTypes'));
 const AdminEventCategories = lazy(() => import('@/pages/admin/AdminEventCategories'));
@@ -121,6 +122,15 @@ export const PublicRoutes = () => {
   return (
     <>
       <Route path="/events/:id" element={
+        <SiteSettingsRouteGuard feature="events">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <EventDetail />
+            </Suspense>
+          </ErrorBoundary>
+        </SiteSettingsRouteGuard>
+      } />
+      <Route path="/courses/:id" element={
         <SiteSettingsRouteGuard feature="events">
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
@@ -332,6 +342,11 @@ export const AdminRoutes = () => {
         <Route path="events/:id/edit" element={
           <Suspense fallback={<LoadingFallback />}>
             <EditEvent />
+          </Suspense>
+        } />
+        <Route path="courses" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminCourses />
           </Suspense>
         } />
         <Route path="event-blueprints" element={

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Calendar, Users, MapPin, Clock, Star } from 'lucide-react';
+import LegacyBanner from '@/components/admin/courses/LegacyBanner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -187,6 +188,7 @@ const AdminEventBlueprints: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <LegacyBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Event Blueprints</h1>

@@ -136,22 +136,14 @@ const EventCard = ({ event }: EventCardProps) => {
               View Details
             </Button>
           </Link>
-          {user ? (
-            <Button 
-              className="w-full font-medium hover:shadow-md transition-shadow"
-              onClick={() => registerForEvent(event.id)}
-              disabled={registrationLoading}
-              style={{ backgroundColor: templateBrandColor }}
-            >
-              {registrationLoading ? "Processing..." : "Register Now"}
-            </Button>
-          ) : (
-            <Link to="/auth" className="block">
-              <Button variant="secondary" className="w-full font-medium">
-                Sign In to Register
-              </Button>
-            </Link>
-          )}
+          <Button
+            className="w-full font-medium hover:shadow-md transition-shadow"
+            onClick={() => registerForEvent(event.id)}
+            disabled={registrationLoading}
+            style={{ backgroundColor: templateBrandColor }}
+          >
+            {registrationLoading ? "Processing..." : "Register Now"}
+          </Button>
         </div>
       </CardContent>
     </Card>

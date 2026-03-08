@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useMatch } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import LegacyBanner from '@/components/admin/courses/LegacyBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -125,6 +126,7 @@ const AdminEvents = () => {
 
   return (
     <div className="space-y-6">
+      <LegacyBanner />
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Events</h1>
         <Link to="/admin/events/new">

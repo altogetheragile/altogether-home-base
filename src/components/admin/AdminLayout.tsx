@@ -27,6 +27,12 @@ const AdminLayout = () => {
   // Define tab structure
   const eventsItems = [
     {
+      label: 'Courses',
+      href: '/admin/courses',
+      icon: BookOpen,
+      description: 'Manage courses and scheduled dates'
+    },
+    {
       label: 'Events',
       href: '/admin/events',
       icon: Calendar,
@@ -157,7 +163,7 @@ const AdminLayout = () => {
       id: 'events',
       label: 'Events',
       icon: Calendar,
-      paths: ['/admin/events', '/admin/event-blueprints', '/admin/instructors', '/admin/locations', '/admin/event-categories', '/admin/event-types', '/admin/levels', '/admin/formats'],
+      paths: ['/admin/events', '/admin/courses', '/admin/event-blueprints', '/admin/instructors', '/admin/locations', '/admin/event-categories', '/admin/event-types', '/admin/levels', '/admin/formats'],
       href: '/admin/events',
       items: eventsItems
     },
