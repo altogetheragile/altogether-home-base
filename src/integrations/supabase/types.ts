@@ -1085,11 +1085,13 @@ export type Database = {
           hero_image_url: string | null
           icon_name: string | null
           id: string
+          is_published: boolean
           key_benefits: string[] | null
           learning_outcomes: string[] | null
           level_id: string | null
           popularity_score: number | null
           prerequisites: string[] | null
+          short_description: string | null
           target_audience: string | null
           template_tags: string[] | null
           title: string
@@ -1111,11 +1113,13 @@ export type Database = {
           hero_image_url?: string | null
           icon_name?: string | null
           id?: string
+          is_published?: boolean
           key_benefits?: string[] | null
           learning_outcomes?: string[] | null
           level_id?: string | null
           popularity_score?: number | null
           prerequisites?: string[] | null
+          short_description?: string | null
           target_audience?: string | null
           template_tags?: string[] | null
           title: string
@@ -1137,11 +1141,13 @@ export type Database = {
           hero_image_url?: string | null
           icon_name?: string | null
           id?: string
+          is_published?: boolean
           key_benefits?: string[] | null
           learning_outcomes?: string[] | null
           level_id?: string | null
           popularity_score?: number | null
           prerequisites?: string[] | null
+          short_description?: string | null
           target_audience?: string | null
           template_tags?: string[] | null
           title?: string
