@@ -87,7 +87,7 @@ export default function AdminUsers() {
       user.email || '',
       user.username || '',
       user.role || 'user',
-      format(new Date(user.created_at), 'yyyy-MM-dd'),
+      user.created_at ? format(new Date(user.created_at), 'yyyy-MM-dd') : '',
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -193,7 +193,7 @@ export default function AdminUsers() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {format(new Date(user.created_at), 'MMM d, yyyy')}
+                      {user.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : '-'}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

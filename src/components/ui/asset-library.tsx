@@ -3,13 +3,13 @@ import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardHeader } from './card';
 import { Badge } from './badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Trash2, Image, Video, FileText, ExternalLink, File, Archive, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useMediaAssets, useMediaAssetMutations, MediaAsset, MediaAssetInsert } from '@/hooks/useMediaAssets';
+import { useMediaAssets, useMediaAssetMutations, MediaAssetInsert } from '@/hooks/useMediaAssets';
 
 interface AssetLibraryProps {
   selectedAssetIds: string[];
@@ -28,7 +28,7 @@ export const AssetLibrary: React.FC<AssetLibraryProps> = ({
   supportedTypes = ['image', 'video', 'document', 'embed', 'template'],
   maxFileSize = 50
 }) => {
-  const [newAssetType, setNewAssetType] = useState<'image' | 'video' | 'document' | 'embed' | 'template'>('image');
+  const [_newAssetType, _setNewAssetType] = useState<'image' | 'video' | 'document' | 'embed' | 'template'>('image');
   const [uploadFormData, setUploadFormData] = useState<Partial<MediaAssetInsert>>({
     type: 'image',
     title: '',

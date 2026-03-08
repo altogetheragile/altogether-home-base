@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { hexPoints, wrapLines, ensureOpaqueFill, getLightTint } from '../hex-utils';
+import { hexPoints, wrapLines, ensureOpaqueFill } from '../hex-utils';
 import { HexiFloatingToolbar } from './HexiFloatingToolbar';
 import { ArtifactLinkDialog } from './ArtifactLinkDialog';
 import { ArtifactLinkEditorDialog } from './ArtifactLinkEditorDialog';
@@ -153,7 +153,7 @@ const getDefaultColor = (linkType: string): string => {
 };
 
 export const ArtifactLinkHexiElement: React.FC<ArtifactLinkHexiElementProps> = ({
-  id,
+  id: _id,
   position,
   size,
   data,

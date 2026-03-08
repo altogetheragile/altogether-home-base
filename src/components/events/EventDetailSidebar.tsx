@@ -5,7 +5,7 @@ import { formatPrice } from "@/utils/currency";
 import { EventData } from "@/hooks/useEvents";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEventRegistration } from "@/hooks/useEventRegistration";
-import { useUserRegistrations } from "@/hooks/useUserRegistrations";
+import { useUserRegistrations, UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
 import { useEventUnregistration } from "@/hooks/useEventUnregistration";
 
 const p = {
@@ -62,7 +62,7 @@ const EventDetailSidebar = ({ event }: EventDetailSidebarProps) => {
   const { unregisterFromEvent, loading: unregisterLoading } = useEventUnregistration();
   const [interestRegistered, setInterestRegistered] = useState(false);
 
-  const existingRegistration = registrations?.find(reg => reg.event_id === event.id);
+  const existingRegistration = (registrations as UserRegistrationWithEvent[] | undefined)?.find((reg: UserRegistrationWithEvent) => reg.event_id === event.id);
   const isRegistered = !!existingRegistration;
   const isUpcoming = event.start_date ? new Date(event.start_date) > new Date() : false;
   const isScheduled = !!event.start_date;
@@ -77,7 +77,6 @@ const EventDetailSidebar = ({ event }: EventDetailSidebarProps) => {
   const durationLabel = durationDays
     ? durationDays === 1 ? "1 Day" : `${durationDays} Days`
     : null;
-  const levelName = event.level?.name || event.event_template?.levels?.name;
   const formatName = event.format?.name || event.event_template?.formats?.name;
   const instructorName = event.instructor?.name;
   const templateTags = event.event_template?.template_tags;

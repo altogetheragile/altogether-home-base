@@ -47,7 +47,7 @@ export const useCreateKnowledgeTag = () => {
         description: "Tag created successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create tag",
@@ -80,7 +80,7 @@ export const useUpdateKnowledgeTag = () => {
         description: "Tag updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update tag",
@@ -110,7 +110,7 @@ export const useDeleteKnowledgeTag = () => {
         description: "Tag deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete tag",

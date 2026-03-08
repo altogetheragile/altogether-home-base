@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -100,7 +99,7 @@ const Footer = () => {
                     return (
                       <a
                         key={index}
-                        href={link.url}
+                        href={link.url ?? undefined}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-primary transition-colors"

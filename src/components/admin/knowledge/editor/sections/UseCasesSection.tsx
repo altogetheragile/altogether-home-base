@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { KnowledgeItemUseCases } from "../KnowledgeItemUseCases";
 import { UseCaseForm } from "../UseCaseForm";
 import { useFormContext } from "react-hook-form";
@@ -16,7 +16,7 @@ export const UseCasesSection = () => {
   const handleSaveItem = async () => {
     // Trigger form submission to save current progress
     return new Promise<void>((resolve) => {
-      form.handleSubmit((data) => {
+      form.handleSubmit((_data) => {
 
         resolve();
       })();

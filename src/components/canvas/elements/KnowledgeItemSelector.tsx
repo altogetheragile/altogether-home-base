@@ -71,19 +71,19 @@ export const KnowledgeItemSelector: React.FC<KnowledgeItemSelectorProps> = ({
 
   const categories = useMemo(() => {
     if (!items) return [];
-    const unique = new Set(items.map(item => item.knowledge_categories?.name).filter(Boolean));
+    const unique = new Set(items.map(item => item.knowledge_categories?.name).filter((n): n is string => Boolean(n)));
     return Array.from(unique);
   }, [items]);
 
   const domains = useMemo(() => {
     if (!items) return [];
-    const unique = new Set(items.map(item => item.activity_domains?.name).filter(Boolean));
+    const unique = new Set(items.map(item => item.activity_domains?.name).filter((n): n is string => Boolean(n)));
     return Array.from(unique);
   }, [items]);
 
   const focuses = useMemo(() => {
     if (!items) return [];
-    const unique = new Set(items.map(item => item.planning_focuses?.name).filter(Boolean));
+    const unique = new Set(items.map(item => item.planning_focuses?.name).filter((n): n is string => Boolean(n)));
     return Array.from(unique);
   }, [items]);
 

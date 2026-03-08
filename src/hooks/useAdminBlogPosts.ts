@@ -37,7 +37,7 @@ export const useAdminBlogPosts = () => {
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as BlogPost[];
     },
   });
 };
@@ -65,7 +65,7 @@ export const useAdminBlogPost = (id: string) => {
         throw error;
       }
 
-      return data;
+      return data as unknown as BlogPost;
     },
     enabled: !!id,
   });

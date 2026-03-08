@@ -18,7 +18,7 @@ interface EventCardProps {
 
 const EventCard = ({ event }: EventCardProps) => {
   const { registerForEvent, loading: registrationLoading } = useEventRegistration();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
 
   // Template branding data
   const templateBrandColor = event.event_template?.brand_color || '#3B82F6';
@@ -71,9 +71,9 @@ const EventCard = ({ event }: EventCardProps) => {
         {/* Template badge */}
         {event.event_template && (
           <div className="pt-2">
-            <TemplateBadge 
-              template={event.event_template} 
-              variant="outline" 
+            <TemplateBadge
+              template={{...event.event_template, duration_days: event.event_template.duration_days ?? 0}}
+              variant="outline"
               className="text-xs"
             />
           </div>

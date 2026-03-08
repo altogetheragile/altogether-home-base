@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
 import { ButtonRenderer } from './ButtonRenderer';
-import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
-import { useDynamicFontSize, getTitleSpacing } from '../../../hooks/useDynamicFontSize';
+import { SafeText, isNonEmptyString } from '@/lib/safe';
+import { useDynamicFontSize } from '../../../hooks/useDynamicFontSize';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
 interface TextBlockProps {
@@ -13,7 +13,7 @@ export const TextBlock: React.FC<TextBlockProps> = React.memo(({ block }) => {
   // Ensure block.content exists with safe defaults - normalize to prevent object-in-JSX issues
   const content = (block.content && typeof block.content === 'object') ? block.content : {};
   const styles = useMemo(() => (content.styles && typeof content.styles === 'object') ? content.styles : {}, [content.styles]);
-  const { titleSize, contentSize, titleStyle, contentStyle } = useDynamicFontSize(styles);
+  const { titleSize, contentSize } = useDynamicFontSize(styles);
   const inlineStyles = getInlineStyles(styles);
   const styleClasses = getStyleClasses(styles);
   const textBackgroundStyles = getBackgroundStyles(content);

@@ -52,7 +52,7 @@ export const useCreateDecisionLevel = () => {
         description: "Decision level created successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create decision level",
@@ -85,7 +85,7 @@ export const useUpdateDecisionLevel = () => {
         description: "Decision level updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update decision level",
@@ -115,7 +115,7 @@ export const useDeleteDecisionLevel = () => {
         description: "Decision level deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete decision level",

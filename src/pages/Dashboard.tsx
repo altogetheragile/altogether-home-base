@@ -6,19 +6,16 @@ import RegistrationsList from "@/components/dashboard/RegistrationsList";
 import { ProjectsList } from "@/components/dashboard/ProjectsList";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import RecentActivityList from "@/components/dashboard/RecentActivityList";
-import { useUserRegistrations } from "@/hooks/useUserRegistrations";
+import { useUserRegistrations, UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
 import { Calendar, FolderKanban, Activity, BarChart3 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { data: registrations = [], isLoading: registrationsLoading, isError: registrationsError, refetch: refetchRegistrations } = useUserRegistrations();
+  const { data: registrationsData, isLoading: registrationsLoading, isError: registrationsError, refetch: refetchRegistrations } = useUserRegistrations();
+  const registrations: UserRegistrationWithEvent[] = registrationsData ?? [];
   const [searchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'overview';
-
-  const upcomingRegistrations = registrations.filter(
-    (reg) => reg.event && new Date(reg.event.start_date) > new Date()
-  );
 
   return (
     <div className="min-h-screen bg-background">

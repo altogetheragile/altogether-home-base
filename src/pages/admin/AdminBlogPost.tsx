@@ -108,9 +108,9 @@ const AdminBlogPost = () => {
   const handleSave = async (publish: boolean) => {
     const payload = {
       ...formData,
-      category_id: formData.category_id || null,
+      category_id: formData.category_id || undefined,
       is_published: publish,
-      published_at: publish ? new Date().toISOString() : null,
+      published_at: publish ? new Date().toISOString() : undefined,
     };
 
     if (isEdit) {

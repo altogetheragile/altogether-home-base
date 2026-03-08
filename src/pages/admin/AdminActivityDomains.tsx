@@ -185,9 +185,9 @@ const AdminActivityDomains = () => {
                   <div className="flex items-center space-x-2">
                     <div 
                       className="w-4 h-4 rounded-full border" 
-                      style={{ backgroundColor: domain.color }}
+                      style={{ backgroundColor: domain.color ?? undefined }}
                     />
-                    <Badge style={{ backgroundColor: domain.color + '20', color: domain.color }}>
+                    <Badge style={{ backgroundColor: (domain.color ?? '') + '20', color: domain.color ?? undefined }}>
                       {domain.color}
                     </Badge>
                   </div>

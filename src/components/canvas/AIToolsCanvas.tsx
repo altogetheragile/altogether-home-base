@@ -71,7 +71,7 @@ const COMPACT_CARD_SIZE = { width: 240, height: 100 };
 
 const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   projectId,
-  projectName,
+  projectName: _projectName,
   initialData,
   artifactId,
   onSave,
@@ -825,7 +825,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     }
   }, [selectedElementIds, elements]);
 
-  const handleGroupMove = useCallback((draggedId: string, delta: { dx: number; dy: number }) => {
+  const handleGroupMove = useCallback((_draggedId: string, delta: { dx: number; dy: number }) => {
     setIsDraggingGroup(false);
     setGroupDragDelta({ dx: 0, dy: 0 });
     

@@ -5,9 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface BasicRegistration {
   id: string;
-  event_id: string;
-  registered_at: string;
-  payment_status: string;
+  event_id: string | null;
+  registered_at: string | null;
+  payment_status: string | null;
   stripe_session_id: string | null;
 }
 
@@ -16,8 +16,8 @@ export interface EventDetails {
   title: string;
   start_date: string;
   end_date: string | null;
-  price_cents: number;
-  currency: string;
+  price_cents: number | null;
+  currency: string | null;
   instructor_id: string | null;
 }
 
@@ -48,7 +48,7 @@ export const useUserRegistrations = () => {
       if (!registrations || registrations.length === 0) return [];
 
       // STEP 2: Fetch related events in one query
-      const eventIds = registrations.map(r => r.event_id).filter(Boolean);
+      const eventIds = registrations.map(r => r.event_id).filter((id): id is string => id !== null);
 
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
@@ -60,10 +60,18 @@ export const useUserRegistrations = () => {
       }
 
       // STEP 3: Join registrations with events
-      const eventMap = new Map(eventsData?.map(e => [e.id, e]) || []);
-      const enriched = registrations.map(reg => ({
-        ...reg,
-        event: eventMap.get(reg.event_id) || null,
+      const eventMap = new Map(eventsData?.map(e => [e.id, {
+        ...e,
+        price_cents: e.price_cents ?? 0,
+        currency: e.currency ?? 'usd',
+      } as EventDetails]) || []);
+      const enriched: UserRegistrationWithEvent[] = registrations.map(reg => ({
+        id: reg.id,
+        event_id: reg.event_id ?? '',
+        registered_at: reg.registered_at ?? '',
+        payment_status: reg.payment_status ?? '',
+        stripe_session_id: reg.stripe_session_id,
+        event: reg.event_id ? (eventMap.get(reg.event_id) ?? null) : null,
       }));
 
       return enriched;

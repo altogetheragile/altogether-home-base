@@ -32,7 +32,7 @@ export const VersionConflictDialog: React.FC<VersionConflictDialogProps> = ({
   open,
   onOpenChange,
   existingTemplate,
-  suggestedVersion,
+  suggestedVersion: _suggestedVersion,
   customVersion,
   onCustomVersionChange,
   onReplace,

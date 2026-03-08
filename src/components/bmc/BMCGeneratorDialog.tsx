@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, RotateCcw, Save, ExternalLink, FileText, Download, RefreshCw, Eye } from 'lucide-react';
+import { Loader2, Sparkles, RotateCcw, Save, ExternalLink, FileText, Download, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectMutations } from '@/hooks/useProjects';
@@ -41,7 +41,7 @@ interface BMCGeneratorDialogProps {
 const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
   isOpen: externalIsOpen,
   onClose: externalOnClose,
-  projectId,
+  projectId: _projectId,
   saveToCanvas = false,
   onBMCGenerated,
 }) => {

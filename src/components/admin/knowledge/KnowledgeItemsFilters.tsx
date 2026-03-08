@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { CalendarIcon, X, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -174,7 +173,7 @@ export const KnowledgeItemsFilters = ({
                   <div className="flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: category.color }}
+                      style={{ backgroundColor: category.color ?? undefined }}
                     />
                     {category.name}
                   </div>
@@ -242,7 +241,7 @@ export const KnowledgeItemsFilters = ({
                   <div className="flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: level.color }}
+                      style={{ backgroundColor: level.color ?? undefined }}
                     />
                     {level.name}
                   </div>
@@ -287,7 +286,7 @@ export const KnowledgeItemsFilters = ({
                   <div className="flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: domain.color }}
+                      style={{ backgroundColor: domain.color ?? undefined }}
                     />
                     {domain.name}
                   </div>

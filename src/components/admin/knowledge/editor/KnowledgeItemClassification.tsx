@@ -1,5 +1,4 @@
 import { FolderOpen, Layers, Target } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,7 +60,7 @@ export const KnowledgeItemClassification = ({
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: category.color }}
+                        style={{ backgroundColor: category.color ?? undefined }}
                       />
                       {category.name}
                     </div>
@@ -74,9 +73,9 @@ export const KnowledgeItemClassification = ({
               <div className="mt-2">
                 <Badge 
                   variant="secondary"
-                  style={{ 
-                    backgroundColor: `${selectedCategory.color}15`, 
-                    color: selectedCategory.color,
+                  style={{
+                    backgroundColor: `${selectedCategory.color}15`,
+                    color: selectedCategory.color ?? undefined,
                     borderColor: `${selectedCategory.color}30`
                   }}
                 >
@@ -119,7 +118,7 @@ export const KnowledgeItemClassification = ({
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: focus.color }}
+                        style={{ backgroundColor: focus.color ?? undefined }}
                       />
                       {focus.name}
                     </div>
@@ -133,8 +132,8 @@ export const KnowledgeItemClassification = ({
                 <Badge 
                   variant="outline"
                   style={{ 
-                    borderColor: selectedFocus.color, 
-                    color: selectedFocus.color
+                    borderColor: selectedFocus.color ?? undefined,
+                    color: selectedFocus.color ?? undefined
                   }}
                 >
                   {selectedFocus.name}
@@ -173,7 +172,7 @@ export const KnowledgeItemClassification = ({
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: domain.color }}
+                        style={{ backgroundColor: domain.color ?? undefined }}
                       />
                       {domain.name}
                     </div>
@@ -187,8 +186,8 @@ export const KnowledgeItemClassification = ({
                 <Badge 
                   variant="outline"
                   style={{ 
-                    borderColor: selectedDomain.color, 
-                    color: selectedDomain.color 
+                    borderColor: selectedDomain.color ?? undefined,
+                    color: selectedDomain.color ?? undefined
                   }}
                 >
                   {selectedDomain.name}
@@ -214,31 +213,31 @@ export const KnowledgeItemClassification = ({
             {selectedCategory && (
               <Badge 
                 variant="secondary"
-                style={{ 
-                  backgroundColor: `${selectedCategory.color}15`, 
-                  color: selectedCategory.color
+                style={{
+                  backgroundColor: `${selectedCategory.color}15`,
+                  color: selectedCategory.color ?? undefined
                 }}
               >
                 {selectedCategory.name}
               </Badge>
             )}
             {selectedFocus && (
-              <Badge 
+              <Badge
                 variant="outline"
-                style={{ 
-                  borderColor: selectedFocus.color, 
-                  color: selectedFocus.color 
+                style={{
+                  borderColor: selectedFocus.color ?? undefined,
+                  color: selectedFocus.color ?? undefined
                 }}
               >
                 {selectedFocus.name}
               </Badge>
             )}
             {selectedDomain && (
-              <Badge 
+              <Badge
                 variant="outline"
-                style={{ 
-                  borderColor: selectedDomain.color, 
-                  color: selectedDomain.color 
+                style={{
+                  borderColor: selectedDomain.color ?? undefined,
+                  color: selectedDomain.color ?? undefined
                 }}
               >
                 {selectedDomain.name}

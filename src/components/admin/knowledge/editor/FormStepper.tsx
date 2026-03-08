@@ -29,23 +29,12 @@ export const FormStepper: React.FC<FormStepperProps> = ({
   form,
   canNavigateToStep = () => true,
 }) => {
-  const { formState: { errors, touchedFields }, getValues } = form;
+  const { formState: { errors } } = form;
 
   // Check if a step has errors
   const hasStepErrors = (step: StepConfig): boolean => {
     if (!step.requiredFields) return false;
     return step.requiredFields.some(field => errors[field]);
-  };
-
-  // Check if a step is completed (all required fields filled)
-  const isStepCompleted = (step: StepConfig): boolean => {
-    if (!step.requiredFields) return true;
-    const values = getValues();
-    return step.requiredFields.every(field => {
-      const value = values[field];
-      if (typeof value === 'string') return value.trim() !== '';
-      return value !== undefined && value !== null;
-    });
   };
 
   const getStepStatus = (stepIndex: number): 'current' | 'completed' | 'error' | 'upcoming' => {

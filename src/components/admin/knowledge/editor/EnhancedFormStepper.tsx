@@ -32,7 +32,7 @@ export const EnhancedFormStepper: React.FC<EnhancedFormStepperProps> = ({
   canNavigateToStep = () => true,
   className
 }) => {
-  const { formState: { errors, touchedFields }, getValues, watch } = form;
+  const { formState: { errors }, watch } = form;
 
   // Watch all form values for real-time completion tracking
   const formValues = watch();
@@ -41,16 +41,6 @@ export const EnhancedFormStepper: React.FC<EnhancedFormStepperProps> = ({
   const hasStepErrors = (step: StepConfig): boolean => {
     if (!step.requiredFields) return false;
     return step.requiredFields.some(field => errors[field]);
-  };
-
-  // Check if a step is completed (all required fields filled)
-  const isStepCompleted = (step: StepConfig): boolean => {
-    if (!step.requiredFields) return true;
-    return step.requiredFields.every(field => {
-      const value = formValues[field];
-      if (typeof value === 'string') return value.trim() !== '';
-      return value !== undefined && value !== null;
-    });
   };
 
   // Calculate completion percentage for each step

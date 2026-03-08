@@ -1,9 +1,8 @@
-import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { UnifiedStoryData, UnifiedStoryMode, FIBONACCI_POINTS, PRIORITIES, StoryPriority } from '@/types/story';
+import { UnifiedStoryData, UnifiedStoryMode, FIBONACCI_POINTS, PRIORITIES } from '@/types/story';
 import { cn } from '@/lib/utils';
 
 interface EstimationTabProps {

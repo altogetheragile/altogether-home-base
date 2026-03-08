@@ -91,6 +91,7 @@ export const RelatedItemsEditor: React.FC<RelatedItemsEditorProps> = ({ knowledg
   // Add relationship mutation
   const addRelationship = useMutation({
     mutationFn: async ({ relatedItemId, type }: { relatedItemId: string; type: string }) => {
+      if (!knowledgeItemId) throw new Error('Knowledge item ID is required');
       const { error } = await supabase
         .from('knowledge_item_relationships')
         .insert({

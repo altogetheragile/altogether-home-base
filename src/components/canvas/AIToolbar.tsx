@@ -52,7 +52,7 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
   onZoomOut,
   onExport,
   zoom,
-  onStoryGenerated,
+  onStoryGenerated: _onStoryGenerated,
   onAddElement,
   onUndo,
   onRedo,

@@ -1,6 +1,5 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Trash2, Download, Upload } from 'lucide-react';
 import { exportToCSV } from '@/utils/exportUtils';

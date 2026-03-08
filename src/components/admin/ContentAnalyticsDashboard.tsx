@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { TrendingUp, Search, Eye, MessageSquare, Users } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Search, Eye, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +33,7 @@ export const ContentAnalyticsDashboard = () => {
       const totalViews = topViewed?.reduce((sum, t) => sum + (t.view_count || 0), 0) || 0;
       const totalSearches = searchStats?.length || 0;
       const avgRating = feedbackStats?.length 
-        ? feedbackStats.reduce((sum, f) => sum + (f.rating || 0), 0) / feedbackStats.length 
+        ? feedbackStats.reduce((sum: number, f: Record<string, unknown>) => sum + (Number(f.rating) || 0), 0) / feedbackStats.length
         : 0;
 
       // Popular searches

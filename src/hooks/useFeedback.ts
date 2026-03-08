@@ -42,7 +42,7 @@ export const useSubmitFeedback = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['technique-feedback'] });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to submit feedback. Please try again.",

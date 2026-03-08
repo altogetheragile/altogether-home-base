@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/useProjects';
 import { useCanvas, useCanvasMutations } from '@/hooks/useCanvas';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Download } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
 import { BMCData } from '@/components/canvas/templates/BMCCanvas';
 import { toast } from 'sonner';

@@ -43,7 +43,7 @@ const CreateEvent = () => {
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         <EventFormFields
           formData={formData}
-          selectedTemplate={selectedTemplate}
+          selectedTemplate={selectedTemplate ?? null}
           instructors={instructors || []}
           locations={locations || []}
           handleInputChange={handleInputChange}

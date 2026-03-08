@@ -2,7 +2,7 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Calendar, User, Link, Star, ExternalLink } from 'lucide-react';
+import { Eye, Star } from 'lucide-react';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 import { cn } from '@/lib/utils';
 

@@ -79,7 +79,7 @@ export const useCreatePublication = () => {
         description: "Publication created successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create publication",
@@ -112,7 +112,7 @@ export const useUpdatePublication = () => {
         description: "Publication updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update publication",
@@ -142,7 +142,7 @@ export const useDeletePublication = () => {
         description: "Publication deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete publication",

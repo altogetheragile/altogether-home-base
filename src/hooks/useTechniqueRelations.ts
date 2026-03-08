@@ -2,15 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface TechniqueRelation {
-  id: string;
-  source_technique_id: string;
-  related_technique_id: string;
-  relation_type: string;
-  strength: number;
-  created_at: string;
-}
-
 interface CreateRelationData {
   source_technique_id: string;
   related_technique_id: string;
@@ -67,7 +58,7 @@ export const useCreateTechniqueRelation = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['technique-relations'] });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create technique relation. Please try again.",
@@ -97,7 +88,7 @@ export const useDeleteTechniqueRelation = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['technique-relations'] });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete technique relation. Please try again.",

@@ -19,8 +19,8 @@ export default function ArtifactViewer() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get('from');
-  const { data: artifact, isLoading: isLoadingArtifact } = useProjectArtifact(artifactId);
-  const { data: project, isLoading: isLoadingProject } = useProject(projectId);
+  const { data: artifact, isLoading: isLoadingArtifact } = useProjectArtifact(artifactId || '');
+  const { data: project, isLoading: isLoadingProject } = useProject(projectId || '');
   const { data: liveBacklogItems } = useBacklogItems(projectId);
   const { updateArtifact } = useProjectArtifactMutations();
   const bmcRef = useRef<BusinessModelCanvasRef>(null);

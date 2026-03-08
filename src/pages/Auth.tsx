@@ -23,7 +23,7 @@ const Auth = () => {
 
   // MFA state
   const [mfaRequired, setMfaRequired] = useState(false);
-  const [mfaFactors, setMfaFactors] = useState<any[]>([]);
+  const [, setMfaFactors] = useState<unknown[]>([]);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");

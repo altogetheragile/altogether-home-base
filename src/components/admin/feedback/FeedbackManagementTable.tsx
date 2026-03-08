@@ -29,8 +29,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { CheckCircle, XCircle, Star, Trash2, Edit, ExternalLink } from "lucide-react";
-import { format } from "date-fns";
+import { CheckCircle, XCircle, Star, Trash2, ExternalLink } from "lucide-react";
 
 const FeedbackManagementTable = () => {
   const [approvalFilter, setApprovalFilter] = useState<string>("all");

@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Project, ProjectStats } from '@/hooks/useProjects';
-import { Navigate, useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
 import { useCanvas } from '@/hooks/useCanvas';
 
@@ -36,7 +36,7 @@ interface ProjectCardProps {
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   stats,
-  onOpen,
+  onOpen: _onOpen,
   onEdit,
   onArchive,
   onDelete,

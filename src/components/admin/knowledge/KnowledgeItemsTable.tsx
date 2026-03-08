@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Eye, EyeOff, Edit, Trash2, MoreHorizontal, 
-  Clock, Copy, Archive, Star, StarOff, Share, ExternalLink 
+  Eye, EyeOff, Edit, Trash2, MoreHorizontal,
+  Copy, Archive, Star, StarOff, Share, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -295,7 +295,7 @@ export const KnowledgeItemsTable = ({
     );
   }
 
-  const allSelected = items?.length > 0 && selectedItems.length === items.length;
+  const allSelected = (items?.length ?? 0) > 0 && selectedItems.length === (items?.length ?? 0);
 
   return (
     <div className="bg-card rounded border">

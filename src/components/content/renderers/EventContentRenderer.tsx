@@ -11,7 +11,6 @@ interface EventContentRendererProps {
 }
 
 export const EventContentRenderer: React.FC<EventContentRendererProps> = ({ metadata }) => {
-  const templateBrandColor = metadata.event_template?.brand_color || '#3B82F6';
   const templateDifficulty = metadata.event_template?.difficulty_rating;
   const templatePopularity = metadata.event_template?.popularity_score || 0;
 

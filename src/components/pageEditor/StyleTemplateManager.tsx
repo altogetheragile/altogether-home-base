@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStyleTemplates, useCreateStyleTemplate, useDeleteStyleTemplate } from '@/hooks/useStyleTemplates';
 import { Save, Trash2, Download } from 'lucide-react';
 

@@ -181,7 +181,7 @@ export const exportBMC = async (
 /**
  * Export canvas to PDF
  */
-const exportToPDF = async (canvas: HTMLCanvasElement, filename: string): Promise<string> => {
+const exportToPDF = async (canvas: HTMLCanvasElement, _filename: string): Promise<string> => {
   const imgData = canvas.toDataURL('image/png');
   
   // BMC is landscape oriented

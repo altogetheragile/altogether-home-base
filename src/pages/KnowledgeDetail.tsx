@@ -10,34 +10,27 @@ import { useKnowledgeItemUnifiedAssets } from "@/hooks/useUnifiedAssetManager";
 import { useKnowledgeItemSteps } from "@/hooks/useKnowledgeItemSteps";
 import { useKnowledgeItemComments } from "@/hooks/useKnowledgeItemComments";
 import { useViewTracking } from "@/hooks/useViewTracking";
-import { KnowledgeItemComments } from "@/components/knowledge/KnowledgeItemComments";
 import { KnowledgeReadView } from "@/components/knowledge/KnowledgeReadView";
 import { KnowledgeEditView } from "@/components/knowledge/KnowledgeEditView";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { 
-  ArrowLeft, FileText, Download, Image as ImageIcon, Video, BookOpen, 
-  ExternalLink, Pencil, ListOrdered, MessageCircle, ImagePlus,
+import {
+  ArrowLeft, BookOpen,
+  Pencil,
   X, Save, Loader2, Plus
 } from "lucide-react";
-import { format } from "date-fns";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
-import { RichTextEditor } from "@/components/admin/RichTextEditor";
-import { HowToSection } from "@/components/admin/knowledge/editor/sections/HowToSection";
-import { UseCasesSection } from "@/components/admin/knowledge/editor/sections/UseCasesSection";
 import { knowledgeItemDefaults, type KnowledgeItemFormData } from "@/schemas/knowledgeItem";
 
 // Use the schema type for form data
@@ -64,8 +57,8 @@ const KnowledgeDetail = () => {
     : '/knowledge';
   
   // Only fetch if we have a slug (not creating new)
-  const { data: item, isLoading, error } = useKnowledgeItemBySlug(isNewItem ? '' : slug!);
-  const { data: useCases } = useKnowledgeUseCases(item?.id);
+  const { data: item, isLoading, error } = useKnowledgeItemBySlug(isNewItem ? '' : (slug || ''));
+  const { data: useCases } = useKnowledgeUseCases(item?.id || '');
   const { data: templates } = useKnowledgeItemTemplates(item?.id || '');
   const { data: mediaAssets } = useKnowledgeItemUnifiedAssets(item?.id);
   const { data: steps } = useKnowledgeItemSteps(item?.id);
@@ -357,7 +350,7 @@ const KnowledgeDetail = () => {
                 <KnowledgeReadView 
                   item={item}
                   knowledgeItemId={item.id}
-                  steps={steps}
+                  steps={steps?.map(s => ({ ...s, description: s.description ?? undefined }))}
                   useCases={useCases}
                   templates={templates as any}
                   mediaAssets={filteredMediaAssets as any}

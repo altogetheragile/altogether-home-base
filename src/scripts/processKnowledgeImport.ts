@@ -52,9 +52,11 @@ export const processKnowledgeImport = async (importId: string) => {
 
     for (const stagingRow of stagingData) {
       try {
-        // console.log(`📝 Processing row ${stagingRow.row_number}: ${stagingRow.raw_data['Knowledge Item']}`);
-        
-        const mappedData: any = {
+        // console.log(`📝 Processing row ${stagingRow.row_number}: ${rawData?.['Knowledge Item']}`);
+
+        const rawData = stagingRow.raw_data as Record<string, unknown> | null;
+
+        const mappedData: Record<string, unknown> = {
           content_type: 'technique',
           is_published: true,
           is_featured: false,
@@ -63,105 +65,108 @@ export const processKnowledgeImport = async (importId: string) => {
 
         // Map basic fields
         Object.entries(fieldMappings).forEach(([targetField, sourceColumn]) => {
-          if (sourceColumn && stagingRow.raw_data[sourceColumn]) {
-            let value = stagingRow.raw_data[sourceColumn];
-            
+          if (sourceColumn && rawData?.[sourceColumn]) {
+            let value: unknown = rawData[sourceColumn];
+
             if (targetField.includes('_min') || targetField.includes('_max') || targetField === 'estimated_reading_time') {
-              value = parseInt(value) || null;
+              value = parseInt(String(value)) || null;
             } else if (targetField.startsWith('is_')) {
               value = String(value).toLowerCase() === 'true';
             }
-            
+
             mappedData[targetField] = value;
           }
         });
 
         // Generate slug
-        mappedData.slug = mappedData.name?.toLowerCase()
+        mappedData.slug = (typeof mappedData.name === 'string' ? mappedData.name : '').toLowerCase()
           .replace(/[^a-z0-9\s-]/g, '')
           .replace(/\s+/g, '-')
           .substring(0, 50) || `item-${stagingRow.row_number}`;
 
         // Handle category lookup
-        if (stagingRow.raw_data['Category']) {
-          const categoryName = stagingRow.raw_data['Category'];
+        if (rawData?.['Category']) {
+          const categoryName = String(rawData['Category']);
           let { data: category } = await supabase
             .from('knowledge_categories')
             .select('id')
             .eq('name', categoryName)
             .maybeSingle();
-          
+
           if (!category) {
             // Create category
+            const catDesc = rawData?.['Category Description'] ? String(rawData['Category Description']) : null;
             const { data: newCategory } = await supabase
               .from('knowledge_categories')
               .insert([{
                 name: categoryName,
                 slug: categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                description: stagingRow.raw_data['Category Description'] || null,
-                full_description: stagingRow.raw_data['Category Description'] || null
+                description: catDesc,
+                full_description: catDesc
               }])
               .select('id')
               .single();
             category = newCategory;
           }
-          
+
           if (category) mappedData.category_id = category.id;
         }
 
         // Handle domain lookup
-        if (stagingRow.raw_data['Domain of Interest']) {
-          const domainName = stagingRow.raw_data['Domain of Interest'];
+        if (rawData?.['Domain of Interest']) {
+          const domainName = String(rawData['Domain of Interest']);
           let { data: domain } = await supabase
             .from('activity_domains')
             .select('id')
             .eq('name', domainName)
             .maybeSingle();
-          
+
           if (!domain) {
             // Create domain
+            const domDesc = rawData?.['Domain of Interest Description'] ? String(rawData['Domain of Interest Description']) : null;
             const { data: newDomain } = await supabase
               .from('activity_domains')
               .insert([{
                 name: domainName,
                 slug: domainName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                description: stagingRow.raw_data['Domain of Interest Description'] || null,
-                full_description: stagingRow.raw_data['Domain of Interest Description'] || null
+                description: domDesc,
+                full_description: domDesc
               }])
               .select('id')
               .single();
             domain = newDomain;
           }
-          
+
           if (domain) mappedData.activity_domain_id = domain.id;
         }
 
         // Insert knowledge item
         const { data: knowledgeItem, error } = await supabase
           .from('knowledge_items')
-          .insert([mappedData])
+          .insert([mappedData as { name: string; slug: string; [key: string]: unknown }])
           .select('id')
           .single();
 
         if (error) throw error;
 
         // Handle planning focuses
-        if (stagingRow.raw_data['Planning Focus']) {
-          const focusName = stagingRow.raw_data['Planning Focus'];
+        if (rawData?.['Planning Focus']) {
+          const focusName = String(rawData['Planning Focus']);
           let { data: focus } = await supabase
             .from('planning_focuses')
             .select('id')
             .eq('name', focusName)
             .maybeSingle();
-          
+
           if (!focus) {
             // Create planning focus
+            const focusDesc = rawData?.['Planning Focus Description'] ? String(rawData['Planning Focus Description']) : null;
             const { data: newFocus } = await supabase
               .from('planning_focuses')
               .insert([{
                 name: focusName,
                 slug: focusName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                description: stagingRow.raw_data['Planning Focus Description'] || null
+                description: focusDesc
               }])
               .select('id')
               .single();
@@ -179,7 +184,7 @@ export const processKnowledgeImport = async (importId: string) => {
           .update({
             processing_status: 'processed',
             target_record_id: knowledgeItem.id,
-            mapped_data: mappedData,
+            mapped_data: mappedData as Record<string, string | number | boolean | null | string[]>,
             processed_at: new Date().toISOString()
           })
           .eq('id', stagingRow.id);
@@ -246,9 +251,9 @@ export const processKnowledgeImport = async (importId: string) => {
 
 // Auto-run the processing
 processKnowledgeImport('350bf975-21e2-4e12-8352-cf4a87178228')
-  .then(result => {
-    // console.log('📋 Final result:', result);
+  .then(_result => {
+    // console.log('📋 Final result:', _result);
   })
-  .catch(error => {
+  .catch(_error => {
     // console.error('🚨 Processing script error:', error);
   });

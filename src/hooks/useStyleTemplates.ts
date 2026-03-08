@@ -51,7 +51,7 @@ export const useCreateStyleTemplate = () => {
         description: 'Style template saved successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to save style template',
@@ -81,7 +81,7 @@ export const useDeleteStyleTemplate = () => {
         description: 'Style template deleted successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to delete style template',

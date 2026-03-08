@@ -6,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useUserRole } from '@/hooks/useUserRole';
 import { ArtifactLinkDialog } from './ArtifactLinkDialog';
 import type { ArtifactLinkData } from './ArtifactLinkHexiElement';
-import { Link2 } from 'lucide-react';
 
 export interface KnowledgeItemHexiElementProps {
   id: string;

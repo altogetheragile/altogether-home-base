@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useImperativeHandle } from 'react';
 import { z } from 'zod';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { cn } from '@/lib/utils';
@@ -143,7 +143,7 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
   className,
 }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
+  const [, setIsExporting] = useState(false);
 
   // Centralized handle styling
   const handleCx = `
@@ -175,8 +175,6 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     const newData = { ...bmcData, [section]: content };
     onDataChange?.(newData);
   }, [bmcData, onDataChange]);
-
-  const getBMCData = (): NormalizedBMCData => bmcData;
 
   const getBMCDataForExport = () => {
     // Convert internal BMCData to export format
@@ -226,8 +224,8 @@ const BMCCanvas = React.forwardRef<BMCCanvasRef, BMCCanvasProps>(({
     onChange, 
     placeholder,
     headerColor = 'bg-primary/10',
-    sectionType
-  }: { 
+    sectionType: _sectionType
+  }: {
     title: string; 
     value: string; 
     onChange: (value: string) => void;

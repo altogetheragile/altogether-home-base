@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import { useRef, useImperativeHandle, forwardRef } from 'react';
 import BMCCanvas, { BMCData, BMCCanvasRef } from '../canvas/templates/BMCCanvas';
 import { BMCData as ExportBMCData } from '@/utils/bmcExport';
 

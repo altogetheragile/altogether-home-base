@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { MediaUpload, type MediaItem } from '@/components/ui/media-upload';
+import { MediaUpload } from '@/components/ui/media-upload';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, X } from 'lucide-react';
@@ -28,7 +28,7 @@ interface SimpleFormProps {
   }>;
 }
 
-const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions = true, fields }: SimpleFormProps) => {
+const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions: _showActions = true, fields }: SimpleFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState(() => {
     const initial: any = {};
@@ -89,12 +89,12 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions = true
   };
 
   const handleChange = (key: string, value: string | string[]) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
+    setFormData((prev: Record<string, unknown>) => ({ ...prev, [key]: value }));
   };
 
   const handleMultiSelectToggle = (fieldKey: string, optionValue: string) => {
-    setFormData(prev => {
-      const currentValues = prev[fieldKey] || [];
+    setFormData((prev: Record<string, unknown>) => {
+      const currentValues = (prev[fieldKey] as string[]) || [];
       const newValues = currentValues.includes(optionValue)
         ? currentValues.filter((v: string) => v !== optionValue)
         : [...currentValues, optionValue];
@@ -103,9 +103,9 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions = true
   };
 
   const removeMultiSelectItem = (fieldKey: string, optionValue: string) => {
-    setFormData(prev => ({
+    setFormData((prev: Record<string, unknown>) => ({
       ...prev,
-      [fieldKey]: (prev[fieldKey] || []).filter((v: string) => v !== optionValue)
+      [fieldKey]: ((prev[fieldKey] as string[]) || []).filter((v: string) => v !== optionValue)
     }));
   };
 
@@ -196,7 +196,7 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions = true
             ) : field.type === 'media' ? (
               <MediaUpload
                 value={formData[field.key] || []}
-                onChange={(media) => setFormData(prev => ({ ...prev, [field.key]: media }))}
+                onChange={(media) => setFormData((prev: Record<string, unknown>) => ({ ...prev, [field.key]: media }))}
               />
             ) : (
               <Input

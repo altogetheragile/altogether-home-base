@@ -43,11 +43,10 @@ const ExtendedImage = Image.extend({
     };
   },
 });
-import { 
-  Bold, 
-  Italic, 
-  Underline, 
-  Strikethrough, 
+import {
+  Bold,
+  Italic,
+  Strikethrough,
   Link as LinkIcon, 
   Image as ImageIcon,
   List,
@@ -429,7 +428,7 @@ export const RichTextEditor = ({ content = '', onChange, placeholder }: RichText
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4',
       },
-      handleClickOn: (view: any, pos: any, node: any, nodePos: any, event: any, direct: any) => {
+      handleClickOn: (view: any, _pos: any, node: any, nodePos: any, _event: any, _direct: any) => {
         if (node?.type?.name === 'image') {
           const tr = view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos));
           view.dispatch(tr);

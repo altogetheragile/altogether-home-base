@@ -222,7 +222,7 @@ export default function AdminPlanningFocuses() {
                     <td className="p-2 text-muted-foreground">{focus.slug}</td>
                     <td className="p-2">
                       <Badge 
-                        style={{ backgroundColor: focus.color + '20', borderColor: focus.color, color: focus.color }}
+                        style={{ backgroundColor: (focus.color ?? '') + '20', borderColor: focus.color ?? undefined, color: focus.color ?? undefined }}
                         variant="outline"
                       >
                         {focus.color}

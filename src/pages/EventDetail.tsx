@@ -61,7 +61,8 @@ const EventDetail = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const { registerForEvent, loading: registrationLoading } = useEventRegistration();
-  const { data: registrations } = useUserRegistrations();
+  const { data: registrationsData } = useUserRegistrations();
+  const registrations = registrationsData as import('@/hooks/useUserRegistrations').UserRegistrationWithEvent[] | undefined;
   const { unregisterFromEvent, loading: unregisterLoading } = useEventUnregistration();
   const [interestRegistered, setInterestRegistered] = useState(false);
 

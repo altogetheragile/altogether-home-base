@@ -24,11 +24,11 @@ interface TestimonialsCarouselProps {
 
 export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({ 
   testimonials = [],
-  limit = 6,
+  limit: _limit = 6,
   autoPlay = true,
   autoPlayDelay = 4000,
   showArrows = true,
-  showDots = false,
+  showDots: _showDots = false,
   showNames = true,
   showCompanies = true,
   showJobTitles = true

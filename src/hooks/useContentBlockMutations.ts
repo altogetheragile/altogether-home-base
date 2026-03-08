@@ -37,7 +37,7 @@ export const useContentBlockMutations = () => {
         description: 'Content block added successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to add content block',
@@ -78,7 +78,7 @@ export const useContentBlockMutations = () => {
         description: 'Content block updated successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to update content block',
@@ -119,7 +119,7 @@ export const useContentBlockMutations = () => {
         description: 'Content block deleted successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to delete content block',
@@ -153,7 +153,7 @@ export const useContentBlockMutations = () => {
         description: 'Content blocks reordered successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to reorder content blocks',

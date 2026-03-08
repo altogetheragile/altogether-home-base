@@ -21,7 +21,7 @@ export const useBlogCategories = () => {
         .order('name');
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as BlogCategory[];
     },
   });
 };

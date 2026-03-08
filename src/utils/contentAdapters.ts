@@ -65,7 +65,14 @@ export function adaptEventToUnifiedContent(event: EventData): UnifiedContent {
       id: '', // EventData doesn't have category id
       name: event.category.name
     } : undefined,
-    event_template: event.event_template
+    event_template: event.event_template ? {
+      id: event.event_template.id,
+      title: event.event_template.title,
+      brand_color: event.event_template.brand_color,
+      difficulty_rating: event.event_template.difficulty_rating,
+      popularity_score: event.event_template.popularity_score,
+      duration_days: event.event_template.duration_days ?? undefined,
+    } : undefined
   };
 
   return {

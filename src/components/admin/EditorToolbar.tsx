@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * EditorToolbar combines back navigation, the page title and step counter into a single horizontal bar. 
  * It replaces the large header on the existing Knowledge Item editor and helps reduce vertical clutter. 

@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Terminal, 
-  AlertTriangle, 
-  Info, 
-  Bug, 
-  Trash2, 
-  Download, 
+  Terminal,
+  AlertTriangle,
+  Info,
+  Bug,
+  Trash2,
+  Download,
   Search,
-  Filter,
   RefreshCw,
-  Calendar,
   User,
   Database
 } from 'lucide-react';
@@ -31,17 +29,6 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from '@/components/ui/pagination';
-
-interface LogEntry {
-  id: string;
-  timestamp: string;
-  level: 'info' | 'warning' | 'error' | 'debug';
-  message: string;
-  source: string;
-  userId?: string;
-  userEmail?: string;
-  data?: any;
-}
 
 interface DatabaseLog {
   id: string;
@@ -118,7 +105,7 @@ const AdminLogs = () => {
   });
 
   // Fetch application logs from admin_logs table
-  const { data: applicationLogs, isLoading: appLoading, refetch: refetchAppLogs } = useQuery({
+  const { data: applicationLogs, refetch: refetchAppLogs } = useQuery({
     queryKey: ['admin-application-logs'],
     queryFn: async () => {
       const { data, error } = await supabase

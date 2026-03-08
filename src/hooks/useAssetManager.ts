@@ -68,7 +68,7 @@ export const useAssetMutations = () => {
         description: "Asset created successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create asset",
@@ -99,7 +99,7 @@ export const useAssetMutations = () => {
         description: "Asset updated successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update asset",
@@ -124,7 +124,7 @@ export const useAssetMutations = () => {
         description: "Asset deleted successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete asset",
@@ -242,7 +242,7 @@ export const useKnowledgeItemAssetMutations = () => {
         description: "Knowledge item assets updated successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update knowledge item assets",

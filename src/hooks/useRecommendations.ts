@@ -95,7 +95,7 @@ const generateFreshRecommendations = async (
   contentTypes?: ('technique' | 'event' | 'blog' | 'testimonial')[],
   limit = 6,
   excludeIds: string[] = [],
-  userId?: string
+  _userId?: string
 ) => {
   // If explicitly empty array, return nothing
   if (contentTypes !== undefined && contentTypes.length === 0) {
@@ -274,7 +274,7 @@ export const useTrackInteraction = () => {
   return useMutation({
     mutationFn: async ({
       contentType,
-      contentId,
+      contentId: _contentId,
       interactionType,
       value = 1
     }: {

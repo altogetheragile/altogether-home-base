@@ -46,7 +46,7 @@ export const CanvasProvider: React.FC<CanvasProviderProps> = ({
 }) => {
   const [canvasData, setCanvasDataState] = useState<CanvasData>(initialData);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
-  const [activeUsers, setActiveUsers] = useState<Array<{ id: string; name: string; cursor?: { x: number; y: number } }>>([]);
+  const [activeUsers, _setActiveUsers] = useState<Array<{ id: string; name: string; cursor?: { x: number; y: number } }>>([]);
   const [history, setHistory] = useState<CanvasData[]>([initialData]);
   const [historyIndex, setHistoryIndex] = useState(0);
 

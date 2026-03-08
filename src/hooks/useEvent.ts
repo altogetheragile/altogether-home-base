@@ -63,7 +63,7 @@ export const useEvent = (id: string) => {
         description: data.description,
         start_date: data.start_date,
         end_date: data.end_date,
-        is_published: data.is_published,
+        is_published: data.is_published ?? false,
         price_cents: data.price_cents || 0,
         currency: data.currency || 'usd',
         event_type: (data.event_types as any) || null,

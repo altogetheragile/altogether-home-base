@@ -14,10 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { usePlanningFocuses } from '@/hooks/usePlanningFocuses';
 import { useActivityDomains } from '@/hooks/useActivityDomains';
-import { useKnowledgeItems, useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useCreateKnowledgeItem, useUpdateKnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
-import { useKnowledgeUseCases, useCreateKnowledgeUseCase, useUpdateKnowledgeUseCase, useDeleteKnowledgeUseCase, type KnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
+import { useKnowledgeUseCases, useCreateKnowledgeUseCase, useDeleteKnowledgeUseCase, type KnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, Plus, Trash2, Edit } from 'lucide-react';
@@ -40,7 +40,6 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
   // Use cases hooks
   const { data: useCases } = useKnowledgeUseCases(editingItem?.id || '');
   const createUseCase = useCreateKnowledgeUseCase();
-  const updateUseCase = useUpdateKnowledgeUseCase();
   const deleteUseCase = useDeleteKnowledgeUseCase();
 
   const [formData, setFormData] = useState({
@@ -58,7 +57,7 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUseCases, setShowUseCases] = useState(false);
-  const [editingUseCase, setEditingUseCase] = useState<KnowledgeUseCase | null>(null);
+  const [_editingUseCase, setEditingUseCase] = useState<KnowledgeUseCase | null>(null);
   const [newUseCase, setNewUseCase] = useState<Partial<KnowledgeUseCase>>({
     case_type: 'generic',
     title: '',
@@ -136,9 +135,9 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
     try {
       const submitData = {
         ...formData,
-        category_id: formData.category_id || null,
-        planning_focus_id: formData.planning_focus_id || null,
-        domain_id: formData.domain_id || null,
+        category_id: formData.category_id || undefined,
+        planning_focus_id: formData.planning_focus_id || undefined,
+        domain_id: formData.domain_id || undefined,
       };
 
       if (editingItem) {
@@ -179,15 +178,6 @@ const KnowledgeItemForm = ({ open, onOpenChange, editingItem, onSuccess }: Knowl
         how_much: '',
         summary: '',
       });
-    } catch (error) {
-      // Error handled in hook
-    }
-  };
-
-  const handleUpdateUseCase = async (useCase: KnowledgeUseCase) => {
-    try {
-      await updateUseCase.mutateAsync(useCase);
-      setEditingUseCase(null);
     } catch (error) {
       // Error handled in hook
     }

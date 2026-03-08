@@ -25,7 +25,7 @@ export const useBlogTags = (limit?: number) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as BlogTag[];
     },
   });
 };

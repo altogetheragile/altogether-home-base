@@ -5,13 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Palette, Users, Clock, Filter, Eye, Edit, Copy, Trash2, ExternalLink } from 'lucide-react';
-import { useKnowledgeTemplates, useKnowledgeTemplatesByType, useDeleteKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
+import { Search, Plus, Palette, Users, Filter, Eye, Edit, Copy, Trash2, ExternalLink } from 'lucide-react';
+import { useKnowledgeTemplates, useDeleteKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
 import { useAssociateTemplate } from '@/hooks/useKnowledgeItemTemplates';
 import { toast } from 'sonner';
 import type { KnowledgeTemplate, TemplateType } from '@/types/template';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useNavigate } from 'react-router-dom';
 
 interface TemplateSelectionDialogProps {
   open: boolean;
@@ -44,7 +43,6 @@ export const TemplateSelectionDialog = ({
 }: TemplateSelectionDialogProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<TemplateType | 'all'>('all');
-  const navigate = useNavigate();
   
   const { data: allTemplates = [] } = useKnowledgeTemplates();
   const associateTemplate = useAssociateTemplate();

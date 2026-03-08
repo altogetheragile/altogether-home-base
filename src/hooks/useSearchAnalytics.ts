@@ -1,18 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface SearchAnalytics {
-  id: string;
-  query: string;
-  results_count: number;
-  user_id?: string;
-  session_id?: string;
-  ip_address?: string;
-  clicked_technique_id?: string;
-  search_filters: Record<string, any>;
-  created_at: string;
-}
-
 interface LogSearchParams {
   query: string;
   results_count: number;

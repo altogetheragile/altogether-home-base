@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePageById } from '@/hooks/usePages';
 import { usePageMutations } from '@/hooks/usePageMutations';
 import { useContentBlockMutations } from '@/hooks/useContentBlockMutations';
-import { ContentBlock, ContentBlockCreate } from '@/types/page';
+import { ContentBlock } from '@/types/page';
 import { ContentBlockEditor } from './ContentBlockEditor';
 import { PageHeader } from './PageHeader';
 import { PageSettings } from './PageSettings';

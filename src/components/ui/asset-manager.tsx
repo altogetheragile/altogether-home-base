@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
-import { Textarea } from './textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
-import { Trash2, Upload, Image, Video, FileText, ExternalLink, Plus, File, Archive } from 'lucide-react';
+import { Trash2, Image, Video, FileText, ExternalLink, Plus, File, Archive } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 

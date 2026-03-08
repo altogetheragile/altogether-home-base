@@ -51,7 +51,7 @@ export const useCreateActivityDomain = () => {
         description: "Activity domain created successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create activity domain",
@@ -84,7 +84,7 @@ export const useUpdateActivityDomain = () => {
         description: "Activity domain updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update activity domain",
@@ -114,7 +114,7 @@ export const useDeleteActivityDomain = () => {
         description: "Activity domain deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete activity domain",

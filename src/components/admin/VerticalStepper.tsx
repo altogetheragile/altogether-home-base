@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * VerticalStepper displays the progress of the editor steps on the left-hand side. 
  * Each step is clickable to jump between sections.  The active step is highlighted.  

@@ -134,7 +134,7 @@ export const useSiteSettings = () => {
         description: 'Site settings and page visibility have been saved successfully.',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to update settings. Please try again.',

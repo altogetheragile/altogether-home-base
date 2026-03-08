@@ -119,8 +119,8 @@ export const useBlogPosts = (options: UseBlogPostsOptions = {}) => {
       // Transform the data to flatten blog_tags
       return (data || []).map(post => ({
         ...post,
-        blog_tags: post.blog_post_tags?.map((pt: any) => pt.blog_tags).filter(Boolean) || []
-      }));
+        blog_tags: post.blog_post_tags?.map((pt: { blog_tags: { id: string; name: string; slug: string } }) => pt.blog_tags).filter(Boolean) || []
+      })) as unknown as BlogPost[];
     },
   });
 };
@@ -161,8 +161,8 @@ export const useBlogPost = (slug: string) => {
       // Transform the data to flatten blog_tags
       return {
         ...data,
-        blog_tags: data.blog_post_tags?.map((pt: any) => pt.blog_tags).filter(Boolean) || []
-      };
+        blog_tags: data.blog_post_tags?.map((pt: { blog_tags: { id: string; name: string; slug: string } }) => pt.blog_tags).filter(Boolean) || []
+      } as unknown as BlogPost;
     },
     enabled: !!slug,
   });

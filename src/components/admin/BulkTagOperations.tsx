@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckSquare, Trash2, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ export const BulkTagOperations = ({
       onSelectionChange([]);
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-tags'] });
     },
-    onError: (error) => {
+    onError: (_error) => {
 
       toast({
         title: "Error",
@@ -71,7 +71,7 @@ export const BulkTagOperations = ({
       const { data, error } = await supabase
         .from('knowledge_tags')
         .insert(tags);
-      
+
       if (error) throw error;
       return data;
     },
@@ -82,7 +82,7 @@ export const BulkTagOperations = ({
       });
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-tags'] });
     },
-    onError: (error) => {
+    onError: (_error) => {
 
       toast({
         title: "Error",

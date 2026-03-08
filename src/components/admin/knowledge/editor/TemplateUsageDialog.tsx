@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ interface TemplateUsageDialogProps {
 
 export const TemplateUsageDialog = ({ template, open, onOpenChange }: TemplateUsageDialogProps) => {
   const [activeTab, setActiveTab] = useState('preview');
-  const [sessionData, setSessionData] = useState<Record<string, any>>({});
+  const [sessionData, _setSessionData] = useState<Record<string, unknown>>({});
 
   const handleExportPDF = async () => {
     try {

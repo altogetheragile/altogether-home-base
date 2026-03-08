@@ -3,14 +3,13 @@ import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardHeader } from './card';
 import { Badge } from './badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { Trash2, Upload, Image, Video, FileText, ExternalLink, Plus, Check } from 'lucide-react';
+import { Trash2, Image, Video, FileText, ExternalLink, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useMediaAssets, useMediaAssetMutations, MediaAsset, MediaAssetInsert } from '@/hooks/useMediaAssets';
+import { useMediaAssets, useMediaAssetMutations, MediaAssetInsert } from '@/hooks/useMediaAssets';
 
 interface MediaLibraryProps {
   selectedMediaIds: string[];
@@ -26,11 +25,11 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   onSelectionChange,
   multiSelect = true,
   bucketName = 'knowledge-base',
-  knowledgeItemId,
+  knowledgeItemId: _knowledgeItemId,
   onMediaUploaded
 }) => {
-  const [uploadingItems, setUploadingItems] = useState<Set<number>>(new Set());
-  const [newMediaType, setNewMediaType] = useState<'image' | 'video' | 'embed'>('image');
+  const [_uploadingItems, _setUploadingItems] = useState<Set<number>>(new Set());
+  const [_newMediaType, _setNewMediaType] = useState<'image' | 'video' | 'embed'>('image');
   const [uploadFormData, setUploadFormData] = useState<Partial<MediaAssetInsert>>({
     type: 'image',
     title: '',

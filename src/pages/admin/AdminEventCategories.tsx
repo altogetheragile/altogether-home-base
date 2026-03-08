@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useEventCategories } from '@/hooks/useEventCategories';
 import { useCreateEventCategory, useUpdateEventCategory, useDeleteEventCategory } from '@/hooks/useEventCategoryMutations';

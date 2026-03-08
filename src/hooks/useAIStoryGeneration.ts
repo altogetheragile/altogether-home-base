@@ -76,7 +76,7 @@ export function useAIStoryGeneration() {
 
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const levelLabel = variables.storyLevel.charAt(0).toUpperCase() + 
                         variables.storyLevel.slice(1);
       

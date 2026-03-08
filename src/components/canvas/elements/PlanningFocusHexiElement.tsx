@@ -92,7 +92,7 @@ export const PlanningFocusHexiElement: React.FC<PlanningFocusHexiElementProps> =
     }
   }, [isDragging, dragStart, initialPosition, isMultiSelected]);
 
-  const { name, color, description } = element.content || {};
+  const { name, color } = element.content || {};
   const width = element.size?.width || 140;
   const height = element.size?.height || 121;
 

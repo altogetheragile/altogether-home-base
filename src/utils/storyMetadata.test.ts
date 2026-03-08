@@ -2,13 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
   mapGeneratedStoryToUserStory,
   mapGeneratedEpicToEpic,
-  mapGeneratedFeatureToFeature,
   calculateReadiness,
   calculateCompletion,
   getConfidenceLevelLabel,
   getConfidenceLevelColor,
 } from './storyMetadata';
-import type { GeneratedStory, GeneratedEpic, GeneratedFeature } from '@/types/ai-generation';
+import type { GeneratedStory, GeneratedEpic } from '@/types/ai-generation';
 
 describe('storyMetadata utilities', () => {
   describe('mapGeneratedStoryToUserStory', () => {

@@ -95,7 +95,7 @@ export const useUnifiedAssetMutations = () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast.success("Asset created successfully");
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast.error("Failed to create asset");
     }
   });
@@ -121,7 +121,7 @@ export const useUnifiedAssetMutations = () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast.success("Asset updated successfully");
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast.error("Failed to update asset");
     }
   });
@@ -141,7 +141,7 @@ export const useUnifiedAssetMutations = () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast.success("Asset deleted successfully");
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast.error("Failed to delete asset");
     }
   });
@@ -233,7 +233,7 @@ export const useKnowledgeItemUnifiedAssetMutations = () => {
       });
       toast.success("Knowledge item assets updated successfully");
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast.error("Failed to update knowledge item assets");
     }
   });

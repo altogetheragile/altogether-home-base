@@ -121,7 +121,7 @@ export const useEvents = () => {
         description: event.description,
         start_date: event.start_date,
         end_date: event.end_date,
-        is_published: event.is_published,
+        is_published: event.is_published ?? false,
         price_cents: event.price_cents || 0,
         currency: event.currency || 'usd',
         event_type: (event.event_types as any) || null,

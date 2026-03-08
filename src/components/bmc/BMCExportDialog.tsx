@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { exportBMC, downloadBMC, printBMC, BMCData } from '@/utils/bmcExport';
 import { BusinessModelCanvasRef } from './BusinessModelCanvas';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BMCExportDialogProps {
   companyName?: string;

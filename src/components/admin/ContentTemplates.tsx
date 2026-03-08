@@ -301,7 +301,7 @@ interface ContentTemplatesProps {
 }
 
 export const ContentTemplates = ({ onUseTemplate }: ContentTemplatesProps) => {
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [_selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const { toast } = useToast();
 
   const handleUseTemplate = (template: Template) => {

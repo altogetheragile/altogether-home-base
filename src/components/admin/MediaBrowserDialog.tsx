@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMediaAssets } from '@/hooks/useMediaAssets';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Image as ImageIcon, Video, ExternalLink, Search, Check } from 'lucide-react';

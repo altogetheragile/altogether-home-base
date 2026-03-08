@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Layers, List } from 'lucide-react';
 import { UnifiedStoryEditDialog } from '@/components/stories/UnifiedStoryEditDialog';
-import { UnifiedStoryData, ItemType } from '@/types/story';
+import { UnifiedStoryData } from '@/types/story';
 import { AddChildDialog } from './AddChildDialog';
 import { SplitStoryDialog, SplitConfig } from '@/components/stories/SplitStoryDialog';
 

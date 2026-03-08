@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckSquare, Trash2, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ export const BulkCategoryOperations = ({
       onSelectionChange([]);
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-categories'] });
     },
-    onError: (error) => {
+    onError: (_error) => {
 
       toast({
         title: "Error",
@@ -71,7 +71,7 @@ export const BulkCategoryOperations = ({
       const { data, error } = await supabase
         .from('knowledge_categories')
         .insert(categories);
-      
+
       if (error) throw error;
       return data;
     },
@@ -82,7 +82,7 @@ export const BulkCategoryOperations = ({
       });
       queryClient.invalidateQueries({ queryKey: ['admin-knowledge-categories'] });
     },
-    onError: (error) => {
+    onError: (_error) => {
 
       toast({
         title: "Error",

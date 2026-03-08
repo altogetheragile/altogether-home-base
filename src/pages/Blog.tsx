@@ -4,7 +4,6 @@ import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "@/config/featureFlags";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import BlogFilter from "@/components/blog/BlogFilter";
 import { useBlogPosts, type BlogPost } from "@/hooks/useBlogPosts";
 import { useBlogCategories } from "@/hooks/useBlogCategories";
 import { useBlogTags } from "@/hooks/useBlogTags";
@@ -21,7 +20,7 @@ const Blog = () => {
   const [sortBy, setSortBy] = useState("newest");
 
   const { data: categories } = useBlogCategories();
-  const { data: popularTags } = useBlogTags(20);
+  const { data: _popularTags } = useBlogTags(20);
 
   const { data: filteredPosts, isLoading: postsLoading } = useBlogPosts({
     search: searchQuery,

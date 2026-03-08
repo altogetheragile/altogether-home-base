@@ -44,7 +44,7 @@ interface ExistingItem {
   id: string;
   name: string;
   slug: string;
-  is_published: boolean;
+  is_published: boolean | null;
   domain_id: string | null;
   category_id: string | null;
   planning_focus_id: string | null;
@@ -188,15 +188,15 @@ export const SaveToKBDialog: React.FC<SaveToKBDialogProps> = ({
       const result: any = await createKnowledgeItem.mutateAsync({
         name: name.trim(),
         slug,
-        description: description.trim() || null,
+        description: description.trim() || undefined,
         // Use new array-based taxonomy
         category_ids: categoryId ? [categoryId] : [],
         domain_ids: domainId ? [domainId] : [],
         decision_level_ids: decisionLevelId ? [decisionLevelId] : [],
         is_published: isPublished,
         is_featured: false,
-        icon: data.icon || null,
-        emoji: data.emoji || null,
+        icon: data.icon || undefined,
+        emoji: data.emoji || undefined,
       });
 
       // Look up selected items to get their full data including colors

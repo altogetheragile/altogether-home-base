@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { BacklogItem, useUpdateBacklogItem, useDeleteBacklogItem } from '@/hooks/useBacklogItems';
 import { cn } from '@/lib/utils';
-import { InlineEditableText } from '@/components/ui/InlineEditableText';
 
 interface BacklogItemCardProps {
   item: BacklogItem;

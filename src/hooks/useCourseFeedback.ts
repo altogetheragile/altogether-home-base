@@ -113,9 +113,9 @@ export const useFeedbackStats = (courseType?: string) => {
       const { data, error } = await query;
       if (error) throw error;
 
-      const ratings = data.map(f => f.rating);
+      const ratings = (data ?? []).map(f => f.rating).filter((r): r is number => r !== null);
       const averageRating = ratings.length > 0
-        ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+        ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length
         : 0;
 
       return {
@@ -151,7 +151,7 @@ export const useSubmitFeedback = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['course-feedback'] });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to submit feedback. Please try again.",
@@ -187,7 +187,7 @@ export const useUpdateFeedback = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['course-feedback'] });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update feedback. Please try again.",
@@ -217,7 +217,7 @@ export const useDeleteFeedback = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['course-feedback'] });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete feedback. Please try again.",
@@ -250,7 +250,7 @@ export const useBulkApproveFeedback = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['course-feedback'] });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to approve feedback. Please try again.",

@@ -107,7 +107,7 @@ export const useProjectMutations = () => {
           name: data.name,
           description: data.description,
           color_theme: data.color_theme || '#3B82F6',
-          created_by: (await supabase.auth.getUser()).data.user?.id
+          created_by: (await supabase.auth.getUser()).data.user?.id ?? ''
         }])
         .select()
         .single();

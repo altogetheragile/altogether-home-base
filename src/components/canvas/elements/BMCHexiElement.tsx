@@ -52,8 +52,8 @@ const BMCHexiElement: React.FC<BMCHexiElementProps> = ({
   onMove,
   onContentChange,
   onDelete,
-  onEdit,
-  showWatermark = false,
+  onEdit: _onEdit,
+  showWatermark: _showWatermark = false,
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -82,10 +82,6 @@ const BMCHexiElement: React.FC<BMCHexiElementProps> = ({
   const bmcData = extractBMCData(data);
   const companyName = getCompanyName(data);
   const isAIGenerated = isNestedData(data);
-
-  const handleClick = () => {
-    setIsEditorOpen(true);
-  };
 
   const handleEditorSave = (newData: BMCData) => {
     if (!onContentChange) return;

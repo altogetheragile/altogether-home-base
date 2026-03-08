@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
@@ -149,7 +149,7 @@ const BMCGenerator = () => {
     setSaveDialogOpen(true);
   };
 
-  const handleSaveComplete = (projectId: string, artifactId: string) => {
+  const handleSaveComplete = (projectId: string, _artifactId: string) => {
     toast.success('BMC saved to project successfully!', {
       action: {
         label: 'View Project',

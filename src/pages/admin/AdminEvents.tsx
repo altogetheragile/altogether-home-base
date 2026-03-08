@@ -40,7 +40,7 @@ const AdminEvents = () => {
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['admin-events', shouldRender],
     queryFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
+      await supabase.auth.getSession();
 
       const { data, error } = await supabase
         .from('events')

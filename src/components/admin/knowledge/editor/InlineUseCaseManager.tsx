@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { 
   Plus, 
   Edit2, 
@@ -45,7 +44,7 @@ export const InlineUseCaseManager: React.FC<InlineUseCaseManagerProps> = ({
   onSaveItem
 }) => {
   const { toast } = useToast();
-  const [editingUseCase, setEditingUseCase] = useState<string | null>(null);
+  const [_editingUseCase, setEditingUseCase] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState<{ type: 'generic' | 'example' | null }>({ type: null });
   const [newUseCaseData, setNewUseCaseData] = useState<UseCaseFormData>({
     who: '',
@@ -60,7 +59,7 @@ export const InlineUseCaseManager: React.FC<InlineUseCaseManagerProps> = ({
   });
   const [expandedUseCases, setExpandedUseCases] = useState<Set<string>>(new Set());
 
-  const { data: useCases = [], isLoading } = useKnowledgeUseCases(knowledgeItemId);
+  const { data: useCases = [] } = useKnowledgeUseCases(knowledgeItemId ?? '');
 
   if (!knowledgeItemId || knowledgeItemId === 'new') {
     return (

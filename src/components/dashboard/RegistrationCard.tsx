@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, User, ExternalLink } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
@@ -24,7 +24,7 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
         <CardHeader>
           <CardTitle className="text-xl">Event Not Found</CardTitle>
           <CardDescription>
-            Registered on {format(new Date(registered_at), 'MMMM d, yyyy')}
+            Registered on {registered_at ? format(new Date(registered_at), 'MMMM d, yyyy') : 'Unknown'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -60,11 +60,11 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
           <Badge variant={isUpcoming ? "default" : "secondary"}>
             {isUpcoming ? "Upcoming" : "Past"}
           </Badge>
-          {getPaymentStatusBadge(payment_status)}
+          {getPaymentStatusBadge(payment_status ?? 'unknown')}
         </div>
         <CardTitle className="text-xl">{event.title}</CardTitle>
         <CardDescription>
-          Registered on {format(new Date(registered_at), 'MMMM d, yyyy')}
+          Registered on {registered_at ? format(new Date(registered_at), 'MMMM d, yyyy') : 'Unknown'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -73,14 +73,14 @@ const RegistrationCard = ({ registration }: RegistrationCardProps) => {
             <Calendar className="h-4 w-4 mr-2" />
             <span>
               {format(new Date(event.start_date), 'MMMM d, yyyy')}
-              {event.end_date && event.end_date !== event.start_date && 
+              {event.end_date && event.end_date !== event.start_date &&
                 ` - ${format(new Date(event.end_date), 'MMMM d, yyyy')}`
               }
             </span>
           </div>
-          
+
           <div className="text-lg font-semibold text-primary">
-            <span>{formatPrice(event.price_cents, event.currency)}</span>
+            <span>{formatPrice(event.price_cents ?? 0, event.currency ?? undefined)}</span>
           </div>
         </div>
         

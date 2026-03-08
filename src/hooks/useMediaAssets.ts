@@ -79,7 +79,7 @@ export const useMediaAssetMutations = () => {
         description: "Media asset created successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create media asset",
@@ -110,7 +110,7 @@ export const useMediaAssetMutations = () => {
         description: "Media asset updated successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update media asset",
@@ -135,7 +135,7 @@ export const useMediaAssetMutations = () => {
         description: "Media asset deleted successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete media asset",
@@ -264,7 +264,7 @@ export const useKnowledgeItemMediaMutations = () => {
         description: "Knowledge item media updated successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update knowledge item media",

@@ -1,6 +1,4 @@
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { UseCaseForm } from "@/components/admin/knowledge/editor/UseCaseForm";
 import { useToast } from "@/hooks/use-toast";
 import { useKnowledgeUseCases } from "@/hooks/useKnowledgeUseCases";

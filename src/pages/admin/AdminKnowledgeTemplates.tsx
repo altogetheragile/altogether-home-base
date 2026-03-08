@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Copy, Eye, FileText, Upload } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, FileText, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useKnowledgeTemplates, useDeleteKnowledgeTemplate, useCreateKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
+import { useKnowledgeTemplates, useDeleteKnowledgeTemplate } from '@/hooks/useKnowledgeTemplates';
 import { KnowledgeTemplate } from '@/types/template';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { toast } from 'sonner';
 import { TemplateAssetUpload } from '@/components/admin/templates/TemplateAssetUpload';
 import { PDFViewer } from '@/components/admin/templates/PDFViewer';
 import { usePDFTemplateOperations } from '@/hooks/usePDFTemplateOperations';
@@ -29,13 +28,12 @@ export default function AdminKnowledgeTemplates() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [viewingTemplate, setViewingTemplate] = useState<KnowledgeTemplate | null>(null);
+  const [selectedCategory] = useState<string>('all');
+  const [, setViewingTemplate] = useState<KnowledgeTemplate | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  
+
   const { data: templates, isLoading } = useKnowledgeTemplates();
   const deleteTemplate = useDeleteKnowledgeTemplate();
-  const createTemplate = useCreateKnowledgeTemplate();
   
   const {
     selectedTemplate: pdfTemplate,
@@ -55,7 +53,6 @@ export default function AdminKnowledgeTemplates() {
       return matchesSearch && matchesType;
     });
 
-  const categories = templates ? [...new Set(templates.map(t => t.category).filter(Boolean) as string[])] : [];
 
   const handleDelete = async (id: string) => {
     await deleteTemplate.mutateAsync(id);
@@ -206,7 +203,7 @@ interface TemplateCardProps {
   onDeletePDF: (template: KnowledgeTemplate) => void;
 }
 
-function TemplateCard({ template, onDelete, onEdit, onView, onDownload, onDeletePDF }: TemplateCardProps) {
+function TemplateCard({ template, onDelete: _onDelete, onEdit, onView, onDownload, onDeletePDF }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">

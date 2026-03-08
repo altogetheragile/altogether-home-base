@@ -47,7 +47,7 @@ export const MultiSelectClassification: React.FC<MultiSelectClassificationProps>
 
   // Sort items by display_order if available, then by name
   const sortedItems = [...items].sort((a, b) => {
-    if (a.display_order !== undefined && b.display_order !== undefined) {
+    if (a.display_order != null && b.display_order != null) {
       return a.display_order - b.display_order;
     }
     return a.name.localeCompare(b.name);

@@ -3,8 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { X, Plus, Book, AlertTriangle, Link, Users, Calendar } from 'lucide-react';
+import { X, Plus, Book, AlertTriangle, Link, Users } from 'lucide-react';
 
 interface KnowledgeItemEnhancedProps {
   formData: {

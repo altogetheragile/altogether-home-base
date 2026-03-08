@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +44,7 @@ export function StoryList() {
 
   const { data: stories = [], isLoading: storiesLoading } = useUserStories();
   const { data: epics = [], isLoading: epicsLoading } = useEpics();
-  const { data: features = [], isLoading: featuresLoading } = useFeatures();
+  const { data: _features = [], isLoading: featuresLoading } = useFeatures();
   const { deleteStory, updateStory, updateEpic } = useStoryMutations();
   const splitStory = useSplitUserStory();
   const { toast } = useToast();
@@ -85,18 +85,18 @@ export function StoryList() {
         await updateEpic.mutateAsync({
           id: editingStory.id,
           title: data.title,
-          description: data.description,
-          status: data.status as any,
+          description: data.description ?? undefined,
+          status: data.status as Epic['status'],
           theme: (editingStory as Epic).theme,
         });
       } else {
         await updateStory.mutateAsync({
           id: editingStory.id,
           title: data.title,
-          description: data.description,
-          status: data.status as any,
-          priority: data.priority,
-          story_points: data.story_points,
+          description: data.description ?? undefined,
+          status: data.status as 'draft' | 'ready' | 'in_progress' | 'done',
+          priority: data.priority ?? undefined,
+          story_points: data.story_points ?? undefined,
           acceptance_criteria: data.acceptance_criteria?.filter(c => c.trim()) || [],
         });
       }

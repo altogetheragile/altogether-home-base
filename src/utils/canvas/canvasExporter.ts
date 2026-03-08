@@ -50,7 +50,7 @@ export const exportCanvas = async (
   }
 };
 
-const exportToPDF = (canvas: HTMLCanvasElement, filename: string): string => {
+const exportToPDF = (canvas: HTMLCanvasElement, _filename: string): string => {
   const imgData = canvas.toDataURL('image/png');
   
   // Determine orientation based on canvas aspect ratio

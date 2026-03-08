@@ -5,12 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Play, FileText, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, FileText, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { DataImport } from '@/hooks/useDataImports';
 import { useStagingData } from '@/hooks/useDataImports';
 import { ColumnMapper } from './ColumnMapper';
 // ProcessDataButton removed - KB functionality deleted
-import { format } from 'date-fns';
 
 interface ImportPreviewProps {
   importRecord: DataImport;

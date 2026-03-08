@@ -92,14 +92,14 @@ export const PlanningFocusSelector: React.FC<PlanningFocusSelectorProps> = ({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Layers className="h-4 w-4" style={{ color: focus.color }} />
+                          <Layers className="h-4 w-4" style={{ color: focus.color ?? undefined }} />
                           <h4 className="text-sm font-medium">{focus.name}</h4>
                           <Badge
                             variant="outline"
                             className="text-xs"
                             style={{
-                              borderColor: focus.color,
-                              color: focus.color,
+                              borderColor: focus.color ?? undefined,
+                              color: focus.color ?? undefined,
                             }}
                           >
                             {focus.display_order}

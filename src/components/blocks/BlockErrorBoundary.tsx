@@ -12,7 +12,7 @@ export class BlockErrorBoundary extends React.Component<
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  componentDidCatch(err: any, info: any) {
+  componentDidCatch(_err: Error, _info: React.ErrorInfo) {
     // Error caught by BlockErrorBoundary - will be reported via Sentry
   }
   render() {

@@ -53,7 +53,7 @@ export const useCreateAuthor = () => {
         description: "Author created successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create author",
@@ -86,7 +86,7 @@ export const useUpdateAuthor = () => {
         description: "Author updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update author",
@@ -116,7 +116,7 @@ export const useDeleteAuthor = () => {
         description: "Author deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete author",

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Target, Users, FolderOpen, Lightbulb, CheckCircle2, BookOpen, ListOrdered, Tags, Link2 } from 'lucide-react';
+import { FileText, Target, Users, FolderOpen, Lightbulb, CheckCircle2, BookOpen, ListOrdered, Tags } from 'lucide-react';
 import { EditableListField } from './EditableListField';
 import { PrimaryClassificationPicker } from './PrimaryClassificationPicker';
 import { BackgroundEditor, StepsEditor, UseCasesEditor, TagsPicker, RelatedItemsEditor } from './editors';
@@ -21,7 +21,7 @@ interface KnowledgeEditViewProps {
   knowledgeItemId?: string;
 }
 
-export const KnowledgeEditView: React.FC<KnowledgeEditViewProps> = ({ isNewItem, knowledgeItemId }) => {
+export const KnowledgeEditView: React.FC<KnowledgeEditViewProps> = ({ isNewItem: _isNewItem, knowledgeItemId }) => {
   const form = useFormContext();
   const { data: categories, isLoading: categoriesLoading } = useKnowledgeCategories();
   const { data: decisionLevels, isLoading: levelsLoading } = useDecisionLevels();

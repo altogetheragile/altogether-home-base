@@ -7,11 +7,9 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const AccountSecurity = () => {
-  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 

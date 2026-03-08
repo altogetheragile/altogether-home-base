@@ -58,7 +58,7 @@ export const useAssociateTemplate = () => {
         description: "Template associated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
 
       toast({
         title: "Error",
@@ -90,7 +90,7 @@ export const useRemoveTemplateAssociation = () => {
         description: "Template association removed",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
 
       toast({
         title: "Error",
@@ -136,7 +136,7 @@ export const useUpdateTemplateAssociation = () => {
         description: "Template association updated",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
 
       toast({
         title: "Error",

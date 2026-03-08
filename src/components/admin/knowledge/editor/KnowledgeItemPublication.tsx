@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink } from "lucide-react";
 import { usePublications } from "@/hooks/usePublications";
 import { useState } from "react";
 

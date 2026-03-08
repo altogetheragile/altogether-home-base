@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Target, TrendingUp, Clock, Eye, EyeOff, Edit, MoreHorizontal } from 'lucide-react';
+import { FileText, Target, TrendingUp, Clock, Edit, MoreHorizontal } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

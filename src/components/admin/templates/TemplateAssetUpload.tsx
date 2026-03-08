@@ -152,12 +152,10 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
 
     try {
       let publicUrl: string;
-      let uploadedPath: string;
-      
+
       if (pendingUpload) {
         // Use already uploaded file
         publicUrl = pendingUpload.publicUrl;
-        uploadedPath = pendingUpload.uploadedUrl;
       } else {
         // Upload new file
         const fileExt = file!.name.split('.').pop();
@@ -181,12 +179,11 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           .getPublicUrl(uploadData.path);
           
         publicUrl = newPublicUrl;
-        uploadedPath = uploadData.path;
       }
 
       // Prepare template data based on type
       // Map file type to logical template type
-      const getTemplateType = (fileType: string) => {
+      const getTemplateType = (fileType: string): 'worksheet' | 'form' | 'canvas' => {
         switch (fileType) {
           case 'pdf': return 'worksheet';
           case 'document': return 'form';
@@ -197,9 +194,9 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       
       const baseTemplateData = {
         title: formData.title.trim(),
-        description: formData.description?.trim() || null,
+        description: formData.description?.trim() || undefined,
         template_type: getTemplateType(templateType),
-        file_format: templateType === 'pdf' ? 'pdf' : templateType === 'document' ? 'docx' : 'png',
+        file_format: templateType === 'pdf' ? 'pdf' as const : templateType === 'document' ? 'docx' as const : 'png' as const,
         is_public: true,
         tags: formData.tags.length > 0 ? formData.tags : [],
         version: version.trim(),
@@ -227,7 +224,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
         };
       }
 
-      const template = await createTemplate.mutateAsync(templateData);
+      const template = await createTemplate.mutateAsync(templateData as Parameters<typeof createTemplate.mutateAsync>[0]);
       // Associate with knowledge items (only for new templates)
       if (!replaceExisting && formData.knowledgeItemIds.length > 0) {
         try {
@@ -577,7 +574,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       <VersionConflictDialog
         open={versionConflictOpen}
         onOpenChange={setVersionConflictOpen}
-        existingTemplate={existingTemplate}
+        existingTemplate={existingTemplate ? { title: existingTemplate.title, version: existingTemplate.version ?? '' } : null}
         suggestedVersion={suggestedVersion || '1.1'}
         customVersion={customVersion}
         onCustomVersionChange={setCustomVersion}

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { useCreateLocation, useUpdateLocation, useDeleteLocation } from '@/hooks/useLocationMutations';
@@ -36,8 +36,8 @@ import LocationForm from '@/components/admin/LocationForm';
 type Location = {
   id: string;
   name: string;
-  address: string;
-  virtual_url: string;
+  address: string | null;
+  virtual_url: string | null;
 };
 
 const AdminLocations = () => {
@@ -174,7 +174,7 @@ const AdminLocations = () => {
                           <LocationForm
                             initialData={{
                               name: location.name,
-                              address: location.address,
+                              address: location.address ?? '',
                               virtual_url: location.virtual_url || '',
                             }}
                             onSubmit={handleEdit}

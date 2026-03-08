@@ -52,7 +52,7 @@ export const useCreatePlanningFocus = () => {
         description: "Planning focus created successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create planning focus",
@@ -85,7 +85,7 @@ export const useUpdatePlanningFocus = () => {
         description: "Planning focus updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update planning focus",
@@ -115,7 +115,7 @@ export const useDeletePlanningFocus = () => {
         description: "Planning focus deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete planning focus",

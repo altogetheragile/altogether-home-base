@@ -189,7 +189,7 @@ export async function populateTestData() {
       const { category_slug, tag_slugs, ...techniqueData } = technique;
 
       // Find category ID
-      const category = categoriesData.find(c => c.slug === category_slug);
+      const category = categoriesData.find((c: { slug: string }) => c.slug === category_slug);
       if (!category) {
         continue;
       }
@@ -209,7 +209,7 @@ export async function populateTestData() {
 
       // Link tags
       for (const tagSlug of tag_slugs) {
-        const tag = tagsData.find(t => t.slug === tagSlug);
+        const tag = tagsData.find((t: { slug: string }) => t.slug === tagSlug);
         if (tag) {
           await (supabase.from as any)('knowledge_technique_tags')
             .upsert({

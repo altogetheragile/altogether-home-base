@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ExternalLink, Eye, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Eye, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CompactHeaderProps {
@@ -23,14 +23,14 @@ interface CompactHeaderProps {
 
 export const CompactHeader: React.FC<CompactHeaderProps> = ({
   title,
-  isEditing = false,
+  isEditing: _isEditing = false,
   currentStep,
   totalSteps,
   completionPercentage,
   errorCount,
   onBack,
-  isCompactMode = false,
-  onToggleCompactMode,
+  isCompactMode: _isCompactMode = false,
+  onToggleCompactMode: _onToggleCompactMode,
   onOpenPreview,
   className,
   returnTo,

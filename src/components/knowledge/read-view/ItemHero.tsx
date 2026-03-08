@@ -1,7 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { KnowledgeItem } from '@/hooks/useKnowledgeItems';
-import { ITEM_TYPES } from '@/schemas/knowledgeItem';
 
 interface ItemHeroProps {
   item: KnowledgeItem;

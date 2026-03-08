@@ -85,13 +85,13 @@ const KnowledgeFilter = ({
               style={
                 selectedCategory === category.id
                   ? {
-                      backgroundColor: category.color,
-                      borderColor: category.color,
-                      color: "white",
+                      backgroundColor: category.color ?? undefined,
+                      borderColor: category.color ?? undefined,
+                      color: "white" as const,
                     }
                   : {
-                      borderColor: `${category.color}50`,
-                      color: category.color,
+                      borderColor: category.color ? `${category.color}50` : undefined,
+                      color: category.color ?? undefined,
                     }
               }
             >

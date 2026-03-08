@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
-import { useEvents, EventData } from '@/hooks/useEvents';
 import { useCourseCards } from '@/hooks/useCourseCards';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
 import AboutSection from '@/components/AboutSection';
@@ -109,59 +108,12 @@ const Icons = {
   ),
 };
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function formatPrice(cents: number, currency: string): string {
-  if (cents === 0) return 'Free';
-  const symbol = currency?.toLowerCase() === 'gbp' ? '\u00a3' : currency?.toLowerCase() === 'eur' ? '\u20ac' : '$';
-  return `${symbol}${(cents / 100).toLocaleString()}`;
-}
-
-function formatDateRange(start: string, end: string | null): string {
-  const s = new Date(start);
-  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-  if (!end || start === end) return s.toLocaleDateString('en-GB', opts);
-  const e = new Date(end);
-  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
-    return `${s.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}\u2013${e.getDate()}, ${s.getFullYear()}`;
-  }
-  return `${s.toLocaleDateString('en-GB', opts)} \u2013 ${e.toLocaleDateString('en-GB', opts)}`;
-}
-
-function getDuration(event: EventData): string {
-  const days = event.event_template?.duration_days;
-  if (days) return `${days} day${days !== 1 ? 's' : ''}`;
-  if (event.start_date && event.end_date) {
-    const diff = Math.ceil((new Date(event.end_date).getTime() - new Date(event.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    return `${diff} day${diff !== 1 ? 's' : ''}`;
-  }
-  return '1 day';
-}
-
-function getEventType(event: EventData): string {
-  return event.event_type?.name || event.event_template?.event_types?.name || 'Event';
-}
-
-const typeColorMap: Record<string, string> = {
-  Course: '#004D4D',
-  Workshop: '#007A7A',
-  Masterclass: '#FF9715',
-};
-
-function getTypeColor(name: string): string {
-  return typeColorMap[name] || '#007A7A';
-}
-
 // ─── Main Component ─────────────────────────────────────────────────────────
 const Home: React.FC = () => {
   const isMobile = useIsMobile();
   const { settings } = useSiteSettings();
-  const { data: allEvents } = useEvents();
   const { data: courseCards } = useCourseCards();
   const [carouselIndex, setCarouselIndex] = React.useState(0);
-
-  const events = (allEvents || [])
-    .filter((e) => new Date(e.start_date) >= new Date())
-    .slice(0, 3);
 
   const courses = courseCards || [];
   const getVisibleCount = () => {

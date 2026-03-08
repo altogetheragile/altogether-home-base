@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { UserStory } from '@/hooks/useUserStories';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { StoryMetadataPanel } from './StoryMetadataPanel';
 import { ConfidenceLevelBadge } from './ConfidenceLevelBadge';
-import { ImpactEffortMatrix } from './ImpactEffortMatrix';
-import { DefinitionChecklistCard } from './DefinitionChecklistCard';
 import { calculateReadiness, calculateCompletion } from '@/utils/storyMetadata';
 import {
   Edit,

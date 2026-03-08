@@ -24,10 +24,6 @@ vi.mock('sonner', () => ({
 }));
 
 describe('useAIStoryGeneration', () => {
-  const mockSession = {
-    access_token: 'mock-token',
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     (supabase.auth.getUser as any).mockResolvedValue({

@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { 
-  CheckSquare, X, Eye, EyeOff, Trash2, Download, 
-  Star, Archive, Tag, FolderOpen, Layers 
+import {
+  CheckSquare, X, Eye, EyeOff, Trash2, Download,
+  Star, Archive, FolderOpen, Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -38,14 +37,13 @@ export const BulkOperationsPanel = ({
   onClearSelection
 }: BulkOperationsPanelProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<string>('');
   const [selectedValue, setSelectedValue] = useState<string>('');
 
   const { data: categories } = useKnowledgeCategories();
   const { data: planningFocuses } = usePlanningFocuses();
   const { data: domains } = useActivityDomains();
 
-  const handleAction = (action: string, value?: string) => {
+  const handleAction = (action: string, _value?: string) => {
     if (action === 'delete') {
       setShowDeleteConfirm(true);
       return;
@@ -60,20 +58,6 @@ export const BulkOperationsPanel = ({
   const handleAssignCategory = () => {
     if (!selectedValue) return;
     onBulkAction('assign_category', [selectedValue]);
-    setSelectedValue('');
-    onClearSelection();
-  };
-
-  const handleAssignLayer = () => {
-    if (!selectedValue) return;
-    onBulkAction('assign_layer', [selectedValue]);
-    setSelectedValue('');
-    onClearSelection();
-  };
-
-  const handleAssignDomain = () => {
-    if (!selectedValue) return;
-    onBulkAction('assign_domain', [selectedValue]);
     setSelectedValue('');
     onClearSelection();
   };
@@ -159,7 +143,7 @@ export const BulkOperationsPanel = ({
                       <div className="flex items-center gap-2">
                         <div 
                           className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: category.color }}
+                          style={{ backgroundColor: category.color ?? undefined }}
                         />
                         {category.name}
                       </div>
@@ -219,7 +203,7 @@ export const BulkOperationsPanel = ({
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: layer.color }}
+                        style={{ backgroundColor: layer.color ?? undefined }}
                       />
                       {layer.name}
                     </div>
@@ -238,7 +222,7 @@ export const BulkOperationsPanel = ({
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: domain.color }}
+                        style={{ backgroundColor: domain.color ?? undefined }}
                       />
                       {domain.name}
                     </div>

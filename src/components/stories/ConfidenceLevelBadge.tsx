@@ -1,7 +1,6 @@
-import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { getConfidenceLevelLabel, getConfidenceLevelColor } from '@/utils/storyMetadata';
+import { getConfidenceLevelLabel } from '@/utils/storyMetadata';
 
 interface ConfidenceLevelBadgeProps {
   level: number;
@@ -17,8 +16,6 @@ export function ConfidenceLevelBadge({
   variant = 'outline'
 }: ConfidenceLevelBadgeProps) {
   const label = getConfidenceLevelLabel(level);
-  const colorClass = getConfidenceLevelColor(level);
-  
   const getIcon = () => {
     if (level >= 4) return <TrendingUp className="h-3 w-3" />;
     if (level <= 2) return <TrendingDown className="h-3 w-3" />;

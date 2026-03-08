@@ -52,7 +52,7 @@ export const useKnowledgeMediaMutations = () => {
         description: "Media updated successfully"
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update media",

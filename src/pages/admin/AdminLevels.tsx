@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useLevels } from '@/hooks/useLevels';
 import { useCreateLevel, useUpdateLevel, useDeleteLevel } from '@/hooks/useLevelMutations';

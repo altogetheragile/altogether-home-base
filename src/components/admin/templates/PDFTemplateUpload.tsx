@@ -140,12 +140,10 @@ const handleSubmit = async (event: React.FormEvent) => {
 
     try {
       let publicUrl: string;
-      let uploadedPath: string;
-      
+
       if (pendingUpload) {
         // Use already uploaded file
         publicUrl = pendingUpload.publicUrl;
-        uploadedPath = pendingUpload.uploadedUrl;
       } else {
         // Upload new file
         const fileExt = file!.name.split('.').pop();
@@ -168,13 +166,12 @@ const handleSubmit = async (event: React.FormEvent) => {
           .getPublicUrl(uploadData.path);
           
         publicUrl = newPublicUrl;
-        uploadedPath = uploadData.path;
       }
 
       // Validate and prepare template data
       const templateData = {
         title: formData.title.trim(),
-        description: formData.description?.trim() || null,
+        description: formData.description?.trim() || undefined,
         template_type: 'worksheet' as const, // Default to worksheet for PDF uploads
         file_format: 'pdf' as const,
         is_public: true,
@@ -453,7 +450,7 @@ const handleSubmit = async (event: React.FormEvent) => {
       <VersionConflictDialog
         open={versionConflictOpen}
         onOpenChange={setVersionConflictOpen}
-        existingTemplate={existingTemplate}
+        existingTemplate={existingTemplate ? { title: existingTemplate.title, version: existingTemplate.version ?? '' } : null}
         suggestedVersion={suggestedVersion || '1.1'}
         customVersion={customVersion}
         onCustomVersionChange={setCustomVersion}

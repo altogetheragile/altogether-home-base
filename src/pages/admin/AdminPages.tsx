@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { usePages } from '@/hooks/usePages';
 import { Button } from '@/components/ui/button';

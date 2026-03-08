@@ -3,15 +3,12 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { knowledgeItemSchema, knowledgeItemDefaults, type KnowledgeItemFormData } from '@/schemas/knowledgeItem';
-import { useCreateKnowledgeItem, useUpdateKnowledgeItem, type KnowledgeItem } from '@/hooks/useKnowledgeItems';
+import { useCreateKnowledgeItem, useUpdateKnowledgeItem, type KnowledgeItem, type KnowledgeItemInput } from '@/hooks/useKnowledgeItems';
 import { useToast } from '@/hooks/use-toast';
-import { useDebounce } from '@/hooks/useDebounce';
 
 // Import layout components
 import { CompactHeader } from './editor/CompactHeader';
 import { VerticalStepper } from './editor/VerticalStepper';
-import { BottomNavigationBar } from './editor/BottomNavigationBar';
-import { LivePreviewPanel } from './editor/LivePreviewPanel';
 import { KnowledgeBreadcrumb } from './editor/KnowledgeBreadcrumb';
 
 // Import section components
@@ -100,7 +97,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [isCompactMode, setIsCompactMode] = useState(false);
   const [stepperCollapsed, setStepperCollapsed] = useState(false);
-  const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
   const [userIsTyping, setUserIsTyping] = useState(false);
   const [formInitialized, setFormInitialized] = useState(false);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
@@ -110,13 +106,12 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const updateMutation = useUpdateKnowledgeItem();
 
   // Data for dropdowns with error handling and retry
-  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useKnowledgeCategories();
-  const { data: planningFocuses = [], isLoading: focusesLoading, error: focusesError, refetch: refetchFocuses } = usePlanningFocuses();
-  const { data: domains = [], isLoading: domainsLoading, error: domainsError, refetch: refetchDomains } = useActivityDomains();
+  const { error: categoriesError, refetch: refetchCategories } = useKnowledgeCategories();
+  const { error: focusesError, refetch: refetchFocuses } = usePlanningFocuses();
+  const { error: domainsError, refetch: refetchDomains } = useActivityDomains();
 
   // Network error handling
   const hasNetworkErrors = categoriesError || focusesError || domainsError;
-  const isLoadingDropdownData = categoriesLoading || focusesLoading || domainsLoading;
 
   // Form setup with proper type
   const formDefaults = {
@@ -133,7 +128,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     mode: 'onChange',
   });
 
-  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   // Initialize form with existing data - only on first load or significant changes
   useEffect(() => {
@@ -235,7 +229,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     }
 
     // Prevent auto-save if we just saved recently (cooldown period)
-    if (lastAutoSave && Date.now() - lastAutoSave.getTime() < 2000) {
+    if (lastAutoSave && Date.now() - lastAutoSave!.getTime() < 2000) {
       return;
     }
 
@@ -243,10 +237,13 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       setAutoSaveStatus('saving');
       setLastAutoSave(new Date());
       
-      await updateMutation.mutateAsync({
-        id: knowledgeItem.id,
-        ...data,
-      });
+      if (knowledgeItem) {
+        await updateMutation.mutateAsync({
+          id: knowledgeItem!.id,
+          ...data,
+          primary_publication_id: data.primary_publication_id ?? undefined,
+        } as KnowledgeItemInput & { id: string });
+      }
       
       setLastSaved(new Date());
       setAutoSaveStatus('saved');
@@ -302,18 +299,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     setCurrentStep(step);
   };
 
-  const handleNext = () => {
-    if (currentStep < stepConfigs.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
   // Save handler with improved error handling and debugging
   const handleSave = async (shouldNavigateAway = false) => {
     const isValid = await form.trigger();
@@ -333,6 +318,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
         await updateMutation.mutateAsync({
           id: knowledgeItem.id,
           ...data,
+          primary_publication_id: data.primary_publication_id ?? undefined,
         });
       } else {
         await createMutation.mutateAsync(data);

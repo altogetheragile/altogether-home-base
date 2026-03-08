@@ -13,9 +13,9 @@ interface UnifiedContentCardProps {
   onAction?: (action: string, content: UnifiedContent) => void;
 }
 
-export const UnifiedContentCard: React.FC<UnifiedContentCardProps> = ({ 
-  content, 
-  onAction 
+export const UnifiedContentCard: React.FC<UnifiedContentCardProps> = ({
+  content,
+  onAction: _onAction
 }) => {
   // Determine the primary color for the content type
   const getPrimaryColor = () => {

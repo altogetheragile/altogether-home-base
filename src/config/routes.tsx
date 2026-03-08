@@ -1,9 +1,8 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Route } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { featureFlags } from './featureFlags';
-import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { SiteSettingsRouteGuard } from '@/components/SiteSettingsRouteGuard';
 
 // ============= Loading Fallback Components =============
@@ -76,7 +75,6 @@ const CreateKnowledgeUseCase = lazy(() => import('@/pages/admin/CreateKnowledgeU
 const CreateKnowledgeTemplate = lazy(() => import('@/pages/admin/CreateKnowledgeTemplate'));
 const AdminTaxonomy = lazy(() => import('@/pages/admin/AdminTaxonomy'));
 const AdminKnowledgeAnalyticsRoute = lazy(() => import('@/pages/admin/AdminKnowledgeAnalyticsRoute'));
-const AdminKnowledgeTemplates = lazy(() => import('@/pages/admin/AdminKnowledgeTemplates'));
 const AdminKnowledgeImport = lazy(() => import('@/pages/admin/AdminKnowledgeImport'));
 const PreviewPage = lazy(() => import('@/components/admin/knowledge/PreviewPage').then(m => ({ default: m.PreviewPage })));
 

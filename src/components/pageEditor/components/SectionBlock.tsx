@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
 import { ButtonRenderer } from './ButtonRenderer';
-import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
-import { useDynamicFontSize, getTitleSpacing } from '../../../hooks/useDynamicFontSize';
+import { SafeText, isNonEmptyString } from '@/lib/safe';
+import { useDynamicFontSize } from '../../../hooks/useDynamicFontSize';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 
 interface SectionBlockProps {

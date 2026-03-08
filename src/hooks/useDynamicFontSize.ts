@@ -4,7 +4,6 @@ const calculateResponsiveFontSize = (pixelSize: number): string => {
   if (pixelSize && pixelSize > 0) {
     // More aggressive mobile scaling: mobile (35%), tablet (65%), desktop (100%)
     const mobileSize = Math.max(14, Math.round(pixelSize * 0.35));
-    const tabletSize = Math.max(18, Math.round(pixelSize * 0.65));
     return `clamp(${mobileSize}px, ${Math.round(pixelSize / 24)}rem + 1vw, ${pixelSize}px)`;
   }
   return '';

@@ -1,8 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useFormContext } from 'react-hook-form';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Palette, Eye, X, GripVertical, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { TemplateSelectionDialog } from '../TemplateSelectionDialog';
@@ -17,7 +16,6 @@ interface TemplatesSectionProps {
 }
 
 export const TemplatesSection = ({ knowledgeItemId }: TemplatesSectionProps) => {
-  const form = useFormContext();
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<KnowledgeTemplate | null>(null);

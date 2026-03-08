@@ -13,19 +13,10 @@ import { useCanvasRealtime } from '@/hooks/canvas/useCanvasRealtime';
 import { useDebounceCanvas } from '@/hooks/useDebounceCanvas';
 import { Button } from '@/components/ui/button';
 import { Toolbar } from './Toolbar';
-import { 
-  Plus, 
-  Building2, 
-  FileText, 
-  StickyNote,
-  ZoomIn,
-  ZoomOut,
-  Maximize,
-  Download,
+import {
   ArrowLeft
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 
 interface ProjectCanvasProps {
   projectId: string;
@@ -103,7 +94,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   }, [canvas, isLoading, projectId]); // Removed createCanvas from dependency array
 
   // Real-time collaboration
-  const { isConnected, activeUsers } = useCanvasRealtime({
+  useCanvasRealtime({
     canvasId: canvas?.id || '',
     onDataChange: (data: CanvasData) => {
       setCanvasData(data);

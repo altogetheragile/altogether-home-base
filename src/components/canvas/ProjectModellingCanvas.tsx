@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Save } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
@@ -317,7 +317,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     toast.success(`Added ${itemData.name || 'Knowledge Item'}`);
   }, [elements, updateElementsWithHistory]);
 
-  const handleAddPlanningFocus = useCallback((focusId: string, focusData: any) => {
+  const handleAddPlanningFocus = useCallback((_focusId: string, focusData: Record<string, unknown>) => {
     const newElement: CanvasElement = {
       id: crypto.randomUUID(),
       type: 'planning-focus',
@@ -443,7 +443,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   }, [selectedElementIds, elements]);
 
   // Handle group movement when dragging a selected element ends
-  const handleGroupMove = useCallback((draggedId: string, delta: { dx: number; dy: number }) => {
+  const handleGroupMove = useCallback((_draggedId: string, delta: { dx: number; dy: number }) => {
     setIsDraggingGroup(false);
     setGroupDragDelta({ dx: 0, dy: 0 });
     

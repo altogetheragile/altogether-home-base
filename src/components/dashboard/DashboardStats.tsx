@@ -1,19 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CheckCircle2, FolderKanban, TrendingUp } from "lucide-react";
-import { useUserRegistrations } from "@/hooks/useUserRegistrations";
-import { useProjects } from "@/hooks/useProjects";
+import { useUserRegistrations, UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
+import { useProjects, Project } from "@/hooks/useProjects";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const DashboardStats = () => {
-  const { data: registrations = [], isLoading: registrationsLoading } = useUserRegistrations();
-  const { data: projects = [], isLoading: projectsLoading } = useProjects();
+  const { data: registrations = [] as UserRegistrationWithEvent[], isLoading: registrationsLoading } = useUserRegistrations();
+  const { data: projects = [] as Project[], isLoading: projectsLoading } = useProjects();
 
-  const upcomingEvents = registrations.filter(
-    (reg) => reg.event && new Date(reg.event.start_date) > new Date()
+  const upcomingEvents = (registrations as UserRegistrationWithEvent[]).filter(
+    (reg: UserRegistrationWithEvent) => reg.event && new Date(reg.event.start_date) > new Date()
   );
 
-  const paidRegistrations = registrations.filter(
-    (reg) => reg.payment_status === 'paid'
+  const paidRegistrations = (registrations as UserRegistrationWithEvent[]).filter(
+    (reg: UserRegistrationWithEvent) => reg.payment_status === 'paid'
   );
 
   const stats = [

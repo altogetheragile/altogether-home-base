@@ -34,7 +34,7 @@ export const usePageMutations = () => {
         .single();
 
       if (error) throw error;
-      return result;
+      return result as unknown as Page;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pages'] });
@@ -43,7 +43,7 @@ export const usePageMutations = () => {
         description: 'Page created successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to create page',
@@ -66,7 +66,7 @@ export const usePageMutations = () => {
         .single();
 
       if (error) throw error;
-      return result;
+      return result as unknown as Page;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pages'] });
@@ -77,7 +77,7 @@ export const usePageMutations = () => {
         description: 'Page updated successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to update page',
@@ -102,7 +102,7 @@ export const usePageMutations = () => {
         description: 'Page deleted successfully',
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to delete page',

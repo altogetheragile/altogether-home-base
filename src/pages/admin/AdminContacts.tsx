@@ -94,7 +94,7 @@ const AdminContacts = () => {
                   {contacts.map((contact) => (
                     <TableRow key={contact.id}>
                       <TableCell className="text-sm">
-                        {format(new Date(contact.submitted_at), "MMM dd, yyyy HH:mm")}
+                        {contact.submitted_at ? format(new Date(contact.submitted_at), "MMM dd, yyyy HH:mm") : '-'}
                       </TableCell>
                       <TableCell className="font-medium">{contact.full_name}</TableCell>
                       <TableCell>
@@ -103,7 +103,7 @@ const AdminContacts = () => {
                         </a>
                       </TableCell>
                       <TableCell>{contact.phone || "-"}</TableCell>
-                      <TableCell>{getEnquiryTypeBadge(contact.enquiry_type)}</TableCell>
+                      <TableCell>{getEnquiryTypeBadge(contact.enquiry_type ?? 'general')}</TableCell>
                       <TableCell className="max-w-xs truncate">{contact.subject}</TableCell>
                       <TableCell className="max-w-xs truncate">{contact.message}</TableCell>
                       <TableCell>
@@ -122,10 +122,10 @@ const AdminContacts = () => {
                           "-"
                         )}
                       </TableCell>
-                      <TableCell>{getStatusBadge(contact.status)}</TableCell>
+                      <TableCell>{getStatusBadge(contact.status ?? 'new')}</TableCell>
                       <TableCell>
                         <Select
-                          value={contact.status}
+                          value={contact.status ?? undefined}
                           onValueChange={(value) =>
                             updateStatusMutation.mutate({ id: contact.id, status: value })
                           }

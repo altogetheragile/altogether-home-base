@@ -163,7 +163,7 @@ export const useEventForm = () => {
       });
       navigate('/admin/events');
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error creating event",
         description: "Please try again or contact support.",

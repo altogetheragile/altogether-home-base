@@ -12,7 +12,7 @@ export const usePages = () => {
         .order('title');
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as Page[];
     },
   });
 };
@@ -45,14 +45,14 @@ export const usePage = (slug: string) => {
       if (blocksError) {
 
         // Return page with empty blocks rather than failing
-        return { ...pageData, content_blocks: [] };
+        return { ...pageData, content_blocks: [] } as unknown as PageWithBlocks;
       }
 
       // Combine and return
       return {
         ...pageData,
-        content_blocks: (blocksData || []) as any
-      };
+        content_blocks: (blocksData || []) as unknown as PageWithBlocks['content_blocks']
+      } as unknown as PageWithBlocks;
     },
     enabled: !!slug,
   });
@@ -85,13 +85,13 @@ export const usePageById = (id: string) => {
 
       if (blocksError) {
 
-        return { ...pageData, content_blocks: [] };
+        return { ...pageData, content_blocks: [] } as unknown as PageWithBlocks;
       }
 
       return {
         ...pageData,
-        content_blocks: (blocksData || []) as any
-      };
+        content_blocks: (blocksData || []) as unknown as PageWithBlocks['content_blocks']
+      } as unknown as PageWithBlocks;
     },
     enabled: !!id,
   });

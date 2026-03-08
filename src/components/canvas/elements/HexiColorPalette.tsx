@@ -47,14 +47,14 @@ export const HexiColorPalette: React.FC<HexiColorPaletteProps> = ({
         <div className="space-y-2">
           <Label className="text-sm font-medium">Domain Colors</Label>
           <div className="grid grid-cols-6 gap-2">
-            {domains.map((domain) => (
+            {domains.filter((domain) => domain.color != null).map((domain) => (
               <button
                 key={domain.id}
-                onClick={() => onColorChange(domain.color)}
+                onClick={() => onColorChange(domain.color!)}
                 className="relative w-10 h-10 rounded-md border-2 transition-all hover:scale-110"
                 style={{
-                  backgroundColor: domain.color,
-                  borderColor: selectedColor === domain.color ? domain.color : 'transparent',
+                  backgroundColor: domain.color ?? undefined,
+                  borderColor: selectedColor === domain.color ? (domain.color ?? undefined) : 'transparent',
                 }}
                 title={domain.name}
               >

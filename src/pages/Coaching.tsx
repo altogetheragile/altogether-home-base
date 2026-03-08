@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { supabase } from '@/integrations/supabase/client';

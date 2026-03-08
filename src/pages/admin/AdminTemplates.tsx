@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, FileText, Download, Trash2, Edit } from 'lucide-react';
+import { Plus, FileText, Download, Trash2 } from 'lucide-react';
 import { useKnowledgeTemplates } from '@/hooks/useKnowledgeTemplates';
 import SearchAndFilter from '@/components/admin/SearchAndFilter';
 import BulkOperations from '@/components/admin/BulkOperations';
-import { TemplateAssetUpload } from '@/components/admin/templates/TemplateAssetUpload';
 import { PDFViewer } from '@/components/admin/templates/PDFViewer';
 import { usePDFTemplateOperations } from '@/hooks/usePDFTemplateOperations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutations';
-import { toast } from 'sonner';
 
 const AdminTemplates = () => {
   const navigate = useNavigate();
@@ -29,8 +25,6 @@ const AdminTemplates = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'pdf' | 'canvas' | 'matrix' | 'worksheet' | 'process' | 'form'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'alphabetical'>('newest');
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
-
   // Filter and sort templates
   const filteredTemplates = templates
     .filter(template => {
@@ -54,10 +48,6 @@ const AdminTemplates = () => {
           return 0;
       }
     });
-
-  const handleUploadSuccess = () => {
-    setShowUploadDialog(false);
-  };
 
   const formatFileSize = (bytes: number) => {
     const mb = bytes / (1024 * 1024);

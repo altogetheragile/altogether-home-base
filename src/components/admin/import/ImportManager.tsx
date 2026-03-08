@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Eye, Trash2, Download, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Upload, Eye, Trash2, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useDataImports, useDeleteDataImport, DataImport } from '@/hooks/useDataImports';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';

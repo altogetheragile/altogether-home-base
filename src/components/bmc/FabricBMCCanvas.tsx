@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Canvas as FabricCanvas, Rect, Textbox, IText } from 'fabric';
-import { toast } from 'sonner';
 
 // Simple color interface for Fabric.js
 interface FabricColors {
@@ -131,7 +130,7 @@ const FabricBMCCanvas = forwardRef<FabricBMCCanvasRef, FabricBMCCanvasProps>(({
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
-  const [sections, setSections] = useState<Record<string, { rect: Rect; title: IText; content: Textbox }>>({});
+  const [_sections, setSections] = useState<Record<string, { rect: Rect; title: IText; content: Textbox }>>({});
   const [colors, setColors] = useState<FabricColors>(getSimpleFabricColors());
 
   useEffect(() => {

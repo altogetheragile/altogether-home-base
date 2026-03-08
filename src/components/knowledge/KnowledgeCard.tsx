@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { KnowledgeItem } from "@/hooks/useKnowledgeItems";
 import { Eye, Heart, MessageCircle, ChevronRight, Pencil } from "lucide-react";
@@ -76,10 +75,10 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
               key={category.id}
               variant="secondary"
               className="text-xs"
-              style={{ 
-                backgroundColor: `${category.color}20`,
-                color: category.color,
-                borderColor: `${category.color}30`
+              style={{
+                backgroundColor: category.color ? `${category.color}20` : undefined,
+                color: category.color ?? undefined,
+                borderColor: category.color ? `${category.color}30` : undefined
               }}
             >
               {category.name}
@@ -92,8 +91,8 @@ export const KnowledgeCard = React.memo(({ item }: KnowledgeCardProps) => {
               variant="outline"
               className="text-xs"
               style={{
-                borderColor: domain.color,
-                color: domain.color
+                borderColor: domain.color ?? undefined,
+                color: domain.color ?? undefined
               }}
             >
               {domain.name}

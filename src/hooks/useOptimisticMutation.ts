@@ -44,7 +44,7 @@ export const useOptimisticMutation = <TData, TVariables>({
       });
       onSuccessCallback?.(data);
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
       }

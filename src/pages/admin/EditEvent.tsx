@@ -154,7 +154,7 @@ const EditEvent = () => {
       });
       navigate('/admin/events');
     },
-    onError: (error) => {
+    onError: (_error) => {
       toast({
         title: "Error updating event",
         description: "Please try again or contact support.",

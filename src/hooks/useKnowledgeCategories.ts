@@ -51,7 +51,7 @@ export const useCreateKnowledgeCategory = () => {
         description: "Category created successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to create category",
@@ -84,7 +84,7 @@ export const useUpdateKnowledgeCategory = () => {
         description: "Category updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to update category",
@@ -114,7 +114,7 @@ export const useDeleteKnowledgeCategory = () => {
         description: "Category deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete category",

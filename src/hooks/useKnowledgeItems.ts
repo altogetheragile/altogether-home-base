@@ -622,7 +622,7 @@ export const useCreateKnowledgeItem = () => {
         
         // Execute all junction inserts in parallel
         if (junctionInserts.length > 0) {
-          const results = await Promise.all(junctionInserts);
+          await Promise.all(junctionInserts);
           // Junction insert errors are non-fatal
         }
         
@@ -723,7 +723,7 @@ export const useUpdateKnowledgeItem = () => {
                       rationale: dlId === primary_decision_level_id ? decision_level_rationale : null,
                     }))
                   )
-                : Promise.resolve({ error: null })
+                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
             )
           );
         }
@@ -740,7 +740,7 @@ export const useUpdateKnowledgeItem = () => {
                       rationale: catId === primary_category_id ? category_rationale : null,
                     }))
                   )
-                : Promise.resolve({ error: null })
+                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
             )
           );
         }
@@ -757,7 +757,7 @@ export const useUpdateKnowledgeItem = () => {
                       rationale: domId === primary_domain_id ? domain_rationale : null,
                     }))
                   )
-                : Promise.resolve({ error: null })
+                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
             )
           );
         }
@@ -769,7 +769,7 @@ export const useUpdateKnowledgeItem = () => {
                 ? supabase.from('knowledge_item_tags').insert(
                     tag_ids.map(tagId => ({ knowledge_item_id: id, tag_id: tagId }))
                   )
-                : Promise.resolve({ error: null })
+                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
             )
           );
         }
@@ -872,7 +872,7 @@ export const useDeleteKnowledgeItem = () => {
         description: "Knowledge item deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: "Error",
         description: "Failed to delete knowledge item",

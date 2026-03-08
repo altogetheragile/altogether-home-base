@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ContentBlock } from '@/types/page';
-import { SafeText, textOrEmpty, isNonEmptyString } from '@/lib/safe';
+import { textOrEmpty, isNonEmptyString } from '@/lib/safe';
 import { useDynamicFontSize } from '../../../hooks/useDynamicFontSize';
 import { getHeightClass, getBackgroundStyles, getInlineStyles, getStyleClasses } from '../utils/backgroundUtils';
 

@@ -5,7 +5,7 @@ import { Plus, FolderOpen } from 'lucide-react';
 import { useProjects, useProjectMutations, Project } from '@/hooks/useProjects';
 import { ProjectCard } from './ProjectCard';
 import { ProjectDialog } from './ProjectDialog';
-import { Navigate, useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,

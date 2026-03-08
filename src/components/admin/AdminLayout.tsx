@@ -1,9 +1,8 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, Target, FileImage, LayoutDashboard, Footprints, MessageSquare, Database, ExternalLink, FileText } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, LayoutDashboard, Footprints, MessageSquare, Database, ExternalLink, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import AccessDenied from '@/components/AccessDenied';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const AdminLayout = () => {
@@ -311,7 +310,7 @@ const AdminLayout = () => {
               <div className="flex gap-2">
                 {(() => {
                   // Get items for active tab
-                  let itemsToRender = [];
+                  let itemsToRender: typeof eventsItems = [];
                   
                   if (activeTab === 'events') {
                     itemsToRender = eventsItems;
