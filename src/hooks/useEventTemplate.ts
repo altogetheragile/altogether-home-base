@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { EventData } from './useEvents';
+import { mapEventData } from '@/utils/mapEventData';
 
 export const useEventTemplate = (templateId: string) => {
   return useQuery({
@@ -36,45 +36,43 @@ export const useEventTemplate = (templateId: string) => {
       if (!data) throw new Error('Course not found');
 
       // Map to EventData shape (unscheduled — no start_date, no instructor, no location)
-      const mapped: EventData = {
+      return mapEventData({
         id: data.id,
         title: data.title,
-        description: (data as any).description || null,
+        description: data.description,
         start_date: '',
         end_date: null,
         is_published: true,
         price_cents: 0,
         currency: 'gbp',
-        event_type: (data.event_types as any) || null,
-        category: (data.event_categories as any) || null,
-        level: (data.levels as any) || null,
-        format: (data.formats as any) || null,
-        instructor: null,
-        location: null,
-        event_template: {
+        event_types: data.event_types,
+        event_categories: data.event_categories,
+        levels: data.levels,
+        formats: data.formats,
+        instructors: null,
+        locations: null,
+        event_templates: {
           id: data.id,
           title: data.title,
           created_at: '',
           duration_days: data.duration_days,
-          brand_color: (data as any).brand_color,
-          icon_name: (data as any).icon_name,
-          hero_image_url: (data as any).hero_image_url,
-          banner_template: (data as any).banner_template,
-          learning_outcomes: (data as any).learning_outcomes,
-          prerequisites: (data as any).prerequisites,
-          target_audience: (data as any).target_audience,
-          key_benefits: (data as any).key_benefits,
-          template_tags: (data as any).template_tags,
-          difficulty_rating: (data as any).difficulty_rating,
-          popularity_score: (data as any).popularity_score,
-          event_types: (data.event_types as any) || null,
-          formats: (data.formats as any) || null,
-          levels: (data.levels as any) || null,
-          categories: (data.event_categories as any) || null,
+          brand_color: data.brand_color,
+          icon_name: data.icon_name,
+          hero_image_url: data.hero_image_url,
+          banner_template: data.banner_template,
+          learning_outcomes: data.learning_outcomes,
+          prerequisites: data.prerequisites,
+          target_audience: data.target_audience,
+          key_benefits: data.key_benefits,
+          template_tags: data.template_tags,
+          difficulty_rating: data.difficulty_rating,
+          popularity_score: data.popularity_score,
+          event_types: data.event_types,
+          formats: data.formats,
+          levels: data.levels,
+          event_categories: data.event_categories,
         },
-      };
-
-      return mapped;
+      } as never);
     },
     enabled: !!templateId,
   });

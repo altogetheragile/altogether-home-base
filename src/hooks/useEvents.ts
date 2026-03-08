@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { mapEventData } from '@/utils/mapEventData';
 
 export interface EventData {
   id: string;
@@ -114,46 +115,7 @@ export const useEvents = () => {
         throw error;
       }
 
-      // Map the data to transform arrays to single objects
-      const mappedData: EventData[] = (data || []).map(event => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        start_date: event.start_date,
-        end_date: event.end_date,
-        is_published: event.is_published ?? false,
-        price_cents: event.price_cents || 0,
-        currency: event.currency || 'usd',
-        event_type: (event.event_types as any) || null,
-        category: (event.event_categories as any) || null,
-        level: (event.levels as any) || null,
-        format: (event.formats as any) || null,
-        instructor: (event.instructors as any) || null,
-        location: (event.locations as any) || null,
-        event_template: event.event_templates ? {
-          id: (event.event_templates as any).id,
-          title: (event.event_templates as any).title,
-          created_at: (event.event_templates as any).created_at,
-          duration_days: (event.event_templates as any).duration_days,
-          brand_color: (event.event_templates as any).brand_color,
-          icon_name: (event.event_templates as any).icon_name,
-          hero_image_url: (event.event_templates as any).hero_image_url,
-          banner_template: (event.event_templates as any).banner_template,
-          learning_outcomes: (event.event_templates as any).learning_outcomes,
-          prerequisites: (event.event_templates as any).prerequisites,
-          target_audience: (event.event_templates as any).target_audience,
-          key_benefits: (event.event_templates as any).key_benefits,
-          template_tags: (event.event_templates as any).template_tags,
-          difficulty_rating: (event.event_templates as any).difficulty_rating,
-          popularity_score: (event.event_templates as any).popularity_score,
-          event_types: (event.event_templates as any).event_types || null,
-          formats: (event.event_templates as any).formats || null,
-          levels: (event.event_templates as any).levels || null,
-          categories: (event.event_templates as any).event_categories || null,
-        } : null,
-      }));
-
-      return mappedData;
+      return (data || []).map(event => mapEventData(event as never));
     },
   });
 };
