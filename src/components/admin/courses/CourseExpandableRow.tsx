@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -16,9 +16,10 @@ interface CourseExpandableRowProps {
   onToggle: () => void;
   onDelete: (id: string) => void;
   onAddDate: (id: string) => void;
+  onTogglePublish: (id: string, isPublished: boolean) => void;
 }
 
-const CourseExpandableRow = ({ course, isExpanded, onToggle, onDelete, onAddDate }: CourseExpandableRowProps) => {
+const CourseExpandableRow = ({ course, isExpanded, onToggle, onDelete, onAddDate, onTogglePublish }: CourseExpandableRowProps) => {
   const nextDateFormatted = course.next_date
     ? (() => {
         try { return format(new Date(course.next_date), 'MMM dd, yyyy'); } catch { return '—'; }
@@ -39,6 +40,16 @@ const CourseExpandableRow = ({ course, isExpanded, onToggle, onDelete, onAddDate
         <TableCell><CourseStatusBadge status={course.status} /></TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onTogglePublish(course.id, !course.is_published); }}>
+                    {course.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{course.is_published ? 'Unpublish' : 'Publish'}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

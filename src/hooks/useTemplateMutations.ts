@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 export interface TemplateData {
   title: string;
   description?: string;
+  short_description?: string | null;
+  is_published?: boolean;
   duration_days: number;
   default_location_id?: string;
   default_instructor_id?: string;

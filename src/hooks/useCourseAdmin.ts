@@ -23,6 +23,8 @@ export interface CourseAdminItem {
   id: string;
   title: string;
   description: string | null;
+  short_description: string | null;
+  is_published: boolean;
   duration_days: number;
   event_type_id: string | null;
   category_id: string | null;
@@ -46,18 +48,16 @@ export interface CourseAdminItem {
   status: 'draft' | 'published' | 'scheduled';
 }
 
-function computeStatus(events: CourseEvent[]): 'draft' | 'published' | 'scheduled' {
-  if (!events || events.length === 0) return 'draft';
+function computeStatus(isPublished: boolean, events: CourseEvent[]): 'draft' | 'published' | 'scheduled' {
+  if (!isPublished) return 'draft';
 
   const now = new Date();
-  const hasPublished = events.some(e => e.is_published);
   const hasFuturePublished = events.some(
     e => e.is_published && e.start_date && new Date(e.start_date) > now
   );
 
   if (hasFuturePublished) return 'scheduled';
-  if (hasPublished) return 'published';
-  return 'draft';
+  return 'published';
 }
 
 function computeNextDate(events: CourseEvent[]): string | null {
@@ -100,7 +100,7 @@ export const useCourseAdmin = () => {
           events,
           event_count: events.length,
           next_date: computeNextDate(events),
-          status: computeStatus(events),
+          status: computeStatus(!!template.is_published, events),
         };
       });
     },

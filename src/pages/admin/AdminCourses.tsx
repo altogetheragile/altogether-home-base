@@ -18,7 +18,7 @@ type SortDir = 'asc' | 'desc';
 
 const AdminCourses = () => {
   const { data: courses = [], isLoading } = useCourseAdmin();
-  const { deleteTemplate, invalidate } = useCourseAdminMutations();
+  const { updateTemplate, deleteTemplate, invalidate } = useCourseAdminMutations();
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
@@ -78,6 +78,11 @@ const AdminCourses = () => {
     await deleteTemplate.mutateAsync(deleteId);
     invalidate();
     setDeleteId(null);
+  };
+
+  const handleTogglePublish = async (id: string, isPublished: boolean) => {
+    await updateTemplate.mutateAsync({ id, data: { is_published: isPublished } });
+    invalidate();
   };
 
   const handleCreated = (id: string) => {
@@ -167,6 +172,7 @@ const AdminCourses = () => {
                   onToggle={() => toggleExpand(course.id)}
                   onDelete={setDeleteId}
                   onAddDate={setAddDateForId}
+                  onTogglePublish={handleTogglePublish}
                 />
               ))}
             </TableBody>

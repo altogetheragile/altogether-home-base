@@ -25,10 +25,9 @@ const CreateCourseSheet = ({ open, onOpenChange, onCreated }: CreateCourseSheetP
 
   const [form, setForm] = useState({
     title: '',
-    description: '',
+    short_description: '',
     event_type_id: '',
     category_id: '',
-    is_published: false,
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,14 +37,14 @@ const CreateCourseSheet = ({ open, onOpenChange, onCreated }: CreateCourseSheetP
     try {
       const result = await createTemplate.mutateAsync({
         title: form.title,
-        description: form.description || undefined,
+        short_description: form.short_description || null,
         duration_days: 1,
         ...({ event_type_id: form.event_type_id || undefined } as any),
         ...({ category_id: form.category_id || undefined } as any),
       });
       invalidate();
       onOpenChange(false);
-      setForm({ title: '', description: '', event_type_id: '', category_id: '', is_published: false });
+      setForm({ title: '', short_description: '', event_type_id: '', category_id: '' });
       if (result?.id && onCreated) onCreated(result.id);
     } finally {
       setSubmitting(false);
@@ -70,14 +69,18 @@ const CreateCourseSheet = ({ open, onOpenChange, onCreated }: CreateCourseSheetP
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Description</Label>
+          <div className="space-y-1">
+            <Label>Short description</Label>
             <Textarea
-              value={form.description}
-              onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
+              value={form.short_description}
+              onChange={(e) => setForm(prev => ({ ...prev, short_description: e.target.value.slice(0, 200) }))}
               rows={3}
-              placeholder="Brief description..."
+              placeholder="1-2 sentence summary for the listing page..."
             />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Shown on the course listing page. Keep it to 1-2 sentences.</span>
+              <span>{form.short_description.length} / 200</span>
+            </div>
           </div>
 
           <div className="space-y-2">

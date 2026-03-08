@@ -13,6 +13,7 @@ interface CourseContentTabProps {
 }
 
 interface ContentForm {
+  short_description: string;
   description: string;
   learning_outcomes: string[];
   key_benefits: string[];
@@ -25,6 +26,7 @@ const CourseContentTab = ({ course }: CourseContentTabProps) => {
   const { updateTemplate, invalidate } = useCourseAdminMutations();
 
   const [form, setForm] = useState<ContentForm>({
+    short_description: course.short_description || '',
     description: course.description || '',
     learning_outcomes: course.learning_outcomes || [],
     key_benefits: course.key_benefits || [],
@@ -35,6 +37,7 @@ const CourseContentTab = ({ course }: CourseContentTabProps) => {
 
   useEffect(() => {
     setForm({
+      short_description: course.short_description || '',
       description: course.description || '',
       learning_outcomes: course.learning_outcomes || [],
       key_benefits: course.key_benefits || [],
@@ -50,6 +53,7 @@ const CourseContentTab = ({ course }: CourseContentTabProps) => {
       await updateTemplate.mutateAsync({
         id: course.id,
         data: {
+          short_description: data.short_description || null,
           description: data.description || undefined,
           ...({ learning_outcomes: data.learning_outcomes } as any),
           ...({ key_benefits: data.key_benefits } as any),
@@ -115,13 +119,27 @@ const CourseContentTab = ({ course }: CourseContentTabProps) => {
         <Button variant="outline" size="sm" onClick={saveNow}>Save</Button>
       </div>
 
+      <div className="space-y-1">
+        <Label>Short Description</Label>
+        <Textarea
+          value={form.short_description}
+          onChange={(e) => setForm(prev => ({ ...prev, short_description: e.target.value.slice(0, 200) }))}
+          rows={3}
+          placeholder="1-2 sentence summary for the listing page..."
+        />
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Shown on the course listing page. Keep it to 1-2 sentences.</span>
+          <span>{form.short_description.length} / 200</span>
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label>Description</Label>
         <Textarea
           value={form.description}
           onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
           rows={4}
-          placeholder="Course description..."
+          placeholder="Full course description..."
         />
       </div>
 

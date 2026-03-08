@@ -155,9 +155,9 @@ const FALLBACK_COURSES: CourseItem[] = [
   },
 ];
 
-// ─── Data hooks ─────────────────────────────────────────────────────────────
+// ─── Data hook ──────────────────────────────────────────────────────────────
 
-// Fetch course catalogue from event_templates
+// Fetch course catalogue from event_templates with nested events for date enrichment
 const useCoursesCatalogue = () => {
   return useQuery({
     queryKey: ['courses-catalogue'],
@@ -165,30 +165,16 @@ const useCoursesCatalogue = () => {
       const { data, error } = await supabase
         .from('event_templates')
         .select(`
-          id, title, description, duration_days, target_audience,
-          learning_outcomes, key_benefits, template_tags,
-          event_types!event_type_id(name),
-          formats!format_id(name)
+          *,
+          event_types:event_types!event_type_id(name),
+          event_categories:event_categories!category_id(name),
+          levels:levels!level_id(name),
+          formats:formats!format_id(name),
+          events:events!template_id(
+            id, start_date, end_date, is_published, price_cents, currency, capacity, status
+          )
         `)
         .order('title', { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
-};
-
-// Fetch upcoming scheduled events
-const useScheduledDates = () => {
-  return useQuery({
-    queryKey: ['scheduled-dates'],
-    queryFn: async () => {
-      const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('events')
-        .select('id, title, start_date, template_id')
-        .eq('is_published', true)
-        .gte('start_date', now)
-        .order('start_date', { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -326,32 +312,33 @@ const Events: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('All');
 
   const { data: rawTemplates, isError: catalogueError, refetch: refetchCatalogue } = useCoursesCatalogue();
-  const { data: rawEvents, isError: eventsError, refetch: refetchEvents } = useScheduledDates();
 
   // Build the course list from Supabase data, or fallback
   const courses: CourseItem[] = useMemo(() => {
     if (!rawTemplates?.length) return FALLBACK_COURSES;
 
-    // Build a map of template_id -> sorted scheduled dates
-    const datesByTemplate: Record<string, { date: string; eventId: string }[]> = {};
-    for (const ev of rawEvents || []) {
-      const tid = ev.template_id;
-      if (!tid) continue;
-      if (!datesByTemplate[tid]) datesByTemplate[tid] = [];
-      datesByTemplate[tid].push({ date: formatDate(ev.start_date), eventId: ev.id });
-    }
+    // Only show published templates (gracefully handle missing column)
+    const published = rawTemplates.filter((t: any) => t.is_published !== false);
+    if (!published.length) return FALLBACK_COURSES;
 
-    return rawTemplates.map((t: any) => {
+    return published.map((t: any) => {
       const typeName = (t.event_types as any)?.name || 'Course';
       const formatName = (t.formats as any)?.name || 'Both';
       const durationDays = t.duration_days;
+
+      // Derive scheduled dates from nested events (published + future only)
+      const now = new Date();
+      const events = (t.events || []) as any[];
+      const scheduledDates = events
+        .filter((e: any) => e.is_published && e.start_date && new Date(e.start_date) > now)
+        .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))
+        .map((e: any) => ({ date: formatDate(e.start_date), eventId: e.id }));
 
       // Derive cert body from template_tags or title
       let cert: string | null = null;
       const tags = (t.template_tags || []) as string[];
       if (tags.some((tag: string) => tag.toLowerCase().includes('apmg'))) cert = 'APMG';
       else if (tags.some((tag: string) => tag.toLowerCase().includes('scrum alliance'))) cert = 'Scrum Alliance';
-      // Also check title for common cert patterns
       if (!cert) {
         const titleLower = t.title?.toLowerCase() || '';
         if (titleLower.includes('agilepm') || titleLower.includes('agileba') || titleLower.includes('agile digital')) cert = 'APMG';
@@ -366,13 +353,13 @@ const Events: React.FC = () => {
         forWho: t.target_audience || '',
         duration: durationLabel(durationDays),
         format: formatName,
-        groupSize: 'Up to 12', // default — no column for this yet
+        groupSize: 'Up to 12',
         objectives: (t.learning_outcomes || []) as string[],
-        description: t.description || '',
-        scheduledDates: datesByTemplate[t.id] || [],
+        description: t.short_description || (t.description ? (t.description.length > 160 ? t.description.slice(0, 160) + '...' : t.description) : ''),
+        scheduledDates,
       };
     });
-  }, [rawTemplates, rawEvents]);
+  }, [rawTemplates]);
 
   const filtered = useMemo(() => {
     if (activeFilter === 'All') return courses;
@@ -463,11 +450,11 @@ const Events: React.FC = () => {
 
       {/* ─── COURSE GRID ─── */}
       <div style={{ background: p.skyTeal, padding: isMobile ? '32px 20px' : '48px 48px' }}>
-        {(catalogueError || eventsError) ? (
+        {catalogueError ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: p.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
             <div style={{ fontSize: 16, fontWeight: 600, color: p.body }}>Failed to load courses. Please try again.</div>
             <button
-              onClick={() => { refetchCatalogue(); refetchEvents(); }}
+              onClick={() => { refetchCatalogue(); }}
               style={{ background: p.deepTeal, color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
             >
               Retry

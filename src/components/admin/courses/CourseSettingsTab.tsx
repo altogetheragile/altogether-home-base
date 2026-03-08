@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, Loader2 } from 'lucide-react';
 import { useAutoSave } from '@/hooks/useAutoSave';
@@ -16,6 +17,7 @@ interface CourseSettingsTabProps {
 }
 
 interface SettingsForm {
+  is_published: boolean;
   duration_days: number;
   event_type_id: string;
   category_id: string;
@@ -32,6 +34,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
   const { data: formats = [] } = useFormats();
 
   const [form, setForm] = useState<SettingsForm>({
+    is_published: course.is_published ?? false,
     duration_days: course.duration_days || 1,
     event_type_id: course.event_type_id || '',
     category_id: course.category_id || '',
@@ -42,6 +45,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
 
   useEffect(() => {
     setForm({
+      is_published: course.is_published ?? false,
       duration_days: course.duration_days || 1,
       event_type_id: course.event_type_id || '',
       category_id: course.category_id || '',
@@ -62,6 +66,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
       await updateTemplate.mutateAsync({
         id: course.id,
         data: {
+          is_published: data.is_published,
           duration_days: data.duration_days,
           ...({ event_type_id: data.event_type_id || null } as any),
           ...({ category_id: data.category_id || null } as any),
@@ -109,6 +114,17 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
           ) : null}
         </div>
         <Button variant="outline" size="sm" onClick={saveNow}>Save</Button>
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border p-4">
+        <div className="space-y-0.5">
+          <Label>Published</Label>
+          <p className="text-xs text-muted-foreground">Published courses appear on the public events page</p>
+        </div>
+        <Switch
+          checked={form.is_published}
+          onCheckedChange={(checked) => setForm(prev => ({ ...prev, is_published: checked }))}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-6">
