@@ -7,19 +7,7 @@ import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-// ─── Palette ────────────────────────────────────────────────────────────────
-const p = {
-  white: '#FFFFFF',
-  skyTeal: '#F0FAFA',
-  deepTeal: '#004D4D',
-  midTeal: '#007A7A',
-  lightTeal: '#B2DFDF',
-  paleTeal: '#D9F2F2',
-  orange: '#FF9715',
-  body: '#374151',
-  muted: '#6B7280',
-};
+import { colors as p } from '@/theme/colors';
 
 // ─── Responsive CSS classes (media-query driven) ────────────────────────────
 const ResponsiveStyles = () => (

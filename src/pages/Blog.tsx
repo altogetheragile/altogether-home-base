@@ -1,3 +1,4 @@
+import { colors as p } from '@/theme/colors';
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -50,8 +51,8 @@ const Blog = () => {
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md px-4">
-            <h1 style={{ color: '#004D4D', fontSize: 24, fontWeight: 800 }}>Feature Unavailable</h1>
-            <p style={{ color: '#6B7280', marginTop: 8 }}>This feature is currently disabled.</p>
+            <h1 style={{ color: p.deepTeal, fontSize: 24, fontWeight: 800 }}>Feature Unavailable</h1>
+            <p style={{ color: p.muted, marginTop: 8 }}>This feature is currently disabled.</p>
           </div>
         </div>
         <Footer />
@@ -69,12 +70,12 @@ const Blog = () => {
       <Navigation />
 
       {/* Hero header */}
-      <div style={{ background: 'linear-gradient(135deg, #004D4D 0%, #006666 100%)', padding: '48px 24px' }}>
+      <div style={{ background: `linear-gradient(135deg, ${p.deepTeal} 0%, #006666 100%)`, padding: '48px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <h1 style={{ color: '#FFFFFF', fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
+          <h1 style={{ color: p.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
             Agile Insights &amp; Resources
           </h1>
-          <p style={{ color: '#D9F2F2', fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p style={{ color: p.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
             Expert insights, practical tips, and thought leadership on agile methodologies,
             team dynamics, and organisational transformation.
           </p>
@@ -96,8 +97,8 @@ const Blog = () => {
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                background: selectedCategory === "all" ? '#004D4D' : '#F0FAFA',
-                color: selectedCategory === "all" ? '#FFFFFF' : '#004D4D',
+                background: selectedCategory === "all" ? p.deepTeal : p.skyTeal,
+                color: selectedCategory === "all" ? p.white : p.deepTeal,
               }}
             >
               All
@@ -115,8 +116,8 @@ const Blog = () => {
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  background: selectedCategory === cat.id ? '#004D4D' : '#F0FAFA',
-                  color: selectedCategory === cat.id ? '#FFFFFF' : '#004D4D',
+                  background: selectedCategory === cat.id ? p.deepTeal : p.skyTeal,
+                  color: selectedCategory === cat.id ? p.white : p.deepTeal,
                 }}
               >
                 {cat.name}
@@ -159,7 +160,7 @@ const Blog = () => {
                 background: '#FFFFFF',
                 fontSize: 13,
                 fontWeight: 600,
-                color: '#6B7280',
+                color: p.muted,
                 cursor: 'pointer',
               }}
             >
@@ -171,7 +172,7 @@ const Blog = () => {
         {/* Featured posts */}
         {!hasActiveFilters && featuredPosts && featuredPosts.length > 0 && (
           <div style={{ marginBottom: 40 }}>
-            <h2 style={{ color: '#004D4D', fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Featured</h2>
+            <h2 style={{ color: p.deepTeal, fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Featured</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
               {featuredPosts.map((post) => (
                 <BlogCardStyled key={post.id} post={post} />
@@ -198,7 +199,7 @@ const Blog = () => {
         ) : filteredPosts && filteredPosts.length > 0 ? (
           <>
             {hasActiveFilters && (
-              <p style={{ color: '#6B7280', fontSize: 14, marginBottom: 16 }}>
+              <p style={{ color: p.muted, fontSize: 14, marginBottom: 16 }}>
                 {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''} found
               </p>
             )}
@@ -211,8 +212,8 @@ const Blog = () => {
         ) : (
           <div style={{ textAlign: 'center', padding: '64px 0' }}>
             <BookOpen style={{ width: 48, height: 48, color: '#9CA3AF', margin: '0 auto 16px' }} />
-            <h3 style={{ color: '#004D4D', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No blog posts found</h3>
-            <p style={{ color: '#6B7280', fontSize: 15 }}>
+            <h3 style={{ color: p.deepTeal, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No blog posts found</h3>
+            <p style={{ color: p.muted, fontSize: 15 }}>
               {hasActiveFilters
                 ? "Try adjusting your search criteria"
                 : "No blog posts have been published yet"}
@@ -228,7 +229,7 @@ const Blog = () => {
                   background: '#FFFFFF',
                   fontSize: 14,
                   fontWeight: 600,
-                  color: '#004D4D',
+                  color: p.deepTeal,
                   cursor: 'pointer',
                 }}
               >
@@ -280,8 +281,8 @@ const BlogCardStyled = ({ post }: { post: BlogPost }) => (
           />
         </div>
       ) : (
-        <div style={{ height: 180, background: 'linear-gradient(135deg, #F0FAFA, #D9F2F2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <BookOpen style={{ width: 32, height: 32, color: '#007A7A' }} />
+        <div style={{ height: 180, background: `linear-gradient(135deg, ${p.skyTeal}, ${p.paleTeal})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <BookOpen style={{ width: 32, height: 32, color: p.midTeal }} />
         </div>
       )}
 
@@ -292,8 +293,8 @@ const BlogCardStyled = ({ post }: { post: BlogPost }) => (
           <span style={{
             display: 'inline-block',
             alignSelf: 'flex-start',
-            background: post.blog_categories.color || '#F0FAFA',
-            color: '#004D4D',
+            background: post.blog_categories.color || p.skyTeal,
+            color: p.deepTeal,
             fontSize: 11,
             fontWeight: 700,
             padding: '3px 10px',
@@ -307,14 +308,14 @@ const BlogCardStyled = ({ post }: { post: BlogPost }) => (
         )}
 
         {/* Title */}
-        <h3 style={{ color: '#004D4D', fontSize: 18, fontWeight: 700, lineHeight: 1.3, margin: '0 0 8px' }}>
+        <h3 style={{ color: p.deepTeal, fontSize: 18, fontWeight: 700, lineHeight: 1.3, margin: '0 0 8px' }}>
           {post.title}
         </h3>
 
         {/* Excerpt */}
         {post.excerpt && (
           <p style={{
-            color: '#6B7280',
+            color: p.muted,
             fontSize: 14,
             lineHeight: 1.6,
             margin: '0 0 12px',

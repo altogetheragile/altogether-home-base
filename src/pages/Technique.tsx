@@ -9,6 +9,7 @@ import { useKnowledgeItemUnifiedAssets } from '@/hooks/useUnifiedAssetManager';
 import { useViewTracking } from '@/hooks/useViewTracking';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { colors as p } from '@/theme/colors';
 
 // ─── Mobile detection hook ──────────────────────────────────────────────────
 const useIsMobile = () => {
@@ -19,19 +20,6 @@ const useIsMobile = () => {
     return () => window.removeEventListener('resize', handler);
   }, []);
   return isMobile;
-};
-
-// ─── Palette ────────────────────────────────────────────────────────────────
-const p = {
-  white: '#FFFFFF',
-  skyTeal: '#F0FAFA',
-  deepTeal: '#004D4D',
-  midTeal: '#007A7A',
-  lightTeal: '#B2DFDF',
-  paleTeal: '#D9F2F2',
-  orange: '#FF9715',
-  body: '#374151',
-  muted: '#6B7280',
 };
 
 const categoryColours: Record<string, { solid: string; pill: string; bg: string }> = {

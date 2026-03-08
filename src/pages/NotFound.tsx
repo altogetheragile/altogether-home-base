@@ -3,16 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-
-const p = {
-  deepTeal: '#004D4D',
-  midTeal: '#007A7A',
-  lightTeal: '#D9F2F2',
-  paleTeal: '#F0FAFA',
-  orange: '#FF9715',
-  text: '#374151',
-  textLight: '#B2DFDF',
-};
+import { colors as p } from '@/theme/colors';
 
 
 const NotFound: React.FC = () => {
@@ -33,7 +24,7 @@ const NotFound: React.FC = () => {
         <div style={{ textAlign: 'center', maxWidth: 480 }}>
           <div style={{ color: p.orange, fontWeight: 800, fontSize: 96, lineHeight: 1, marginBottom: 16 }}>404</div>
           <h1 style={{ color: p.deepTeal, fontWeight: 700, fontSize: 28, marginBottom: 12 }}>Page not found</h1>
-          <p style={{ color: p.text, fontSize: 15, lineHeight: 1.7, marginBottom: 32 }}>
+          <p style={{ color: p.body, fontSize: 15, lineHeight: 1.7, marginBottom: 32 }}>
             The page you're looking for doesn't exist or has been moved. Let's get you back on track.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>

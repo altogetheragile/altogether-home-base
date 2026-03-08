@@ -1,18 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { EventData } from "@/hooks/useEvents";
-
-const p = {
-  deepTeal: "#004D4D",
-  midTeal: "#006666",
-  lightTeal: "#B2DFDF",
-  paleTeal: "#D9F2F2",
-  skyTeal: "#F0FAFA",
-  orange: "#FF9715",
-  body: "#374151",
-  muted: "#6B7280",
-  white: "#FFFFFF",
-};
+import { colors as p } from '@/theme/colors';
 
 interface EventDetailContentProps {
   event: EventData;

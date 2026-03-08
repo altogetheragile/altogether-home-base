@@ -1,3 +1,4 @@
+import { colors as p } from '@/theme/colors';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -133,7 +134,7 @@ const Home: React.FC = () => {
   const canNext = carouselIndex < maxIndex;
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF' }}>
+    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
         <title>Altogether Agile — Agile Coaching & Training</title>
         <meta name="description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience." />
@@ -152,18 +153,18 @@ const Home: React.FC = () => {
         <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '48px 20px 80px' : '80px 48px 80px' }}>
           <div className="aa-hero-grid">
             <div>
-              <h1 className="aa-hero-h1" style={{ color: '#004D4D', fontWeight: 800, lineHeight: 1.4, margin: '0 0 20px' }}>
+              <h1 className="aa-hero-h1" style={{ color: p.deepTeal, fontWeight: 800, lineHeight: 1.4, margin: '0 0 20px' }}>
                 Work better together.<br />Accelerate time to Value.
               </h1>
-              <p style={{ color: '#374151', fontSize: 16, lineHeight: 1.7, margin: '0 0 32px', maxWidth: 480 }}>
+              <p style={{ color: p.body, fontSize: 16, lineHeight: 1.7, margin: '0 0 32px', maxWidth: 480 }}>
                 Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.
               </p>
               <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-                <Link to="/events" style={{ background: '#FF9715', color: '#FFFFFF', border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                <Link to="/events" style={{ background: p.orange, color: p.white, border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                   Browse Events <Icons.ArrowRight />
                 </Link>
                 {settings?.show_knowledge && (
-                  <Link to="/knowledge" style={{ color: '#004D4D', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                  <Link to="/knowledge" style={{ color: p.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
                     Knowledge Base <Icons.ArrowRight />
                   </Link>
                 )}
@@ -182,28 +183,28 @@ const Home: React.FC = () => {
           { icon: <Icons.Star />, num: '4.9\u2605', label: 'Average rating' },
         ].map((stat, i) => (
           <div key={i} style={{ textAlign: 'center', padding: '8px 40px' }}>
-            <div style={{ color: '#FF9715', display: 'flex', justifyContent: 'center', marginBottom: 4 }}>{stat.icon}</div>
-            <div style={{ color: '#004D4D', fontSize: 22, fontWeight: 800 }}>{stat.num}</div>
-            <div style={{ color: '#004D4D', fontSize: 12, opacity: 0.7 }}>{stat.label}</div>
+            <div style={{ color: p.orange, display: 'flex', justifyContent: 'center', marginBottom: 4 }}>{stat.icon}</div>
+            <div style={{ color: p.deepTeal, fontSize: 22, fontWeight: 800 }}>{stat.num}</div>
+            <div style={{ color: p.deepTeal, fontSize: 12, opacity: 0.7 }}>{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* ─── WHO IS THIS FOR ─── */}
-      <div className="aa-section-pad" style={{ background: '#FFFFFF', paddingTop: 56, paddingBottom: 48 }}>
-        <h2 style={{ color: '#004D4D', fontSize: 28, fontWeight: 800, margin: '0 0 32px', textAlign: 'center' }}>Who is this for?</h2>
+      <div className="aa-section-pad" style={{ background: p.white, paddingTop: 56, paddingBottom: 48 }}>
+        <h2 style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 32px', textAlign: 'center' }}>Who is this for?</h2>
         <div className="aa-three-col">
           {[
             { icon: <Icons.ArrowRight />, heading: 'Moving into agile', body: "You're a project manager, BA, or team lead transitioning to agile ways of working and need grounded, practical guidance - not just theory." },
             { icon: <Icons.GraduationCap />, heading: 'Seeking certification', body: "You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - delivered by someone who has contributed to the frameworks and knows them inside out." },
             { icon: <Icons.Users />, heading: 'Building team agility', body: "You're a leader trying to grow genuine organisational agility - and you need a coach who understands both the human and structural side of change." },
           ].map((card, i) => (
-            <div key={i} style={{ background: '#F0FAFA', borderRadius: 14, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#004D4D', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            <div key={i} style={{ background: p.skyTeal, borderRadius: 14, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: p.deepTeal, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                 {card.icon}
               </div>
-              <div style={{ color: '#004D4D', fontSize: 17, fontWeight: 700 }}>{card.heading}</div>
-              <div style={{ color: '#374151', fontSize: 14, lineHeight: 1.65 }}>{card.body}</div>
+              <div style={{ color: p.deepTeal, fontSize: 17, fontWeight: 700 }}>{card.heading}</div>
+              <div style={{ color: p.body, fontSize: 14, lineHeight: 1.65 }}>{card.body}</div>
             </div>
           ))}
         </div>
@@ -213,9 +214,9 @@ const Home: React.FC = () => {
       <HomepageStrip />
 
       {/* ─── EVENTS (live Supabase data) ─── */}
-      <div className="aa-section-pad" style={{ background: '#F0FAFA' }}>
+      <div className="aa-section-pad" style={{ background: p.skyTeal }}>
         <div style={{ marginBottom: 32 }}>
-          <h2 style={{ color: '#004D4D', fontSize: 32, fontWeight: 800, margin: 0 }}>Courses, workshops and masterclasses</h2>
+          <h2 style={{ color: p.deepTeal, fontSize: 32, fontWeight: 800, margin: 0 }}>Courses, workshops and masterclasses</h2>
         </div>
 
         {/* Course carousel */}
@@ -227,7 +228,7 @@ const Home: React.FC = () => {
               style={{
                 position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)',
                 zIndex: 2, width: 40, height: 40, borderRadius: '50%', border: 'none',
-                background: '#004D4D', color: '#fff', cursor: 'pointer',
+                background: p.deepTeal, color: '#fff', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 2px 8px rgba(0,77,77,0.2)',
               }}
@@ -242,7 +243,7 @@ const Home: React.FC = () => {
               style={{
                 position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
                 zIndex: 2, width: 40, height: 40, borderRadius: '50%', border: 'none',
-                background: '#004D4D', color: '#fff', cursor: 'pointer',
+                background: p.deepTeal, color: '#fff', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 2px 8px rgba(0,77,77,0.2)',
               }}
@@ -264,7 +265,7 @@ const Home: React.FC = () => {
                   key={course.id}
                   to={`/courses/${course.id}`}
                   style={{
-                    background: '#FFFFFF', borderRadius: 14, padding: 24,
+                    background: p.white, borderRadius: 14, padding: 24,
                     display: 'flex', flexDirection: 'column', gap: 14,
                     textDecoration: 'none', minHeight: 220,
                     boxShadow: '0 2px 12px rgba(0,77,77,0.07)',
@@ -273,7 +274,7 @@ const Home: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     {course.category && (
                       <span style={{
-                        background: '#004D4D', color: '#fff', fontSize: 10, fontWeight: 700,
+                        background: p.deepTeal, color: '#fff', fontSize: 10, fontWeight: 700,
                         padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                       }}>
@@ -281,18 +282,18 @@ const Home: React.FC = () => {
                       </span>
                     )}
                     {course.difficulty && (
-                      <span style={{ color: '#007A7A', fontSize: 11, fontWeight: 600 }}>
+                      <span style={{ color: p.midTeal, fontSize: 11, fontWeight: 600 }}>
                         {course.difficulty}
                       </span>
                     )}
                   </div>
 
-                  <div style={{ color: '#004D4D', fontSize: 17, fontWeight: 700, lineHeight: 1.3 }}>
+                  <div style={{ color: p.deepTeal, fontSize: 17, fontWeight: 700, lineHeight: 1.3 }}>
                     {course.title}
                   </div>
 
                   {course.description && (
-                    <div style={{ color: '#374151', fontSize: 13, lineHeight: 1.6 }}>
+                    <div style={{ color: p.body, fontSize: 13, lineHeight: 1.6 }}>
                       {course.description.length > 100
                         ? course.description.slice(0, 100).trimEnd() + '\u2026'
                         : course.description}
@@ -302,7 +303,7 @@ const Home: React.FC = () => {
                   {course.hasDatesAvailable && (
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: 5,
-                      background: '#007A7A', color: '#fff', fontSize: 11, fontWeight: 700,
+                      background: p.midTeal, color: '#fff', fontSize: 11, fontWeight: 700,
                       padding: '4px 12px', borderRadius: 20, alignSelf: 'flex-start',
                     }}>
                       <Icons.Calendar /> Dates available
@@ -311,7 +312,7 @@ const Home: React.FC = () => {
 
                   <div style={{ marginTop: 'auto' }}>
                     <span style={{
-                      color: '#FF9715', fontWeight: 700, fontSize: 13,
+                      color: p.orange, fontWeight: 700, fontSize: 13,
                       display: 'inline-flex', alignItems: 'center', gap: 4,
                     }}>
                       Find out more <Icons.ArrowRight />
@@ -326,7 +327,7 @@ const Home: React.FC = () => {
         {/* View all CTA */}
         <div style={{ textAlign: 'center', marginTop: 32 }}>
           <Link to="/events" style={{
-            background: '#FF9715', color: '#fff', padding: '12px 24px',
+            background: p.orange, color: '#fff', padding: '12px 24px',
             borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none',
             display: 'inline-flex', alignItems: 'center', gap: 8,
           }}>
@@ -340,23 +341,23 @@ const Home: React.FC = () => {
 
       {/* ─── KNOWLEDGE BASE ─── */}
       {settings?.show_knowledge && (
-        <div className="aa-section-pad" style={{ background: '#004D4D' }}>
+        <div className="aa-section-pad" style={{ background: p.deepTeal }}>
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.1)', color: '#B2DFDF', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 20, marginBottom: 20 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 20, marginBottom: 20 }}>
               <Icons.Books />Knowledge Base
             </div>
             <h2 style={{ color: '#fff', fontSize: 32, fontWeight: 800, margin: '0 0 12px' }}>80+ agile techniques,<br />ready to use</h2>
-            <p style={{ color: '#B2DFDF', fontSize: 16, margin: '0 0 24px', lineHeight: 1.6, maxWidth: 560 }}>
+            <p style={{ color: p.lightTeal, fontSize: 16, margin: '0 0 24px', lineHeight: 1.6, maxWidth: 560 }}>
               From Story Mapping to OKRs — every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
               {['Story Mapping', 'OKRs', '5 Whys', 'Business Model Canvas', 'Impact Mapping', 'Retrospectives'].map((tag) => (
-                <span key={tag} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.08)', color: '#B2DFDF', fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 20 }}>
+                <span key={tag} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.08)', color: p.lightTeal, fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 20 }}>
                   <Icons.Tag />{tag}
                 </span>
               ))}
             </div>
-            <Link to="/knowledge" style={{ background: '#FF9715', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <Link to="/knowledge" style={{ background: p.orange, color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
               Browse Techniques <Icons.ArrowRight />
             </Link>
           </div>
@@ -364,7 +365,7 @@ const Home: React.FC = () => {
       )}
 
       {/* ─── CTA ─── */}
-      <div className="aa-section-pad" style={{ background: '#FF9715' }}>
+      <div className="aa-section-pad" style={{ background: p.orange }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 48, maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ flex: 1 }}>
             <h2 style={{ color: '#fff', fontSize: 36, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>
@@ -374,7 +375,7 @@ const Home: React.FC = () => {
               Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell — just a conversation.
             </p>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-              <Link to="/events" style={{ background: '#004D4D', color: '#fff', border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <Link to="/events" style={{ background: p.deepTeal, color: '#fff', border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                 Browse Events <Icons.ArrowRight />
               </Link>
               <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>

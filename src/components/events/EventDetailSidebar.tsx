@@ -7,18 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEventRegistration } from "@/hooks/useEventRegistration";
 import { useUserRegistrations, UserRegistrationWithEvent } from "@/hooks/useUserRegistrations";
 import { useEventUnregistration } from "@/hooks/useEventUnregistration";
-
-const p = {
-  deepTeal: "#004D4D",
-  midTeal: "#006666",
-  lightTeal: "#B2DFDF",
-  paleTeal: "#D9F2F2",
-  skyTeal: "#F0FAFA",
-  orange: "#FF9715",
-  body: "#374151",
-  muted: "#6B7280",
-  white: "#FFFFFF",
-};
+import { colors as p } from '@/theme/colors';
 
 interface EventDetailSidebarProps {
   event: EventData;

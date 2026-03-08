@@ -1,3 +1,4 @@
+import { colors as p } from '@/theme/colors';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL } from '@/config/featureFlags';
@@ -31,7 +32,7 @@ const BlogPost = () => {
         <Link
           to="/blog"
           style={{
-            color: '#007A7A',
+            color: p.midTeal,
             fontSize: 14,
             fontWeight: 600,
             textDecoration: 'none',
@@ -53,8 +54,8 @@ const BlogPost = () => {
           </div>
         ) : !post ? (
           <div style={{ textAlign: 'center', padding: '64px 0' }}>
-            <h1 style={{ color: '#004D4D', fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Post not found</h1>
-            <p style={{ color: '#6B7280', fontSize: 15 }}>This blog post may have been removed or doesn't exist.</p>
+            <h1 style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Post not found</h1>
+            <p style={{ color: p.muted, fontSize: 15 }}>This blog post may have been removed or doesn't exist.</p>
           </div>
         ) : (
           <article style={{ marginTop: 24 }}>
@@ -62,8 +63,8 @@ const BlogPost = () => {
             {post.blog_categories && (
               <span style={{
                 display: 'inline-block',
-                background: post.blog_categories.color || '#F0FAFA',
-                color: '#004D4D',
+                background: post.blog_categories.color || p.skyTeal,
+                color: p.deepTeal,
                 fontSize: 11,
                 fontWeight: 700,
                 padding: '4px 12px',
@@ -77,12 +78,12 @@ const BlogPost = () => {
             )}
 
             {/* Title */}
-            <h1 style={{ color: '#004D4D', fontSize: 36, fontWeight: 800, lineHeight: 1.2, margin: '0 0 12px' }}>
+            <h1 style={{ color: p.deepTeal, fontSize: 36, fontWeight: 800, lineHeight: 1.2, margin: '0 0 12px' }}>
               {post.title}
             </h1>
 
             {/* Meta line */}
-            <div style={{ color: '#6B7280', fontSize: 14, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ color: p.muted, fontSize: 14, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
               {post.published_at && (
                 <span>{format(new Date(post.published_at), 'dd MMM yyyy')}</span>
               )}
@@ -92,7 +93,7 @@ const BlogPost = () => {
             </div>
 
             {/* Orange rule */}
-            <div style={{ width: 60, height: 4, borderRadius: 2, background: '#FF9715', marginBottom: 32 }} />
+            <div style={{ width: 60, height: 4, borderRadius: 2, background: p.orange, marginBottom: 32 }} />
 
             {/* Featured image */}
             {post.featured_image_url && (
@@ -112,34 +113,34 @@ const BlogPost = () => {
                   <ReactMarkdown
                     components={{
                       h2: ({ children }) => (
-                        <h2 style={{ color: '#004D4D', fontSize: 24, fontWeight: 700, marginTop: 40, marginBottom: 12 }}>{children}</h2>
+                        <h2 style={{ color: p.deepTeal, fontSize: 24, fontWeight: 700, marginTop: 40, marginBottom: 12 }}>{children}</h2>
                       ),
                       h3: ({ children }) => (
                         <h3 style={{ color: '#006666', fontSize: 20, fontWeight: 700, marginTop: 32, marginBottom: 10 }}>{children}</h3>
                       ),
                       p: ({ children }) => (
-                        <p style={{ color: '#374151', fontSize: 16, lineHeight: 1.8, marginBottom: 16 }}>{children}</p>
+                        <p style={{ color: p.body, fontSize: 16, lineHeight: 1.8, marginBottom: 16 }}>{children}</p>
                       ),
                       strong: ({ children }) => (
-                        <strong style={{ color: '#004D4D', fontWeight: 700 }}>{children}</strong>
+                        <strong style={{ color: p.deepTeal, fontWeight: 700 }}>{children}</strong>
                       ),
                       a: ({ href, children }) => (
-                        <a href={href} style={{ color: '#007A7A', fontWeight: 600, textDecoration: 'underline' }} target="_blank" rel="noopener noreferrer">{children}</a>
+                        <a href={href} style={{ color: p.midTeal, fontWeight: 600, textDecoration: 'underline' }} target="_blank" rel="noopener noreferrer">{children}</a>
                       ),
                       ul: ({ children }) => (
-                        <ul style={{ color: '#374151', fontSize: 16, lineHeight: 1.8, paddingLeft: 24, marginBottom: 16 }}>{children}</ul>
+                        <ul style={{ color: p.body, fontSize: 16, lineHeight: 1.8, paddingLeft: 24, marginBottom: 16 }}>{children}</ul>
                       ),
                       ol: ({ children }) => (
-                        <ol style={{ color: '#374151', fontSize: 16, lineHeight: 1.8, paddingLeft: 24, marginBottom: 16 }}>{children}</ol>
+                        <ol style={{ color: p.body, fontSize: 16, lineHeight: 1.8, paddingLeft: 24, marginBottom: 16 }}>{children}</ol>
                       ),
                       li: ({ children }) => (
                         <li style={{ marginBottom: 4 }}>{children}</li>
                       ),
                       blockquote: ({ children }) => (
-                        <blockquote style={{ borderLeft: '3px solid #FF9715', paddingLeft: 16, margin: '24px 0', color: '#006666', fontStyle: 'italic' }}>{children}</blockquote>
+                        <blockquote style={{ borderLeft: `3px solid ${p.orange}`, paddingLeft: 16, margin: '24px 0', color: '#006666', fontStyle: 'italic' }}>{children}</blockquote>
                       ),
                       code: ({ children }) => (
-                        <code style={{ background: '#F0FAFA', padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>{children}</code>
+                        <code style={{ background: p.skyTeal, padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>{children}</code>
                       ),
                     }}
                   >
@@ -150,19 +151,19 @@ const BlogPost = () => {
             )}
 
             {/* Author footer */}
-            <div style={{ borderTop: '1px solid #D9F2F2', marginTop: 48, paddingTop: 24, color: '#6B7280', fontSize: 14 }}>
+            <div style={{ borderTop: `1px solid ${p.paleTeal}`, marginTop: 48, paddingTop: 24, color: p.muted, fontSize: 14 }}>
               Alun Davies-Baker, Altogether Agile
             </div>
 
             {/* CTA card */}
             <div style={{
               marginTop: 40,
-              background: 'linear-gradient(135deg, #F0FAFA 0%, #D9F2F2 100%)',
+              background: `linear-gradient(135deg, ${p.skyTeal} 0%, ${p.paleTeal} 100%)`,
               borderRadius: 14,
               padding: 32,
               textAlign: 'center',
             }}>
-              <h3 style={{ color: '#004D4D', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
+              <h3 style={{ color: p.deepTeal, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
                 Want to discuss this topic?
               </h3>
               <p style={{ color: '#006666', fontSize: 15, marginBottom: 20, maxWidth: 460, margin: '0 auto 20px' }}>
@@ -172,8 +173,8 @@ const BlogPost = () => {
                 to="/contact"
                 style={{
                   display: 'inline-block',
-                  background: '#FF9715',
-                  color: '#FFFFFF',
+                  background: p.orange,
+                  color: p.white,
                   padding: '12px 32px',
                   borderRadius: 8,
                   fontSize: 15,
@@ -198,7 +199,7 @@ const BlogPost = () => {
 const isHtml = (text: string) => /<[a-z][\s\S]*>/i.test(text);
 
 const bodyWrapperStyle: React.CSSProperties = {
-  color: '#374151',
+  color: p.body,
   fontSize: 16,
   lineHeight: 1.8,
 };

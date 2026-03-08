@@ -8,19 +8,7 @@ import { EventCardQuote } from '@/components/testimonials/TestimonialComponents'
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-// ─── Palette ────────────────────────────────────────────────────────────────
-const p = {
-  white: '#FFFFFF',
-  skyTeal: '#F0FAFA',
-  deepTeal: '#004D4D',
-  midTeal: '#007A7A',
-  lightTeal: '#B2DFDF',
-  paleTeal: '#D9F2F2',
-  orange: '#FF9715',
-  body: '#374151',
-  muted: '#6B7280',
-};
+import { colors as p } from '@/theme/colors';
 
 const categoryColours: Record<string, { solid: string; pill: string; light: string }> = {
   Course:      { solid: '#1A9090', pill: '#0D5C5C', light: '#E6F5F5' },

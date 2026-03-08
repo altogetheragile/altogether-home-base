@@ -1,24 +1,25 @@
+import { colors as p } from '@/theme/colors';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, CONTACT_EMAIL } from '@/config/featureFlags';
 
-const h1Style = { color: '#004D4D', fontSize: 32, fontWeight: 800 as const, marginBottom: 8 };
-const h2Style = { color: '#004D4D', fontSize: 20, fontWeight: 700 as const, marginTop: 40, marginBottom: 12 };
-const pStyle = { color: '#374151', fontSize: 15, lineHeight: 1.75, marginBottom: 16 };
+const h1Style = { color: p.deepTeal, fontSize: 32, fontWeight: 800 as const, marginBottom: 8 };
+const h2Style = { color: p.deepTeal, fontSize: 20, fontWeight: 700 as const, marginTop: 40, marginBottom: 12 };
+const pStyle = { color: p.body, fontSize: 15, lineHeight: 1.75, marginBottom: 16 };
 
 const thStyle: React.CSSProperties = {
-  background: '#F0FAFA',
-  color: '#004D4D',
+  background: p.skyTeal,
+  color: p.deepTeal,
   fontSize: 13,
   fontWeight: 700,
   padding: '10px 14px',
   textAlign: 'left',
-  border: '1px solid #D9F2F2',
+  border: `1px solid ${p.paleTeal}`,
 };
 const tdStyle: React.CSSProperties = {
-  border: '1px solid #D9F2F2',
+  border: `1px solid ${p.paleTeal}`,
   padding: '10px 14px',
   fontSize: 14,
-  color: '#374151',
+  color: p.body,
 };
 
 const CookiePolicy = () => (
@@ -29,7 +30,7 @@ const CookiePolicy = () => (
     </Helmet>
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '64px 48px' }}>
       <h1 style={h1Style}>Altogether Agile Ltd — Cookie Policy</h1>
-      <p style={{ ...pStyle, color: '#6B7280', fontSize: 13 }}>Last updated: March 2026</p>
+      <p style={{ ...pStyle, color: p.muted, fontSize: 13 }}>Last updated: March 2026</p>
 
       <h2 style={h2Style}>What are cookies?</h2>
       <p style={pStyle}>

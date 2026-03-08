@@ -10,16 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-const p = {
-  deepTeal: '#004D4D',
-  midTeal: '#007A7A',
-  lightTeal: '#D9F2F2',
-  paleTeal: '#F0FAFA',
-  orange: '#FF9715',
-  text: '#374151',
-  textLight: '#B2DFDF',
-};
+import { colors as p } from '@/theme/colors';
 
 const ResponsiveStyles = () => (
   <style>{`
@@ -78,7 +69,7 @@ const Testimonials: React.FC = () => {
       {/* ─── HERO ─── */}
       <div className="aa-section-pad" style={{ background: p.paleTeal, textAlign: 'center' }}>
         <h1 style={{ color: p.deepTeal, fontWeight: 800, fontSize: isMobile ? 34 : 44, lineHeight: 1.15, margin: '0 0 16px' }}>What Our Attendees Say</h1>
-        <p style={{ color: p.text, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
+        <p style={{ color: p.body, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
           Real feedback from professionals who have attended our courses and coaching programmes.
         </p>
         {stats && (
@@ -87,7 +78,7 @@ const Testimonials: React.FC = () => {
               <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34l13.49-58.54L22.76,114.38a16,16,0,0,1,9.12-28.06l59.46-5.14,23.16-55.35a15.95,15.95,0,0,1,29.48,0L167.14,81.18l59.46,5.14a16,16,0,0,1,9.12,28.06Z"/>
             </svg>
             <span style={{ color: p.deepTeal, fontWeight: 700, fontSize: 20 }}>{stats.averageRating}/10</span>
-            <span style={{ color: p.text, fontSize: 14 }}>from {stats.totalRatings} reviews</span>
+            <span style={{ color: p.body, fontSize: 14 }}>from {stats.totalRatings} reviews</span>
           </div>
         )}
       </div>
@@ -141,7 +132,7 @@ const Testimonials: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: p.text }}>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: p.body }}>
             No testimonials found matching your filters.
           </div>
         )}

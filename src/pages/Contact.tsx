@@ -14,17 +14,7 @@ import { Label } from '@/components/ui/label';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-// ─── Palette ────────────────────────────────────────────────────────────────
-const p = {
-  deepTeal: '#004D4D',
-  midTeal: '#007A7A',
-  lightTeal: '#D9F2F2',
-  paleTeal: '#F0FAFA',
-  orange: '#FF9715',
-  text: '#374151',
-  textLight: '#B2DFDF',
-};
+import { colors as p } from '@/theme/colors';
 
 // ─── Responsive CSS classes ─────────────────────────────────────────────────
 const ResponsiveStyles = () => (
@@ -101,7 +91,7 @@ const Contact: React.FC = () => {
       {/* ─── HERO ─── */}
       <div className="aa-section-pad" style={{ background: p.paleTeal, textAlign: 'center' }}>
         <h1 style={{ color: p.deepTeal, fontWeight: 800, fontSize: isMobile ? 34 : 44, lineHeight: 1.15, margin: '0 0 16px' }}>Get in Touch</h1>
-        <p style={{ color: p.text, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
+        <p style={{ color: p.body, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
           Whether you have a question about our courses, want to discuss coaching, or just want to say hello — we'd love to hear from you.
         </p>
       </div>
@@ -122,7 +112,7 @@ const Contact: React.FC = () => {
                   {card.detail}
                 </a>
               ) : (
-                <div style={{ color: p.text, fontSize: 13 }}>{card.detail}</div>
+                <div style={{ color: p.body, fontSize: 13 }}>{card.detail}</div>
               )}
             </div>
           ))}
@@ -137,7 +127,7 @@ const Contact: React.FC = () => {
               </svg>
             </div>
             <h2 style={{ color: p.deepTeal, fontWeight: 700, fontSize: 24, marginBottom: 12 }}>Message Sent</h2>
-            <p style={{ color: p.text, fontSize: 15, lineHeight: 1.7, maxWidth: 400, margin: '0 auto 24px' }}>
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.7, maxWidth: 400, margin: '0 auto 24px' }}>
               Thanks for getting in touch. We'll get back to you as soon as possible.
             </p>
             <button onClick={() => setSubmitted(false)} style={{ background: p.orange, color: '#fff', border: 'none', padding: '12px 28px', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
@@ -147,7 +137,7 @@ const Contact: React.FC = () => {
         ) : (
           <div style={{ maxWidth: 640, margin: '0 auto' }}>
             <h2 style={{ color: p.deepTeal, fontWeight: 700, fontSize: 24, marginBottom: 8, textAlign: 'center' }}>Send us a Message</h2>
-            <p style={{ color: p.text, fontSize: 14, marginBottom: 32, textAlign: 'center' }}>Fill out the form below and we'll get back to you shortly.</p>
+            <p style={{ color: p.body, fontSize: 14, marginBottom: 32, textAlign: 'center' }}>Fill out the form below and we'll get back to you shortly.</p>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

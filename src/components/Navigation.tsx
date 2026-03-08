@@ -1,3 +1,4 @@
+import { colors as p } from '@/theme/colors';
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Shield } from "lucide-react";
 import LogoFull from "@/components/LogoFull";
@@ -62,20 +63,20 @@ const Navigation = () => {
   };
 
   const linkStyle = (active: boolean): React.CSSProperties => ({
-    color: active ? '#004D4D' : '#374151',
+    color: active ? p.deepTeal : p.body,
     fontSize: 13,
     fontWeight: active ? 600 : 500,
     textDecoration: 'none',
     padding: '6px 10px',
     borderRadius: 6,
     transition: 'color 0.15s',
-    background: active ? '#F0FAFA' : 'transparent',
+    background: active ? p.skyTeal : 'transparent',
   });
 
   const dropdownItemStyle: React.CSSProperties = {
     display: 'block',
     padding: '10px 16px',
-    color: '#374151',
+    color: p.body,
     fontSize: 13,
     fontWeight: 500,
     textDecoration: 'none',
@@ -84,8 +85,8 @@ const Navigation = () => {
   const dropdownStyle: React.CSSProperties = {
     position: 'absolute',
     top: '100%',
-    background: '#FFFFFF',
-    border: '1px solid #D9F2F2',
+    background: p.white,
+    border: `1px solid ${p.paleTeal}`,
     borderRadius: 10,
     boxShadow: '0 8px 24px rgba(0,77,77,0.1)',
     padding: '8px 0',
@@ -94,7 +95,7 @@ const Navigation = () => {
 
   return (
     <nav style={{
-      background: '#FFFFFF',
+      background: p.white,
       borderBottom: '1px solid #E5E7EB',
       position: 'sticky',
       top: 0,
@@ -124,7 +125,7 @@ const Navigation = () => {
               <button style={{
                 background: 'none',
                 border: 'none',
-                color: resourcesActive ? '#004D4D' : '#374151',
+                color: resourcesActive ? p.deepTeal : p.body,
                 fontSize: 13,
                 fontWeight: resourcesActive ? 600 : 500,
                 cursor: 'pointer',
@@ -134,7 +135,7 @@ const Navigation = () => {
                 fontFamily: 'inherit',
                 padding: '6px 10px',
                 borderRadius: 6,
-                backgroundColor: resourcesActive ? '#F0FAFA' : 'transparent',
+                backgroundColor: resourcesActive ? p.skyTeal : 'transparent',
               }}>
                 Resources <ChevronDown />
               </button>
@@ -147,11 +148,11 @@ const Navigation = () => {
                       to={item.to}
                       style={{
                         ...dropdownItemStyle,
-                        color: isActive(item.to) ? '#004D4D' : '#374151',
+                        color: isActive(item.to) ? p.deepTeal : p.body,
                         fontWeight: isActive(item.to) ? 600 : 500,
-                        background: isActive(item.to) ? '#F0FAFA' : 'transparent',
+                        background: isActive(item.to) ? p.skyTeal : 'transparent',
                       }}
-                      onMouseEnter={(e) => { if (!isActive(item.to)) e.currentTarget.style.background = '#F0FAFA'; }}
+                      onMouseEnter={(e) => { if (!isActive(item.to)) e.currentTarget.style.background = p.skyTeal; }}
                       onMouseLeave={(e) => { if (!isActive(item.to)) e.currentTarget.style.background = 'transparent'; }}
                       onClick={() => setResourcesOpen(false)}
                     >
@@ -174,7 +175,7 @@ const Navigation = () => {
                 onMouseLeave={() => setDashOpen(false)}
               >
                 <button style={{
-                  background: '#FF9715',
+                  background: p.orange,
                   color: '#fff',
                   border: 'none',
                   padding: '9px 22px',
@@ -195,7 +196,7 @@ const Navigation = () => {
                     <Link
                       to="/dashboard"
                       style={dropdownItemStyle}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#F0FAFA')}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = p.skyTeal)}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       onClick={() => setDashOpen(false)}
                     >
@@ -205,14 +206,14 @@ const Navigation = () => {
                       <Link
                         to="/admin/events"
                         style={dropdownItemStyle}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = '#F0FAFA')}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = p.skyTeal)}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         onClick={() => setDashOpen(false)}
                       >
                         Admin
                       </Link>
                     )}
-                    <div style={{ borderTop: '1px solid #D9F2F2', margin: '4px 0' }} />
+                    <div style={{ borderTop: `1px solid ${p.paleTeal}`, margin: '4px 0' }} />
                     <button
                       onClick={() => { handleSignOut(); setDashOpen(false); }}
                       style={{
@@ -222,13 +223,13 @@ const Navigation = () => {
                         padding: '10px 16px',
                         background: 'none',
                         border: 'none',
-                        color: '#374151',
+                        color: p.body,
                         fontSize: 13,
                         fontWeight: 500,
                         cursor: 'pointer',
                         fontFamily: 'inherit',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#F0FAFA')}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = p.skyTeal)}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       Sign out
@@ -240,7 +241,7 @@ const Navigation = () => {
               <Link
                 to="/auth"
                 style={{
-                  background: '#FF9715',
+                  background: p.orange,
                   color: '#fff',
                   padding: '9px 22px',
                   borderRadius: 8,
@@ -267,7 +268,7 @@ const Navigation = () => {
             border: 'none',
             padding: 8,
             cursor: 'pointer',
-            color: '#374151',
+            color: p.body,
           }}
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -278,7 +279,7 @@ const Navigation = () => {
       {isMenuOpen && (
         <div className="aa-nav-mobile-menu" style={{
           borderTop: '1px solid #E5E7EB',
-          background: '#FFFFFF',
+          background: p.white,
           padding: '8px 0',
         }}>
           {/* Top-level links */}
@@ -290,11 +291,11 @@ const Navigation = () => {
               style={{
                 display: 'block',
                 padding: '12px 24px',
-                color: isActive(link.to) ? '#004D4D' : '#374151',
+                color: isActive(link.to) ? p.deepTeal : p.body,
                 fontSize: 15,
                 fontWeight: isActive(link.to) ? 600 : 500,
                 textDecoration: 'none',
-                background: isActive(link.to) ? '#F0FAFA' : 'transparent',
+                background: isActive(link.to) ? p.skyTeal : 'transparent',
               }}
             >
               {link.label}
@@ -304,7 +305,7 @@ const Navigation = () => {
           {/* Resources group */}
           {visibleResourceLinks.length > 0 && (
             <>
-              <div style={{ padding: '12px 24px 4px', color: '#6B7280', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <div style={{ padding: '12px 24px 4px', color: p.muted, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Resources
               </div>
               {visibleResourceLinks.map((link) => (
@@ -315,11 +316,11 @@ const Navigation = () => {
                   style={{
                     display: 'block',
                     padding: '12px 24px 12px 36px',
-                    color: isActive(link.to) ? '#004D4D' : '#374151',
+                    color: isActive(link.to) ? p.deepTeal : p.body,
                     fontSize: 15,
                     fontWeight: isActive(link.to) ? 600 : 500,
                     textDecoration: 'none',
-                    background: isActive(link.to) ? '#F0FAFA' : 'transparent',
+                    background: isActive(link.to) ? p.skyTeal : 'transparent',
                   }}
                 >
                   {link.label}
@@ -331,17 +332,17 @@ const Navigation = () => {
           {/* Mobile auth */}
           <div style={{ borderTop: '1px solid #E5E7EB', marginTop: 8, paddingTop: 8 }}>
             {loading ? (
-              <div style={{ padding: '12px 24px', color: '#6B7280', fontSize: 14 }}>Loading...</div>
+              <div style={{ padding: '12px 24px', color: p.muted, fontSize: 14 }}>Loading...</div>
             ) : user ? (
               <>
-                <div style={{ padding: '8px 24px', color: '#6B7280', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ padding: '8px 24px', color: p.muted, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                   Signed in as {user.email}
-                  {userRole === 'admin' && <Shield size={12} style={{ color: '#004D4D' }} />}
+                  {userRole === 'admin' && <Shield size={12} style={{ color: p.deepTeal }} />}
                 </div>
                 <Link
                   to="/dashboard"
                   onClick={() => setIsMenuOpen(false)}
-                  style={{ display: 'block', padding: '12px 24px', color: '#004D4D', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
+                  style={{ display: 'block', padding: '12px 24px', color: p.deepTeal, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
                 >
                   Dashboard
                 </Link>
@@ -349,7 +350,7 @@ const Navigation = () => {
                   <Link
                     to="/admin/events"
                     onClick={() => setIsMenuOpen(false)}
-                    style={{ display: 'block', padding: '12px 24px', color: '#004D4D', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
+                    style={{ display: 'block', padding: '12px 24px', color: p.deepTeal, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
                   >
                     Admin Panel
                   </Link>
@@ -361,7 +362,7 @@ const Navigation = () => {
                     width: '100%',
                     textAlign: 'left',
                     padding: '12px 24px',
-                    color: '#6B7280',
+                    color: p.muted,
                     fontSize: 15,
                     fontWeight: 500,
                     background: 'none',
@@ -376,7 +377,7 @@ const Navigation = () => {
               <Link
                 to="/auth"
                 onClick={() => setIsMenuOpen(false)}
-                style={{ display: 'block', padding: '12px 24px', color: '#FF9715', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}
+                style={{ display: 'block', padding: '12px 24px', color: p.orange, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}
               >
                 Sign In
               </Link>

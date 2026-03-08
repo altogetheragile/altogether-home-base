@@ -1,10 +1,11 @@
+import { colors as p } from '@/theme/colors';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, CONTACT_EMAIL } from '@/config/featureFlags';
 
-const h1Style = { color: '#004D4D', fontSize: 32, fontWeight: 800 as const, marginBottom: 8 };
-const h2Style = { color: '#004D4D', fontSize: 20, fontWeight: 700 as const, marginTop: 40, marginBottom: 12 };
-const h3Style = { color: '#004D4D', fontSize: 16, fontWeight: 700 as const, marginTop: 24, marginBottom: 8 };
-const pStyle = { color: '#374151', fontSize: 15, lineHeight: 1.75, marginBottom: 16 };
+const h1Style = { color: p.deepTeal, fontSize: 32, fontWeight: 800 as const, marginBottom: 8 };
+const h2Style = { color: p.deepTeal, fontSize: 20, fontWeight: 700 as const, marginTop: 40, marginBottom: 12 };
+const h3Style = { color: p.deepTeal, fontSize: 16, fontWeight: 700 as const, marginTop: 24, marginBottom: 8 };
+const pStyle = { color: p.body, fontSize: 15, lineHeight: 1.75, marginBottom: 16 };
 
 const Terms = () => (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
@@ -14,7 +15,7 @@ const Terms = () => (
     </Helmet>
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '64px 48px' }}>
       <h1 style={h1Style}>Altogether Agile Ltd — Terms and Conditions</h1>
-      <p style={{ ...pStyle, color: '#6B7280', fontSize: 13 }}>Last updated: March 2026</p>
+      <p style={{ ...pStyle, color: p.muted, fontSize: 13 }}>Last updated: March 2026</p>
 
       <h2 style={h2Style}>1. About Us</h2>
       <p style={pStyle}>

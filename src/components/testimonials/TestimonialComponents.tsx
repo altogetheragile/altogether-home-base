@@ -1,18 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useCourseFeedback, CourseFeedback } from '@/hooks/useCourseFeedback';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-
-// ─── Palette (shared across all pages) ──────────────────────────────────────
-const p = {
-  white: '#FFFFFF',
-  skyTeal: '#F0FAFA',
-  deepTeal: '#004D4D',
-  lightTeal: '#B2DFDF',
-  paleTeal: '#D9F2F2',
-  orange: '#FF9715',
-  body: '#374151',
-  muted: '#6B7280',
-};
+import { colors as p } from '@/theme/colors';
 
 // ─── Shared sub-components ──────────────────────────────────────────────────
 
