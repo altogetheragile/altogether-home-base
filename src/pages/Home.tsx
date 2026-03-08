@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { useEvents, EventData } from '@/hooks/useEvents';
+import { useCourseCards } from '@/hooks/useCourseCards';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
 import AboutSection from '@/components/AboutSection';
 import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
@@ -96,6 +97,16 @@ const Icons = {
       <path d="M216,48H40A16,16,0,0,0,24,64V224a15.85,15.85,0,0,0,9.24,14.5A16.13,16.13,0,0,0,40,240a15.89,15.89,0,0,0,10.25-3.78.69.69,0,0,0,.13-.11L82.5,208H216a16,16,0,0,0,16-16V64A16,16,0,0,0,216,48ZM216,192H82.5a16,16,0,0,0-10.25,3.78.69.69,0,0,0-.13.11L40,224V64H216Z"/>
     </svg>
   ),
+  ChevronLeft: () => (
+    <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+    </svg>
+  ),
+  ChevronRight: () => (
+    <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/>
+    </svg>
+  ),
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -145,10 +156,29 @@ const Home: React.FC = () => {
   const isMobile = useIsMobile();
   const { settings } = useSiteSettings();
   const { data: allEvents } = useEvents();
+  const { data: courseCards } = useCourseCards();
+  const [carouselIndex, setCarouselIndex] = React.useState(0);
 
   const events = (allEvents || [])
     .filter((e) => new Date(e.start_date) >= new Date())
     .slice(0, 3);
+
+  const courses = courseCards || [];
+  const getVisibleCount = () => {
+    if (typeof window === 'undefined') return 3;
+    if (window.innerWidth <= 767) return 1;
+    if (window.innerWidth <= 1024) return 2;
+    return 3;
+  };
+  const [visibleCount, setVisibleCount] = React.useState(getVisibleCount);
+  React.useEffect(() => {
+    const onResize = () => setVisibleCount(getVisibleCount());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const maxIndex = Math.max(0, courses.length - visibleCount);
+  const canPrev = carouselIndex > 0;
+  const canNext = carouselIndex < maxIndex;
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF' }}>
@@ -213,7 +243,7 @@ const Home: React.FC = () => {
         <div className="aa-three-col">
           {[
             { icon: <Icons.ArrowRight />, heading: 'Moving into agile', body: "You're a project manager, BA, or team lead transitioning to agile ways of working and need grounded, practical guidance - not just theory." },
-            { icon: <Icons.GraduationCap />, heading: 'Seeking certification', body: "You want a recognised credential - Scrum Master, AgileBA, AgilePM, or ICAgile - delivered by someone who's examined and authored the syllabuses." },
+            { icon: <Icons.GraduationCap />, heading: 'Seeking certification', body: "You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - delivered by someone who has contributed to the frameworks and knows them inside out." },
             { icon: <Icons.Users />, heading: 'Building team agility', body: "You're a leader trying to grow genuine organisational agility - and you need a coach who understands both the human and structural side of change." },
           ].map((card, i) => (
             <div key={i} style={{ background: '#F0FAFA', borderRadius: 14, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -232,77 +262,129 @@ const Home: React.FC = () => {
 
       {/* ─── EVENTS (live Supabase data) ─── */}
       <div className="aa-section-pad" style={{ background: '#F0FAFA' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
-          <div>
-            <h2 style={{ color: '#004D4D', fontSize: 32, fontWeight: 800, margin: '0 0 6px' }}>Upcoming Events</h2>
-            <p style={{ color: '#6B7280', fontSize: 15, margin: 0 }}>Certified courses, workshops and masterclasses</p>
-          </div>
-          <Link to="/events" style={{ color: '#FF9715', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
-            View all <Icons.ArrowRight />
-          </Link>
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ color: '#004D4D', fontSize: 32, fontWeight: 800, margin: 0 }}>Courses, workshops and masterclasses</h2>
         </div>
 
-        {events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 24px', background: '#FFFFFF', borderRadius: 14 }}>
-            <div style={{ color: '#004D4D', fontSize: 40, marginBottom: 12 }}>📅</div>
-            <p style={{ color: '#004D4D', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
-              New dates being scheduled now
-            </p>
-            <p style={{ color: '#6B7280', fontSize: 14, lineHeight: 1.6, marginBottom: 24, maxWidth: 360, margin: '0 auto 24px' }}>
-              Can't see the course you need? Get in touch and we'll let you know as soon as new dates are confirmed.
-            </p>
-            <Link to="/contact" style={{
-              background: '#FF9715', color: '#fff', padding: '12px 24px',
-              borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center', gap: 8,
+        {/* Course carousel */}
+        <div style={{ position: 'relative' }}>
+          {canPrev && (
+            <button
+              onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
+              aria-label="Previous courses"
+              style={{
+                position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)',
+                zIndex: 2, width: 40, height: 40, borderRadius: '50%', border: 'none',
+                background: '#004D4D', color: '#fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,77,77,0.2)',
+              }}
+            >
+              <Icons.ChevronLeft />
+            </button>
+          )}
+          {canNext && (
+            <button
+              onClick={() => setCarouselIndex((i) => Math.min(maxIndex, i + 1))}
+              aria-label="Next courses"
+              style={{
+                position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
+                zIndex: 2, width: 40, height: 40, borderRadius: '50%', border: 'none',
+                background: '#004D4D', color: '#fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,77,77,0.2)',
+              }}
+            >
+              <Icons.ChevronRight />
+            </button>
+          )}
+
+          <div style={{ overflow: 'hidden' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${courses.length}, calc(${100 / visibleCount}% - ${(20 * (visibleCount - 1)) / visibleCount}px))`,
+              gap: 20,
+              transition: 'transform 0.35s ease',
+              transform: `translateX(calc(-${carouselIndex} * (${100 / visibleCount}% + ${20 / visibleCount}px)))`,
             }}>
-              Register your interest →
-            </Link>
-          </div>
-        ) : (
-          <div className="aa-three-col">
-            {events.map((event) => {
-              const typeName = getEventType(event);
-              return (
-                <Link key={event.id} to={`/events/${event.id}`} style={{ background: '#FFFFFF', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 14, textDecoration: 'none' }}>
+              {courses.map((course) => (
+                <Link
+                  key={course.id}
+                  to={`/courses/${course.id}`}
+                  style={{
+                    background: '#FFFFFF', borderRadius: 14, padding: 24,
+                    display: 'flex', flexDirection: 'column', gap: 14,
+                    textDecoration: 'none', minHeight: 220,
+                    boxShadow: '0 2px 12px rgba(0,77,77,0.07)',
+                  }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ background: getTypeColor(typeName), color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{typeName}</span>
-                    <span style={{ color: '#007A7A', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Icons.Clock />{getDuration(event)}
-                    </span>
+                    {course.category && (
+                      <span style={{
+                        background: '#004D4D', color: '#fff', fontSize: 10, fontWeight: 700,
+                        padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}>
+                        {course.category}
+                      </span>
+                    )}
+                    {course.difficulty && (
+                      <span style={{ color: '#007A7A', fontSize: 11, fontWeight: 600 }}>
+                        {course.difficulty}
+                      </span>
+                    )}
                   </div>
-                  <div style={{ color: '#004D4D', fontSize: 17, fontWeight: 700, lineHeight: 1.3 }}>{event.title}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ color: '#374151', fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <span style={{ color: '#007A7A', flexShrink: 0 }}><Icons.Calendar /></span>
-                      {formatDateRange(event.start_date, event.end_date)}
+
+                  <div style={{ color: '#004D4D', fontSize: 17, fontWeight: 700, lineHeight: 1.3 }}>
+                    {course.title}
+                  </div>
+
+                  {course.description && (
+                    <div style={{ color: '#374151', fontSize: 13, lineHeight: 1.6 }}>
+                      {course.description.length > 100
+                        ? course.description.slice(0, 100).trimEnd() + '\u2026'
+                        : course.description}
                     </div>
-                    {event.location && (
-                      <div style={{ color: '#374151', fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
-                        <span style={{ color: '#007A7A', flexShrink: 0 }}><Icons.MapPin /></span>
-                        {event.location.name}
-                      </div>
-                    )}
-                    {event.instructor && (
-                      <div style={{ color: '#374151', fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
-                        <span style={{ color: '#007A7A', flexShrink: 0 }}><Icons.User /></span>
-                        {event.instructor.name}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#004D4D', fontWeight: 800, fontSize: 18 }}>
-                      {formatPrice(event.price_cents, event.currency)}
+                  )}
+
+                  {course.hasDatesAvailable ? (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      background: '#007A7A', color: '#fff', fontSize: 11, fontWeight: 700,
+                      padding: '4px 12px', borderRadius: 20, alignSelf: 'flex-start',
+                    }}>
+                      <Icons.Calendar /> Dates available
                     </span>
-                    <span style={{ background: '#FF9715', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 8, fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Register <Icons.ArrowRight />
+                  ) : (
+                    <span style={{ color: '#6B7280', fontSize: 12, fontStyle: 'italic' }}>
+                      No dates scheduled
+                    </span>
+                  )}
+
+                  <div style={{ marginTop: 'auto' }}>
+                    <span style={{
+                      color: '#FF9715', fontWeight: 700, fontSize: 13,
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                    }}>
+                      Find out more <Icons.ArrowRight />
                     </span>
                   </div>
                 </Link>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* View all CTA */}
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
+          <Link to="/events" style={{
+            background: '#FF9715', color: '#fff', padding: '12px 24px',
+            borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+          }}>
+            View all →
+          </Link>
+        </div>
       </div>
 
       {/* ─── ABOUT ALUN ─── */}

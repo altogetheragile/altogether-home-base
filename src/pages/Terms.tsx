@@ -61,7 +61,7 @@ const Terms = () => (
 
       <h3 style={h3Style}>3.6 Framework-Based Courses</h3>
       <p style={pStyle}>
-        Some of our courses are based on published frameworks including AgilePM, AgileBA, ICAgile, and ABC Scrum Master. These courses are delivered based on the relevant framework content. They do not currently include a formal examination or certification component. If you require a certified examination, you will need to arrange this separately.
+        Some of our courses are based on published frameworks including AgilePM, AgileBA, Kanban, and ABC Scrum Master. These courses are delivered based on the relevant framework content. They do not currently include a formal examination or certification component. If you require a certified examination, you will need to arrange this separately.
       </p>
 
       <h2 style={h2Style}>4. Coaching Services</h2>
