@@ -142,7 +142,6 @@ const EventDetailSidebar = ({ event }: EventDetailSidebarProps) => {
           )}
           {durationLabel && <MetaRow label="Duration" value={durationLabel} />}
           {event.location && <MetaRow label="Location" value={event.location.name} />}
-          {levelName && <MetaRow label="Level" value={levelName} />}
           {instructorName && <MetaRow label="Instructor" value={instructorName} />}
 
           {difficultyRating && (
@@ -249,7 +248,6 @@ const EventDetailSidebar = ({ event }: EventDetailSidebarProps) => {
       {/* Body */}
       <div style={{ padding: "20px 24px 24px" }}>
         {durationLabel && <MetaRow label="Typical duration" value={durationLabel} />}
-        {levelName && <MetaRow label="Level" value={levelName} />}
         {formatName && <MetaRow label="Format" value={formatName} />}
 
         {difficultyRating && (
