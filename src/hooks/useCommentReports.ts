@@ -45,7 +45,7 @@ export function useReportComment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comment-reports"] });
     },
-    onError: () => { /* silently fail – non-critical */ },
+    onError: (error: Error) => { console.error('Failed to report comment:', error.message); },
   });
 
   return {
@@ -124,7 +124,7 @@ export function useUpdateReportStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comment-reports"] });
     },
-    onError: () => { /* silently fail */ },
+    onError: (error: Error) => { console.error('Failed to update report status:', error.message); },
   });
 
   return {
@@ -150,7 +150,7 @@ export function useDeleteReportedComment() {
       queryClient.invalidateQueries({ queryKey: ["comment-reports"] });
       queryClient.invalidateQueries({ queryKey: ["knowledge-item-comments"] });
     },
-    onError: () => { /* silently fail */ },
+    onError: (error: Error) => { console.error('Failed to delete reported comment:', error.message); },
   });
 
   return {

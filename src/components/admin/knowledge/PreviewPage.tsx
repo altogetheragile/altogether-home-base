@@ -19,8 +19,12 @@ export const PreviewPage: React.FC = () => {
     // Check if this is a preview from the editor
     const previewData = sessionStorage.getItem('preview-knowledge-item');
     if (previewData) {
-      setKnowledgeItem(JSON.parse(previewData));
-      setIsPreview(true);
+      try {
+        setKnowledgeItem(JSON.parse(previewData));
+        setIsPreview(true);
+      } catch {
+        setError('Failed to load preview data. The stored data may be corrupted.');
+      }
       return;
     }
 

@@ -82,9 +82,6 @@ export const useRecommendations = (
     queryKey: ['recommendations', user?.id, contentTypes, limit, excludeIds],
     queryFn: async () => {
       // Always generate fresh recommendations since recommendation_cache table doesn't exist
-      if (import.meta.env.DEV) {
-        console.debug('Generating fresh recommendations');
-      }
       return await generateFreshRecommendations(contentTypes, limit, excludeIds, user?.id);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -209,9 +206,6 @@ const generateFreshRecommendations = async (
 
     // Fallback: if no featured testimonials, get highest-rated approved ones
     if (!testimonials || testimonials.length === 0) {
-      if (import.meta.env.DEV) {
-        console.debug('No featured testimonials found, using fallback query for approved testimonials');
-      }
       let fallbackQuery = supabase
         .from('course_feedback')
         .select('*')
@@ -227,10 +221,6 @@ const generateFreshRecommendations = async (
       testimonials = fallbackTestimonials;
     }
 
-    if (import.meta.env.DEV) {
-      console.debug(`Testimonials fetched: ${testimonials?.length || 0}`);
-    }
-    
     testimonials?.forEach((testimonial, index) => {
       testimonialRecs.push({
         content_type: 'testimonial',

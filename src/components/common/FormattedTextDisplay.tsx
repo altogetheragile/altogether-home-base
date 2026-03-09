@@ -43,12 +43,6 @@ export default function FormattedTextDisplay({
 }: FormattedTextDisplayProps) {
   const items = normalizeToItems(text);
 
-  if (process.env.NODE_ENV !== "production") {
-    console.debug("[FormattedTextDisplay] debugKey:", debugKey);
-    console.debug("[FormattedTextDisplay] input:", text);
-    console.debug("[FormattedTextDisplay] normalized items:", items);
-  }
-
   // If we have items, render a list
   if (items.length > 0 && (as === "ul" || as === "ol")) {
     const ListTag = as;

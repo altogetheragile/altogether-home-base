@@ -124,7 +124,7 @@ export const useTechniqueComments = (techniqueId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technique-comments', techniqueId] });
     },
-    onError: () => { /* silently fail */ },
+    onError: (error: Error) => { console.error('Failed to add technique comment:', error.message); },
   });
 
   const voteCommentMutation = useMutation({
@@ -188,7 +188,7 @@ export const useTechniqueComments = (techniqueId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technique-comments', techniqueId] });
     },
-    onError: () => { /* silently fail */ },
+    onError: (error: Error) => { console.error('Failed to vote on technique comment:', error.message); },
   });
 
   return {

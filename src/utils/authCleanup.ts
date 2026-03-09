@@ -5,7 +5,7 @@ export const cleanupAuthState = () => {
     // Clear specific Supabase auth keys
     try {
       localStorage.removeItem('supabase.auth.token');
-    } catch {}
+    } catch (_) { /* Intentionally silent — localStorage may be unavailable (e.g., private browsing) */ }
 
     // Remove all Supabase-related keys from localStorage
     try {
@@ -14,7 +14,7 @@ export const cleanupAuthState = () => {
           window.localStorage.removeItem(key);
         }
       });
-    } catch {}
+    } catch (_) { /* Intentionally silent — localStorage cleanup is best-effort */ }
 
     // Remove all Supabase-related keys from sessionStorage
     try {
@@ -23,7 +23,7 @@ export const cleanupAuthState = () => {
           window.sessionStorage.removeItem(key);
         }
       });
-    } catch {}
+    } catch (_) { /* Intentionally silent — sessionStorage cleanup is best-effort */ }
   } catch (err) {
     // Swallow errors – cleanup is best-effort
     // Auth cleanup warning suppressed

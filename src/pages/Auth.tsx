@@ -56,7 +56,9 @@ const Auth = () => {
         try {
           const { data } = await supabase.auth.mfa.listFactors();
           factors = data?.all ?? [];
-        } catch {}
+        } catch (error) {
+          console.error('MFA: failed to list factors:', error);
+        }
       }
       setMfaFactors(factors);
 
@@ -74,7 +76,9 @@ const Auth = () => {
           if (sess?.session) {
             navigateAfterAuth();
           }
-        } catch {}
+        } catch (error) {
+          console.error('MFA: failed to check session after factor check:', error);
+        }
         return;
       }
 
@@ -200,6 +204,7 @@ useEffect(() => {
           }
         }
       } catch (aalErr) {
+        console.error('Auth: AAL check failed after sign-in:', aalErr);
       }
 
       toast({ title: "Welcome back!", description: "You have been signed in successfully." });
@@ -234,6 +239,7 @@ useEffect(() => {
       try {
         await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       } catch (aalErr) {
+        console.error('MFA: AAL check failed after verification:', aalErr);
       }
       toast({ title: "MFA verified (AAL2)", description: "You're fully signed in." });
       navigateAfterAuth();
@@ -243,7 +249,7 @@ useEffect(() => {
       const is422 = mfaErr.status === 422 || mfaErr.statusCode === 422;
       const isExpired = /expired|challenge|not found/i.test(msg);
       if (is422 || isExpired) {
-        try { await refreshMfaChallenge(); } catch {}
+        try { await refreshMfaChallenge(); } catch (refreshErr) { console.error('MFA: failed to refresh challenge:', refreshErr); }
       }
       toast({ title: is422 || isExpired ? "Code expired or invalid" : "Invalid code", description: is422 || isExpired ? "We requested a fresh code. Enter the latest 6‑digit code." : (mfaErr.message || "Please try again."), variant: is422 || isExpired ? undefined : "destructive" });
     } finally {
@@ -259,7 +265,9 @@ useEffect(() => {
     try {
       cleanupAuthState();
       await supabase.auth.signOut({ scope: "global" });
-    } catch {}
+    } catch (error) {
+      console.error('MFA cancel: sign-out failed:', error);
+    }
   };
 
   const refreshMfaChallenge = async () => {

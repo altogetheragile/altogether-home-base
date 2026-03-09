@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-    }).catch(() => {
+    }).catch((error) => {
+      console.error('Auth session retrieval failed:', error);
       setLoading(false);
     });
 
@@ -54,10 +55,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const redirectUrl = `${window.location.origin}/`;
 
     // Ensure clean state before attempting sign-up
+    // Intentionally silent — pre-auth cleanup failure is non-critical
     try {
       cleanupAuthState();
-      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
-    } catch {}
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch (_) { /* Intentionally silent — sign-out before sign-up is best-effort */ }
+    } catch (_) { /* Intentionally silent — cleanup failure is non-critical */ }
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -75,10 +77,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     // Clean up any existing auth state to avoid limbo sessions
+    // Intentionally silent — pre-auth cleanup failure is non-critical
     try {
       cleanupAuthState();
-      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
-    } catch {}
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch (_) { /* Intentionally silent — sign-out before sign-in is best-effort */ }
+    } catch (_) { /* Intentionally silent — cleanup failure is non-critical */ }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -99,8 +102,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Attempt global sign-out to invalidate all refresh tokens
       try {
         await supabase.auth.signOut({ scope: 'global' });
-      } catch {}
-    } catch {} finally {
+      } catch (error) {
+        console.error('Auth sign-out request failed:', error);
+      }
+    } catch (error) {
+      console.error('Auth sign-out cleanup failed:', error);
+    } finally {
       // Force hard redirect to ensure a clean app state
       window.location.href = '/auth';
     }

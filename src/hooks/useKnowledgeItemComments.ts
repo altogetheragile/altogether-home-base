@@ -90,7 +90,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-item-comments', knowledgeItemId] });
     },
-    onError: () => { /* silently fail */ },
+    onError: (error: Error) => { console.error('Failed to add knowledge item comment:', error.message); },
   });
 
   // Update comment mutation
@@ -112,7 +112,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-item-comments', knowledgeItemId] });
     },
-    onError: () => { /* silently fail */ },
+    onError: (error: Error) => { console.error('Failed to update knowledge item comment:', error.message); },
   });
 
   // Delete comment mutation
@@ -131,7 +131,7 @@ export const useKnowledgeItemComments = (knowledgeItemId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-item-comments', knowledgeItemId] });
     },
-    onError: () => { /* silently fail */ },
+    onError: (error: Error) => { console.error('Failed to delete knowledge item comment:', error.message); },
   });
 
   return {
