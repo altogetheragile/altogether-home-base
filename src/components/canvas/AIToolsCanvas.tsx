@@ -22,6 +22,7 @@ import { AssignToParentDialog } from './AssignToParentDialog';
 import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
 import { useStoryNumbering } from '@/hooks/useStoryNumbering';
+import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 const loadHtml2Canvas = () => import('html2canvas').then(m => m.default);
 
 // Adapter to convert canvas story data to UnifiedStoryData
@@ -77,17 +78,13 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   onSave,
 }) => {
   // Element state
-  const [elements, setElements] = useState<CanvasElement[]>(initialData?.elements || []);
+  const { items: elements, setItems: setElements, updateWithHistory: updateElementsWithHistory, undo, redo, canUndo, canRedo, resetHistory } = useCanvasHistory<CanvasElement>(initialData?.elements || []);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<CanvasElement | null>(null);
   const [splittingElement, setSplittingElement] = useState<CanvasElement | null>(null);
   const [assignToParentOpen, setAssignToParentOpen] = useState(false);
-  
-  // Undo/Redo history
-  const [history, setHistory] = useState<CanvasElement[][]>([initialData?.elements || []]);
-  const [historyIndex, setHistoryIndex] = useState(0);
   
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -119,10 +116,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   
   // Story numbering hook
   const { getNextNumber, getChildNumbers, getNextChildNumberUnderParent } = useStoryNumbering(elements);
-
-  // Undo/Redo computed values
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
 
   // Clean up stale selections when elements change
   useEffect(() => {
@@ -239,41 +232,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     );
     
     if (hasChanges) {
-      setElements(migratedElements);
-      // Update history with migrated state
-      setHistory([migratedElements]);
-      setHistoryIndex(0);
+      resetHistory(migratedElements);
     }
   }, [isInitialLoad, elements]);
-
-  // History-aware element update function
-  const updateElementsWithHistory = useCallback((newElements: CanvasElement[]) => {
-    setElements(newElements);
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(newElements);
-      return newHistory.slice(-50);
-    });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [historyIndex]);
-
-  // Undo function
-  const undo = useCallback(() => {
-    if (canUndo) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
-      setElements(history[newIndex]);
-    }
-  }, [canUndo, history, historyIndex]);
-
-  // Redo function
-  const redo = useCallback(() => {
-    if (canRedo) {
-      const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
-      setElements(history[newIndex]);
-    }
-  }, [canRedo, history, historyIndex]);
 
   // Reposition elements to prevent overlapping when expanding
   const repositionElementsToPreventOverlap = useCallback((currentElements: CanvasElement[]) => {

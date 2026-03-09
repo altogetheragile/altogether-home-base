@@ -17,6 +17,7 @@ const loadJsPDF = () => import('jspdf').then(m => m.default);
 import type { KBItemData } from './elements/SaveToKBDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebouncedCallback } from 'use-debounce';
+import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 
 interface CanvasElement {
   id: string;
@@ -37,16 +38,12 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   artifactId, 
   projectId 
 }) => {
-  const [elements, setElements] = useState<CanvasElement[]>(initialData?.elements || []);
+  const { items: elements, setItems: setElements, updateWithHistory: updateElementsWithHistory, undo, redo, canUndo, canRedo } = useCanvasHistory<CanvasElement>(initialData?.elements || []);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [hasSyncedKB, setHasSyncedKB] = useState(false);
   const [hasRefreshedKB, setHasRefreshedKB] = useState(false);
-  
-  // Undo/Redo history state
-  const [history, setHistory] = useState<CanvasElement[][]>([initialData?.elements || []]);
-  const [historyIndex, setHistoryIndex] = useState(0);
   
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -67,39 +64,6 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
   const { updateArtifact } = useProjectArtifactMutations();
-
-  // Undo/Redo computed values
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
-
-  // History-aware element update function
-  const updateElementsWithHistory = useCallback((newElements: CanvasElement[]) => {
-    setElements(newElements);
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(newElements);
-      return newHistory.slice(-50); // Keep last 50 states
-    });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [historyIndex]);
-
-  // Undo function
-  const undo = useCallback(() => {
-    if (canUndo) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
-      setElements(history[newIndex]);
-    }
-  }, [canUndo, history, historyIndex]);
-
-  // Redo function
-  const redo = useCallback(() => {
-    if (canRedo) {
-      const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
-      setElements(history[newIndex]);
-    }
-  }, [canRedo, history, historyIndex]);
 
   // Auto-sync custom hexis that match existing KB items on load
   useEffect(() => {
