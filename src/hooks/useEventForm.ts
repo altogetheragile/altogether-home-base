@@ -139,7 +139,8 @@ export const useEventForm = () => {
       
       const { data, error } = await supabase
         .from('events')
-        .insert([processedData])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(processedData as any)
         .select()
         .single();
 

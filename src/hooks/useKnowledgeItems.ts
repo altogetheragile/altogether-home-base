@@ -33,7 +33,7 @@ const retryWithBackoff = async <T>(
     try {
       return await fn();
     } catch (error) {
-      if (attempt === maxRetries || !isNetworkError(error)) {
+      if (attempt === maxRetries || !isNetworkError(error as PostgreSQLError)) {
         throw error;
       }
       
@@ -247,7 +247,7 @@ export interface KnowledgeItem {
 // Transform raw database response to KnowledgeItem with taxonomy arrays
 // Now includes is_primary and rationale from junction tables
 interface JunctionRow {
-  is_primary?: boolean;
+  is_primary?: boolean | null;
   rationale?: string | null;
   decision_levels?: DecisionLevel;
   knowledge_categories?: KnowledgeCategory;
@@ -301,7 +301,7 @@ const transformKnowledgeItem = (raw: RawKnowledgeItem): KnowledgeItem => {
     categories,
     domains,
     tags,
-  };
+  } as unknown as KnowledgeItem;
 };
 
 export const useKnowledgeItems = (params?: {
@@ -322,7 +322,7 @@ export const useKnowledgeItems = (params?: {
         .from('knowledge_items')
         .select(`
           id, name, slug, description, is_published, is_featured, view_count,
-          emoji, icon, hero_image_url, created_at, updated_at, background,
+          emoji, icon, created_at, updated_at, background,
           learning_value_summary, common_pitfalls,
           item_type, use_this_when, avoid_when, decisions_supported,
           what_good_looks_like, typical_output,
@@ -579,7 +579,8 @@ export const useCreateKnowledgeItem = () => {
         // Create the knowledge item
         const { data: result, error } = await supabase
           .from('knowledge_items')
-          .insert([transformedData])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert(transformedData as any)
           .select()
           .single();
 
@@ -718,7 +719,8 @@ export const useUpdateKnowledgeItem = () => {
         // Update the knowledge item
         const { data: result, error } = await supabase
           .from('knowledge_items')
-          .update(transformedData)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .update(transformedData as any)
           .eq('id', id)
           .select()
           .single();

@@ -106,7 +106,7 @@ export const useCanvasRealtime = ({
       const { error } = await supabase
         .from('canvases')
         .update({
-          data,
+          data: data as unknown as import('@/integrations/supabase/types').Json,
           updated_at: new Date().toISOString()
         })
         .eq('id', canvasId);

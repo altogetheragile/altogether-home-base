@@ -72,10 +72,11 @@ const AdminEventBlueprints: React.FC = () => {
   const createBlueprint = useMutation({
     mutationFn: async (blueprintData: Partial<EventBlueprint>) => {
       const { data, error } = await supabase.from('event_templates')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert({
           ...blueprintData,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        } as any)
         .select()
         .single();
       

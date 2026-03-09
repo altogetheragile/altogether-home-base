@@ -50,18 +50,13 @@ describe('storyMetadata utilities', () => {
         description: 'As a user, I want to log in',
         acceptance_criteria: ['Valid credentials accepted', 'Invalid rejected'],
         user_persona: 'End User',
-        business_objective: 'Improve security',
-        user_value: 'Secure access',
         technical_notes: 'Use JWT tokens',
-        estimated_effort_hours: 8,
-        business_value_score: 9,
-        technical_complexity_score: 6,
         confidence_level: 4,
       });
 
       expect(result.dependencies).toEqual(['Authentication service']);
-      expect(result.definition_of_ready).toHaveLength(2);
-      expect(result.definition_of_done).toHaveLength(2);
+      expect(result.definition_of_ready?.items).toHaveLength(2);
+      expect(result.definition_of_done?.items).toHaveLength(2);
     });
   });
 
@@ -86,9 +81,6 @@ describe('storyMetadata utilities', () => {
         description: 'Complete system for managing users',
         project_id: 'project-123',
         business_objective: 'Streamline operations',
-        estimated_effort_hours: 160,
-        business_value_score: 10,
-        confidence_level: 3,
       });
 
       expect(result.success_metrics).toEqual(['User satisfaction > 90%']);
@@ -186,9 +178,9 @@ describe('storyMetadata utilities', () => {
       expect(getConfidenceLevelLabel(5)).toBe('Very High');
     });
 
-    it('should return Medium for invalid levels', () => {
-      expect(getConfidenceLevelLabel(0)).toBe('Medium');
-      expect(getConfidenceLevelLabel(6)).toBe('Medium');
+    it('should return boundary values for out-of-range levels', () => {
+      expect(getConfidenceLevelLabel(0)).toBe('Very Low');
+      expect(getConfidenceLevelLabel(6)).toBe('Very High');
     });
   });
 

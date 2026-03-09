@@ -38,7 +38,8 @@ export const useCreatePlanningFocus = () => {
     mutationFn: async (data: Partial<PlanningFocus>) => {
       const { data: result, error } = await supabase
         .from('planning_focuses')
-        .insert([data])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(data as any)
         .select()
         .single();
 

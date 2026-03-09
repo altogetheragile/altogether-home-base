@@ -37,7 +37,8 @@ export const useCreateKnowledgeCategory = () => {
     mutationFn: async (data: Partial<KnowledgeCategory>) => {
       const { data: result, error } = await supabase
         .from('knowledge_categories')
-        .insert([data])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(data as any)
         .select()
         .single();
 

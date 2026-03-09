@@ -282,7 +282,8 @@ export const useTrackInteraction = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const interactionScore: Record<string, number> = (currentPrefs?.interaction_score as Record<string, number> | null) || {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const interactionScore: Record<string, number> = ((currentPrefs as any)?.interaction_score as Record<string, number> | null) || {};
       const key = `${contentType}_${interactionType}`;
       interactionScore[key] = (interactionScore[key] || 0) + value;
 

@@ -257,7 +257,7 @@ export default function AdminUsers() {
 
       {/* Dialogs */}
       <UserDetailsDialog
-        user={selectedUser}
+        user={selectedUser ? { ...selectedUser, created_at: selectedUser.created_at ?? '' } : null}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onEditRole={handleEditRoleFromDetails}

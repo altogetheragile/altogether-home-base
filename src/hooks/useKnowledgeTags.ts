@@ -33,7 +33,8 @@ export const useCreateKnowledgeTag = () => {
     mutationFn: async (data: Partial<KnowledgeTag>) => {
       const { data: result, error } = await supabase
         .from('knowledge_tags')
-        .insert([data])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(data as any)
         .select()
         .single();
 

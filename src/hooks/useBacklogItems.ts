@@ -70,11 +70,12 @@ export const useCreateBacklogItem = () => {
       
       const { data, error } = await supabase
         .from('backlog_items')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert({
           ...item,
           created_by: user?.id,
           backlog_position: maxPosition + 1,
-        })
+        } as any)
         .select()
         .single();
       

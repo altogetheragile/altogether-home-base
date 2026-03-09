@@ -222,8 +222,9 @@ export default function ArtifactViewer() {
         );
         return (
           <React.Suspense fallback={<div className="flex justify-center p-8">Loading canvas...</div>}>
-            <ProjectModellingCanvas 
-              initialData={artifact.data}
+            <ProjectModellingCanvas
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
               artifactId={artifact.id}
               projectId={projectId}
             />
@@ -279,8 +280,9 @@ export default function ArtifactViewer() {
         );
         return (
           <React.Suspense fallback={<div className="flex justify-center p-8">Loading canvas...</div>}>
-            <AIToolsCanvas 
-              initialData={artifact.data}
+            <AIToolsCanvas
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
               artifactId={artifact.id}
               projectId={projectId}
             />

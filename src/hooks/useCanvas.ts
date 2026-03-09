@@ -50,11 +50,12 @@ export const useCanvasMutations = () => {
     mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
       const { data: canvas, error } = await supabase
         .from('canvases')
-        .insert([{
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert({
           project_id: projectId,
-          data,
+          data: data as any,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        }])
+        })
         .select()
         .single();
 
@@ -77,7 +78,8 @@ export const useCanvasMutations = () => {
     mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
       const { data: canvas, error } = await supabase
         .from('canvases')
-        .update({ data })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update({ data: data as any })
         .eq('project_id', projectId)
         .select()
         .single();

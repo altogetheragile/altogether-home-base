@@ -134,10 +134,11 @@ export const useSubmitFeedback = () => {
     mutationFn: async (feedback: Partial<CourseFeedback>) => {
       const { data, error } = await supabase
         .from('course_feedback')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert({
           ...feedback,
           created_by: (await supabase.auth.getUser()).data.user?.id,
-        })
+        } as any)
         .select()
         .single();
 

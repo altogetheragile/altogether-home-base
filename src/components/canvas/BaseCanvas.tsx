@@ -66,50 +66,46 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
       await document.fonts.ready;
     }
 
-    try {
-      const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(canvasRef.current, {
-        backgroundColor: '#ffffff',
-        scale: options.quality === 2 ? 2 : 3,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: false,
-        logging: false,
-        ignoreElements: (el) => el.classList?.contains('no-export'),
+    const { default: html2canvas } = await import('html2canvas');
+    const canvas = await html2canvas(canvasRef.current, {
+      backgroundColor: '#ffffff',
+      scale: options.quality === 2 ? 2 : 3,
+      useCORS: true,
+      allowTaint: true,
+      foreignObjectRendering: false,
+      logging: false,
+      ignoreElements: (el) => el.classList?.contains('no-export'),
+    });
+
+    if (options.format === 'pdf') {
+      const { default: jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: (canvas.width / canvas.height) > 1 ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: 'a4',
       });
 
-      if (options.format === 'pdf') {
-        const { default: jsPDF } = await import('jspdf');
-        const pdf = new jsPDF({
-          orientation: (canvas.width / canvas.height) > 1 ? 'landscape' : 'portrait',
-          unit: 'mm',
-          format: 'a4',
-        });
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        const imgData = canvas.toDataURL('image/png');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
-        const canvasAspectRatio = canvas.width / canvas.height;
-        let imgWidth = pdfWidth - 20;
-        let imgHeight = imgWidth / canvasAspectRatio;
-        
-        if (imgHeight > pdfHeight - 20) {
-          imgHeight = pdfHeight - 20;
-          imgWidth = imgHeight * canvasAspectRatio;
-        }
-        
-        const x = (pdfWidth - imgWidth) / 2;
-        const y = (pdfHeight - imgHeight) / 2;
-        
-        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-        return pdf.output('dataurlstring');
+      const canvasAspectRatio = canvas.width / canvas.height;
+      let imgWidth = pdfWidth - 20;
+      let imgHeight = imgWidth / canvasAspectRatio;
+
+      if (imgHeight > pdfHeight - 20) {
+        imgHeight = pdfHeight - 20;
+        imgWidth = imgHeight * canvasAspectRatio;
       }
 
-      return canvas.toDataURL('image/png');
-    } catch (error) {
-      throw error;
+      const x = (pdfWidth - imgWidth) / 2;
+      const y = (pdfHeight - imgHeight) / 2;
+
+      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+      return pdf.output('dataurlstring');
     }
+
+    return canvas.toDataURL('image/png');
   };
 
   const getCanvasData = (): CanvasData => {

@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trash2 } from 'lucide-react';
-import { useEventRegistrations, useDeleteRegistration, AdminRegistrationWithUser } from '@/hooks/useEventRegistrations';
+import { useEventRegistrations, useDeleteRegistration } from '@/hooks/useEventRegistrations';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ExternalLink, Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';

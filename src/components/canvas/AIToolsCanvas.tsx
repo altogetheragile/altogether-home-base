@@ -165,8 +165,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     
     // Track counters for generating new numbers
     let epicCounter = 0;
-    let featureCounters: Record<number, number> = {};
-    let storyCounters: Record<string, number> = {};
+    const featureCounters: Record<number, number> = {};
+    const storyCounters: Record<string, number> = {};
     
     // Find highest existing numbers
     usedNumbers.epic.forEach(num => {
@@ -413,7 +413,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   const handleElementUpdate = useCallback((id: string, updates: Partial<CanvasElement>) => {
     setElements(prev => prev.map(el => {
       if (el.id === id) {
-        let newUpdates = { ...updates };
+        const newUpdates = { ...updates };
         if (newUpdates.position) {
           newUpdates.position = {
             x: Math.max(0, newUpdates.position.x),

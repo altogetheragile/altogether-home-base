@@ -316,8 +316,8 @@ const AccountSecurity = () => {
                     {factors.map((f) => (
                       <li key={f.id} className="flex items-center justify-between border rounded-md p-3">
                         <div>
-                          <div className="font-medium">{f.friendly_name || f.type?.toUpperCase?.() || 'TOTP'}</div>
-                          <div className="text-xs text-muted-foreground">Status: {f.status || f.factor_status || 'unknown'}</div>
+                          <div className="font-medium">{f.friendly_name || (f as any).type?.toUpperCase?.() || 'TOTP'}</div>
+                          <div className="text-xs text-muted-foreground">Status: {f.status || (f as any).factor_status || 'unknown'}</div>
                           <div className="text-xs text-muted-foreground">ID: {f.id}</div>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => disableFactor(f.id)} disabled={loading}>

@@ -28,9 +28,8 @@ export const useSubmitFeedback = () => {
         insertData.comment = feedback.comment.trim();
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- kb_feedback not in generated Supabase types
       const { data, error } = await supabase
-        .from('kb_feedback' as any)
+        .from('kb_feedback')
         .insert(insertData);
 
       if (error) throw error;
@@ -58,7 +57,7 @@ export const useTechniqueFeedback = (techniqueId: string) => {
     queryKey: ['technique-feedback', techniqueId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('kb_feedback' as any)
+        .from('kb_feedback')
         .select('*')
         .eq('technique_id', techniqueId)
         .order('created_at', { ascending: false });

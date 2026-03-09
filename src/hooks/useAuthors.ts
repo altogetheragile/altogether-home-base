@@ -39,7 +39,8 @@ export const useCreateAuthor = () => {
     mutationFn: async (data: Partial<Author>) => {
       const { data: result, error } = await supabase
         .from('authors')
-        .insert([{ ...data, created_by: (await supabase.auth.getUser()).data.user?.id }])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert({ ...data, created_by: (await supabase.auth.getUser()).data.user?.id } as any)
         .select()
         .single();
 

@@ -81,7 +81,7 @@ serve(async (req) => {
   const userAgent = req.headers.get('user-agent') || 'unknown';
 
   let rawRequest: GenerateStoryRequest;
-  let storyLevel: StoryLevel = 'story';
+  const storyLevel: StoryLevel = 'story';
   
   try {
     rawRequest = await req.json();

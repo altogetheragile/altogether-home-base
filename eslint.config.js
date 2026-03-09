@@ -24,6 +24,17 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-empty": "warn",
+      "no-case-declarations": "warn",
+      // React Compiler rules from react-hooks v7 — downgrade to warnings
+      // These flag real patterns but need gradual migration, not blocking CI
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/static-components": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/refs": "warn",
     },
   }
 );

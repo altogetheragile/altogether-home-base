@@ -443,7 +443,7 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
             created_at: null,
             created_by: null,
             updated_at: null,
-          } as BacklogItem}
+          } as unknown as BacklogItem}
           onSplit={handleSplit}
         />
       )}

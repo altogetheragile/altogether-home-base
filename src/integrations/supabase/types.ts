@@ -53,6 +53,36 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_focus: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -1476,6 +1506,44 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          knowledge_item_id: string | null
+          rating: number | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          knowledge_item_id?: string | null
+          rating?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          knowledge_item_id?: string | null
+          rating?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_feedback_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_categories: {
         Row: {
           color: string | null
@@ -1746,6 +1814,48 @@ export type Database = {
             columns: ["publication_id"]
             isOneToOne: false
             referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_item_relations: {
+        Row: {
+          created_at: string
+          id: string
+          knowledge_item_id: string
+          related_knowledge_item_id: string
+          relation_type: string | null
+          strength: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          knowledge_item_id: string
+          related_knowledge_item_id: string
+          relation_type?: string | null
+          strength?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          knowledge_item_id?: string
+          related_knowledge_item_id?: string
+          relation_type?: string | null
+          strength?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_relations_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_relations_related_knowledge_item_id_fkey"
+            columns: ["related_knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
             referencedColumns: ["id"]
           },
         ]
@@ -3046,6 +3156,60 @@ export type Database = {
             columns: ["target_story_id"]
             isOneToOne: false
             referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technique_comments: {
+        Row: {
+          content: string
+          created_at: string
+          downvotes: number | null
+          id: string
+          is_approved: boolean | null
+          parent_comment_id: string | null
+          technique_id: string
+          updated_at: string
+          upvotes: number | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          downvotes?: number | null
+          id?: string
+          is_approved?: boolean | null
+          parent_comment_id?: string | null
+          technique_id: string
+          updated_at?: string
+          upvotes?: number | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          downvotes?: number | null
+          id?: string
+          is_approved?: boolean | null
+          parent_comment_id?: string | null
+          technique_id?: string
+          updated_at?: string
+          upvotes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technique_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "technique_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technique_comments_technique_id_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
             referencedColumns: ["id"]
           },
         ]

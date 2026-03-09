@@ -19,6 +19,7 @@ import {
   type AnalysisTextItem,
   formatForExport,
   downloadAsFile,
+  getItemText,
 } from './storyExportUtils';
 
 interface CanvasData {
@@ -187,7 +188,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
           await createStory.mutateAsync({
             title: storyToCreate.title,
             description: storyToCreate.description,
-            acceptance_criteria: storyToCreate.acceptanceCriteria,
+            acceptance_criteria: storyToCreate.acceptanceCriteria.map(getItemText),
             status: 'draft',
             priority: 'medium',
             issue_type: storyType === 'feature' ? 'story' : storyType,
@@ -253,13 +254,13 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       if (existingCanvas) {
         await updateCanvas.mutateAsync({
           projectId: selectedProjectId,
-          data: updatedData,
+          data: updatedData as unknown as import('@/components/canvas/BaseCanvas').CanvasData,
         });
       } else {
-        await supabase.from('canvases').insert([{
+        await supabase.from('canvases').insert({
           project_id: selectedProjectId,
-          data: updatedData,
-        }]);
+          data: updatedData as unknown as import('@/integrations/supabase/types').Json,
+        });
       }
 
       toast({
@@ -349,7 +350,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       const storiesToCreate = analysisResult.splitStories.map(story => ({
         title: story.title,
         description: story.description,
-        acceptance_criteria: story.acceptanceCriteria,
+        acceptance_criteria: story.acceptanceCriteria.map(getItemText),
         status: 'draft' as const,
         priority: 'medium' as const,
         issue_type: 'story' as const,

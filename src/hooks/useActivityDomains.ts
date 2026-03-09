@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface ActivityDomain {
   id: string;
@@ -37,7 +38,7 @@ export const useCreateActivityDomain = () => {
     mutationFn: async (data: Partial<ActivityDomain>) => {
       const { data: result, error } = await supabase
         .from('activity_domains')
-        .insert([data])
+        .insert(data as Database['public']['Tables']['activity_domains']['Insert'])
         .select()
         .single();
 

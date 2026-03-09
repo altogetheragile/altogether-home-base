@@ -15,7 +15,14 @@ interface BlogPostsBlockProps {
 export const BlogPostsBlock: React.FC<BlogPostsBlockProps> = ({ block }) => {
   const { settings } = useSiteSettings();
   const content = block.content || {};
-  
+  const title = content.title || 'Latest Blog Posts';
+  const limit = content.limit || 6;
+  const showViewAll = content.showViewAll !== false;
+  const excludeIds: string[] = content.excludeIds || [];
+
+  // Hook must be called before any early returns
+  const { data: posts, isLoading, error } = useBlogPosts({ limit, sortBy: 'newest' });
+
   // Don't render if blog is disabled
   if (!settings?.show_blog) {
     return (
@@ -24,13 +31,6 @@ export const BlogPostsBlock: React.FC<BlogPostsBlockProps> = ({ block }) => {
       </div>
     );
   }
-  
-  const title = content.title || 'Latest Blog Posts';
-  const limit = content.limit || 6;
-  const showViewAll = content.showViewAll !== false;
-  const excludeIds: string[] = content.excludeIds || [];
-
-  const { data: posts, isLoading, error } = useBlogPosts({ limit, sortBy: 'newest' });
   const displayed = (posts || []).filter((p: any) => !excludeIds.includes(p.id)).slice(0, limit);
 
   if (isLoading) {

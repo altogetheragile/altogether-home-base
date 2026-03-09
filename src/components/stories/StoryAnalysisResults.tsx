@@ -16,7 +16,7 @@ interface StoryAnalysisResultsProps {
 
 export function StoryAnalysisResults({
   analysisResult,
-  analysisType,
+  analysisType: _analysisType,
   storyType,
   user,
   isSavingStories,

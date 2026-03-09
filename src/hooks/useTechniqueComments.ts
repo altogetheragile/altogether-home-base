@@ -40,9 +40,8 @@ export const useTechniqueComments = (techniqueId: string) => {
         selectQuery += `, user_vote:comment_votes!left(vote_type)`;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments schema differs from generated knowledge_item_comments type
       const { data, error } = await supabase
-        .from('technique_comments' as any)
+        .from('technique_comments')
         .select(selectQuery)
         .eq('technique_id', techniqueId)
         .eq('is_approved', true)
@@ -56,9 +55,8 @@ export const useTechniqueComments = (techniqueId: string) => {
       let allReplies: any[] = [];
 
       if (parentIds.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments not in generated types
         const { data: replies, error: repliesError } = await supabase
-          .from('technique_comments' as any)
+          .from('technique_comments')
           .select(selectQuery)
           .in('parent_comment_id', parentIds)
           .eq('is_approved', true)
@@ -106,9 +104,8 @@ export const useTechniqueComments = (techniqueId: string) => {
         throw new Error('No user');
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments not in generated types
       const { data, error } = await supabase
-        .from('technique_comments' as any)
+        .from('technique_comments')
         .insert({
           technique_id: techniqueId,
           user_id: user.id,
@@ -179,9 +176,8 @@ export const useTechniqueComments = (techniqueId: string) => {
       const upvotes = votes?.filter(v => v.vote_type === 'up').length || 0;
       const downvotes = votes?.filter(v => v.vote_type === 'down').length || 0;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments not in generated types
       await supabase
-        .from('technique_comments' as any)
+        .from('technique_comments')
         .update({ upvotes, downvotes })
         .eq('id', commentId);
     },

@@ -38,7 +38,8 @@ export const useKnowledgeMediaMutations = () => {
 
         const { error } = await supabase
           .from('knowledge_media')
-          .insert(mediaToInsert);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert(mediaToInsert as any);
 
         if (error) throw error;
       }

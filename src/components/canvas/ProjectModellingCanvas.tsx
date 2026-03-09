@@ -338,7 +338,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
   const handleElementUpdate = useCallback((id: string, updates: Partial<CanvasElement>) => {
     setElements(prev => prev.map(el => {
       if (el.id === id) {
-        let newUpdates = { ...updates };
+        const newUpdates = { ...updates };
         // Clamp position to prevent off-screen movement
         if (newUpdates.position) {
           newUpdates.position = {

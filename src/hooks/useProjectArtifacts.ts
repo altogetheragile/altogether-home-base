@@ -93,11 +93,12 @@ export const useProjectArtifactMutations = () => {
 
       const { data, error } = await supabase
         .from("project_artifacts")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert({
           ...artifact,
           created_by: user.id,
           display_order: nextOrder,
-        })
+        } as any)
         .select()
         .single();
 
@@ -121,10 +122,11 @@ export const useProjectArtifactMutations = () => {
 
       const { data, error } = await supabase
         .from("project_artifacts")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .update({
           ...updates,
           updated_by: user.id,
-        })
+        } as any)
         .eq("id", id)
         .select()
         .single();

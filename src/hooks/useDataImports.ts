@@ -93,7 +93,8 @@ export const useCreateDataImport = () => {
     mutationFn: async (importData: Partial<DataImport>) => {
       const { data, error } = await supabase
         .from('data_imports')
-        .insert([importData])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(importData as any)
         .select()
         .single();
       
@@ -187,7 +188,8 @@ export const useCreateStagingData = () => {
     mutationFn: async (stagingRows: Partial<StagingData>[]) => {
       const { data, error } = await supabase
         .from('staging_data')
-        .insert(stagingRows)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(stagingRows as any)
         .select();
       
       if (error) throw error;

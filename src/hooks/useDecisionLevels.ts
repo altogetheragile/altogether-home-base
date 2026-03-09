@@ -38,7 +38,8 @@ export const useCreateDecisionLevel = () => {
     mutationFn: async (data: Partial<DecisionLevel>) => {
       const { data: result, error } = await supabase
         .from('decision_levels')
-        .insert([data])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(data as any)
         .select()
         .single();
 

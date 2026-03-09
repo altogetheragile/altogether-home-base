@@ -43,10 +43,11 @@ export const useCreateKnowledgeStep = () => {
       
       const { data, error } = await supabase
         .from('knowledge_item_steps')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert({
           ...step,
           created_by: user?.id,
-        })
+        } as any)
         .select()
         .single();
       
