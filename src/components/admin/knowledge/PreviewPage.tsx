@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 import type { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
 
 export const PreviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [knowledgeItem, setKnowledgeItem] = useState<KnowledgeItemFormData | null>(null);
   const [isPreview, setIsPreview] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if this is a preview from the editor
@@ -22,9 +24,40 @@ export const PreviewPage: React.FC = () => {
       return;
     }
 
-    // TODO: For actual published items, fetch from API
-    // This would be implemented when we have the public preview functionality
+    // Fetch published item by ID
+    if (id) {
+      supabase
+        .from('knowledge_items')
+        .select('*')
+        .eq('id', id)
+        .single()
+        .then(({ data, error: fetchError }) => {
+          if (fetchError || !data) {
+            setError('Knowledge item not found.');
+            return;
+          }
+          setKnowledgeItem(data as unknown as KnowledgeItemFormData);
+        });
+    } else {
+      setError('No preview data available. Open this page from the knowledge item editor.');
+    }
   }, [id]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">{error}</p>
+          <Button variant="outline" asChild>
+            <Link to="/admin/knowledge/items">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Knowledge Items
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!knowledgeItem) {
     return (

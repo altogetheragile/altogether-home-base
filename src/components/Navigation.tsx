@@ -111,8 +111,8 @@ function useDropdownKeyboard(
 const Navigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [resourcesOpen, setResourcesOpen] = useState(false);
-  const [dashOpen, setDashOpen] = useState(false);
+  const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+  const [isDashOpen, setIsDashOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
   const { settings } = useSiteSettings();
@@ -122,8 +122,8 @@ const Navigation = () => {
   const dashMenuRef = useRef<HTMLDivElement>(null);
   const dashTriggerRef = useRef<HTMLButtonElement>(null);
 
-  const resourcesKb = useDropdownKeyboard(resourcesOpen, setResourcesOpen, resourcesMenuRef, resourcesTriggerRef);
-  const dashKb = useDropdownKeyboard(dashOpen, setDashOpen, dashMenuRef, dashTriggerRef);
+  const resourcesKb = useDropdownKeyboard(isResourcesOpen, setIsResourcesOpen, resourcesMenuRef, resourcesTriggerRef);
+  const dashKb = useDropdownKeyboard(isDashOpen, setIsDashOpen, dashMenuRef, dashTriggerRef);
 
   const showAdminLinks = !roleLoading && userRole === 'admin';
 
@@ -150,8 +150,8 @@ const Navigation = () => {
 
   // Close dropdowns on route change
   useEffect(() => {
-    setResourcesOpen(false);
-    setDashOpen(false);
+    setIsResourcesOpen(false);
+    setIsDashOpen(false);
     setIsMenuOpen(false);
   }, [location.pathname]);
 
@@ -239,15 +239,15 @@ const Navigation = () => {
             {visibleResourceLinks.length > 0 && (
               <div
                 style={{ position: 'relative' }}
-                onMouseEnter={() => setResourcesOpen(true)}
-                onMouseLeave={() => setResourcesOpen(false)}
+                onMouseEnter={() => setIsResourcesOpen(true)}
+                onMouseLeave={() => setIsResourcesOpen(false)}
               >
                 <button
                   ref={resourcesTriggerRef}
                   aria-haspopup="true"
-                  aria-expanded={resourcesOpen}
+                  aria-expanded={isResourcesOpen}
                   onKeyDown={resourcesKb.handleTriggerKeyDown}
-                  onClick={() => setResourcesOpen(!resourcesOpen)}
+                  onClick={() => setIsResourcesOpen(!isResourcesOpen)}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -267,7 +267,7 @@ const Navigation = () => {
                   Resources <ChevronDown />
                 </button>
 
-                {resourcesOpen && (
+                {isResourcesOpen && (
                   <div ref={resourcesMenuRef} role="menu" aria-label="Resources" style={{ ...dropdownStyle, left: 0, minWidth: 180 }} onKeyDown={resourcesKb.handleMenuKeyDown}>
                     {visibleResourceLinks.map((item) => (
                       <Link
@@ -286,7 +286,7 @@ const Navigation = () => {
                         onMouseLeave={(e) => { if (!isActive(item.to)) e.currentTarget.style.background = 'transparent'; }}
                         onFocus={(e) => { e.currentTarget.style.background = p.skyTeal; }}
                         onBlur={(e) => { if (!isActive(item.to)) e.currentTarget.style.background = 'transparent'; }}
-                        onClick={() => setResourcesOpen(false)}
+                        onClick={() => setIsResourcesOpen(false)}
                       >
                         {item.label}
                       </Link>
@@ -303,15 +303,15 @@ const Navigation = () => {
               ) : user ? (
                 <div
                   style={{ position: 'relative' }}
-                  onMouseEnter={() => setDashOpen(true)}
-                  onMouseLeave={() => setDashOpen(false)}
+                  onMouseEnter={() => setIsDashOpen(true)}
+                  onMouseLeave={() => setIsDashOpen(false)}
                 >
                   <button
                     ref={dashTriggerRef}
                     aria-haspopup="true"
-                    aria-expanded={dashOpen}
+                    aria-expanded={isDashOpen}
                     onKeyDown={dashKb.handleTriggerKeyDown}
-                    onClick={() => setDashOpen(!dashOpen)}
+                    onClick={() => setIsDashOpen(!isDashOpen)}
                     style={{
                       background: p.orange,
                       color: '#fff',
@@ -330,7 +330,7 @@ const Navigation = () => {
                     Dashboard <ChevronDown />
                   </button>
 
-                  {dashOpen && (
+                  {isDashOpen && (
                     <div ref={dashMenuRef} role="menu" aria-label="Dashboard" style={{ ...dropdownStyle, right: 0, minWidth: 160 }} onKeyDown={dashKb.handleMenuKeyDown}>
                       <Link
                         to="/dashboard"
@@ -341,7 +341,7 @@ const Navigation = () => {
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         onFocus={(e) => (e.currentTarget.style.background = p.skyTeal)}
                         onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
-                        onClick={() => setDashOpen(false)}
+                        onClick={() => setIsDashOpen(false)}
                       >
                         Dashboard
                       </Link>
@@ -355,7 +355,7 @@ const Navigation = () => {
                           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                           onFocus={(e) => (e.currentTarget.style.background = p.skyTeal)}
                           onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
-                          onClick={() => setDashOpen(false)}
+                          onClick={() => setIsDashOpen(false)}
                         >
                           Admin
                         </Link>
@@ -364,7 +364,7 @@ const Navigation = () => {
                       <button
                         role="menuitem"
                         tabIndex={-1}
-                        onClick={() => { handleSignOut(); setDashOpen(false); }}
+                        onClick={() => { handleSignOut(); setIsDashOpen(false); }}
                         style={{
                           display: 'block',
                           width: '100%',
