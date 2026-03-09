@@ -62,7 +62,7 @@ export const useRecentUserActivity = (limit: number = 20) => {
       if (artifacts) {
         artifacts.forEach(artifact => {
           const isNew = new Date(artifact.created_at).getTime() === new Date(artifact.updated_at).getTime();
-          const projectName = (artifact.projects as any)?.name || 'Unknown project';
+          const projectName = (artifact.projects as { name: string } | null)?.name || 'Unknown project';
           activities.push({
             id: `artifact-${artifact.id}-${isNew ? 'created' : 'updated'}`,
             type: isNew ? 'artifact_created' : 'artifact_updated',
@@ -91,7 +91,7 @@ export const useRecentUserActivity = (limit: number = 20) => {
 
       if (registrations) {
         registrations.forEach(reg => {
-          const event = reg.events as any;
+          const event = reg.events as { id: string; title: string } | null;
           if (event) {
             activities.push({
               id: `registration-${reg.id}`,

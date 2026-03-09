@@ -350,7 +350,7 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
 
   const handleOpenPreview = () => {
     const formData = form.getValues();
-    const knowledgeItemId = (formData as any).id || knowledgeItem?.id || 'new';
+    const knowledgeItemId = formData.id || knowledgeItem?.id || 'new';
     
     // Store preview data in sessionStorage for the preview window to access
     sessionStorage.setItem('preview-knowledge-item', JSON.stringify(formData));

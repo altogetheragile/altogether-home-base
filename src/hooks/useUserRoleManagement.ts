@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { auditLogger } from '@/utils/auditLogger';
 import { toast } from 'sonner';
@@ -33,7 +34,7 @@ export const useUpdateUserRole = () => {
 
       const { error: insertError } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role: newRole as any });
+        .insert({ user_id: userId, role: newRole as Database['public']['Enums']['app_role'] });
 
       if (insertError) throw insertError;
 

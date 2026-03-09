@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { 
   Terminal,
   AlertTriangle,
@@ -120,9 +120,9 @@ const AdminLogs = () => {
         id: log.id,
         timestamp: log.created_at,
         level: 'info',
-        message: log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        message: log.action.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
         source: 'APPLICATION',
-        data: log.details
+        data: log.details as Record<string, unknown> | null
       })) || [];
     },
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -145,7 +145,7 @@ const AdminLogs = () => {
     }
   };
 
-  const getLevelBadgeVariant = (level: string) => {
+  const getLevelBadgeVariant = (level: string): BadgeProps['variant'] => {
     switch (level.toLowerCase()) {
       case 'error':
         return 'destructive';
@@ -348,7 +348,7 @@ const AdminLogs = () => {
                             {getLevelIcon(log.level)}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-2 mb-1">
-                                <Badge variant={getLevelBadgeVariant(log.level) as any}>
+                                <Badge variant={getLevelBadgeVariant(log.level)}>
                                   {log.level.toUpperCase()}
                                 </Badge>
                                 <Badge variant="outline">{log.source}</Badge>
@@ -359,10 +359,10 @@ const AdminLogs = () => {
                               <p className="text-sm font-medium text-foreground mb-2">
                                 {log.message}
                               </p>
-                              {(log.data as any)?.userEmail && (
+                              {(log.data as Record<string, string> | null)?.userEmail && (
                                 <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                                   <User className="h-3 w-3" />
-                                  <span>{(log.data as any).userEmail}</span>
+                                  <span>{(log.data as Record<string, string>).userEmail}</span>
                                 </div>
                               )}
                               {log.data && (
@@ -410,7 +410,7 @@ const AdminLogs = () => {
                           {getLevelIcon(log.error_severity)}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2 mb-1">
-                              <Badge variant={getLevelBadgeVariant(log.error_severity) as any}>
+                              <Badge variant={getLevelBadgeVariant(log.error_severity)}>
                                 {log.error_severity}
                               </Badge>
                               <span className="text-sm text-muted-foreground">
@@ -457,7 +457,7 @@ const AdminLogs = () => {
                           {getLevelIcon(log.level)}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2 mb-1">
-                              <Badge variant={getLevelBadgeVariant(log.level) as any}>
+                              <Badge variant={getLevelBadgeVariant(log.level)}>
                                 {log.level.toUpperCase()}
                               </Badge>
                               {log.status && (

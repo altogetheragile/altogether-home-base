@@ -15,6 +15,7 @@ export const useActivityFocus = () => {
   return useQuery({
     queryKey: ['activity-focus'],
     queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- activity_focus not in generated Supabase types
       const { data, error } = await supabase
         .from('activity_focus' as any)
         .select('*')

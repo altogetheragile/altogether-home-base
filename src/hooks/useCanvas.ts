@@ -49,7 +49,7 @@ export const useCanvasMutations = () => {
   const createCanvas = useMutation({
     mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
       const { data: canvas, error } = await supabase
-        .from('canvases' as any)
+        .from('canvases')
         .insert([{
           project_id: projectId,
           data,
@@ -76,7 +76,7 @@ export const useCanvasMutations = () => {
   const updateCanvas = useMutation({
     mutationFn: async ({ projectId, data }: { projectId: string; data: CanvasData }) => {
       const { data: canvas, error } = await supabase
-        .from('canvases' as any)
+        .from('canvases')
         .update({ data })
         .eq('project_id', projectId)
         .select()

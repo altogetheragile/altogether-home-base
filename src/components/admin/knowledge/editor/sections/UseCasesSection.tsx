@@ -25,7 +25,7 @@ export const UseCasesSection = () => {
 
   const handleAddUseCase = (type: 'generic' | 'example' = 'generic') => {
     // Open the form with the specified type
-    setEditingUseCase({ case_type: type } as any);
+    setEditingUseCase({ case_type: type } as KnowledgeUseCase);
     setIsEditDialogOpen(true);
   };
 

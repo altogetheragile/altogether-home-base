@@ -62,8 +62,8 @@ const BaseCanvas = React.forwardRef<BaseCanvasRef, BaseCanvasProps>(({
     }
 
     // Wait for fonts to load
-    if ((document as any).fonts?.ready) {
-      await (document as any).fonts.ready;
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
     }
 
     try {

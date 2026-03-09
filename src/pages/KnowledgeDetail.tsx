@@ -352,8 +352,8 @@ const KnowledgeDetail = () => {
                   knowledgeItemId={item.id}
                   steps={steps?.map(s => ({ ...s, description: s.description ?? undefined }))}
                   useCases={useCases}
-                  templates={templates as any}
-                  mediaAssets={filteredMediaAssets as any}
+                  templates={templates}
+                  mediaAssets={filteredMediaAssets}
                   commentCount={commentCount}
                   onImageClick={openLightbox}
                 />

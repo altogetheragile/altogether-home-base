@@ -10,7 +10,7 @@ export const useContentBlockMutations = () => {
   const createContentBlock = useMutation({
     mutationFn: async (data: ContentBlockCreate): Promise<ContentBlock> => {
       const { data: result, error } = await supabase
-        .from('content_blocks' as any)
+        .from('content_blocks')
         .insert([data])
         .select()
         .single();
@@ -50,7 +50,7 @@ export const useContentBlockMutations = () => {
     mutationFn: async (data: ContentBlockUpdate): Promise<ContentBlock> => {
       const { id, ...updateData } = data;
       const { data: result, error } = await supabase
-        .from('content_blocks' as any)
+        .from('content_blocks')
         .update(updateData)
         .eq('id', id)
         .select()

@@ -578,7 +578,7 @@ export const useCreateKnowledgeItem = () => {
       return retryWithBackoff(async () => {
         // Create the knowledge item
         const { data: result, error } = await supabase
-          .from('knowledge_items' as any)
+          .from('knowledge_items')
           .insert([transformedData])
           .select()
           .single();

@@ -175,7 +175,7 @@ export const CustomHexiElement: React.FC<CustomHexiElementProps> = ({
               {data.emoji}
             </text>
           ) : (() => {
-            const IconComponent = data.icon ? Icons[data.icon as keyof typeof Icons] as any : Icons.BookOpen;
+            const IconComponent = (data.icon ? Icons[data.icon as keyof typeof Icons] : Icons.BookOpen) as React.ElementType | undefined;
             return IconComponent ? (
               <foreignObject x={w/2 - 12} y={h/2 - 37} width={24} height={24}>
                 <IconComponent style={{ color: stroke, width: 24, height: 24 }} />

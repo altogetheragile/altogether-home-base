@@ -104,7 +104,7 @@ export const useCanvasRealtime = ({
     try {
       // Update database (this will trigger the postgres_changes event)
       const { error } = await supabase
-        .from('canvases' as any)
+        .from('canvases')
         .update({
           data,
           updated_at: new Date().toISOString()

@@ -114,7 +114,7 @@ const BMCGenerator = () => {
       if (error) throw error;
 
       // Unwrap { success, data } wrapper from edge function
-      const raw = (data && typeof data === 'object' && 'data' in data) ? (data as any).data : data;
+      const raw = (data && typeof data === 'object' && 'data' in data) ? (data as { data: unknown }).data : data;
       
       // Normalize to ensure all fields are string arrays
       const bmcData = normalizeBmc(raw as Record<string, string | string[] | undefined>);

@@ -38,7 +38,7 @@ export const useCreateAuthor = () => {
   return useMutation({
     mutationFn: async (data: Partial<Author>) => {
       const { data: result, error } = await supabase
-        .from('authors' as any)
+        .from('authors')
         .insert([{ ...data, created_by: (await supabase.auth.getUser()).data.user?.id }])
         .select()
         .single();

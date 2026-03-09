@@ -36,7 +36,7 @@ export const useCreateActivityDomain = () => {
   return useMutation({
     mutationFn: async (data: Partial<ActivityDomain>) => {
       const { data: result, error } = await supabase
-        .from('activity_domains' as any)
+        .from('activity_domains')
         .insert([data])
         .select()
         .single();

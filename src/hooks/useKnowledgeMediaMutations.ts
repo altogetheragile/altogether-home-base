@@ -20,7 +20,7 @@ export const useKnowledgeMediaMutations = () => {
     mutationFn: async ({ techniqueId, mediaItems }: { techniqueId: string; mediaItems: MediaItem[] }) => {
       // First, delete existing media for this technique
       await supabase
-        .from('knowledge_media' as any)
+        .from('knowledge_media')
         .delete()
         .eq('technique_id', techniqueId);
 
@@ -37,7 +37,7 @@ export const useKnowledgeMediaMutations = () => {
         }));
 
         const { error } = await supabase
-          .from('knowledge_media' as any)
+          .from('knowledge_media')
           .insert(mediaToInsert);
 
         if (error) throw error;

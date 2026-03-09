@@ -92,7 +92,7 @@ export const useCreateDataImport = () => {
   return useMutation({
     mutationFn: async (importData: Partial<DataImport>) => {
       const { data, error } = await supabase
-        .from('data_imports' as any)
+        .from('data_imports')
         .insert([importData])
         .select()
         .single();
@@ -186,7 +186,7 @@ export const useCreateStagingData = () => {
   return useMutation({
     mutationFn: async (stagingRows: Partial<StagingData>[]) => {
       const { data, error } = await supabase
-        .from('staging_data' as any)
+        .from('staging_data')
         .insert(stagingRows)
         .select();
       

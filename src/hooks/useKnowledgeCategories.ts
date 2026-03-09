@@ -36,7 +36,7 @@ export const useCreateKnowledgeCategory = () => {
   return useMutation({
     mutationFn: async (data: Partial<KnowledgeCategory>) => {
       const { data: result, error } = await supabase
-        .from('knowledge_categories' as any)
+        .from('knowledge_categories')
         .insert([data])
         .select()
         .single();

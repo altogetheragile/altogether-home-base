@@ -131,7 +131,7 @@ export const FormStepper: React.FC<FormStepperProps> = ({
             <h4 className="text-sm font-medium text-destructive mb-2">Please fix the following errors:</h4>
             <ul className="text-sm text-destructive/80 space-y-1">
               {Object.entries(errors).map(([field, error]) => (
-                <li key={field}>• {(error as any)?.message || 'Invalid field'}</li>
+                <li key={field}>• {(error as { message?: string })?.message || 'Invalid field'}</li>
               ))}
             </ul>
           </div>

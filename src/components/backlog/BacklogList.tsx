@@ -8,7 +8,7 @@ import { Search, Filter } from 'lucide-react';
 import { UnifiedStoryEditDialog } from '@/components/stories';
 import { SplitStoryDialog, SplitConfig } from '@/components/stories/SplitStoryDialog';
 import { useSplitBacklogItem } from '@/hooks/useSplitStory';
-import { UnifiedStoryData } from '@/types/story';
+import { UnifiedStoryData, StoryPriority } from '@/types/story';
 
 interface BacklogListProps {
   items: BacklogItem[];
@@ -38,7 +38,7 @@ const backlogToUnifiedData = (item: BacklogItem): UnifiedStoryData => ({
   title: item.title,
   description: item.description,
   acceptance_criteria: item.acceptance_criteria,
-  priority: (item.priority as any) || 'medium',
+  priority: (item.priority as StoryPriority) || 'medium',
   estimated_value: item.estimated_value,
   estimated_effort: item.estimated_effort,
   status: item.status,

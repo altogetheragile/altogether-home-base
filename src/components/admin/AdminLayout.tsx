@@ -327,7 +327,7 @@ const AdminLayout = () => {
                   }
 
                 return itemsToRender.map((item) => {
-                  const IconComponent = item.icon as any;
+                  const IconComponent: React.ElementType = item.icon;
                   return (
                     <TooltipProvider key={item.href}>
                       <Tooltip>

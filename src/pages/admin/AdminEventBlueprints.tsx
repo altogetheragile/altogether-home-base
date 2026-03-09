@@ -71,7 +71,7 @@ const AdminEventBlueprints: React.FC = () => {
   // Create blueprint mutation
   const createBlueprint = useMutation({
     mutationFn: async (blueprintData: Partial<EventBlueprint>) => {
-      const { data, error } = await (supabase.from as any)('event_templates')
+      const { data, error } = await supabase.from('event_templates')
         .insert({
           ...blueprintData,
           created_by: (await supabase.auth.getUser()).data.user?.id

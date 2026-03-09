@@ -43,8 +43,8 @@ export function UserStoryTab({ data, onChange, mode }: UserStoryTabProps) {
         <Label htmlFor="storyNumber">Story Number</Label>
         <Input
           id="storyNumber"
-          value={(data as any).storyNumber || ''}
-          onChange={(e) => onChange({ storyNumber: e.target.value } as any)}
+          value={data.storyNumber || ''}
+          onChange={(e) => onChange({ storyNumber: e.target.value })}
           placeholder="e.g., 1.1.1"
           className="font-mono"
         />

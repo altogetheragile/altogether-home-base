@@ -13,6 +13,7 @@ export const useTechniqueRelations = (techniqueId: string) => {
   return useQuery({
     queryKey: ['technique-relations', techniqueId],
     queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- knowledge_item_relations uses different column names than generated knowledge_item_relationships type
       const { data, error } = await supabase
         .from('knowledge_item_relations' as any)
         .select(`
@@ -39,6 +40,7 @@ export const useCreateTechniqueRelation = () => {
 
   return useMutation({
     mutationFn: async (relationData: CreateRelationData) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- knowledge_item_relations uses different column names than generated knowledge_item_relationships type
       const { data, error } = await supabase
         .from('knowledge_item_relations' as any)
         .insert({
@@ -74,6 +76,7 @@ export const useDeleteTechniqueRelation = () => {
 
   return useMutation({
     mutationFn: async (relationId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- knowledge_item_relations not in generated types
       const { error } = await supabase
         .from('knowledge_item_relations' as any)
         .delete()

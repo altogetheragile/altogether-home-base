@@ -34,6 +34,9 @@ export interface UnifiedStoryData {
   problem_statement?: string | null;
   business_value?: string | null;
   
+  // Numbering
+  storyNumber?: string | null;
+
   // Links
   user_story_id?: string | null;
   epic_id?: string | null;

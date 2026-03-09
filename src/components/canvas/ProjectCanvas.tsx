@@ -148,7 +148,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const handleAddKnowledgeItem = (itemId: string, itemData: any) => {
     const newElement: CanvasElement = {
       id: `knowledgeItem-${Date.now()}`,
-      type: 'knowledgeItem' as any,
+      type: 'knowledgeItem',
       position: { x: 100, y: 100 },
       size: { width: 140, height: 121 },
       content: {
@@ -181,7 +181,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const handleAddCustomHexi = () => {
     const newElement: CanvasElement = {
       id: `customHexi-${Date.now()}`,
-      type: 'customHexi' as any,
+      type: 'customHexi',
       position: { x: 200, y: 100 },
       size: { width: 140, height: 121 },
       content: {
@@ -205,7 +205,7 @@ export const ProjectCanvas: React.FC<ProjectCanvasProps> = ({
   const handleAddPlanningFocus = (focusId: string, focusData: any) => {
     const newElement: CanvasElement = {
       id: `planningFocus-${Date.now()}`,
-      type: 'planningFocus' as any,
+      type: 'planningFocus',
       position: { x: 250, y: 150 },
       size: { width: 140, height: 121 },
       content: {

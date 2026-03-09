@@ -23,8 +23,8 @@ export const usePDFTemplateOperations = () => {
     if (template.pdf_url) {
       // Increment usage count
       try {
-        await (supabase as any)
-          .rpc('increment_pdf_template_usage', { template_uuid: template.id });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC not in generated Supabase types
+        await (supabase.rpc as any)('increment_pdf_template_usage', { template_uuid: template.id });
         
         // Open download
         const link = document.createElement('a');

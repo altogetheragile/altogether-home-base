@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Upload, FileText, AlertTriangle } from 'lucide-react';
-import { useCreateDataImport, useCreateStagingData } from '@/hooks/useDataImports';
+import { useCreateDataImport, useCreateStagingData, type DataImport } from '@/hooks/useDataImports';
 import { parseFile, validateFileSize, getFileSizeDisplay } from '@/utils/fileParser';
 import { useToast } from '@/hooks/use-toast';
 
@@ -109,7 +109,7 @@ export const ImportUploader: React.FC = () => {
         filename: file.name,
         original_filename: file.name,
         file_type: fileType,
-        target_entity: targetEntity as any,
+        target_entity: targetEntity as DataImport['target_entity'],
         file_size: file.size,
         total_rows: parsedData.rowCount,
         mapping_config: {

@@ -133,7 +133,7 @@ export const useSubmitFeedback = () => {
   return useMutation({
     mutationFn: async (feedback: Partial<CourseFeedback>) => {
       const { data, error } = await supabase
-        .from('course_feedback' as any)
+        .from('course_feedback')
         .insert({
           ...feedback,
           created_by: (await supabase.auth.getUser()).data.user?.id,

@@ -40,6 +40,7 @@ export const useTechniqueComments = (techniqueId: string) => {
         selectQuery += `, user_vote:comment_votes!left(vote_type)`;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments schema differs from generated knowledge_item_comments type
       const { data, error } = await supabase
         .from('technique_comments' as any)
         .select(selectQuery)
@@ -55,6 +56,7 @@ export const useTechniqueComments = (techniqueId: string) => {
       let allReplies: any[] = [];
 
       if (parentIds.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments not in generated types
         const { data: replies, error: repliesError } = await supabase
           .from('technique_comments' as any)
           .select(selectQuery)
@@ -104,6 +106,7 @@ export const useTechniqueComments = (techniqueId: string) => {
         throw new Error('No user');
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments not in generated types
       const { data, error } = await supabase
         .from('technique_comments' as any)
         .insert({
@@ -176,6 +179,7 @@ export const useTechniqueComments = (techniqueId: string) => {
       const upvotes = votes?.filter(v => v.vote_type === 'up').length || 0;
       const downvotes = votes?.filter(v => v.vote_type === 'down').length || 0;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- technique_comments not in generated types
       await supabase
         .from('technique_comments' as any)
         .update({ upvotes, downvotes })

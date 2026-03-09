@@ -48,7 +48,7 @@ export const HexiIconSelector: React.FC<HexiIconSelectorProps> = ({
   };
 
   const renderIcon = (iconName: string) => {
-    const IconComponent = Icons[iconName as keyof typeof Icons] as any;
+    const IconComponent = Icons[iconName as keyof typeof Icons] as React.ElementType | undefined;
     if (!IconComponent) return null;
     
     const isSelected = selectedIcon === iconName;

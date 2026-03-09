@@ -64,7 +64,7 @@ export const useCreatePublication = () => {
   return useMutation({
     mutationFn: async (data: Partial<Publication>) => {
       const { data: result, error } = await supabase
-        .from('publications' as any)
+        .from('publications')
         .insert([{ ...data, created_by: (await supabase.auth.getUser()).data.user?.id }])
         .select()
         .single();

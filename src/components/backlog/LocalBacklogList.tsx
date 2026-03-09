@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { LocalBacklogItem, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
+import type { BacklogItem } from '@/hooks/useBacklogItems';
 import { LocalBacklogItemCard } from './LocalBacklogItemCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Layers, List } from 'lucide-react';
 import { UnifiedStoryEditDialog } from '@/components/stories/UnifiedStoryEditDialog';
-import { UnifiedStoryData } from '@/types/story';
+import { UnifiedStoryData, StoryPriority } from '@/types/story';
 import { AddChildDialog } from './AddChildDialog';
 import { SplitStoryDialog, SplitConfig } from '@/components/stories/SplitStoryDialog';
 
@@ -253,7 +254,7 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
       title: item.title,
       description: item.description,
       acceptance_criteria: item.acceptance_criteria,
-      priority: item.priority as any,
+      priority: (item.priority as StoryPriority) || undefined,
       status: item.status,
       source: item.source,
       estimated_value: item.estimated_value,
@@ -442,7 +443,7 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
             created_at: null,
             created_by: null,
             updated_at: null,
-          } as any}
+          } as BacklogItem}
           onSplit={handleSplit}
         />
       )}

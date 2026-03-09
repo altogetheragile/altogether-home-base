@@ -310,13 +310,13 @@ const Events: React.FC = () => {
     if (!published.length) return FALLBACK_COURSES;
 
     return published.map((t: any) => {
-      const typeName = (t.event_types as any)?.name || 'Course';
-      const formatName = (t.formats as any)?.name || 'Both';
+      const typeName = (t.event_types as { name: string } | null)?.name || 'Course';
+      const formatName = (t.formats as { name: string } | null)?.name || 'Both';
       const durationDays = t.duration_days;
 
       // Derive scheduled dates from nested events (published + future only)
       const now = new Date();
-      const events = (t.events || []) as any[];
+      const events = (t.events || []) as Array<{ id: string; start_date: string; end_date: string; is_published: boolean; price_cents: number; currency: string; capacity: number; status: string }>;
       const scheduledDates = events
         .filter((e: any) => e.is_published && e.start_date && new Date(e.start_date) > now)
         .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))

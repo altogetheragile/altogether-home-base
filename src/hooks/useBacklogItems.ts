@@ -69,7 +69,7 @@ export const useCreateBacklogItem = () => {
       const maxPosition = maxPosData?.[0]?.backlog_position ?? -1;
       
       const { data, error } = await supabase
-        .from('backlog_items' as any)
+        .from('backlog_items')
         .insert({
           ...item,
           created_by: user?.id,
