@@ -99,7 +99,7 @@ export const useEventForm = () => {
   const createEventMutation = useMutation({
     mutationFn: async (eventData: typeof formData) => {
       // Helper function to convert empty strings to null
-      const cleanValue = (value: any) => {
+      const cleanValue = (value: string | number | boolean | null) => {
         if (value === '' || value === 'none') return null;
         return value;
       };
@@ -177,7 +177,7 @@ export const useEventForm = () => {
     createEventMutation.mutate(formData);
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

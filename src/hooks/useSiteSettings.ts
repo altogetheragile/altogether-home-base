@@ -66,7 +66,7 @@ export const useSiteSettings = () => {
       // 1. Update site_settings table
       const { data: settingsData, error: settingsError } = await supabase
         .from('site_settings')
-        .update(updates as any)
+        .update(updates as Record<string, unknown>)
         .eq('id', SETTINGS_ID)
         .select()
         .single();

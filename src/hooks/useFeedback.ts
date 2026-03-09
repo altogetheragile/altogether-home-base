@@ -14,7 +14,7 @@ export const useSubmitFeedback = () => {
 
   return useMutation({
     mutationFn: async (feedback: FeedbackData) => {
-      const insertData: any = {
+      const insertData: Record<string, unknown> = {
         technique_id: feedback.technique_id,
       };
 
@@ -28,6 +28,7 @@ export const useSubmitFeedback = () => {
         insertData.comment = feedback.comment.trim();
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- kb_feedback not in generated Supabase types
       const { data, error } = await supabase
         .from('kb_feedback' as any)
         .insert(insertData);
@@ -78,7 +79,7 @@ export const useFeedbackStats = (techniqueId: string) => {
 
       if (error) throw error;
 
-      const row = Array.isArray(data) ? data[0] : data as any;
+      const row = (Array.isArray(data) ? data[0] : data) as { average_rating?: number; total_ratings?: number } | undefined;
       const average = Number(row?.average_rating ?? 0);
       const total = Number(row?.total_ratings ?? 0);
 

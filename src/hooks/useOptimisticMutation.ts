@@ -2,12 +2,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
+interface Identifiable {
+  id: string;
+  [key: string]: unknown;
+}
+
 interface OptimisticMutationConfig<TData, TVariables> {
   queryKey: string[];
   mutationFn: (variables: TVariables) => Promise<TData>;
   successMessage: string;
   errorMessage: string;
-  updateCache?: (oldData: any[], variables: TVariables) => any[];
+  updateCache?: (oldData: Identifiable[], variables: TVariables) => Identifiable[];
   onSuccessCallback?: (data: TData) => void;
 }
 
@@ -26,12 +31,12 @@ export const useOptimisticMutation = <TData, TVariables>({
     mutationFn,
     onMutate: async (variables) => {
       if (!updateCache) return;
-      
+
       await queryClient.cancelQueries({ queryKey });
-      
+
       const previousData = queryClient.getQueryData(queryKey);
-      
-      queryClient.setQueryData(queryKey, (old: any) => 
+
+      queryClient.setQueryData(queryKey, (old: Identifiable[] | undefined) =>
         old ? updateCache(old, variables) : old
       );
 
@@ -48,7 +53,7 @@ export const useOptimisticMutation = <TData, TVariables>({
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -63,7 +68,7 @@ export const useOptimisticMutation = <TData, TVariables>({
 
 export const useOptimisticCreate = <TData, TVariables>(
   config: Omit<OptimisticMutationConfig<TData, TVariables>, 'updateCache'> & {
-    createTempItem: (variables: TVariables) => any;
+    createTempItem: (variables: TVariables) => Identifiable;
   }
 ) => {
   return useOptimisticMutation({
@@ -80,9 +85,9 @@ export const useOptimisticUpdate = <TData, TVariables extends { id: string }>(
 ) => {
   return useOptimisticMutation({
     ...config,
-    updateCache: (oldData, variables) => 
-      oldData.map((item: any) =>
-        item.id === variables.id 
+    updateCache: (oldData, variables) =>
+      oldData.map((item) =>
+        item.id === variables.id
           ? { ...item, ...variables, updated_at: new Date().toISOString() }
           : item
       ),
@@ -95,6 +100,6 @@ export const useOptimisticDelete = <TData, TVariables extends string>(
   return useOptimisticMutation({
     ...config,
     updateCache: (oldData, deletedId) =>
-      oldData.filter((item: any) => item.id !== deletedId),
+      oldData.filter((item) => item.id !== deletedId),
   });
 };

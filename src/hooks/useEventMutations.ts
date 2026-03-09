@@ -117,15 +117,13 @@ export const useEventMutations = () => {
         description: "Event deleted successfully",
       });
     },
-    onError: (error: any) => {
-      const code = error?.code;
-      const msg = String(error?.message || '').toLowerCase();
-      const isFk = code === '23503' || /foreign key|violates|constraint/.test(msg);
+    onError: (error: Error & { code?: string }) => {
+      const isFk = error.code === '23503' || /foreign key|violates|constraint/.test(error.message?.toLowerCase() ?? '');
       toast({
         title: "Error",
         description: isFk
           ? "Cannot delete event with existing registrations or references. Remove them first."
-          : (error?.message || "An error occurred"),
+          : (error.message || "An error occurred"),
         variant: "destructive",
       });
     },
@@ -134,7 +132,7 @@ export const useEventMutations = () => {
   const bulkUpdateEvents = useMutation({
     mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<EventData> }) => {
       if (!user) throw new Error('User not authenticated');
-      
+
       const { data: events, error } = await supabase
         .from('events')
         .update({
@@ -182,15 +180,13 @@ export const useEventMutations = () => {
         description: "Events deleted successfully",
       });
     },
-    onError: (error: any) => {
-      const code = error?.code;
-      const msg = String(error?.message || '').toLowerCase();
-      const isFk = code === '23503' || /foreign key|violates|constraint/.test(msg);
+    onError: (error: Error & { code?: string }) => {
+      const isFk = error.code === '23503' || /foreign key|violates|constraint/.test(error.message?.toLowerCase() ?? '');
       toast({
         title: "Error",
         description: isFk
           ? "Cannot delete some events because they have registrations or references. Remove them first."
-          : (error?.message || "An error occurred"),
+          : (error.message || "An error occurred"),
         variant: "destructive",
       });
     },

@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { mapEventData } from '@/utils/mapEventData';
+import { mapEventData, RawEvent } from '@/utils/mapEventData';
 
 export const useEvent = (id: string) => {
   return useQuery({
@@ -56,7 +56,7 @@ export const useEvent = (id: string) => {
         throw new Error('Event not found');
       }
 
-      return mapEventData(data as never);
+      return mapEventData(data as unknown as RawEvent);
     },
     enabled: !!id,
   });

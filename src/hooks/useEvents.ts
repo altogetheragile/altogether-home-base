@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { mapEventData } from '@/utils/mapEventData';
+import { mapEventData, RawEvent } from '@/utils/mapEventData';
 
 export interface EventData {
   id: string;
@@ -115,7 +115,7 @@ export const useEvents = () => {
         throw error;
       }
 
-      return (data || []).map(event => mapEventData(event as never));
+      return (data || []).map(event => mapEventData(event as unknown as RawEvent));
     },
   });
 };

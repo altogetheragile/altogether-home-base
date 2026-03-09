@@ -6,7 +6,7 @@ import { EventData } from '@/hooks/useEvents';
  * as `{ name: string } | { name: string }[]` depending on the relation.
  * We cast through `unknown` once here to avoid `any` across every hook.
  */
-interface RawEvent {
+export interface RawEvent {
   id: string;
   title: string;
   description: string | null;

@@ -11,7 +11,7 @@ interface PostgreSQLError extends Error {
 }
 
 // Network error detection utility
-const isNetworkError = (error: any): boolean => {
+const isNetworkError = (error: PostgreSQLError): boolean => {
   return (
     error.message?.includes('network') ||
     error.message?.includes('connection') ||
@@ -63,8 +63,8 @@ const KNOWLEDGE_ITEM_COLUMNS = [
 ] as const;
 
 // Helper to pick only valid columns from input data
-const pickKnowledgeItemColumns = (data: Record<string, any>): Record<string, any> => {
-  const result: Record<string, any> = {};
+const pickKnowledgeItemColumns = (data: Record<string, unknown>): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
   for (const key of KNOWLEDGE_ITEM_COLUMNS) {
     if (key in data) {
       result[key] = data[key];
@@ -245,37 +245,53 @@ export interface KnowledgeItem {
 
 // Transform raw database response to KnowledgeItem with taxonomy arrays
 // Now includes is_primary and rationale from junction tables
-const transformKnowledgeItem = (raw: any): KnowledgeItem => {
+interface JunctionRow {
+  is_primary?: boolean;
+  rationale?: string | null;
+  decision_levels?: DecisionLevel;
+  knowledge_categories?: KnowledgeCategory;
+  activity_domains?: ActivityDomain;
+  knowledge_tags?: KnowledgeTag;
+}
+
+interface RawKnowledgeItem extends Record<string, unknown> {
+  knowledge_item_decision_levels?: JunctionRow[];
+  knowledge_item_categories?: JunctionRow[];
+  knowledge_item_domains?: JunctionRow[];
+  knowledge_item_tags?: JunctionRow[];
+}
+
+const transformKnowledgeItem = (raw: RawKnowledgeItem): KnowledgeItem => {
   // Extract decision levels from junction table with is_primary/rationale
   const decision_levels: DecisionLevel[] = (raw.knowledge_item_decision_levels || [])
-    .map((jt: any) => ({
-      ...jt.decision_levels,
+    .map((jt) => ({
+      ...jt.decision_levels!,
       is_primary: jt.is_primary || false,
       rationale: jt.rationale || null,
     }))
-    .filter((item: any) => item.id);
+    .filter((item) => item.id);
 
   // Extract categories from junction table with is_primary/rationale
   const categories: KnowledgeCategory[] = (raw.knowledge_item_categories || [])
-    .map((jt: any) => ({
-      ...jt.knowledge_categories,
+    .map((jt) => ({
+      ...jt.knowledge_categories!,
       is_primary: jt.is_primary || false,
       rationale: jt.rationale || null,
     }))
-    .filter((item: any) => item.id);
+    .filter((item) => item.id);
 
   // Extract domains from junction table with is_primary/rationale
   const domains: ActivityDomain[] = (raw.knowledge_item_domains || [])
-    .map((jt: any) => ({
-      ...jt.activity_domains,
+    .map((jt) => ({
+      ...jt.activity_domains!,
       is_primary: jt.is_primary || false,
       rationale: jt.rationale || null,
     }))
-    .filter((item: any) => item.id);
+    .filter((item) => item.id);
 
   // Extract tags from junction table
   const tags: KnowledgeTag[] = (raw.knowledge_item_tags || [])
-    .map((jt: any) => jt.knowledge_tags)
+    .map((jt) => jt.knowledge_tags!)
     .filter(Boolean);
 
   return {
@@ -568,7 +584,7 @@ export const useCreateKnowledgeItem = () => {
 
         if (error) throw error;
 
-        const itemId = (result as any).id;
+        const itemId = (result as Record<string, unknown>).id as string;
         
         // Insert junction table records for taxonomy
         const junctionInserts = [];
@@ -632,10 +648,11 @@ export const useCreateKnowledgeItem = () => {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] });
       
-      auditLogger.create('knowledge_items', (result as any).id, {
-        item_name: (result as any).name,
-        is_published: (result as any).is_published,
-        category_id: (result as any).category_id
+      const r = result as Record<string, unknown>;
+      auditLogger.create('knowledge_items', r.id as string, {
+        item_name: r.name,
+        is_published: r.is_published,
+        category_id: r.category_id
       }).catch(() => {});
       
       toast({
@@ -799,7 +816,7 @@ export const useUpdateKnowledgeItem = () => {
       queryClient.setQueryData(['knowledge-item', id], result);
       const listData = queryClient.getQueryData(['knowledge-items']);
       if (listData && Array.isArray(listData)) {
-        const updatedList = listData.map((item: any) => 
+        const updatedList = listData.map((item: KnowledgeItem) =>
           item.id === id ? result : item
         );
         queryClient.setQueryData(['knowledge-items'], updatedList);

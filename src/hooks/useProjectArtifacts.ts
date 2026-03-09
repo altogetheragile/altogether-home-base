@@ -8,7 +8,7 @@ export interface ProjectArtifact {
   artifact_type: string;
   name: string;
   description: string | null;
-  data: any;
+  data: Record<string, unknown>;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -21,13 +21,13 @@ export interface ProjectArtifactCreate {
   artifact_type: string;
   name: string;
   description?: string;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export interface ProjectArtifactUpdate {
   name?: string;
   description?: string;
-  data?: any;
+  data?: Record<string, unknown>;
   project_id?: string;
   display_order?: number;
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { mapEventData } from '@/utils/mapEventData';
+import { mapEventData, RawEvent } from '@/utils/mapEventData';
 
 export const useEventTemplate = (templateId: string) => {
   return useQuery({
@@ -72,7 +72,7 @@ export const useEventTemplate = (templateId: string) => {
           levels: data.levels,
           event_categories: data.event_categories,
         },
-      } as never);
+      } as RawEvent);
     },
     enabled: !!templateId,
   });

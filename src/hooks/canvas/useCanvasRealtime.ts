@@ -43,7 +43,7 @@ export const useCanvasRealtime = ({
         const state = channel.presenceState();
         const users = Object.entries(state).map(([key, presences]) => ({
           id: key,
-          name: (presences as any[])[0]?.name || 'Unknown User'
+          name: (presences as Array<{ name?: string }>)[0]?.name || 'Unknown User'
         }));
         setActiveUsers(users);
       })

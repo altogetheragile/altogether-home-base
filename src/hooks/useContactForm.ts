@@ -81,7 +81,7 @@ export const useContactForm = () => {
     onSuccess: () => {
       toast.success("Message sent successfully! We'll get back to you soon.");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       if (error.message?.includes('Rate limit exceeded')) {
         toast.error("Please wait 5 minutes before submitting another message.");
       } else {

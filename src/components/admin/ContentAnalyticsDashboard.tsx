@@ -25,7 +25,8 @@ export const ContentAnalyticsDashboard = () => {
         .order('created_at', { ascending: false });
 
       // Get feedback stats
-      const { data: feedbackStats } = await (supabase.from as any)('kb_feedback')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- kb_feedback not in generated Supabase types
+      const { data: feedbackStats } = await supabase.from('kb_feedback' as any)
         .select('rating, created_at, technique_id')
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
