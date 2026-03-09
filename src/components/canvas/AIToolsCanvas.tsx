@@ -22,7 +22,7 @@ import { AssignToParentDialog } from './AssignToParentDialog';
 import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
 import { useStoryNumbering } from '@/hooks/useStoryNumbering';
-import html2canvas from 'html2canvas';
+const loadHtml2Canvas = () => import('html2canvas').then(m => m.default);
 
 // Adapter to convert canvas story data to UnifiedStoryData
 const canvasToUnifiedData = (content: any): UnifiedStoryData & { storyNumber?: string } => ({
@@ -975,6 +975,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     if (!canvasRef.current) return;
     try {
       toast({ title: 'Generating export...' });
+      const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(canvasRef.current, { scale: 2, backgroundColor: '#ffffff' });
       const link = document.createElement('a');
       link.download = `ai-tools-canvas-${Date.now()}.png`;

@@ -12,8 +12,8 @@ import { Toolbar, SaveStatus } from './Toolbar';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { toast } from 'sonner';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+const loadHtml2Canvas = () => import('html2canvas').then(m => m.default);
+const loadJsPDF = () => import('jspdf').then(m => m.default);
 import type { KBItemData } from './elements/SaveToKBDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebouncedCallback } from 'use-debounce';
@@ -628,12 +628,14 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     
     try {
       toast.info('Generating export...');
+      const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(canvasRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
       });
       
       const imgData = canvas.toDataURL('image/png');
+      const jsPDF = await loadJsPDF();
       const pdf = new jsPDF({
         orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
         unit: 'px',

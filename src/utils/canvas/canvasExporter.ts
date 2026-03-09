@@ -1,5 +1,6 @@
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+// Lazy-loaded on first use to keep initial bundle small
+const loadHtml2Canvas = () => import('html2canvas').then(m => m.default);
+const loadJsPDF = () => import('jspdf').then(m => m.default);
 
 export interface ExportOptions {
   format?: 'png' | 'pdf' | 'jpeg';
@@ -24,6 +25,7 @@ export const exportCanvas = async (
   try {
     element.classList.add('exporting');
 
+    const html2canvas = await loadHtml2Canvas();
     const canvas = await html2canvas(element, {
       backgroundColor,
       scale,
@@ -36,7 +38,7 @@ export const exportCanvas = async (
     } as any); // Cast to bypass TypeScript issue with letterRendering
 
     if (format === 'pdf') {
-      return exportToPDF(canvas, filename);
+      return await exportToPDF(canvas, filename);
     } else if (format === 'jpeg') {
       return canvas.toDataURL('image/jpeg', quality / 10);
     } else {
@@ -50,13 +52,14 @@ export const exportCanvas = async (
   }
 };
 
-const exportToPDF = (canvas: HTMLCanvasElement, _filename: string): string => {
+const exportToPDF = async (canvas: HTMLCanvasElement, _filename: string): Promise<string> => {
+  const jsPDF = await loadJsPDF();
   const imgData = canvas.toDataURL('image/png');
-  
+
   // Determine orientation based on canvas aspect ratio
   const aspectRatio = canvas.width / canvas.height;
   const orientation = aspectRatio > 1 ? 'landscape' : 'portrait';
-  
+
   const pdf = new jsPDF({
     orientation,
     unit: 'mm',
@@ -94,6 +97,7 @@ export const downloadFile = (dataUrl: string, filename: string, format: string) 
 };
 
 export const printCanvas = async (element: HTMLElement) => {
+  const html2canvas = await loadHtml2Canvas();
   const canvas = await html2canvas(element, {
     backgroundColor: 'white',
     scale: 2,

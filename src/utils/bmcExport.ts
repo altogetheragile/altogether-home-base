@@ -1,5 +1,5 @@
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+const loadHtml2Canvas = () => import('html2canvas').then(m => m.default);
+const loadJsPDF = () => import('jspdf').then(m => m.default);
 
 export interface BMCData {
   keyPartners: string | string[];
@@ -147,6 +147,7 @@ export const exportBMC = async (
 
   try {
     // Capture with html2canvas
+    const html2canvas = await loadHtml2Canvas();
     const canvas = await html2canvas(exportElement, {
       backgroundColor: '#ffffff',
       scale: 2,
@@ -182,8 +183,9 @@ export const exportBMC = async (
  * Export canvas to PDF
  */
 const exportToPDF = async (canvas: HTMLCanvasElement, _filename: string): Promise<string> => {
+  const jsPDF = await loadJsPDF();
   const imgData = canvas.toDataURL('image/png');
-  
+
   // BMC is landscape oriented
   const pdf = new jsPDF({
     orientation: 'landscape',
@@ -233,6 +235,7 @@ export const printBMC = async (data: BMCData, companyName?: string) => {
   document.body.appendChild(exportElement);
 
   try {
+    const html2canvas = await loadHtml2Canvas();
     const canvas = await html2canvas(exportElement, {
       backgroundColor: '#ffffff',
       scale: 2,
