@@ -1,4 +1,3 @@
-import { colors as p } from '@/theme/colors';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -11,29 +10,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-
-// ─── Responsive CSS classes (media-query driven) ────────────────────────────
-const ResponsiveStyles = () => (
-  <style>{`
-    .aa-hero-grid { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; }
-    .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .aa-stats-bar { display: flex; align-items: stretch; justify-content: center; }
-    .aa-section-pad { padding: 64px 48px; }
-    .aa-hero-h1 { font-size: 50px; }
-    .aa-hide-mobile { display: block; }
-
-    @media (max-width: 767px) {
-      .aa-hero-grid { grid-template-columns: 1fr; }
-      .aa-three-col { grid-template-columns: 1fr; }
-      .aa-stats-bar { flex-wrap: wrap; }
-      .aa-stats-bar > div { width: 50%; border-right: none !important; }
-      .aa-section-pad { padding: 40px 20px; }
-      .aa-hero-h1 { font-size: 34px !important; }
-      .aa-hide-mobile { display: none; }
-    }
-  `}</style>
-
-);
+import './Home.css';
 
 // ─── Phosphor-style bold SVG icons (exact from reference) ───────────────────
 const Icons = {
@@ -116,55 +93,54 @@ const Home: React.FC = () => {
   const { data: courseCards, isLoading: coursesLoading, error: coursesError } = useCourseCards();
   const [carouselIndex, setCarouselIndex] = React.useState(0);
 
-  const courses = courseCards || [];
-  const getVisibleCount = () => {
+  const courses = React.useMemo(() => courseCards || [], [courseCards]);
+
+  const getVisibleCount = React.useCallback(() => {
     if (typeof window === 'undefined') return 3;
     if (window.innerWidth <= 767) return 1;
     if (window.innerWidth <= 1024) return 2;
     return 3;
-  };
+  }, []);
   const [visibleCount, setVisibleCount] = React.useState(getVisibleCount);
   React.useEffect(() => {
     const onResize = () => setVisibleCount(getVisibleCount());
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, []);
-  const maxIndex = Math.max(0, courses.length - visibleCount);
+  }, [getVisibleCount]);
+
+  const maxIndex = React.useMemo(() => Math.max(0, courses.length - visibleCount), [courses.length, visibleCount]);
   const canPrev = carouselIndex > 0;
   const canNext = carouselIndex < maxIndex;
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+    <div className="aa-page">
       <Helmet>
         <title>Altogether Agile — Agile Coaching & Training</title>
         <meta name="description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience." />
         <link rel="canonical" href={`${SITE_URL}/`} />
       </Helmet>
-      <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
       <Navigation />
 
       {/* ─── HERO ─── */}
-      <div id="main-content" style={{ position: 'relative', minHeight: 560, overflow: 'visible', border: 'none', boxShadow: 'none' }}>
-        {/* Background image layer — extends through stats band */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: -80, backgroundImage: "url('/images/hero-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center 30%', backgroundRepeat: 'no-repeat', zIndex: 0 }} />
-        {/* Hero content */}
-        <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '48px 20px 80px' : '80px 48px 80px' }}>
+      <div id="main-content" className="aa-hero">
+        <div className="aa-hero-bg" />
+        <div className={`aa-hero-content${isMobile ? ' aa-hero-content--mobile' : ''}`}>
           <div className="aa-hero-grid">
             <div>
-              <h1 className="aa-hero-h1" style={{ color: p.deepTeal, fontWeight: 800, lineHeight: 1.4, margin: '0 0 20px' }}>
+              <h1 className="aa-hero-h1">
                 Work better together.<br />Accelerate time to Value.
               </h1>
-              <p style={{ color: p.body, fontSize: 16, lineHeight: 1.7, margin: '0 0 32px', maxWidth: 480 }}>
+              <p className="aa-hero-subtitle">
                 Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.
               </p>
-              <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-                <Link to="/events" style={{ background: p.orange, color: p.white, border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <div className="aa-hero-actions">
+                <Link to="/events" className="aa-btn aa-btn--primary">
                   Browse Events <Icons.ArrowRight />
                 </Link>
                 {settings?.show_knowledge && (
-                  <Link to="/knowledge" style={{ color: p.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                  <Link to="/knowledge" className="aa-btn aa-btn--ghost">
                     Knowledge Base <Icons.ArrowRight />
                   </Link>
                 )}
@@ -175,36 +151,36 @@ const Home: React.FC = () => {
       </div>
 
       {/* ─── STATS BAR ─── */}
-      <div className="aa-stats-bar" style={{ background: 'transparent', padding: '20px 48px', paddingTop: 60, position: 'relative', zIndex: 2 }}>
+      <div className="aa-stats-bar">
         {[
           { icon: <Icons.Users />, num: '1,500+', label: 'Practitioners trained' },
           { icon: <Icons.Books />, num: '80+', label: 'Agile techniques' },
           { icon: <Icons.GraduationCap />, num: '12+', label: 'Frameworks covered' },
-          { icon: <Icons.Star />, num: '4.9\u2605', label: 'Average rating' },
+          { icon: <Icons.Star />, num: '4.9★', label: 'Average rating' },
         ].map((stat, i) => (
-          <div key={i} style={{ textAlign: 'center', padding: '8px 40px' }}>
-            <div style={{ color: p.orange, display: 'flex', justifyContent: 'center', marginBottom: 4 }}>{stat.icon}</div>
-            <div style={{ color: p.deepTeal, fontSize: 22, fontWeight: 800 }}>{stat.num}</div>
-            <div style={{ color: p.deepTeal, fontSize: 12, opacity: 0.7 }}>{stat.label}</div>
+          <div key={i} className="aa-stat">
+            <div className="aa-stat__icon">{stat.icon}</div>
+            <div className="aa-stat__num">{stat.num}</div>
+            <div className="aa-stat__label">{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* ─── WHO IS THIS FOR ─── */}
-      <div className="aa-section-pad" style={{ background: p.white, paddingTop: 56, paddingBottom: 48 }}>
-        <h2 style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 32px', textAlign: 'center' }}>Who is this for?</h2>
+      <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
+        <h2 className="aa-section-heading aa-section-heading--center">Who is this for?</h2>
         <div className="aa-three-col">
           {[
             { icon: <Icons.ArrowRight />, heading: 'Moving into agile', body: "You're a project manager, BA, or team lead transitioning to agile ways of working and need grounded, practical guidance - not just theory." },
             { icon: <Icons.GraduationCap />, heading: 'Seeking certification', body: "You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - delivered by someone who has contributed to the frameworks and knows them inside out." },
             { icon: <Icons.Users />, heading: 'Building team agility', body: "You're a leader trying to grow genuine organisational agility - and you need a coach who understands both the human and structural side of change." },
           ].map((card, i) => (
-            <div key={i} style={{ background: p.skyTeal, borderRadius: 14, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: p.deepTeal, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            <div key={i} className="aa-persona-card">
+              <div className="aa-persona-card__icon">
                 {card.icon}
               </div>
-              <div style={{ color: p.deepTeal, fontSize: 17, fontWeight: 700 }}>{card.heading}</div>
-              <div style={{ color: p.body, fontSize: 14, lineHeight: 1.65 }}>{card.body}</div>
+              <div className="aa-persona-card__heading">{card.heading}</div>
+              <div className="aa-persona-card__body">{card.body}</div>
             </div>
           ))}
         </div>
@@ -214,34 +190,27 @@ const Home: React.FC = () => {
       <HomepageStrip />
 
       {/* ─── EVENTS (live Supabase data) ─── */}
-      <div className="aa-section-pad" style={{ background: p.skyTeal }}>
-        <div style={{ marginBottom: 32 }}>
-          <h2 style={{ color: p.deepTeal, fontSize: 32, fontWeight: 800, margin: 0 }}>Courses, workshops and masterclasses</h2>
+      <div className="aa-section-pad" style={{ background: 'var(--aa-sky-teal)' }}>
+        <div className="aa-mb-32">
+          <h2 className="aa-section-heading aa-section-heading--lg">Courses, workshops and masterclasses</h2>
         </div>
 
         {/* Course carousel */}
         {coursesLoading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }} className="aa-three-col">
+          <div className="aa-three-col">
             {[0, 1, 2].map((i) => (
-              <div key={i} style={{
-                background: p.white, borderRadius: 14, padding: 24, minHeight: 220,
-                boxShadow: '0 2px 12px rgba(0,77,77,0.07)',
-              }}>
-                <div style={{ background: p.paleTeal, borderRadius: 20, width: 60, height: 16, marginBottom: 14 }} />
-                <div style={{ background: p.paleTeal, borderRadius: 8, width: '80%', height: 20, marginBottom: 14 }} />
-                <div style={{ background: p.skyTeal, borderRadius: 6, width: '100%', height: 14, marginBottom: 8 }} />
-                <div style={{ background: p.skyTeal, borderRadius: 6, width: '70%', height: 14 }} />
+              <div key={i} className="aa-skeleton-card">
+                <div className="aa-skeleton-bar aa-skeleton-bar--badge" />
+                <div className="aa-skeleton-bar aa-skeleton-bar--title" />
+                <div className="aa-skeleton-bar--line" />
+                <div className="aa-skeleton-bar--line-short" />
               </div>
             ))}
           </div>
         ) : coursesError ? (
-          <div style={{ textAlign: 'center', padding: '48px 24px', background: p.white, borderRadius: 14 }}>
-            <p style={{ color: p.deepTeal, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
-              Unable to load courses
-            </p>
-            <p style={{ color: p.muted, fontSize: 14 }}>
-              Please try refreshing the page.
-            </p>
+          <div className="aa-error-box">
+            <p className="aa-error-box__title">Unable to load courses</p>
+            <p className="aa-error-box__msg">Please try refreshing the page.</p>
           </div>
         ) : (
         <div style={{ position: 'relative' }}>
@@ -249,13 +218,7 @@ const Home: React.FC = () => {
             <button
               onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
               aria-label="Previous courses"
-              style={{
-                position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)',
-                zIndex: 2, width: 40, height: 40, borderRadius: '50%', border: 'none',
-                background: p.deepTeal, color: '#fff', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,77,77,0.2)',
-              }}
+              className="aa-carousel-btn aa-carousel-btn--prev"
             >
               <Icons.ChevronLeft />
             </button>
@@ -264,13 +227,7 @@ const Home: React.FC = () => {
             <button
               onClick={() => setCarouselIndex((i) => Math.min(maxIndex, i + 1))}
               aria-label="Next courses"
-              style={{
-                position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
-                zIndex: 2, width: 40, height: 40, borderRadius: '50%', border: 'none',
-                background: p.deepTeal, color: '#fff', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,77,77,0.2)',
-              }}
+              className="aa-carousel-btn aa-carousel-btn--next"
             >
               <Icons.ChevronRight />
             </button>
@@ -288,59 +245,41 @@ const Home: React.FC = () => {
                 <Link
                   key={course.id}
                   to={`/courses/${course.id}`}
-                  style={{
-                    background: p.white, borderRadius: 14, padding: 24,
-                    display: 'flex', flexDirection: 'column', gap: 14,
-                    textDecoration: 'none', minHeight: 220,
-                    boxShadow: '0 2px 12px rgba(0,77,77,0.07)',
-                  }}
+                  className="aa-course-card"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="aa-course-card__header">
                     {course.category && (
-                      <span style={{
-                        background: p.deepTeal, color: '#fff', fontSize: 10, fontWeight: 700,
-                        padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                      }}>
+                      <span className="aa-badge aa-badge--deep">
                         {course.category}
                       </span>
                     )}
                     {course.difficulty && (
-                      <span style={{ color: p.midTeal, fontSize: 11, fontWeight: 600 }}>
+                      <span className="aa-badge--difficulty">
                         {course.difficulty}
                       </span>
                     )}
                   </div>
 
-                  <div style={{ color: p.deepTeal, fontSize: 17, fontWeight: 700, lineHeight: 1.3 }}>
+                  <div className="aa-course-card__title">
                     {course.title}
                   </div>
 
                   {course.description && (
-                    <div style={{ color: p.body, fontSize: 13, lineHeight: 1.6 }}>
+                    <div className="aa-course-card__desc">
                       {course.description.length > 100
-                        ? course.description.slice(0, 100).trimEnd() + '\u2026'
+                        ? course.description.slice(0, 100).trimEnd() + '…'
                         : course.description}
                     </div>
                   )}
 
                   {course.hasDatesAvailable && (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      background: p.midTeal, color: '#fff', fontSize: 11, fontWeight: 700,
-                      padding: '4px 12px', borderRadius: 20, alignSelf: 'flex-start',
-                    }}>
+                    <span className="aa-badge aa-badge--dates">
                       <Icons.Calendar /> Dates available
                     </span>
                   )}
 
-                  <div style={{ marginTop: 'auto' }}>
-                    <span style={{
-                      color: p.orange, fontWeight: 700, fontSize: 13,
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
-                    }}>
-                      Find out more <Icons.ArrowRight />
-                    </span>
+                  <div className="aa-course-card__cta">
+                    <span>Find out more <Icons.ArrowRight /></span>
                   </div>
                 </Link>
               ))}
@@ -350,12 +289,8 @@ const Home: React.FC = () => {
         )}
 
         {/* View all CTA */}
-        <div style={{ textAlign: 'center', marginTop: 32 }}>
-          <Link to="/events" style={{
-            background: p.orange, color: '#fff', padding: '12px 24px',
-            borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none',
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-          }}>
+        <div className="aa-text-center aa-mt-32">
+          <Link to="/events" className="aa-btn aa-btn--primary-sm">
             View all →
           </Link>
         </div>
@@ -366,23 +301,23 @@ const Home: React.FC = () => {
 
       {/* ─── KNOWLEDGE BASE ─── */}
       {settings?.show_knowledge && (
-        <div className="aa-section-pad" style={{ background: p.deepTeal }}>
+        <div className="aa-section-pad" style={{ background: 'var(--aa-deep-teal)' }}>
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 20, marginBottom: 20 }}>
+            <div className="aa-kb-badge">
               <Icons.Books />Knowledge Base
             </div>
-            <h2 style={{ color: '#fff', fontSize: 32, fontWeight: 800, margin: '0 0 12px' }}>80+ agile techniques,<br />ready to use</h2>
-            <p style={{ color: p.lightTeal, fontSize: 16, margin: '0 0 24px', lineHeight: 1.6, maxWidth: 560 }}>
+            <h2 className="aa-kb-heading">80+ agile techniques,<br />ready to use</h2>
+            <p className="aa-kb-body">
               From Story Mapping to OKRs — every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
+            <div className="aa-kb-tags">
               {['Story Mapping', 'OKRs', '5 Whys', 'Business Model Canvas', 'Impact Mapping', 'Retrospectives'].map((tag) => (
-                <span key={tag} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.08)', color: p.lightTeal, fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 20 }}>
+                <span key={tag} className="aa-kb-tag">
                   <Icons.Tag />{tag}
                 </span>
               ))}
             </div>
-            <Link to="/knowledge" style={{ background: p.orange, color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <Link to="/knowledge" className="aa-btn aa-btn--primary-sm">
               Browse Techniques <Icons.ArrowRight />
             </Link>
           </div>
@@ -390,20 +325,20 @@ const Home: React.FC = () => {
       )}
 
       {/* ─── CTA ─── */}
-      <div className="aa-section-pad" style={{ background: p.orange }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 48, maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ color: '#fff', fontSize: 36, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>
+      <div className="aa-section-pad" style={{ background: 'var(--aa-orange)' }}>
+        <div className="aa-cta-banner">
+          <div className="aa-cta-banner__text">
+            <h2 className="aa-cta-banner__heading">
               Ready to work with someone<br />who's been in the room?
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.88)', fontSize: 16, margin: '0 0 28px', lineHeight: 1.6, maxWidth: 560 }}>
+            <p className="aa-cta-banner__body">
               Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell — just a conversation.
             </p>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-              <Link to="/events" style={{ background: p.deepTeal, color: '#fff', border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <div className="aa-cta-banner__actions">
+              <Link to="/events" className="aa-btn aa-btn--deep">
                 Browse Events <Icons.ArrowRight />
               </Link>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="aa-btn aa-btn--ghost-light">
                 <Icons.Chat />Book a Chemistry Session
               </a>
             </div>
