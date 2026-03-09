@@ -14,6 +14,11 @@ export interface EventData {
   max_participants?: number;
   price?: number;
   status?: 'draft' | 'published' | 'cancelled';
+  template_id?: string;
+  price_cents?: number;
+  currency?: string;
+  capacity?: number;
+  is_published?: boolean;
 }
 
 export const useEventMutations = () => {

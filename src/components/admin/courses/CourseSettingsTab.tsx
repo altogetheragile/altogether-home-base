@@ -68,11 +68,11 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
         data: {
           is_published: data.is_published,
           duration_days: data.duration_days,
-          ...({ event_type_id: data.event_type_id || null } as any),
-          ...({ category_id: data.category_id || null } as any),
-          ...({ level_id: data.level_id || null } as any),
-          ...({ format_id: data.format_id || null } as any),
-          ...({ template_tags: tags } as any),
+          event_type_id: data.event_type_id || null,
+          category_id: data.category_id || null,
+          level_id: data.level_id || null,
+          format_id: data.format_id || null,
+          template_tags: tags,
         },
       });
       invalidate();

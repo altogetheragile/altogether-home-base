@@ -14,31 +14,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import TaxonomyViewDialog from './components/TaxonomyViewDialog';
+import TaxonomyFormDialog from './components/TaxonomyFormDialog';
+import type { TaxonomyType, TaxonomyItem, TaxonomyFormData, TabConfig } from './components/taxonomy-types';
 
-type TaxonomyType = 'decision-levels' | 'categories' | 'domains' | 'tags';
-
-interface TaxonomyItem {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  color?: string;
-  display_order?: number;
-  full_description?: string;
-  usage_count?: number;
-  created_at: string;
-  updated_at?: string;
-}
+const DEFAULT_FORM_DATA: TaxonomyFormData = {
+  name: '',
+  slug: '',
+  description: '',
+  full_description: '',
+  color: '#3B82F6',
+  display_order: 0,
+};
 
 const AdminTaxonomy = () => {
   const { toast } = useToast();
@@ -49,14 +38,7 @@ const AdminTaxonomy = () => {
   const [viewingItem, setViewingItem] = useState<TaxonomyItem | null>(null);
   const [editingItem, setEditingItem] = useState<TaxonomyItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    description: '',
-    full_description: '',
-    color: '#3B82F6',
-    display_order: 0,
-  });
+  const [formData, setFormData] = useState<TaxonomyFormData>(DEFAULT_FORM_DATA);
 
   const getTableName = (type: TaxonomyType) => {
     switch (type) {
@@ -73,21 +55,21 @@ const AdminTaxonomy = () => {
     queryKey: [getQueryKey(activeTab)],
     queryFn: async () => {
       const tableName = getTableName(activeTab);
-      const orderColumn = activeTab === 'tags' ? 'name' : 
+      const orderColumn = activeTab === 'tags' ? 'name' :
                          activeTab === 'domains' ? 'name' : 'display_order';
-      
+
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
         .order(orderColumn);
-      
+
       if (error) throw error;
       return data as TaxonomyItem[];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: TaxonomyFormData) => {
       const { error } = await supabase
         .from(getTableName(activeTab))
         .insert(data);
@@ -98,13 +80,13 @@ const AdminTaxonomy = () => {
       toast({ title: 'Success', description: 'Item created successfully' });
       handleCloseForm();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: any) => {
+    mutationFn: async ({ id, ...data }: { id: string } & TaxonomyFormData) => {
       const { error } = await supabase
         .from(getTableName(activeTab))
         .update(data)
@@ -116,7 +98,7 @@ const AdminTaxonomy = () => {
       toast({ title: 'Success', description: 'Item updated successfully' });
       handleCloseForm();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
   });
@@ -133,7 +115,7 @@ const AdminTaxonomy = () => {
       queryClient.invalidateQueries({ queryKey: [getQueryKey(activeTab)] });
       toast({ title: 'Success', description: 'Item deleted successfully' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
   });
@@ -141,14 +123,12 @@ const AdminTaxonomy = () => {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingItem(null);
-    setFormData({ name: '', slug: '', description: '', full_description: '', color: '#3B82F6', display_order: 0 });
+    setFormData(DEFAULT_FORM_DATA);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const submitData: any = { name: formData.name, slug: formData.slug };
-    
-    // Add fields based on type
+  const buildSubmitData = (): Partial<TaxonomyFormData> => {
+    const submitData: Partial<TaxonomyFormData> = { name: formData.name, slug: formData.slug };
+
     if (activeTab !== 'tags') {
       submitData.description = formData.description;
       submitData.color = formData.color;
@@ -160,10 +140,17 @@ const AdminTaxonomy = () => {
       submitData.full_description = formData.full_description;
     }
 
+    return submitData;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const submitData = buildSubmitData();
+
     if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, ...submitData });
+      updateMutation.mutate({ id: editingItem.id, ...submitData } as { id: string } & TaxonomyFormData);
     } else {
-      createMutation.mutate(submitData);
+      createMutation.mutate(submitData as TaxonomyFormData);
     }
   };
 
@@ -214,7 +201,7 @@ const AdminTaxonomy = () => {
     item.slug?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getTabConfig = (type: TaxonomyType) => {
+  const getTabConfig = (type: TaxonomyType): TabConfig => {
     switch (type) {
       case 'decision-levels':
         return {
@@ -298,7 +285,7 @@ const AdminTaxonomy = () => {
                     <h2 className="text-xl font-semibold">{getTabConfig(type).label}</h2>
                     <p className="text-muted-foreground">{getTabConfig(type).description}</p>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => {
                       setActiveTab(type);
                       setShowForm(true);
@@ -336,8 +323,8 @@ const AdminTaxonomy = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredItems?.map((item) => (
-                        <TableRow 
-                          key={item.id} 
+                        <TableRow
+                          key={item.id}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleView(item)}
                         >
@@ -349,8 +336,8 @@ const AdminTaxonomy = () => {
                           {getTabConfig(type).hasColor && (
                             <TableCell>
                               <div className="flex items-center space-x-2">
-                                <div 
-                                  className="w-4 h-4 rounded" 
+                                <div
+                                  className="w-4 h-4 rounded"
                                   style={{ backgroundColor: item.color }}
                                 />
                                 <Badge style={{ backgroundColor: (item.color || '#3B82F6') + '20', color: item.color }}>
@@ -385,8 +372,8 @@ const AdminTaxonomy = () => {
                       ))}
                       {filteredItems?.length === 0 && (
                         <TableRow>
-                          <TableCell 
-                            colSpan={getTabConfig(type).hasOrder ? (getTabConfig(type).hasColor ? 7 : 6) : (type === 'tags' ? 6 : 5)} 
+                          <TableCell
+                            colSpan={getTabConfig(type).hasOrder ? (getTabConfig(type).hasColor ? 7 : 6) : (type === 'tags' ? 6 : 5)}
                             className="text-center py-8 text-muted-foreground"
                           >
                             {searchTerm ? `No ${getTabConfig(type).label.toLowerCase()} found matching your search.` : `No ${getTabConfig(type).label.toLowerCase()} created yet.`}
@@ -402,171 +389,26 @@ const AdminTaxonomy = () => {
         </CardContent>
       </Card>
 
-      {/* View Dialog */}
-      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>{viewingItem?.name}</span>
-              <Button onClick={handleEditFromView} size="sm">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground">Slug</Label>
-              <p className="mt-1 font-mono text-sm">{viewingItem?.slug}</p>
-            </div>
-            {tabConfig.hasColor && viewingItem?.color && (
-              <div>
-                <Label className="text-muted-foreground">Color</Label>
-                <div className="flex items-center space-x-3 mt-1">
-                  <div 
-                    className="w-8 h-8 rounded border" 
-                    style={{ backgroundColor: viewingItem?.color }}
-                  />
-                  <Badge style={{ backgroundColor: (viewingItem?.color || '') + '20', color: viewingItem?.color }}>
-                    {viewingItem?.color}
-                  </Badge>
-                </div>
-              </div>
-            )}
-            {tabConfig.hasOrder && (
-              <div>
-                <Label className="text-muted-foreground">Display Order</Label>
-                <p className="mt-1">{viewingItem?.display_order}</p>
-              </div>
-            )}
-            {activeTab === 'tags' && (
-              <div>
-                <Label className="text-muted-foreground">Usage Count</Label>
-                <p className="mt-1">{viewingItem?.usage_count || 0}</p>
-              </div>
-            )}
-            <div>
-              <Label className="text-muted-foreground">Description</Label>
-              <p className="mt-1 text-sm">{viewingItem?.description || 'No description'}</p>
-            </div>
-            {activeTab === 'domains' && viewingItem?.full_description && (
-              <div>
-                <Label className="text-muted-foreground">Full Description</Label>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{viewingItem.full_description}</p>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t text-sm">
-              <div>
-                <Label className="text-muted-foreground">Created</Label>
-                <p className="mt-1">{new Date(viewingItem?.created_at || '').toLocaleDateString()}</p>
-              </div>
-              {viewingItem?.updated_at && (
-                <div>
-                  <Label className="text-muted-foreground">Updated</Label>
-                  <p className="mt-1">{new Date(viewingItem.updated_at).toLocaleDateString()}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TaxonomyViewDialog
+        item={viewingItem}
+        tabConfig={tabConfig}
+        activeTab={activeTab}
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        onEdit={handleEditFromView}
+      />
 
-      {/* Form Dialog */}
-      <Dialog open={showForm} onOpenChange={handleCloseForm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingItem ? `Edit ${tabConfig.label.slice(0, -1)}` : `Create ${tabConfig.label.slice(0, -1)}`}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter name"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="slug">Slug *</Label>
-              <Input
-                id="slug"
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="url-friendly-name"
-                required
-              />
-            </div>
-            {tabConfig.hasColor && (
-              <div>
-                <Label htmlFor="color">Color</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    id="color"
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-16 h-10 p-1"
-                  />
-                  <Input
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="flex-1"
-                    placeholder="#3B82F6"
-                  />
-                </div>
-              </div>
-            )}
-            {tabConfig.hasOrder && (
-              <div>
-                <Label htmlFor="display_order">Display Order</Label>
-                <Input
-                  id="display_order"
-                  type="number"
-                  value={formData.display_order}
-                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-                  placeholder="0"
-                />
-              </div>
-            )}
-            {activeTab !== 'tags' && (
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Enter description"
-                  rows={3}
-                />
-              </div>
-            )}
-            {activeTab === 'domains' && (
-              <div>
-                <Label htmlFor="full_description">Full Description</Label>
-                <Textarea
-                  id="full_description"
-                  value={formData.full_description}
-                  onChange={(e) => setFormData({ ...formData, full_description: e.target.value })}
-                  placeholder="Enter detailed description"
-                  rows={4}
-                />
-              </div>
-            )}
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={handleCloseForm}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                {editingItem ? 'Update' : 'Create'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <TaxonomyFormDialog
+        editingItem={editingItem}
+        formData={formData}
+        setFormData={setFormData}
+        tabConfig={tabConfig}
+        activeTab={activeTab}
+        open={showForm}
+        onOpenChange={handleCloseForm}
+        onSubmit={handleSubmit}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+      />
     </div>
   );
 };

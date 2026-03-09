@@ -8,13 +8,15 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import type { Factor } from "@supabase/auth-js";
+import type { FactorWithTotp } from "@/types/supabaseMfa";
 
 const AccountSecurity = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-  const [factors, setFactors] = useState<any[]>([]);
+  const [factors, setFactors] = useState<Factor[]>([]);
   const [enrolling, setEnrolling] = useState(false);
   const [factorId, setFactorId] = useState<string | null>(null);
   const [uri, setUri] = useState<string | null>(null);
@@ -35,7 +37,7 @@ const AccountSecurity = () => {
       const { data, error } = await supabase.auth.mfa.listFactors();
       if (error) throw error;
       setFactors(data?.all ?? []);
-    } catch (err: any) {
+    } catch {
     }
   };
 
@@ -46,8 +48,8 @@ const AccountSecurity = () => {
       const { data: factorsData, error: listErr } = await supabase.auth.mfa.listFactors();
       if (listErr) throw listErr;
       const allFactors = factorsData?.all ?? [];
-      const verifiedTotp = allFactors.find((f: any) => (f.type === "totp" || f.factor_type === "totp") && (f.status === "verified" || f.factor_status === "verified"));
-      const pendingTotp = allFactors.find((f: any) => (f.type === "totp" || f.factor_type === "totp") && (f.status === "unverified" || f.factor_status === "unverified"));
+      const verifiedTotp = allFactors.find((f) => f.factor_type === "totp" && f.status === "verified");
+      const pendingTotp = allFactors.find((f) => f.factor_type === "totp" && f.status === "unverified") as FactorWithTotp | undefined;
 
       if (verifiedTotp) {
         toast({ title: "Already enabled", description: "A TOTP factor is already verified for this account." });
@@ -56,7 +58,7 @@ const AccountSecurity = () => {
 
       if (pendingTotp) {
         setFactorId(pendingTotp.id);
-        setUri((pendingTotp as any).totp?.uri || null);
+        setUri(pendingTotp.totp?.uri || null);
         setEnrolling(true);
         // Ensure a fresh challenge exists for verification
         const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId: pendingTotp.id });
@@ -76,8 +78,9 @@ const AccountSecurity = () => {
       if (chErr) throw chErr;
       setChallengeId(chData?.id || null);
       toast({ title: "MFA enrollment started", description: "Scan the QR with your authenticator app." });
-    } catch (err: any) {
-      toast({ title: "Couldn't start MFA", description: err.message || "Unexpected error", variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      toast({ title: "Couldn't start MFA", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -113,9 +116,9 @@ const AccountSecurity = () => {
       setFactorId(null);
       setChallengeId(null);
       await refreshFactors();
-    } catch (err: any) {
-      const msg = String(err?.message || "");
-      const status = err?.status;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      const status = (err as { status?: number }).status;
 
       if (status === 422 || /challenge/i.test(msg) || /expired/i.test(msg) || /not found/i.test(msg)) {
         try {
@@ -143,8 +146,9 @@ const AccountSecurity = () => {
       if (error) throw error;
       toast({ title: "MFA disabled", description: "The selected factor has been removed." });
       await refreshFactors();
-    } catch (err: any) {
-      toast({ title: "Couldn't disable", description: err.message || "Unexpected error", variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      toast({ title: "Couldn't disable", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -165,8 +169,9 @@ const AccountSecurity = () => {
       if (error) throw error;
       toast({ title: "Setup reset", description: "Pending MFA setup removed." });
       await refreshFactors();
-    } catch (err: any) {
-      toast({ title: "Couldn't reset", description: err.message || "Unexpected error", variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      toast({ title: "Couldn't reset", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
       setEnrolling(false);
@@ -185,8 +190,9 @@ const AccountSecurity = () => {
       if (chErr) throw chErr;
       setChallengeId(chData?.id || null);
       toast({ title: "Challenge refreshed", description: "Enter a new 6‑digit code from your app." });
-    } catch (err: any) {
-      toast({ title: "Couldn't refresh", description: err.message || "Unexpected error", variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      toast({ title: "Couldn't refresh", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -198,7 +204,7 @@ const AccountSecurity = () => {
       const { data, error } = await supabase.auth.mfa.listFactors();
       if (error) throw error;
       const all = data?.all ?? [];
-      const totps = all.filter((f: any) => (f.type === 'totp' || f.factor_type === 'totp'));
+      const totps = all.filter((f) => f.factor_type === 'totp');
       let removed = 0;
       for (const f of totps) {
         const { error: uerr } = await supabase.auth.mfa.unenroll({ factorId: f.id });
@@ -211,8 +217,9 @@ const AccountSecurity = () => {
       setCode("");
       setChallengeId(null);
       await refreshFactors();
-    } catch (err: any) {
-      toast({ title: "Couldn't reset MFA", description: err.message || "Unexpected error", variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      toast({ title: "Couldn't reset MFA", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -229,7 +236,7 @@ const AccountSecurity = () => {
       }
       const { data: lf } = await supabase.auth.mfa.listFactors();
       const all = lf?.all ?? [];
-      const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
+      const verifiedTotp = all.find((f) => f.factor_type === 'totp' && f.status === 'verified');
       if (!verifiedTotp) {
         toast({ title: 'No verified TOTP', description: 'Enable MFA first, then try again.', variant: 'destructive' });
         return;
@@ -243,8 +250,9 @@ const AccountSecurity = () => {
       sessionStorage.setItem('mfa:prompt', '1');
       toast({ title: 'MFA required', description: 'Enter the 6‑digit code to verify your session.' });
       navigate('/auth');
-    } catch (err: any) {
-      toast({ title: "Couldn't start test", description: err.message || 'Unexpected error', variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      toast({ title: "Couldn't start test", description: message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -261,16 +269,19 @@ const AccountSecurity = () => {
         setLoading(false);
         return;
       }
-      const payload: any = { factorId: stepUpFactorId, code };
-      if (stepUpChallengeId) payload.challengeId = stepUpChallengeId;
-      const { error } = await supabase.auth.mfa.verify(payload);
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: stepUpFactorId,
+        challengeId: stepUpChallengeId!,
+        code,
+      });
       if (error) throw error;
       toast({ title: 'Session verified', description: 'Your session is now at AAL2.' });
       setStepUpFactorId(null);
       setStepUpChallengeId(null);
       setStepUpCode('');
-    } catch (err: any) {
-      toast({ title: 'Invalid code', description: err.message || 'Please try again.', variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Please try again.";
+      toast({ title: 'Invalid code', description: message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }

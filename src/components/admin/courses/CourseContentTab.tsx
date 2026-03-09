@@ -55,11 +55,11 @@ const CourseContentTab = ({ course }: CourseContentTabProps) => {
         data: {
           short_description: data.short_description || null,
           description: data.description || undefined,
-          ...({ learning_outcomes: data.learning_outcomes } as any),
-          ...({ key_benefits: data.key_benefits } as any),
-          ...({ target_audience: data.target_audience } as any),
-          ...({ prerequisites: data.prerequisites } as any),
-          ...({ difficulty_rating: data.difficulty_rating } as any),
+          learning_outcomes: data.learning_outcomes,
+          key_benefits: data.key_benefits,
+          target_audience: data.target_audience,
+          prerequisites: data.prerequisites,
+          difficulty_rating: data.difficulty_rating,
         },
       });
       invalidate();

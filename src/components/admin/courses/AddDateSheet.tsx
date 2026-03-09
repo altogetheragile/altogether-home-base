@@ -51,13 +51,13 @@ const AddDateSheet = ({ open, onOpenChange, templateId, templateTitle, durationD
         title: templateTitle,
         start_date: form.start_date,
         end_date: form.end_date || form.start_date,
-        ...({ template_id: templateId } as any),
-        ...({ price_cents: form.price_cents } as any),
-        ...({ currency: form.currency } as any),
-        ...({ capacity: form.capacity ? parseInt(form.capacity) : undefined } as any),
-        ...({ is_published: form.is_published } as any),
+        template_id: templateId,
+        price_cents: form.price_cents,
+        currency: form.currency,
+        ...(form.capacity ? { capacity: parseInt(form.capacity) } : {}),
+        is_published: form.is_published,
         status: form.is_published ? 'published' : 'draft',
-      } as any);
+      });
       invalidate();
       onOpenChange(false);
       setForm({
@@ -116,7 +116,7 @@ const AddDateSheet = ({ open, onOpenChange, templateId, templateTitle, durationD
                 <SelectValue placeholder="Select format" />
               </SelectTrigger>
               <SelectContent>
-                {formats.map((f: any) => (
+                {formats.map((f) => (
                   <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                 ))}
               </SelectContent>

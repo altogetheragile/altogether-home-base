@@ -12,6 +12,16 @@ export interface TemplateData {
   duration_days: number;
   default_location_id?: string;
   default_instructor_id?: string;
+  event_type_id?: string | null;
+  category_id?: string | null;
+  level_id?: string | null;
+  format_id?: string | null;
+  learning_outcomes?: string[];
+  key_benefits?: string[];
+  target_audience?: string;
+  prerequisites?: string[];
+  difficulty_rating?: string;
+  template_tags?: string[];
 }
 
 export const useTemplateMutations = () => {

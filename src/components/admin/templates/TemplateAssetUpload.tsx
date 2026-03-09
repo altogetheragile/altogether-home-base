@@ -1,21 +1,35 @@
 import React, { useState } from 'react';
-import { Upload, FileText, X, CheckCircle, Search } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useKnowledgeTemplateMutations } from '@/hooks/useKnowledgeTemplateMutations';
 import { useAssociateTemplate } from '@/hooks/useKnowledgeItemTemplates';
-import { useQuery } from '@tanstack/react-query';
 import { useCheckExistingTemplate, useGetNextVersion } from '@/hooks/useTemplateVersioning';
 import { VersionConflictDialog } from './VersionConflictDialog';
+import { KnowledgeItemSelector } from './KnowledgeItemSelector';
+import {
+  type UploadFileType,
+  getAcceptedFileTypes,
+  getMaxFileSize,
+  detectUploadFileType,
+  toTemplateType,
+  toFileFormat,
+} from './templateUploadUtils';
+import type { KnowledgeTemplateFormData } from '@/types/template';
+
+/** Fields that the upload form appends on top of KnowledgeTemplateFormData. */
+interface CreateTemplatePayload extends KnowledgeTemplateFormData {
+  version: string;
+  replaceExisting: boolean;
+  existingId?: string;
+}
 
 interface TemplateAssetUploadProps {
   onSuccess?: () => void;
@@ -24,7 +38,7 @@ interface TemplateAssetUploadProps {
 export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [templateType, setTemplateType] = useState<'pdf' | 'document' | 'image'>('pdf');
+  const [templateType, setTemplateType] = useState<UploadFileType>('pdf');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -32,8 +46,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
     knowledgeItemIds: [] as string[]
   });
   const [tagInput, setTagInput] = useState('');
-  const [knowledgeItemOpen, setKnowledgeItemOpen] = useState(false);
-  const [knowledgeItemSearch, setKnowledgeItemSearch] = useState('');
   const [versionConflictOpen, setVersionConflictOpen] = useState(false);
   const [customVersion, setCustomVersion] = useState('');
   const [pendingUpload, setPendingUpload] = useState<{
@@ -44,48 +56,23 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
 
   const { createTemplate } = useKnowledgeTemplateMutations();
   const associateTemplate = useAssociateTemplate();
-  
+
   // Version checking hooks
   const { data: existingTemplate } = useCheckExistingTemplate(formData.title);
   const { data: suggestedVersion } = useGetNextVersion(formData.title);
-
-  const { data: knowledgeItems = [] } = useQuery({
-    queryKey: ['knowledge-items-for-template-upload', knowledgeItemSearch],
-    queryFn: async () => {
-      let q = supabase
-        .from('knowledge_items')
-        .select('id, name, is_published')
-        .order('name', { ascending: true })
-        .limit(5000);
-
-      if (knowledgeItemSearch && knowledgeItemSearch.length >= 2) {
-        q = q.or(`name.ilike.%${knowledgeItemSearch}%`);
-      }
-
-      const { data, error } = await q;
-      if (error) {
-        throw error;
-      }
-      
-      return data || [];
-    },
-  });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       // Auto-detect template type based on file extension
-      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
-      if (fileExt === 'pdf') {
-        setTemplateType('pdf');
-      } else if (['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(fileExt || '')) {
-        setTemplateType('image');
-      } else if (['docx', 'pptx', 'xlsx', 'doc', 'ppt', 'xls'].includes(fileExt || '')) {
-        setTemplateType('document');
+      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase() ?? '';
+      const detected = detectUploadFileType(fileExt);
+      if (detected) {
+        setTemplateType(detected);
       }
 
       // Validate file size based on type
-      const maxSize = templateType === 'pdf' ? 50 : templateType === 'document' ? 25 : 10;
+      const maxSize = getMaxFileSize(templateType);
       if (selectedFile.size > maxSize * 1024 * 1024) {
         toast.error(`File size must be less than ${maxSize}MB for ${templateType} files`);
         return;
@@ -118,9 +105,26 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
     }));
   };
 
+  // --- Knowledge item selector callbacks ---
+  const handleKnowledgeItemToggle = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      knowledgeItemIds: prev.knowledgeItemIds.includes(id)
+        ? prev.knowledgeItemIds.filter(kiId => kiId !== id)
+        : [...prev.knowledgeItemIds, id]
+    }));
+  };
+
+  const handleKnowledgeItemRemove = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      knowledgeItemIds: prev.knowledgeItemIds.filter(kiId => kiId !== id)
+    }));
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!file) {
       toast.error('Please select a file');
       return;
@@ -177,26 +181,16 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
         const { data: { publicUrl: newPublicUrl } } = supabase.storage
           .from('knowledge-base')
           .getPublicUrl(uploadData.path);
-          
+
         publicUrl = newPublicUrl;
       }
 
-      // Prepare template data based on type
-      // Map file type to logical template type
-      const getTemplateType = (fileType: string): 'worksheet' | 'form' | 'canvas' => {
-        switch (fileType) {
-          case 'pdf': return 'worksheet';
-          case 'document': return 'form';
-          case 'image': return 'canvas';
-          default: return 'worksheet';
-        }
-      };
-      
-      const baseTemplateData = {
+      // Build the base payload with properly typed fields
+      const baseTemplateData: CreateTemplatePayload = {
         title: formData.title.trim(),
         description: formData.description?.trim() || undefined,
-        template_type: getTemplateType(templateType),
-        file_format: templateType === 'pdf' ? 'pdf' as const : templateType === 'document' ? 'docx' as const : 'png' as const,
+        template_type: toTemplateType(templateType),
+        file_format: toFileFormat(templateType),
         is_public: true,
         tags: formData.tags.length > 0 ? formData.tags : [],
         version: version.trim(),
@@ -204,8 +198,8 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
         existingId: replaceExisting ? existingTemplate?.id : undefined,
       };
 
-      // Add type-specific fields
-      let templateData;
+      // Add type-specific file fields
+      let templateData: CreateTemplatePayload;
       if (templateType === 'pdf') {
         templateData = {
           ...baseTemplateData,
@@ -216,19 +210,17 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       } else {
         templateData = {
           ...baseTemplateData,
-          // Add generic file fields for non-PDF templates
           file_url: publicUrl,
           file_filename: file!.name,
           file_size: Math.round(file!.size),
-          file_type: file!.type,
         };
       }
 
-      const template = await createTemplate.mutateAsync(templateData as Parameters<typeof createTemplate.mutateAsync>[0]);
+      const template = await createTemplate.mutateAsync(templateData);
+
       // Associate with knowledge items (only for new templates)
       if (!replaceExisting && formData.knowledgeItemIds.length > 0) {
         try {
-          // Create associations for all selected knowledge items
           const associationPromises = formData.knowledgeItemIds.map((knowledgeItemId, index) =>
             associateTemplate.mutateAsync({
               knowledgeItemId,
@@ -236,9 +228,9 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
               displayOrder: index
             })
           );
-          
+
           await Promise.all(associationPromises);
-        } catch (associationError) {
+        } catch (_associationError) {
           // Don't fail the entire upload for association errors
         }
       }
@@ -253,8 +245,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           .remove([pendingUpload.uploadedUrl])
           .catch(() => {});
       }
-      
-      // Show user-friendly error message
+
       const errorMessage = error instanceof Error ? error.message : "Failed to upload template";
       toast.error(errorMessage);
     } finally {
@@ -274,7 +265,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
       knowledgeItemIds: [],
     });
     setTagInput('');
-    setKnowledgeItemSearch('');
     setCustomVersion('');
     setPendingUpload(null);
     setVersionConflictOpen(false);
@@ -311,24 +301,6 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
     setUploading(false);
   };
 
-  const getAcceptedFileTypes = () => {
-    switch (templateType) {
-      case 'pdf': return '.pdf';
-      case 'image': return '.png,.jpg,.jpeg,.webp,.svg';
-      case 'document': return '.docx,.pptx,.xlsx,.doc,.ppt,.xls';
-      default: return '*/*';
-    }
-  };
-
-  const getMaxFileSize = () => {
-    switch (templateType) {
-      case 'pdf': return 50;
-      case 'document': return 25;
-      case 'image': return 10;
-      default: return 50;
-    }
-  };
-
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
@@ -342,7 +314,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           {/* Template Type Selection */}
           <div className="space-y-2">
             <Label>Template Type</Label>
-            <Select value={templateType} onValueChange={(value: 'pdf' | 'document' | 'image') => setTemplateType(value)}>
+            <Select value={templateType} onValueChange={(value: UploadFileType) => setTemplateType(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -353,7 +325,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Max file size: {getMaxFileSize()}MB
+              Max file size: {getMaxFileSize(templateType)}MB
             </p>
           </div>
 
@@ -390,7 +362,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
                   <Input
                     id="file"
                     type="file"
-                    accept={getAcceptedFileTypes()}
+                    accept={getAcceptedFileTypes(templateType)}
                     onChange={handleFileSelect}
                     className="max-w-xs mx-auto"
                   />
@@ -400,107 +372,11 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           </div>
 
           {/* Knowledge Item Selection */}
-          <div className="space-y-3">
-            <Label>Knowledge Items * ({formData.knowledgeItemIds.length} selected)</Label>
-            
-            {/* Selected Items Display */}
-            {formData.knowledgeItemIds.length > 0 && (
-              <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-md">
-                {formData.knowledgeItemIds.map((id) => {
-                  const item = knowledgeItems.find(ki => ki.id === id);
-                  return (
-                    <Badge key={id} variant="secondary" className="flex items-center gap-1">
-                      {item?.name || 'Unknown'}
-                      <X 
-                        className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                        onClick={() => setFormData(prev => ({
-                          ...prev,
-                          knowledgeItemIds: prev.knowledgeItemIds.filter(kiId => kiId !== id)
-                        }))}
-                      />
-                    </Badge>
-                  );
-                })}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, knowledgeItemIds: [] }))}
-                  className="h-6 px-2 text-xs"
-                >
-                  Clear All
-                </Button>
-              </div>
-            )}
-            
-            <Popover open={knowledgeItemOpen} onOpenChange={setKnowledgeItemOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={knowledgeItemOpen}
-                  className="w-full justify-between"
-                >
-                  {formData.knowledgeItemIds.length === 0 
-                    ? "Select knowledge items to link template to"
-                    : `${formData.knowledgeItemIds.length} knowledge item${formData.knowledgeItemIds.length === 1 ? '' : 's'} selected`
-                  }
-                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="z-[70] w-[var(--radix-popover-trigger-width)] p-0 bg-popover border shadow-lg max-h-[60vh] overflow-visible pointer-events-auto"
-                side="bottom" 
-                align="start"
-              >
-                <Command className="max-h-[50vh]">
-                  <CommandInput
-                    placeholder="Search knowledge items..."
-                    value={knowledgeItemSearch}
-                    onValueChange={setKnowledgeItemSearch}
-                    autoFocus
-                  />
-                  <CommandList className="max-h-[40vh] overflow-y-auto scroll-smooth scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
-                    <CommandEmpty>No knowledge item found.</CommandEmpty>
-                    <CommandGroup>
-                      {knowledgeItems
-                        ?.filter((item) => 
-                          item.name.toLowerCase().includes(knowledgeItemSearch.toLowerCase())
-                        )
-                        ?.map((item) => {
-                          const isSelected = formData.knowledgeItemIds.includes(item.id);
-                          return (
-                            <CommandItem
-                              key={item.id}
-                              value={item.name}
-                              onSelect={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  knowledgeItemIds: isSelected
-                                    ? prev.knowledgeItemIds.filter(id => id !== item.id)
-                                    : [...prev.knowledgeItemIds, item.id]
-                                }));
-                                // Don't close dropdown for multi-select
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <div className="flex items-center gap-2 w-full">
-                                <div className={`w-4 h-4 border rounded flex items-center justify-center ${
-                                  isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'
-                                }`}>
-                                  {isSelected && <CheckCircle className="w-3 h-3 text-primary-foreground" />}
-                                </div>
-                                <span className="flex-1">{item.name}</span>
-                              </div>
-                            </CommandItem>
-                          );
-                        })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
+          <KnowledgeItemSelector
+            selectedIds={formData.knowledgeItemIds}
+            onToggle={handleKnowledgeItemToggle}
+            onRemove={handleKnowledgeItemRemove}
+          />
 
           {/* Template Details */}
           <div className="space-y-2">
@@ -554,8 +430,8 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
             )}
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={!file || uploading}
             className="w-full"
           >
@@ -570,7 +446,7 @@ export const TemplateAssetUpload = ({ onSuccess }: TemplateAssetUploadProps) => 
           </Button>
         </form>
       </CardContent>
-      
+
       <VersionConflictDialog
         open={versionConflictOpen}
         onOpenChange={setVersionConflictOpen}

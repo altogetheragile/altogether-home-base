@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUsers } from '@/hooks/useUsers';
+import { useUsers, UserProfile } from '@/hooks/useUsers';
 import { useUpdateUserRole } from '@/hooks/useUserRoleManagement';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -36,19 +36,19 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editRoleOpen, setEditRoleOpen] = useState(false);
 
   const { data, isLoading } = useUsers({ search, role: roleFilter, page, pageSize: 20 });
   const updateRoleMutation = useUpdateUserRole();
 
-  const handleViewDetails = (user: any) => {
+  const handleViewDetails = (user: UserProfile) => {
     setSelectedUser(user);
     setDetailsOpen(true);
   };
 
-  const handleEditRole = (user: any) => {
+  const handleEditRole = (user: UserProfile) => {
     setSelectedUser(user);
     setEditRoleOpen(true);
   };
@@ -176,7 +176,7 @@ export default function AdminUsers() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <Avatar>
-                        <AvatarImage src={(user as any).profile_image_url || undefined} />
+                        <AvatarImage src={user.profile_image_url || undefined} />
                         <AvatarFallback>{initials}</AvatarFallback>
                       </Avatar>
                     </TableCell>

@@ -129,6 +129,7 @@ export interface KnowledgeItem {
   // Visual fields
   icon?: string;
   emoji?: string;
+  hero_image_url?: string;
   
   // NEW: Item type and governance fields
   item_type?: string;
@@ -321,7 +322,7 @@ export const useKnowledgeItems = (params?: {
         .from('knowledge_items')
         .select(`
           id, name, slug, description, is_published, is_featured, view_count,
-          emoji, icon, created_at, updated_at, background,
+          emoji, icon, hero_image_url, created_at, updated_at, background,
           learning_value_summary, common_pitfalls,
           item_type, use_this_when, avoid_when, decisions_supported,
           what_good_looks_like, typical_output,

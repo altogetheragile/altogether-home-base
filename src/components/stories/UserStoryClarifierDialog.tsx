@@ -4,44 +4,46 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles, CheckCircle, HelpCircle, Copy, Download, LogIn, AlertCircle } from 'lucide-react';
+import { Loader2, Sparkles, Copy, Download, LogIn, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from '@/hooks/useUserStories';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useProjects } from '@/hooks/useProjects';
 import { useCanvasMutations } from '@/hooks/useCanvas';
+import { StoryAnalysisResults } from './StoryAnalysisResults';
+import { StoryAdvancedOptions } from './StoryAdvancedOptions';
+import {
+  type StoryAnalysisResult,
+  type AnalysisTextItem,
+  formatForExport,
+  downloadAsFile,
+} from './storyExportUtils';
+
+interface CanvasData {
+  elements?: Array<{
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+    content: Record<string, unknown>;
+  }>;
+  metadata?: Record<string, unknown>;
+}
 
 interface UserStoryClarifierDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectId?: string;
-  onStoryGenerated?: (storyData: any) => void;
-}
-
-interface StoryAnalysisResult {
-  analysisType: string;
-  title?: string;
-  description?: string;
-  suggestions?: (string | any)[];
-  acceptanceCriteria?: (string | any)[];
-  refinementQuestions?: (string | any)[];
-  splitStories?: Array<{
+  onStoryGenerated?: (storyData: {
     title: string;
-    description: string;
-    acceptanceCriteria: (string | any)[];
-  }>;
-  spidrAnalysis?: {
-    spike: (string | any)[];
-    path: (string | any)[];
-    interface: (string | any)[];
-    data: (string | any)[];
-    rules: (string | any)[];
-  };
+    story: string;
+    acceptanceCriteria: AnalysisTextItem[];
+    priority: string;
+    storyPoints: number;
+    status: string;
+  }) => void;
 }
 
 export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGenerated }: UserStoryClarifierDialogProps) {
@@ -54,7 +56,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || '');
   const [saveToCanvas, setSaveToCanvas] = useState(false);
-  
+
   const { toast } = useToast();
   const { createStory, createEpic, createFeature, createBulkStories } = useStoryMutations();
   const { user } = useAuth();
@@ -73,7 +75,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
 
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('generate-canvas', {
         body: {
@@ -87,13 +89,13 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
 
       if (error) {
         let errorMessage = "Failed to analyze story. Please try again.";
-        
+
         if (error.message?.includes('Failed to send a request')) {
           errorMessage = "Network connection issue. Please check your internet connection and try again.";
         } else if (error.message?.includes('non-2xx status code')) {
           errorMessage = "AI service is temporarily unavailable. Please try again in a moment.";
         }
-        
+
         toast({
           title: "Analysis failed",
           description: errorMessage,
@@ -111,14 +113,14 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
         return;
       }
 
-      const result = data.generatedCanvas;
+      const result = data.generatedCanvas as StoryAnalysisResult;
       setAnalysisResult(result);
-      
+
       // Auto-populate fields if we got a user story generation
       if (result.analysisType === 'user-story-generation' || analysisType === 'user-story-generation') {
         if (result.title) setTitle(result.title);
         if (result.description) setDescription(result.description);
-        
+
         // If canvas integration is enabled, pass the data back immediately
         if (onStoryGenerated && result.title && result.description) {
           onStoryGenerated({
@@ -133,16 +135,16 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
           return;
         }
       }
-      
+
       toast({
         title: "Analysis complete!",
-        description: analysisType === 'user-story-generation' ? 
-          "Your user story has been generated!" : 
+        description: analysisType === 'user-story-generation' ?
+          "Your user story has been generated!" :
           "Your story has been successfully analyzed.",
       });
     } catch (error) {
       let errorMessage = "An unexpected error occurred.";
-      
+
       if (error instanceof Error) {
         if (error.message.includes('network') || error.message.includes('fetch')) {
           errorMessage = "Network error. Please check your connection and try again.";
@@ -150,7 +152,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
           errorMessage = error.message;
         }
       }
-      
+
       toast({
         title: "Analysis failed",
         description: errorMessage,
@@ -164,7 +166,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   const handleCreateStory = async (storyData?: {
     title: string;
     description: string;
-    acceptanceCriteria: string[];
+    acceptanceCriteria: AnalysisTextItem[];
   }) => {
     const storyToCreate = storyData || {
       title,
@@ -198,19 +200,20 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       if (saveToCanvas && selectedProjectId) {
         await saveStoryToCanvas(storyToCreate);
       }
-      
+
       if (!storyData) {
         handleReset();
         onClose();
       }
     } catch (error) {
+      // Error handled by mutation callbacks
     }
   };
 
   const saveStoryToCanvas = async (storyData: {
     title: string;
     description: string;
-    acceptanceCriteria: string[];
+    acceptanceCriteria: AnalysisTextItem[];
   }) => {
     try {
       // Get existing canvas or create new one
@@ -236,8 +239,8 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
         },
       };
 
-      const canvasData = existingCanvas?.data as any;
-      const updatedData = existingCanvas
+      const canvasData = existingCanvas?.data as CanvasData | null;
+      const updatedData: CanvasData = existingCanvas
         ? {
             ...canvasData,
             elements: [...(canvasData?.elements || []), newElement]
@@ -285,7 +288,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   };
 
   const handleCopyToClipboard = async (content?: string) => {
-    const textToCopy = content || formatForExport();
+    const textToCopy = content || formatForExport(analysisResult, title, description);
     try {
       await navigator.clipboard.writeText(textToCopy);
       toast({
@@ -302,217 +305,30 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
   };
 
   const handleExport = (format: 'json' | 'text') => {
-    const content = format === 'json' ? 
+    const content = format === 'json' ?
       JSON.stringify({ title, description, analysisResult }, null, 2) :
-      formatForExport();
-    
-    const blob = new Blob([content], { 
-      type: format === 'json' ? 'application/json' : 'text/plain' 
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `user-story-${Date.now()}.${format === 'json' ? 'json' : 'txt'}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
+      formatForExport(analysisResult, title, description);
+
+    const filename = `user-story-${Date.now()}.${format === 'json' ? 'json' : 'txt'}`;
+    const mimeType = format === 'json' ? 'application/json' : 'text/plain';
+    downloadAsFile(content, filename, mimeType);
+
     toast({
       title: "Export successful",
       description: `Content exported as ${format.toUpperCase()} file.`,
     });
   };
 
-  const formatForExport = (): string => {
-    let content = `Title: ${title}\n`;
-    if (description) content += `Description: ${description}\n`;
-    
-    if (analysisResult) {
-      content += `\nAnalysis Type: ${analysisResult.analysisType}\n`;
-      
-      if (analysisResult.acceptanceCriteria) {
-        content += '\nAcceptance Criteria:\n';
-        analysisResult.acceptanceCriteria.forEach((criteria, idx) => {
-          content += `${idx + 1}. ${criteria}\n`;
-        });
-      }
-      
-      if (analysisResult.suggestions) {
-        content += '\nSuggestions:\n';
-        analysisResult.suggestions.forEach((suggestion, idx) => {
-          content += `${idx + 1}. ${suggestion}\n`;
-        });
-      }
-      
-      if (analysisResult.splitStories) {
-        content += '\nSplit Stories:\n';
-        analysisResult.splitStories.forEach((story, idx) => {
-          content += `\n${idx + 1}. ${story.title}\n`;
-          content += `   Description: ${story.description}\n`;
-          if (story.acceptanceCriteria.length > 0) {
-            content += '   Acceptance Criteria:\n';
-            story.acceptanceCriteria.forEach((criteria) => {
-              content += `   - ${criteria}\n`;
-            });
-          }
-        });
-      }
-    }
-    
-    return content;
-  };
-
   const handleSignInRedirect = () => {
     window.open('/auth', '_blank');
   };
 
-  const renderAnalysisResult = () => {
-    if (!analysisResult) return null;
-
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            AI Analysis Results
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {analysisResult.spidrAnalysis && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(analysisResult.spidrAnalysis).map(([key, items]) => (
-                <div key={key} className="space-y-2">
-                  <h4 className="font-semibold capitalize text-sm">
-                    {key === 'spike' ? 'Spike (Research)' :
-                     key === 'path' ? 'Path (User Journey)' :
-                     key === 'interface' ? 'Interface (UI/UX)' :
-                     key === 'data' ? 'Data (Storage)' :
-                     'Rules (Business Logic)'}
-                  </h4>
-                   <div className="space-y-1">
-                     {items.map((item: any, index: number) => (
-                       <div key={index} className="text-sm p-2 bg-muted rounded">
-                         {typeof item === 'string' ? item : 
-                          typeof item === 'object' && item !== null ? 
-                          ((item as any).text || (item as any).content || JSON.stringify(item)) :
-                          String(item)}
-                       </div>
-                     ))}
-                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-           {analysisResult.splitStories && (
-             <div className="space-y-3">
-               <div className="flex items-center justify-between">
-                 <h4 className="font-semibold">Suggested Split Stories:</h4>
-                 {user && (
-                   <Button
-                     size="sm"
-                     onClick={handleSaveAllSplitStories}
-                     disabled={createStory.isPending || createEpic.isPending || createFeature.isPending || createBulkStories.isPending}
-                   >
-                     Save All as {storyType === 'epic' ? 'Epic + Stories' : storyType === 'feature' ? 'Feature + Stories' : 'Stories'}
-                   </Button>
-                 )}
-               </div>
-               {analysisResult.splitStories.map((story, index) => (
-                <Card key={index} className="border-l-4 border-l-primary">
-                  <CardContent className="pt-4">
-                     <div className="flex justify-between items-start mb-2">
-                       <h5 className="font-medium">{story.title}</h5>
-                       <div className="flex gap-2">
-                         {user ? (
-                           <Button
-                             size="sm"
-                             variant="outline"
-                             onClick={() => handleCreateStory(story)}
-                             disabled={createStory.isPending}
-                           >
-                             Create Story
-                           </Button>
-                         ) : (
-                           <Button
-                             size="sm"
-                             variant="outline"
-                             onClick={() => handleCopyToClipboard(`${story.title}\n${story.description}\n\nAcceptance Criteria:\n${story.acceptanceCriteria.join('\n')}`)}
-                           >
-                             <Copy className="h-3 w-3 mr-1" />
-                             Copy
-                           </Button>
-                         )}
-                       </div>
-                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{story.description}</p>
-                    {story.acceptanceCriteria.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="text-sm font-medium">Acceptance Criteria:</span>
-                        {story.acceptanceCriteria.map((criteria, idx) => (
-                          <div key={idx} className="text-sm pl-2 border-l-2 border-muted">
-                            {criteria}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {analysisResult.acceptanceCriteria && (
-            <div className="space-y-2">
-              <h4 className="font-semibold">Acceptance Criteria:</h4>
-              {analysisResult.acceptanceCriteria.map((criteria, index) => (
-                <div key={index} className="flex items-start gap-2 p-2 bg-muted rounded">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-green-600" />
-                  <span className="text-sm">{criteria}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {analysisResult.refinementQuestions && (
-            <div className="space-y-2">
-              <h4 className="font-semibold">Refinement Questions:</h4>
-              {analysisResult.refinementQuestions.map((question, index) => (
-                <div key={index} className="flex items-start gap-2 p-2 bg-muted rounded">
-                  <HelpCircle className="h-4 w-4 mt-0.5 text-blue-600" />
-                  <span className="text-sm">
-                    {typeof question === 'string' ? question : 
-                     typeof question === 'object' && question !== null ? 
-                     ((question as any).text || (question as any).content || (question as any).question || JSON.stringify(question)) :
-                     String(question)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {analysisResult.suggestions && (
-            <div className="space-y-2">
-              <h4 className="font-semibold">Suggestions:</h4>
-              {analysisResult.suggestions.map((suggestion, index) => (
-                <div key={index} className="p-2 bg-muted rounded text-sm">
-                  {suggestion}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
   const handleSaveAllSplitStories = async () => {
     if (!analysisResult?.splitStories || !user) return;
-    
+
     try {
       let parentId: string | undefined;
-      
+
       // Create parent first if needed
       if (storyType === 'epic') {
         const parentEpic = await createEpic.mutateAsync({
@@ -528,7 +344,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
         });
         parentId = parentFeature.id;
       }
-      
+
       // Create all split stories with parent relationship
       const storiesToCreate = analysisResult.splitStories.map(story => ({
         title: story.title,
@@ -543,25 +359,28 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
       }));
 
       await createBulkStories.mutateAsync(storiesToCreate);
-      
+
       toast({
         title: "Stories created successfully!",
         description: `Created ${storyType} "${title}" with ${storiesToCreate.length} child stories.`,
       });
-      
+
       handleReset();
       onClose();
     } catch (error) {
+      // Error handled by mutation callbacks
     }
   };
+
+  const isSavingStories = createStory.isPending || createEpic.isPending || createFeature.isPending || createBulkStories.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {analysisType === 'user-story-generation' ? 
-                'Generate User Story - Turn Ideas into Actionable Stories' : 
+              {analysisType === 'user-story-generation' ?
+                'Generate User Story - Turn Ideas into Actionable Stories' :
                 'Story Clarifier - Turn Ideas into User Stories'}
             </DialogTitle>
           </DialogHeader>
@@ -571,12 +390,12 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in. 
+                  <strong>AI Analysis is free for everyone!</strong> You can generate user stories and get AI insights without signing in.
                   Sign in to save your stories and manage them in projects.
                 </AlertDescription>
               </Alert>
             )}
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">What are you trying to build? *</Label>
@@ -609,128 +428,19 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
               </Button>
 
               {showAdvanced && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
-                   <div className="space-y-2">
-                     <div className="flex items-center gap-2">
-                       <Label htmlFor="storyType">Story Type</Label>
-                       <Popover>
-                         <PopoverTrigger asChild>
-                           <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground" />
-                         </PopoverTrigger>
-                         <PopoverContent className="w-80" side="top">
-                           <div className="space-y-3">
-                             <h4 className="font-medium">Story Types</h4>
-                             <div className="space-y-2 text-sm">
-                               <div>
-                                 <strong>User Story:</strong> Small, user-focused requirement that can be completed in 1-3 days. Best for specific features.
-                               </div>
-                               <div>
-                                 <strong>Feature:</strong> Larger functional component containing multiple user stories (1-2 weeks). Groups related functionality.
-                               </div>
-                               <div>
-                                 <strong>Epic:</strong> High-level initiative spanning multiple features (1-3 months). Represents major product areas.
-                               </div>
-                             </div>
-                           </div>
-                         </PopoverContent>
-                       </Popover>
-                     </div>
-                    <Select value={storyType} onValueChange={(value: 'epic' | 'feature' | 'story') => setStoryType(value)}>
-                      <SelectTrigger id="storyType">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="story">User Story</SelectItem>
-                        <SelectItem value="feature">Feature</SelectItem>
-                        <SelectItem value="epic">Epic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                   <div className="space-y-2">
-                     <div className="flex items-center gap-2">
-                       <Label htmlFor="analysisType">Analysis Type</Label>
-                       <Popover>
-                         <PopoverTrigger asChild>
-                           <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground" />
-                         </PopoverTrigger>
-                         <PopoverContent className="w-96" side="top">
-                           <div className="space-y-3">
-                             <h4 className="font-medium">Analysis Types</h4>
-                             <div className="space-y-3 text-sm">
-                               <div>
-                                 <strong>Generate User Story:</strong> Create a complete user story from scratch with title, description, and acceptance criteria. Use when starting with just an idea.
-                               </div>
-                               <div>
-                                 <strong>Enhanced Criteria:</strong> Generate additional, detailed acceptance criteria for an existing story. Use when you already have a story but need more specific requirements.
-                               </div>
-                               <div>
-                                 <strong>Story Refinement:</strong> Get questions and suggestions to improve story clarity and completeness. Use when your story feels incomplete or unclear.
-                               </div>
-                               <div>
-                                 <strong>SPIDR Analysis:</strong> Break down using SPIDR framework - Spike (research needed), Path (user journey), Interface (UI/UX), Data (storage), Rules (business logic). Use for complex stories.
-                               </div>
-                               <div>
-                                 <strong>Split Stories:</strong> Break large stories into smaller, manageable pieces. Use when stories are too big (8+ story points) or span multiple areas.
-                               </div>
-                             </div>
-                           </div>
-                         </PopoverContent>
-                       </Popover>
-                     </div>
-                    <Select value={analysisType} onValueChange={(value: 'user-story-generation' | 'spidr' | 'split' | 'acceptance_criteria' | 'refine') => setAnalysisType(value)}>
-                      <SelectTrigger id="analysisType">
-                        <SelectValue />
-                      </SelectTrigger>
-                       <SelectContent>
-                         <SelectItem value="user-story-generation">Generate User Story (Default)</SelectItem>
-                         <SelectItem value="acceptance_criteria">Enhanced Criteria</SelectItem>
-                         <SelectItem value="refine">Story Refinement</SelectItem>
-                         <SelectItem value="spidr">SPIDR Analysis</SelectItem>
-                         <SelectItem value="split">Split Into Smaller Stories</SelectItem>
-                       </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {user && (
-                    <div className="md:col-span-2 space-y-4 pt-4 border-t">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="saveToCanvas"
-                          checked={saveToCanvas}
-                          onChange={(e) => setSaveToCanvas(e.target.checked)}
-                          className="rounded"
-                        />
-                        <Label htmlFor="saveToCanvas" className="text-sm font-medium">
-                          Save to Project Canvas
-                        </Label>
-                      </div>
-                      
-                      {saveToCanvas && (
-                        <div className="space-y-2">
-                          <Label htmlFor="projectSelect">Select Project</Label>
-                          <Select
-                            value={selectedProjectId}
-                            onValueChange={setSelectedProjectId}
-                            disabled={!!projectId}
-                          >
-                            <SelectTrigger id="projectSelect">
-                              <SelectValue placeholder="Choose a project..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {projects?.map((project) => (
-                                <SelectItem key={project.id} value={project.id}>
-                                  {project.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <StoryAdvancedOptions
+                  storyType={storyType}
+                  onStoryTypeChange={setStoryType}
+                  analysisType={analysisType}
+                  onAnalysisTypeChange={setAnalysisType}
+                  saveToCanvas={saveToCanvas}
+                  onSaveToCanvasChange={setSaveToCanvas}
+                  selectedProjectId={selectedProjectId}
+                  onSelectedProjectIdChange={setSelectedProjectId}
+                  projectIdLocked={!!projectId}
+                  projects={projects}
+                  user={user}
+                />
               )}
             </div>
 
@@ -741,17 +451,17 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                 </Button>
                 {analysisResult && (
                   <>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleCopyToClipboard()}
                     >
                       <Copy className="h-4 w-4 mr-2" />
                       Copy
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleExport('text')}
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -777,8 +487,8 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
                 {analysisResult && !analysisResult.splitStories && (
                   user ? (
                     <div className="flex gap-2">
-                      <Button 
-                        onClick={() => handleCreateStory()} 
+                      <Button
+                        onClick={() => handleCreateStory()}
                         disabled={createStory.isPending || createEpic.isPending || (saveToCanvas && !selectedProjectId)}
                       >
                         {saveToCanvas ? `Add to Canvas` : `Create ${storyType}`}
@@ -805,7 +515,18 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
               </div>
             </div>
 
-            {renderAnalysisResult()}
+            {analysisResult && (
+              <StoryAnalysisResults
+                analysisResult={analysisResult}
+                analysisType={analysisType}
+                storyType={storyType}
+                user={user}
+                isSavingStories={isSavingStories}
+                onSaveAllSplitStories={handleSaveAllSplitStories}
+                onCreateStory={handleCreateStory}
+                onCopyToClipboard={(content) => handleCopyToClipboard(content)}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

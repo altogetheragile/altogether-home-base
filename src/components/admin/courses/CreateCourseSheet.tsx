@@ -38,8 +38,8 @@ const CreateCourseSheet = ({ open, onOpenChange, onCreated }: CreateCourseSheetP
         title: form.title,
         short_description: form.short_description || null,
         duration_days: 1,
-        ...({ event_type_id: form.event_type_id || undefined } as any),
-        ...({ category_id: form.category_id || undefined } as any),
+        ...(form.event_type_id ? { event_type_id: form.event_type_id } : {}),
+        ...(form.category_id ? { category_id: form.category_id } : {}),
       });
       invalidate();
       onOpenChange(false);
@@ -92,7 +92,7 @@ const CreateCourseSheet = ({ open, onOpenChange, onCreated }: CreateCourseSheetP
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                {eventTypes.map((t: any) => (
+                {eventTypes.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -109,7 +109,7 @@ const CreateCourseSheet = ({ open, onOpenChange, onCreated }: CreateCourseSheetP
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((c: any) => (
+                {categories.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>

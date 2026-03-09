@@ -23,6 +23,7 @@ export interface BacklogItem {
   updated_at: string;
   // Parent-child relationship for split items
   parent_item_id: string | null;
+  item_type: string | null;
 }
 
 export type BacklogItemInsert = Omit<BacklogItem, 'id' | 'created_at' | 'updated_at'>;

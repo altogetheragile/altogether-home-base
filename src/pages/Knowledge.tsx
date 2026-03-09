@@ -256,7 +256,7 @@ const Knowledge: React.FC = () => {
 
             return (
               <div key={item.id} style={{ background: p.white, borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 12px rgba(0,77,77,0.07)' }}>
-                <TechniqueImage category={catName} index={i} imageUrl={(item as any).hero_image_url || null} />
+                <TechniqueImage category={catName} index={i} imageUrl={item.hero_image_url || null} />
                 <div style={{ padding: '20px 20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
                   {/* category pill */}

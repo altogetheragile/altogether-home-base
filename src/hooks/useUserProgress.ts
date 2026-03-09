@@ -56,7 +56,8 @@ export const useUserProgress = (techniqueId?: string) => {
         updated_at: new Date().toISOString(),
       };
 
-      if (status !== 'unread' && !(progress as any)?.started_at) {
+      const currentProgress = progress as UserProgress | null | undefined;
+      if (status !== 'unread' && !currentProgress?.started_at) {
         updateData.started_at = new Date().toISOString();
       }
 
@@ -65,7 +66,7 @@ export const useUserProgress = (techniqueId?: string) => {
       }
 
       if (timeSpent !== undefined) {
-        updateData.time_spent_seconds = ((progress as any)?.time_spent_seconds || 0) + timeSpent;
+        updateData.time_spent_seconds = (currentProgress?.time_spent_seconds || 0) + timeSpent;
       }
 
       const { data, error } = await supabase

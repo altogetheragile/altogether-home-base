@@ -30,11 +30,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trash2 } from 'lucide-react';
-import { useEventRegistrations, useDeleteRegistration } from '@/hooks/useEventRegistrations';
+import { useEventRegistrations, useDeleteRegistration, AdminRegistrationWithUser } from '@/hooks/useEventRegistrations';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { ExternalLink, Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { getStripeDashboardSearchUrl } from '@/utils/stripe';
+import type { BadgeProps } from '@/components/ui/badge';
 
 
 interface EventRegistrationsDialogProps {
@@ -102,24 +103,22 @@ const EventRegistrationsDialog = ({
                         : '—';
 
                       const displayName =
-                        (r as any).user?.full_name?.trim() ||
-                        (r as any).user?.email ||
+                        r.user?.full_name?.trim() ||
+                        r.user?.email ||
                         (r.user_id ? `${r.user_id.slice(0, 8)}…` : 'Unknown');
 
                       const emailSub =
-                        (r as any).user?.full_name && (r as any).user?.email
-                          ? (r as any).user?.email
+                        r.user?.full_name && r.user?.email
+                          ? r.user.email
                           : null;
 
                       const sessionShort = r.stripe_session_id
                         ? `${r.stripe_session_id.slice(0, 10)}…`
                         : '—';
 
-                      const paymentVariant =
+                      const paymentVariant: BadgeProps['variant'] =
                         r.payment_status === 'paid'
                           ? 'default'
-                          : r.payment_status === 'unpaid'
-                          ? 'secondary'
                           : 'secondary';
 
                       return (
@@ -128,9 +127,9 @@ const EventRegistrationsDialog = ({
                           <TableCell>
                             <div className="flex flex-col gap-1">
                               <span className="font-medium">{displayName}</span>
-                              {(r as any).user?.username && (
+                              {r.user?.username && (
                                 <span className="text-xs text-muted-foreground">
-                                  @{(r as any).user.username}
+                                  @{r.user.username}
                                 </span>
                               )}
                               {emailSub && (
@@ -153,12 +152,12 @@ const EventRegistrationsDialog = ({
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={(r as any).user?.role === 'admin' ? 'destructive' : 'outline'}>
-                              {(r as any).user?.role || 'user'}
+                            <Badge variant={r.user?.role === 'admin' ? 'destructive' : 'outline'}>
+                              {r.user?.role || 'user'}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={paymentVariant as any}>
+                            <Badge variant={paymentVariant}>
                               {r.payment_status || 'unknown'}
                             </Badge>
                           </TableCell>
@@ -185,7 +184,7 @@ const EventRegistrationsDialog = ({
             await navigator.clipboard.writeText(r.stripe_session_id as string);
             toast({ title: 'Copied session ID', description: 'Stripe session ID copied to clipboard.' });
           } catch (e) {
-            toast({ title: 'Copy failed', description: 'Could not copy to clipboard.', variant: 'destructive' as any });
+            toast({ title: 'Copy failed', description: 'Could not copy to clipboard.', variant: 'destructive' });
           }
         }}
       >

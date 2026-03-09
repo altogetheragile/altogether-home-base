@@ -172,16 +172,20 @@ export const useKnowledgeItemUnifiedAssets = (knowledgeItemId?: string) => {
       
       if (error) throw error;
       
+      // Supabase returns joined media_assets as a single object for a many-to-one join
+      type JoinedAsset = Record<string, unknown> & {
+        is_template?: boolean | null;
+      };
+
       return data
-        .filter(item => item.media_assets)
-        .filter(item => !(item.media_assets as any).is_template) // Exclude templates
-        .map(item => {
-          const asset = item.media_assets as any;
-          return {
-            ...asset,
-            position: item.position
-          } as UnifiedAsset & { position: number };
-        });
+        .filter((item): item is typeof item & { media_assets: JoinedAsset } =>
+          item.media_assets != null
+        )
+        .filter(item => !item.media_assets.is_template) // Exclude templates
+        .map(item => ({
+          ...item.media_assets,
+          position: item.position
+        } as UnifiedAsset & { position: number }));
     },
     enabled: !!knowledgeItemId
   });

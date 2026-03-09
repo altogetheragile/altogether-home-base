@@ -61,7 +61,7 @@ const ProductBacklog: React.FC = () => {
         tags: item.tags,
         target_release: item.target_release,
         backlog_position: item.backlog_position || 0,
-        item_type: (item as any).item_type || 'story',
+        item_type: item.item_type || 'story',
         parent_item_id: item.parent_item_id || null,
       }));
       setAllItems(localItems);

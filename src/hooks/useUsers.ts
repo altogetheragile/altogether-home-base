@@ -3,6 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from './useUserRole';
 
+export interface UserProfile {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  username: string | null;
+  role: string | null;
+  created_at: string | null;
+  profile_image_url: string | null;
+}
+
 interface UseUsersFilters {
   search?: string;
   role?: string;
@@ -43,7 +53,7 @@ export const useUsers = (filters: UseUsersFilters = {}) => {
       if (error) throw error;
 
       return {
-        users: data || [],
+        users: (data || []) as UserProfile[],
         totalCount: count || 0,
         totalPages: Math.ceil((count || 0) / pageSize),
       };

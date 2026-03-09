@@ -173,10 +173,29 @@ export const useKnowledgeItemAssets = (knowledgeItemId?: string) => {
       
       if (error) throw error;
       
+      // Supabase returns joined media_assets as a single object for a many-to-one join
+      type JoinedAsset = {
+        id: string;
+        type: string;
+        title: string | null;
+        description: string | null;
+        url: string;
+        thumbnail_url: string | null;
+        file_size: number | null;
+        file_type: string | null;
+        original_filename: string | null;
+        created_at: string;
+        updated_at: string;
+        created_by: string;
+        updated_by: string | null;
+      };
+
       return data
-        .filter(item => item.media_assets && typeof item.media_assets === 'object')
+        .filter((item): item is typeof item & { media_assets: JoinedAsset } =>
+          item.media_assets != null && typeof item.media_assets === 'object'
+        )
         .map(item => {
-          const asset = item.media_assets as any;
+          const asset = item.media_assets;
           return {
             id: asset.id,
             type: asset.type,

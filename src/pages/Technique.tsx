@@ -127,7 +127,7 @@ const Technique: React.FC = () => {
   useViewTracking(item?.id || '');
 
   // Fetch related techniques by slug
-  const relatedSlugs = (item as any)?.related_techniques || [];
+  const relatedSlugs = item?.related_techniques || [];
   const { data: allItems } = useKnowledgeItems({ sortBy: 'alphabetical' });
   const relatedItems = useMemo(() => {
     if (!allItems || relatedSlugs.length === 0) return [];
@@ -143,7 +143,7 @@ const Technique: React.FC = () => {
   // Get first image from media assets
   const diagramImage = useMemo(() => {
     if (!mediaAssets) return null;
-    const images = (mediaAssets as any[]).filter((a) => a.type === 'image' && !a.is_template);
+    const images = mediaAssets.filter((a) => a.type === 'image' && !a.is_template);
     return images.length > 0 ? images[0] : null;
   }, [mediaAssets]);
 
@@ -318,8 +318,8 @@ const Technique: React.FC = () => {
               {diagramImage ? (
                 <div style={{ borderRadius: 14, overflow: 'hidden' }}>
                   <img
-                    src={(diagramImage as any).url}
-                    alt={(diagramImage as any).title || item.name}
+                    src={diagramImage.url}
+                    alt={diagramImage.title || item.name}
                     style={{ width: '100%', height: 'auto', display: 'block' }}
                   />
                 </div>

@@ -14,6 +14,8 @@ import { useEffect } from "react";
 import { getFriendlyAuthError } from "@/utils/authErrors";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupAuthState } from "@/utils/authCleanup";
+import type { Factor } from "@supabase/auth-js";
+import type { MfaAuthError } from "@/types/supabaseMfa";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -23,7 +25,7 @@ const Auth = () => {
 
   // MFA state
   const [mfaRequired, setMfaRequired] = useState(false);
-  const [, setMfaFactors] = useState<unknown[]>([]);
+  const [, setMfaFactors] = useState<Factor[]>([]);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -44,23 +46,23 @@ const Auth = () => {
   };
 
   // Start MFA challenge after an MFA-required sign-in response
-  const handleStartMfa = async (factorsHint?: any[]) => {
+  const handleStartMfa = async (factorsHint?: Factor[]) => {
     try {
       // Prevent redirect race by marking MFA step immediately
       setMfaRequired(true);
 
-      let factors = Array.isArray(factorsHint) ? factorsHint : [];
-      if (!Array.isArray(factors) || factors.length === 0) {
+      let factors: Factor[] = Array.isArray(factorsHint) ? factorsHint : [];
+      if (factors.length === 0) {
         try {
-          const { data } = await (supabase as any).auth.mfa.listFactors();
+          const { data } = await supabase.auth.mfa.listFactors();
           factors = data?.all ?? [];
         } catch {}
       }
       setMfaFactors(factors);
 
-      const verifiedTotp = factors.find((f: any) => (f.factor_type ?? f.type) === "totp" && ((f.status ?? f.factor_status) === "verified"));
+      const verifiedTotp = factors.find((f) => f.factor_type === "totp" && f.status === "verified");
       if (!verifiedTotp) {
-        const hasTotp = factors.some((f: any) => (f.factor_type ?? f.type) === "totp");
+        const hasTotp = factors.some((f) => f.factor_type === "totp");
         setMfaRequired(false);
         toast({
           title: hasTotp ? "Authenticator not verified" : "No authenticator found",
@@ -76,16 +78,17 @@ const Auth = () => {
         return;
       }
 
-      const { data: chData, error: chErr } = await (supabase as any).auth.mfa.challenge({ factorId: verifiedTotp.id });
+      const { data: chData, error: chErr } = await supabase.auth.mfa.challenge({ factorId: verifiedTotp.id });
       if (chErr) throw chErr;
-      const challengeId = chData?.id ?? chData?.challengeId ?? null;
+      const challengeId = chData?.id ?? null;
       setMfaFactorId(verifiedTotp.id);
       setMfaChallengeId(challengeId);
       toast({ title: "MFA required", description: "Enter the 6‑digit code from your authenticator app." });
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Don't sign the user out on challenge errors
       setMfaRequired(false);
-      toast({ title: "MFA challenge failed", description: err?.message || "Please try again.", variant: "destructive" });
+      const message = err instanceof Error ? err.message : "Please try again.";
+      toast({ title: "MFA challenge failed", description: message, variant: "destructive" });
     }
   };
 
@@ -105,7 +108,7 @@ useEffect(() => {
     }
 
     try {
-      const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       const currentLevel = aalData?.currentLevel;
 
       if (currentLevel === 'aal2') {
@@ -113,9 +116,9 @@ useEffect(() => {
         return;
       }
 
-      const { data: lf } = await (supabase as any).auth.mfa.listFactors();
+      const { data: lf } = await supabase.auth.mfa.listFactors();
       const all = lf?.all ?? [];
-      const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
+      const verifiedTotp = all.find((f) => f.factor_type === 'totp' && f.status === 'verified');
 
       if (verifiedTotp) {
         await handleStartMfa(all);
@@ -157,9 +160,11 @@ useEffect(() => {
       const { data, error } = result;
 
       if (error) {
-        const isMfaError = (error as any)?.name === 'AuthMFAError' || /mfa|factor/i.test((error as any)?.message || '');
+        const mfaErr = error as MfaAuthError;
+        const isMfaError = mfaErr.name === 'AuthMFAError' || /mfa|factor/i.test(mfaErr.message || '');
         if (isMfaError) {
-          await handleStartMfa(((error as any)?.mfa?.factors) || (error as any)?.meta?.factors);
+          // MFA factor hints are not part of the typed error; start MFA without hints
+          await handleStartMfa();
           setLoading(false);
           return;
         }
@@ -171,23 +176,23 @@ useEffect(() => {
 
       // No error: check if MFA is required but not signaled via error, and proactively step up to AAL2 when TOTP exists
       try {
-        const maybeFactors = (data as any)?.mfa?.factors;
-        const hasSession = !!(data as any)?.session;
-        const hasUser = !!(data as any)?.user;
+        const hasSession = !!data?.session;
+        const hasUser = !!data?.user;
+        const userFactors = data?.user?.factors;
 
         // If Supabase hinted factors but no session was returned, start MFA immediately
-        if (!hasSession && (Array.isArray(maybeFactors) ? maybeFactors.length > 0 : hasUser)) {
-          await handleStartMfa(maybeFactors);
+        if (!hasSession && (Array.isArray(userFactors) ? userFactors.length > 0 : hasUser)) {
+          await handleStartMfa(userFactors ?? undefined);
           setLoading(false);
           return;
         }
 
         // If we do have a session, check AAL and step up if needed
-        const { data: aalData } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+        const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData?.currentLevel !== 'aal2') {
-          const { data: lf } = await (supabase as any).auth.mfa.listFactors();
+          const { data: lf } = await supabase.auth.mfa.listFactors();
           const all = lf?.all ?? [];
-          const verifiedTotp = all.find((f: any) => (f.type === 'totp' || f.factor_type === 'totp') && (f.status === 'verified' || f.factor_status === 'verified'));
+          const verifiedTotp = all.find((f) => f.factor_type === 'totp' && f.status === 'verified');
           if (verifiedTotp) {
             await handleStartMfa(all);
             setLoading(false);
@@ -217,27 +222,30 @@ useEffect(() => {
     if (!mfaFactorId) return;
     setLoading(true);
     try {
-      const payload: any = { factorId: mfaFactorId, code: mfaCode };
-      if (mfaChallengeId) payload.challengeId = mfaChallengeId;
-      const { error } = await (supabase as any).auth.mfa.verify(payload);
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: mfaChallengeId!,
+        code: mfaCode,
+      });
       if (error) throw error;
       setMfaRequired(false);
       setMfaCode("");
       setMfaChallengeId(null);
       try {
-        await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       } catch (aalErr) {
       }
       toast({ title: "MFA verified (AAL2)", description: "You're fully signed in." });
       navigateAfterAuth();
-    } catch (err: any) {
-      const msg = (err?.message || '').toLowerCase();
-      const is422 = err?.status === 422 || err?.statusCode === 422;
+    } catch (err: unknown) {
+      const mfaErr = err as MfaAuthError;
+      const msg = (mfaErr.message || '').toLowerCase();
+      const is422 = mfaErr.status === 422 || mfaErr.statusCode === 422;
       const isExpired = /expired|challenge|not found/i.test(msg);
       if (is422 || isExpired) {
         try { await refreshMfaChallenge(); } catch {}
       }
-      toast({ title: is422 || isExpired ? "Code expired or invalid" : "Invalid code", description: is422 || isExpired ? "We requested a fresh code. Enter the latest 6‑digit code." : (err?.message || "Please try again."), variant: is422 || isExpired ? undefined : "destructive" });
+      toast({ title: is422 || isExpired ? "Code expired or invalid" : "Invalid code", description: is422 || isExpired ? "We requested a fresh code. Enter the latest 6‑digit code." : (mfaErr.message || "Please try again."), variant: is422 || isExpired ? undefined : "destructive" });
     } finally {
       setLoading(false);
     }
@@ -250,20 +258,21 @@ useEffect(() => {
     setMfaCode("");
     try {
       cleanupAuthState();
-      await (supabase as any).auth.signOut({ scope: "global" });
+      await supabase.auth.signOut({ scope: "global" });
     } catch {}
   };
 
   const refreshMfaChallenge = async () => {
     if (!mfaFactorId) return;
     try {
-      const { data, error } = await (supabase as any).auth.mfa.challenge({ factorId: mfaFactorId });
+      const { data, error } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
       if (error) throw error;
-      setMfaChallengeId(data?.id ?? data?.challengeId ?? null);
+      setMfaChallengeId(data?.id ?? null);
       setMfaCode("");
       toast({ title: "New code requested", description: "Enter the latest 6‑digit code." });
-    } catch (err: any) {
-      toast({ title: "Couldn't refresh code", description: err?.message || "Try again.", variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Try again.";
+      toast({ title: "Couldn't refresh code", description: message, variant: "destructive" });
     }
   };
 

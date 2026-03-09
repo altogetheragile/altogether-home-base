@@ -30,16 +30,15 @@ const ProtectedRoute = ({ children, requiredRole, requireAAL2 = false }: Protect
       setAalLoading(true);
       try {
         // Check if user has MFA factors configured
-        const { data: factors } = await (supabase as any).auth.mfa.listFactors();
-        const verifiedTotp = factors?.all?.find((f: any) => 
-          (f.type === 'totp' || f.factor_type === 'totp') && 
-          (f.status === 'verified' || f.factor_status === 'verified')
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const verifiedTotp = factors?.all?.find((f) =>
+          f.factor_type === 'totp' && f.status === 'verified'
         );
         setHasMfaFactors(!!verifiedTotp);
 
         // Only check AAL if user has MFA configured
         if (verifiedTotp) {
-          const { data } = await (supabase as any).auth.mfa.getAuthenticatorAssuranceLevel();
+          const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
           if (!cancelled) setAalLevel(data?.currentLevel ?? null);
         } else {
           // No MFA configured, so AAL2 not required

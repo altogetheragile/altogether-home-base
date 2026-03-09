@@ -42,7 +42,7 @@ const getFirstSentence = (text?: string): string => {
 };
 
 export const ItemHero: React.FC<ItemHeroProps> = ({ item }) => {
-  const itemType = (item as any).item_type || 'technique';
+  const itemType = item.item_type || 'technique';
 
   return (
     <div className="space-y-3">
