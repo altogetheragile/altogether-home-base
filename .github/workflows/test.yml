@@ -17,31 +17,20 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
 
-    - name: Nuclear cache clear (MSW v2 fix)
-      run: |
-        echo "🧹 Performing nuclear cache clear for MSW v2..."
-        rm -rf node_modules .vitest dist coverage .cache .tsbuildinfo
-        rm -f package-lock.json yarn.lock pnpm-lock.yaml
-        npm cache clean --force
-        echo "✅ Nuclear cache clear complete"
-
     - name: Install dependencies
-      run: npm install
+      run: npm ci
 
     - name: Verify MSW v2 compliance
       run: |
-        echo "🔍 Verifying MSW v2 compliance..."
+        echo "Verifying MSW v2 compliance..."
         node src/test/verify-msw-v2.mjs
-        echo "📦 Checking MSW version..."
         npm ls msw
 
-    - name: Run unit tests (Vitest) - Nuclear mode
-      run: |
-        echo "🚀 Running tests with nuclear cache clearing..."
-        npx vitest run --no-cache --config vitest.config.ts
+    - name: Run unit tests (Vitest)
+      run: npx vitest run --config vitest.config.ts
       env:
         NODE_ENV: test
 
@@ -86,13 +75,3 @@ jobs:
           reports/
           screenshots/
         retention-days: 30
-
-    - name: Debug info on failure
-      if: failure()
-      run: |
-        echo "🔍 Debug information:"
-        echo "Node version: $(node --version)"
-        echo "NPM version: $(npm --version)"
-        echo "MSW version: $(npm ls msw || echo 'MSW not found')"
-        echo "Test files:"
-        find src/test -name "*.test.*" -type f | head -10
