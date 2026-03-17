@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { RoundState, ColumnId, Specialism } from './types';
+import type { RoundState, Specialism } from './types';
 import { COLUMNS, DAYS_PER_ROUND } from './config';
 import { KanbanColumn } from './KanbanColumn';
 import { WorkerPool } from './WorkerPool';

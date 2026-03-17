@@ -1,6 +1,5 @@
 import type {
   WorkItem,
-  WorkerAssignment,
   DayRollResult,
   DaySummaryData,
   RoundMetrics,
@@ -15,7 +14,6 @@ import {
   OFF_SPEC_MULTIPLIER,
   BLOCKER_CHANCE,
   BLOCKER_EFFORT,
-  ACTIVE_COLUMNS,
 } from './config';
 
 // ============= Item Factory =============
@@ -52,7 +50,7 @@ export function rollDie(): number {
 
 // ============= Blocker Logic =============
 
-export function applyBlockers(items: WorkItem[], day: number): { items: WorkItem[]; blockedIds: string[] } {
+export function applyBlockers(items: WorkItem[], _day: number): { items: WorkItem[]; blockedIds: string[] } {
   const blockedIds: string[] = [];
   const updated = items.map((item) => {
     if (item.column === 'backlog' || item.column === 'done' || item.blocked) return item;
@@ -67,10 +65,6 @@ export function applyBlockers(items: WorkItem[], day: number): { items: WorkItem
 }
 
 // ============= Day Simulation =============
-
-function columnForSpecialism(spec: Specialism): ColumnId {
-  return spec;
-}
 
 function nextColumn(column: ColumnId): ColumnId | null {
   const order: ColumnId[] = ['backlog', 'analysis', 'development', 'test', 'done'];
@@ -169,30 +163,6 @@ export function simulateDay(state: RoundState): { items: WorkItem[]; summary: Da
       columnSnapshot: snapshotColumns(workingItems),
     },
   };
-}
-
-// ============= WIP Enforcement =============
-
-export function canAssignToCard(
-  items: WorkItem[],
-  cardId: string,
-  wipLimits: Record<Specialism, number> | null
-): boolean {
-  const item = items.find((i) => i.id === cardId);
-  if (!item) return false;
-  if (item.column === 'backlog' || item.column === 'done') return false;
-  // WIP limits don't affect assignment, they affect pulling new work
-  return true;
-}
-
-export function canPullToColumn(
-  items: WorkItem[],
-  column: Specialism,
-  wipLimits: Record<Specialism, number> | null
-): boolean {
-  if (!wipLimits) return true;
-  const count = items.filter((i) => i.column === column).length;
-  return count < wipLimits[column];
 }
 
 // ============= Metrics Calculation =============

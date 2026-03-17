@@ -1,4 +1,4 @@
-import type { WorkItem, WorkerAssignment, Specialism, ColumnId } from './types';
+import type { WorkItem, WorkerAssignment, ColumnId } from './types';
 import { COLUMNS } from './config';
 import { WorkItemCard } from './WorkItemCard';
 import { cn } from '@/lib/utils';

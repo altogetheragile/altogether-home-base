@@ -1,4 +1,4 @@
-import type { WorkerDef, WorkerAssignment, Specialism } from './types';
+import type { WorkerAssignment, Specialism } from './types';
 import { WORKERS } from './config';
 import { cn } from '@/lib/utils';
 

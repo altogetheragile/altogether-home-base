@@ -13,10 +13,9 @@ interface WorkItemCardProps {
   assignments: WorkerAssignment[];
   isSelected: boolean;
   onClick: () => void;
-  compact?: boolean;
 }
 
-export function WorkItemCard({ item, assignments, isSelected, onClick, compact }: WorkItemCardProps) {
+export function WorkItemCard({ item, assignments, isSelected, onClick }: WorkItemCardProps) {
   const cardAssignments = assignments.filter((a) => a.cardId === item.id);
   const column = item.column as Specialism;
   const isActive = item.column !== 'backlog' && item.column !== 'done';
