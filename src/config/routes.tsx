@@ -42,6 +42,7 @@ const Privacy = lazy(() => import('@/pages/Privacy'));
 const AccountSecurity = lazy(() => import('@/pages/AccountSecurity'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ProductBacklog = lazy(() => import('@/pages/ProductBacklog'));
+const FlowGame = lazy(() => import('@/pages/FlowGame'));
 
 // Protected Project Pages
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
@@ -234,6 +235,13 @@ export const PublicRoutes = () => {
           </Suspense>
         </ErrorBoundary>
       </ProtectedRoute>
+    } />
+    <Route path="/flow-game" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <FlowGame />
+        </Suspense>
+      </ErrorBoundary>
     } />
     <Route path="/backlog" element={
       <Suspense fallback={<LoadingFallback />}>

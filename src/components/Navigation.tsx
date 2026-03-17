@@ -21,6 +21,7 @@ const RESOURCE_LINKS = [
   { label: 'Knowledge Base', to: '/knowledge', flag: 'show_knowledge' as const },
   { label: 'Blog', to: '/blog', flag: 'show_blog' as const },
   { label: 'AI Tools', to: '/ai-tools', flag: 'show_ai_tools' as const },
+  { label: 'Flow Game', to: '/flow-game', flag: 'show_flow_game' as const },
 ];
 
 const FLAG_DEFAULTS: Record<string, boolean> = {
@@ -32,6 +33,8 @@ const FLAG_DEFAULTS: Record<string, boolean> = {
   show_contact: true,
   show_testimonials: true,
   show_ai_tools: false,
+  show_resources: true,
+  show_flow_game: true,
 };
 
 const ChevronDown = () => (
@@ -131,7 +134,8 @@ const Navigation = () => {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const visibleTopLinks = TOP_LINKS.filter((l) => isFlag(l.flag));
-  const visibleResourceLinks = RESOURCE_LINKS.filter((l) => isFlag(l.flag));
+  const showResources = isFlag('show_resources');
+  const visibleResourceLinks = showResources ? RESOURCE_LINKS.filter((l) => isFlag(l.flag)) : [];
   const resourcesActive = visibleResourceLinks.some((l) => isActive(l.to));
 
   const handleSignOut = async () => {
