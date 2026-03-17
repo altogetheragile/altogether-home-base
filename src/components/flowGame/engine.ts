@@ -83,7 +83,7 @@ export function simulateDay(state: RoundState): { items: WorkItem[]; summary: Da
   // Blockers were already applied before assignment phase — don't re-apply
   // Step 1: Process worker assignments
   const rolls: DayRollResult[] = [];
-  let workingItems = state.items.map((item) => ({ ...item }));
+  const workingItems = state.items.map((item) => ({ ...item }));
   const blockersCleared: string[] = [];
 
   for (const assignment of state.assignments) {
