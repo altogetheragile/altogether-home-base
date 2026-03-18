@@ -215,6 +215,21 @@ const About: React.FC = () => {
                   </div>
                 ))}
               </div>
+              {/* Credly badges */}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${p.paleTeal}` }}>
+                <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>Verified Badges</div>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {[
+                    { src: '/images/badges/acc.png', alt: 'Associate Certified Coach (ACC)', url: 'https://www.credly.com/badges/aaac0b7b-dbd7-4560-ad51-f8d89a84f6cf/public_url' },
+                    { src: '/images/badges/psm-ii.png', alt: 'Professional Scrum Master II (PSM II)', url: 'https://www.credly.com/badges/ab193ca2-d233-48a2-a264-55ee82a819c2/public_url' },
+                    { src: '/images/badges/business-agility-catalyst.png', alt: 'Business Agility Catalyst', url: 'https://www.credly.com/badges/2e963763-78d4-43ba-92f4-3ce262e5f8b7/public_url' },
+                  ].map((badge, i) => (
+                    <a key={i} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'block', width: 88, height: 88, flexShrink: 0 }}>
+                      <img src={badge.src} alt={badge.alt} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
             </div>
             <div style={{ background: p.deepTeal, borderRadius: 14, padding: 24 }}>
               <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Work with me</div>
