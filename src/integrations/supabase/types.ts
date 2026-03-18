@@ -50,6 +50,117 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_focus: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          target_id: string | null
+          target_table: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_table: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_table?: string
+        }
+        Relationships: []
+      }
+      ai_generation_audit: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          input_data: Json | null
+          ip_address: string | null
+          output_data: Json | null
+          story_level: string | null
+          success: boolean | null
+          token_count: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          ip_address?: string | null
+          output_data?: Json | null
+          story_level?: string | null
+          success?: boolean | null
+          token_count?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          ip_address?: string | null
+          output_data?: Json | null
+          story_level?: string | null
+          success?: boolean | null
+          token_count?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       authors: {
         Row: {
           bio: string | null
@@ -91,6 +202,302 @@ export type Database = {
           website_url?: string | null
         }
         Relationships: []
+      }
+      backlog_items: {
+        Row: {
+          acceptance_criteria: string[] | null
+          backlog_position: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_effort: number | null
+          estimated_value: number | null
+          id: string
+          item_type: string | null
+          parent_item_id: string | null
+          priority: string | null
+          product_id: string | null
+          project_id: string | null
+          source: string | null
+          status: string | null
+          tags: string[] | null
+          target_release: string | null
+          title: string
+          updated_at: string
+          user_story_id: string | null
+        }
+        Insert: {
+          acceptance_criteria?: string[] | null
+          backlog_position?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_effort?: number | null
+          estimated_value?: number | null
+          id?: string
+          item_type?: string | null
+          parent_item_id?: string | null
+          priority?: string | null
+          product_id?: string | null
+          project_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: string[] | null
+          target_release?: string | null
+          title: string
+          updated_at?: string
+          user_story_id?: string | null
+        }
+        Update: {
+          acceptance_criteria?: string[] | null
+          backlog_position?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_effort?: number | null
+          estimated_value?: number | null
+          id?: string
+          item_type?: string | null
+          parent_item_id?: string | null
+          priority?: string | null
+          product_id?: string | null
+          project_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: string[] | null
+          target_release?: string | null
+          title?: string
+          updated_at?: string
+          user_story_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backlog_items_parent_item_id_fkey"
+            columns: ["parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "backlog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlog_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlog_items_user_story_id_fkey"
+            columns: ["user_story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_post_tags: {
+        Row: {
+          blog_post_id: string
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          blog_post_id: string
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          blog_post_id?: string
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_tags_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "blog_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          category_id: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          estimated_reading_time: number | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          like_count: number | null
+          published_at: string | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          slug: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          estimated_reading_time?: number | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          like_count?: number | null
+          published_at?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          estimated_reading_time?: number | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          like_count?: number | null
+          published_at?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      canvases: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: Json | null
+          id: string
+          project_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json | null
+          id?: string
+          project_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json | null
+          id?: string
+          project_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comment_reports: {
         Row: {
@@ -136,6 +543,226 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          attachment_filename: string | null
+          attachment_size: number | null
+          attachment_type: string | null
+          attachment_url: string | null
+          created_at: string
+          email: string
+          enquiry_type: string | null
+          full_name: string
+          id: string
+          ip_address: string | null
+          message: string
+          phone: string | null
+          preferred_contact_method: string | null
+          status: string | null
+          subject: string | null
+        }
+        Insert: {
+          attachment_filename?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          email: string
+          enquiry_type?: string | null
+          full_name: string
+          id?: string
+          ip_address?: string | null
+          message: string
+          phone?: string | null
+          preferred_contact_method?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Update: {
+          attachment_filename?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          email?: string
+          enquiry_type?: string | null
+          full_name?: string
+          id?: string
+          ip_address?: string | null
+          message?: string
+          phone?: string | null
+          preferred_contact_method?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
+      content_blocks: {
+        Row: {
+          content: Json | null
+          created_at: string
+          id: string
+          is_visible: boolean | null
+          page_id: string
+          position: number | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean | null
+          page_id: string
+          position?: number | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean | null
+          page_id?: string
+          position?: number | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_blocks_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_feedback: {
+        Row: {
+          comment: string
+          company: string | null
+          course_name: string
+          created_at: string
+          created_by: string | null
+          event_id: string | null
+          first_name: string
+          id: string
+          is_approved: boolean | null
+          is_featured: boolean | null
+          job_title: string | null
+          last_name: string
+          rating: number | null
+          source: string | null
+          source_url: string | null
+          submitted_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          comment: string
+          company?: string | null
+          course_name: string
+          created_at?: string
+          created_by?: string | null
+          event_id?: string | null
+          first_name: string
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          job_title?: string | null
+          last_name: string
+          rating?: number | null
+          source?: string | null
+          source_url?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          comment?: string
+          company?: string | null
+          course_name?: string
+          created_at?: string
+          created_by?: string | null
+          event_id?: string | null
+          first_name?: string
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          job_title?: string | null
+          last_name?: string
+          rating?: number | null
+          source?: string | null
+          source_url?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_feedback_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_imports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          failed_rows: number | null
+          file_size: number | null
+          file_type: string
+          filename: string
+          id: string
+          mapping_config: Json | null
+          original_filename: string | null
+          processed_at: string | null
+          processing_log: Json | null
+          status: string | null
+          successful_rows: number | null
+          target_entity: string
+          total_rows: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          failed_rows?: number | null
+          file_size?: number | null
+          file_type?: string
+          filename: string
+          id?: string
+          mapping_config?: Json | null
+          original_filename?: string | null
+          processed_at?: string | null
+          processing_log?: Json | null
+          status?: string | null
+          successful_rows?: number | null
+          target_entity: string
+          total_rows?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          failed_rows?: number | null
+          file_size?: number | null
+          file_type?: string
+          filename?: string
+          id?: string
+          mapping_config?: Json | null
+          original_filename?: string | null
+          processed_at?: string | null
+          processing_log?: Json | null
+          status?: string | null
+          successful_rows?: number | null
+          target_entity?: string
+          total_rows?: number | null
+        }
+        Relationships: []
+      }
       decision_levels: {
         Row: {
           color: string | null
@@ -174,6 +801,74 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      epics: {
+        Row: {
+          business_objective: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          jira_issue_key: string | null
+          position: number | null
+          project_id: string | null
+          stakeholders: string[] | null
+          start_date: string | null
+          status: string | null
+          success_metrics: string[] | null
+          target_date: string | null
+          theme: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          business_objective?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          project_id?: string | null
+          stakeholders?: string[] | null
+          start_date?: string | null
+          status?: string | null
+          success_metrics?: string[] | null
+          target_date?: string | null
+          theme?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          business_objective?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          project_id?: string | null
+          stakeholders?: string[] | null
+          start_date?: string | null
+          status?: string | null
+          success_metrics?: string[] | null
+          target_date?: string | null
+          theme?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_categories: {
         Row: {
@@ -536,6 +1231,72 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "event_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      features: {
+        Row: {
+          acceptance_criteria: string[] | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          epic_id: string | null
+          id: string
+          jira_issue_key: string | null
+          position: number | null
+          project_id: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+          user_value: string | null
+        }
+        Insert: {
+          acceptance_criteria?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          epic_id?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          project_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          user_value?: string | null
+        }
+        Update: {
+          acceptance_criteria?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          epic_id?: string | null
+          id?: string
+          jira_issue_key?: string | null
+          position?: number | null
+          project_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "features_epic_id_fkey"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "features_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1542,6 +2303,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          show_in_main_menu: boolean | null
+          slug: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          show_in_main_menu?: boolean | null
+          slug: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          show_in_main_menu?: boolean | null
+          slug?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       planning_focuses: {
         Row: {
           color: string | null
@@ -1611,6 +2411,89 @@ export type Database = {
           role?: string | null
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      project_artifacts: {
+        Row: {
+          artifact_type: string
+          created_at: string
+          created_by: string | null
+          data: Json | null
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          project_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          artifact_type: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          project_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          artifact_type?: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          project_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          color_theme: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_archived: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color_theme?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color_theme?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1754,6 +2637,160 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          company_description: string | null
+          company_name: string | null
+          contact_email: string | null
+          contact_location: string | null
+          contact_phone: string | null
+          copyright_text: string | null
+          created_at: string
+          id: string
+          quick_links: Json | null
+          show_ai_tools: boolean | null
+          show_blog: boolean | null
+          show_events: boolean | null
+          show_knowledge: boolean | null
+          social_facebook: string | null
+          social_github: string | null
+          social_linkedin: string | null
+          social_twitter: string | null
+          social_youtube: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_description?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_location?: string | null
+          contact_phone?: string | null
+          copyright_text?: string | null
+          created_at?: string
+          id?: string
+          quick_links?: Json | null
+          show_ai_tools?: boolean | null
+          show_blog?: boolean | null
+          show_events?: boolean | null
+          show_knowledge?: boolean | null
+          social_facebook?: string | null
+          social_github?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_description?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_location?: string | null
+          contact_phone?: string | null
+          copyright_text?: string | null
+          created_at?: string
+          id?: string
+          quick_links?: Json | null
+          show_ai_tools?: boolean | null
+          show_blog?: boolean | null
+          show_events?: boolean | null
+          show_knowledge?: boolean | null
+          social_facebook?: string | null
+          social_github?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staging_data: {
+        Row: {
+          created_at: string
+          id: string
+          import_id: string
+          mapped_data: Json | null
+          processed_at: string | null
+          processing_errors: Json | null
+          processing_status: string | null
+          raw_data: Json | null
+          row_number: number
+          target_record_id: string | null
+          validation_errors: Json | null
+          validation_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          import_id: string
+          mapped_data?: Json | null
+          processed_at?: string | null
+          processing_errors?: Json | null
+          processing_status?: string | null
+          raw_data?: Json | null
+          row_number: number
+          target_record_id?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          import_id?: string
+          mapped_data?: Json | null
+          processed_at?: string | null
+          processing_errors?: Json | null
+          processing_status?: string | null
+          raw_data?: Json | null
+          row_number?: number
+          target_record_id?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staging_data_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_usages: {
+        Row: {
+          created_at: string
+          exported_format: string | null
+          id: string
+          session_data: Json | null
+          template_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          exported_format?: string | null
+          id?: string
+          session_data?: Json | null
+          template_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          exported_format?: string | null
+          id?: string
+          session_data?: Json | null
+          template_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_usages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_bookmarks: {
         Row: {
           created_at: string
@@ -1844,6 +2881,152 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_stories: {
+        Row: {
+          acceptance_criteria: string[] | null
+          assumptions_risks: string | null
+          business_value: string | null
+          confidence_level: number | null
+          created_at: string
+          created_by: string | null
+          customer_journey_stage: string | null
+          definition_of_done: Json | null
+          definition_of_ready: Json | null
+          dependencies: string[] | null
+          description: string | null
+          design_notes: string | null
+          epic_id: string | null
+          evidence_links: string[] | null
+          feature_id: string | null
+          id: string
+          impact_effort_matrix: Json | null
+          issue_type: string | null
+          jira_issue_key: string | null
+          non_functional_requirements: string[] | null
+          parent_story_id: string | null
+          position: number | null
+          priority: string | null
+          problem_statement: string | null
+          project_id: string | null
+          sprint: string | null
+          status: string | null
+          story_points: number | null
+          story_type: string | null
+          tags: string[] | null
+          technical_notes: string | null
+          title: string
+          ui_mockup_url: string | null
+          updated_at: string
+          updated_by: string | null
+          user_persona: string | null
+        }
+        Insert: {
+          acceptance_criteria?: string[] | null
+          assumptions_risks?: string | null
+          business_value?: string | null
+          confidence_level?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_journey_stage?: string | null
+          definition_of_done?: Json | null
+          definition_of_ready?: Json | null
+          dependencies?: string[] | null
+          description?: string | null
+          design_notes?: string | null
+          epic_id?: string | null
+          evidence_links?: string[] | null
+          feature_id?: string | null
+          id?: string
+          impact_effort_matrix?: Json | null
+          issue_type?: string | null
+          jira_issue_key?: string | null
+          non_functional_requirements?: string[] | null
+          parent_story_id?: string | null
+          position?: number | null
+          priority?: string | null
+          problem_statement?: string | null
+          project_id?: string | null
+          sprint?: string | null
+          status?: string | null
+          story_points?: number | null
+          story_type?: string | null
+          tags?: string[] | null
+          technical_notes?: string | null
+          title: string
+          ui_mockup_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_persona?: string | null
+        }
+        Update: {
+          acceptance_criteria?: string[] | null
+          assumptions_risks?: string | null
+          business_value?: string | null
+          confidence_level?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_journey_stage?: string | null
+          definition_of_done?: Json | null
+          definition_of_ready?: Json | null
+          dependencies?: string[] | null
+          description?: string | null
+          design_notes?: string | null
+          epic_id?: string | null
+          evidence_links?: string[] | null
+          feature_id?: string | null
+          id?: string
+          impact_effort_matrix?: Json | null
+          issue_type?: string | null
+          jira_issue_key?: string | null
+          non_functional_requirements?: string[] | null
+          parent_story_id?: string | null
+          position?: number | null
+          priority?: string | null
+          problem_statement?: string | null
+          project_id?: string | null
+          sprint?: string | null
+          status?: string | null
+          story_points?: number | null
+          story_type?: string | null
+          tags?: string[] | null
+          technical_notes?: string | null
+          title?: string
+          ui_mockup_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_persona?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stories_epic_id_fkey"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stories_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stories_parent_story_id_fkey"
+            columns: ["parent_story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
