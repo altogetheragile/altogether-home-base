@@ -499,6 +499,36 @@ export type Database = {
           },
         ]
       }
+      classification_config: {
+        Row: {
+          classification_type: string
+          created_at: string
+          custom_label: string | null
+          display_order: number | null
+          id: string
+          is_visible: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          classification_type: string
+          created_at?: string
+          custom_label?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          classification_type?: string
+          created_at?: string
+          custom_label?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comment_reports: {
         Row: {
           comment_id: string
@@ -2012,6 +2042,44 @@ export type Database = {
             columns: ["media_asset_id"]
             isOneToOne: false
             referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          knowledge_item_id: string
+          media_type: string | null
+          media_url: string
+          position: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          knowledge_item_id: string
+          media_type?: string | null
+          media_url: string
+          position?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          knowledge_item_id?: string
+          media_type?: string | null
+          media_url?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_media_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
             referencedColumns: ["id"]
           },
         ]
