@@ -105,15 +105,17 @@ const philosophyCards = [
 ];
 
 const credentials = [
-  'Lead author — AgilePM (new version, 2025)',
+  'Co-author — AgilePM (new version, 2025)',
   'ABC Level-4 Specialist in agile training',
   'Advanced Certified Scrum Master (A-CSM)',
   'ABC Assessor - interviews professional membership candidates',
   'AgileBA module author',
-  'Management 3.0 Licensed Facilitator',
+  'Management 3.0 Facilitator',
   'ICF-aligned coaching practice',
   'STAR Manager Trainer',
   'Visiting Lecturer, University of Westminster',
+  'SAFe 5 Agilist (elapsed)',
+  'Scrum Master (elapsed)',
 ];
 
 // ─── Component ──────────────────────────────────────────────────────────────
