@@ -2,6 +2,28 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "redirects": [
+    { "source": "/agile-training-courses/", "destination": "/events", "statusCode": 301 },
+    { "source": "/schedule/", "destination": "/events", "statusCode": 301 },
+    { "source": "/schedule/event/", "destination": "/events", "statusCode": 301 },
+    { "source": "/gallery/", "destination": "/", "statusCode": 301 },
+    { "source": "/registration-page/", "destination": "/events", "statusCode": 301 },
+    { "source": "/appointments/", "destination": "/contact", "statusCode": 301 },
+    { "source": "/user-story-mapping/", "destination": "/blog/user-story-mapping", "statusCode": 301 },
+    { "source": "/successful-agile-teams-fail-every-day/", "destination": "/blog/successful-agile-teams-fail-every-day", "statusCode": 301 },
+    { "source": "/agile-training-certification-1/", "destination": "/blog/agile-training-certification-1", "statusCode": 301 },
+    { "source": "/top-ten-agile-failures/", "destination": "/blog/top-ten-agile-failures", "statusCode": 301 },
+    { "source": "/agile-reading-list/", "destination": "/blog/agile-reading-list", "statusCode": 301 },
+    { "source": "/what-is-agile-part-2-agile-frameworks/", "destination": "/blog/what-is-agile-part-2-agile-frameworks", "statusCode": 301 },
+    { "source": "/agile-training-certification-2/", "destination": "/blog/agile-training-certification-2", "statusCode": 301 },
+    { "source": "/an-introduction-to-agile/", "destination": "/blog/an-introduction-to-agile", "statusCode": 301 },
+    { "source": "/understanding-mvp-meaning/", "destination": "/blog/understanding-mvp-meaning", "statusCode": 301 },
+    { "source": "/what-is-agile-part-3-unpredictability-change/", "destination": "/blog/what-is-agile-part-3-unpredictability-change", "statusCode": 301 },
+    { "source": "/the-pdca-model-explained-exploring-the-deming-cycle/", "destination": "/blog/the-pdca-model-explained-exploring-the-deming-cycle", "statusCode": 301 },
+    { "source": "/better-coaching-with-moving-motivators/", "destination": "/blog/better-coaching-with-moving-motivators", "statusCode": 301 },
+    { "source": "/overcome-imposter-syndrome/", "destination": "/blog/overcome-imposter-syndrome", "statusCode": 301 },
+    { "source": "/coaching-benefits/", "destination": "/blog/coaching-benefits", "statusCode": 301 }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
