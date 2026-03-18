@@ -1134,6 +1134,7 @@ export type Database = {
           default_location_id: string | null
           description: string | null
           difficulty_rating: string | null
+          display_order: number
           duration_days: number | null
           event_type_id: string | null
           format_id: string | null
@@ -1162,6 +1163,7 @@ export type Database = {
           default_location_id?: string | null
           description?: string | null
           difficulty_rating?: string | null
+          display_order?: number
           duration_days?: number | null
           event_type_id?: string | null
           format_id?: string | null
@@ -1190,6 +1192,7 @@ export type Database = {
           default_location_id?: string | null
           description?: string | null
           difficulty_rating?: string | null
+          display_order?: number
           duration_days?: number | null
           event_type_id?: string | null
           format_id?: string | null

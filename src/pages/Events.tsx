@@ -162,6 +162,7 @@ const useCoursesCatalogue = () => {
             id, start_date, end_date, is_published, price_cents, currency, capacity, status
           )
         `)
+        .order('display_order', { ascending: true })
         .order('title', { ascending: true });
       if (error) throw error;
       return data;
