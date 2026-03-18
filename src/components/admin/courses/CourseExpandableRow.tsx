@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronRight, ChevronDown, Plus, Trash2, Eye, EyeOff, GripVertical } from 'lucide-react';
+import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { Button } from '@/components/ui/button';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -20,7 +21,7 @@ interface CourseExpandableRowProps {
   onTogglePublish: (id: string, isPublished: boolean) => void;
   dragHandleProps?: {
     attributes: React.HTMLAttributes<HTMLButtonElement>;
-    listeners: Record<string, Function> | undefined;
+    listeners: SyntheticListenerMap | undefined;
   };
   style?: React.CSSProperties;
   nodeRef?: React.Ref<HTMLTableRowElement>;
