@@ -19,7 +19,7 @@ const Privacy = () => (
 
       <h2 style={h2Style}>1. Who We Are</h2>
       <p style={pStyle}>
-        Altogether Agile Ltd ("we", "us", "our") is a company registered in England and Wales. We provide agile training, coaching, and consultancy services via this website. Our contact email for data protection enquiries is {CONTACT_EMAIL}.
+        Altogether Agile Limited ("we", "us", "our") is a company registered in England and Wales (company number 10695166). Our registered office is c/o Hillier Hopkins LLP, First Floor, Radius House, 51 Clarendon Road, Watford, Hertfordshire, WD17 1HP. We provide agile training, coaching, and consultancy services via this website. Our contact email for data protection enquiries is {CONTACT_EMAIL}.
       </p>
 
       <h2 style={h2Style}>2. What Data We Collect</h2>
@@ -99,7 +99,8 @@ const Privacy = () => (
       <h2 style={h2Style}>11. Contact</h2>
       <p style={pStyle}>
         {CONTACT_EMAIL}<br />
-        Altogether Agile Ltd, London, England.
+        Altogether Agile Limited, c/o Hillier Hopkins LLP, First Floor, Radius House, 51 Clarendon Road, Watford, Hertfordshire, WD17 1HP.<br />
+        Company number: 10695166.
       </p>
     </div>
   </div>

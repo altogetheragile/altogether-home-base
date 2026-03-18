@@ -19,7 +19,7 @@ const Terms = () => (
 
       <h2 style={h2Style}>1. About Us</h2>
       <p style={pStyle}>
-        Altogether Agile Ltd is a company registered in England and Wales. Our registered office is in London, England. We provide agile training, coaching, facilitation, and access to a library of agile techniques and resources (the "Knowledge Base") via this website.
+        Altogether Agile Limited (company number 10695166) is a company registered in England and Wales. Our registered office is c/o Hillier Hopkins LLP, First Floor, Radius House, 51 Clarendon Road, Watford, Hertfordshire, WD17 1HP, United Kingdom. We provide agile training, coaching, facilitation, and access to a library of agile techniques and resources (the "Knowledge Base") via this website.
       </p>
       <p style={pStyle}>
         References to "we", "us", or "our" mean Altogether Agile Ltd. References to "you" mean the individual accessing this website or purchasing our services.
@@ -110,7 +110,8 @@ const Terms = () => (
       <h2 style={h2Style}>11. Contact</h2>
       <p style={pStyle}>
         {CONTACT_EMAIL}<br />
-        Altogether Agile Ltd, London, England.
+        Altogether Agile Limited, c/o Hillier Hopkins LLP, First Floor, Radius House, 51 Clarendon Road, Watford, Hertfordshire, WD17 1HP.<br />
+        Company number: 10695166.
       </p>
     </div>
   </div>
