@@ -89,6 +89,7 @@ export const useCourseAdmin = () => {
             locations:locations!location_id(name)
           )
         `)
+        .order('display_order', { ascending: true })
         .order('title');
 
       if (error) throw error;

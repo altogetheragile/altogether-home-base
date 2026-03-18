@@ -1,4 +1,5 @@
-import { ChevronRight, ChevronDown, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+import React from 'react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Eye, EyeOff, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -17,9 +18,15 @@ interface CourseExpandableRowProps {
   onDelete: (id: string) => void;
   onAddDate: (id: string) => void;
   onTogglePublish: (id: string, isPublished: boolean) => void;
+  dragHandleProps?: {
+    attributes: React.HTMLAttributes<HTMLButtonElement>;
+    listeners: Record<string, Function> | undefined;
+  };
+  style?: React.CSSProperties;
+  nodeRef?: React.Ref<HTMLTableRowElement>;
 }
 
-const CourseExpandableRow = ({ course, isExpanded, onToggle, onDelete, onAddDate, onTogglePublish }: CourseExpandableRowProps) => {
+const CourseExpandableRow = ({ course, isExpanded, onToggle, onDelete, onAddDate, onTogglePublish, dragHandleProps, style, nodeRef }: CourseExpandableRowProps) => {
   const nextDateFormatted = course.next_date
     ? (() => {
         try { return format(new Date(course.next_date), 'MMM dd, yyyy'); } catch { return '—'; }
@@ -28,9 +35,21 @@ const CourseExpandableRow = ({ course, isExpanded, onToggle, onDelete, onAddDate
 
   return (
     <>
-      <TableRow className="cursor-pointer hover:bg-muted/50" onClick={onToggle}>
+      <TableRow ref={nodeRef} style={style} className="cursor-pointer hover:bg-muted/50" onClick={onToggle}>
         <TableCell className="w-8">
-          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {dragHandleProps ? (
+            <button
+              {...dragHandleProps.attributes}
+              {...dragHandleProps.listeners}
+              className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground"
+              aria-label={`Reorder ${course.title}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          ) : (
+            isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+          )}
         </TableCell>
         <TableCell className="font-medium">{course.title}</TableCell>
         <TableCell>{course.event_types?.name || '—'}</TableCell>

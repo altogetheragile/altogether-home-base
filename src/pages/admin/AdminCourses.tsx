@@ -12,6 +12,66 @@ import { useCourseAdmin, useCourseAdminMutations } from '@/hooks/useCourseAdmin'
 import CourseExpandableRow from '@/components/admin/courses/CourseExpandableRow';
 import CreateCourseSheet from '@/components/admin/courses/CreateCourseSheet';
 import AddDateSheet from '@/components/admin/courses/AddDateSheet';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { CourseAdminItem } from '@/hooks/useCourseAdmin';
+
+// Wrapper that makes a CourseExpandableRow sortable
+const SortableCourseRow = ({
+  course,
+  isExpanded,
+  onToggle,
+  onDelete,
+  onAddDate,
+  onTogglePublish,
+}: {
+  course: CourseAdminItem;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onDelete: (id: string) => void;
+  onAddDate: (id: string) => void;
+  onTogglePublish: (id: string, isPublished: boolean) => void;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: course.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <CourseExpandableRow
+      course={course}
+      isExpanded={isExpanded}
+      onToggle={onToggle}
+      onDelete={onDelete}
+      onAddDate={onAddDate}
+      onTogglePublish={onTogglePublish}
+      dragHandleProps={{ attributes, listeners }}
+      style={style}
+      nodeRef={setNodeRef}
+    />
+  );
+};
 
 type SortField = 'title' | 'next_date';
 type SortDir = 'asc' | 'desc';
@@ -19,6 +79,7 @@ type SortDir = 'asc' | 'desc';
 const AdminCourses = () => {
   const { data: courses = [], isLoading } = useCourseAdmin();
   const { updateTemplate, deleteTemplate, invalidate } = useCourseAdminMutations();
+  const queryClient = useQueryClient();
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
@@ -28,6 +89,51 @@ const AdminCourses = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [addDateForId, setAddDateForId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  // Whether drag-and-drop is active (only when no filters/search applied)
+  const isDndActive = !search && statusFilter === 'all';
+
+  const reorderCourses = useMutation({
+    mutationFn: async (ordered: { id: string; display_order: number }[]) => {
+      const updates = ordered.map(({ id, display_order }) =>
+        supabase.from('event_templates').update({ display_order }).eq('id', id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['courses-catalogue'] });
+      toast.success('Order saved');
+    },
+    onError: () => {
+      toast.error('Failed to save order');
+      queryClient.invalidateQueries({ queryKey: ['course-admin'] });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = courses.findIndex((c) => c.id === active.id);
+    const newIndex = courses.findIndex((c) => c.id === over.id);
+    const reordered = arrayMove(courses, oldIndex, newIndex);
+
+    // Optimistic update
+    queryClient.setQueryData(['course-admin'], reordered);
+
+    // Persist
+    reorderCourses.mutate(
+      reordered.map((c, i) => ({ id: c.id, display_order: i + 1 }))
+    );
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
@@ -50,19 +156,22 @@ const AdminCourses = () => {
       result = result.filter(c => c.status === statusFilter);
     }
 
-    result = [...result].sort((a, b) => {
-      if (sortField === 'title') {
-        const cmp = a.title.localeCompare(b.title);
+    // Only apply client-side sorting when filtering/searching (not in default drag mode)
+    if (!isDndActive) {
+      result = [...result].sort((a, b) => {
+        if (sortField === 'title') {
+          const cmp = a.title.localeCompare(b.title);
+          return sortDir === 'asc' ? cmp : -cmp;
+        }
+        const aDate = a.next_date || '';
+        const bDate = b.next_date || '';
+        const cmp = aDate.localeCompare(bDate);
         return sortDir === 'asc' ? cmp : -cmp;
-      }
-      const aDate = a.next_date || '';
-      const bDate = b.next_date || '';
-      const cmp = aDate.localeCompare(bDate);
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+      });
+    }
 
     return result;
-  }, [courses, search, statusFilter, sortField, sortDir]);
+  }, [courses, search, statusFilter, sortField, sortDir, isDndActive]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -99,10 +208,75 @@ const AdminCourses = () => {
     );
   }
 
+  const tableContent = (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-8" />
+            <TableHead
+              className="cursor-pointer select-none"
+              onClick={() => handleSort('title')}
+            >
+              Title {sortField === 'title' && !isDndActive ? (sortDir === 'asc' ? '\u2191' : '\u2193') : ''}
+            </TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead className="text-center">Dates</TableHead>
+            <TableHead
+              className="cursor-pointer select-none"
+              onClick={() => handleSort('next_date')}
+            >
+              Next Date {sortField === 'next_date' && !isDndActive ? (sortDir === 'asc' ? '\u2191' : '\u2193') : ''}
+            </TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        {isDndActive ? (
+          <SortableContext items={filtered.map(c => c.id)} strategy={verticalListSortingStrategy}>
+            <TableBody>
+              {filtered.map(course => (
+                <SortableCourseRow
+                  key={course.id}
+                  course={course}
+                  isExpanded={expandedIds.has(course.id)}
+                  onToggle={() => toggleExpand(course.id)}
+                  onDelete={setDeleteId}
+                  onAddDate={setAddDateForId}
+                  onTogglePublish={handleTogglePublish}
+                />
+              ))}
+            </TableBody>
+          </SortableContext>
+        ) : (
+          <TableBody>
+            {filtered.map(course => (
+              <CourseExpandableRow
+                key={course.id}
+                course={course}
+                isExpanded={expandedIds.has(course.id)}
+                onToggle={() => toggleExpand(course.id)}
+                onDelete={setDeleteId}
+                onAddDate={setAddDateForId}
+                onTogglePublish={handleTogglePublish}
+              />
+            ))}
+          </TableBody>
+        )}
+      </Table>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Courses</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Courses</h1>
+          {isDndActive && (
+            <p className="text-sm text-muted-foreground">Drag to reorder how courses appear on the public page</p>
+          )}
+        </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> New Course
         </Button>
@@ -138,46 +312,12 @@ const AdminCourses = () => {
             <Plus className="h-4 w-4 mr-2" /> Create your first course
           </Button>
         </div>
+      ) : isDndActive ? (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          {tableContent}
+        </DndContext>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-8" />
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => handleSort('title')}
-                >
-                  Title {sortField === 'title' ? (sortDir === 'asc' ? '\u2191' : '\u2193') : ''}
-                </TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-center">Dates</TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => handleSort('next_date')}
-                >
-                  Next Date {sortField === 'next_date' ? (sortDir === 'asc' ? '\u2191' : '\u2193') : ''}
-                </TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map(course => (
-                <CourseExpandableRow
-                  key={course.id}
-                  course={course}
-                  isExpanded={expandedIds.has(course.id)}
-                  onToggle={() => toggleExpand(course.id)}
-                  onDelete={setDeleteId}
-                  onAddDate={setAddDateForId}
-                  onTogglePublish={handleTogglePublish}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        tableContent
       )}
 
       <CreateCourseSheet open={createOpen} onOpenChange={setCreateOpen} onCreated={handleCreated} />
