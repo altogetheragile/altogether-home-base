@@ -25,11 +25,11 @@ const RESOURCE_LINKS = [
 ];
 
 const FLAG_DEFAULTS: Record<string, boolean> = {
-  show_events: false,
+  show_events: true,
   show_knowledge: false,
   show_coaching: true,
   show_about: true,
-  show_blog: false,
+  show_blog: true,
   show_contact: true,
   show_testimonials: true,
   show_ai_tools: false,

@@ -45,7 +45,7 @@ const Blog = () => {
 
   const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedTag !== "all";
 
-  if (!settings?.show_blog) {
+  if (settings && settings.show_blog === false) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />

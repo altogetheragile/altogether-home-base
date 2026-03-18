@@ -22,11 +22,11 @@ const Footer = () => {
   // Dynamic navigation links matching Navigation component logic
   const navLinks = [
     { label: 'Home', url: '/', show: true },
-    { label: 'Events', url: '/events', show: settings?.show_events ?? false },
+    { label: 'Events', url: '/events', show: settings?.show_events ?? true },
     { label: 'Knowledge Base', url: '/knowledge', show: settings?.show_knowledge ?? false },
     { label: 'Coaching', url: '/coaching', show: settings?.show_coaching ?? true },
     { label: 'About', url: '/about', show: settings?.show_about ?? true },
-    { label: 'Blog', url: '/blog', show: settings?.show_blog ?? false },
+    { label: 'Blog', url: '/blog', show: settings?.show_blog ?? true },
     { label: 'Contact', url: '/contact', show: settings?.show_contact ?? true },
     { label: 'Testimonials', url: '/testimonials', show: settings?.show_testimonials ?? true },
     { label: 'AI Tools', url: '/ai-tools', show: settings?.show_ai_tools ?? false },
