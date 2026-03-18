@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 import { EventData } from "@/hooks/useEvents";
 import { colors as p } from '@/theme/colors';
 
@@ -32,6 +33,12 @@ const EventDetailContent = ({ event }: EventDetailContentProps) => {
           grid-template-columns: 1fr 1fr;
           gap: 24px;
         }
+        .ed-markdown h2 { font-family: 'DM Serif Display', serif; color: ${p.deepTeal}; font-size: 22px; font-weight: 400; margin: 28px 0 12px; }
+        .ed-markdown h3 { font-family: 'DM Sans', system-ui, sans-serif; color: ${p.deepTeal}; font-size: 18px; font-weight: 700; margin: 24px 0 8px; }
+        .ed-markdown p { margin: 0 0 16px; }
+        .ed-markdown ul, .ed-markdown ol { padding-left: 24px; margin: 0 0 16px; }
+        .ed-markdown li { margin-bottom: 6px; }
+        .ed-markdown strong { color: ${p.deepTeal}; }
         @media (max-width: 767px) {
           .ed-benefits-grid {
             grid-template-columns: 1fr;
@@ -52,9 +59,15 @@ const EventDetailContent = ({ event }: EventDetailContentProps) => {
             fontWeight: 400,
             margin: "0 0 16px",
           }}>About This Course</h2>
-          <p style={{ color: p.body, fontSize: 16, lineHeight: 1.8, margin: 0 }}>
-            {displayText}
-          </p>
+          {needsToggle && !expanded ? (
+            <p style={{ color: p.body, fontSize: 16, lineHeight: 1.8, margin: 0 }}>
+              {displayText}
+            </p>
+          ) : (
+            <div className="ed-markdown" style={{ color: p.body, fontSize: 16, lineHeight: 1.8 }}>
+              <ReactMarkdown>{description}</ReactMarkdown>
+            </div>
+          )}
           {needsToggle && (
             <button
               onClick={() => setExpanded(!expanded)}
