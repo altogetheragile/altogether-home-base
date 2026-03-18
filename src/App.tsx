@@ -7,6 +7,7 @@ import { BrowserRouter, Routes } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { Analytics } from "@vercel/analytics/react";
 import {
   PublicRoutes,
   ProtectedUserRoutes,
@@ -61,6 +62,7 @@ const App = () => (
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
+    <Analytics />
   </HelmetProvider>
 );
 
