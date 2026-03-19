@@ -318,7 +318,7 @@ const Navigation = () => {
                     onClick={() => setIsDashOpen(!isDashOpen)}
                     style={{
                       background: p.orange,
-                      color: '#fff',
+                      color: p.deepTeal,
                       border: 'none',
                       padding: '9px 22px',
                       borderRadius: 8,
@@ -398,7 +398,7 @@ const Navigation = () => {
                   to="/auth"
                   style={{
                     background: p.orange,
-                    color: '#fff',
+                    color: p.deepTeal,
                     padding: '9px 22px',
                     borderRadius: 8,
                     fontWeight: 700,
@@ -548,7 +548,7 @@ const Navigation = () => {
                   to="/auth"
                   role="menuitem"
                   onClick={() => setIsMenuOpen(false)}
-                  style={{ display: 'block', padding: '12px 24px', color: p.orange, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}
+                  style={{ display: 'block', padding: '12px 24px', color: p.midTeal, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}
                 >
                   Sign In
                 </Link>

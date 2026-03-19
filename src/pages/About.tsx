@@ -157,7 +157,7 @@ const About: React.FC = () => {
           {/* Photo of Alun — swap src when real photo is ready */}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <img
-              src="/images/alun.jpg"
+              src="/images/alun.webp"
               alt="Alun Davies-Baker, founder of Altogether Agile"
               loading="lazy"
               style={{ width: isMobile ? '70%' : '65%', height: 'auto', display: 'block', borderRadius: 16 }}
@@ -226,9 +226,9 @@ const About: React.FC = () => {
                 <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>Verified Badges</div>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
                   {[
-                    { src: '/images/badges/acc.png', alt: 'Associate Certified Coach (ACC)', url: 'https://www.credly.com/badges/aaac0b7b-dbd7-4560-ad51-f8d89a84f6cf/public_url' },
-                    { src: '/images/badges/psm-ii.png', alt: 'Professional Scrum Master II (PSM II)', url: 'https://www.credly.com/badges/ab193ca2-d233-48a2-a264-55ee82a819c2/public_url' },
-                    { src: '/images/badges/business-agility-catalyst.png', alt: 'Business Agility Catalyst', url: 'https://www.credly.com/badges/2e963763-78d4-43ba-92f4-3ce262e5f8b7/public_url' },
+                    { src: '/images/badges/acc.webp', alt: 'Associate Certified Coach (ACC)', url: 'https://www.credly.com/badges/aaac0b7b-dbd7-4560-ad51-f8d89a84f6cf/public_url' },
+                    { src: '/images/badges/psm-ii.webp', alt: 'Professional Scrum Master II (PSM II)', url: 'https://www.credly.com/badges/ab193ca2-d233-48a2-a264-55ee82a819c2/public_url' },
+                    { src: '/images/badges/business-agility-catalyst.webp', alt: 'Business Agility Catalyst', url: 'https://www.credly.com/badges/2e963763-78d4-43ba-92f4-3ce262e5f8b7/public_url' },
                   ].map((badge, i) => (
                     <a key={i} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 }}>
                       <img src={badge.src} alt={badge.alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />

@@ -31,7 +31,7 @@
 .aa-hero-bg {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: -80px;
-  background-image: url('/images/hero-bg.png');
+  background-image: url('/images/hero-bg.webp');
   background-size: cover;
   background-position: center 30%;
   background-repeat: no-repeat;
@@ -113,7 +113,7 @@
 
 .aa-btn--ghost-light {
   background: none;
-  color: rgba(255,255,255,0.95);
+  color: var(--aa-deep-teal);
   padding: 0;
   font-size: 15px;
   gap: 6px;
@@ -150,9 +150,8 @@
 }
 
 .aa-stat__label {
-  color: var(--aa-deep-teal);
+  color: var(--aa-body);
   font-size: 12px;
-  opacity: 0.7;
 }
 
 /* ─── Section headings ────────────────────────────────────────────────────── */
@@ -245,7 +244,7 @@
 
 .aa-course-card__cta {
   margin-top: auto;
-  color: var(--aa-orange);
+  color: var(--aa-mid-teal);
   font-weight: 700;
   font-size: 13px;
   display: inline-flex;
@@ -438,7 +437,7 @@
 }
 
 .aa-cta-banner__heading {
-  color: #fff;
+  color: var(--aa-deep-teal);
   font-size: 36px;
   font-weight: 800;
   margin: 0 0 12px;
@@ -446,7 +445,8 @@
 }
 
 .aa-cta-banner__body {
-  color: rgba(255,255,255,0.88);
+  color: var(--aa-deep-teal);
+  opacity: 0.85;
   font-size: 16px;
   margin: 0 0 28px;
   line-height: 1.6;

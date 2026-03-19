@@ -161,9 +161,9 @@ export const HomepageStrip: React.FC = () => {
               <ReadMoreText text={t.comment} limit={200} buttonColor="#FF9715" style={{ color: '#ffffff', fontSize: 16, lineHeight: 1.65, flex: 1 }} />
               <div>
                 <div style={{ color: '#ffffff', fontWeight: 700, fontSize: 14 }}>{displayName(t, firstNameOnly)}</div>
-                <div style={{ color: p.lightTeal, fontSize: 12 }}>{t.job_title}{t.job_title && t.company ? ' \u00b7 ' : ''}{t.company}</div>
+                <div style={{ color: p.paleTeal, fontSize: 12 }}>{t.job_title}{t.job_title && t.company ? ' \u00b7 ' : ''}{t.company}</div>
                 {t.source === 'linkedin' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: p.lightTeal, fontSize: 11, marginTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: p.paleTeal, fontSize: 11, marginTop: 4 }}>
                     <LinkedInIcon /><span>via LinkedIn</span>
                   </div>
                 )}
@@ -173,7 +173,7 @@ export const HomepageStrip: React.FC = () => {
         </div>
         <button onClick={handleNext} style={navBtnStyle}>{'\u203A'}</button>
       </div>
-      <div style={{ textAlign: 'center', marginTop: 20, color: p.lightTeal, fontSize: 12 }}>
+      <div style={{ textAlign: 'center', marginTop: 20, color: p.paleTeal, fontSize: 12 }}>
         {startIndex + 1}&ndash;{Math.min(startIndex + visibleCount, items.length)} of {items.length}
       </div>
     </div>

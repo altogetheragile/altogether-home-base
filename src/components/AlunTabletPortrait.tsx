@@ -3,7 +3,7 @@ interface TabletFrameProps {
   className?: string;
 }
 
-export function AlunTabletPortrait({ imgSrc = "/images/alun-illustrated.png", className }: TabletFrameProps) {
+export function AlunTabletPortrait({ imgSrc = "/images/alun-illustrated.webp", className }: TabletFrameProps) {
   const W = 300;
   const H = 420;
   const bezel = 14;

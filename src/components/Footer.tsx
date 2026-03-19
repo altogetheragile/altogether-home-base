@@ -50,7 +50,7 @@ const Footer = () => {
           </div>
           
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Quick Links</h4>
+            <h3 className="text-sm font-semibold text-foreground mb-4">Quick Links</h3>
             <ul className="space-y-2">
               {quickLinks.map((link, index) => (
                 <li key={index}>
@@ -71,7 +71,7 @@ const Footer = () => {
           </div>
           
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Contact</h4>
+            <h3 className="text-sm font-semibold text-foreground mb-4">Contact</h3>
             <div className="space-y-2">
               {settings?.contact_email && (
                 <a href={`mailto:${settings.contact_email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">

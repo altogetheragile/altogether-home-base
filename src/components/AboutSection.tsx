@@ -93,7 +93,7 @@ export default function AboutSection() {
               cursor: "default",
             }}>
               <img
-                src="/images/alun.jpg"
+                src="/images/alun.webp"
                 alt="Alun Davies-Baker, founder of Altogether Agile"
                 loading="lazy"
                 style={{
@@ -139,7 +139,7 @@ export default function AboutSection() {
                 <div style={{ color: p.deepTeal, opacity: 0.85, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 3 }}>years<br/>experience</div>
               </div>
               <div style={{
-                color: p.orange,
+                color: p.lightTeal,
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.14em",
