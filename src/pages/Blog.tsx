@@ -21,7 +21,7 @@ const Blog = () => {
   const [sortBy, setSortBy] = useState("newest");
 
   const { data: categories } = useBlogCategories();
-  const { data: _popularTags } = useBlogTags(20);
+  const { data: popularTags } = useBlogTags(20);
 
   const { data: filteredPosts, isLoading: postsLoading } = useBlogPosts({
     search: searchQuery,
@@ -133,8 +133,8 @@ const Blog = () => {
       {/* Main content */}
       <div style={{ flex: 1, maxWidth: 1100, margin: '0 auto', padding: '32px 24px', width: '100%' }}>
 
-        {/* Search bar + filter */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', marginBottom: 24 }}>
+        {/* Search bar + sort */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', marginBottom: 16 }}>
           <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: 360 }}>
             <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#9CA3AF' }} />
             <input
@@ -153,6 +153,24 @@ const Blog = () => {
               }}
             />
           </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              padding: '10px 12px',
+              borderRadius: 8,
+              border: '1px solid #D1D5DB',
+              fontSize: 14,
+              background: '#FFFFFF',
+              color: p.deepTeal,
+              cursor: 'pointer',
+            }}
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="popularity">Most read</option>
+            <option value="title">A–Z</option>
+          </select>
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
@@ -171,6 +189,31 @@ const Blog = () => {
             </button>
           )}
         </div>
+
+        {/* Tag filter pills */}
+        {popularTags && popularTags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 24 }}>
+            {popularTags.filter(t => t.usage_count > 0).map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => setSelectedTag(selectedTag === tag.slug ? "all" : tag.slug)}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  border: selectedTag === tag.slug ? `1px solid ${p.deepTeal}` : '1px solid #D1D5DB',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: selectedTag === tag.slug ? p.deepTeal : '#FFFFFF',
+                  color: selectedTag === tag.slug ? p.white : p.muted,
+                }}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Featured posts */}
         {!hasActiveFilters && featuredPosts && featuredPosts.length > 0 && (
@@ -285,9 +328,7 @@ const BlogCardStyled = ({ post }: { post: BlogPost }) => (
           />
         </div>
       ) : (
-        <div style={{ height: 180, background: `linear-gradient(135deg, ${p.skyTeal}, ${p.paleTeal})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <BookOpen style={{ width: 32, height: 32, color: p.midTeal }} />
-        </div>
+        <div style={{ height: 8, background: post.blog_categories?.color || p.skyTeal }} />
       )}
 
       {/* Body */}

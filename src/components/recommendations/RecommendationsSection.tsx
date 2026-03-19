@@ -87,11 +87,14 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   const shouldShowViewAll = showViewAll && (!types || types.length <= 1);
 
   if (isLoading) {
+    // Don't show loading skeletons for supplementary sections
+    if (!shouldShowViewAll) return null;
+
     return (
       <div className={className}>
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-8 w-64" />
-          {shouldShowViewAll && <Skeleton className="h-10 w-24" />}
+          <Skeleton className="h-10 w-24" />
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: limit }).map((_, i) => (
@@ -107,6 +110,9 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   }
 
   if (error) {
+    // Silently fail for supplementary sections
+    if (!shouldShowViewAll) return null;
+
     return (
       <div className={`py-8 ${className}`}>
         <div className="text-center">
@@ -125,21 +131,22 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   }
 
   if (!recommendations || recommendations.length === 0) {
+    // When used as a supplementary section (no "View All" link), hide entirely
+    if (!shouldShowViewAll) return null;
+
     return (
       <div className={`py-8 ${className}`}>
         <div className="text-center">
           <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
           <p className="text-muted-foreground">No recommendations available at the moment</p>
-          {shouldShowViewAll && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={handleViewAll}
-            >
-              Browse All Content
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={handleViewAll}
+          >
+            Browse All Content
+          </Button>
         </div>
       </div>
     );

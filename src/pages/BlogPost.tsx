@@ -174,8 +174,17 @@ const BlogPost = () => {
             )}
 
             {/* Author footer */}
-            <div style={{ borderTop: `1px solid ${p.paleTeal}`, marginTop: 48, paddingTop: 24, color: p.muted, fontSize: 14 }}>
-              Alun Davies-Baker, Altogether Agile
+            <div style={{ borderTop: `1px solid ${p.paleTeal}`, marginTop: 48, paddingTop: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+                background: p.skyTeal, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <img src="/images/alun.webp" alt="Alun Davies-Baker" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div>
+                <div style={{ color: p.deepTeal, fontSize: 14, fontWeight: 700 }}>Alun Davies-Baker</div>
+                <div style={{ color: p.muted, fontSize: 13 }}>Agile Coach &amp; Trainer, Altogether Agile</div>
+              </div>
             </div>
 
             {/* CTA card */}
