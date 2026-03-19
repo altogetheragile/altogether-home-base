@@ -83,12 +83,6 @@ const AdminLayout = () => {
 
   const knowledgeItems = [
     {
-      label: 'Assets',
-      href: '/admin/assets',
-      icon: Layers,
-      description: 'Manage templates, PDFs, and media assets'
-    },
-    {
       label: 'Analytics',
       href: '/admin/knowledge/analytics',
       icon: BarChart3,
@@ -193,11 +187,18 @@ const AdminLayout = () => {
       ]
     },
     {
+      id: 'assets',
+      label: 'Assets',
+      icon: Upload,
+      paths: ['/admin/assets', '/admin/media'],
+      href: '/admin/assets'
+    },
+    {
       id: 'knowledge',
       label: 'Knowledge Base',
       icon: BookOpen,
-      paths: ['/admin/knowledge', '/admin/assets'],
-      href: '/admin/assets',
+      paths: ['/admin/knowledge'],
+      href: '/admin/knowledge',
       items: knowledgeItems
     },
     {
