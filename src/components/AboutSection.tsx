@@ -135,8 +135,8 @@ export default function AboutSection() {
                 boxShadow: "0 4px 16px rgba(255,151,21,0.3)",
                 minWidth: 72,
               }}>
-                <div style={{ fontFamily: "'DM Serif Display', serif", color: "#FFFFFF", fontSize: 26, fontWeight: 400, lineHeight: 1 }}>25</div>
-                <div style={{ color: "rgba(255,255,255,0.9)", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 3 }}>years<br/>experience</div>
+                <div style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 26, fontWeight: 400, lineHeight: 1 }}>25</div>
+                <div style={{ color: p.deepTeal, opacity: 0.85, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 3 }}>years<br/>experience</div>
               </div>
               <div style={{
                 color: p.orange,
@@ -219,7 +219,7 @@ export default function AboutSection() {
             <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
               <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="aa-cta-primary" style={{
                 background: p.orange,
-                color: p.white,
+                color: p.deepTeal,
                 border: "none",
                 padding: "14px 28px",
                 borderRadius: 10,

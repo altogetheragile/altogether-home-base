@@ -84,14 +84,14 @@
 
 .aa-btn--primary {
   background: var(--aa-orange);
-  color: var(--aa-white);
+  color: var(--aa-deep-teal);
   padding: 13px 26px;
   font-size: 15px;
 }
 
 .aa-btn--primary-sm {
   background: var(--aa-orange);
-  color: var(--aa-white);
+  color: var(--aa-deep-teal);
   padding: 12px 24px;
   font-size: 14px;
 }

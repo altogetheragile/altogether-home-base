@@ -238,7 +238,7 @@ const EventDetail = () => {
             {!isScheduled && (
               <span style={{
                 background: p.orange,
-                color: p.white,
+                color: p.deepTeal,
                 fontSize: 12,
                 fontWeight: 700,
                 padding: "4px 12px",
@@ -253,20 +253,20 @@ const EventDetail = () => {
       {isScheduled ? (
         <div style={{ background: p.orange, padding: "16px 0" }}>
           <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px" }} className="ed-action-bar-inner">
-            <div style={{ color: p.white, fontSize: 18, fontWeight: 700 }}>
-              {priceDisplay} <span style={{ fontWeight: 400, fontSize: 14, opacity: 0.9 }}>+ VAT per delegate</span>
+            <div style={{ color: p.deepTeal, fontSize: 18, fontWeight: 700 }}>
+              {priceDisplay} <span style={{ fontWeight: 400, fontSize: 14, opacity: 0.85 }}>+ VAT per delegate</span>
             </div>
             <div>
               {user ? (
                 isRegistered ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ color: p.white, fontWeight: 600, fontSize: 14 }}>Already Registered</span>
+                    <span style={{ color: p.deepTeal, fontWeight: 600, fontSize: 14 }}>Already Registered</span>
                     <button
                       onClick={handleUnregister}
                       disabled={unregisterLoading}
                       style={{
                         ...actionBtnStyle,
-                        background: "rgba(255,255,255,0.2)",
+                        background: p.deepTeal,
                         color: p.white,
                       }}
                     >
@@ -321,7 +321,7 @@ const EventDetail = () => {
                   style={{
                     ...actionBtnStyle,
                     background: p.orange,
-                    color: p.white,
+                    color: p.deepTeal,
                   }}
                 >
                   Register My Interest

@@ -474,7 +474,7 @@ const Events: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
             <Link
               to="/contact"
-              style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', textDecoration: 'none' }}
+              style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', textDecoration: 'none' }}
             >
               Book a conversation <Icons.ArrowRight />
             </Link>

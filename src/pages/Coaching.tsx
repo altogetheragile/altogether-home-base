@@ -244,7 +244,7 @@ const Coaching: React.FC = () => {
               href={BOOKING_URL}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+              style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
             >
               <Icons.Chat />Book a free chemistry session
             </a>
@@ -311,7 +311,7 @@ const Coaching: React.FC = () => {
                 </div>
                 <button
                   onClick={scrollToEnquiry}
-                  style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                 >
                   <Icons.Chat />{service.cta}
                 </button>
@@ -362,7 +362,7 @@ const Coaching: React.FC = () => {
                 href={BOOKING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ background: p.orange, color: '#fff', border: 'none', padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
+                style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
               >
                 <Icons.Calendar />Book a time slot
               </a>
@@ -444,7 +444,7 @@ const Coaching: React.FC = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  style={{ background: submitting ? p.muted : p.orange, color: '#fff', border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: submitting ? 0.7 : 1 }}
+                  style={{ background: submitting ? p.muted : p.orange, color: submitting ? p.white : p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: submitting ? 0.7 : 1 }}
                 >
                   {submitting ? 'Sending...' : <>Send enquiry <Icons.ArrowRight /></>}
                 </button>

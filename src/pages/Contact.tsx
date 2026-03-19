@@ -133,7 +133,7 @@ const Contact: React.FC = () => {
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.7, maxWidth: 400, margin: '0 auto 24px' }}>
               Thanks for getting in touch. We'll get back to you as soon as possible.
             </p>
-            <button onClick={() => setSubmitted(false)} style={{ background: p.orange, color: '#fff', border: 'none', padding: '12px 28px', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+            <button onClick={() => setSubmitted(false)} style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '12px 28px', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
               Send Another Message
             </button>
           </div>
@@ -226,7 +226,7 @@ const Contact: React.FC = () => {
                   </FormItem>
                 )} />
 
-                <button type="submit" disabled={isPending} style={{ background: p.orange, color: '#fff', border: 'none', padding: '14px 32px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, marginTop: 8 }}>
+                <button type="submit" disabled={isPending} style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 32px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, marginTop: 8 }}>
                   {isPending ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
