@@ -103,8 +103,8 @@ export const EventCardQuote: React.FC<{ course: string }> = ({ course }) => {
 
 const getVisibleCount = () => {
   if (typeof window === 'undefined') return 1;
-  if (window.innerWidth >= 1200) return 3;
-  if (window.innerWidth >= 768) return 2;
+  if (window.matchMedia('(min-width: 1200px)').matches) return 3;
+  if (window.matchMedia('(min-width: 768px)').matches) return 2;
   return 1;
 };
 
@@ -116,9 +116,19 @@ export const HomepageStrip: React.FC = () => {
   const [visibleCount, setVisibleCount] = useState(getVisibleCount());
 
   useEffect(() => {
-    const handleResize = () => setVisibleCount(getVisibleCount());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const mql1200 = window.matchMedia('(min-width: 1200px)');
+    const mql768 = window.matchMedia('(min-width: 768px)');
+    const update = () => {
+      if (mql1200.matches) setVisibleCount(3);
+      else if (mql768.matches) setVisibleCount(2);
+      else setVisibleCount(1);
+    };
+    mql1200.addEventListener('change', update);
+    mql768.addEventListener('change', update);
+    return () => {
+      mql1200.removeEventListener('change', update);
+      mql768.removeEventListener('change', update);
+    };
   }, []);
 
   const items = useMemo(() => {

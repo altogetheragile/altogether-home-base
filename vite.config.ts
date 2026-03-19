@@ -39,12 +39,9 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-slot',
             '@radix-ui/react-switch',
           ],
-          'vendor-charts': ['recharts'],
-          'vendor-editor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-link', '@tiptap/extension-image', '@tiptap/extension-text-align'],
-          'vendor-canvas': ['fabric'],
-          'vendor-pdf': ['jspdf', 'html2canvas'],
-          'vendor-xlsx': ['xlsx'],
-          'vendor-sentry': ['@sentry/react'],
+          // Heavy libraries omitted from manualChunks so Vite loads them
+          // lazily via their route-level code splits instead of preloading
+          // them in <head> on every page visit.
         },
       },
     },

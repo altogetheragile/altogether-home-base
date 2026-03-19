@@ -21,17 +21,12 @@
     
     <!-- Critical fonts (self-hosted, no render-blocking external request) -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-sans-latin.woff2" crossorigin>
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-serif-display-latin.woff2" crossorigin>
     <style>
       @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(/fonts/dm-sans-latin.woff2) format('woff2'); }
       @font-face { font-family: 'DM Serif Display'; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/dm-serif-display-latin.woff2) format('woff2'); }
       @font-face { font-family: 'DM Serif Display'; font-style: italic; font-weight: 400; font-display: swap; src: url(/fonts/dm-serif-display-italic-latin.woff2) format('woff2'); }
     </style>
-    <!-- Preload hero image for faster LCP -->
-    <link rel="preload" as="image" type="image/webp" href="/images/hero-bg.webp" fetchpriority="high">
     <!-- Additional fonts (page editor) - loaded async to avoid render blocking -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700&family=Merriweather:wght@300;400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet"></noscript>
   </head>
