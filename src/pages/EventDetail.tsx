@@ -18,6 +18,7 @@ import EventDetailError from "@/components/events/EventDetailError";
 import EventDetailContent from "@/components/events/EventDetailContent";
 import EventDetailSidebar from "@/components/events/EventDetailSidebar";
 import EventFeedbackSection from "@/components/events/EventFeedbackSection";
+import { RecommendationsSection } from "@/components/recommendations/RecommendationsSection";
 import { CourseSchema, BreadcrumbSchema } from "@/components/seo/JsonLd";
 import type { EventData } from "@/hooks/useEvents";
 import { colors as p } from '@/theme/colors';
@@ -165,7 +166,7 @@ const EventDetail = () => {
         {event.description && <meta property="og:description" content={event.description.slice(0, 160)} />}
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:type" content="event" />
-        <link rel="canonical" href={`${SITE_URL}/events/${id}`} />
+        <link rel="canonical" href={`${SITE_URL}${isTemplateRoute ? `/courses/${id}` : `/events/${id}`}`} />
       </Helmet>
       <CourseSchema
         title={event.title}
@@ -179,8 +180,8 @@ const EventDetail = () => {
       />
       <BreadcrumbSchema items={[
         { name: 'Home', url: SITE_URL },
-        { name: 'Events', url: `${SITE_URL}/events` },
-        { name: event.title, url: `${SITE_URL}/events/${id}` },
+        { name: isTemplateRoute ? 'Courses' : 'Events', url: `${SITE_URL}/events` },
+        { name: event.title, url: `${SITE_URL}${isTemplateRoute ? `/courses/${id}` : `/events/${id}`}` },
       ]} />
 
       <Navigation />
@@ -343,6 +344,17 @@ const EventDetail = () => {
               </div>
             </div>
             <EventDetailSidebar event={event} />
+          </div>
+
+          {/* Cross-content recommendations */}
+          <div style={{ marginTop: 48, paddingTop: 40, borderTop: `1px solid ${p.paleTeal}` }}>
+            <RecommendationsSection
+              title="Explore More"
+              contentTypes={['blog', 'technique']}
+              excludeIds={[event.id]}
+              limit={3}
+              showViewAll={false}
+            />
           </div>
         </div>
       </div>

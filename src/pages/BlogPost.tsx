@@ -8,6 +8,7 @@ import { useBlogPost } from '@/hooks/useBlogPosts';
 import { BlogPostSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
@@ -161,6 +162,9 @@ const BlogPost = () => {
                       code: ({ children }) => (
                         <code style={{ background: p.skyTeal, padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>{children}</code>
                       ),
+                      img: ({ src, alt }) => (
+                        <img src={src} alt={alt || 'Blog post image'} loading="lazy" style={{ width: '100%', borderRadius: 10, margin: '16px 0' }} />
+                      ),
                     }}
                   >
                     {post.content}
@@ -206,6 +210,19 @@ const BlogPost = () => {
               </Link>
             </div>
           </article>
+        )}
+
+        {/* Cross-content recommendations */}
+        {post && (
+          <div style={{ marginTop: 48, paddingTop: 40, borderTop: `1px solid ${p.paleTeal}` }}>
+            <RecommendationsSection
+              title="Explore More"
+              contentTypes={['event', 'technique']}
+              excludeIds={[post.id]}
+              limit={3}
+              showViewAll={false}
+            />
+          </div>
         )}
       </div>
 

@@ -10,6 +10,7 @@ import { useViewTracking } from '@/hooks/useViewTracking';
 import { TechniqueSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
 import { colors as p } from '@/theme/colors';
 
 // ─── Mobile detection hook ──────────────────────────────────────────────────
@@ -196,7 +197,7 @@ const Technique: React.FC = () => {
         <meta name="description" content={item.description || `Learn about ${item.name} — a practical agile technique from the Altogether Agile knowledge base.`} />
         <meta property="og:title" content={item.name} />
         <meta property="og:description" content={item.description || `Learn about ${item.name} — a practical agile technique.`} />
-        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
+        <meta property="og:image" content={diagramImage?.url || `${SITE_URL}/og-image.png`} />
         <meta property="og:type" content="article" />
         {slug && <link rel="canonical" href={`${SITE_URL}/knowledge/${slug}`} />}
       </Helmet>
@@ -467,6 +468,21 @@ const Technique: React.FC = () => {
                 </Link>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ─── CROSS-CONTENT RECOMMENDATIONS ─── */}
+      {item && (
+        <div style={{ background: '#FAFAFA', padding: isMobile ? '40px 20px' : '56px 48px' }}>
+          <div style={{ maxWidth: 960, margin: '0 auto' }}>
+            <RecommendationsSection
+              title="Explore More"
+              contentTypes={['event', 'blog']}
+              excludeIds={[item.id]}
+              limit={3}
+              showViewAll={false}
+            />
           </div>
         </div>
       )}
