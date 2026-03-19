@@ -282,8 +282,8 @@ const AdminLayout = () => {
         {/* Admin Navigation - Tabbed Interface */}
         <div className="bg-white border-b">
           {/* Tab Bar */}
-          <div className="px-6 py-3 border-b border-gray-100">
-            <div className="flex space-x-6">
+          <div className="px-6 py-3 border-b border-gray-100 overflow-x-auto">
+            <div className="flex space-x-2 min-w-0">
               {tabs.map((tab) => {
                 const IconComponent = tab.icon;
                 const isTabActive = activeTab === tab.id;
@@ -291,7 +291,7 @@ const AdminLayout = () => {
                   <Link
                     key={tab.id}
                     to={tab.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                    className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
                       isTabActive
                         ? 'bg-primary/10 text-primary border border-primary/20'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
