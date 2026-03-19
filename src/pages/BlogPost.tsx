@@ -118,6 +118,7 @@ const BlogPost = () => {
               <img
                 src={post.featured_image_url}
                 alt={post.title}
+                loading="lazy"
                 style={{ width: '100%', borderRadius: 14, marginBottom: 32, objectFit: 'cover', maxHeight: 400 }}
               />
             )}

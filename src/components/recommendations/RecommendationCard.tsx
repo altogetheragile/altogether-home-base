@@ -145,6 +145,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
           <img
             src={normalized.imageUrl}
             alt={normalized.title}
+            loading="lazy"
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}
@@ -239,6 +240,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
           <img
             src={normalized.imageUrl}
             alt={normalized.title}
+            loading="lazy"
             className="w-full h-32 object-cover rounded-md mb-3"
           />
         )}

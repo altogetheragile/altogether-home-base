@@ -118,6 +118,10 @@ const Home: React.FC = () => {
       <Helmet>
         <title>Altogether Agile — Agile Coaching & Training</title>
         <meta name="description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience." />
+        <meta property="og:title" content="Altogether Agile — Agile Coaching & Training" />
+        <meta property="og:description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results." />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
+        <meta property="og:type" content="website" />
         <link rel="canonical" href={`${SITE_URL}/`} />
       </Helmet>
       <OrganizationSchema />

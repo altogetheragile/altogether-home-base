@@ -60,6 +60,7 @@ export function AlunTabletPortrait({ imgSrc = "/images/alun-illustrated.png", cl
         <img
           src={imgSrc}
           alt="Alun Davies-Baker, founder of Altogether Agile"
+          loading="lazy"
           style={{
             width: "100%",
             height: "100%",

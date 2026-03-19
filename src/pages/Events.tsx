@@ -362,6 +362,9 @@ const Events: React.FC = () => {
       <Helmet>
         <title>Courses & Events — Altogether Agile</title>
         <meta name="description" content="Browse our catalogue of certified agile courses, workshops, and masterclasses. Scrum, Kanban, SAFe, and more." />
+        <meta property="og:title" content="Courses & Events — Altogether Agile" />
+        <meta property="og:description" content="Browse our catalogue of certified agile courses, workshops, and masterclasses." />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/events`} />
       </Helmet>
       <ResponsiveStyles />

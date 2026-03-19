@@ -163,6 +163,7 @@ const EventDetail = () => {
         {event.description && <meta name="description" content={event.description.slice(0, 160)} />}
         <meta property="og:title" content={event.title} />
         {event.description && <meta property="og:description" content={event.description.slice(0, 160)} />}
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:type" content="event" />
         <link rel="canonical" href={`${SITE_URL}/events/${id}`} />
       </Helmet>

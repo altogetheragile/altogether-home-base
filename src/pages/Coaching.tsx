@@ -219,6 +219,9 @@ const Coaching: React.FC = () => {
       <Helmet>
         <title>Coaching — Altogether Agile</title>
         <meta name="description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
+        <meta property="og:title" content="Coaching — Altogether Agile" />
+        <meta property="og:description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/coaching`} />
       </Helmet>
       <ResponsiveStyles />

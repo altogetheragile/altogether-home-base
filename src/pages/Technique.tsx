@@ -196,6 +196,7 @@ const Technique: React.FC = () => {
         <meta name="description" content={item.description || `Learn about ${item.name} — a practical agile technique from the Altogether Agile knowledge base.`} />
         <meta property="og:title" content={item.name} />
         <meta property="og:description" content={item.description || `Learn about ${item.name} — a practical agile technique.`} />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:type" content="article" />
         {slug && <link rel="canonical" href={`${SITE_URL}/knowledge/${slug}`} />}
       </Helmet>
@@ -332,6 +333,7 @@ const Technique: React.FC = () => {
                   <img
                     src={diagramImage.url}
                     alt={diagramImage.title || item.name}
+                    loading="lazy"
                     style={{ width: '100%', height: 'auto', display: 'block' }}
                   />
                 </div>

@@ -81,6 +81,9 @@ const Contact: React.FC = () => {
       <Helmet>
         <title>Contact — Altogether Agile</title>
         <meta name="description" content="Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session." />
+        <meta property="og:title" content="Contact — Altogether Agile" />
+        <meta property="og:description" content="Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session." />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/contact`} />
       </Helmet>
       <ResponsiveStyles />

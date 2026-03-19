@@ -300,6 +300,7 @@ export const KnowledgeReadView: React.FC<KnowledgeReadViewProps> = ({
                             <img
                               src={asset.url}
                               alt={asset.title || 'Knowledge item media'}
+                              loading="lazy"
                               className="w-full h-full object-cover"
                             />
                           ) : asset.type === 'video' ? (

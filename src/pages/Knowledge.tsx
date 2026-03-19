@@ -61,7 +61,7 @@ const Icons = {
 };
 
 // ─── Technique card image ───────────────────────────────────────────────────
-const TechniqueImage = ({ category, index, imageUrl }: { category: string; index: number; imageUrl?: string | null }) => {
+const TechniqueImage = ({ category, index, imageUrl, name }: { category: string; index: number; imageUrl?: string | null; name?: string }) => {
   const col = categoryColours[category] || categoryColours.Analysis;
 
   if (imageUrl) {
@@ -73,7 +73,8 @@ const TechniqueImage = ({ category, index, imageUrl }: { category: string; index
       }}>
         <img
           src={imageUrl}
-          alt=""
+          alt={name || 'Technique image'}
+          loading="lazy"
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
@@ -159,6 +160,9 @@ const Knowledge: React.FC = () => {
       <Helmet>
         <title>Knowledge Base — Altogether Agile</title>
         <meta name="description" content="Explore 80+ agile techniques, frameworks, and practices. Practical guides for Scrum, Kanban, facilitation, and team coaching." />
+        <meta property="og:title" content="Knowledge Base — Altogether Agile" />
+        <meta property="og:description" content="Explore 80+ agile techniques, frameworks, and practices. Practical guides for Scrum, Kanban, facilitation, and team coaching." />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/knowledge`} />
       </Helmet>
       <ResponsiveStyles />
@@ -256,7 +260,7 @@ const Knowledge: React.FC = () => {
 
             return (
               <div key={item.id} style={{ background: p.white, borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 12px rgba(0,77,77,0.07)' }}>
-                <TechniqueImage category={catName} index={i} imageUrl={item.hero_image_url || null} />
+                <TechniqueImage category={catName} index={i} imageUrl={item.hero_image_url || null} name={item.name} />
                 <div style={{ padding: '20px 20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
                   {/* category pill */}

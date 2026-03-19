@@ -127,6 +127,9 @@ const About: React.FC = () => {
       <Helmet>
         <title>About Alun — Altogether Agile</title>
         <meta name="description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and certified Scrum trainer." />
+        <meta property="og:title" content="About Alun — Altogether Agile" />
+        <meta property="og:description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and certified Scrum trainer." />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/about`} />
       </Helmet>
       <ResponsiveStyles />
@@ -156,6 +159,7 @@ const About: React.FC = () => {
             <img
               src="/images/alun.jpg"
               alt="Alun Davies-Baker, founder of Altogether Agile"
+              loading="lazy"
               style={{ width: isMobile ? '70%' : '65%', height: 'auto', display: 'block', borderRadius: 16 }}
               onError={(e) => {
                 // Fallback to styled placeholder if image not found
@@ -227,7 +231,7 @@ const About: React.FC = () => {
                     { src: '/images/badges/business-agility-catalyst.png', alt: 'Business Agility Catalyst', url: 'https://www.credly.com/badges/2e963763-78d4-43ba-92f4-3ce262e5f8b7/public_url' },
                   ].map((badge, i) => (
                     <a key={i} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 }}>
-                      <img src={badge.src} alt={badge.alt} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      <img src={badge.src} alt={badge.alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </a>
                   ))}
                 </div>

@@ -96,7 +96,8 @@ export default function AboutSection() {
             }}>
               <img
                 src="/images/alun.jpg"
-                alt="Alun, founder of Altogether Agile"
+                alt="Alun Davies-Baker, founder of Altogether Agile"
+                loading="lazy"
                 style={{
                   width: "100%",
                   height: "100%",
