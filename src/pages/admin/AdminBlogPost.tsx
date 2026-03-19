@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAdminBlogPost, useBlogPostMutations } from '@/hooks/useAdminBlogPosts';
 import { useBlogCategories } from '@/hooks/useBlogCategories';
-import { ImageUpload } from '@/components/ui/image-upload';
+import { ImagePicker } from '@/components/ui/image-picker';
 
 const generateSlug = (title: string) =>
   title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -270,13 +270,14 @@ const AdminBlogPost = () => {
               </div>
 
               <div>
-                <Label>Featured Image</Label>
-                <ImageUpload
+                <ImagePicker
+                  label="Featured Image"
                   value={formData.featured_image_url}
                   onChange={(url) => handleChange('featured_image_url', url)}
                   bucket="assets"
                   path="blog/"
-                  maxSize={5}
+                  maxSize={10}
+                  aspect={16 / 9}
                 />
               </div>
 
