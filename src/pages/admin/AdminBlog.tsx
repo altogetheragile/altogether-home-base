@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useMatch } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, ChevronDown, ChevronRight, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -23,10 +24,199 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAdminBlogPosts, useBlogPostMutations } from '@/hooks/useAdminBlogPosts';
+import { useBlogCategories, useBlogCategoryMutations, type BlogCategory } from '@/hooks/useBlogCategories';
 import { format } from 'date-fns';
 
 type StatusFilter = 'all' | 'published' | 'drafts';
 
+const generateSlug = (name: string) =>
+  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/* ── Category Management Panel ── */
+const CategoryPanel = () => {
+  const { data: categories } = useBlogCategories();
+  const { createCategory, updateCategory, deleteCategory } = useBlogCategoryMutations();
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', slug: '', color: '', description: '' });
+  const [newForm, setNewForm] = useState({ name: '', color: '#B2DFDB' });
+  const [deleteCatId, setDeleteCatId] = useState<string | null>(null);
+
+  const startEdit = (cat: BlogCategory) => {
+    setEditingId(cat.id);
+    setEditForm({ name: cat.name, slug: cat.slug, color: cat.color, description: cat.description || '' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editForm.name.trim()) return;
+    updateCategory.mutate({ id: editingId, data: editForm });
+    setEditingId(null);
+  };
+
+  const handleCreate = () => {
+    if (!newForm.name.trim()) return;
+    createCategory.mutate({
+      name: newForm.name.trim(),
+      slug: generateSlug(newForm.name),
+      color: newForm.color,
+    });
+    setNewForm({ name: '', color: '#B2DFDB' });
+  };
+
+  const handleDelete = () => {
+    if (!deleteCatId) return;
+    deleteCategory.mutate(deleteCatId);
+    setDeleteCatId(null);
+  };
+
+  return (
+    <>
+      <Card>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <span className="font-semibold">Manage Categories</span>
+            <Badge variant="secondary" className="ml-2">{categories?.length || 0}</Badge>
+          </div>
+        </button>
+
+        {isOpen && (
+          <div className="border-t px-4 pb-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">Colour</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead className="w-24">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(categories || []).map((cat) => (
+                  <TableRow key={cat.id}>
+                    {editingId === cat.id ? (
+                      <>
+                        <TableCell>
+                          <input
+                            type="color"
+                            value={editForm.color}
+                            onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                            className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({
+                              ...editForm,
+                              name: e.target.value,
+                              slug: generateSlug(e.target.value),
+                            })}
+                            className="h-8"
+                          />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{editForm.slug}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={saveEdit}>
+                              <Check className="h-4 w-4 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                              <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>
+                          <div
+                            className="w-6 h-6 rounded-full border"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">{cat.name}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{cat.slug}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => startEdit(cat)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setDeleteCatId(cat.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                ))}
+
+                {/* Add new row */}
+                <TableRow>
+                  <TableCell>
+                    <input
+                      type="color"
+                      value={newForm.color}
+                      onChange={(e) => setNewForm({ ...newForm, color: e.target.value })}
+                      className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={newForm.name}
+                      onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
+                      placeholder="New category name"
+                      className="h-8"
+                      onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                    />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {newForm.name ? generateSlug(newForm.name) : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCreate}
+                      disabled={!newForm.name.trim() || createCategory.isPending}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </Card>
+
+      <AlertDialog open={!!deleteCatId} onOpenChange={(open) => { if (!open) setDeleteCatId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the category from all posts that use it. The posts themselves will not be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+};
+
+/* ── Main AdminBlog Page ── */
 const AdminBlog = () => {
   const match = useMatch('/admin/blog');
   const shouldRender = !!match;
@@ -83,6 +273,9 @@ const AdminBlog = () => {
           </Button>
         </Link>
       </div>
+
+      {/* Category management */}
+      <CategoryPanel />
 
       <div className="flex space-x-2">
         {filterTabs.map((tab) => (
