@@ -132,7 +132,9 @@ const Home: React.FC = () => {
       <main id="main-content">
       {/* ─── HERO ─── */}
       <div className="aa-hero">
-        <div className="aa-hero-bg" />
+        <div className="aa-hero-bg">
+          <img src="/images/hero-bg.webp" alt="" fetchPriority="high" width="1380" height="648" />
+        </div>
         <div className={`aa-hero-content${isMobile ? ' aa-hero-content--mobile' : ''}`}>
           <div className="aa-hero-grid">
             <div>
