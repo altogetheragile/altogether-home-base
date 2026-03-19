@@ -25,6 +25,7 @@
     { "source": "/coaching-benefits/", "destination": "/blog/coaching-benefits", "statusCode": 301 }
   ],
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

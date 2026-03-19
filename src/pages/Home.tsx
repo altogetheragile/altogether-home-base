@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
+import { OrganizationSchema } from '@/components/seo/JsonLd';
 import { useCourseCards } from '@/hooks/useCourseCards';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
 import AboutSection from '@/components/AboutSection';
@@ -119,6 +120,7 @@ const Home: React.FC = () => {
         <meta name="description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience." />
         <link rel="canonical" href={`${SITE_URL}/`} />
       </Helmet>
+      <OrganizationSchema />
 
       {/* ─── NAV ─── */}
       <Navigation />

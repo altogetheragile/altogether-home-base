@@ -15,6 +15,7 @@ const NotFound: React.FC = () => {
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF' }}>
       <Helmet>
         <title>Page Not Found — Altogether Agile</title>
+        <meta name="robots" content="noindex" />
       </Helmet>
       {/* ─── NAV ─── */}
       <Navigation />

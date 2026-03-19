@@ -5,6 +5,7 @@ import { SITE_URL } from '@/config/featureFlags';
 import ReactMarkdown from 'react-markdown';
 import DOMPurify from 'dompurify';
 import { useBlogPost } from '@/hooks/useBlogPosts';
+import { BlogPostSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,6 +26,23 @@ const BlogPost = () => {
         <meta property="og:type" content="article" />
         {slug && <link rel="canonical" href={`${SITE_URL}/blog/${slug}`} />}
       </Helmet>
+      {post && (
+        <>
+          <BlogPostSchema
+            title={post.title}
+            description={post.seo_description}
+            url={`${SITE_URL}/blog/${slug}`}
+            datePublished={post.published_at}
+            dateModified={post.updated_at}
+            imageUrl={post.featured_image_url}
+          />
+          <BreadcrumbSchema items={[
+            { name: 'Home', url: SITE_URL },
+            { name: 'Blog', url: `${SITE_URL}/blog` },
+            { name: post.title, url: `${SITE_URL}/blog/${slug}` },
+          ]} />
+        </>
+      )}
       <Navigation />
 
       <div style={{ flex: 1, maxWidth: 760, margin: '0 auto', padding: '40px 24px 64px', width: '100%' }}>

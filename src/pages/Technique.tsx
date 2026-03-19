@@ -7,6 +7,7 @@ import { useKnowledgeItemSteps } from '@/hooks/useKnowledgeItemSteps';
 import { useKnowledgeUseCases } from '@/hooks/useKnowledgeUseCases';
 import { useKnowledgeItemUnifiedAssets } from '@/hooks/useUnifiedAssetManager';
 import { useViewTracking } from '@/hooks/useViewTracking';
+import { TechniqueSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { colors as p } from '@/theme/colors';
@@ -198,6 +199,17 @@ const Technique: React.FC = () => {
         <meta property="og:type" content="article" />
         {slug && <link rel="canonical" href={`${SITE_URL}/knowledge/${slug}`} />}
       </Helmet>
+      <TechniqueSchema
+        name={item.name}
+        description={item.description}
+        url={`${SITE_URL}/knowledge/${slug}`}
+        category={item.categories?.[0]?.name}
+      />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: SITE_URL },
+        { name: 'Knowledge Base', url: `${SITE_URL}/knowledge` },
+        { name: item.name, url: `${SITE_URL}/knowledge/${slug}` },
+      ]} />
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}

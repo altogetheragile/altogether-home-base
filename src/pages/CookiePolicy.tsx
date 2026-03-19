@@ -26,6 +26,7 @@ const CookiePolicy = () => (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>
       <title>Cookie Policy — Altogether Agile</title>
+      <meta name="description" content="How Altogether Agile uses cookies and similar technologies on our website." />
       <link rel="canonical" href={`${SITE_URL}/cookies`} />
     </Helmet>
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '64px 48px' }}>

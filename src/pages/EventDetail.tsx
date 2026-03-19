@@ -18,6 +18,7 @@ import EventDetailError from "@/components/events/EventDetailError";
 import EventDetailContent from "@/components/events/EventDetailContent";
 import EventDetailSidebar from "@/components/events/EventDetailSidebar";
 import EventFeedbackSection from "@/components/events/EventFeedbackSection";
+import { CourseSchema, BreadcrumbSchema } from "@/components/seo/JsonLd";
 import type { EventData } from "@/hooks/useEvents";
 import { colors as p } from '@/theme/colors';
 
@@ -165,6 +166,21 @@ const EventDetail = () => {
         <meta property="og:type" content="event" />
         <link rel="canonical" href={`${SITE_URL}/events/${id}`} />
       </Helmet>
+      <CourseSchema
+        title={event.title}
+        description={event.description}
+        url={`${SITE_URL}${isTemplateRoute ? `/courses/${id}` : `/events/${id}`}`}
+        startDate={event.start_date}
+        endDate={event.end_date}
+        locationName={event.location?.name}
+        priceCents={event.price_cents}
+        currency={event.currency}
+      />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: SITE_URL },
+        { name: 'Events', url: `${SITE_URL}/events` },
+        { name: event.title, url: `${SITE_URL}/events/${id}` },
+      ]} />
 
       <Navigation />
 

@@ -11,6 +11,7 @@ const Terms = () => (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>
       <title>Terms and Conditions — Altogether Agile</title>
+      <meta name="description" content="Terms and conditions for using Altogether Agile services, courses, and website." />
       <link rel="canonical" href={`${SITE_URL}/terms`} />
     </Helmet>
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '64px 48px' }}>

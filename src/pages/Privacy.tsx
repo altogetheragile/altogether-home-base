@@ -11,6 +11,7 @@ const Privacy = () => (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>
       <title>Privacy Notice — Altogether Agile</title>
+      <meta name="description" content="How Altogether Agile collects, uses, and protects your personal data. Read our full privacy notice." />
       <link rel="canonical" href={`${SITE_URL}/privacy`} />
     </Helmet>
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '64px 48px' }}>
