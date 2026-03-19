@@ -9,7 +9,16 @@ interface ImageCropperProps {
   aspect?: number;
   onCropComplete: (croppedBlob: Blob) => void;
   onCancel: () => void;
+  /** Allow the user to skip cropping and use the original image */
+  onUseOriginal?: () => void;
 }
+
+const ASPECT_PRESETS = [
+  { label: 'Free', value: undefined },
+  { label: '16:9', value: 16 / 9 },
+  { label: '4:3', value: 4 / 3 },
+  { label: '1:1', value: 1 },
+] as const;
 
 /**
  * Extracts the cropped region from the source image and returns it as a Blob.
@@ -50,14 +59,16 @@ async function getCroppedImage(imageSrc: string, pixelCrop: Area): Promise<Blob>
 
 export const ImageCropper: React.FC<ImageCropperProps> = ({
   imageSrc,
-  aspect = 16 / 9,
+  aspect: initialAspect = 16 / 9,
   onCropComplete,
   onCancel,
+  onUseOriginal,
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [aspect, setAspect] = useState<number | undefined>(initialAspect);
 
   const onCropChange = useCallback((_: unknown, croppedPixels: Area) => {
     setCroppedAreaPixels(croppedPixels);
@@ -70,7 +81,6 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
       const blob = await getCroppedImage(imageSrc, croppedAreaPixels);
       onCropComplete(blob);
     } catch {
-      // Fall back to uncropped if cropping fails
       const response = await fetch(imageSrc);
       const blob = await response.blob();
       onCropComplete(blob);
@@ -93,6 +103,24 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
         />
       </div>
 
+      {/* Aspect ratio presets */}
+      <div className="space-y-2">
+        <Label className="text-sm">Aspect Ratio</Label>
+        <div className="flex gap-2">
+          {ASPECT_PRESETS.map((preset) => (
+            <Button
+              key={preset.label}
+              type="button"
+              variant={aspect === preset.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setAspect(preset.value)}
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label className="text-sm">Zoom</Label>
         <Slider
@@ -109,6 +137,11 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
         <Button variant="outline" onClick={onCancel} disabled={isSaving}>
           Cancel
         </Button>
+        {onUseOriginal && (
+          <Button variant="outline" onClick={onUseOriginal} disabled={isSaving}>
+            Use Original
+          </Button>
+        )}
         <Button onClick={handleSave} disabled={isSaving || !croppedAreaPixels}>
           {isSaving ? 'Cropping...' : 'Apply Crop'}
         </Button>

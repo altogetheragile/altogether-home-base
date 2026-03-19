@@ -42,7 +42,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropSource, setCropSource] = useState<'upload' | 'existing'>('upload');
-  const [pendingFile, setPendingFile] = useState<{ name: string } | null>(null);
+  const [pendingFile, setPendingFile] = useState<{ name: string; blob?: Blob } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,7 +95,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     const objectUrl = URL.createObjectURL(file);
     setCropSrc(objectUrl);
     setCropSource('upload');
-    setPendingFile({ name: file.name });
+    setPendingFile({ name: file.name, blob: file });
 
     // Reset file input so same file can be re-selected
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -141,6 +141,20 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     } finally {
       setIsUploading(false);
       setPendingFile(null);
+    }
+  };
+
+  const handleUseOriginal = async () => {
+    if (cropSource === 'existing' && cropSrc) {
+      // For existing images, just use the URL directly — no re-upload needed
+      onChange(cropSrc);
+      setCropSrc(null);
+      setPendingFile(null);
+      setIsOpen(false);
+    } else if (cropSource === 'upload' && pendingFile?.blob) {
+      // For new uploads, upload the original file without cropping
+      setCropSrc(null);
+      await handleCropComplete(pendingFile.blob);
     }
   };
 
@@ -222,6 +236,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
               aspect={aspect}
               onCropComplete={handleCropComplete}
               onCancel={handleCropCancel}
+              onUseOriginal={handleUseOriginal}
             />
           ) : (
             <Tabs defaultValue="library">
@@ -289,7 +304,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
                 >
                   <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                   <p className="text-sm font-medium">Click to select an image</p>
-                  <p className="text-xs text-muted-foreground mt-1">Max {maxSize}MB. Will be cropped before upload.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Max {maxSize}MB. You can crop or use the original.</p>
                 </div>
 
                 <input
