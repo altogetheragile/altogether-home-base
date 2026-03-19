@@ -26,12 +26,12 @@ export const BlogContentRenderer: React.FC<BlogContentRendererProps> = ({
     <div className="space-y-4">
       {/* Featured Image */}
       {metadata.featured_image_url && (
-        <div className="aspect-video w-full overflow-hidden rounded-lg">
+        <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted/30">
           <img
             src={metadata.featured_image_url}
             alt="Blog post featured image"
             loading="lazy"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       )}

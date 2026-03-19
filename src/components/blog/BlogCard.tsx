@@ -22,12 +22,12 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
   return (
     <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
       {post.featured_image_url && (
-        <div className="aspect-video w-full overflow-hidden rounded-t-lg">
+        <div className="aspect-video w-full overflow-hidden rounded-t-lg bg-muted/30">
           <img
             src={post.featured_image_url}
             alt={post.title}
             loading="lazy"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       )}

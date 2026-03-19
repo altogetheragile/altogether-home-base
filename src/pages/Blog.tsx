@@ -319,12 +319,12 @@ const BlogCardStyled = ({ post }: { post: BlogPost }) => (
     >
       {/* Image */}
       {post.featured_image_url ? (
-        <div style={{ height: 180, overflow: 'hidden' }}>
+        <div style={{ height: 180, background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img
             src={post.featured_image_url}
             alt={post.title}
             loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </div>
       ) : (
