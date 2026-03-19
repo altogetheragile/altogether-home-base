@@ -8,7 +8,7 @@ import { ImageCropper } from './image-cropper';
 import { useUnifiedAssets, useUnifiedAssetMutations } from '@/hooks/useUnifiedAssetManager';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Image as ImageIcon, Upload, X, Search, Check } from 'lucide-react';
+import { Image as ImageIcon, Upload, X, Search, Check, Crop } from 'lucide-react';
 
 interface ImagePickerProps {
   /** Current image URL */
@@ -41,6 +41,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropSource, setCropSource] = useState<'upload' | 'existing'>('upload');
   const [pendingFile, setPendingFile] = useState<{ name: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +64,20 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     setIsOpen(false);
   };
 
+  const handleCropExisting = (url: string) => {
+    setCropSrc(url);
+    setCropSource('existing');
+    setPendingFile({ name: 'cropped-image' });
+  };
+
+  const handleCropCurrentImage = () => {
+    if (!value) return;
+    setCropSrc(value);
+    setCropSource('existing');
+    setPendingFile({ name: 'cropped-image' });
+    setIsOpen(true);
+  };
+
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -79,6 +94,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     // Show crop UI with a local object URL
     const objectUrl = URL.createObjectURL(file);
     setCropSrc(objectUrl);
+    setCropSource('upload');
     setPendingFile({ name: file.name });
 
     // Reset file input so same file can be re-selected
@@ -119,7 +135,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
 
       onChange(publicUrl);
       setIsOpen(false);
-      toast.success('Image uploaded');
+      toast.success(cropSource === 'existing' ? 'Cropped image saved' : 'Image uploaded');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Upload failed');
     } finally {
@@ -129,7 +145,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   };
 
   const handleCropCancel = () => {
-    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    if (cropSrc && cropSource === 'upload') URL.revokeObjectURL(cropSrc);
     setCropSrc(null);
     setPendingFile(null);
   };
@@ -157,15 +173,25 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
           >
             <X className="h-4 w-4" />
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="absolute bottom-2 right-2"
-            onClick={() => setIsOpen(true)}
-          >
-            Change
-          </Button>
+          <div className="absolute bottom-2 right-2 flex gap-1">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleCropCurrentImage}
+            >
+              <Crop className="h-4 w-4 mr-1" />
+              Crop
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsOpen(true)}
+            >
+              Change
+            </Button>
+          </div>
         </div>
       ) : (
         <button
@@ -186,7 +212,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {cropSrc ? 'Crop Image' : 'Select Image'}
+              {cropSrc ? 'Crop & Zoom' : 'Select Image'}
             </DialogTitle>
           </DialogHeader>
 
@@ -218,28 +244,35 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
                 {imageAssets.length > 0 ? (
                   <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
                     {imageAssets.map((asset) => (
-                      <button
+                      <div
                         key={asset.id}
-                        type="button"
-                        onClick={() => handleSelectExisting(asset.url)}
-                        className={`relative rounded-lg border overflow-hidden hover:ring-2 hover:ring-primary transition-all ${
-                          value === asset.url ? 'ring-2 ring-primary' : ''
+                        className={`relative rounded-lg border overflow-hidden transition-all ${
+                          value === asset.url ? 'ring-2 ring-primary' : 'hover:ring-2 hover:ring-primary/50'
                         }`}
                       >
                         <img
                           src={asset.url}
                           alt={asset.title || 'Asset'}
-                          className="w-full h-24 object-contain bg-muted/30"
+                          className="w-full h-24 object-contain bg-muted/30 cursor-pointer"
+                          onClick={() => handleSelectExisting(asset.url)}
                         />
                         {value === asset.url && (
-                          <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                          <div className="absolute top-1 left-1 bg-primary text-primary-foreground rounded-full p-0.5">
                             <Check className="h-3 w-3" />
                           </div>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => handleCropExisting(asset.url)}
+                          className="absolute top-1 right-1 bg-white/90 hover:bg-white text-gray-700 rounded p-1 shadow-sm transition-colors"
+                          title="Crop & zoom this image"
+                        >
+                          <Crop className="h-3 w-3" />
+                        </button>
                         <div className="px-2 py-1 text-xs truncate text-muted-foreground">
                           {asset.title || asset.original_filename || 'Untitled'}
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 ) : (
