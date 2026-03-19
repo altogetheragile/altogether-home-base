@@ -15,8 +15,6 @@ export default function AboutSection() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap');
-
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -172,7 +170,7 @@ export default function AboutSection() {
           {/* RIGHT - Text content */}
           <div style={{ paddingTop: 40 }}>
 
-            <h2 style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>About Alun</h2>
+            <p style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>About Alun</p>
 
             <h2 style={{
               fontFamily: "'DM Serif Display', serif",
@@ -180,22 +178,11 @@ export default function AboutSection() {
               fontSize: 48,
               fontWeight: 400,
               lineHeight: 1.1,
-              margin: "0 0 8px",
-              letterSpacing: "-0.01em",
-            }}>
-              Train with someone
-            </h2>
-            <h2 style={{
-              fontFamily: "'DM Serif Display', serif",
-              color: p.deepTeal,
-              fontSize: 48,
-              fontWeight: 400,
-              fontStyle: "italic",
-              lineHeight: 1.1,
               margin: "0 0 32px",
               letterSpacing: "-0.01em",
             }}>
-              who's been in the room.
+              Train with someone<br />
+              <span style={{ fontStyle: "italic" }}>who's been in the room.</span>
             </h2>
 
             {/* Decorative rule */}
@@ -267,7 +254,7 @@ export default function AboutSection() {
                 padding: 0,
                 textDecoration: "none",
               }}>
-                Read more
+                Read more about Alun
                 <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor">
                   <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/>
                 </svg>

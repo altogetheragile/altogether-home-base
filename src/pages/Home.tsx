@@ -129,8 +129,9 @@ const Home: React.FC = () => {
       {/* ─── NAV ─── */}
       <Navigation />
 
+      <main id="main-content">
       {/* ─── HERO ─── */}
-      <div id="main-content" className="aa-hero">
+      <div className="aa-hero">
         <div className="aa-hero-bg" />
         <div className={`aa-hero-content${isMobile ? ' aa-hero-content--mobile' : ''}`}>
           <div className="aa-hero-grid">
@@ -356,6 +357,8 @@ const Home: React.FC = () => {
           )}
         </div>
       </div>
+
+      </main>
 
       {/* ─── FOOTER ─── */}
       <Footer />
