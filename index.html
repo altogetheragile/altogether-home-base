@@ -32,7 +32,25 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Critical shell: visible instantly while React boots (replaced on hydration) -->
+      <div id="app-shell" style="font-family:'DM Sans',system-ui,sans-serif">
+        <nav style="background:#fff;border-bottom:1px solid #E5E7EB;position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;padding:0 24px">
+          <div style="display:flex;align-items:baseline">
+            <span style="color:#004D4D;font-weight:800;font-size:18px;letter-spacing:0.04em;text-transform:uppercase">ALTOGETHER</span><span style="color:#FF9715;font-weight:800;font-size:18px;letter-spacing:0.04em;text-transform:uppercase">AGILE</span>
+          </div>
+        </nav>
+        <div style="position:relative;min-height:560px;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden">
+            <img src="/images/hero-bg.webp" alt="" fetchpriority="high" width="1380" height="648" style="width:100%;height:100%;object-fit:cover;object-position:center 30%">
+          </div>
+          <div style="position:relative;z-index:2;padding:80px 48px">
+            <h1 style="color:#004D4D;font-weight:800;font-size:50px;line-height:1.4;margin:0 0 20px">Work better together.<br>Accelerate time to Value.</h1>
+            <p style="color:#374151;font-size:16px;line-height:1.7;margin:0 0 32px;max-width:480px">Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.</p>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
