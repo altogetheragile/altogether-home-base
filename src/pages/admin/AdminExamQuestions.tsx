@@ -214,6 +214,7 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
       }
     } else if (colB || (!optionMatch && colC && !colC.match(/^[abcd]\)/i))) {
       // New question line
+      const prevArea = current?.area ?? '';
       if (current && current.question_text && current.option_a && current.correct_answer) {
         questions.push({
           area: current.area || '',
@@ -228,7 +229,7 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
         });
       }
       current = {
-        area: colA || (current?.area ?? ''),
+        area: colA || prevArea,
         question_text: colC,
         option_a: '',
         option_b: '',

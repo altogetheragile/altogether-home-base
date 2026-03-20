@@ -544,9 +544,9 @@ const ExamPlayer = () => {
                   {questions.map((_, i) => {
                     const a = answers[i];
                     const isCurrent = i === currentIdx;
-                    let bg = '#F3F4F6';
-                    let color = p.muted;
-                    let border = 'transparent';
+                    let bg: string = '#F3F4F6';
+                    let color: string = p.muted;
+                    let border: string = 'transparent';
                     if (a?.flagged && a?.selected) { bg = '#FEF3C7'; color = '#92400E'; }
                     else if (a?.flagged) { bg = '#FFFBEB'; color = '#B45309'; }
                     else if (a?.selected) { bg = p.paleTeal; color = p.deepTeal; }
@@ -692,9 +692,9 @@ const ExamPlayer = () => {
                     ].map(({ letter, text }) => {
                       const isThisCorrect = letter === q.correct_answer;
                       const wasSelected = a?.selected === letter;
-                      let bg = '#FAFAFA';
-                      let borderCol = '#E5E7EB';
-                      let textColor = p.body;
+                      let bg: string = '#FAFAFA';
+                      let borderCol: string = '#E5E7EB';
+                      let textColor: string = p.body;
                       if (isThisCorrect) { bg = '#ECFDF5'; borderCol = '#A7F3D0'; textColor = '#065F46'; }
                       else if (wasSelected) { bg = '#FEF2F2'; borderCol = '#FECACA'; textColor = '#991B1B'; }
                       return (
