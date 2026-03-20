@@ -7,7 +7,7 @@ import {
   Code, Eye, Columns, Type, Bold, Italic, Underline as UnderlineIcon,
   Heading1, Heading2, Heading3, Link, Unlink,
   List, ListOrdered, Quote, Minus, AlignLeft, AlignCenter, AlignRight,
-  Palette, Highlighter, Undo, Redo,
+  Palette, Highlighter, Undo, Redo, PaintBucket, AlertTriangle,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -21,6 +21,106 @@ import TextAlign from '@tiptap/extension-text-align';
 import type { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 
 const CodeMirror = lazy(() => import('@uiw/react-codemirror'));
+
+// ─── Detect if content has <style> blocks ──────────────────────────────────
+const hasStyleBlocks = (html: string) => /<style[\s>]/i.test(html);
+
+// ─── Extract all color values from HTML/CSS ────────────────────────────────
+interface ColorMatch {
+  value: string;       // e.g. "#ccc" or "rgba(0,0,0,0.3)"
+  normalized: string;  // lowercase for deduplication
+  count: number;
+  contexts: string[];  // short snippets showing where the color appears
+}
+
+const extractColors = (html: string): ColorMatch[] => {
+  const colorMap = new Map<string, ColorMatch>();
+  // Match hex colors, rgb/rgba, hsl/hsla, and named CSS color properties
+  const colorRegex = /#(?:[0-9a-fA-F]{3,8})\b|rgba?\([^)]+\)|hsla?\([^)]+\)/g;
+  let match;
+  while ((match = colorRegex.exec(html)) !== null) {
+    const value = match[0];
+    const normalized = value.toLowerCase();
+    const existing = colorMap.get(normalized);
+    // Get surrounding context (30 chars each side)
+    const start = Math.max(0, match.index - 30);
+    const end = Math.min(html.length, match.index + value.length + 30);
+    const context = html.slice(start, end).replace(/\n/g, ' ').trim();
+    if (existing) {
+      existing.count++;
+      if (existing.contexts.length < 3) existing.contexts.push(context);
+    } else {
+      colorMap.set(normalized, { value, normalized, count: 1, contexts: [context] });
+    }
+  }
+  return Array.from(colorMap.values()).sort((a, b) => b.count - a.count);
+};
+
+// ─── Color Replace Panel ───────────────────────────────────────────────────
+const ColorReplacePanel = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
+  const colors = useMemo(() => extractColors(value), [value]);
+  const [replacingColor, setReplacingColor] = useState<string | null>(null);
+  const [newColor, setNewColor] = useState('#000000');
+
+  const handleReplace = (oldColor: string) => {
+    // Replace all occurrences (case-insensitive)
+    const escaped = oldColor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'gi');
+    onChange(value.replace(regex, newColor));
+    setReplacingColor(null);
+  };
+
+  if (colors.length === 0) {
+    return <p className="text-sm text-muted-foreground p-2">No color values found in content.</p>;
+  }
+
+  return (
+    <div className="space-y-1 max-h-[400px] overflow-auto">
+      <p className="text-xs font-medium text-gray-500 px-1 mb-2">
+        {colors.length} unique color{colors.length !== 1 ? 's' : ''} found. Click to replace.
+      </p>
+      {colors.map((c) => (
+        <div key={c.normalized} className="flex items-center gap-2 px-1 py-1 hover:bg-gray-50 rounded">
+          <div
+            className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
+            style={{ backgroundColor: c.value }}
+          />
+          <div className="flex-1 min-w-0">
+            <code className="text-xs font-mono">{c.value}</code>
+            <span className="text-xs text-gray-400 ml-1">×{c.count}</span>
+            <div className="text-[10px] text-gray-400 truncate">{c.contexts[0]}</div>
+          </div>
+          {replacingColor === c.normalized ? (
+            <div className="flex items-center gap-1">
+              <input
+                type="color"
+                value={newColor}
+                onChange={(e) => setNewColor(e.target.value)}
+                className="w-7 h-7 cursor-pointer border-0 p-0"
+              />
+              <Button type="button" size="sm" className="h-6 text-xs px-2" onClick={() => handleReplace(c.value)}>
+                Apply
+              </Button>
+              <Button type="button" size="sm" variant="ghost" className="h-6 text-xs px-1" onClick={() => setReplacingColor(null)}>
+                ✕
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-6 text-xs px-2"
+              onClick={() => { setReplacingColor(c.normalized); setNewColor(c.value.length <= 7 ? c.value : '#000000'); }}
+            >
+              Replace
+            </Button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 interface HtmlEditorProps {
   value: string;
@@ -242,7 +342,8 @@ const tiptapStyles = `
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeholder }) => {
-  const [mode, setMode] = useState<ViewMode>('rich');
+  const isStyled = useMemo(() => hasStyleBlocks(value), [value]);
+  const [mode, setMode] = useState<ViewMode>(() => hasStyleBlocks(value) ? 'split' : 'rich');
   const [extensions, setExtensions] = useState<any[]>([]);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const isUpdatingFromCode = useRef(false);
@@ -315,7 +416,23 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
 
       {/* Top bar: label + view mode toggles */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Content</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Content</span>
+          {/* Color replace tool — works on raw HTML in any mode */}
+          {(mode === 'code' || mode === 'split') && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1">
+                  <PaintBucket className="h-3.5 w-3.5" />
+                  Colors
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-2" align="start">
+                <ColorReplacePanel value={value} onChange={onChange} />
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
         <div className="flex gap-1">
           <Button type="button" variant={mode === 'rich' ? 'default' : 'outline'} size="sm" onClick={() => handleModeChange('rich')}>
             <Type className="h-3.5 w-3.5 mr-1" />Rich Text
@@ -331,6 +448,14 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
           </Button>
         </div>
       </div>
+
+      {/* Warning when switching to Rich Text with styled content */}
+      {mode === 'rich' && isStyled && (
+        <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+          <span>This content uses <code>&lt;style&gt;</code> blocks and custom CSS classes. <strong>Split</strong> or <strong>Code</strong> mode will show the actual formatting. Rich Text mode may lose some styling.</span>
+        </div>
+      )}
 
       {/* Rich Text mode */}
       {mode === 'rich' && (
