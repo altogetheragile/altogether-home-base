@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecommendations, useTrackInteraction } from '@/hooks/useRecommendations';
 import { RecommendationCard } from './RecommendationCard';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 interface RecommendationsSectionProps {
   title?: string;
@@ -27,8 +28,24 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   className = '',
 }) => {
   const navigate = useNavigate();
-  // Use contentTypes if provided, otherwise fall back to contentType for backward compatibility
-  const types = contentTypes || (contentType ? [contentType] : undefined);
+  const { settings } = useSiteSettings();
+
+  // Filter out content types for disabled features
+  const types = useMemo(() => {
+    const raw = contentTypes || (contentType ? [contentType] : undefined);
+    if (!raw || !settings) return raw;
+    const featureMap: Record<string, string> = {
+      technique: 'show_knowledge',
+      event: 'show_events',
+      blog: 'show_blog',
+    };
+    const filtered = raw.filter(t => {
+      const key = featureMap[t] as keyof typeof settings | undefined;
+      return !key || settings[key] !== false;
+    });
+    return filtered.length > 0 ? filtered : undefined;
+  }, [contentTypes, contentType, settings]);
+
   const { data: recommendations, isLoading, error } = useRecommendations(types, limit, excludeIds);
   const trackInteraction = useTrackInteraction();
 
