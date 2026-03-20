@@ -27,6 +27,7 @@ import {
 import { useAdminBlogPost, useBlogPostMutations } from '@/hooks/useAdminBlogPosts';
 import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ImagePicker } from '@/components/ui/image-picker';
+import { HtmlEditor } from '@/components/ui/html-editor';
 
 const generateSlug = (title: string) =>
   title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -229,14 +230,10 @@ const AdminBlogPost = () => {
               </div>
 
               <div>
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
+                <HtmlEditor
                   value={formData.content}
-                  onChange={(e) => handleChange('content', e.target.value)}
-                  placeholder="Write your blog post content here..."
-                  rows={20}
-                  className="font-mono"
+                  onChange={(val) => handleChange('content', val)}
+                  placeholder="Write your blog post content here (HTML or Markdown)..."
                 />
               </div>
             </CardContent>
