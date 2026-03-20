@@ -7,7 +7,7 @@ import {
   Code, Eye, Columns, Type, Bold, Italic, Underline as UnderlineIcon,
   Heading1, Heading2, Heading3, Link, Unlink,
   List, ListOrdered, Quote, Minus, AlignLeft, AlignCenter, AlignRight,
-  Palette, Highlighter, Undo, Redo, PaintBucket, AlertTriangle,
+  Palette, Highlighter, Undo, Redo, PaintBucket,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -22,27 +22,25 @@ import type { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 
 const CodeMirror = lazy(() => import('@uiw/react-codemirror'));
 
-// ─── Detect if content has <style> blocks ──────────────────────────────────
+// ─── Detect if content has <style> blocks or complex HTML ──────────────────
 const hasStyleBlocks = (html: string) => /<style[\s>]/i.test(html);
 
 // ─── Extract all color values from HTML/CSS ────────────────────────────────
 interface ColorMatch {
-  value: string;       // e.g. "#ccc" or "rgba(0,0,0,0.3)"
-  normalized: string;  // lowercase for deduplication
+  value: string;
+  normalized: string;
   count: number;
-  contexts: string[];  // short snippets showing where the color appears
+  contexts: string[];
 }
 
 const extractColors = (html: string): ColorMatch[] => {
   const colorMap = new Map<string, ColorMatch>();
-  // Match hex colors, rgb/rgba, hsl/hsla, and named CSS color properties
   const colorRegex = /#(?:[0-9a-fA-F]{3,8})\b|rgba?\([^)]+\)|hsla?\([^)]+\)/g;
   let match;
   while ((match = colorRegex.exec(html)) !== null) {
     const value = match[0];
     const normalized = value.toLowerCase();
     const existing = colorMap.get(normalized);
-    // Get surrounding context (30 chars each side)
     const start = Math.max(0, match.index - 30);
     const end = Math.min(html.length, match.index + value.length + 30);
     const context = html.slice(start, end).replace(/\n/g, ' ').trim();
@@ -63,7 +61,6 @@ const ColorReplacePanel = ({ value, onChange }: { value: string; onChange: (v: s
   const [newColor, setNewColor] = useState('#000000');
 
   const handleReplace = (oldColor: string) => {
-    // Replace all occurrences (case-insensitive)
     const escaped = oldColor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(escaped, 'gi');
     onChange(value.replace(regex, newColor));
@@ -122,6 +119,71 @@ const ColorReplacePanel = ({ value, onChange }: { value: string; onChange: (v: s
   );
 };
 
+// ─── Iframe Preview ────────────────────────────────────────────────────────
+// Renders HTML inside an iframe so <style> blocks are properly isolated
+const IframePreview = ({ html, className }: { html: string; className?: string }) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+
+    const sanitized = DOMPurify.sanitize(html || '', {
+      ADD_TAGS: ['style'],
+      ADD_ATTR: ['style', 'class'],
+      FORCE_BODY: true,
+    });
+
+    doc.open();
+    doc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #fff;
+    }
+    img { max-width: 100%; height: auto; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px; }
+  </style>
+</head>
+<body>${sanitized}</body>
+</html>`);
+    doc.close();
+
+    // Auto-resize iframe to content height
+    const resize = () => {
+      if (iframe.contentDocument?.body) {
+        iframe.style.height = iframe.contentDocument.body.scrollHeight + 'px';
+      }
+    };
+    // Resize after content renders
+    setTimeout(resize, 50);
+    setTimeout(resize, 200);
+  }, [html]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      className={className}
+      sandbox="allow-same-origin"
+      style={{ width: '100%', border: 'none', minHeight: 500, maxHeight: 700 }}
+      title="Content preview"
+    />
+  );
+};
+
+// ─── Types ─────────────────────────────────────────────────────────────────
 interface HtmlEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -179,39 +241,25 @@ const RichTextToolbar = ({ editor }: { editor: ReturnType<typeof useEditor> }) =
   return (
     <div className="flex flex-wrap items-center gap-0.5 p-1.5 bg-gray-50 border rounded-t-lg">
       <TooltipProvider delayDuration={300}>
-        {/* Undo/Redo */}
         <ToolBtn icon={Undo} label="Undo" onClick={() => editor.chain().focus().undo().run()} />
         <ToolBtn icon={Redo} label="Redo" onClick={() => editor.chain().focus().redo().run()} />
-
         <Divider />
-
-        {/* Text formatting */}
         <ToolBtn icon={Bold} label="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} />
         <ToolBtn icon={Italic} label="Italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} />
         <ToolBtn icon={UnderlineIcon} label="Underline" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} />
-
         <Divider />
-
-        {/* Headings */}
         <ToolBtn icon={Heading1} label="Heading 1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} />
         <ToolBtn icon={Heading2} label="Heading 2" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} />
         <ToolBtn icon={Heading3} label="Heading 3" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} />
-
         <Divider />
-
-        {/* Lists */}
         <ToolBtn icon={List} label="Bullet List" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} />
         <ToolBtn icon={ListOrdered} label="Numbered List" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
         <ToolBtn icon={Quote} label="Blockquote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
         <ToolBtn icon={Minus} label="Horizontal Rule" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
-
         <Divider />
-
-        {/* Alignment */}
         <ToolBtn icon={AlignLeft} label="Align Left" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()} />
         <ToolBtn icon={AlignCenter} label="Align Center" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()} />
         <ToolBtn icon={AlignRight} label="Align Right" active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()} />
-
         <Divider />
 
         {/* Text color */}
@@ -273,7 +321,6 @@ const RichTextToolbar = ({ editor }: { editor: ReturnType<typeof useEditor> }) =
             </button>
           </PopoverContent>
         </Popover>
-
         <Divider />
 
         {/* Link */}
@@ -342,12 +389,21 @@ const tiptapStyles = `
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeholder }) => {
-  const isStyled = useMemo(() => hasStyleBlocks(value), [value]);
-  const [mode, setMode] = useState<ViewMode>(() => hasStyleBlocks(value) ? 'split' : 'rich');
+  const isStyled = hasStyleBlocks(value);
+  const [mode, setMode] = useState<ViewMode>('rich');
+  const hasAutoSwitched = useRef(false);
   const [extensions, setExtensions] = useState<any[]>([]);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const isUpdatingFromCode = useRef(false);
   const isUpdatingFromTiptap = useRef(false);
+
+  // Auto-switch to split mode when styled content loads (async from API)
+  useEffect(() => {
+    if (isStyled && !hasAutoSwitched.current) {
+      hasAutoSwitched.current = true;
+      setMode('split');
+    }
+  }, [isStyled]);
 
   // Lazy-load CodeMirror extensions
   useMemo(() => {
@@ -359,12 +415,7 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
     });
   }, []);
 
-  const sanitizedHtml = useMemo(
-    () => DOMPurify.sanitize(value || '', { ADD_TAGS: ['style'], ADD_ATTR: ['style'], FORCE_BODY: true }),
-    [value]
-  );
-
-  // TipTap editor
+  // TipTap editor — only used for non-styled content
   const tiptapEditor = useEditor({
     extensions: [
       StarterKit,
@@ -385,8 +436,9 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
   });
 
   // Sync value → TipTap when switching to rich mode or when code changes value
+  // Only sync for non-styled content to prevent TipTap from destroying HTML
   useEffect(() => {
-    if (tiptapEditor && !isUpdatingFromTiptap.current && mode === 'rich') {
+    if (tiptapEditor && !isUpdatingFromTiptap.current && mode === 'rich' && !isStyled) {
       const currentHtml = tiptapEditor.getHTML();
       if (currentHtml !== value) {
         isUpdatingFromCode.current = true;
@@ -394,17 +446,20 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
         isUpdatingFromCode.current = false;
       }
     }
-  }, [value, tiptapEditor, mode]);
+  }, [value, tiptapEditor, mode, isStyled]);
 
-  // When switching to rich mode, sync content
   const handleModeChange = useCallback((newMode: ViewMode) => {
+    // Block Rich Text mode for styled content — it destroys the HTML
+    if (newMode === 'rich' && isStyled) {
+      return; // Don't allow switching to rich mode
+    }
     if (newMode === 'rich' && tiptapEditor) {
       isUpdatingFromCode.current = true;
       tiptapEditor.commands.setContent(value || '', { emitUpdate: false });
       isUpdatingFromCode.current = false;
     }
     setMode(newMode);
-  }, [tiptapEditor, value]);
+  }, [tiptapEditor, value, isStyled]);
 
   const handleCodeChange = useCallback((val: string) => {
     onChange(val);
@@ -418,8 +473,8 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Content</span>
-          {/* Color replace tool — works on raw HTML in any mode */}
-          {(mode === 'code' || mode === 'split') && (
+          {/* Color replace tool — available in code/split/preview modes */}
+          {mode !== 'rich' && (
             <Popover>
               <PopoverTrigger asChild>
                 <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1">
@@ -434,9 +489,12 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
           )}
         </div>
         <div className="flex gap-1">
-          <Button type="button" variant={mode === 'rich' ? 'default' : 'outline'} size="sm" onClick={() => handleModeChange('rich')}>
-            <Type className="h-3.5 w-3.5 mr-1" />Rich Text
-          </Button>
+          {/* Hide Rich Text button for styled content — it can't handle <style> blocks */}
+          {!isStyled && (
+            <Button type="button" variant={mode === 'rich' ? 'default' : 'outline'} size="sm" onClick={() => handleModeChange('rich')}>
+              <Type className="h-3.5 w-3.5 mr-1" />Rich Text
+            </Button>
+          )}
           <Button type="button" variant={mode === 'code' ? 'default' : 'outline'} size="sm" onClick={() => handleModeChange('code')}>
             <Code className="h-3.5 w-3.5 mr-1" />Code
           </Button>
@@ -449,16 +507,8 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
         </div>
       </div>
 
-      {/* Warning when switching to Rich Text with styled content */}
-      {mode === 'rich' && isStyled && (
-        <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-          <span>This content uses <code>&lt;style&gt;</code> blocks and custom CSS classes. <strong>Split</strong> or <strong>Code</strong> mode will show the actual formatting. Rich Text mode may lose some styling.</span>
-        </div>
-      )}
-
-      {/* Rich Text mode */}
-      {mode === 'rich' && (
+      {/* Rich Text mode — only for simple HTML without <style> blocks */}
+      {mode === 'rich' && !isStyled && (
         <>
           <RichTextToolbar editor={tiptapEditor} />
           <div className="tiptap-editor border rounded-b-lg border-t-0 overflow-hidden bg-white">
@@ -503,12 +553,11 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
             </div>
           )}
 
-          {/* Preview */}
+          {/* Preview — rendered in an iframe for proper style isolation */}
           {mode !== 'code' && (
-            <div
-              className="min-h-[500px] max-h-[700px] overflow-auto p-6 bg-white"
-              dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
-            />
+            <div className="min-h-[500px] max-h-[700px] overflow-auto bg-white">
+              <IframePreview html={value} />
+            </div>
           )}
         </div>
       )}
