@@ -154,7 +154,7 @@ const AdminBlogPost = () => {
           {formData.slug && (
             <Button
               variant="outline"
-              onClick={() => window.open(`/blog/${formData.slug}`, '_blank')}
+              onClick={() => window.open(`/blog/${formData.slug}?preview=true`, '_blank')}
             >
               <Eye className="h-4 w-4 mr-2" />
               Preview

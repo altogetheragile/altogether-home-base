@@ -125,11 +125,11 @@ export const useBlogPosts = (options: UseBlogPostsOptions = {}) => {
   });
 };
 
-export const useBlogPost = (slug: string) => {
+export const useBlogPost = (slug: string, { preview = false }: { preview?: boolean } = {}) => {
   return useQuery({
-    queryKey: ['blog-post', slug],
+    queryKey: ['blog-post', slug, preview],
     queryFn: async (): Promise<BlogPost | null> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('blog_posts')
         .select(`
           *,
@@ -147,9 +147,13 @@ export const useBlogPost = (slug: string) => {
             )
           )
         `)
-        .eq('slug', slug)
-        .eq('is_published', true)
-        .single();
+        .eq('slug', slug);
+
+      if (!preview) {
+        query = query.eq('is_published', true);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) {
         if (error.code === 'PGRST116') return null;

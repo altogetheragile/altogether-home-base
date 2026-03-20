@@ -1,5 +1,5 @@
 import { colors as p } from '@/theme/colors';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL } from '@/config/featureFlags';
 import ReactMarkdown from 'react-markdown';
@@ -9,12 +9,16 @@ import { BlogPostSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { data: post, isLoading } = useBlogPost(slug || '');
+  const [searchParams] = useSearchParams();
+  const { data: userRole } = useUserRole();
+  const isPreview = searchParams.get('preview') === 'true' && userRole === 'admin';
+  const { data: post, isLoading } = useBlogPost(slug || '', { preview: isPreview });
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
