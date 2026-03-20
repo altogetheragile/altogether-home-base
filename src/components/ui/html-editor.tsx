@@ -7,14 +7,14 @@ import {
   Code, Eye, Columns, Type, Bold, Italic, Underline as UnderlineIcon,
   Heading1, Heading2, Heading3, Link, Unlink,
   List, ListOrdered, Quote, Minus, AlignLeft, AlignCenter, AlignRight,
-  Palette, Highlighter, Undo, Redo, Table as TableIcon,
+  Palette, Highlighter, Undo, Redo,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TiptapUnderline from '@tiptap/extension-underline';
 import TiptapLink from '@tiptap/extension-link';
-import TextStyle from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
@@ -289,7 +289,7 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
       const currentHtml = tiptapEditor.getHTML();
       if (currentHtml !== value) {
         isUpdatingFromCode.current = true;
-        tiptapEditor.commands.setContent(value || '', false);
+        tiptapEditor.commands.setContent(value || '', { emitUpdate: false });
         isUpdatingFromCode.current = false;
       }
     }
@@ -299,7 +299,7 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
   const handleModeChange = useCallback((newMode: ViewMode) => {
     if (newMode === 'rich' && tiptapEditor) {
       isUpdatingFromCode.current = true;
-      tiptapEditor.commands.setContent(value || '', false);
+      tiptapEditor.commands.setContent(value || '', { emitUpdate: false });
       isUpdatingFromCode.current = false;
     }
     setMode(newMode);
