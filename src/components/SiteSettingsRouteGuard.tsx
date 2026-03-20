@@ -1,5 +1,7 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useUserRole } from '@/hooks/useUserRole';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -8,12 +10,17 @@ interface SiteSettingsRouteGuardProps {
   children: React.ReactNode;
 }
 
-export const SiteSettingsRouteGuard: React.FC<SiteSettingsRouteGuardProps> = ({ 
-  feature, 
-  children 
+export const SiteSettingsRouteGuard: React.FC<SiteSettingsRouteGuardProps> = ({
+  feature,
+  children
 }) => {
   const { settings, isLoading } = useSiteSettings();
-  
+  const [searchParams] = useSearchParams();
+  const { data: userRole } = useUserRole();
+
+  // Allow admins to bypass the guard when previewing
+  const isAdminPreview = searchParams.get('preview') === 'true' && userRole === 'admin';
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -21,10 +28,10 @@ export const SiteSettingsRouteGuard: React.FC<SiteSettingsRouteGuardProps> = ({
       </div>
     );
   }
-  
+
   const isEnabled = settings?.[`show_${feature}` as keyof typeof settings];
-  
-  if (!isEnabled) {
+
+  if (!isEnabled && !isAdminPreview) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
@@ -40,6 +47,6 @@ export const SiteSettingsRouteGuard: React.FC<SiteSettingsRouteGuardProps> = ({
       </div>
     );
   }
-  
+
   return <>{children}</>;
 };
