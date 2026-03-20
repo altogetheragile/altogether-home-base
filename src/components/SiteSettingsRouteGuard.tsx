@@ -2,6 +2,7 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -15,13 +16,15 @@ export const SiteSettingsRouteGuard: React.FC<SiteSettingsRouteGuardProps> = ({
   children
 }) => {
   const { settings, isLoading } = useSiteSettings();
+  const { loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
-  const { data: userRole } = useUserRole();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
 
-  // Allow admins to bypass the guard when previewing
-  const isAdminPreview = searchParams.get('preview') === 'true' && userRole === 'admin';
+  const wantsPreview = searchParams.get('preview') === 'true';
+  const isAdminPreview = wantsPreview && userRole === 'admin';
 
-  if (isLoading) {
+  // Wait for auth + role to resolve before deciding on preview access
+  if (isLoading || (wantsPreview && (authLoading || roleLoading))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
