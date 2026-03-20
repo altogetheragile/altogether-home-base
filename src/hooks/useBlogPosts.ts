@@ -125,9 +125,10 @@ export const useBlogPosts = (options: UseBlogPostsOptions = {}) => {
   });
 };
 
-export const useBlogPost = (slug: string, { preview = false }: { preview?: boolean } = {}) => {
+export const useBlogPost = (slug: string, { preview = false, enabled = true }: { preview?: boolean; enabled?: boolean } = {}) => {
   return useQuery({
     queryKey: ['blog-post', slug, preview],
+    enabled: enabled && !!slug,
     queryFn: async (): Promise<BlogPost | null> => {
       let query = supabase
         .from('blog_posts')
@@ -168,6 +169,5 @@ export const useBlogPost = (slug: string, { preview = false }: { preview?: boole
         blog_tags: data.blog_post_tags?.map((pt: { blog_tags: { id: string; name: string; slug: string } }) => pt.blog_tags).filter(Boolean) || []
       } as unknown as BlogPost;
     },
-    enabled: !!slug,
   });
 };

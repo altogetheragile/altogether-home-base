@@ -10,17 +10,19 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const { loading: authLoading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
   const wantsPreview = searchParams.get('preview') === 'true';
   const isPreview = wantsPreview && userRole === 'admin';
-  const { data: post, isLoading } = useBlogPost(slug || '', { preview: isPreview });
-  const stillResolving = wantsPreview && roleLoading;
+  const stillResolving = wantsPreview && (authLoading || roleLoading);
+  const { data: post, isLoading } = useBlogPost(slug || '', { preview: isPreview, enabled: !stillResolving });
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
