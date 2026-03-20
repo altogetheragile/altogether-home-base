@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, LayoutDashboard, Footprints, MessageSquare, Database, ExternalLink, FileText } from 'lucide-react';
+import { Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag, FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, LayoutDashboard, Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import AccessDenied from '@/components/AccessDenied';
@@ -200,6 +200,13 @@ const AdminLayout = () => {
       paths: ['/admin/knowledge'],
       href: '/admin/knowledge',
       items: knowledgeItems
+    },
+    {
+      id: 'exams',
+      label: 'Exams',
+      icon: ClipboardList,
+      paths: ['/admin/exams'],
+      href: '/admin/exams'
     },
     {
       id: 'logs',

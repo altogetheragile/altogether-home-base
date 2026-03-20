@@ -43,6 +43,8 @@ const AccountSecurity = lazy(() => import('@/pages/AccountSecurity'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ProductBacklog = lazy(() => import('@/pages/ProductBacklog'));
 const FlowGame = lazy(() => import('@/pages/FlowGame'));
+const ExamsListing = lazy(() => import('@/pages/Exams'));
+const ExamPlayer = lazy(() => import('@/pages/ExamPlayer'));
 
 // Protected Project Pages
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
@@ -103,6 +105,10 @@ const AdminAuditLogs = lazy(() => import('@/pages/admin/AdminAuditLogs'));
 // Admin Pages - Blog Management
 const AdminBlog = lazy(() => import('@/pages/admin/AdminBlog'));
 const AdminBlogPost = lazy(() => import('@/pages/admin/AdminBlogPost'));
+
+// Admin Pages - Exam Question Bank
+const AdminExams = lazy(() => import('@/pages/admin/AdminExams'));
+const AdminExamQuestions = lazy(() => import('@/pages/admin/AdminExamQuestions'));
 
 // Admin Pages - Content Moderation & Data
 const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
@@ -240,6 +246,20 @@ export const PublicRoutes = () => {
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
           <FlowGame />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/exams" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <ExamsListing />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/exams/:examId" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <ExamPlayer />
         </Suspense>
       </ErrorBoundary>
     } />
@@ -511,6 +531,18 @@ export const AdminRoutes = () => {
           </Suspense>
         } />
         
+        {/* Exam Question Bank */}
+        <Route path="exams" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminExams />
+          </Suspense>
+        } />
+        <Route path="exams/:examId/questions" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminExamQuestions />
+          </Suspense>
+        } />
+
         {/* Data Management */}
         <Route path="imports" element={
           <Suspense fallback={<LoadingFallback />}>

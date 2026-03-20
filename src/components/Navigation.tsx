@@ -20,6 +20,7 @@ const TOP_LINKS = [
 const RESOURCE_LINKS = [
   { label: 'Knowledge Base', to: '/knowledge', flag: 'show_knowledge' as const },
   { label: 'Blog', to: '/blog', flag: 'show_blog' as const },
+  { label: 'Practice Exams', to: '/exams', flag: 'show_exams' as const },
   { label: 'AI Tools', to: '/ai-tools', flag: 'show_ai_tools' as const },
   { label: 'Flow Game', to: '/flow-game', flag: 'show_flow_game' as const },
 ];
@@ -34,6 +35,7 @@ const FLAG_DEFAULTS: Record<string, boolean> = {
   show_testimonials: true,
   show_ai_tools: false,
   show_resources: true,
+  show_exams: true,
   show_flow_game: true,
 };
 
