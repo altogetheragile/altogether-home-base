@@ -7,7 +7,6 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useBlogPosts, type BlogPost } from "@/hooks/useBlogPosts";
 import { useBlogCategories } from "@/hooks/useBlogCategories";
-import { useBlogTags } from "@/hooks/useBlogTags";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, BookOpen } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -17,16 +16,12 @@ const Blog = () => {
   const { settings } = useSiteSettings();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>("all");
-  const [selectedTag, setSelectedTag] = useState<string | undefined>("all");
   const [sortBy, setSortBy] = useState("newest");
 
   const { data: categories } = useBlogCategories();
-  const { data: popularTags } = useBlogTags(20);
-
   const { data: filteredPosts, isLoading: postsLoading } = useBlogPosts({
     search: searchQuery,
     categoryId: selectedCategory === "all" ? undefined : selectedCategory,
-    tag: selectedTag === "all" ? undefined : selectedTag,
     sortBy: sortBy,
   });
 
@@ -39,11 +34,10 @@ const Blog = () => {
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
-    setSelectedTag("all");
     setSortBy("newest");
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedTag !== "all";
+  const hasActiveFilters = searchQuery || selectedCategory !== "all";
 
   if (settings && settings.show_blog === false) {
     return (
@@ -190,30 +184,6 @@ const Blog = () => {
           )}
         </div>
 
-        {/* Tag filter pills */}
-        {popularTags && popularTags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 24 }}>
-            {popularTags.filter(t => t.usage_count > 0).map((tag) => (
-              <button
-                key={tag.id}
-                onClick={() => setSelectedTag(selectedTag === tag.slug ? "all" : tag.slug)}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 20,
-                  border: selectedTag === tag.slug ? `1px solid ${p.deepTeal}` : '1px solid #D1D5DB',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  background: selectedTag === tag.slug ? p.deepTeal : '#FFFFFF',
-                  color: selectedTag === tag.slug ? p.white : p.muted,
-                }}
-              >
-                {tag.name}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Featured posts */}
         {!hasActiveFilters && featuredPosts && featuredPosts.length > 0 && (
