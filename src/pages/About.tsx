@@ -7,6 +7,7 @@ import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { colors as p } from '@/theme/colors';
 
 // ─── Responsive CSS classes (media-query driven) ────────────────────────────
@@ -121,6 +122,7 @@ const credentials = [
 // ─── Component ──────────────────────────────────────────────────────────────
 const About: React.FC = () => {
   const isMobile = useIsMobile();
+  const { data: settings } = useSiteSettings();
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
@@ -343,12 +345,16 @@ const About: React.FC = () => {
               >
                 <Icons.Chat />Book a chemistry session
               </a>
-              <Link to="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
-                Browse Events <Icons.ArrowRight />
-              </Link>
-              <Link to="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
-                Knowledge Base <Icons.ArrowRight />
-              </Link>
+              {settings?.show_events !== false && (
+                <Link to="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
+                  Browse Events <Icons.ArrowRight />
+                </Link>
+              )}
+              {settings?.show_knowledge && (
+                <Link to="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
+                  Knowledge Base <Icons.ArrowRight />
+                </Link>
+              )}
             </div>
           </div>
           {!isMobile && (
