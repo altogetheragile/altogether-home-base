@@ -16,9 +16,11 @@ import { format } from 'date-fns';
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
-  const { data: userRole } = useUserRole();
-  const isPreview = searchParams.get('preview') === 'true' && userRole === 'admin';
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+  const wantsPreview = searchParams.get('preview') === 'true';
+  const isPreview = wantsPreview && userRole === 'admin';
   const { data: post, isLoading } = useBlogPost(slug || '', { preview: isPreview });
+  const stillResolving = wantsPreview && roleLoading;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
@@ -68,7 +70,7 @@ const BlogPost = () => {
           ← Back to Blog
         </Link>
 
-        {isLoading ? (
+        {isLoading || stillResolving ? (
           <div style={{ marginTop: 24 }}>
             <Skeleton style={{ height: 20, width: 100, marginBottom: 16, borderRadius: 20 }} />
             <Skeleton style={{ height: 44, width: '80%', marginBottom: 12 }} />
