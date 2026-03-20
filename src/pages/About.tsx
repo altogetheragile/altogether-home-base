@@ -122,7 +122,7 @@ const credentials = [
 // ─── Component ──────────────────────────────────────────────────────────────
 const About: React.FC = () => {
   const isMobile = useIsMobile();
-  const { data: settings } = useSiteSettings();
+  const { settings } = useSiteSettings();
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
