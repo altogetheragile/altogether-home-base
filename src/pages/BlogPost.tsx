@@ -53,6 +53,7 @@ const BlogPost = () => {
         </>
       )}
       <Navigation />
+      <style>{blogHtmlStyles}</style>
 
       <div style={{ flex: 1, maxWidth: 760, margin: '0 auto', padding: '40px 24px 64px', width: '100%' }}>
         {/* Back link */}
@@ -135,7 +136,7 @@ const BlogPost = () => {
             {/* Body */}
             {post.content && (
               isHtml(post.content) ? (
-                <div style={bodyWrapperStyle} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content, { ADD_TAGS: ['style'], ADD_ATTR: ['style'], FORCE_BODY: true }) }} />
+                <div className="blog-html-body" style={bodyWrapperStyle} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content, { ADD_TAGS: ['style'], ADD_ATTR: ['style'], FORCE_BODY: true }) }} />
               ) : (
                 <div style={bodyWrapperStyle}>
                   <ReactMarkdown
@@ -256,5 +257,23 @@ const bodyWrapperStyle: React.CSSProperties = {
   fontSize: 16,
   lineHeight: 1.8,
 };
+
+/* Styles for HTML blog post content — mirrors the Markdown component styles */
+const blogHtmlStyles = `
+.blog-html-body h1 { color: ${p.deepTeal}; font-size: 28px; font-weight: 800; margin: 2.5rem 0 0.75rem; line-height: 1.2; }
+.blog-html-body h2 { color: ${p.deepTeal}; font-size: 24px; font-weight: 700; margin: 2.5rem 0 0.75rem; line-height: 1.3; }
+.blog-html-body h3 { color: #006666; font-size: 20px; font-weight: 700; margin: 2rem 0 0.625rem; }
+.blog-html-body p { color: ${p.body}; font-size: 16px; line-height: 1.8; margin-bottom: 16px; }
+.blog-html-body strong { color: ${p.deepTeal}; font-weight: 700; }
+.blog-html-body a { color: ${p.midTeal}; font-weight: 600; text-decoration: underline; }
+.blog-html-body ul, .blog-html-body ol { color: ${p.body}; font-size: 16px; line-height: 1.8; padding-left: 24px; margin-bottom: 16px; }
+.blog-html-body li { margin-bottom: 4px; }
+.blog-html-body blockquote { border-left: 3px solid ${p.orange}; padding-left: 16px; margin: 24px 0; color: #006666; font-style: italic; }
+.blog-html-body code { background: ${p.skyTeal}; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+.blog-html-body img { max-width: 100%; border-radius: 10px; margin: 16px 0; }
+.blog-html-body hr { border: none; border-top: 1px solid ${p.paleTeal}; margin: 2.5rem 0; }
+.blog-html-body table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
+.blog-html-body table td, .blog-html-body table th { padding: 8px 0; vertical-align: top; }
+`;
 
 export default BlogPost;
