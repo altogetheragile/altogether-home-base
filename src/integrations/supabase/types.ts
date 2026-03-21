@@ -3012,6 +3012,9 @@ export type Database = {
           option_b: string
           option_c: string
           option_d: string
+          option_e: string
+          option_f: string
+          option_g: string
           question_text: string
           reference: string | null
           sort_order: number | null
@@ -3028,6 +3031,9 @@ export type Database = {
           option_b: string
           option_c: string
           option_d: string
+          option_e?: string
+          option_f?: string
+          option_g?: string
           question_text: string
           reference?: string | null
           sort_order?: number | null
@@ -3044,6 +3050,9 @@ export type Database = {
           option_b?: string
           option_c?: string
           option_d?: string
+          option_e?: string
+          option_f?: string
+          option_g?: string
           question_text?: string
           reference?: string | null
           sort_order?: number | null
@@ -3116,6 +3125,7 @@ export type Database = {
           show_dashboard: boolean | null
           show_dynamic_pages: boolean | null
           show_events: boolean | null
+          show_exams: boolean | null
           show_flow_game: boolean | null
           show_knowledge: boolean | null
           show_protected_projects: boolean | null
@@ -3153,6 +3163,7 @@ export type Database = {
           show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
           show_events?: boolean | null
+          show_exams?: boolean | null
           show_flow_game?: boolean | null
           show_knowledge?: boolean | null
           show_protected_projects?: boolean | null
@@ -3190,6 +3201,7 @@ export type Database = {
           show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
           show_events?: boolean | null
+          show_exams?: boolean | null
           show_flow_game?: boolean | null
           show_knowledge?: boolean | null
           show_protected_projects?: boolean | null
