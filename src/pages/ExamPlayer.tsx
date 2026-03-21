@@ -210,7 +210,10 @@ const ExamPlayer = () => {
     if (isMulti) {
       // Toggle selection for multi-answer questions
       if (mode === 'exam' && practiceRevealed) return;
-      const next = current.includes(letter)
+      const maxSelections = q.correct_answer.split(',').length;
+      const isDeselecting = current.includes(letter);
+      if (!isDeselecting && current.length >= maxSelections) return;
+      const next = isDeselecting
         ? current.filter((l) => l !== letter)
         : [...current, letter].sort();
       setAnswers((prev) => ({
