@@ -30,6 +30,9 @@ interface Question {
   option_b: string;
   option_c: string;
   option_d: string;
+  option_e: string;
+  option_f: string;
+  option_g: string;
   correct_answer: string;
   reference: string | null;
   sort_order: number | null;
@@ -67,7 +70,7 @@ const usePublicQuestions = (examId: string | undefined, enabled: boolean) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, area, question_text, option_a, option_b, option_c, option_d, correct_answer, reference, sort_order')
+        .select('id, area, question_text, option_a, option_b, option_c, option_d, option_e, option_f, option_g, correct_answer, reference, sort_order')
         .eq('exam_id', examId!)
         .eq('status', 'published')
         .order('sort_order', { ascending: true, nullsFirst: false })
@@ -429,6 +432,9 @@ const ExamPlayer = () => {
       { letter: 'B', text: q.option_b },
       { letter: 'C', text: q.option_c },
       { letter: 'D', text: q.option_d },
+      { letter: 'E', text: q.option_e },
+      { letter: 'F', text: q.option_f },
+      { letter: 'G', text: q.option_g },
     ].filter((o) => o.text.trim() !== '');
 
     const isMulti = q.correct_answer.includes(',');
@@ -778,6 +784,9 @@ const ExamPlayer = () => {
                       { letter: 'B', text: q.option_b },
                       { letter: 'C', text: q.option_c },
                       { letter: 'D', text: q.option_d },
+                      { letter: 'E', text: q.option_e },
+                      { letter: 'F', text: q.option_f },
+                      { letter: 'G', text: q.option_g },
                     ].filter((o) => o.text.trim() !== '').map(({ letter, text }) => {
                       const isThisCorrect = qCorrectLetters.includes(letter);
                       const wasSelected = a?.selected.includes(letter);

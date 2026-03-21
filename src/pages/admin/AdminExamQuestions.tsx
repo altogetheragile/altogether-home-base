@@ -39,6 +39,8 @@ interface QuestionFormProps {
   onSubmitEdit: (data: Record<string, unknown>) => Promise<void>;
 }
 
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
+
 const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmitCreate, onSubmitEdit }: QuestionFormProps) => {
   const [form, setForm] = useState({
     area: editingQuestion?.area || '',
@@ -47,6 +49,9 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
     option_b: editingQuestion?.option_b || '',
     option_c: editingQuestion?.option_c || '',
     option_d: editingQuestion?.option_d || '',
+    option_e: editingQuestion?.option_e || '',
+    option_f: editingQuestion?.option_f || '',
+    option_g: editingQuestion?.option_g || '',
     correct_answer: editingQuestion?.correct_answer || 'A',
     reference: editingQuestion?.reference || '',
     status: editingQuestion?.status || 'published',
@@ -54,6 +59,14 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
   const [submitting, setSubmitting] = useState(false);
 
   const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
+
+  // Show options A-D always, E-G only if they have content or the previous one does
+  const visibleOptions = OPTION_LETTERS.filter((letter, i) => {
+    if (i < 4) return true; // A-D always visible
+    const key = `option_${letter.toLowerCase()}` as keyof typeof form;
+    const prevKey = `option_${OPTION_LETTERS[i - 1].toLowerCase()}` as keyof typeof form;
+    return form[key] !== '' || form[prevKey] !== '';
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,21 +105,22 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
         <Textarea value={form.question_text} onChange={(e) => update('question_text', e.target.value)} required rows={3} />
       </div>
 
-      {(['A', 'B', 'C', 'D'] as const).map((letter) => (
+      {visibleOptions.map((letter, i) => (
         <div key={letter}>
           <Label>Option {letter}</Label>
           <Input
             value={form[`option_${letter.toLowerCase()}` as keyof typeof form]}
             onChange={(e) => update(`option_${letter.toLowerCase()}`, e.target.value)}
-            required
+            required={i < 2}
+            placeholder={i >= 4 ? '(optional)' : undefined}
           />
         </div>
       ))}
 
       <div>
         <Label>Correct Answer(s)</Label>
-        <div className="flex gap-4 mt-1">
-          {['A', 'B', 'C', 'D'].map((letter) => {
+        <div className="flex gap-4 mt-1 flex-wrap">
+          {visibleOptions.map((letter) => {
             const selected = form.correct_answer.split(',').filter(Boolean);
             const isChecked = selected.includes(letter);
             return (
@@ -166,27 +180,47 @@ interface ParsedQuestion {
   option_b: string;
   option_c: string;
   option_d: string;
+  option_e: string;
+  option_f: string;
+  option_g: string;
   correct_answer: string;
   reference: string;
   status: string;
 }
 
+function emptyQuestion(): Omit<ParsedQuestion, 'area' | 'question_text' | 'reference' | 'status'> {
+  return { option_a: '', option_b: '', option_c: '', option_d: '', option_e: '', option_f: '', option_g: '', correct_answer: '' };
+}
+
+function pushIfValid(questions: ParsedQuestion[], current: Partial<ParsedQuestion> | null) {
+  if (current && current.question_text && current.option_a && current.correct_answer) {
+    questions.push({
+      area: current.area || '',
+      question_text: current.question_text || '',
+      ...emptyQuestion(),
+      ...current,
+      reference: current.reference || '',
+      status: 'published',
+    } as ParsedQuestion);
+  }
+}
+
 function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuestion[] {
   const questions: ParsedQuestion[] = [];
   let current: Partial<ParsedQuestion> | null = null;
-  let optionCount = 0;
+  const correctAnswers: string[] = [];
 
   for (const row of rows) {
-    const colA = String(row[0] || '').trim();  // area
-    const colB = String(row[1] || '').trim();  // question number
-    const colC = String(row[2] || '').trim();  // question text or option
-    const colE = String(row[4] || '').trim().toLowerCase();  // 'x' = correct
-    const colF = String(row[5] || '').trim();  // reference
+    const colA = String(row[0] || '').trim();
+    const colB = String(row[1] || '').trim();
+    const colC = String(row[2] || '').trim();
+    const colE = String(row[4] || '').trim().toLowerCase();
+    const colF = String(row[5] || '').trim();
 
     if (!colC) continue;
 
-    // Detect option lines: starts with a) b) c) d)
-    const optionMatch = colC.match(/^([abcd])\)\s*(.*)/i);
+    // Detect option lines: a) through g)
+    const optionMatch = colC.match(/^([a-g])\)\s*(.*)/i);
 
     if (optionMatch) {
       if (!current) continue;
@@ -194,79 +228,38 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
       const text = optionMatch[2].trim();
       const key = `option_${letter}` as keyof ParsedQuestion;
       (current as Record<string, string>)[key] = text;
-      optionCount++;
 
       if (colE === 'x') {
-        const prev = current.correct_answer ? current.correct_answer + ',' : '';
-        current.correct_answer = prev + letter.toUpperCase();
+        correctAnswers.push(letter.toUpperCase());
       }
 
       if (colF) {
         current.reference = colF;
       }
-
-      // After option d, push the question
-      if (letter === 'd' || optionCount === 4) {
-        if (current.question_text && current.option_a && current.correct_answer) {
-          questions.push({
-            area: current.area || '',
-            question_text: current.question_text || '',
-            option_a: current.option_a || '',
-            option_b: current.option_b || '',
-            option_c: current.option_c || '',
-            option_d: current.option_d || '',
-            correct_answer: current.correct_answer || 'A',
-            reference: current.reference || '',
-            status: 'published',
-          });
-        }
-        current = null;
-        optionCount = 0;
-      }
-    } else if (colB || (!optionMatch && colC && !colC.match(/^[abcd]\)/i))) {
-      // New question line
+    } else {
+      // New question line — flush previous
       const prevArea: string = current?.area ?? '';
-      if (current && current.question_text && current.option_a && current.correct_answer) {
-        questions.push({
-          area: current.area || '',
-          question_text: current.question_text || '',
-          option_a: current.option_a || '',
-          option_b: current.option_b || '',
-          option_c: current.option_c || '',
-          option_d: current.option_d || '',
-          correct_answer: current.correct_answer || 'A',
-          reference: current.reference || '',
-          status: 'published',
-        });
+      if (current) {
+        current.correct_answer = correctAnswers.join(',');
+        pushIfValid(questions, current);
       }
+      correctAnswers.length = 0;
       current = {
         area: colA || prevArea,
         question_text: colC,
-        option_a: '',
-        option_b: '',
-        option_c: '',
-        option_d: '',
+        ...emptyQuestion(),
         correct_answer: '',
         reference: colF || '',
         status: 'published',
       };
-      optionCount = 0;
+      // "Multi" in colE on the question row is just a marker — no action needed
     }
   }
 
-  // Push last question if pending
-  if (current && current.question_text && current.option_a && current.correct_answer) {
-    questions.push({
-      area: current.area || '',
-      question_text: current.question_text || '',
-      option_a: current.option_a || '',
-      option_b: current.option_b || '',
-      option_c: current.option_c || '',
-      option_d: current.option_d || '',
-      correct_answer: current.correct_answer || 'A',
-      reference: current.reference || '',
-      status: 'published',
-    });
+  // Flush last question
+  if (current) {
+    current.correct_answer = correctAnswers.join(',');
+    pushIfValid(questions, current);
   }
 
   return questions;

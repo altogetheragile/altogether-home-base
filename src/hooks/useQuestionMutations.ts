@@ -15,6 +15,9 @@ interface QuestionData {
   option_b: string;
   option_c: string;
   option_d: string;
+  option_e: string;
+  option_f: string;
+  option_g: string;
   correct_answer: string;
   reference?: string;
   status: string;
