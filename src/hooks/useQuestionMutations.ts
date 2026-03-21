@@ -87,7 +87,7 @@ export const useBulkImportQuestions = (examId: string) => {
       const rows = questions.map((q) => ({ ...q, exam_id: examId }));
       // Insert in batches of 50 to avoid payload size limits
       const BATCH_SIZE = 50;
-      const allData: typeof rows = [];
+      const allData: Record<string, unknown>[] = [];
       for (let i = 0; i < rows.length; i += BATCH_SIZE) {
         const batch = rows.slice(i, i + BATCH_SIZE);
         const { data, error } = await supabase
