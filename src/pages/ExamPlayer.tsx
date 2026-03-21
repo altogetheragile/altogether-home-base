@@ -429,7 +429,7 @@ const ExamPlayer = () => {
       { letter: 'B', text: q.option_b },
       { letter: 'C', text: q.option_c },
       { letter: 'D', text: q.option_d },
-    ];
+    ].filter((o) => o.text.trim() !== '');
 
     const isMulti = q.correct_answer.includes(',');
     const correctLetters = q.correct_answer.split(',');
@@ -778,7 +778,7 @@ const ExamPlayer = () => {
                       { letter: 'B', text: q.option_b },
                       { letter: 'C', text: q.option_c },
                       { letter: 'D', text: q.option_d },
-                    ].map(({ letter, text }) => {
+                    ].filter((o) => o.text.trim() !== '').map(({ letter, text }) => {
                       const isThisCorrect = qCorrectLetters.includes(letter);
                       const wasSelected = a?.selected.includes(letter);
                       let bg: string = '#FAFAFA';
