@@ -101,10 +101,11 @@ export const useBulkImportQuestions = (examId: string) => {
       queryClient.invalidateQueries({ queryKey: ['question-areas', examId] });
       queryClient.invalidateQueries({ queryKey: ['exams'] });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error('Bulk import error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to import questions',
+        description: `Failed to import questions: ${error.message}`,
         variant: 'destructive',
       });
     },
