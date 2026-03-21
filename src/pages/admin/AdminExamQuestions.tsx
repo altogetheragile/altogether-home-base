@@ -212,7 +212,6 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
 
   for (const row of rows) {
     const colA = String(row[0] || '').trim();
-    const colB = String(row[1] || '').trim();
     const colC = String(row[2] || '').trim();
     const colE = String(row[4] || '').trim().toLowerCase();
     const colF = String(row[5] || '').trim();
