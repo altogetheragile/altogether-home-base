@@ -22,6 +22,7 @@ export default function AdminSettings() {
     show_dashboard: settings?.show_dashboard ?? true,
     show_resources: settings?.show_resources ?? true,
     show_flow_game: settings?.show_flow_game ?? true,
+    show_exams: settings?.show_exams ?? true,
     show_admin_routes: settings?.show_admin_routes ?? true,
     show_protected_projects: settings?.show_protected_projects ?? true,
     show_dynamic_pages: settings?.show_dynamic_pages ?? true,
@@ -43,6 +44,7 @@ export default function AdminSettings() {
         show_dashboard: settings.show_dashboard ?? true,
         show_resources: settings.show_resources ?? true,
         show_flow_game: settings.show_flow_game ?? true,
+        show_exams: settings.show_exams ?? true,
         show_admin_routes: settings.show_admin_routes ?? true,
         show_protected_projects: settings.show_protected_projects ?? true,
         show_dynamic_pages: settings.show_dynamic_pages ?? true,
@@ -246,6 +248,20 @@ export default function AdminSettings() {
               id="show_flow_game"
               checked={localSettings.show_flow_game}
               onCheckedChange={() => handleToggle('show_flow_game')}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_exams" className="text-base font-medium">Practice Exams</Label>
+              <p className="text-sm text-muted-foreground">Show the Practice Exams page in the Resources dropdown</p>
+            </div>
+            <Switch
+              id="show_exams"
+              checked={localSettings.show_exams}
+              onCheckedChange={() => handleToggle('show_exams')}
             />
           </div>
         </CardContent>

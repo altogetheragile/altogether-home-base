@@ -7,7 +7,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 interface SiteSettingsRouteGuardProps {
-  feature: 'events' | 'blog' | 'knowledge';
+  feature: 'events' | 'blog' | 'knowledge' | 'exams';
   children: React.ReactNode;
 }
 

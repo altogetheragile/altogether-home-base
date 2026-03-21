@@ -39,8 +39,12 @@ const Exams = () => {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
       <Helmet>
         <title>Practice Exams — Altogether Agile</title>
-        <meta name="description" content="Test your agile knowledge with timed practice exams and revision mode." />
+        <meta name="description" content="Test your agile knowledge with timed practice exams and revision mode. Prepare for Scrum, Kanban, and agile certifications." />
         <link rel="canonical" href={`${SITE_URL}/exams`} />
+        <meta property="og:title" content="Practice Exams — Altogether Agile" />
+        <meta property="og:description" content="Test your agile knowledge with timed practice exams and revision mode. Prepare for Scrum, Kanban, and agile certifications." />
+        <meta property="og:url" content={`${SITE_URL}/exams`} />
+        <meta property="og:type" content="website" />
       </Helmet>
       <Navigation />
 

@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Clock, Flag, ChevronLeft, ChevronRight, SkipForward, CheckCircle2,
   XCircle, ArrowLeft, RotateCcw, BookOpen, Timer, AlertCircle,
@@ -38,7 +39,7 @@ type Mode = 'exam' | 'practice';
 type Phase = 'start' | 'playing' | 'review';
 
 interface Answer {
-  selected: string | null;
+  selected: string[];
   flagged: boolean;
 }
 
@@ -122,6 +123,7 @@ function shuffle<T>(arr: T[]): T[] {
 /* ─── Main component ─── */
 const ExamPlayer = () => {
   const { examId } = useParams<{ examId: string }>();
+  const { user } = useAuth();
   const { data: exam, isLoading: examLoading, error: examError } = usePublicExam(examId);
 
   const [phase, setPhase] = useState<Phase>('start');
@@ -142,15 +144,42 @@ const ExamPlayer = () => {
       const limited = exam ? shuffled.slice(0, exam.total_questions) : shuffled;
       setQuestions(limited);
       const initialAnswers: Record<number, Answer> = {};
-      limited.forEach((_, i) => { initialAnswers[i] = { selected: null, flagged: false }; });
+      limited.forEach((_, i) => { initialAnswers[i] = { selected: [], flagged: false }; });
       setAnswers(initialAnswers);
     }
   }, [rawQuestions, exam, questions.length]);
 
+  const saveAttempt = useCallback(async () => {
+    if (!user || !exam) return;
+    let correct = 0;
+    questions.forEach((q, i) => {
+      const a = answers[i];
+      const correctSet = q.correct_answer.split(',').sort().join(',');
+      const selectedSet = a ? [...a.selected].sort().join(',') : '';
+      if (correctSet === selectedSet) correct++;
+    });
+    const passed = correct >= exam.pass_mark;
+    try {
+      await supabase.from('exam_attempts').insert({
+        exam_id: exam.id,
+        user_id: user.id,
+        score: correct,
+        passed,
+        answers: Object.fromEntries(
+          questions.map((q, i) => [q.id, { selected: answers[i]?.selected ?? [], correct: q.correct_answer }])
+        ),
+        completed_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Failed to save exam attempt:', err);
+    }
+  }, [user, exam, questions, answers, mode]);
+
   const handleExpire = useCallback(() => {
     setTimerRunning(false);
     setPhase('review');
-  }, []);
+    saveAttempt();
+  }, [saveAttempt]);
 
   const { formatted: timeLeft, urgent: timeUrgent } = useCountdown(
     (exam?.duration_minutes ?? 40) * 60,
@@ -170,13 +199,35 @@ const ExamPlayer = () => {
   };
 
   const selectAnswer = (letter: string) => {
-    if (mode === 'exam' && answers[currentIdx]?.selected) return; // no re-answer in exam
     if (mode === 'practice' && practiceRevealed) return;
-    setAnswers((prev) => ({
-      ...prev,
-      [currentIdx]: { ...prev[currentIdx], selected: letter },
-    }));
-    if (mode === 'practice') setPracticeRevealed(true);
+    const q = questions[currentIdx];
+    const isMulti = q?.correct_answer.includes(',');
+    const current = answers[currentIdx]?.selected || [];
+
+    if (isMulti) {
+      // Toggle selection for multi-answer questions
+      if (mode === 'exam' && practiceRevealed) return;
+      const next = current.includes(letter)
+        ? current.filter((l) => l !== letter)
+        : [...current, letter].sort();
+      setAnswers((prev) => ({
+        ...prev,
+        [currentIdx]: { ...prev[currentIdx], selected: next },
+      }));
+    } else {
+      // Single answer — lock after first selection in exam mode
+      if (mode === 'exam' && current.length > 0) return;
+      setAnswers((prev) => ({
+        ...prev,
+        [currentIdx]: { ...prev[currentIdx], selected: [letter] },
+      }));
+      if (mode === 'practice') setPracticeRevealed(true);
+    }
+  };
+
+  // For multi-answer practice: explicit confirm button
+  const confirmMultiAnswer = () => {
+    setPracticeRevealed(true);
   };
 
   const toggleFlag = () => {
@@ -197,7 +248,7 @@ const ExamPlayer = () => {
   const goNextUnanswered = () => {
     for (let i = 1; i <= questions.length; i++) {
       const idx = (currentIdx + i) % questions.length;
-      if (!answers[idx]?.selected) { goTo(idx); return; }
+      if (!answers[idx]?.selected.length) { goTo(idx); return; }
     }
   };
 
@@ -211,6 +262,7 @@ const ExamPlayer = () => {
   const finishExam = () => {
     setTimerRunning(false);
     setPhase('review');
+    saveAttempt();
   };
 
   const retake = () => {
@@ -225,8 +277,15 @@ const ExamPlayer = () => {
 
   /* ─── Computed stats ─── */
   const totalQ = questions.length;
-  const answeredCount = Object.values(answers).filter((a) => a.selected).length;
+  const answeredCount = Object.values(answers).filter((a) => a.selected.length > 0).length;
   const flaggedCount = Object.values(answers).filter((a) => a.flagged).length;
+
+  const isCorrectAnswer = (q: Question, a: Answer | undefined): boolean => {
+    if (!a || a.selected.length === 0) return false;
+    const correctSet = q.correct_answer.split(',').sort().join(',');
+    const selectedSet = [...a.selected].sort().join(',');
+    return correctSet === selectedSet;
+  };
 
   const computeResults = () => {
     let correct = 0;
@@ -234,8 +293,8 @@ const ExamPlayer = () => {
     let unanswered = 0;
     questions.forEach((q, i) => {
       const a = answers[i];
-      if (!a?.selected) { unanswered++; }
-      else if (a.selected === q.correct_answer) { correct++; }
+      if (!a || a.selected.length === 0) { unanswered++; }
+      else if (isCorrectAnswer(q, a)) { correct++; }
       else { incorrect++; }
     });
     const passed = exam ? correct >= exam.pass_mark : false;
@@ -372,9 +431,12 @@ const ExamPlayer = () => {
       { letter: 'D', text: q.option_d },
     ];
 
+    const isMulti = q.correct_answer.includes(',');
+    const correctLetters = q.correct_answer.split(',');
+
     const getOptionStyle = (letter: string): React.CSSProperties => {
-      const isSelected = currentAnswer?.selected === letter;
-      const isCorrect = letter === q.correct_answer;
+      const isSelected = currentAnswer?.selected.includes(letter);
+      const isCorrect = correctLetters.includes(letter);
       const showResult = mode === 'practice' && practiceRevealed;
 
       if (showResult && isCorrect) {
@@ -445,24 +507,31 @@ const ExamPlayer = () => {
                   {q.question_text}
                 </p>
 
+                {isMulti && (
+                  <p style={{ fontSize: 13, color: p.midTeal, fontWeight: 600, marginBottom: 12, fontStyle: 'italic' }}>
+                    Select {correctLetters.length} answers
+                  </p>
+                )}
+
                 {/* Options */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {options.map(({ letter, text }) => {
                     const optStyle = getOptionStyle(letter);
                     const showResult = mode === 'practice' && practiceRevealed;
-                    const isCorrect = letter === q.correct_answer;
-                    const isSelected = currentAnswer?.selected === letter;
+                    const isCorrect = correctLetters.includes(letter);
+                    const isSelected = currentAnswer?.selected.includes(letter);
+                    const singleLocked = !isMulti && mode === 'exam' && currentAnswer?.selected.length > 0;
                     return (
                       <button
                         key={letter}
                         onClick={() => selectAnswer(letter)}
-                        disabled={mode === 'exam' && !!currentAnswer?.selected && currentAnswer.selected !== letter}
+                        disabled={singleLocked && !isSelected}
                         style={{
                           display: 'flex', alignItems: 'flex-start', gap: 12,
                           padding: '14px 16px', borderRadius: 10,
                           border: `2px solid ${optStyle.borderColor}`,
                           background: optStyle.background, color: optStyle.color,
-                          cursor: (showResult || (mode === 'exam' && currentAnswer?.selected)) ? 'default' : 'pointer',
+                          cursor: (showResult || singleLocked) ? 'default' : 'pointer',
                           fontFamily: 'inherit', fontSize: 15, textAlign: 'left',
                           transition: 'border-color 0.15s, background 0.15s',
                           width: '100%',
@@ -470,7 +539,7 @@ const ExamPlayer = () => {
                         }}
                       >
                         <span style={{
-                          flexShrink: 0, width: 28, height: 28, borderRadius: '50%',
+                          flexShrink: 0, width: 28, height: 28, borderRadius: isMulti ? 6 : '50%',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 13, fontWeight: 700,
                           background: isSelected ? (showResult ? (isCorrect ? '#10B981' : '#EF4444') : p.deepTeal) : '#F3F4F6',
@@ -489,6 +558,20 @@ const ExamPlayer = () => {
                     );
                   })}
                 </div>
+
+                {/* Confirm button for multi-answer in practice mode */}
+                {isMulti && mode === 'practice' && !practiceRevealed && currentAnswer?.selected.length > 0 && (
+                  <button
+                    onClick={confirmMultiAnswer}
+                    style={{
+                      marginTop: 12, padding: '8px 20px', borderRadius: 8, border: 'none',
+                      background: p.deepTeal, color: '#fff', fontWeight: 700, fontSize: 14,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Confirm Answer
+                  </button>
+                )}
 
                 {/* Practice mode reference */}
                 {mode === 'practice' && practiceRevealed && q.reference && (
@@ -547,9 +630,9 @@ const ExamPlayer = () => {
                     let bg: string = '#F3F4F6';
                     let color: string = p.muted;
                     let border: string = 'transparent';
-                    if (a?.flagged && a?.selected) { bg = '#FEF3C7'; color = '#92400E'; }
+                    if (a?.flagged && a?.selected.length) { bg = '#FEF3C7'; color = '#92400E'; }
                     else if (a?.flagged) { bg = '#FFFBEB'; color = '#B45309'; }
-                    else if (a?.selected) { bg = p.paleTeal; color = p.deepTeal; }
+                    else if (a?.selected.length) { bg = p.paleTeal; color = p.deepTeal; }
                     if (isCurrent) { border = p.deepTeal; }
                     return (
                       <button
@@ -656,26 +739,32 @@ const ExamPlayer = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {questions.map((q, i) => {
             const a = answers[i];
-            const isCorrect = a?.selected === q.correct_answer;
-            const wasAnswered = !!a?.selected;
+            const qCorrectAnswer = isCorrectAnswer(q, a);
+            const wasAnswered = (a?.selected.length ?? 0) > 0;
+            const qCorrectLetters = q.correct_answer.split(',');
 
             return (
               <div key={q.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
                 {/* Status bar */}
                 <div style={{
                   height: 4,
-                  background: wasAnswered ? (isCorrect ? '#10B981' : '#EF4444') : '#D1D5DB',
+                  background: wasAnswered ? (qCorrectAnswer ? '#10B981' : '#EF4444') : '#D1D5DB',
                 }} />
                 <div style={{ padding: '16px 20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: p.muted }}>Q{i + 1}</span>
                     <span style={{
                       fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 12,
-                      background: wasAnswered ? (isCorrect ? '#ECFDF5' : '#FEF2F2') : '#F3F4F6',
-                      color: wasAnswered ? (isCorrect ? '#065F46' : '#991B1B') : '#6B7280',
+                      background: wasAnswered ? (qCorrectAnswer ? '#ECFDF5' : '#FEF2F2') : '#F3F4F6',
+                      color: wasAnswered ? (qCorrectAnswer ? '#065F46' : '#991B1B') : '#6B7280',
                     }}>
-                      {wasAnswered ? (isCorrect ? 'CORRECT' : 'INCORRECT') : 'UNANSWERED'}
+                      {wasAnswered ? (qCorrectAnswer ? 'CORRECT' : 'INCORRECT') : 'UNANSWERED'}
                     </span>
+                    {qCorrectLetters.length > 1 && (
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: '#EFF6FF', color: '#1D4ED8' }}>
+                        MULTI
+                      </span>
+                    )}
                     <span style={{ fontSize: 11, color: p.muted, marginLeft: 'auto' }}>{q.area}</span>
                   </div>
                   <p style={{ color: p.deepTeal, fontSize: 15, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px' }}>
@@ -690,8 +779,8 @@ const ExamPlayer = () => {
                       { letter: 'C', text: q.option_c },
                       { letter: 'D', text: q.option_d },
                     ].map(({ letter, text }) => {
-                      const isThisCorrect = letter === q.correct_answer;
-                      const wasSelected = a?.selected === letter;
+                      const isThisCorrect = qCorrectLetters.includes(letter);
+                      const wasSelected = a?.selected.includes(letter);
                       let bg: string = '#FAFAFA';
                       let borderCol: string = '#E5E7EB';
                       let textColor: string = p.body;

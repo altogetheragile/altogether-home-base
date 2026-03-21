@@ -104,22 +104,32 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
       ))}
 
       <div>
-        <Label>Correct Answer</Label>
+        <Label>Correct Answer(s)</Label>
         <div className="flex gap-4 mt-1">
-          {['A', 'B', 'C', 'D'].map((letter) => (
-            <label key={letter} className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="radio"
-                name="correct_answer"
-                value={letter}
-                checked={form.correct_answer === letter}
-                onChange={() => update('correct_answer', letter)}
-                className="accent-primary"
-              />
-              <span className="text-sm font-medium">{letter}</span>
-            </label>
-          ))}
+          {['A', 'B', 'C', 'D'].map((letter) => {
+            const selected = form.correct_answer.split(',').filter(Boolean);
+            const isChecked = selected.includes(letter);
+            return (
+              <label key={letter} className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => {
+                    const next = isChecked
+                      ? selected.filter((l) => l !== letter)
+                      : [...selected, letter].sort();
+                    update('correct_answer', next.join(','));
+                  }}
+                  className="accent-primary"
+                />
+                <span className="text-sm font-medium">{letter}</span>
+              </label>
+            );
+          })}
         </div>
+        {form.correct_answer.includes(',') && (
+          <p className="text-xs text-muted-foreground mt-1">Multiple answers selected — player will use checkboxes</p>
+        )}
       </div>
 
       <div>
@@ -187,7 +197,8 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
       optionCount++;
 
       if (colE === 'x') {
-        current.correct_answer = letter.toUpperCase();
+        const prev = current.correct_answer ? current.correct_answer + ',' : '';
+        current.correct_answer = prev + letter.toUpperCase();
       }
 
       if (colF) {

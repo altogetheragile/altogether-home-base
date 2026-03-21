@@ -250,18 +250,22 @@ export const PublicRoutes = () => {
       </ErrorBoundary>
     } />
     <Route path="/exams" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ExamsListing />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="exams">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ExamsListing />
+          </Suspense>
+        </ErrorBoundary>
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/exams/:examId" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ExamPlayer />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="exams">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ExamPlayer />
+          </Suspense>
+        </ErrorBoundary>
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/backlog" element={
       <Suspense fallback={<LoadingFallback />}>
