@@ -85,12 +85,22 @@ export const useBulkImportQuestions = (examId: string) => {
   return useMutation({
     mutationFn: async (questions: Omit<QuestionData, 'exam_id'>[]) => {
       const rows = questions.map((q) => ({ ...q, exam_id: examId }));
-      const { data, error } = await supabase
-        .from('questions')
-        .insert(rows)
-        .select();
-      if (error) throw error;
-      return data;
+      // Insert in batches of 50 to avoid payload size limits
+      const BATCH_SIZE = 50;
+      const allData: typeof rows = [];
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        const { data, error } = await supabase
+          .from('questions')
+          .insert(batch)
+          .select();
+        if (error) {
+          console.error('Supabase insert error (batch ' + Math.floor(i / BATCH_SIZE) + '):', JSON.stringify(error));
+          throw error;
+        }
+        if (data) allData.push(...data);
+      }
+      return allData;
     },
     onSuccess: (data) => {
       toast({
