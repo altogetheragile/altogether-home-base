@@ -49,7 +49,6 @@
     { "source": "/xmlrpc.php", "destination": "/", "statusCode": 301 },
     { "source": "/wp-login.php", "destination": "/", "statusCode": 301 },
     { "source": "/wp-signup.php", "destination": "/", "statusCode": 301 },
-    { "source": "/?p=:id", "destination": "/", "statusCode": 301 },
     { "source": "/category/:path*", "destination": "/blog", "statusCode": 301 },
     { "source": "/tag/:path*", "destination": "/blog", "statusCode": 301 },
     { "source": "/author/:path*", "destination": "/about", "statusCode": 301 },
