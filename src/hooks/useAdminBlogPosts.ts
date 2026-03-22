@@ -68,6 +68,8 @@ export const useAdminBlogPost = (id: string) => {
       return data as unknown as BlogPost;
     },
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 };
 
@@ -124,8 +126,9 @@ export const useBlogPostMutations = () => {
       if (error) throw error;
       return post;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       invalidateAll();
+      queryClient.invalidateQueries({ queryKey: ['admin-blog-post', data.id] });
       toast({ title: 'Success', description: 'Blog post updated successfully' });
     },
     onError: (error: Error) => {
