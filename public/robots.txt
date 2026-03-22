@@ -19,4 +19,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /auth/
 
-Sitemap: https://altogetheragile.com/sitemap.xml
+Sitemap: https://www.altogetheragile.com/sitemap.xml

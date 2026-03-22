@@ -8,7 +8,7 @@
 /**
  * Canonical site URL used for SEO canonical link tags.
  */
-export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://altogetheragile.com';
+export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://www.altogetheragile.com';
 
 /**
  * Shared booking and contact constants.

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const SITE_URL = 'https://altogetheragile.com';
+const SITE_URL = 'https://www.altogetheragile.com';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
