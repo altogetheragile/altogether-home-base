@@ -1,10 +1,13 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import { SITE_URL } from '@/config/featureFlags';
 import { usePage } from '@/hooks/usePages';
 import { ContentBlockRenderer } from './pageEditor/ContentBlockRenderer';
 import { BlockErrorBoundary } from './blocks/BlockErrorBoundary';
 import Navigation from './Navigation';
 import Footer from './Footer';
+import NotFound from '@/pages/NotFound';
 import { useUserRole } from '@/hooks/useUserRole';
 
 // Reusable loading state component
@@ -13,20 +16,6 @@ const LoadingState = () => (
     <Navigation />
     <div id="main-content" className="flex-1 flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-    <Footer />
-  </div>
-);
-
-// Reusable page not found component
-const PageNotFoundState = () => (
-  <div className="min-h-screen flex flex-col bg-background">
-    <Navigation />
-    <div id="main-content" className="flex-1 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
-        <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
-      </div>
     </div>
     <Footer />
   </div>
@@ -52,22 +41,33 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
 
   // Page doesn't exist
   if (!page) {
-    return <PageNotFoundState />;
+    return <NotFound />;
   }
 
   // Page exists but is unpublished - NOBODY can view (including admins)
   if (!page.is_published) {
-    return <PageNotFoundState />;
+    return <NotFound />;
   }
 
   // Page is published but not in main menu - only admins can access
   if (page.show_in_main_menu === false && !isAdmin) {
-    return <PageNotFoundState />;
+    return <NotFound />;
   }
+
+  const pageTitle = page.title ? `${page.title} — Altogether Agile` : 'Altogether Agile';
 
   // Render CMS page with content blocks
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Helmet>
+        <title>{pageTitle}</title>
+        {page.description && <meta name="description" content={page.description} />}
+        <link rel="canonical" href={`${SITE_URL}/${effectiveSlug}`} />
+        <meta property="og:title" content={pageTitle} />
+        {page.description && <meta property="og:description" content={page.description} />}
+        <meta property="og:url" content={`${SITE_URL}/${effectiveSlug}`} />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <Navigation />
       <div id="main-content" className="flex-1">
         {page.content_blocks

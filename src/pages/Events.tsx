@@ -360,11 +360,13 @@ const Events: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>Courses & Events — Altogether Agile</title>
-        <meta name="description" content="Browse our catalogue of certified agile courses, workshops, and masterclasses. Scrum, Kanban, SAFe, and more." />
-        <meta property="og:title" content="Courses & Events — Altogether Agile" />
-        <meta property="og:description" content="Browse our catalogue of certified agile courses, workshops, and masterclasses." />
+        <title>Agile Training Courses & Workshops UK — Altogether Agile</title>
+        <meta name="description" content="Certified agile training courses in the UK — AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally by an experienced coach." />
+        <meta property="og:title" content="Agile Training Courses & Workshops UK — Altogether Agile" />
+        <meta property="og:description" content="Certified agile training courses in the UK — AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
+        <meta property="og:url" content={`${SITE_URL}/events`} />
+        <meta property="og:type" content="website" />
         <link rel="canonical" href={`${SITE_URL}/events`} />
       </Helmet>
       <ResponsiveStyles />

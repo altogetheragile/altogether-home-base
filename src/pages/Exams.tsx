@@ -38,11 +38,11 @@ const Exams = () => {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
       <Helmet>
-        <title>Practice Exams — Altogether Agile</title>
-        <meta name="description" content="Test your agile knowledge with timed practice exams and revision mode. Prepare for Scrum, Kanban, and agile certifications." />
+        <title>AgilePM & Scrum Practice Exam Questions — Altogether Agile</title>
+        <meta name="description" content="Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification." />
         <link rel="canonical" href={`${SITE_URL}/exams`} />
-        <meta property="og:title" content="Practice Exams — Altogether Agile" />
-        <meta property="og:description" content="Test your agile knowledge with timed practice exams and revision mode. Prepare for Scrum, Kanban, and agile certifications." />
+        <meta property="og:title" content="AgilePM & Scrum Practice Exam Questions — Altogether Agile" />
+        <meta property="og:description" content="Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode." />
         <meta property="og:url" content={`${SITE_URL}/exams`} />
         <meta property="og:type" content="website" />
       </Helmet>
@@ -52,10 +52,10 @@ const Exams = () => {
       <div id="main-content" style={{ background: `linear-gradient(135deg, ${p.deepTeal} 0%, #006666 100%)`, padding: '48px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
           <h1 style={{ color: p.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
-            Practice Exams
+            AgilePM & Scrum Practice Exam Questions
           </h1>
           <p style={{ color: p.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
-            Test your knowledge with timed exam simulations or work through questions at your own pace in practice mode.
+            Prepare for your agile certification with timed mock exams or work through questions at your own pace in revision mode. Free AgilePM Foundation and Scrum Master practice questions with answers.
           </p>
         </div>
       </div>
