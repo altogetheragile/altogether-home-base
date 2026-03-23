@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useUnifiedAssets, useUnifiedAssetMutations } from '@/hooks/useUnifiedAssetManager';
+import { useUnifiedAssets, useUnifiedAssetMutations, type UnifiedAsset } from '@/hooks/useUnifiedAssetManager';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -21,7 +21,12 @@ import {
   Grid,
   List,
   Trash2,
-  Plus
+  Plus,
+  Copy,
+  Check,
+  X,
+  Save,
+  ExternalLink
 } from 'lucide-react';
 
 export interface UnifiedAssetLibraryProps {
@@ -45,6 +50,145 @@ interface UploadFormData {
   isTemplate?: boolean;
 }
 
+// ─── Asset Detail Panel ──────────────────────────────────────────────────────
+const AssetDetailPanel = ({
+  asset,
+  onClose,
+  onSave,
+  onDelete,
+  isSaving
+}: {
+  asset: UnifiedAsset;
+  onClose: () => void;
+  onSave: (updates: { title?: string; description?: string }) => void;
+  onDelete: (id: string) => void;
+  isSaving: boolean;
+}) => {
+  const [title, setTitle] = useState(asset.title || '');
+  const [description, setDescription] = useState(asset.description || '');
+  const [copied, setCopied] = useState(false);
+  const hasChanges = title !== (asset.title || '') || description !== (asset.description || '');
+
+  const copyUrl = () => {
+    navigator.clipboard.writeText(asset.url);
+    setCopied(true);
+    toast.success('URL copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="font-semibold text-lg">Asset Details</h3>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Preview */}
+          {asset.type === 'image' && asset.url && (
+            <div className="bg-muted rounded-lg p-2 flex items-center justify-center">
+              <img
+                src={asset.url}
+                alt={asset.title || 'Asset preview'}
+                className="max-h-[300px] max-w-full object-contain rounded"
+              />
+            </div>
+          )}
+
+          {/* URL with copy button */}
+          <div>
+            <Label className="text-xs text-muted-foreground">URL</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded break-all select-all">
+                {asset.url}
+              </code>
+              <Button variant="outline" size="sm" onClick={copyUrl} className="flex-shrink-0">
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+              <Button variant="outline" size="sm" asChild className="flex-shrink-0">
+                <a href={asset.url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            </div>
+          </div>
+
+          {/* Editable fields */}
+          <div>
+            <Label htmlFor="detail-title">Title</Label>
+            <Input
+              id="detail-title"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Asset title"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="detail-description">Description</Label>
+            <Textarea
+              id="detail-description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Asset description"
+              rows={3}
+            />
+          </div>
+
+          {/* Metadata */}
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+            <span>Type: <Badge variant="outline" className="ml-1">{asset.type}</Badge></span>
+            {asset.file_size && <span>Size: {Math.round(asset.file_size / 1024)} KB</span>}
+            {asset.original_filename && <span>File: {asset.original_filename}</span>}
+            {asset.is_template && asset.template_version && (
+              <span>Version: v{asset.template_version}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border-t">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-1" /> Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Asset</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{asset.title}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => { onDelete(asset.id); onClose(); }}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button
+              onClick={() => onSave({ title, description })}
+              disabled={!hasChanges || isSaving}
+            >
+              <Save className="h-4 w-4 mr-1" />
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
   selectedAssetIds = [],
   onSelectionChange,
@@ -70,11 +214,14 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
   const [templateFilter, setTemplateFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialViewMode);
   const [isUploading, setIsUploading] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<UnifiedAsset | null>(null);
+  const [lastUploadedId, setLastUploadedId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('browse');
 
-  const { data: mediaAssets, isLoading } = useUnifiedAssets({ 
-    templatesOnly: showTemplatesOnly 
+  const { data: mediaAssets, isLoading } = useUnifiedAssets({
+    templatesOnly: showTemplatesOnly
   });
-  const { createAsset, deleteAsset } = useUnifiedAssetMutations();
+  const { createAsset, updateAsset, deleteAsset } = useUnifiedAssetMutations();
 
   // Filter assets based on search, type, and template status
   const filteredAssets = mediaAssets?.filter(asset => {
@@ -151,7 +298,7 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
         .from(bucketName)
         .getPublicUrl(fileName);
 
-      await createAsset.mutateAsync({
+      const newAsset = await createAsset.mutateAsync({
         type: newAssetType as any,
         title: uploadFormData.title || file.name,
         description: uploadFormData.description,
@@ -173,8 +320,16 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
         templateVersion: '1.0',
         isTemplate: false
       });
-      
-      toast.success("Asset uploaded successfully");
+
+      // Track uploaded asset and switch to browse tab
+      if (newAsset?.id) {
+        setLastUploadedId(newAsset.id);
+        setActiveTab('browse');
+        // Clear highlight after 5 seconds
+        setTimeout(() => setLastUploadedId(null), 5000);
+      }
+
+      toast.success("Asset uploaded successfully — click it to view or copy the URL");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
     } finally {
@@ -189,7 +344,7 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
     }
 
     try {
-      await createAsset.mutateAsync({
+      const newAsset = await createAsset.mutateAsync({
         type: newAssetType as any,
         title: uploadFormData.title,
         description: uploadFormData.description,
@@ -208,7 +363,13 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
         templateVersion: '1.0',
         isTemplate: false
       });
-      
+
+      if (newAsset?.id) {
+        setLastUploadedId(newAsset.id);
+        setActiveTab('browse');
+        setTimeout(() => setLastUploadedId(null), 5000);
+      }
+
       toast.success("Asset created successfully");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Creation failed");
@@ -221,6 +382,15 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
       toast.success("Asset deleted successfully");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Delete failed");
+    }
+  };
+
+  const handleUpdateAsset = async (assetId: string, updates: { title?: string; description?: string }) => {
+    try {
+      await updateAsset.mutateAsync({ id: assetId, updates });
+      setEditingAsset(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Update failed");
     }
   };
 
@@ -250,7 +420,7 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="browse" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="browse">Browse Assets</TabsTrigger>
             <TabsTrigger value="upload">Upload New</TabsTrigger>
@@ -301,79 +471,108 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
               : "space-y-2"
             }>
               {filteredAssets.map((asset) => (
-                <Card 
-                  key={asset.id} 
+                <Card
+                  key={asset.id}
                   className={`cursor-pointer transition-all ${
-                    selectedAssetIds.includes(asset.id) 
-                      ? 'ring-2 ring-primary bg-primary/5' 
-                      : 'hover:shadow-md'
+                    lastUploadedId === asset.id
+                      ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950/20'
+                      : selectedAssetIds.includes(asset.id)
+                        ? 'ring-2 ring-primary bg-primary/5'
+                        : 'hover:shadow-md'
                   }`}
-                  onClick={() => toggleSelection(asset.id)}
+                  onClick={() => onSelectionChange ? toggleSelection(asset.id) : setEditingAsset(asset)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0">
-                        {getTypeIcon(asset.type)}
+                  <CardContent className="p-0">
+                    {/* Image thumbnail */}
+                    {asset.type === 'image' && asset.url && (
+                      <div className="bg-muted/50 flex items-center justify-center h-32 overflow-hidden rounded-t-lg">
+                        <img
+                          src={asset.url}
+                          alt={asset.title || ''}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate" title={asset.title || 'Untitled'}>{asset.title || 'Untitled'}</h4>
-                            {asset.description && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {asset.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {asset.is_template && (
-                              <Badge variant="secondary" className="text-xs">
-                                Template
-                              </Badge>
-                            )}
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Asset</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "{asset.title}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteAsset(asset.id)}>
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                    )}
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {getTypeIcon(asset.type)}
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {asset.type}
-                            </Badge>
-                            {asset.is_template && asset.template_version && (
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium truncate" title={asset.title || 'Untitled'}>{asset.title || 'Untitled'}</h4>
+                              {asset.description && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                  {asset.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {asset.is_template && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Template
+                                </Badge>
+                              )}
+                              {/* Copy URL button */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title="Copy URL"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(asset.url);
+                                  toast.success('URL copied');
+                                }}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Asset</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{asset.title}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteAsset(asset.id)}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2">
                               <Badge variant="outline" className="text-xs">
-                                v{asset.template_version}
+                                {asset.type}
                               </Badge>
+                              {asset.is_template && asset.template_version && (
+                                <Badge variant="outline" className="text-xs">
+                                  v{asset.template_version}
+                                </Badge>
+                              )}
+                            </div>
+                            {asset.file_size && (
+                              <span className="text-xs text-muted-foreground">
+                                {Math.round(asset.file_size / 1024)} KB
+                              </span>
                             )}
                           </div>
-                          {asset.file_size && (
-                            <span className="text-xs text-muted-foreground">
-                              {Math.round(asset.file_size / 1024)} KB
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -502,7 +701,10 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
                     disabled={isUploading}
                   />
                   {isUploading && (
-                    <p className="text-sm text-muted-foreground mt-2">Uploading...</p>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Uploading...
+                    </div>
                   )}
                 </div>
               )}
@@ -518,6 +720,17 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
           </div>
         )}
       </CardContent>
+
+      {/* Asset detail/edit panel */}
+      {editingAsset && (
+        <AssetDetailPanel
+          asset={editingAsset}
+          onClose={() => setEditingAsset(null)}
+          onSave={(updates) => handleUpdateAsset(editingAsset.id, updates)}
+          onDelete={handleDeleteAsset}
+          isSaving={updateAsset.isPending}
+        />
+      )}
     </Card>
   );
 };
