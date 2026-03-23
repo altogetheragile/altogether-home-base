@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/table';
 import { useAdminBlogPosts, useBlogPostMutations } from '@/hooks/useAdminBlogPosts';
 import { useBlogCategories, useBlogCategoryMutations, type BlogCategory } from '@/hooks/useBlogCategories';
+import { ImportMarkdownDialog } from '@/components/admin/ImportMarkdownDialog';
 import { format } from 'date-fns';
 
 type StatusFilter = 'all' | 'published' | 'drafts';
@@ -266,12 +267,15 @@ const AdminBlog = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Blog Posts</h1>
-        <Link to="/admin/blog/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Post
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <ImportMarkdownDialog />
+          <Link to="/admin/blog/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Post
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Category management */}

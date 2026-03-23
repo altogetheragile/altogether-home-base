@@ -34,3 +34,4 @@ cucumber-reports
 *.sln
 *.sw?
 bun.lockb
+.vercel
