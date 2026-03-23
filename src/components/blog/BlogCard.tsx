@@ -27,7 +27,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             src={post.featured_image_url}
             alt={post.title}
             loading="lazy"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
       )}

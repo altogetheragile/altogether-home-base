@@ -31,7 +31,7 @@ export const BlogContentRenderer: React.FC<BlogContentRendererProps> = ({
             src={metadata.featured_image_url}
             alt="Blog post featured image"
             loading="lazy"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
       )}

@@ -294,7 +294,7 @@ const BlogCardStyled = ({ post }: { post: BlogPost }) => (
             src={post.featured_image_url}
             alt={post.title}
             loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
       ) : (
