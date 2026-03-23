@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, FileText, Image as ImageIcon, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -14,7 +13,6 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBlogPostMutations } from '@/hooks/useAdminBlogPosts';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import matter from 'gray-matter';
 import { marked } from 'marked';
@@ -139,7 +137,6 @@ export const ImportMarkdownDialog = () => {
   const imgInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { createPost } = useBlogPostMutations();
-  const navigate = useNavigate();
 
   const reset = () => {
     setState({
@@ -219,15 +216,6 @@ export const ImportMarkdownDialog = () => {
       // Build excerpt
       const excerpt = (fm.excerpt as string) || (fm.meta_description as string) ||
         state.mdContent.split('\n\n').find(p => p && !p.startsWith('#') && !p.startsWith('---'))?.slice(0, 300) || '';
-
-      // Parse keywords
-      let seoKeywords: string | undefined;
-      if (fm.keywords) {
-        const kw = typeof fm.keywords === 'string'
-          ? fm.keywords.split(',').map((k: string) => k.trim())
-          : fm.keywords;
-        seoKeywords = Array.isArray(kw) ? kw.join(', ') : undefined;
-      }
 
       const slug = normalizeSlug((fm.slug as string) || '');
       const readingTime = (fm.estimated_reading_time as number) || estimateReadingTime(state.mdContent);
@@ -363,12 +351,12 @@ export const ImportMarkdownDialog = () => {
               <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
                 <h4 className="font-semibold text-base">{fm.title as string}</h4>
                 <p className="text-muted-foreground">Slug: /blog/{normalizeSlug((fm.slug as string) || '')}</p>
-                {fm.meta_description && (
-                  <p className="text-muted-foreground line-clamp-2">{fm.meta_description as string}</p>
-                )}
-                {fm.keywords && (
-                  <p className="text-muted-foreground text-xs">Keywords: {fm.keywords as string}</p>
-                )}
+                {fm.meta_description ? (
+                  <p className="text-muted-foreground line-clamp-2">{String(fm.meta_description)}</p>
+                ) : null}
+                {fm.keywords ? (
+                  <p className="text-muted-foreground text-xs">Keywords: {String(fm.keywords)}</p>
+                ) : null}
               </div>
             )}
 
