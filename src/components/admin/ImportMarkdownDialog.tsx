@@ -14,8 +14,31 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBlogPostMutations } from '@/hooks/useAdminBlogPosts';
 import { toast } from 'sonner';
-import matter from 'gray-matter';
 import { marked } from 'marked';
+
+// Simple browser-compatible frontmatter parser (replaces gray-matter which needs Node.js)
+function parseFrontmatter(text: string): { data: Record<string, unknown>; content: string } {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  if (!match) return { data: {}, content: text };
+
+  const yamlBlock = match[1];
+  const content = match[2];
+  const data: Record<string, unknown> = {};
+
+  for (const line of yamlBlock.split('\n')) {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx === -1) continue;
+    const key = line.slice(0, colonIdx).trim();
+    let value: string | unknown = line.slice(colonIdx + 1).trim();
+    // Strip surrounding quotes
+    if (typeof value === 'string' && /^["'].*["']$/.test(value)) {
+      value = value.slice(1, -1);
+    }
+    if (key) data[key] = value;
+  }
+
+  return { data, content };
+}
 
 // ─── Post styles (same as import script) ─────────────────────────────────────
 
@@ -152,7 +175,7 @@ export const ImportMarkdownDialog = () => {
   const handleMdSelect = async (file: File) => {
     try {
       const text = await file.text();
-      const { data: fm, content } = matter(text);
+      const { data: fm, content } = parseFrontmatter(text);
       setState(prev => ({
         ...prev,
         mdFile: file,
