@@ -63,7 +63,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     const { data: exams } = await supabase
       .from('exams')
       .select('id, updated_at')
-      .eq('is_published', true)
+      .eq('status', 'published')
       .order('title');
 
     // Fetch published CMS pages (excluding those already in static list)
