@@ -7,6 +7,7 @@ import {
 
 interface ExamData {
   title: string;
+  slug: string;
   description?: string;
   duration_minutes: number;
   pass_mark: number;

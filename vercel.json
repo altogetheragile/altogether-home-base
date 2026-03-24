@@ -75,7 +75,9 @@
     { "source": "/author/:path*", "destination": "/about", "statusCode": 301 },
     { "source": "/page/:path*", "destination": "/", "statusCode": 301 },
     { "source": "/blog/best-ai-strategy-200-years-old", "destination": "/blog/ai-adoption-strategy-200-years-old", "statusCode": 301 },
-    { "source": "/blog/humans-in-the-loop-not-a-checkbox", "destination": "/blog/humans-in-the-loop-cynefin-ai-agents", "statusCode": 301 }
+    { "source": "/blog/humans-in-the-loop-not-a-checkbox", "destination": "/blog/humans-in-the-loop-cynefin-ai-agents", "statusCode": 301 },
+    { "source": "/exams/bcf2a50c-f29a-49e6-b82f-1dfa7243ec6a", "destination": "/exams/agilepm-foundation-paper-1", "statusCode": 301 },
+    { "source": "/exams/c031d99d-8e0a-4fe5-ae71-501c5df53372", "destination": "/exams/professional-scrum-master", "statusCode": 301 }
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" },

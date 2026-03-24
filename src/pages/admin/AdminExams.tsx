@@ -22,6 +22,7 @@ import type { Exam } from '@/hooks/useExams';
 
 const examFields = [
   { key: 'title', label: 'Title', type: 'text' as const, required: true },
+  { key: 'slug', label: 'Slug (URL path)', type: 'text' as const, required: true, placeholder: 'e.g. professional-scrum-master' },
   { key: 'description', label: 'Description', type: 'textarea' as const },
   { key: 'duration_minutes', label: 'Duration (minutes)', type: 'number' as const, required: true, placeholder: '40' },
   { key: 'pass_mark', label: 'Pass Mark', type: 'number' as const, required: true, placeholder: '30' },
@@ -49,6 +50,7 @@ const AdminExams = () => {
       createMutation.mutate(
         {
           title: data.title as string,
+          slug: data.slug as string,
           description: (data.description as string) || undefined,
           duration_minutes: Number(data.duration_minutes) || 40,
           pass_mark: Number(data.pass_mark) || 30,
@@ -68,6 +70,7 @@ const AdminExams = () => {
           id: editingExam.id,
           data: {
             title: data.title as string,
+            slug: data.slug as string,
             description: (data.description as string) || undefined,
             duration_minutes: Number(data.duration_minutes) || 40,
             pass_mark: Number(data.pass_mark) || 30,

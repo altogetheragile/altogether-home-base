@@ -47,15 +47,15 @@ interface Answer {
 }
 
 /* ─── Data hooks ─── */
-const usePublicExam = (examId: string | undefined) =>
+const usePublicExam = (slug: string | undefined) =>
   useQuery({
-    queryKey: ['public-exam', examId],
-    enabled: !!examId,
+    queryKey: ['public-exam', slug],
+    enabled: !!slug,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('exams')
         .select('id, title, description, duration_minutes, pass_mark, total_questions')
-        .eq('id', examId!)
+        .eq('slug', slug!)
         .eq('status', 'published')
         .single();
       if (error) throw error;
@@ -125,15 +125,15 @@ function shuffle<T>(arr: T[]): T[] {
 
 /* ─── Main component ─── */
 const ExamPlayer = () => {
-  const { examId } = useParams<{ examId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
-  const { data: exam, isLoading: examLoading, error: examError } = usePublicExam(examId);
+  const { data: exam, isLoading: examLoading, error: examError } = usePublicExam(slug);
 
   const [phase, setPhase] = useState<Phase>('start');
   const [mode, setMode] = useState<Mode>('exam');
   const [started, setStarted] = useState(false);
 
-  const { data: rawQuestions } = usePublicQuestions(examId, started);
+  const { data: rawQuestions } = usePublicQuestions(exam?.id, started);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<number, Answer>>({});
   const [currentIdx, setCurrentIdx] = useState(0);

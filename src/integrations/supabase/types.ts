@@ -1449,6 +1449,7 @@ export type Database = {
           duration_minutes: number
           id: string
           pass_mark: number
+          slug: string
           status: string
           title: string
           total_questions: number
@@ -1460,6 +1461,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           pass_mark?: number
+          slug: string
           status?: string
           title: string
           total_questions?: number
@@ -1471,6 +1473,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           pass_mark?: number
+          slug?: string
           status?: string
           title?: string
           total_questions?: number

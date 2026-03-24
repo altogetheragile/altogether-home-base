@@ -11,6 +11,7 @@ import { ClipboardList, Clock, Award, HelpCircle } from 'lucide-react';
 
 interface PublicExam {
   id: string;
+  slug: string;
   title: string;
   description: string | null;
   duration_minutes: number;
@@ -24,7 +25,7 @@ const usePublishedExams = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('exams')
-        .select('id, title, description, duration_minutes, pass_mark, total_questions')
+        .select('id, slug, title, description, duration_minutes, pass_mark, total_questions')
         .eq('status', 'published')
         .order('title');
       if (error) throw error;
@@ -122,7 +123,7 @@ const Exams = () => {
                   </div>
 
                   <Link
-                    to={`/exams/${exam.id}`}
+                    to={`/exams/${exam.slug}`}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',

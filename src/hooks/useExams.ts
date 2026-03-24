@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface Exam {
   id: string;
   title: string;
+  slug: string;
   description: string | null;
   duration_minutes: number;
   pass_mark: number;
@@ -56,6 +57,23 @@ export const useExam = (examId: string | undefined) => {
         .from('exams')
         .select('*')
         .eq('id', examId!)
+        .single();
+      if (error) throw error;
+      return data as Exam;
+    },
+  });
+};
+
+export const useExamBySlug = (slug: string | undefined) => {
+  return useQuery({
+    queryKey: ['exam-by-slug', slug],
+    enabled: !!slug,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('exams')
+        .select('*')
+        .eq('slug', slug!)
+        .eq('status', 'published')
         .single();
       if (error) throw error;
       return data as Exam;

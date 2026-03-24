@@ -62,7 +62,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     // Fetch published exams
     const { data: exams } = await supabase
       .from('exams')
-      .select('id, updated_at')
+      .select('slug, updated_at')
       .eq('status', 'published')
       .order('title');
 
@@ -133,7 +133,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     if (exams) {
       for (const e of exams) {
         xml += `  <url>
-    <loc>${SITE_URL}/exams/${escapeXml(e.id)}</loc>
+    <loc>${SITE_URL}/exams/${escapeXml(e.slug)}</loc>
     <lastmod>${formatDate(e.updated_at)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>

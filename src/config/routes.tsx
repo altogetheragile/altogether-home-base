@@ -258,7 +258,7 @@ export const PublicRoutes = () => {
         </ErrorBoundary>
       </SiteSettingsRouteGuard>
     } />
-    <Route path="/exams/:examId" element={
+    <Route path="/exams/:slug" element={
       <SiteSettingsRouteGuard feature="exams">
         <ErrorBoundary>
           <Suspense fallback={<LoadingFallback />}>
