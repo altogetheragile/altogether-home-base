@@ -42,7 +42,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     const { data: posts } = await supabase
       .from('blog_posts')
       .select('slug, updated_at, published_at')
-      .eq('status', 'published')
+      .eq('is_published', true)
       .order('published_at', { ascending: false });
 
     // Fetch published event templates (courses)
@@ -63,7 +63,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     const { data: exams } = await supabase
       .from('exams')
       .select('id, updated_at')
-      .eq('status', 'published')
+      .eq('is_published', true)
       .order('title');
 
     // Fetch published CMS pages (excluding those already in static list)
