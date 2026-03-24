@@ -471,6 +471,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           created_by: string | null
+          display_order: number | null
           estimated_reading_time: number | null
           excerpt: string | null
           featured_image_url: string | null
@@ -495,6 +496,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           created_by?: string | null
+          display_order?: number | null
           estimated_reading_time?: number | null
           excerpt?: string | null
           featured_image_url?: string | null
@@ -519,6 +521,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           created_by?: string | null
+          display_order?: number | null
           estimated_reading_time?: number | null
           excerpt?: string | null
           featured_image_url?: string | null

@@ -95,7 +95,8 @@ export const useBlogPosts = (options: UseBlogPostsOptions = {}) => {
           query = query.order('view_count', { ascending: false });
           break;
         case 'newest':
-          query = query.order('published_at', { ascending: false });
+          query = query.order('display_order', { ascending: true, nullsFirst: false })
+            .order('published_at', { ascending: false });
           break;
         case 'oldest':
           query = query.order('published_at', { ascending: true });
@@ -104,7 +105,8 @@ export const useBlogPosts = (options: UseBlogPostsOptions = {}) => {
           query = query.order('title', { ascending: true });
           break;
         default:
-          query = query.order('published_at', { ascending: false });
+          query = query.order('display_order', { ascending: true, nullsFirst: false })
+            .order('published_at', { ascending: false });
       }
 
       // Add limit

@@ -34,7 +34,8 @@ export const useAdminBlogPosts = () => {
             color
           )
         `)
-        .order('updated_at', { ascending: false });
+        .order('display_order', { ascending: true, nullsFirst: false })
+        .order('published_at', { ascending: false });
 
       if (error) throw error;
       return (data || []) as unknown as BlogPost[];

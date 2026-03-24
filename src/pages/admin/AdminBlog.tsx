@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useMatch } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, EyeOff, ChevronDown, ChevronRight, Check, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, ChevronDown, ChevronRight, Check, X, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -27,6 +27,27 @@ import { useAdminBlogPosts, useBlogPostMutations } from '@/hooks/useAdminBlogPos
 import { useBlogCategories, useBlogCategoryMutations, type BlogCategory } from '@/hooks/useBlogCategories';
 import { ImportMarkdownDialog } from '@/components/admin/ImportMarkdownDialog';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { BlogPost } from '@/hooks/useBlogPosts';
 
 type StatusFilter = 'all' | 'published' | 'drafts';
 
@@ -217,6 +238,99 @@ const CategoryPanel = () => {
   );
 };
 
+/* ── Sortable Blog Row ── */
+const SortableBlogRow = ({
+  post,
+  isDndActive,
+  onTogglePublish,
+  onDelete,
+}: {
+  post: BlogPost;
+  isDndActive: boolean;
+  onTogglePublish: (id: string, is_published: boolean) => void;
+  onDelete: (id: string) => void;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: post.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      {isDndActive && (
+        <TableCell className="w-8">
+          <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
+            <GripVertical className="h-4 w-4" />
+          </button>
+        </TableCell>
+      )}
+      <TableCell className="font-medium max-w-[300px]">
+        <span className="block truncate" title={post.title}>{post.title}</span>
+      </TableCell>
+      <TableCell>
+        {post.blog_categories ? (
+          <Badge
+            variant="outline"
+            style={{
+              borderColor: post.blog_categories.color,
+              color: post.blog_categories.color,
+            }}
+          >
+            {post.blog_categories.name}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <Badge variant={post.is_published ? 'default' : 'secondary'}>
+          {post.is_published ? (
+            <><Eye className="h-3 w-3 mr-1" />Published</>
+          ) : (
+            <><EyeOff className="h-3 w-3 mr-1" />Draft</>
+          )}
+        </Badge>
+      </TableCell>
+      <TableCell className="whitespace-nowrap">
+        {post.published_at
+          ? format(new Date(post.published_at), 'MMM dd, yyyy')
+          : '—'}
+      </TableCell>
+      <TableCell>{post.view_count}</TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Link to={`/admin/blog/${post.id}`}>
+            <Button variant="outline" size="sm">
+              <Edit className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onTogglePublish(post.id, post.is_published)}
+          >
+            {post.is_published ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onDelete(post.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
+
 /* ── Main AdminBlog Page ── */
 const AdminBlog = () => {
   const match = useMatch('/admin/blog');
@@ -224,8 +338,53 @@ const AdminBlog = () => {
 
   const { data: posts, isLoading, error } = useAdminBlogPosts();
   const { deletePost, togglePublished } = useBlogPostMutations();
+  const queryClient = useQueryClient();
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const isDndActive = statusFilter === 'all';
+
+  const reorderPosts = useMutation({
+    mutationFn: async (ordered: { id: string; display_order: number }[]) => {
+      const updates = ordered.map(({ id, display_order }) =>
+        supabase.from('blog_posts').update({ display_order }).eq('id', id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
+      toast.success('Order saved');
+    },
+    onError: () => {
+      toast.error('Failed to save order');
+      queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !posts) return;
+
+    const oldIndex = posts.findIndex((p) => p.id === active.id);
+    const newIndex = posts.findIndex((p) => p.id === over.id);
+    const reordered = arrayMove(posts, oldIndex, newIndex);
+
+    // Optimistic update
+    queryClient.setQueryData(['admin-blog-posts'], reordered);
+
+    // Persist
+    reorderPosts.mutate(
+      reordered.map((p, i) => ({ id: p.id, display_order: i + 1 }))
+    );
+  };
 
   if (!shouldRender) return null;
 
@@ -296,97 +455,53 @@ const AdminBlog = () => {
 
       <Card>
         <div className="rounded-md overflow-x-auto">
-          <Table className="min-w-[800px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Published</TableHead>
-                <TableHead>Views</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPosts.map((post) => (
-                <TableRow key={post.id}>
-                  <TableCell className="font-medium max-w-[300px]">
-                    <span className="block truncate" title={post.title}>{post.title}</span>
-                  </TableCell>
-                  <TableCell>
-                    {post.blog_categories ? (
-                      <Badge
-                        variant="outline"
-                        style={{
-                          borderColor: post.blog_categories.color,
-                          color: post.blog_categories.color,
-                        }}
-                      >
-                        {post.blog_categories.name}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={post.is_published ? 'default' : 'secondary'}>
-                      {post.is_published ? (
-                        <><Eye className="h-3 w-3 mr-1" />Published</>
-                      ) : (
-                        <><EyeOff className="h-3 w-3 mr-1" />Draft</>
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {post.published_at
-                      ? format(new Date(post.published_at), 'MMM dd, yyyy')
-                      : '—'}
-                  </TableCell>
-                  <TableCell>{post.view_count}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Link to={`/admin/blog/${post.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          togglePublished.mutate({
-                            id: post.id,
-                            is_published: post.is_published,
-                          })
-                        }
-                        disabled={togglePublished.isPending}
-                      >
-                        {post.is_published ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeletePostId(post.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredPosts.length === 0 && (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <Table className="min-w-[800px]">
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    No blog posts found.
-                  </TableCell>
+                  {isDndActive && <TableHead className="w-8" />}
+                  <TableHead>Title</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Published</TableHead>
+                  <TableHead>Views</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isDndActive ? (
+                  <SortableContext items={filteredPosts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                    {filteredPosts.map((post) => (
+                      <SortableBlogRow
+                        key={post.id}
+                        post={post}
+                        isDndActive
+                        onTogglePublish={(id, is_published) => togglePublished.mutate({ id, is_published })}
+                        onDelete={(id) => setDeletePostId(id)}
+                      />
+                    ))}
+                  </SortableContext>
+                ) : (
+                  filteredPosts.map((post) => (
+                    <SortableBlogRow
+                      key={post.id}
+                      post={post}
+                      isDndActive={false}
+                      onTogglePublish={(id, is_published) => togglePublished.mutate({ id, is_published })}
+                      onDelete={(id) => setDeletePostId(id)}
+                    />
+                  ))
+                )}
+                {filteredPosts.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={isDndActive ? 7 : 6} className="text-center text-muted-foreground py-8">
+                      No blog posts found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </DndContext>
         </div>
       </Card>
 
