@@ -66,15 +66,21 @@ const Icons = {
   ),
 };
 
-// ─── Illustration placeholder ───────────────────────────────────────────────
-const IllustrationSpot = ({ bg, height = 280 }: { bg: string; height?: number }) => (
-  <div style={{ background: bg, borderRadius: 16, height, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg width="24" height="24" viewBox="0 0 256 256" fill="rgba(255,255,255,0.7)">
-        <path d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220ZM128,144a56,56,0,1,0-56-56A56.06,56.06,0,0,0,128,144Zm0,16c-30.67,0-58.7,12.36-79.49,34H207.49C186.7,172.36,158.67,160,128,160Z"/>
-      </svg>
-    </div>
-    {/* label hidden for production */}
+// ─── Coaching illustrations ─────────────────────────────────────────────────
+const coachingImages = {
+  hero: '/images/coaching-hero.webp',
+  oneToOne: '/images/coaching-one-to-one.webp',
+  team: '/images/coaching-team.webp',
+};
+
+const CoachingIllustration = ({ src, alt, height = 320, position = 'center center', scale = 105 }: { src: string; alt: string; height?: number; position?: string; scale?: number }) => (
+  <div style={{ borderRadius: 16, overflow: 'hidden', height, position: 'relative' }}>
+    <img
+      src={src}
+      alt={alt}
+      style={{ width: `${scale}%`, height: `${scale}%`, objectFit: 'cover', objectPosition: position, display: 'block' }}
+      loading="lazy"
+    />
   </div>
 );
 
@@ -274,7 +280,7 @@ const Coaching: React.FC = () => {
               Where it's useful, I'll bring 25 years of agile and organisational experience into the room. But the work is yours. That's why it sticks.
             </p>
           </div>
-          <IllustrationSpot bg="#1A9090" height={320} />
+          <CoachingIllustration src={coachingImages.hero} alt="Two people having a coaching conversation" height={320} position="center 40%" />
         </div>
       </div>
 
@@ -318,7 +324,10 @@ const Coaching: React.FC = () => {
               </div>
             </div>
             <div style={{ direction: 'ltr' }}>
-              <IllustrationSpot bg={service.colour} height={360} />
+              {si === 0
+                ? <CoachingIllustration src={coachingImages.oneToOne} alt="One-to-one coaching session in comfortable chairs" height={360} position="center 35%" scale={118} />
+                : <CoachingIllustration src={coachingImages.team} alt="Team coaching session at a desk with laptop" height={360} />
+              }
             </div>
           </div>
         </div>
