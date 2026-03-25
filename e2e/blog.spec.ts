@@ -63,6 +63,6 @@ test.describe('Blog', () => {
     if (await postCards.count() === 0) return;
 
     await postCards.first().click();
-    await expect(page.locator('a[href="/blog"]')).toBeVisible();
+    await expect(page.getByRole('link', { name: /back to blog/i })).toBeVisible();
   });
 });

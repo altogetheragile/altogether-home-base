@@ -27,15 +27,22 @@ test.describe('About - Ready Ravi', () => {
   });
 
   test('no broken images on about page', async ({ page }) => {
-    const images = page.locator('img');
-    const count = await images.count();
-    for (let i = 0; i < count; i++) {
-      const src = await images.nth(i).getAttribute('src');
-      if (src && !src.startsWith('data:')) {
-        // Check image loaded successfully
-        const naturalWidth = await images.nth(i).evaluate((img: HTMLImageElement) => img.naturalWidth);
-        expect(naturalWidth).toBeGreaterThan(0);
+    // Track failed image requests
+    const failedImages: string[] = [];
+    page.on('response', response => {
+      if (response.request().resourceType() === 'image' && response.status() >= 400) {
+        failedImages.push(response.url());
       }
-    }
+    });
+    page.on('requestfailed', request => {
+      if (request.resourceType() === 'image') {
+        failedImages.push(request.url());
+      }
+    });
+
+    await page.goto('/about');
+    await page.waitForLoadState('networkidle');
+
+    expect(failedImages, `Failed image requests: ${failedImages.join(', ')}`).toHaveLength(0);
   });
 });
