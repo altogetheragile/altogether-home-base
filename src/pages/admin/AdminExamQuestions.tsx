@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Upload, ArrowLeft, FileSpreadsheet } from 'lucide-react';
+import { Plus, Trash2, Upload, ArrowLeft, FileSpreadsheet, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { useExam } from '@/hooks/useExams';
 import { useQuestions, useQuestionAreas, type Question } from '@/hooks/useQuestions';
 import {
@@ -29,40 +29,265 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 
-/* ─── Question Form Component ─── */
-interface QuestionFormProps {
-  examId: string;
-  existingAreas: string[];
-  editingQuestion?: Question | null;
-  onClose: () => void;
-  onSubmitCreate: (data: Record<string, unknown>) => Promise<void>;
-  onSubmitEdit: (data: Record<string, unknown>) => Promise<void>;
-}
+/* ─── Inline Editable Field ─── */
+const EditableText = ({
+  value,
+  onChange,
+  multiline,
+  className,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  multiline?: boolean;
+  className?: string;
+  placeholder?: string;
+}) => {
+  const [local, setLocal] = useState(value);
+  const [editing, setEditing] = useState(false);
+  const ref = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
+  useEffect(() => { setLocal(value); }, [value]);
+  useEffect(() => { if (editing) ref.current?.focus(); }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = local.trim();
+    if (trimmed !== value) onChange(trimmed);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') { setLocal(value); setEditing(false); }
+    if (e.key === 'Enter' && !multiline) { commit(); }
+    if (e.key === 'Enter' && e.metaKey && multiline) { commit(); }
+  };
+
+  if (!editing) {
+    return (
+      <span
+        onClick={() => setEditing(true)}
+        className={`cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 ${!value ? 'text-muted-foreground italic' : ''} ${className || ''}`}
+        title="Click to edit"
+      >
+        {value || placeholder || '(empty)'}
+      </span>
+    );
+  }
+
+  if (multiline) {
+    return (
+      <Textarea
+        ref={ref as React.RefObject<HTMLTextAreaElement>}
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKeyDown}
+        rows={3}
+        className={`text-sm ${className || ''}`}
+      />
+    );
+  }
+
+  return (
+    <Input
+      ref={ref as React.RefObject<HTMLInputElement>}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={handleKeyDown}
+      className={`text-sm h-8 ${className || ''}`}
+    />
+  );
+};
+
+/* ─── Correct Answer Selector ─── */
+const AnswerSelector = ({
+  value,
+  visibleOptions,
+  onChange,
+}: {
+  value: string;
+  visibleOptions: string[];
+  onChange: (v: string) => void;
+}) => {
+  const selected = value.split(',').filter(Boolean);
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {visibleOptions.map((letter) => {
+        const isSelected = selected.includes(letter);
+        return (
+          <button
+            key={letter}
+            type="button"
+            onClick={() => {
+              const next = isSelected
+                ? selected.filter((l) => l !== letter)
+                : [...selected, letter].sort();
+              if (next.length > 0) onChange(next.join(','));
+            }}
+            className={`w-7 h-7 rounded text-xs font-bold border transition-colors ${
+              isSelected
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+            }`}
+          >
+            {letter}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ─── Expanded Question Row ─── */
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
 
-const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmitCreate, onSubmitEdit }: QuestionFormProps) => {
+const ExpandedQuestion = ({
+  question,
+  existingAreas,
+  onUpdate,
+  onDelete,
+}: {
+  question: Question;
+  existingAreas: string[];
+  onUpdate: (field: string, value: string) => void;
+  onDelete: () => void;
+}) => {
+  const visibleOptions = OPTION_LETTERS.filter((letter, i) => {
+    if (i < 4) return true;
+    const val = question[`option_${letter.toLowerCase()}` as keyof Question] as string;
+    const prevVal = question[`option_${OPTION_LETTERS[i - 1].toLowerCase()}` as keyof Question] as string;
+    return (val && val !== '') || (prevVal && prevVal !== '');
+  });
+
+  return (
+    <TableRow>
+      <TableCell colSpan={7} className="bg-muted/30 p-0">
+        <div className="px-6 py-4 space-y-4">
+          {/* Area + Reference + Status row */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Area</Label>
+              <div className="relative">
+                <EditableText
+                  value={question.area}
+                  onChange={(v) => onUpdate('area', v)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Reference</Label>
+              <EditableText
+                value={question.reference || ''}
+                onChange={(v) => onUpdate('reference', v)}
+                placeholder="e.g. 5.3.2"
+              />
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Status</Label>
+                <Select value={question.status} onValueChange={(v) => onUpdate('status', v)}>
+                  <SelectTrigger className="h-8 w-32 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete question?</AlertDialogTitle>
+                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+
+          {/* Question text */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Question</Label>
+            <EditableText
+              value={question.question_text}
+              onChange={(v) => onUpdate('question_text', v)}
+              multiline
+            />
+          </div>
+
+          {/* Options + Correct Answer */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+            {visibleOptions.map((letter) => {
+              const key = `option_${letter.toLowerCase()}` as keyof Question;
+              const isCorrect = question.correct_answer.split(',').includes(letter);
+              return (
+                <div key={letter} className="flex items-center gap-2">
+                  <span className={`text-xs font-bold w-4 flex-shrink-0 ${isCorrect ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {letter})
+                  </span>
+                  {isCorrect && <Check className="h-3 w-3 text-green-600 flex-shrink-0" />}
+                  <EditableText
+                    value={(question[key] as string) || ''}
+                    onChange={(v) => onUpdate(key, v)}
+                    className="flex-1"
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Correct answer toggles */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Correct Answer(s)</Label>
+            <AnswerSelector
+              value={question.correct_answer}
+              visibleOptions={visibleOptions.map(String)}
+              onChange={(v) => onUpdate('correct_answer', v)}
+            />
+          </div>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+/* ─── Add Question Form (simplified inline) ─── */
+const AddQuestionForm = ({
+  examId,
+  existingAreas,
+  onClose,
+  onCreate,
+}: {
+  examId: string;
+  existingAreas: string[];
+  onClose: () => void;
+  onCreate: (data: Record<string, unknown>) => Promise<void>;
+}) => {
   const [form, setForm] = useState({
-    area: editingQuestion?.area || '',
-    question_text: editingQuestion?.question_text || '',
-    option_a: editingQuestion?.option_a || '',
-    option_b: editingQuestion?.option_b || '',
-    option_c: editingQuestion?.option_c || '',
-    option_d: editingQuestion?.option_d || '',
-    option_e: editingQuestion?.option_e || '',
-    option_f: editingQuestion?.option_f || '',
-    option_g: editingQuestion?.option_g || '',
-    correct_answer: editingQuestion?.correct_answer || 'A',
-    reference: editingQuestion?.reference || '',
-    status: editingQuestion?.status || 'published',
+    area: '', question_text: '',
+    option_a: '', option_b: '', option_c: '', option_d: '',
+    option_e: '', option_f: '', option_g: '',
+    correct_answer: 'A', reference: '', status: 'published',
   });
   const [submitting, setSubmitting] = useState(false);
 
   const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
-  // Show options A-D always, E-G only if they have content or the previous one does
   const visibleOptions = OPTION_LETTERS.filter((letter, i) => {
-    if (i < 4) return true; // A-D always visible
+    if (i < 4) return true;
     const key = `option_${letter.toLowerCase()}` as keyof typeof form;
     const prevKey = `option_${OPTION_LETTERS[i - 1].toLowerCase()}` as keyof typeof form;
     return form[key] !== '' || form[prevKey] !== '';
@@ -72,12 +297,7 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = { ...form, exam_id: examId };
-      if (editingQuestion) {
-        await onSubmitEdit(payload);
-      } else {
-        await onSubmitCreate(payload);
-      }
+      await onCreate({ ...form, exam_id: examId });
       onClose();
     } finally {
       setSubmitting(false);
@@ -88,23 +308,13 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
       <div>
         <Label>Area</Label>
-        <Input
-          list="area-list"
-          value={form.area}
-          onChange={(e) => update('area', e.target.value)}
-          required
-          placeholder="e.g. Planning, Delivery, Governance"
-        />
-        <datalist id="area-list">
-          {existingAreas.map((a) => <option key={a} value={a} />)}
-        </datalist>
+        <Input list="area-list" value={form.area} onChange={(e) => update('area', e.target.value)} required placeholder="e.g. Planning, Delivery" />
+        <datalist id="area-list">{existingAreas.map((a) => <option key={a} value={a} />)}</datalist>
       </div>
-
       <div>
         <Label>Question Text</Label>
         <Textarea value={form.question_text} onChange={(e) => update('question_text', e.target.value)} required rows={3} />
       </div>
-
       {visibleOptions.map((letter, i) => (
         <div key={letter}>
           <Label>Option {letter}</Label>
@@ -116,7 +326,6 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
           />
         </div>
       ))}
-
       <div>
         <Label>Correct Answer(s)</Label>
         <div className="flex gap-4 mt-1 flex-wrap">
@@ -126,12 +335,9 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
             return (
               <label key={letter} className="flex items-center gap-1.5 cursor-pointer">
                 <input
-                  type="checkbox"
-                  checked={isChecked}
+                  type="checkbox" checked={isChecked}
                   onChange={() => {
-                    const next = isChecked
-                      ? selected.filter((l) => l !== letter)
-                      : [...selected, letter].sort();
+                    const next = isChecked ? selected.filter((l) => l !== letter) : [...selected, letter].sort();
                     update('correct_answer', next.join(','));
                   }}
                   className="accent-primary"
@@ -141,16 +347,11 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
             );
           })}
         </div>
-        {form.correct_answer.includes(',') && (
-          <p className="text-xs text-muted-foreground mt-1">Multiple answers selected — player will use checkboxes</p>
-        )}
       </div>
-
       <div>
         <Label>Reference</Label>
-        <Input value={form.reference} onChange={(e) => update('reference', e.target.value)} placeholder="e.g. Ref: 5.3.2" />
+        <Input value={form.reference} onChange={(e) => update('reference', e.target.value)} placeholder="e.g. 5.3.2" />
       </div>
-
       <div>
         <Label>Status</Label>
         <Select value={form.status} onValueChange={(v) => update('status', v)}>
@@ -161,12 +362,9 @@ const QuestionForm = ({ examId, existingAreas, editingQuestion, onClose, onSubmi
           </SelectContent>
         </Select>
       </div>
-
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-        <Button type="submit" disabled={submitting}>
-          {submitting ? 'Saving...' : editingQuestion ? 'Update Question' : 'Add Question'}
-        </Button>
+        <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Add Question'}</Button>
       </div>
     </form>
   );
@@ -218,7 +416,6 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
 
     if (!colC) continue;
 
-    // Detect option lines: a) through g)
     const optionMatch = colC.match(/^([a-g])\)\s*(.*)/i);
 
     if (optionMatch) {
@@ -236,7 +433,6 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
         current.reference = colF;
       }
     } else {
-      // New question line — flush previous
       const prevArea: string = current?.area ?? '';
       if (current) {
         current.correct_answer = correctAnswers.join(',');
@@ -251,11 +447,9 @@ function parseSpreadsheet(rows: (string | number | undefined)[][]): ParsedQuesti
         reference: colF || '',
         status: 'published',
       };
-      // "Multi" in colE on the question row is just a marker — no action needed
     }
   }
 
-  // Flush last question
   if (current) {
     current.correct_answer = correctAnswers.join(',');
     pushIfValid(questions, current);
@@ -319,13 +513,7 @@ const BulkImportDialog = ({ examId, open, onOpenChange }: { examId: string; open
 
         <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
           <div className="flex items-center gap-3">
-            <Input
-              ref={fileRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFile}
-              className="max-w-sm"
-            />
+            <Input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="max-w-sm" />
             {fileName && <span className="text-sm text-muted-foreground">{fileName}</span>}
           </div>
 
@@ -379,7 +567,7 @@ const BulkImportDialog = ({ examId, open, onOpenChange }: { examId: string; open
 const AdminExamQuestions = () => {
   const { examId } = useParams<{ examId: string }>();
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [filterArea, setFilterArea] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -404,13 +592,10 @@ const AdminExamQuestions = () => {
     });
   };
 
-  const handleEdit = async (data: Record<string, unknown>) => {
-    if (!editingQuestion) return;
-    return new Promise<void>((resolve, reject) => {
-      updateMutation.mutate(
-        { id: editingQuestion.id, data: data as never },
-        { onSuccess: () => resolve(), onError: reject },
-      );
+  const handleFieldUpdate = (questionId: string, field: string, value: string) => {
+    updateMutation.mutate({
+      id: questionId,
+      data: { [field]: value } as never,
     });
   };
 
@@ -451,12 +636,11 @@ const AdminExamQuestions = () => {
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle>Add Question</DialogTitle></DialogHeader>
-              <QuestionForm
+              <AddQuestionForm
                 examId={examId!}
                 existingAreas={areas || []}
                 onClose={() => setIsAddOpen(false)}
-                onSubmitCreate={handleCreate}
-                onSubmitEdit={handleEdit}
+                onCreate={handleCreate}
               />
             </DialogContent>
           </Dialog>
@@ -494,76 +678,49 @@ const AdminExamQuestions = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10"></TableHead>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>Area</TableHead>
                 <TableHead>Question</TableHead>
                 <TableHead className="w-16 text-center">Ans</TableHead>
                 <TableHead>Ref</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {questions?.map((q, idx) => (
-                <TableRow key={q.id}>
-                  <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                  <TableCell className="text-sm font-medium">{q.area}</TableCell>
-                  <TableCell className="text-sm max-w-[320px] truncate">{q.question_text}</TableCell>
-                  <TableCell className="text-center font-mono font-bold">{q.correct_answer}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{q.reference}</TableCell>
-                  <TableCell>
-                    <Badge variant={q.status === 'published' ? 'default' : 'secondary'}>{q.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Dialog
-                        open={editingQuestion?.id === q.id}
-                        onOpenChange={(open) => { if (!open) setEditingQuestion(null); }}
-                      >
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" onClick={() => setEditingQuestion(q)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                          <DialogHeader><DialogTitle>Edit Question</DialogTitle></DialogHeader>
-                          <QuestionForm
-                            examId={examId!}
-                            existingAreas={areas || []}
-                            editingQuestion={q}
-                            onClose={() => setEditingQuestion(null)}
-                            onSubmitCreate={handleCreate}
-                            onSubmitEdit={handleEdit}
-                          />
-                        </DialogContent>
-                      </Dialog>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete question?</AlertDialogTitle>
-                            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteMutation.mutate(q.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {questions?.map((q, idx) => {
+                const isExpanded = expandedId === q.id;
+                return (
+                  <>
+                    <TableRow
+                      key={q.id}
+                      className={`cursor-pointer hover:bg-muted/50 ${isExpanded ? 'bg-muted/30' : ''}`}
+                      onClick={() => setExpandedId(isExpanded ? null : q.id)}
+                    >
+                      <TableCell className="text-muted-foreground px-2">
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell className="text-sm font-medium">{q.area}</TableCell>
+                      <TableCell className="text-sm max-w-[320px] truncate">{q.question_text}</TableCell>
+                      <TableCell className="text-center font-mono font-bold">{q.correct_answer}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{q.reference}</TableCell>
+                      <TableCell>
+                        <Badge variant={q.status === 'published' ? 'default' : 'secondary'}>{q.status}</Badge>
+                      </TableCell>
+                    </TableRow>
+                    {isExpanded && (
+                      <ExpandedQuestion
+                        key={`${q.id}-expanded`}
+                        question={q}
+                        existingAreas={areas || []}
+                        onUpdate={(field, value) => handleFieldUpdate(q.id, field, value)}
+                        onDelete={() => { deleteMutation.mutate(q.id); setExpandedId(null); }}
+                      />
+                    )}
+                  </>
+                );
+              })}
             </TableBody>
           </Table>
           {questions?.length === 0 && (
