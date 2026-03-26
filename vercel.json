@@ -30,6 +30,7 @@
     { "source": "/blog/agile-training-certification-1", "destination": "/blog/agile-certifications-do-they-matter", "statusCode": 301 },
     { "source": "/top-ten-agile-failures/", "destination": "/blog/top-ten-agile-failures", "statusCode": 301 },
     { "source": "/agile-reading-list/", "destination": "/blog/agile-reading-list", "statusCode": 301 },
+    { "source": "/agile-reading-list", "destination": "/blog/agile-reading-list", "statusCode": 301 },
     { "source": "/what-is-agile-part-2-agile-frameworks/", "destination": "/blog/what-is-agile-part-2-agile-frameworks", "statusCode": 301 },
     { "source": "/what-is-agile-part-2-agile-frameworks", "destination": "/blog/what-is-agile-part-2-agile-frameworks", "statusCode": 301 },
     { "source": "/agile-training-certification-2/", "destination": "/blog/agile-certifications-do-they-matter", "statusCode": 301 },
