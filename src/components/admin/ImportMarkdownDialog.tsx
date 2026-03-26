@@ -241,6 +241,21 @@ export const ImportMarkdownDialog = () => {
         state.mdContent.split('\n\n').find(p => p && !p.startsWith('#') && !p.startsWith('---'))?.slice(0, 300) || '';
 
       const slug = normalizeSlug((fm.slug as string) || '');
+      if (!slug) {
+        throw new Error('No slug found in frontmatter. Add a "slug" field to your markdown file.');
+      }
+
+      // Check if a post with this slug already exists
+      const { data: existing } = await supabase
+        .from('blog_posts')
+        .select('id, title')
+        .eq('slug', slug)
+        .maybeSingle();
+
+      if (existing) {
+        throw new Error(`A post with slug "${slug}" already exists ("${existing.title}"). Delete it first or use a different slug.`);
+      }
+
       const readingTime = (fm.estimated_reading_time as number) || estimateReadingTime(state.mdContent);
 
       await createPost.mutateAsync({
