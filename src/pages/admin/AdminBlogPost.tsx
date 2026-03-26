@@ -241,7 +241,7 @@ const AdminBlogPost = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* ── Canvas ── */}
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-[720px] px-6 py-12">
+          <div className="mx-auto max-w-[960px] px-6 py-12">
             {/* Title */}
             <textarea
               value={formData.title}

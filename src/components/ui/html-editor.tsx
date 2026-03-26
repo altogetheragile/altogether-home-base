@@ -410,8 +410,9 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
     Promise.all([
       import('@codemirror/lang-html'),
       import('@codemirror/lang-css'),
-    ]).then(([htmlMod, cssMod]) => {
-      setExtensions([htmlMod.html({ matchClosingTags: true }), cssMod.css()]);
+      import('@codemirror/view'),
+    ]).then(([htmlMod, cssMod, viewMod]) => {
+      setExtensions([htmlMod.html({ matchClosingTags: true }), cssMod.css(), viewMod.EditorView.lineWrapping]);
     });
   }, []);
 
