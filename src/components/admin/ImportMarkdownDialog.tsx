@@ -159,7 +159,7 @@ export const ImportMarkdownDialog = () => {
   const mdInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
-  const { createPost } = useBlogPostMutations();
+  const { createPost, updatePost } = useBlogPostMutations();
 
   const reset = () => {
     setState({
@@ -252,26 +252,39 @@ export const ImportMarkdownDialog = () => {
         .eq('slug', slug)
         .maybeSingle();
 
-      if (existing) {
-        throw new Error(`A post with slug "${slug}" already exists ("${existing.title}"). Delete it first or use a different slug.`);
-      }
-
       const readingTime = (fm.estimated_reading_time as number) || estimateReadingTime(state.mdContent);
 
-      await createPost.mutateAsync({
+      const postData = {
         title: fm.title as string,
         slug,
         content: htmlContent,
         excerpt,
         seo_title: (fm.meta_title || fm.seo_title || fm.title) as string,
         seo_description: (fm.meta_description || fm.seo_description || excerpt) as string,
-        featured_image_url: ogImageUrl,
+        featured_image_url: ogImageUrl || undefined,
         estimated_reading_time: readingTime,
-        is_published: false,
-      });
+      };
 
-      setState(prev => ({ ...prev, step: 'done' }));
-      toast.success(`"${fm.title}" imported as draft`);
+      if (existing) {
+        // Update existing post — preserve its published status, category, etc.
+        await updatePost.mutateAsync({
+          id: existing.id,
+          data: {
+            ...postData,
+            // Only update featured image if the import provides one
+            ...(ogImageUrl ? { featured_image_url: ogImageUrl } : {}),
+          },
+        });
+        setState(prev => ({ ...prev, step: 'done' }));
+        toast.success(`"${existing.title}" updated with imported content`);
+      } else {
+        await createPost.mutateAsync({
+          ...postData,
+          is_published: false,
+        });
+        setState(prev => ({ ...prev, step: 'done' }));
+        toast.success(`"${fm.title}" imported as draft`);
+      }
 
       // Navigate to blog list after a moment
       setTimeout(() => {
