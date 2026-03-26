@@ -162,26 +162,16 @@ const ExpandedQuestion = ({
     <TableRow>
       <TableCell colSpan={7} className="bg-muted/30 p-0">
         <div className="px-6 py-4 space-y-4">
-          {/* Area + Reference + Status row */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Area</Label>
-              <div className="relative">
+          {/* Area + Status row */}
+          <div className="flex items-end justify-between">
+            <div className="flex gap-6 items-end">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Area</Label>
                 <EditableText
                   value={question.area}
                   onChange={(v) => onUpdate('area', v)}
                 />
               </div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Reference</Label>
-              <EditableText
-                value={question.reference || ''}
-                onChange={(v) => onUpdate('reference', v)}
-                placeholder="e.g. 5.3.2"
-              />
-            </div>
-            <div className="flex items-end justify-between">
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">Status</Label>
                 <Select value={question.status} onValueChange={(v) => onUpdate('status', v)}>
@@ -194,6 +184,8 @@ const ExpandedQuestion = ({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
@@ -214,6 +206,17 @@ const ExpandedQuestion = ({
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+          </div>
+
+          {/* Reference — full width for lengthy content */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Reference</Label>
+            <EditableText
+              value={question.reference || ''}
+              onChange={(v) => onUpdate('reference', v)}
+              multiline
+              placeholder="e.g. 5.3.2"
+            />
           </div>
 
           {/* Question text */}
