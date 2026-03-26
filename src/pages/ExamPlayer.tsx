@@ -202,14 +202,13 @@ const ExamPlayer = () => {
   };
 
   const selectAnswer = (letter: string) => {
-    if (mode === 'practice' && practiceRevealed) return;
     const q = questions[currentIdx];
     const isMulti = q?.correct_answer.includes(',');
     const current = answers[currentIdx]?.selected || [];
 
     if (isMulti) {
       // Toggle selection for multi-answer questions
-      if (mode === 'exam' && practiceRevealed) return;
+      if (practiceRevealed) return;
       const maxSelections = q.correct_answer.split(',').length;
       const isDeselecting = current.includes(letter);
       if (!isDeselecting && current.length >= maxSelections) return;
@@ -223,6 +222,16 @@ const ExamPlayer = () => {
     } else {
       // Single answer — lock after first selection in exam mode
       if (mode === 'exam' && current.length > 0) return;
+      // In practice mode, allow deselecting the current answer
+      if (mode === 'practice' && practiceRevealed && current.includes(letter)) {
+        setAnswers((prev) => ({
+          ...prev,
+          [currentIdx]: { ...prev[currentIdx], selected: [] },
+        }));
+        setPracticeRevealed(false);
+        return;
+      }
+      if (mode === 'practice' && practiceRevealed) return;
       setAnswers((prev) => ({
         ...prev,
         [currentIdx]: { ...prev[currentIdx], selected: [letter] },
