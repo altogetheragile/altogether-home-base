@@ -144,12 +144,10 @@ const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
 
 const ExpandedQuestion = ({
   question,
-  existingAreas,
   onUpdate,
   onDelete,
 }: {
   question: Question;
-  existingAreas: string[];
   onUpdate: (field: string, value: string) => void;
   onDelete: () => void;
 }) => {
@@ -713,7 +711,6 @@ const AdminExamQuestions = () => {
                       <ExpandedQuestion
                         key={`${q.id}-expanded`}
                         question={q}
-                        existingAreas={areas || []}
                         onUpdate={(field, value) => handleFieldUpdate(q.id, field, value)}
                         onDelete={() => { deleteMutation.mutate(q.id); setExpandedId(null); }}
                       />
