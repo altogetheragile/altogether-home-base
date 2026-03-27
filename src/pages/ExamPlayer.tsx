@@ -220,17 +220,18 @@ const ExamPlayer = () => {
         [currentIdx]: { ...prev[currentIdx], selected: next },
       }));
     } else {
-      // Single answer — lock after first selection in exam mode
-      if (mode === 'exam' && current.length > 0) return;
-      // In practice mode, allow deselecting the current answer
-      if (mode === 'practice' && practiceRevealed && current.includes(letter)) {
+      // Allow deselecting the currently selected answer
+      if (current.includes(letter)) {
         setAnswers((prev) => ({
           ...prev,
           [currentIdx]: { ...prev[currentIdx], selected: [] },
         }));
-        setPracticeRevealed(false);
+        if (mode === 'practice') setPracticeRevealed(false);
         return;
       }
+      // In exam mode, lock after first selection (can only deselect above)
+      if (mode === 'exam' && current.length > 0) return;
+      // In practice mode, block selecting a different answer while revealed
       if (mode === 'practice' && practiceRevealed) return;
       setAnswers((prev) => ({
         ...prev,
