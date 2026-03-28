@@ -136,7 +136,7 @@ const BlogPost = () => {
             {/* Body */}
             {post.content && (
               isHtml(post.content) ? (
-                <div className="blog-html-body" style={bodyWrapperStyle} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content, { ADD_TAGS: ['style'], ADD_ATTR: ['style'], FORCE_BODY: true }) }} />
+                <div className="blog-html-body" style={bodyWrapperStyle} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content, { ADD_TAGS: ['style'], ADD_ATTR: ['style', 'class', 'target', 'rel', 'download'], FORCE_BODY: true }) }} />
               ) : (
                 <div style={bodyWrapperStyle}>
                   <ReactMarkdown
