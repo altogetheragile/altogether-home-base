@@ -274,6 +274,20 @@ const blogHtmlStyles = `
 .blog-html-body hr { border: none; border-top: 1px solid ${p.paleTeal}; margin: 2.5rem 0; }
 .blog-html-body table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
 .blog-html-body table td, .blog-html-body table th { padding: 8px 0; vertical-align: top; }
+.blog-html-body .download-link {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: ${p.skyTeal}; border: 1px solid ${p.lightTeal}; border-radius: 10px;
+  padding: 14px 20px; margin: 20px 0; text-decoration: none; color: ${p.deepTeal};
+  font-weight: 600; font-size: 15px; transition: box-shadow 0.2s, transform 0.2s;
+}
+.blog-html-body .download-link:hover {
+  box-shadow: 0 4px 12px rgba(0,77,77,0.1); transform: translateY(-1px);
+}
+.blog-html-body .download-link::before {
+  content: ''; display: inline-block; width: 20px; height: 20px; flex-shrink: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23007A7A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' y1='15' x2='12' y2='3'/%3E%3C/svg%3E");
+  background-size: contain; background-repeat: no-repeat;
+}
 `;
 
 export default BlogPost;
