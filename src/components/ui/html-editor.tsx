@@ -400,7 +400,7 @@ const InsertDownloadButton = ({ onInsert }: { onInsert: (html: string) => void }
   const handleInsert = () => {
     if (!fileUrl) return;
     const label = linkLabel || 'Download file';
-    const html = `<a href="${fileUrl}" class="download-link" download>${label}</a>`;
+    const html = `<a href="${fileUrl}" class="download-link" target="_blank" rel="noopener noreferrer" download>${label}</a>`;
     onInsert(html);
     setFileUrl('');
     setLinkLabel('');
