@@ -7,7 +7,7 @@ import {
   Code, Eye, Columns, Type, Bold, Italic, Underline as UnderlineIcon,
   Heading1, Heading2, Heading3, Link, Unlink,
   List, ListOrdered, Quote, Minus, AlignLeft, AlignCenter, AlignRight,
-  Palette, Highlighter, Undo, Redo, PaintBucket,
+  Palette, Highlighter, Undo, Redo, PaintBucket, Download,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -205,7 +205,7 @@ const HIGHLIGHT_COLORS = [
 ];
 
 // ─── Rich Text Toolbar ─────────────────────────────────────────────────────
-const RichTextToolbar = ({ editor }: { editor: ReturnType<typeof useEditor> }) => {
+const RichTextToolbar = ({ editor, onInsertHtml }: { editor: ReturnType<typeof useEditor>; onInsertHtml?: (html: string) => void }) => {
   const [linkUrl, setLinkUrl] = useState('');
 
   if (!editor) return null;
@@ -351,6 +351,10 @@ const RichTextToolbar = ({ editor }: { editor: ReturnType<typeof useEditor> }) =
         {editor.isActive('link') && (
           <ToolBtn icon={Unlink} label="Remove Link" onClick={() => editor.chain().focus().unsetLink().run()} />
         )}
+        <Divider />
+        {onInsertHtml && (
+          <InsertDownloadButton onInsert={onInsertHtml} />
+        )}
       </TooltipProvider>
     </div>
   );
@@ -386,6 +390,60 @@ const tiptapStyles = `
   pointer-events: none;
 }
 `;
+
+// ─── Insert Download Link ───────────────────────────────────────────────────
+const InsertDownloadButton = ({ onInsert }: { onInsert: (html: string) => void }) => {
+  const [fileUrl, setFileUrl] = useState('');
+  const [linkLabel, setLinkLabel] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const handleInsert = () => {
+    if (!fileUrl) return;
+    const label = linkLabel || 'Download file';
+    const html = `<a href="${fileUrl}" class="download-link" download>${label}</a>`;
+    onInsert(html);
+    setFileUrl('');
+    setLinkLabel('');
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1">
+          <Download className="h-3.5 w-3.5" />
+          Download
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3 space-y-2" align="start">
+        <p className="text-xs font-medium text-gray-500">Insert download link</p>
+        <div>
+          <label className="text-xs text-muted-foreground">File URL</label>
+          <Input
+            placeholder="https://...supabase.co/.../file.pdf"
+            value={fileUrl}
+            onChange={(e) => setFileUrl(e.target.value)}
+            className="h-8 text-sm mt-0.5"
+          />
+          <p className="text-[10px] text-muted-foreground mt-0.5">Upload to Supabase Storage &gt; assets, then paste the public URL</p>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Link text</label>
+          <Input
+            placeholder="Download the guide (PDF)"
+            value={linkLabel}
+            onChange={(e) => setLinkLabel(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleInsert()}
+            className="h-8 text-sm mt-0.5"
+          />
+        </div>
+        <Button type="button" size="sm" className="w-full h-8 text-xs" onClick={handleInsert} disabled={!fileUrl}>
+          Insert
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeholder }) => {
@@ -466,6 +524,15 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
     onChange(val);
   }, [onChange]);
 
+  const insertHtml = useCallback((html: string) => {
+    if (mode === 'rich' && tiptapEditor) {
+      tiptapEditor.chain().focus().insertContent(html, { parseOptions: { preserveWhitespace: false } }).run();
+    } else {
+      // Append to content in code/split mode
+      onChange(value ? value + '\n' + html : html);
+    }
+  }, [mode, tiptapEditor, onChange, value]);
+
   return (
     <div className="space-y-2">
       <style>{tiptapStyles}</style>
@@ -474,6 +541,10 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Content</span>
+          {/* Insert download link — available in code/split modes */}
+          {mode !== 'preview' && mode !== 'rich' && (
+            <InsertDownloadButton onInsert={insertHtml} />
+          )}
           {/* Color replace tool — available in code/split/preview modes */}
           {mode !== 'rich' && (
             <Popover>
@@ -511,7 +582,7 @@ export const HtmlEditor: React.FC<HtmlEditorProps> = ({ value, onChange, placeho
       {/* Rich Text mode — only for simple HTML without <style> blocks */}
       {mode === 'rich' && !isStyled && (
         <>
-          <RichTextToolbar editor={tiptapEditor} />
+          <RichTextToolbar editor={tiptapEditor} onInsertHtml={insertHtml} />
           <div className="tiptap-editor border rounded-b-lg border-t-0 overflow-hidden bg-white">
             <EditorContent editor={tiptapEditor} />
           </div>
