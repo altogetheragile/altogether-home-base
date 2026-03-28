@@ -145,10 +145,16 @@ const AdminBlogPost = () => {
 
     if (isEdit) {
       await updatePost.mutateAsync({ id, data: payload });
+      setSaveStatus('saved');
+      if (publish) navigate('/admin/blog');
     } else {
-      await createPost.mutateAsync(payload);
+      const newPost = await createPost.mutateAsync(payload);
+      if (newPost?.id) {
+        navigate(`/admin/blog/${newPost.id}`, { replace: true });
+      } else {
+        navigate('/admin/blog');
+      }
     }
-    navigate('/admin/blog');
   };
 
   const handleDelete = async () => {
