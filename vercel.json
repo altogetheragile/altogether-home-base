@@ -72,6 +72,8 @@
     { "source": "/wp-json/:path*", "destination": "/", "statusCode": 301 },
     { "source": "/feed/", "destination": "/blog", "statusCode": 301 },
     { "source": "/feed", "destination": "/blog", "statusCode": 301 },
+    { "source": "/:path*/feed/", "destination": "/blog", "statusCode": 301 },
+    { "source": "/:path*/feed", "destination": "/blog", "statusCode": 301 },
     { "source": "/xmlrpc.php", "destination": "/", "statusCode": 301 },
     { "source": "/wp-login.php", "destination": "/", "statusCode": 301 },
     { "source": "/wp-signup.php", "destination": "/", "statusCode": 301 },
