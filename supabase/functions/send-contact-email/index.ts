@@ -21,6 +21,34 @@ interface ContactRequest {
   preferred_contact_method?: string;
 }
 
+// Spam detection — reject messages with URLs or known spam patterns
+function isSpam(text: string): boolean {
+  // Check for URLs (http/https/www)
+  const urlPattern = /https?:\/\/[^\s]+|www\.[^\s]+/i;
+  if (urlPattern.test(text)) return true;
+
+  // Check for common spam phrases (case-insensitive)
+  const spamPhrases = [
+    'sign up for free',
+    'submit contact forms',
+    'contact form submissions',
+    'cold email',
+    'at scale',
+    'captcha solving',
+    'rotating ip',
+    'stealth browser',
+    'per submission',
+    'give it a try',
+    'beats cold email',
+    'powered by a rotating',
+  ];
+
+  const lowerText = text.toLowerCase();
+  const matchCount = spamPhrases.filter(phrase => lowerText.includes(phrase)).length;
+  // Two or more spam phrases is a strong signal
+  return matchCount >= 2;
+}
+
 // HTML-escape user input to prevent injection
 function escapeHtml(str: string): string {
   return str
@@ -54,6 +82,16 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "Invalid email format" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Spam filtering — check message and subject for spam signals
+    if (isSpam(body.message) || isSpam(body.subject)) {
+      // Return success to avoid revealing detection to spammers
+      console.warn(`Spam blocked from ${body.email}: ${body.subject}`);
+      return new Response(
+        JSON.stringify({ success: true, message: "Email sent successfully" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 

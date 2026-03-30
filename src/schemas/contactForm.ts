@@ -32,6 +32,9 @@ export const contactFormSchema = z.object({
   preferred_contact_method: z.enum(["email", "phone"]).optional(),
   
   attachment: z.instanceof(File).optional(),
+
+  // Honeypot field — must remain empty for legitimate submissions
+  website: z.string().optional(),
 });
 
 export type ContactFormData = z.infer<typeof contactFormSchema>;

@@ -51,6 +51,7 @@ const Icons = {
 const Contact: React.FC = () => {
   const isMobile = useIsMobile();
   const [submitted, setSubmitted] = useState(false);
+  const [formLoadedAt] = useState(() => Date.now());
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
@@ -68,7 +69,7 @@ const Contact: React.FC = () => {
   const { mutate: submitContact, isPending } = useContactForm();
 
   const onSubmit = (data: ContactFormData) => {
-    submitContact(data, {
+    submitContact({ ...data, _formLoadedAt: formLoadedAt }, {
       onSuccess: () => {
         form.reset();
         setSubmitted(true);
@@ -225,6 +226,16 @@ const Contact: React.FC = () => {
                     <FormMessage />
                   </FormItem>
                 )} />
+
+                {/* Honeypot — hidden from real users, filled by bots */}
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden', tabIndex: -1 } as React.CSSProperties}>
+                  <FormField control={form.control} name="website" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Website</FormLabel>
+                      <FormControl><Input type="text" autoComplete="off" tabIndex={-1} {...field} /></FormControl>
+                    </FormItem>
+                  )} />
+                </div>
 
                 <button type="submit" disabled={isPending} style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 32px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, marginTop: 8 }}>
                   {isPending ? 'Sending...' : 'Send Message'}
