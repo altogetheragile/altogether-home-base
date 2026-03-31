@@ -21,6 +21,7 @@ export interface EventTemplate {
   target_audience?: string;
   key_benefits?: string[];
   template_tags?: string[];
+  certification_body?: string | null;
   difficulty_rating?: 'beginner' | 'intermediate' | 'advanced';
   popularity_score?: number;
 }

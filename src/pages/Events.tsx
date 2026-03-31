@@ -323,16 +323,7 @@ const Events: React.FC = () => {
         .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))
         .map((e: any) => ({ date: formatDate(e.start_date), eventId: e.id }));
 
-      // Derive cert body from template_tags or title
-      let cert: string | null = null;
-      const tags = (t.template_tags || []) as string[];
-      if (tags.some((tag: string) => tag.toLowerCase().includes('apmg'))) cert = 'APMG';
-      else if (tags.some((tag: string) => tag.toLowerCase().includes('scrum alliance'))) cert = 'Scrum Alliance';
-      if (!cert) {
-        const titleLower = t.title?.toLowerCase() || '';
-        if (titleLower.includes('agilepm') || titleLower.includes('agileba') || titleLower.includes('agile digital')) cert = 'APMG';
-        // Scrum Master / Product Owner courses are not certified by a body — do not infer cert from title
-      }
+      const cert: string | null = t.certification_body || null;
 
       return {
         id: t.id,
