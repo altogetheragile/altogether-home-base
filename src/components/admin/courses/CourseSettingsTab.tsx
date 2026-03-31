@@ -10,18 +10,12 @@ import { useEventTypes } from '@/hooks/useEventTypes';
 import { useEventCategories } from '@/hooks/useEventCategories';
 import { useLevels } from '@/hooks/useLevels';
 import { useFormats } from '@/hooks/useFormats';
+import { useCertificationBodies } from '@/hooks/useCertificationBodies';
 import { useCourseAdminMutations, type CourseAdminItem } from '@/hooks/useCourseAdmin';
 
 interface CourseSettingsTabProps {
   course: CourseAdminItem;
 }
-
-const CERTIFICATION_BODIES = [
-  { id: '', name: 'None' },
-  { id: 'APMG', name: 'APMG' },
-  { id: 'Scrum Alliance', name: 'Scrum Alliance' },
-  { id: 'Scrum.org', name: 'Scrum.org' },
-];
 
 interface SettingsForm {
   is_published: boolean;
@@ -30,7 +24,7 @@ interface SettingsForm {
   category_id: string;
   level_id: string;
   format_id: string;
-  certification_body: string;
+  certification_body_id: string;
   template_tags: string;
 }
 
@@ -40,6 +34,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
   const { data: categories = [] } = useEventCategories();
   const { data: levels = [] } = useLevels();
   const { data: formats = [] } = useFormats();
+  const { data: certBodies = [] } = useCertificationBodies();
 
   const [form, setForm] = useState<SettingsForm>({
     is_published: course.is_published ?? false,
@@ -48,7 +43,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
     category_id: course.category_id || '',
     level_id: course.level_id || '',
     format_id: course.format_id || '',
-    certification_body: course.certification_body || '',
+    certification_body_id: course.certification_body_id || '',
     template_tags: (course.template_tags || []).join(', '),
   });
 
@@ -60,7 +55,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
       category_id: course.category_id || '',
       level_id: course.level_id || '',
       format_id: course.format_id || '',
-      certification_body: course.certification_body || '',
+      certification_body_id: course.certification_body_id || '',
       template_tags: (course.template_tags || []).join(', '),
     });
   }, [course.id]);
@@ -82,7 +77,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
           category_id: data.category_id || null,
           level_id: data.level_id || null,
           format_id: data.format_id || null,
-          certification_body: data.certification_body || null,
+          certification_body_id: data.certification_body_id || null,
           template_tags: tags,
         },
       });
@@ -153,23 +148,7 @@ const CourseSettingsTab = ({ course }: CourseSettingsTabProps) => {
         {renderSelect('Category', form.category_id, 'category_id', categories)}
         {renderSelect('Level', form.level_id, 'level_id', levels)}
         {renderSelect('Format', form.format_id, 'format_id', formats)}
-
-        <div className="space-y-2">
-          <Label>Certification Body</Label>
-          <Select
-            value={form.certification_body}
-            onValueChange={(v) => setForm(prev => ({ ...prev, certification_body: v === 'none' ? '' : v }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="None" />
-            </SelectTrigger>
-            <SelectContent>
-              {CERTIFICATION_BODIES.map(opt => (
-                <SelectItem key={opt.id || 'none'} value={opt.id || 'none'}>{opt.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {renderSelect('Certification Body', form.certification_body_id, 'certification_body_id', certBodies)}
 
         <div className="space-y-2 col-span-2">
           <Label>Tags (comma-separated)</Label>

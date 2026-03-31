@@ -76,6 +76,7 @@ const navigation: NavGroup[] = [
           { label: 'Types', href: '/admin/event-types', icon: Tag },
           { label: 'Levels', href: '/admin/levels', icon: BarChart3 },
           { label: 'Formats', href: '/admin/formats', icon: Settings },
+          { label: 'Certification Bodies', href: '/admin/certification-bodies', icon: Shield },
         ],
       },
       { label: 'Exams', icon: ClipboardList, href: '/admin/exams' },

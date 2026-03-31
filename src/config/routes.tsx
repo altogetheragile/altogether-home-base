@@ -89,6 +89,7 @@ const AdminAssets = lazy(() => import('@/pages/admin/AdminAssets'));
 
 // Admin Pages - Configuration
 const AdminLevels = lazy(() => import('@/pages/admin/AdminLevels'));
+const AdminCertificationBodies = lazy(() => import('@/pages/admin/AdminCertificationBodies'));
 const AdminFormats = lazy(() => import('@/pages/admin/AdminFormats'));
 const AdminActivityDomains = lazy(() => import('@/pages/admin/AdminActivityDomains'));
 const AdminFooter = lazy(() => import('@/pages/admin/AdminFooter'));
@@ -517,6 +518,11 @@ export const AdminRoutes = () => {
         <Route path="formats" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminFormats />
+          </Suspense>
+        } />
+        <Route path="certification-bodies" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminCertificationBodies />
           </Suspense>
         } />
         <Route path="activity-domains" element={

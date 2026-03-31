@@ -158,6 +158,7 @@ const useCoursesCatalogue = () => {
           event_categories:event_categories!category_id(name),
           levels:levels!level_id(name),
           formats:formats!format_id(name),
+          certification_bodies:certification_bodies!certification_body_id(name),
           events:events!template_id(
             id, start_date, end_date, is_published, price_cents, currency, capacity, status
           )
@@ -323,7 +324,7 @@ const Events: React.FC = () => {
         .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))
         .map((e: any) => ({ date: formatDate(e.start_date), eventId: e.id }));
 
-      const cert: string | null = t.certification_body || null;
+      const cert: string | null = (t.certification_bodies as { name: string } | null)?.name || null;
 
       return {
         id: t.id,

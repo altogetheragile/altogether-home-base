@@ -35,7 +35,7 @@ export interface CourseAdminItem {
   target_audience: string | null;
   key_benefits: string[] | null;
   template_tags: string[] | null;
-  certification_body: string | null;
+  certification_body_id: string | null;
   difficulty_rating: string | null;
   default_location_id: string | null;
   default_instructor_id: string | null;
