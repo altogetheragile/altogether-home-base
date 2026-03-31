@@ -718,6 +718,27 @@ export type Database = {
         }
         Relationships: []
       }
+      certification_bodies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           attachment_filename: string | null
@@ -1106,6 +1127,7 @@ export type Database = {
           banner_template: string | null
           brand_color: string | null
           category_id: string | null
+          certification_body_id: string | null
           created_at: string | null
           created_by: string | null
           default_instructor_id: string | null
@@ -1135,6 +1157,7 @@ export type Database = {
           banner_template?: string | null
           brand_color?: string | null
           category_id?: string | null
+          certification_body_id?: string | null
           created_at?: string | null
           created_by?: string | null
           default_instructor_id?: string | null
@@ -1164,6 +1187,7 @@ export type Database = {
           banner_template?: string | null
           brand_color?: string | null
           category_id?: string | null
+          certification_body_id?: string | null
           created_at?: string | null
           created_by?: string | null
           default_instructor_id?: string | null
@@ -1195,6 +1219,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "event_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_templates_certification_body_id_fkey"
+            columns: ["certification_body_id"]
+            isOneToOne: false
+            referencedRelation: "certification_bodies"
             referencedColumns: ["id"]
           },
           {
