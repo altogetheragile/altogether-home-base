@@ -22,6 +22,7 @@ export interface TemplateData {
   prerequisites?: string[];
   difficulty_rating?: string;
   template_tags?: string[];
+  certification_body?: string | null;
 }
 
 export const useTemplateMutations = () => {
