@@ -112,13 +112,13 @@ const FALLBACK_COURSES: CourseItem[] = [
     scheduledDates: [], description: 'The APMG certification for business analysts working in agile environments. Covers requirements, modelling, and stakeholder engagement — all grounded in agile values.',
   },
   {
-    id: 'fallback-4', type: 'Course', title: 'Scrum Master', cert: 'Scrum Alliance',
+    id: 'fallback-4', type: 'Course', title: 'Scrum Master', cert: null,
     forWho: 'New and aspiring Scrum Masters, team leads, delivery managers', duration: '2 days', format: 'Both', groupSize: 'Up to 16',
     objectives: ['Understand the Scrum framework and the Scrum Master role', 'Facilitate Scrum ceremonies with confidence', 'Coach teams through common agile adoption challenges'],
     scheduledDates: [], description: 'A practical, scenario-led introduction to Scrum and the Scrum Master role. Less about memorising the framework, more about what to do when the team gets stuck.',
   },
   {
-    id: 'fallback-5', type: 'Course', title: 'Product Owner', cert: 'Scrum Alliance',
+    id: 'fallback-5', type: 'Course', title: 'Product Owner', cert: null,
     forWho: 'Product owners, product managers, business stakeholders', duration: '2 days', format: 'Both', groupSize: 'Up to 16',
     objectives: ['Define and manage a product backlog effectively', 'Prioritise using value-based techniques including MoSCoW and OKRs', 'Work with the team to deliver the right thing, not just a thing'],
     scheduledDates: [], description: 'For the people responsible for what gets built. Covers backlog management, stakeholder alignment, and prioritisation — with real scenarios from day one.',
@@ -331,7 +331,7 @@ const Events: React.FC = () => {
       if (!cert) {
         const titleLower = t.title?.toLowerCase() || '';
         if (titleLower.includes('agilepm') || titleLower.includes('agileba') || titleLower.includes('agile digital')) cert = 'APMG';
-        else if (titleLower.includes('scrum master') || titleLower.includes('product owner')) cert = 'Scrum Alliance';
+        // Scrum Master / Product Owner courses are not certified by a body — do not infer cert from title
       }
 
       return {
