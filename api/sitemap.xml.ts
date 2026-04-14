@@ -28,7 +28,6 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     const staticPages = [
       { url: '/', priority: '1.0', changefreq: 'weekly' },
       { url: '/events', priority: '0.9', changefreq: 'daily' },
-      { url: '/knowledge', priority: '0.8', changefreq: 'weekly' },
       { url: '/coaching', priority: '0.8', changefreq: 'monthly' },
       { url: '/blog', priority: '0.8', changefreq: 'weekly' },
       { url: '/exams', priority: '0.8', changefreq: 'weekly' },
@@ -51,13 +50,6 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       .select('id, updated_at')
       .eq('is_published', true)
       .order('display_order', { ascending: true });
-
-    // Fetch knowledge items
-    const { data: techniques } = await supabase
-      .from('knowledge_items')
-      .select('slug, updated_at')
-      .eq('is_published', true)
-      .order('name');
 
     // Fetch published exams
     const { data: exams } = await supabase
@@ -111,19 +103,6 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     <lastmod>${formatDate(t.updated_at)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>
-`;
-      }
-    }
-
-    // Knowledge base techniques
-    if (techniques) {
-      for (const t of techniques) {
-        xml += `  <url>
-    <loc>${SITE_URL}/knowledge/${escapeXml(t.slug)}</loc>
-    <lastmod>${formatDate(t.updated_at)}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
   </url>
 `;
       }

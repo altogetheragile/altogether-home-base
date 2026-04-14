@@ -196,10 +196,6 @@ const STATIC_PAGES = {
     title: 'Courses, Workshops & Masterclasses — Altogether Agile',
     description: 'Browse upcoming agile courses, workshops, and masterclasses. Certified training delivered by an experienced agile coach and trainer.',
   },
-  '/knowledge': {
-    title: 'Knowledge Base — Altogether Agile',
-    description: 'Explore 80+ practical agile techniques, frameworks, and tools. A comprehensive knowledge base for agile practitioners.',
-  },
   '/coaching': {
     title: 'Coaching — Altogether Agile',
     description: 'Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience.',
@@ -263,14 +259,10 @@ async function main() {
   const baseHtml = readFileSync(resolve(DIST, 'index.html'), 'utf-8');
 
   // Fetch all dynamic content in parallel
-  const [postsRes, techniquesRes, examsRes, templatesRes] = await Promise.all([
+  const [postsRes, examsRes, templatesRes] = await Promise.all([
     supabase
       .from('blog_posts')
       .select('slug, title, seo_title, seo_description, featured_image_url, published_at, updated_at')
-      .eq('is_published', true),
-    supabase
-      .from('knowledge_items')
-      .select('slug, name, description')
       .eq('is_published', true),
     supabase
       .from('exams')
@@ -283,7 +275,6 @@ async function main() {
   ]);
 
   const posts = postsRes.data || [];
-  const techniques = techniquesRes.data || [];
   const exams = examsRes.data || [];
   const templates = templatesRes.data || [];
 
@@ -321,24 +312,7 @@ async function main() {
     succeeded++;
   }
 
-  // 3. Knowledge items
-  for (const item of techniques) {
-    const route = `/knowledge/${item.slug}`;
-    const title = `${item.name} — Altogether Agile Knowledge Base`;
-    const description = item.description || `Learn about ${item.name} — a practical agile technique from the Altogether Agile knowledge base.`;
-    const tags = buildMetaTags({
-      title,
-      description: truncate(description),
-      canonical: `${SITE_URL}${route}`,
-      ogType: 'article',
-      jsonLd: techniqueJsonLd(item),
-    });
-    writeHtml(route, injectMeta(baseHtml, tags));
-    console.log(`  ok   ${route}`);
-    succeeded++;
-  }
-
-  // 4. Exams
+  // 3. Exams
   for (const exam of exams) {
     const route = `/exams/${exam.slug}`;
     const title = `${exam.title} — Altogether Agile`;
