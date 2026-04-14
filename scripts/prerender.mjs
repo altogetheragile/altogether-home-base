@@ -16,10 +16,20 @@ import { preview } from 'vite';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const DIST = resolve(ROOT, 'dist');
+
+// Load .env for local builds (Vercel sets env vars via dashboard)
+const envPath = resolve(ROOT, '.env');
+if (existsSync(envPath)) {
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const m = line.match(/^(\w+)=["']?(.+?)["']?$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+  }
+}
 
 // ── Routes to prerender ─────────────────────────────────────────────
 const STATIC_ROUTES = [
@@ -52,6 +62,46 @@ function routesFromSitemap() {
     .filter(p => !STATIC_ROUTES.includes(p));
 }
 
+/** Fetch dynamic routes from Supabase (courses, knowledge items, exams). */
+async function routesFromSupabase() {
+  const url = process.env.VITE_SUPABASE_URL;
+  const key = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    console.warn('  Supabase env vars not set — skipping dynamic routes');
+    return [];
+  }
+
+  const supabase = createClient(url, key);
+  const routes = [];
+
+  const { data: templates } = await supabase
+    .from('event_templates')
+    .select('id')
+    .eq('is_published', true);
+  if (templates) {
+    for (const t of templates) routes.push(`/courses/${t.id}`);
+  }
+
+  const { data: techniques } = await supabase
+    .from('knowledge_items')
+    .select('slug')
+    .eq('is_published', true);
+  if (techniques) {
+    for (const t of techniques) routes.push(`/knowledge/${t.slug}`);
+  }
+
+  const { data: exams } = await supabase
+    .from('exams')
+    .select('slug')
+    .eq('status', 'published');
+  if (exams) {
+    for (const e of exams) routes.push(`/exams/${e.slug}`);
+  }
+
+  console.log(`  Found ${routes.length} dynamic routes from Supabase`);
+  return routes;
+}
+
 /** Write rendered HTML to dist/<route>/index.html. */
 function writeHtml(route, html) {
   if (route === '/') {
@@ -78,7 +128,8 @@ async function main() {
   }
 
   const sitemapRoutes = routesFromSitemap();
-  const allRoutes = [...new Set([...STATIC_ROUTES, ...sitemapRoutes])];
+  const dynamicRoutes = await routesFromSupabase();
+  const allRoutes = [...new Set([...STATIC_ROUTES, ...sitemapRoutes, ...dynamicRoutes])];
 
   console.log(`\nPrerendering ${allRoutes.length} routes…\n`);
 
