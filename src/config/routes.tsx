@@ -35,6 +35,7 @@ const AIToolsHub = lazy(() => import('@/pages/AIToolsHub'));
 const BMCGenerator = lazy(() => import('@/pages/BMCGenerator'));
 const ProjectModellingCanvas = lazy(() => import('@/pages/ProjectModellingCanvas'));
 const Contact = lazy(() => import('@/pages/Contact'));
+const CoursePage = lazy(() => import('@/pages/CoursePage'));
 const BlogPost = lazy(() => import('@/pages/BlogPost'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const CookiePolicy = lazy(() => import('@/pages/CookiePolicy'));
@@ -90,6 +91,7 @@ const AdminAssets = lazy(() => import('@/pages/admin/AdminAssets'));
 // Admin Pages - Configuration
 const AdminLevels = lazy(() => import('@/pages/admin/AdminLevels'));
 const AdminCertificationBodies = lazy(() => import('@/pages/admin/AdminCertificationBodies'));
+const AdminSelfPacedCourses = lazy(() => import('@/pages/admin/AdminSelfPacedCourses'));
 const AdminFormats = lazy(() => import('@/pages/admin/AdminFormats'));
 const AdminActivityDomains = lazy(() => import('@/pages/admin/AdminActivityDomains'));
 const AdminFooter = lazy(() => import('@/pages/admin/AdminFooter'));
@@ -218,6 +220,11 @@ export const PublicRoutes = () => {
           <Contact />
         </Suspense>
       </ErrorBoundary>
+    } />
+    <Route path="/events/learn/:slug" element={
+      <Suspense fallback={<LoadingFallback />}>
+        <CoursePage />
+      </Suspense>
     } />
     <Route path="/terms" element={
       <Suspense fallback={<LoadingFallback />}>
@@ -523,6 +530,11 @@ export const AdminRoutes = () => {
         <Route path="certification-bodies" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminCertificationBodies />
+          </Suspense>
+        } />
+        <Route path="self-paced-courses" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminSelfPacedCourses />
           </Suspense>
         } />
         <Route path="activity-domains" element={

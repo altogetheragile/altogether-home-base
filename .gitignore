@@ -35,3 +35,7 @@ cucumber-reports
 *.sw?
 bun.lockb
 .vercel
+
+# Google API credentials
+scripts/gsc-credentials.json
+scripts/gsc-token.json

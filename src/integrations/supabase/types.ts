@@ -739,6 +739,30 @@ export type Database = {
         }
         Relationships: []
       }
+      courses: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          title?: string
+          description?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           attachment_filename: string | null
@@ -1657,6 +1681,50 @@ export type Database = {
             columns: ["knowledge_item_id"]
             isOneToOne: false
             referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          id: string
+          module_id: string
+          title: string
+          type: string
+          duration: string
+          chapter_ref: string | null
+          notes_html: string | null
+          video_url: string | null
+          position: number
+        }
+        Insert: {
+          id?: string
+          module_id: string
+          title: string
+          type: string
+          duration: string
+          chapter_ref?: string | null
+          notes_html?: string | null
+          video_url?: string | null
+          position: number
+        }
+        Update: {
+          id?: string
+          module_id?: string
+          title?: string
+          type?: string
+          duration?: string
+          chapter_ref?: string | null
+          notes_html?: string | null
+          video_url?: string | null
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
@@ -2594,6 +2662,35 @@ export type Database = {
           virtual_url?: string | null
         }
         Relationships: []
+      }
+      modules: {
+        Row: {
+          id: string
+          course_id: string
+          title: string
+          position: number
+        }
+        Insert: {
+          id?: string
+          course_id: string
+          title: string
+          position: number
+        }
+        Update: {
+          id?: string
+          course_id?: string
+          title?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       media_assets: {
         Row: {
@@ -3780,6 +3877,42 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_progress: {
+        Row: {
+          id: string
+          user_id: string
+          lesson_id: string
+          completed_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          lesson_id: string
+          completed_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          lesson_id?: string
+          completed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_stories: {
         Row: {

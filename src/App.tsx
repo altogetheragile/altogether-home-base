@@ -62,7 +62,7 @@ const App = () => (
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
-    <Analytics />
+    <Analytics scriptSrc="/va/script.js" />
   </HelmetProvider>
 );
 

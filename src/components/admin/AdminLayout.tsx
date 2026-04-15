@@ -80,6 +80,7 @@ const navigation: NavGroup[] = [
         ],
       },
       { label: 'Exams', icon: ClipboardList, href: '/admin/exams' },
+      { label: 'Self-paced Courses', icon: Layers, href: '/admin/self-paced-courses' },
     ],
   },
   {

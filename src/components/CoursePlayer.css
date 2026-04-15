@@ -1,0 +1,35 @@
+/* Course player notes_html styles */
+.course-notes .ref {
+  font-size: 11px;
+  color: #6B7280;
+  margin-bottom: 12px;
+  padding: 3px 8px;
+  background: #F9FAFB;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.course-notes .vt {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.course-notes .vb {
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+.course-notes .co {
+  background: #E1F5EE;
+  border-left: 3px solid #004D4D;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  color: #085041;
+  margin: 10px 0;
+  line-height: 1.65;
+}

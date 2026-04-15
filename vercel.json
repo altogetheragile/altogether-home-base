@@ -106,6 +106,8 @@
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" },
+    { "source": "/va/script.js", "destination": "https://va.vercel-scripts.com/v1/script.js" },
+    { "source": "/va/:path*", "destination": "https://va.vercel-scripts.com/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
