@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Search, FolderOpen, Layers, Target, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, FolderOpen, Layers, Target, Tag, Compass } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,7 @@ const AdminTaxonomy = () => {
       case 'categories': return 'knowledge_categories';
       case 'domains': return 'activity_domains';
       case 'tags': return 'knowledge_tags';
+      case 'isa-dimensions': return 'isa_dimensions';
     }
   };
 
@@ -55,8 +56,7 @@ const AdminTaxonomy = () => {
     queryKey: [getQueryKey(activeTab)],
     queryFn: async () => {
       const tableName = getTableName(activeTab);
-      const orderColumn = activeTab === 'tags' ? 'name' :
-                         activeTab === 'domains' ? 'name' : 'display_order';
+      const orderColumn = (activeTab === 'tags' || activeTab === 'domains') ? 'name' : 'display_order';
 
       const { data, error } = await supabase
         .from(tableName)
@@ -133,7 +133,7 @@ const AdminTaxonomy = () => {
       submitData.description = formData.description;
       submitData.color = formData.color;
     }
-    if (activeTab === 'decision-levels' || activeTab === 'categories') {
+    if (activeTab === 'decision-levels' || activeTab === 'categories' || activeTab === 'isa-dimensions') {
       submitData.display_order = formData.display_order;
     }
     if (activeTab === 'domains') {
@@ -239,6 +239,15 @@ const AdminTaxonomy = () => {
           hasOrder: false,
           hasColor: false,
         };
+      case 'isa-dimensions':
+        return {
+          label: 'ISA Dimensions',
+          icon: Compass,
+          description: 'Intent, Scope, Approach, Evidence — the four lenses at every horizon',
+          addLabel: 'Add ISA Dimension',
+          hasOrder: true,
+          hasColor: true,
+        };
     }
   };
 
@@ -266,8 +275,8 @@ const AdminTaxonomy = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TaxonomyType)}>
-            <TabsList className="grid w-full grid-cols-4">
-              {(['decision-levels', 'categories', 'domains', 'tags'] as TaxonomyType[]).map(type => {
+            <TabsList className="grid w-full grid-cols-5">
+              {(['decision-levels', 'categories', 'domains', 'tags', 'isa-dimensions'] as TaxonomyType[]).map(type => {
                 const config = getTabConfig(type);
                 return (
                   <TabsTrigger key={type} value={type} className="flex items-center space-x-2">
@@ -278,7 +287,7 @@ const AdminTaxonomy = () => {
               })}
             </TabsList>
 
-            {(['decision-levels', 'categories', 'domains', 'tags'] as TaxonomyType[]).map((type) => (
+            {(['decision-levels', 'categories', 'domains', 'tags', 'isa-dimensions'] as TaxonomyType[]).map((type) => (
               <TabsContent key={type} value={type} className="mt-6">
                 <div className="flex justify-between items-center mb-6">
                   <div>

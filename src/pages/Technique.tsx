@@ -117,6 +117,10 @@ function getDomains(item: KnowledgeItem): string[] {
   return (item.domains || []).map((d) => d.name);
 }
 
+function getIsaDimensions(item: KnowledgeItem): Array<{ name: string; color: string | null }> {
+  return (item.isa_dimensions || []).map((d) => ({ name: d.name, color: d.color }));
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 const Technique: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -175,6 +179,7 @@ const Technique: React.FC = () => {
   const col = categoryColours[catName] || categoryColours.Analysis;
   const horizons = getHorizons(item);
   const domains = getDomains(item);
+  const isaDims = getIsaDimensions(item);
   const itemData = item as KnowledgeItem & {
     use_this_when?: string[];
     avoid_when?: string[];
@@ -402,6 +407,16 @@ const Technique: React.FC = () => {
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {horizons.map((h) => (
                           <span key={h} style={{ background: p.paleTeal, color: p.midTeal, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>{h}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {isaDims.length > 0 && (
+                    <div>
+                      <div style={{ color: p.muted, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>ISA Dimension</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {isaDims.map((d) => (
+                          <span key={d.name} style={{ background: `${d.color || '#6366f1'}18`, color: d.color || '#6366f1', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: `1px solid ${d.color || '#6366f1'}40` }}>{d.name}</span>
                         ))}
                       </div>
                     </div>
