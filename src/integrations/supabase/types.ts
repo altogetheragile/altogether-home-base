@@ -1028,45 +1028,6 @@ export type Database = {
         }
         Relationships: []
       }
-      isa_dimensions: {
-        Row: {
-          color: string | null
-          created_at: string
-          created_by: string | null
-          description: string | null
-          display_order: number | null
-          id: string
-          name: string
-          slug: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          name: string
-          slug: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          name?: string
-          slug?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
       epics: {
         Row: {
           business_objective: string | null
@@ -1952,45 +1913,6 @@ export type Database = {
           },
           {
             foreignKeyName: "knowledge_item_domains_knowledge_item_id_fkey"
-            columns: ["knowledge_item_id"]
-            isOneToOne: false
-            referencedRelation: "knowledge_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      knowledge_item_isa_dimensions: {
-        Row: {
-          created_at: string
-          isa_dimension_id: string
-          is_primary: boolean | null
-          knowledge_item_id: string
-          rationale: string | null
-        }
-        Insert: {
-          created_at?: string
-          isa_dimension_id: string
-          is_primary?: boolean | null
-          knowledge_item_id: string
-          rationale?: string | null
-        }
-        Update: {
-          created_at?: string
-          isa_dimension_id?: string
-          is_primary?: boolean | null
-          knowledge_item_id?: string
-          rationale?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "knowledge_item_isa_dimensions_isa_dimension_id_fkey"
-            columns: ["isa_dimension_id"]
-            isOneToOne: false
-            referencedRelation: "isa_dimensions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "knowledge_item_isa_dimensions_knowledge_item_id_fkey"
             columns: ["knowledge_item_id"]
             isOneToOne: false
             referencedRelation: "knowledge_items"

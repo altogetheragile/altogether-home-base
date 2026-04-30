@@ -104,16 +104,6 @@ export interface ActivityDomain {
   rationale?: string | null;
 }
 
-export interface IsaDimension {
-  id: string;
-  name: string;
-  slug: string;
-  color: string | null;
-  description: string | null;
-  is_primary?: boolean;
-  rationale?: string | null;
-}
-
 export interface KnowledgeTag {
   id: string;
   name: string;
@@ -173,7 +163,6 @@ export interface KnowledgeItem {
   decision_levels: DecisionLevel[];
   categories: KnowledgeCategory[];
   domains: ActivityDomain[];
-  isa_dimensions: IsaDimension[];
   tags: KnowledgeTag[];
   
   // Legacy single relations (deprecated)
@@ -263,7 +252,6 @@ interface JunctionRow {
   decision_levels?: DecisionLevel;
   knowledge_categories?: KnowledgeCategory;
   activity_domains?: ActivityDomain;
-  isa_dimensions?: IsaDimension;
   knowledge_tags?: KnowledgeTag;
 }
 
@@ -271,7 +259,6 @@ interface RawKnowledgeItem extends Record<string, unknown> {
   knowledge_item_decision_levels?: JunctionRow[];
   knowledge_item_categories?: JunctionRow[];
   knowledge_item_domains?: JunctionRow[];
-  knowledge_item_isa_dimensions?: JunctionRow[];
   knowledge_item_tags?: JunctionRow[];
 }
 
@@ -303,15 +290,6 @@ const transformKnowledgeItem = (raw: RawKnowledgeItem): KnowledgeItem => {
     }))
     .filter((item) => item.id);
 
-  // Extract ISA dimensions from junction table with is_primary/rationale
-  const isa_dimensions: IsaDimension[] = (raw.knowledge_item_isa_dimensions || [])
-    .map((jt) => ({
-      ...jt.isa_dimensions!,
-      is_primary: jt.is_primary || false,
-      rationale: jt.rationale || null,
-    }))
-    .filter((item) => item.id);
-
   // Extract tags from junction table
   const tags: KnowledgeTag[] = (raw.knowledge_item_tags || [])
     .map((jt) => jt.knowledge_tags!)
@@ -322,7 +300,6 @@ const transformKnowledgeItem = (raw: RawKnowledgeItem): KnowledgeItem => {
     decision_levels,
     categories,
     domains,
-    isa_dimensions,
     tags,
   } as unknown as KnowledgeItem;
 };
@@ -333,7 +310,6 @@ export const useKnowledgeItems = (params?: {
   layerId?: string;  // Deprecated: use decisionLevelId
   decisionLevelId?: string;  // NEW: Filter by decision level
   domainId?: string;
-  isaDimensionId?: string;
   featured?: boolean;
   limit?: number;
   sortBy?: string;
@@ -362,10 +338,6 @@ export const useKnowledgeItems = (params?: {
           knowledge_item_domains (
             is_primary, rationale,
             activity_domains (id, name, slug, color, description)
-          ),
-          knowledge_item_isa_dimensions (
-            is_primary, rationale,
-            isa_dimensions (id, name, slug, color, description)
           ),
           knowledge_use_cases (id, case_type, title, summary)
         `);
@@ -417,24 +389,9 @@ export const useKnowledgeItems = (params?: {
           .from('knowledge_item_domains')
           .select('knowledge_item_id')
           .eq('domain_id', params.domainId);
-
+        
         if (domainItems && domainItems.length > 0) {
           const itemIds = domainItems.map(d => d.knowledge_item_id);
-          query = query.in('id', itemIds);
-        } else {
-          return [];
-        }
-      }
-
-      // Filter by ISA dimension via junction table
-      if (params?.isaDimensionId) {
-        const { data: isaItems } = await supabase
-          .from('knowledge_item_isa_dimensions')
-          .select('knowledge_item_id')
-          .eq('isa_dimension_id', params.isaDimensionId);
-
-        if (isaItems && isaItems.length > 0) {
-          const itemIds = isaItems.map(i => i.knowledge_item_id);
           query = query.in('id', itemIds);
         } else {
           return [];
@@ -498,10 +455,6 @@ export const useKnowledgeItemById = (id: string) => {
             is_primary, rationale,
             activity_domains (id, name, slug, color, description)
           ),
-          knowledge_item_isa_dimensions (
-            is_primary, rationale,
-            isa_dimensions (id, name, slug, color, description)
-          ),
           knowledge_item_tags (
             knowledge_tags (id, name, slug)
           ),
@@ -542,10 +495,6 @@ export const useKnowledgeItemBySlug = (slug: string) => {
           knowledge_item_domains (
             is_primary, rationale,
             activity_domains (id, name, slug, color, description)
-          ),
-          knowledge_item_isa_dimensions (
-            is_primary, rationale,
-            isa_dimensions (id, name, slug, color, description)
           ),
           knowledge_use_cases (id, case_type, title, who, what, when_used, where_used, why, how, how_much, summary)
         `)

@@ -1,4 +1,4 @@
-export type TaxonomyType = 'decision-levels' | 'categories' | 'domains' | 'tags' | 'isa-dimensions';
+export type TaxonomyType = 'decision-levels' | 'categories' | 'domains' | 'tags';
 
 export interface TaxonomyItem {
   id: string;
