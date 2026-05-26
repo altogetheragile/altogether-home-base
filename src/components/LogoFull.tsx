@@ -1,22 +1,9 @@
-import { colors as p } from '@/theme/colors';
-
-const LogoFull = ({ height = 48, light = false }: { height?: number; light?: boolean }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-    <span style={{
-      color: light ? '#fff' : p.deepTeal,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Altogether</span>
-    <span style={{
-      color: p.orange,
-      fontWeight: 800,
-      fontSize: height * 0.48,
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-    }}>Agile</span>
-  </div>
+const LogoFull = ({ height = 48 }: { height?: number; light?: boolean }) => (
+  <img
+    src="/brand/lockup-horizontal-tight.svg"
+    alt="Altogether Agile"
+    style={{ height, width: 'auto', display: 'block' }}
+  />
 );
 
 export default LogoFull;
