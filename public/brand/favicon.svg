@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img">
-  <title>Altogether Agile favicon</title>
-  <desc>Favicon source. At small sizes the kanji reads as texture; the orange square is the recognisable mark.</desc>
-  <rect width="32" height="32" fill="#FF9715"/>
-  <text x="16" y="25"
+  <title>Altogether Agile favicon - primary</title>
+  <desc>Deep Teal ground with the kanji 皆 in Orange at bold weight 700. The default favicon for browser tabs and bookmarks.</desc>
+  <rect width="32" height="32" fill="#004D4D"/>
+  <text x="16" y="24.5"
         text-anchor="middle"
         font-family="'Hiragino Sans', 'Yu Gothic', 'Noto Sans CJK JP', sans-serif"
-        font-weight="900"
-        font-size="28"
-        fill="#F0FAFA">皆</text>
+        font-weight="700"
+        font-size="22"
+        fill="#FF9715">皆</text>
 </svg>

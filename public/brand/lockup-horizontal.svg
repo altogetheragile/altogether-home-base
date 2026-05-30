@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 100" width="100%" role="img">
   <title>Altogether Agile horizontal lockup</title>
-  <desc>Horizontal logo lockup with the hanko mark on the left and the Altogether Agile wordmark stacked on the right. Default lockup for headers and email signatures.</desc>
-  <rect width="100" height="100" fill="#FF9715"/>
-  <text x="50" y="78"
+  <desc>Horizontal lockup with the Deep Teal hanko mark on the left and the Altogether Agile wordmark stacked on the right.</desc>
+  <rect width="100" height="100" fill="#004D4D"/>
+  <text x="50" y="83.5"
         text-anchor="middle"
         font-family="'Hiragino Sans', 'Yu Gothic', 'Noto Sans CJK JP', sans-serif"
-        font-weight="900"
+        font-weight="700"
         font-size="86"
-        fill="#F0FAFA">皆</text>
+        fill="#FF9715">皆</text>
   <text x="120" y="42"
         font-family="'DM Sans', system-ui, sans-serif"
         font-weight="800"
