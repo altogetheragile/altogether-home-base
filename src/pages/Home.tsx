@@ -133,7 +133,7 @@ const Home: React.FC = () => {
       {/* ─── HERO ─── */}
       <div className="aa-hero">
         <div className="aa-hero-bg">
-          <img src="/images/hero-bg.webp" alt="" fetchPriority="high" width="1380" height="648" />
+          <img src="/images/hero-bg.svg" alt="" fetchPriority="high" width="1440" height="700" />
         </div>
         <div className={`aa-hero-content${isMobile ? ' aa-hero-content--mobile' : ''}`}>
           <div className="aa-hero-grid">
