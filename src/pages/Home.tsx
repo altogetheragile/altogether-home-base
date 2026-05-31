@@ -117,9 +117,10 @@ const Home: React.FC = () => {
     <div className="aa-page">
       <Helmet>
         <title>Altogether Agile — Agile Coaching & Training</title>
-        <meta name="description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience." />
+        <meta name="description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
         <meta property="og:title" content="Altogether Agile — Agile Coaching & Training" />
-        <meta property="og:description" content="Certified agile courses, practical coaching, and 80+ techniques for teams who want real results." />
+        <meta property="og:description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
+        <meta name="twitter:description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:type" content="website" />
         <link rel="canonical" href={`${SITE_URL}/`} />
@@ -147,7 +148,7 @@ const Home: React.FC = () => {
           <div className="aa-hero-grid">
             <div>
               <h1 className="aa-hero-h1">
-                Work better together.<br />Accelerate time to Value.
+                Work better together.<br />Accelerate time to value.
               </h1>
               <p className="aa-hero-subtitle">
                 Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.

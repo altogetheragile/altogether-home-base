@@ -128,9 +128,9 @@ const About: React.FC = () => {
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
         <title>About Alun — Altogether Agile</title>
-        <meta name="description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and certified Scrum trainer." />
+        <meta name="description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer." />
         <meta property="og:title" content="About Alun — Altogether Agile" />
-        <meta property="og:description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and certified Scrum trainer." />
+        <meta property="og:description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/about`} />
       </Helmet>

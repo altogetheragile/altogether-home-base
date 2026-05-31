@@ -115,7 +115,7 @@ function organizationJsonLd() {
     name: 'Altogether Agile',
     url: SITE_URL,
     logo: `${SITE_URL}/og-image.png`,
-    description: 'Certified agile courses, practical coaching, and 80+ techniques for teams who want real results.',
+    description: 'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
     founder: {
       '@type': 'Person',
       name: 'Alun Davies-Baker',
@@ -188,13 +188,13 @@ function breadcrumbJsonLd(items) {
 const STATIC_PAGES = {
   '/': {
     title: 'Altogether Agile — Agile Coaching & Training',
-    description: 'Certified agile courses, practical coaching, and 80+ techniques for teams who want real results. 25 years of hands-on experience.',
+    description: 'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
     ogType: 'website',
     jsonLd: organizationJsonLd(),
   },
   '/events': {
     title: 'Courses, Workshops & Masterclasses — Altogether Agile',
-    description: 'Browse upcoming agile courses, workshops, and masterclasses. Certified training delivered by an experienced agile coach and trainer.',
+    description: 'Browse upcoming agile courses, workshops, and masterclasses. Framework-based training delivered by an experienced agile coach and trainer.',
   },
   '/coaching': {
     title: 'Coaching — Altogether Agile',
@@ -210,7 +210,7 @@ const STATIC_PAGES = {
   },
   '/about': {
     title: 'About Alun — Altogether Agile',
-    description: 'Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and certified Scrum trainer.',
+    description: 'Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer.',
   },
   '/contact': {
     title: 'Contact — Altogether Agile',

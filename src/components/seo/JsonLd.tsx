@@ -18,7 +18,7 @@ export const OrganizationSchema = () => (
     name: 'Altogether Agile',
     url: SITE_URL,
     logo: `${SITE_URL}/og-image.png`,
-    description: 'Certified agile courses, practical coaching, and 80+ techniques for teams who want real results.',
+    description: 'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
     founder: {
       '@type': 'Person',
       name: 'Alun Davies-Baker',

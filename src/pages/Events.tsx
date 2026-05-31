@@ -353,9 +353,9 @@ const Events: React.FC = () => {
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
         <title>Agile Training Courses & Workshops UK — Altogether Agile</title>
-        <meta name="description" content="Certified agile training courses in the UK — AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally by an experienced coach." />
+        <meta name="description" content="Framework-based agile training courses in the UK covering AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally by an experienced coach." />
         <meta property="og:title" content="Agile Training Courses & Workshops UK — Altogether Agile" />
-        <meta property="og:description" content="Certified agile training courses in the UK — AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally." />
+        <meta property="og:description" content="Framework-based agile training courses in the UK covering AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:url" content={`${SITE_URL}/events`} />
         <meta property="og:type" content="website" />

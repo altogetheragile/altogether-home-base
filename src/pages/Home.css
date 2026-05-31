@@ -22,7 +22,7 @@
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
 .aa-hero {
   position: relative;
-  min-height: 760px;
+  min-height: 560px;
   overflow: visible;
   border: none;
   box-shadow: none;
@@ -128,11 +128,8 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
-  background: transparent;
-  padding: 20px 48px 80px;
-  margin-top: -240px;
-  position: relative;
-  z-index: 3;
+  background: #F0FAFA;
+  padding: 64px 48px;
 }
 
 .aa-stat {
