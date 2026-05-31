@@ -34,7 +34,7 @@ export function CumulativeFlowDiagram({ metrics, title }: CumulativeFlowDiagramP
       </ResponsiveContainer>
       <p className="text-xs text-muted-foreground">
         The cumulative flow diagram shows how items accumulate in each column over time.
-        A widening band indicates growing WIP — items stuck in that stage.
+        A widening band indicates growing WIP - items stuck in that stage.
       </p>
     </div>
   );

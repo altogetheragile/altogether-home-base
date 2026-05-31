@@ -158,9 +158,9 @@ const Knowledge: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>Knowledge Base — Altogether Agile</title>
+        <title>Knowledge Base - Altogether Agile</title>
         <meta name="description" content="Explore 80+ agile techniques, frameworks, and practices. Practical guides for Scrum, Kanban, facilitation, and team coaching." />
-        <meta property="og:title" content="Knowledge Base — Altogether Agile" />
+        <meta property="og:title" content="Knowledge Base - Altogether Agile" />
         <meta property="og:description" content="Explore 80+ agile techniques, frameworks, and practices. Practical guides for Scrum, Kanban, facilitation, and team coaching." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/knowledge`} />
@@ -198,8 +198,8 @@ const Knowledge: React.FC = () => {
             </div>
             <div style={{ display: 'flex', gap: 24 }}>
               {[
-                { n: totalCount > 0 ? `${totalCount}+` : '—', label: 'Techniques' },
-                { n: String(categoryCount || '—'), label: 'Categories' },
+                { n: totalCount > 0 ? `${totalCount}+` : '-', label: 'Techniques' },
+                { n: String(categoryCount || '-'), label: 'Categories' },
                 { n: '6', label: 'Frameworks' },
               ].map((s, i) => (
                 <div key={i}>
@@ -321,7 +321,7 @@ const Knowledge: React.FC = () => {
         {/* empty state */}
         {filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 0', color: p.muted }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>—</div>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>-</div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>No techniques match your search.</div>
             <div style={{ fontSize: 14, marginTop: 8 }}>Try a different search term or clear the filter.</div>
           </div>
@@ -337,7 +337,7 @@ const Knowledge: React.FC = () => {
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Go Deeper</div>
             <h2 style={{ color: '#fff', fontSize: isMobile ? 26 : 34, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>Want to use these techniques with your team?</h2>
             <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
-              Altogether Agile runs hands-on workshops and certification courses built around these techniques — with real scenarios, not toy examples.
+              Altogether Agile runs hands-on workshops and certification courses built around these techniques - with real scenarios, not toy examples.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>

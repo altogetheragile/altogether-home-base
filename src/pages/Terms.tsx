@@ -10,12 +10,12 @@ const pStyle = { color: p.body, fontSize: 15, lineHeight: 1.75, marginBottom: 16
 const Terms = () => (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>
-      <title>Terms and Conditions — Altogether Agile</title>
+      <title>Terms and Conditions - Altogether Agile</title>
       <meta name="description" content="Terms and conditions for using Altogether Agile services, courses, and website." />
       <link rel="canonical" href={`${SITE_URL}/terms`} />
     </Helmet>
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '64px 48px' }}>
-      <h1 style={h1Style}>Altogether Agile Ltd — Terms and Conditions</h1>
+      <h1 style={h1Style}>Altogether Agile Ltd - Terms and Conditions</h1>
       <p style={{ ...pStyle, color: p.muted, fontSize: 13 }}>Last updated: March 2026</p>
 
       <h2 style={h2Style}>1. About Us</h2>
@@ -63,7 +63,7 @@ const Terms = () => (
 
       <h3 style={h3Style}>3.6 Framework-Based Courses</h3>
       <p style={pStyle}>
-        Some of our courses are based on published frameworks including AgilePM, AgileBA, Kanban, and ABC Scrum Master. These courses are delivered based on the relevant framework content. They do not currently include a formal examination or certification component. If you require a certified examination, you will need to arrange this separately.
+        Some of our courses are based on published frameworks including AgilePM, AgileBA, Kanban, and ABC Scrum Master. These courses are delivered based on the relevant framework content. They do not currently include a formal examination or certification component. If you require a formal examination, you will need to arrange this separately.
       </p>
 
       <h2 style={h2Style}>4. Coaching Services</h2>

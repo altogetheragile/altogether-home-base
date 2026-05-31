@@ -329,7 +329,7 @@ export const UnifiedAssetLibrary: React.FC<UnifiedAssetLibraryProps> = ({
         setTimeout(() => setLastUploadedId(null), 5000);
       }
 
-      toast.success("Asset uploaded successfully — click it to view or copy the URL");
+      toast.success("Asset uploaded successfully - click it to view or copy the URL");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
     } finally {

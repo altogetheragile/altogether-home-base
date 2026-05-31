@@ -47,7 +47,7 @@ export const CourseSchema = ({ title, description, url, startDate, endDate, loca
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: title,
-    description: description || `${title} — professional training course by Altogether Agile.`,
+    description: description || `${title} - professional training course by Altogether Agile.`,
     url,
     provider: {
       '@type': 'Organization',
@@ -121,7 +121,7 @@ export const TechniqueSchema = ({ name, description, url, category }: {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
     name,
-    description: description || `Learn about ${name} — a practical agile technique.`,
+    description: description || `Learn about ${name} - a practical agile technique.`,
     url,
     ...(category && {
       about: {

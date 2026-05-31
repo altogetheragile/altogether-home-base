@@ -114,7 +114,7 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, onContinue,
 
         <p className="text-sm text-muted-foreground text-center">
           {isFinal
-            ? 'Lower WIP means shorter cycle times — even if throughput stays similar, items flow through faster when you limit work in progress.'
+            ? 'Lower WIP means shorter cycle times - even if throughput stays similar, items flow through faster when you limit work in progress.'
             : 'The more items in flight at once, the longer each one takes. Can you improve this in Round 2?'}
         </p>
 
@@ -130,14 +130,14 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, onContinue,
         )}
       </div>
 
-      {/* Dig deeper — CFD */}
+      {/* Dig deeper - CFD */}
       <div className="max-w-2xl mx-auto">
         <button
           type="button"
           onClick={() => setShowCfd(!showCfd)}
           className="text-sm text-primary hover:underline font-medium"
         >
-          {showCfd ? '▾ Hide' : '▸ Dig deeper'} — Cumulative Flow Diagram
+          {showCfd ? '▾ Hide' : '▸ Dig deeper'} - Cumulative Flow Diagram
         </button>
         {showCfd && (
           <div className="mt-4 space-y-6">

@@ -10,16 +10,16 @@ export function GameIntro({ onStart }: GameIntroProps) {
       <h1 className="text-4xl font-bold text-foreground">Kanban Flow Simulation</h1>
       <p className="text-lg text-muted-foreground">
         Experience why limiting work-in-progress improves flow. You'll play two rounds
-        managing a Kanban board — first without constraints, then with WIP limits you choose.
+        managing a Kanban board - first without constraints, then with WIP limits you choose.
       </p>
 
       <div className="bg-muted/50 rounded-lg p-6 text-left space-y-4">
         <h2 className="text-xl font-semibold">How it works</h2>
         <ul className="space-y-2 text-muted-foreground">
           <li><strong>20 work items</strong> need to flow through Analysis, Development, and Test.</li>
-          <li><strong>6 workers</strong> — each specialises in one column (full effectiveness) but can work anywhere (at 60%).</li>
+          <li><strong>6 workers</strong> - each specialises in one column (full effectiveness) but can work anywhere (at 60%).</li>
           <li>Each day: assign workers to cards, then click <strong>Run Day</strong>. Dice determine progress.</li>
-          <li><strong>Blockers</strong> appear randomly — a worker must clear them before work resumes.</li>
+          <li><strong>Blockers</strong> appear randomly - a worker must clear them before work resumes.</li>
           <li>After 20 days, you'll see your metrics. Then you'll set WIP limits and try again.</li>
         </ul>
       </div>

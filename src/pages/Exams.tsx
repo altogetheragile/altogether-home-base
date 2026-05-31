@@ -39,10 +39,10 @@ const Exams = () => {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
       <Helmet>
-        <title>AgilePM & Scrum Practice Exam Questions — Altogether Agile</title>
+        <title>AgilePM & Scrum Practice Exam Questions - Altogether Agile</title>
         <meta name="description" content="Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification." />
         <link rel="canonical" href={`${SITE_URL}/exams`} />
-        <meta property="og:title" content="AgilePM & Scrum Practice Exam Questions — Altogether Agile" />
+        <meta property="og:title" content="AgilePM & Scrum Practice Exam Questions - Altogether Agile" />
         <meta property="og:description" content="Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode." />
         <meta property="og:url" content={`${SITE_URL}/exams`} />
         <meta property="og:type" content="website" />

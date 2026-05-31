@@ -102,8 +102,8 @@ const services = [
     colour: '#1A9090',
     lightBg: '#E6F5F5',
     tagline: 'Space to think. Clarity to act.',
-    description: "One-to-one coaching for professionals navigating change — whether that's a new role, a difficult team dynamic, a career pivot, or the challenge of leading in an agile organisation without a map.",
-    detail: "This isn't mentoring or consultancy. I won't tell you what to do. My role is to hold the right space and ask the questions that help you find your own answers — because those are the ones that actually stick.",
+    description: "One-to-one coaching for professionals navigating change - whether that's a new role, a difficult team dynamic, a career pivot, or the challenge of leading in an agile organisation without a map.",
+    detail: "This isn't mentoring or consultancy. I won't tell you what to do. My role is to hold the right space and ask the questions that help you find your own answers - because those are the ones that actually stick.",
     includes: [
       '60-minute sessions via video call or in person (London)',
       'Pre-session reflection prompts sent 48 hours before',
@@ -124,8 +124,8 @@ const services = [
     colour: '#6B5FCC',
     lightBg: '#EEECF9',
     tagline: "Better teams don't happen by accident.",
-    description: "Coaching for agile teams that are technically doing the ceremonies but not getting the results — or for newly formed teams that want to build good habits from the start.",
-    detail: "I work with the whole team, not just the Scrum Master or team lead. That means coaching the dynamics, not just the process — how the team makes decisions, how they handle conflict, and whether their retrospectives are actually changing anything.",
+    description: "Coaching for agile teams that are technically doing the ceremonies but not getting the results - or for newly formed teams that want to build good habits from the start.",
+    detail: "I work with the whole team, not just the Scrum Master or team lead. That means coaching the dynamics, not just the process - how the team makes decisions, how they handle conflict, and whether their retrospectives are actually changing anything.",
     includes: [
       'Initial team assessment and health check',
       'Fortnightly team coaching sessions (90 minutes)',
@@ -145,7 +145,7 @@ const credentials = [
   { label: 'STAR Manager Practitioner', desc: 'Assessed portfolio across all nine management competencies' },
   { label: '25+ years experience', desc: 'Working in and around agile teams as practitioner, trainer, and coach' },
   { label: 'ABC Assessor', desc: 'Interviews professional membership candidates for the Agile Business Consortium' },
-  { label: 'Management 3.0', desc: 'Licensed Facilitator — energising people, teams, and organisations' },
+  { label: 'Management 3.0', desc: 'Licensed Facilitator - energising people, teams, and organisations' },
   { label: 'University Lecturer', desc: 'Part-time visiting lecturer at the University of Westminster' },
 ];
 
@@ -223,9 +223,9 @@ const Coaching: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>Coaching — Altogether Agile</title>
+        <title>Coaching - Altogether Agile</title>
         <meta name="description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
-        <meta property="og:title" content="Coaching — Altogether Agile" />
+        <meta property="og:title" content="Coaching - Altogether Agile" />
         <meta property="og:description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/coaching`} />
@@ -243,7 +243,7 @@ const Coaching: React.FC = () => {
             Coaching that asks<br />the right questions.
           </h1>
           <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 32px', maxWidth: 540 }}>
-            Whether you're navigating a difficult career moment or trying to build a team that actually functions well — coaching works best when it's grounded in real experience. That's what Altogether Agile brings.
+            Whether you're navigating a difficult career moment or trying to build a team that actually functions well - coaching works best when it's grounded in real experience. That's what Altogether Agile brings.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
             <a
@@ -271,10 +271,10 @@ const Coaching: React.FC = () => {
           <div>
             <SectionHeading label="The approach" title="Coaching isn't advice-giving." />
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>
-              Most people who come to coaching are not short of information. They know what they should probably do. What they need is space to think it through — without someone else's agenda in the room.
+              Most people who come to coaching are not short of information. They know what they should probably do. What they need is space to think it through - without someone else's agenda in the room.
             </p>
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>
-              My role as a coach is to hold that space and ask the questions that help you find your own answers. That might sound simple. In practice it requires real skill — and real discipline not to reach for the easy answer on your behalf.
+              My role as a coach is to hold that space and ask the questions that help you find your own answers. That might sound simple. In practice it requires real skill - and real discipline not to reach for the easy answer on your behalf.
             </p>
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }}>
               Where it's useful, I'll bring 25 years of agile and organisational experience into the room. But the work is yours. That's why it sticks.
@@ -356,7 +356,7 @@ const Coaching: React.FC = () => {
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Free chemistry session</div>
             <h2 style={{ color: '#fff', fontSize: isMobile ? 26 : 34, fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>Not sure if coaching is right for you?</h2>
             <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>
-              A chemistry session is a free 30-minute conversation — no agenda, no commitment. It's a chance for both of us to work out whether we're a good fit before anything else.
+              A chemistry session is a free 30-minute conversation - no agenda, no commitment. It's a chance for both of us to work out whether we're a good fit before anything else.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {['30 minutes', 'No commitment', 'Video or phone', 'Free'].map((tag, i) => (
@@ -391,7 +391,7 @@ const Coaching: React.FC = () => {
                 <Icons.CheckCircle />
               </div>
               <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 20, marginBottom: 8 }}>Message sent</div>
-              <div style={{ color: p.muted, fontSize: 14 }}>Thanks — I'll be in touch within one working day.</div>
+              <div style={{ color: p.muted, fontSize: 14 }}>Thanks - I'll be in touch within one working day.</div>
             </div>
           ) : (
             <div style={{ background: p.white, borderRadius: 16, padding: isMobile ? '28px 20px' : '40px 40px' }}>
@@ -457,7 +457,7 @@ const Coaching: React.FC = () => {
                 >
                   {submitting ? 'Sending...' : <>Send enquiry <Icons.ArrowRight /></>}
                 </button>
-                <div style={{ color: p.muted, fontSize: 12, textAlign: 'center' }}>I aim to respond within one working day. No hard sell — just a conversation.</div>
+                <div style={{ color: p.muted, fontSize: 12, textAlign: 'center' }}>I aim to respond within one working day. No hard sell - just a conversation.</div>
               </div>
             </div>
           )}

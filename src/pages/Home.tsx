@@ -116,9 +116,9 @@ const Home: React.FC = () => {
   return (
     <div className="aa-page">
       <Helmet>
-        <title>Altogether Agile — Agile Coaching & Training</title>
+        <title>Altogether Agile - Agile Coaching & Training</title>
         <meta name="description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
-        <meta property="og:title" content="Altogether Agile — Agile Coaching & Training" />
+        <meta property="og:title" content="Altogether Agile - Agile Coaching & Training" />
         <meta property="og:description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
         <meta name="twitter:description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
@@ -326,7 +326,7 @@ const Home: React.FC = () => {
             </div>
             <h2 className="aa-kb-heading">80+ agile techniques,<br />ready to use</h2>
             <p className="aa-kb-body">
-              From Story Mapping to OKRs — every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.
+              From Story Mapping to OKRs - every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.
             </p>
             <div className="aa-kb-tags">
               {['Story Mapping', 'OKRs', '5 Whys', 'Business Model Canvas', 'Impact Mapping', 'Retrospectives'].map((tag) => (
@@ -350,7 +350,7 @@ const Home: React.FC = () => {
               Ready to work with someone<br />who's been in the room?
             </h2>
             <p className="aa-cta-banner__body">
-              Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell — just a conversation.
+              Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell - just a conversation.
             </p>
             <div className="aa-cta-banner__actions">
               <Link to="/events" className="aa-btn aa-btn--deep">

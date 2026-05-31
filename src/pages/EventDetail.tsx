@@ -160,7 +160,7 @@ const EventDetail = () => {
       `}</style>
 
       <Helmet>
-        <title>{event.title} — Altogether Agile</title>
+        <title>{event.title} - Altogether Agile</title>
         {event.description && <meta name="description" content={event.description.slice(0, 160)} />}
         <meta property="og:title" content={event.title} />
         {event.description && <meta property="og:description" content={event.description.slice(0, 160)} />}

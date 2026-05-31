@@ -193,10 +193,10 @@ const Technique: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>{item.name} — Altogether Agile Knowledge Base</title>
-        <meta name="description" content={item.description || `Learn about ${item.name} — a practical agile technique from the Altogether Agile knowledge base.`} />
+        <title>{item.name} - Altogether Agile Knowledge Base</title>
+        <meta name="description" content={item.description || `Learn about ${item.name} - a practical agile technique from the Altogether Agile knowledge base.`} />
         <meta property="og:title" content={item.name} />
-        <meta property="og:description" content={item.description || `Learn about ${item.name} — a practical agile technique.`} />
+        <meta property="og:description" content={item.description || `Learn about ${item.name} - a practical agile technique.`} />
         <meta property="og:image" content={diagramImage?.url || `${SITE_URL}/og-image.png`} />
         <meta property="og:type" content="article" />
         {slug && <link rel="canonical" href={`${SITE_URL}/knowledge/${slug}`} />}
@@ -245,7 +245,7 @@ const Technique: React.FC = () => {
       <div style={{ padding: isMobile ? '32px 20px' : '56px 48px', background: p.skyTeal }}>
         <div className="aa-technique-layout">
 
-          {/* LEFT — main content */}
+          {/* LEFT - main content */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
 
             {/* WHAT IT IS */}
@@ -261,7 +261,7 @@ const Technique: React.FC = () => {
             {/* WHEN TO USE */}
             {((itemData.use_this_when && itemData.use_this_when.length > 0) || (itemData.avoid_when && itemData.avoid_when.length > 0)) && (
               <div>
-                <SectionHeading label="Application" title="When to use it — and when not to" />
+                <SectionHeading label="Application" title="When to use it - and when not to" />
                 <div className="aa-when-grid">
                   {itemData.use_this_when && itemData.use_this_when.length > 0 && (
                     <div style={{ background: '#EAF5F5', borderRadius: 12, overflow: 'hidden' }}>
@@ -385,7 +385,7 @@ const Technique: React.FC = () => {
 
           </div>
 
-          {/* RIGHT — sticky sidebar */}
+          {/* RIGHT - sticky sidebar */}
           <div className="aa-sticky-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* At a glance */}

@@ -57,9 +57,9 @@ const Blog = () => {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
       <Helmet>
-        <title>Blog — Altogether Agile</title>
+        <title>Blog - Altogether Agile</title>
         <meta name="description" content="Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation." />
-        <meta property="og:title" content="Blog — Altogether Agile" />
+        <meta property="og:title" content="Blog - Altogether Agile" />
         <meta property="og:description" content="Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/blog`} />

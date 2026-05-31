@@ -3,7 +3,7 @@
  *
  * Generates per-route HTML files with correct <head> meta tags
  * (title, description, canonical, OG, JSON-LD) injected into the
- * SPA shell. No browser needed — fetches page data from Supabase
+ * SPA shell. No browser needed - fetches page data from Supabase
  * and does string templating.
  *
  * For routes where Playwright is available (local dev), falls back
@@ -51,7 +51,7 @@ function buildMetaTags({ title, description, canonical, ogType = 'website', ogIm
   const img = ogImage || `${SITE_URL}/og-image.png`;
   let tags = '';
 
-  // Title — replace the existing <title> tag via a marker
+  // Title - replace the existing <title> tag via a marker
   tags += `<title>${escapeHtml(title)}</title>\n`;
   tags += `    <meta name="description" content="${escapeHtml(description)}" />\n`;
   tags += `    <link rel="canonical" href="${canonical}" />\n`;
@@ -153,7 +153,7 @@ function techniqueJsonLd(item) {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
     name: item.name,
-    description: item.description || `Learn about ${item.name} — a practical agile technique.`,
+    description: item.description || `Learn about ${item.name} - a practical agile technique.`,
     url: `${SITE_URL}/knowledge/${item.slug}`,
     author: { '@type': 'Organization', name: 'Altogether Agile' },
   };
@@ -187,57 +187,57 @@ function breadcrumbJsonLd(items) {
 
 const STATIC_PAGES = {
   '/': {
-    title: 'Altogether Agile — Agile Coaching & Training',
+    title: 'Altogether Agile - Agile Coaching & Training',
     description: 'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
     ogType: 'website',
     jsonLd: organizationJsonLd(),
   },
   '/events': {
-    title: 'Courses, Workshops & Masterclasses — Altogether Agile',
+    title: 'Courses, Workshops & Masterclasses - Altogether Agile',
     description: 'Browse upcoming agile courses, workshops, and masterclasses. Framework-based training delivered by an experienced agile coach and trainer.',
   },
   '/coaching': {
-    title: 'Coaching — Altogether Agile',
+    title: 'Coaching - Altogether Agile',
     description: 'Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience.',
   },
   '/blog': {
-    title: 'Blog — Altogether Agile',
+    title: 'Blog - Altogether Agile',
     description: 'Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation.',
   },
   '/exams': {
-    title: 'AgilePM & Scrum Practice Exam Questions — Altogether Agile',
+    title: 'AgilePM & Scrum Practice Exam Questions - Altogether Agile',
     description: 'Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification.',
   },
   '/about': {
-    title: 'About Alun — Altogether Agile',
+    title: 'About Alun - Altogether Agile',
     description: 'Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer.',
   },
   '/contact': {
-    title: 'Contact — Altogether Agile',
+    title: 'Contact - Altogether Agile',
     description: 'Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session.',
   },
   '/testimonials': {
-    title: 'Testimonials — Altogether Agile',
+    title: 'Testimonials - Altogether Agile',
     description: 'Read what clients say about working with Altogether Agile. Real feedback from coaching and training engagements.',
   },
   '/ai-tools': {
-    title: 'AI Tools — Altogether Agile',
+    title: 'AI Tools - Altogether Agile',
     description: 'Free AI-powered agile tools to support your team. Business model canvas generator and more.',
   },
   '/privacy': {
-    title: 'Privacy Policy — Altogether Agile',
+    title: 'Privacy Policy - Altogether Agile',
     description: 'Altogether Agile privacy policy. How we collect, use, and protect your personal data.',
   },
   '/terms': {
-    title: 'Terms & Conditions — Altogether Agile',
+    title: 'Terms & Conditions - Altogether Agile',
     description: 'Terms and conditions for using Altogether Agile services, courses, and website.',
   },
   '/cookies': {
-    title: 'Cookie Policy — Altogether Agile',
+    title: 'Cookie Policy - Altogether Agile',
     description: 'How Altogether Agile uses cookies and similar technologies.',
   },
   '/courses': {
-    title: 'Self-paced Courses — Altogether Agile',
+    title: 'Self-paced Courses - Altogether Agile',
     description: 'Browse self-paced agile courses from Altogether Agile.',
   },
 };
@@ -249,7 +249,7 @@ async function main() {
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('\nSupabase env vars not set — skipping prerender\n');
+    console.warn('\nSupabase env vars not set - skipping prerender\n');
     return;
   }
 
@@ -297,7 +297,7 @@ async function main() {
   // 2. Blog posts
   for (const post of posts) {
     const route = `/blog/${post.slug}`;
-    const title = `${post.seo_title || post.title || 'Blog'} — Altogether Agile`;
+    const title = `${post.seo_title || post.title || 'Blog'} - Altogether Agile`;
     const description = post.seo_description || truncate(post.title || '', 160);
     const tags = buildMetaTags({
       title,
@@ -315,7 +315,7 @@ async function main() {
   // 3. Exams
   for (const exam of exams) {
     const route = `/exams/${exam.slug}`;
-    const title = `${exam.title} — Altogether Agile`;
+    const title = `${exam.title} - Altogether Agile`;
     const description = truncate(exam.description || `Practice exam: ${exam.title}. Free mock exam questions with answers.`);
     const tags = buildMetaTags({
       title,
@@ -330,7 +330,7 @@ async function main() {
   // 5. Course templates
   for (const course of templates) {
     const route = `/courses/${course.id}`;
-    const title = `${course.title} — Altogether Agile`;
+    const title = `${course.title} - Altogether Agile`;
     const description = truncate(course.description || `Agile course: ${course.title}`);
     const tags = buildMetaTags({
       title,

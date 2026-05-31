@@ -45,7 +45,7 @@ export function BoardView({
       <div className="flex items-center gap-4 flex-wrap shrink-0">
         <div className="shrink-0">
           <h2 className="text-lg font-bold leading-tight">
-            Round {round.roundNumber} — Day {round.day}/{DAYS_PER_ROUND}
+            Round {round.roundNumber} - Day {round.day}/{DAYS_PER_ROUND}
           </h2>
           <p className="text-xs text-muted-foreground">
             {round.wipLimits ? 'WIP limits active' : 'No WIP limits'} · {doneCount} done
@@ -71,7 +71,7 @@ export function BoardView({
         </div>
       </div>
 
-      {/* Board — fills remaining height */}
+      {/* Board - fills remaining height */}
       <div className="flex gap-3 overflow-x-auto flex-1 min-h-0 pb-2">
         {COLUMNS.map((col) => (
           <KanbanColumn
@@ -90,7 +90,7 @@ export function BoardView({
         ))}
       </div>
 
-      {/* Day results — pinned at bottom */}
+      {/* Day results - pinned at bottom */}
       {round.dayPhase === 'results' && lastSummary && (
         <div className="shrink-0">
           <DaySummary summary={lastSummary} isLastDay={isLastDay} onNextDay={onNextDay} />

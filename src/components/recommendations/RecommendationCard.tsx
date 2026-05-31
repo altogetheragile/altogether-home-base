@@ -35,12 +35,12 @@ const safeText = (v: any, fallback = ''): string => {
 
 const safeFormatDate = (v: any): string => {
   try {
-    if (!v) return '—';
+    if (!v) return '-';
     const d = new Date(v);
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return '-';
     return format(d, 'MMM dd, yyyy');
   } catch {
-    return '—';
+    return '-';
   }
 };
 
@@ -51,7 +51,7 @@ const normalizeRecommendation = (recommendation: Recommendation): NormalizedCont
   let title = 'Untitled';
   let subtitle = '';
   let imageUrl = '';
-  let primaryDate = '—';
+  let primaryDate = '-';
   let price = '';
   let viewCount = '0';
   let navTarget = '';
@@ -197,7 +197,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
           {normalized.subtitle}
         </p>
         <div className="space-y-2 mb-4">
-          {normalized.primaryDate !== '—' && (
+          {normalized.primaryDate !== '-' && (
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-primary" />
               <span>{normalized.primaryDate}</span>

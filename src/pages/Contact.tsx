@@ -80,9 +80,9 @@ const Contact: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF' }}>
       <Helmet>
-        <title>Contact — Altogether Agile</title>
+        <title>Contact - Altogether Agile</title>
         <meta name="description" content="Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session." />
-        <meta property="og:title" content="Contact — Altogether Agile" />
+        <meta property="og:title" content="Contact - Altogether Agile" />
         <meta property="og:description" content="Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/contact`} />
@@ -96,7 +96,7 @@ const Contact: React.FC = () => {
       <div id="main-content" className="aa-section-pad" style={{ background: p.paleTeal, textAlign: 'center' }}>
         <h1 style={{ color: p.deepTeal, fontWeight: 800, fontSize: isMobile ? 34 : 44, lineHeight: 1.15, margin: '0 0 16px' }}>Get in Touch</h1>
         <p style={{ color: p.body, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
-          Whether you have a question about our courses, want to discuss coaching, or just want to say hello — we'd love to hear from you.
+          Whether you have a question about our courses, want to discuss coaching, or just want to say hello - we'd love to hear from you.
         </p>
       </div>
 
@@ -227,7 +227,7 @@ const Contact: React.FC = () => {
                   </FormItem>
                 )} />
 
-                {/* Honeypot — hidden from real users, filled by bots */}
+                {/* Honeypot - hidden from real users, filled by bots */}
                 <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden', tabIndex: -1 } as React.CSSProperties}>
                   <FormField control={form.control} name="website" render={({ field }) => (
                     <FormItem>

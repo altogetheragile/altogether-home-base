@@ -10,7 +10,7 @@ const liStyle = { color: p.body, fontSize: 15, lineHeight: 1.75, marginBottom: 8
 const Privacy = () => (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>
-      <title>Privacy Notice — Altogether Agile</title>
+      <title>Privacy Notice - Altogether Agile</title>
       <meta name="description" content="How Altogether Agile collects, uses, and protects your personal data. Read our full privacy notice." />
       <link rel="canonical" href={`${SITE_URL}/privacy`} />
     </Helmet>

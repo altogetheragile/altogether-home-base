@@ -54,7 +54,7 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
     return <NotFound />;
   }
 
-  const pageTitle = page.title ? `${page.title} — Altogether Agile` : 'Altogether Agile';
+  const pageTitle = page.title ? `${page.title} - Altogether Agile` : 'Altogether Agile';
 
   // Render CMS page with content blocks
   return (

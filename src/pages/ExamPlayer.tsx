@@ -353,7 +353,7 @@ const ExamPlayer = () => {
   if (phase === 'start') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
-        <Helmet><title>{`${exam.title} — Altogether Agile`}</title></Helmet>
+        <Helmet><title>{`${exam.title} - Altogether Agile`}</title></Helmet>
         <Navigation />
         <div id="main-content" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div style={{ maxWidth: 520, width: '100%', background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
@@ -472,7 +472,7 @@ const ExamPlayer = () => {
 
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
-        <Helmet><title>{`${exam.title} — Question ${currentIdx + 1}`}</title></Helmet>
+        <Helmet><title>{`${exam.title} - Question ${currentIdx + 1}`}</title></Helmet>
         <Navigation />
 
         <div id="main-content" style={{ flex: 1, maxWidth: 1100, margin: '0 auto', padding: '24px 24px 40px', width: '100%' }}>
@@ -699,7 +699,7 @@ const ExamPlayer = () => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
-      <Helmet><title>{`${exam.title} — Results`}</title></Helmet>
+      <Helmet><title>{`${exam.title} - Results`}</title></Helmet>
       <Navigation />
 
       <div id="main-content" style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '32px 24px 48px', width: '100%' }}>
@@ -715,7 +715,7 @@ const ExamPlayer = () => {
             {results.correct}/{totalQ}
           </div>
           <div style={{ fontSize: 18, fontWeight: 600, color: results.passed ? '#047857' : '#DC2626', marginTop: 8 }}>
-            {results.passed ? 'Passed' : 'Not Passed'} — {percentage}%
+            {results.passed ? 'Passed' : 'Not Passed'} - {percentage}%
           </div>
           <div style={{ fontSize: 14, color: results.passed ? '#059669' : '#EF4444', marginTop: 4 }}>
             Pass mark: {exam.pass_mark}/{totalQ}

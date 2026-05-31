@@ -26,7 +26,7 @@ export function EstimationTab({ data, onChange, mode }: EstimationTabProps) {
               onClick={() => onChange({ story_points: null })}
               className="min-w-[48px]"
             >
-              —
+              -
             </Button>
             {FIBONACCI_POINTS.map((points) => (
               <Button

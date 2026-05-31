@@ -67,13 +67,13 @@ const SectionHeading = ({ label, title, light = false }: { label: string; title:
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const timeline = [
-  { year: 'Late 1990s', title: 'Starting with systems, not people', body: "Began in enterprise software — ERP implementations, data warehousing, systems analysis. Good technical grounding, but the most interesting problems were never the technical ones. They were the people ones." },
-  { year: 'Early 2000s', title: 'First encounter with agile', body: "Working inside a large pharmaceutical organisation, I started experimenting with Scrum wrapped around DSDM for SAP rollouts — in environments where most people said it couldn't work. It did. That was the turning point." },
-  { year: 'Mid 2000s', title: 'Leading teams, learning to coach', body: "Moved into team leadership and consulting roles. Quickly found that the hard part of agile adoption was never the framework — it was the dynamics. How teams make decisions. How they handle uncertainty. How leaders get out of the way. Started coaching before I had a word for it." },
-  { year: '2016', title: 'Going independent', body: "Left the corporate world to run Altogether Agile full time. Started delivering Scrum and agile training alongside coaching and facilitation work. The goal from day one: practical, honest, grounded in real experience — not textbook agile." },
-  { year: '2017 onwards', title: 'Building the training practice', body: "Developed affiliate training relationships and began delivering certified APMG courses — AgilePM, AgileBA, Agile Digital Services. Each course sharpened the conviction that certification only sticks when it's connected to real problems." },
-  { year: '2020', title: 'Coaching, Westminster, and Management 3.0', body: "Formalised the coaching practice. Became a licensed Management 3.0 Facilitator. Took on a Visiting Lectureship at the University of Westminster. The pandemic forced everything online — and proved that good facilitation is about the room you create, not the room you're in." },
-  { year: 'Now', title: 'Still in it', body: "Training, coaching, assessing, lecturing, and building the platform. In 2025 co-wrote the new version of AgilePM as one of the lead authors — the kind of work that only happens when you've been close to the practice long enough to have something worth saying. Still learning. Still finding it interesting." },
+  { year: 'Late 1990s', title: 'Starting with systems, not people', body: "Began in enterprise software - ERP implementations, data warehousing, systems analysis. Good technical grounding, but the most interesting problems were never the technical ones. They were the people ones." },
+  { year: 'Early 2000s', title: 'First encounter with agile', body: "Working inside a large pharmaceutical organisation, I started experimenting with Scrum wrapped around DSDM for SAP rollouts - in environments where most people said it couldn't work. It did. That was the turning point." },
+  { year: 'Mid 2000s', title: 'Leading teams, learning to coach', body: "Moved into team leadership and consulting roles. Quickly found that the hard part of agile adoption was never the framework - it was the dynamics. How teams make decisions. How they handle uncertainty. How leaders get out of the way. Started coaching before I had a word for it." },
+  { year: '2016', title: 'Going independent', body: "Left the corporate world to run Altogether Agile full time. Started delivering Scrum and agile training alongside coaching and facilitation work. The goal from day one: practical, honest, grounded in real experience - not textbook agile." },
+  { year: '2017 onwards', title: 'Building the training practice', body: "Developed affiliate training relationships and began delivering APMG-accredited courses - AgilePM, AgileBA, Agile Digital Services. Each course sharpened the conviction that certification only sticks when it's connected to real problems." },
+  { year: '2020', title: 'Coaching, Westminster, and Management 3.0', body: "Formalised the coaching practice. Became a licensed Management 3.0 Facilitator. Took on a Visiting Lectureship at the University of Westminster. The pandemic forced everything online - and proved that good facilitation is about the room you create, not the room you're in." },
+  { year: 'Now', title: 'Still in it', body: "Training, coaching, assessing, lecturing, and building the platform. In 2025 co-wrote the new version of AgilePM as one of the lead authors - the kind of work that only happens when you've been close to the practice long enough to have something worth saying. Still learning. Still finding it interesting." },
 ];
 
 const philosophyCards = [
@@ -82,7 +82,7 @@ const philosophyCards = [
     heading: 'Learning that transfers.',
     colour: '#1A9090',
     lightBg: '#E6F5F5',
-    body: "Most agile training fails not because people don't understand the concepts — but because they've never had to apply them under real conditions. Good training puts people in those conditions safely, with a facilitator who's been in the room for real.",
+    body: "Most agile training fails not because people don't understand the concepts - but because they've never had to apply them under real conditions. Good training puts people in those conditions safely, with a facilitator who's been in the room for real.",
     principles: [
       'Scenario-led from the first session',
       'Frameworks as tools, not religions',
@@ -95,7 +95,7 @@ const philosophyCards = [
     heading: 'Questions, not answers.',
     colour: '#6B5FCC',
     lightBg: '#EEECF9',
-    body: "The best coaching conversations don't end with a solution handed over. They end with the person finding their own clarity — which means they own it, and they're more likely to act on it. My job is to ask the right questions, hold the space, and get out of the way.",
+    body: "The best coaching conversations don't end with a solution handed over. They end with the person finding their own clarity - which means they own it, and they're more likely to act on it. My job is to ask the right questions, hold the space, and get out of the way.",
     principles: [
       'ICF-aligned approach throughout',
       "Experience in the room, but not imposing it",
@@ -106,7 +106,7 @@ const philosophyCards = [
 ];
 
 const credentials = [
-  'Co-author — AgilePM (new version, 2025)',
+  'Co-author - AgilePM (new version, 2025)',
   'ABC Level-4 Specialist in agile training',
   'Advanced Certified Scrum Master (A-CSM)',
   'ABC Assessor - interviews professional membership candidates',
@@ -127,9 +127,9 @@ const About: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>About Alun — Altogether Agile</title>
+        <title>About Alun - Altogether Agile</title>
         <meta name="description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer." />
-        <meta property="og:title" content="About Alun — Altogether Agile" />
+        <meta property="og:title" content="About Alun - Altogether Agile" />
         <meta property="og:description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/about`} />
@@ -148,7 +148,7 @@ const About: React.FC = () => {
               25 years in.<br />Still learning.
             </h1>
             <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }}>
-              I'm Alun — founder of Altogether Agile, agile practitioner, trainer, coach, and Visiting Lecturer, University of Westminster. This page is about where I've come from, what I believe, and why I built this.
+              I'm Alun - founder of Altogether Agile, agile practitioner, trainer, coach, and Visiting Lecturer, University of Westminster. This page is about where I've come from, what I believe, and why I built this.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {['London-based', '25+ years experience', '1,500+ trained', 'ABC Assessor'].map((tag, i) => (
@@ -156,7 +156,7 @@ const About: React.FC = () => {
               ))}
             </div>
           </div>
-          {/* Photo of Alun — swap src when real photo is ready */}
+          {/* Photo of Alun - swap src when real photo is ready */}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <img
               src="/images/alun.webp"
@@ -197,16 +197,16 @@ const About: React.FC = () => {
           <div>
             <SectionHeading label="The story" title="How I got here." />
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>
-              I didn't set out to be an agile trainer. I started as a graduate trainee at SSA after a Masters at UMIST, writing code for ERP systems on AS400. What followed was fifteen years at Boehringer Ingelheim — moving from systems analyst to Head of IS Consulting to leading a global SAP deployment across six countries.
+              I didn't set out to be an agile trainer. I started as a graduate trainee at SSA after a Masters at UMIST, writing code for ERP systems on AS400. What followed was fifteen years at Boehringer Ingelheim - moving from systems analyst to Head of IS Consulting to leading a global SAP deployment across six countries.
             </p>
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>
-              It was inside Boehringer that I first got serious about agile — pioneering a Scrum-wrapped-with-DSDM approach to enterprise SAP rollouts at a time when most organisations considered the two incompatible. It worked. Not perfectly, but well enough to prove the point.
+              It was inside Boehringer that I first got serious about agile - pioneering a Scrum-wrapped-with-DSDM approach to enterprise SAP rollouts at a time when most organisations considered the two incompatible. It worked. Not perfectly, but well enough to prove the point.
             </p>
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>
               In 2016 I went independent, founding Altogether Agile and building a training and coaching practice from the ground up. I've worked as an affiliate trainer with QA, Metadata Training, and TCC; as a Scrum Master and Assessor at the Agile Business Consortium; and as a Visiting Lecturer at the University of Westminster since 2020.
             </p>
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }}>
-              Altogether Agile is now the centre of gravity — training, coaching, knowledge base, and platform in one place. One person, nearly 30 years of experience, and a genuine belief that agile works when it's taught and coached by someone who's actually done it.
+              Altogether Agile is now the centre of gravity - training, coaching, knowledge base, and platform in one place. One person, nearly 30 years of experience, and a genuine belief that agile works when it's taught and coached by someone who's actually done it.
             </p>
           </div>
 
@@ -241,7 +241,7 @@ const About: React.FC = () => {
             </div>
             <div style={{ background: p.deepTeal, borderRadius: 14, padding: 24 }}>
               <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Work with me</div>
-              <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>Not sure where to start? A chemistry session is a free 30-minute conversation — no agenda, no commitment.</p>
+              <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>Not sure where to start? A chemistry session is a free 30-minute conversation - no agenda, no commitment.</p>
               <a
                 href={BOOKING_URL}
                 target="_blank"
@@ -271,10 +271,10 @@ const About: React.FC = () => {
             Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches ceremonies without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.
           </p>
           <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }}>
-            Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one — and every session ends with something concrete enough to act on.
+            Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one - and every session ends with something concrete enough to act on.
           </p>
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>
-            Every course, every coaching conversation, and every technique in the knowledge base is designed to be immediately usable — not a concept to be filed away for later. That means real scenarios, honest facilitation, and a trainer who's been in the room for real.
+            Every course, every coaching conversation, and every technique in the knowledge base is designed to be immediately usable - not a concept to be filed away for later. That means real scenarios, honest facilitation, and a trainer who's been in the room for real.
           </p>
         </div>
       </div>

@@ -97,11 +97,11 @@ const FALLBACK_COURSES: CourseItem[] = [
     id: 'fallback-1', type: 'Course', title: 'AgilePM Foundation', cert: 'APMG',
     forWho: 'Project managers, programme managers, change leads', duration: '2 days', format: 'Both', groupSize: 'Up to 12',
     objectives: ['Understand the DSDM Agile Project Management framework', 'Apply timeboxing and iterative delivery in a project context', 'Prepare for and pass the AgilePM Foundation exam'],
-    scheduledDates: [], description: 'The entry point to APMG\'s agile project management certification. Covers the DSDM framework, principles, and lifecycle — grounded in real project scenarios throughout.',
+    scheduledDates: [], description: 'The entry point to APMG\'s agile project management certification. Covers the DSDM framework, principles, and lifecycle - grounded in real project scenarios throughout.',
   },
   {
     id: 'fallback-2', type: 'Course', title: 'AgilePM Practitioner', cert: 'APMG',
-    forWho: 'Certified Foundation holders ready to apply agile PM in depth', duration: '2 days', format: 'Both', groupSize: 'Up to 12',
+    forWho: 'AgilePM Foundation holders ready to apply agile PM in depth', duration: '2 days', format: 'Both', groupSize: 'Up to 12',
     objectives: ['Apply the AgilePM framework to realistic project scenarios', 'Tailor agile governance to the needs of the organisation', 'Prepare for and pass the AgilePM Practitioner exam'],
     scheduledDates: [], description: 'Builds on Foundation to develop real-world application of the framework. Scenario-led throughout, with structured exam preparation woven in.',
   },
@@ -109,7 +109,7 @@ const FALLBACK_COURSES: CourseItem[] = [
     id: 'fallback-3', type: 'Course', title: 'AgileBA', cert: 'APMG',
     forWho: 'Business analysts, product owners, BAs moving into agile teams', duration: '2 days', format: 'Both', groupSize: 'Up to 12',
     objectives: ['Apply agile business analysis techniques across the delivery lifecycle', 'Understand the BA role within Scrum, DSDM, and hybrid contexts', 'Prepare for the AgileBA Foundation certification'],
-    scheduledDates: [], description: 'The APMG certification for business analysts working in agile environments. Covers requirements, modelling, and stakeholder engagement — all grounded in agile values.',
+    scheduledDates: [], description: 'The APMG certification for business analysts working in agile environments. Covers requirements, modelling, and stakeholder engagement - all grounded in agile values.',
   },
   {
     id: 'fallback-4', type: 'Course', title: 'Scrum Master', cert: null,
@@ -121,19 +121,19 @@ const FALLBACK_COURSES: CourseItem[] = [
     id: 'fallback-5', type: 'Course', title: 'Product Owner', cert: null,
     forWho: 'Product owners, product managers, business stakeholders', duration: '2 days', format: 'Both', groupSize: 'Up to 16',
     objectives: ['Define and manage a product backlog effectively', 'Prioritise using value-based techniques including MoSCoW and OKRs', 'Work with the team to deliver the right thing, not just a thing'],
-    scheduledDates: [], description: 'For the people responsible for what gets built. Covers backlog management, stakeholder alignment, and prioritisation — with real scenarios from day one.',
+    scheduledDates: [], description: 'For the people responsible for what gets built. Covers backlog management, stakeholder alignment, and prioritisation - with real scenarios from day one.',
   },
   {
     id: 'fallback-6', type: 'Masterclass', title: 'OKRs in Practice', cert: null,
     forWho: 'Leaders, heads of product, strategy and planning teams', duration: 'Half day', format: 'Both', groupSize: 'Up to 20',
-    objectives: ['Understand what OKRs are — and what they aren\'t', 'Write Objectives and Key Results that actually drive behaviour', 'Connect OKRs to team-level delivery and agile planning'],
-    scheduledDates: [], description: 'A focused half-day on OKRs — why most organisations get them wrong, and how to use them to create real alignment between strategy and delivery.',
+    objectives: ['Understand what OKRs are - and what they aren\'t', 'Write Objectives and Key Results that actually drive behaviour', 'Connect OKRs to team-level delivery and agile planning'],
+    scheduledDates: [], description: 'A focused half-day on OKRs - why most organisations get them wrong, and how to use them to create real alignment between strategy and delivery.',
   },
   {
     id: 'fallback-7', type: 'Workshop', title: 'Agile Fundamentals', cert: null,
-    forWho: 'Anyone new to agile — any role, any sector', duration: '1 day', format: 'Both', groupSize: 'Up to 20',
+    forWho: 'Anyone new to agile - any role, any sector', duration: '1 day', format: 'Both', groupSize: 'Up to 20',
     objectives: ['Understand the Agile Manifesto and what it means in practice', 'See how Scrum, Kanban, and DSDM relate to each other', 'Leave with one concrete thing to try on Monday'],
-    scheduledDates: [], description: 'A practical one-day introduction to agile thinking and ways of working. No jargon, no certification pressure — just a grounded, honest introduction to why agile exists and how it works.',
+    scheduledDates: [], description: 'A practical one-day introduction to agile thinking and ways of working. No jargon, no certification pressure - just a grounded, honest introduction to why agile exists and how it works.',
   },
   {
     id: 'fallback-8', type: 'Workshop', title: 'Story Mapping', cert: null,
@@ -178,7 +178,7 @@ const formatDate = (iso: string) => {
 };
 
 const durationLabel = (days: number | null) => {
-  if (!days) return '—';
+  if (!days) return '-';
   if (days < 1) return 'Half day';
   return `${days} day${days > 1 ? 's' : ''}`;
 };
@@ -241,7 +241,7 @@ const CourseCard = ({ course, index }: { course: CourseItem; index: number }) =>
           <MetaItem icon={<Icons.Clock />} label={course.duration} />
           <MetaItem icon={<Icons.Users />} label={course.groupSize} />
           <MetaItem icon={course.format === 'Remote' ? <Icons.Monitor /> : <Icons.MapPin />} label={course.format === 'Both' ? 'In-person & remote' : course.format} />
-          {course.cert && <MetaItem icon={<Icons.Certificate />} label={course.cert + ' certified'} />}
+          {course.cert && <MetaItem icon={<Icons.Certificate />} label={course.cert + ' accredited'} />}
         </div>
 
         {/* for who */}
@@ -352,9 +352,9 @@ const Events: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>Agile Training Courses & Workshops UK — Altogether Agile</title>
+        <title>Agile Training Courses & Workshops UK - Altogether Agile</title>
         <meta name="description" content="Framework-based agile training courses in the UK covering AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally by an experienced coach." />
-        <meta property="og:title" content="Agile Training Courses & Workshops UK — Altogether Agile" />
+        <meta property="og:title" content="Agile Training Courses & Workshops UK - Altogether Agile" />
         <meta property="og:description" content="Framework-based agile training courses in the UK covering AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:url" content={`${SITE_URL}/events`} />
@@ -375,7 +375,7 @@ const Events: React.FC = () => {
               Every course, run personally.<br />No associates. No surprises.
             </h1>
             <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.7, margin: 0, maxWidth: 440 }}>
-              Browse the full catalogue below. Courses with a date scheduled show an orange badge — all others can be arranged for your team or organisation on request.
+              Browse the full catalogue below. Courses with a date scheduled show an orange badge - all others can be arranged for your team or organisation on request.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, justifyContent: 'flex-end', paddingBottom: isMobile ? 32 : 0 }}>
@@ -462,7 +462,7 @@ const Events: React.FC = () => {
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>In-house &amp; bespoke</div>
             <h2 style={{ color: '#fff', fontSize: isMobile ? 26 : 34, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>Need it tailored for your team?</h2>
             <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>
-              Every course can be delivered in-house — adapted to your context, your team size, and your organisation's way of working. Same quality, no generic materials.
+              Every course can be delivered in-house - adapted to your context, your team size, and your organisation's way of working. Same quality, no generic materials.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>

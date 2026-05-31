@@ -25,12 +25,12 @@ const tdStyle: React.CSSProperties = {
 const CookiePolicy = () => (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>
-      <title>Cookie Policy — Altogether Agile</title>
+      <title>Cookie Policy - Altogether Agile</title>
       <meta name="description" content="How Altogether Agile uses cookies and similar technologies on our website." />
       <link rel="canonical" href={`${SITE_URL}/cookies`} />
     </Helmet>
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '64px 48px' }}>
-      <h1 style={h1Style}>Altogether Agile Ltd — Cookie Policy</h1>
+      <h1 style={h1Style}>Altogether Agile Ltd - Cookie Policy</h1>
       <p style={{ ...pStyle, color: p.muted, fontSize: 13 }}>Last updated: March 2026</p>
 
       <h2 style={h2Style}>What are cookies?</h2>

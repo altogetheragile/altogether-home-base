@@ -57,7 +57,7 @@ const Testimonials: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF' }}>
       <Helmet>
-        <title>Testimonials — Altogether Agile</title>
+        <title>Testimonials - Altogether Agile</title>
         <meta name="description" content="Read what professionals say about Altogether Agile's courses, coaching, and training programmes." />
         <link rel="canonical" href={`${SITE_URL}/testimonials`} />
       </Helmet>

@@ -52,7 +52,7 @@ export const HowItWorksAtAGlance: React.FC<HowItWorksAtAGlanceProps> = ({
                 <div className="flex-1 pt-0.5">
                   <span className="font-medium">{step.title}</span>
                   {step.description && (
-                    <span className="text-muted-foreground"> — {step.description}</span>
+                    <span className="text-muted-foreground"> - {step.description}</span>
                   )}
                 </div>
               </div>

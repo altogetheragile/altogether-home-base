@@ -27,7 +27,7 @@ const BlogPost = () => {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAFA' }}>
       <Helmet>
-        <title>{post?.seo_title || post?.title || 'Blog'} — Altogether Agile</title>
+        <title>{post?.seo_title || post?.title || 'Blog'} - Altogether Agile</title>
         {post?.seo_description && <meta name="description" content={post.seo_description} />}
         {post?.title && <meta property="og:title" content={post.seo_title || post.title} />}
         {post?.seo_description && <meta property="og:description" content={post.seo_description} />}
@@ -258,7 +258,7 @@ const bodyWrapperStyle: React.CSSProperties = {
   lineHeight: 1.8,
 };
 
-/* Styles for HTML blog post content — mirrors the Markdown component styles */
+/* Styles for HTML blog post content - mirrors the Markdown component styles */
 const blogHtmlStyles = `
 .blog-html-body h1 { color: ${p.deepTeal}; font-size: 28px; font-weight: 800; margin: 2.5rem 0 0.75rem; line-height: 1.2; }
 .blog-html-body h2 { color: ${p.deepTeal}; font-size: 24px; font-weight: 700; margin: 2.5rem 0 0.75rem; line-height: 1.3; }

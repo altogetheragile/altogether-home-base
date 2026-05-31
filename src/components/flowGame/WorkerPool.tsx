@@ -58,7 +58,7 @@ export function WorkerPool({
                 disabled && 'cursor-not-allowed opacity-30',
                 !isSelected && !isAssigned && 'border-border bg-card'
               )}
-              title={`${worker.name} — ${SPECIALISM_LABELS[worker.specialism]} specialist${isAssigned ? ' (assigned)' : ''}`}
+              title={`${worker.name} - ${SPECIALISM_LABELS[worker.specialism]} specialist${isAssigned ? ' (assigned)' : ''}`}
             >
               <span
                 className={cn(

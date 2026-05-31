@@ -46,7 +46,7 @@ const AIToolsHub = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
-        <title>AI Tools Hub — Altogether Agile</title>
+        <title>AI Tools Hub - Altogether Agile</title>
         <meta name="description" content="Explore our collection of AI-powered tools designed to streamline your workflow and boost productivity." />
         <link rel="canonical" href={`${SITE_URL}/ai-tools`} />
       </Helmet>
