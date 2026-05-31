@@ -54,10 +54,11 @@
 
 .aa-hero-h1 {
   color: var(--aa-deep-teal);
-  font-weight: 800;
-  line-height: 1.4;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.2;
   margin: 0 0 20px;
-  font-size: 50px;
+  font-size: 56px;
 }
 
 .aa-hero-subtitle {
@@ -141,7 +142,12 @@
   color: var(--aa-orange);
   display: flex;
   justify-content: center;
-  margin-bottom: 4px;
+  margin-bottom: 12px;
+}
+
+.aa-stat__icon svg {
+  width: 36px;
+  height: 36px;
 }
 
 .aa-stat__num {
@@ -477,7 +483,7 @@
   .aa-stats-bar { flex-wrap: wrap; }
   .aa-stats-bar > div { width: 50%; border-right: none !important; }
   .aa-section-pad { padding: 40px 20px; }
-  .aa-hero-h1 { font-size: 34px !important; }
+  .aa-hero-h1 { font-size: 38px !important; }
   .aa-hide-mobile { display: none; }
   .aa-hero-content { padding: 48px 20px 80px; }
 }
