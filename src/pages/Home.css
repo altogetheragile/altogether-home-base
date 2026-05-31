@@ -22,7 +22,7 @@
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
 .aa-hero {
   position: relative;
-  min-height: 560px;
+  min-height: 760px;
   overflow: visible;
   border: none;
   box-shadow: none;
@@ -30,7 +30,7 @@
 
 .aa-hero-bg {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: -80px;
+  top: 0; left: 0; right: 0; bottom: 0;
   z-index: 0;
   overflow: hidden;
 }
@@ -129,9 +129,8 @@
   align-items: stretch;
   justify-content: center;
   background: transparent;
-  padding: 20px 48px;
-  padding-top: 60px;
-  margin-top: -160px;
+  padding: 20px 48px 80px;
+  margin-top: -240px;
   position: relative;
   z-index: 3;
 }
