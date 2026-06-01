@@ -44,8 +44,22 @@ function stripFences(text: string): string {
   return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
 }
 
+// Parse JSON even if the model wrapped it in prose/fences: try strict first,
+// then fall back to the outermost { ... } slice.
+function parseJsonLoose(text: string): any {
+  const t = stripFences(text);
+  try {
+    return JSON.parse(t);
+  } catch {
+    const first = t.indexOf('{');
+    const last = t.lastIndexOf('}');
+    if (first >= 0 && last > first) return JSON.parse(t.slice(first, last + 1));
+    throw new Error('no_json_object');
+  }
+}
+
 // Single Anthropic Messages call returning parsed JSON (or throws).
-async function callClaude(apiKey: string, userMessage: string, maxTokens = 1500): Promise<any> {
+async function callClaude(apiKey: string, userMessage: string, maxTokens = 4096): Promise<any> {
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -68,7 +82,7 @@ async function callClaude(apiKey: string, userMessage: string, maxTokens = 1500)
   }
   const completion = await resp.json();
   const text = completion?.content?.[0]?.text ?? '';
-  return JSON.parse(stripFences(text));
+  return parseJsonLoose(text);
 }
 
 // Shape the model output into a validated result: ids in steps are checked
@@ -182,7 +196,7 @@ serve(async (req) => {
 
     // ── 2. Critic / red-team pass ───────────────────────────────────────────
     // A skeptical reviewer scores the draft against ISA-O3 ordering and fit.
-    const assessment: { reviewed: boolean; revised: boolean; verdict?: string; summary?: string } = {
+    const assessment: { reviewed: boolean; revised: boolean; verdict?: string; summary?: string; repairNote?: string } = {
       reviewed: false,
       revised: false,
     };
@@ -201,7 +215,7 @@ PROPOSED PATTERN:\n${JSON.stringify(result)}
 Judge it on: (a) does the diagnosis match the scenario; (b) correct ordering - Intent before Scope before Approach, and higher horizons setting context for lower ones; (c) are the technique-to-artifact pairings sensible, not just valid; (d) right altitude (4-8 steps, no obvious missing gap); (e) every id exists in the catalogue.
 
 Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summary": "one short sentence" }. Use "revise" only for substantive problems, not nitpicks.`,
-          800,
+          1024,
         );
         assessment.reviewed = true;
         assessment.verdict = critique?.verdict === 'revise' ? 'revise' : 'ok';
@@ -224,10 +238,19 @@ Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summ
             if (revisedResult.steps.length > 0) {
               result = revisedResult;
               assessment.revised = true;
+              assessment.repairNote = 'applied';
+            } else {
+              assessment.repairNote = 'empty-steps';
             }
-          } catch (_) { /* keep the draft if repair fails */ }
+          } catch (e) {
+            assessment.repairNote = `threw:${(e as Error).message}`;
+          }
+        } else {
+          assessment.repairNote = `no-trigger(verdict=${assessment.verdict},hasText=${!!critiqueText})`;
         }
-      } catch (_) { /* critic is best-effort; keep the draft */ }
+      } catch (e) {
+        assessment.repairNote = `critic-threw:${(e as Error).message}`;
+      }
     }
 
     // Empty / fallback result
