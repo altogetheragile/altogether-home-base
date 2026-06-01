@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
+import LegacyKnowledgeRedirect from '@/components/knowledge-base/LegacyKnowledgeRedirect';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { featureFlags } from './featureFlags';
@@ -26,7 +27,11 @@ const AdminLayout = lazy(() => import('@/components/admin/AdminLayout'));
 // Public Pages
 const EventDetail = lazy(() => import('@/pages/EventDetail'));
 const KnowledgeDetail = lazy(() => import('@/pages/KnowledgeDetail'));
-const Technique = lazy(() => import('@/pages/Technique'));
+const KnowledgeBase = lazy(() => import('@/pages/KnowledgeBase'));
+const KnowledgeBaseArtifact = lazy(() => import('@/pages/KnowledgeBaseArtifact'));
+const KnowledgeBaseTechniques = lazy(() => import('@/pages/KnowledgeBaseTechniques'));
+const KnowledgeBaseTechnique = lazy(() => import('@/pages/KnowledgeBaseTechnique'));
+const PatternBuilder = lazy(() => import('@/pages/PatternBuilder'));
 const Testimonials = lazy(() => import('@/pages/Testimonials'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
@@ -156,15 +161,7 @@ export const PublicRoutes = () => {
           </ProtectedRoute>
         </SiteSettingsRouteGuard>
       } />
-      <Route path="/knowledge/:slug" element={
-        <SiteSettingsRouteGuard feature="knowledge">
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <Technique />
-            </Suspense>
-          </ErrorBoundary>
-        </SiteSettingsRouteGuard>
-      } />
+      <Route path="/knowledge/:slug" element={<LegacyKnowledgeRedirect />} />
     <Route path="/testimonials" element={
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
@@ -653,7 +650,6 @@ export const DynamicRoutes = () => {
   if (!featureFlags.dynamicPages) return null;
 
   // Special page components - must be defined BEFORE catch-all
-  const Knowledge = lazy(() => import('@/pages/Knowledge'));
   const Events = lazy(() => import('@/pages/Events'));
   const Coaching = lazy(() => import('@/pages/Coaching'));
   const AboutPage = lazy(() => import('@/pages/About'));
@@ -669,11 +665,51 @@ export const DynamicRoutes = () => {
       } />
       
       {/* Special Pages - Always defined, guarded by SiteSettingsRouteGuard */}
-      <Route path="/knowledge" element={
+      {/* Legacy /knowledge now redirects to the ISA-O3 Knowledge Base */}
+      <Route path="/knowledge" element={<Navigate to="/knowledge-base" replace />} />
+
+      {/* ISA-O3 Knowledge Base */}
+      <Route path="/knowledge-base" element={
         <SiteSettingsRouteGuard feature="knowledge">
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
-              <Knowledge />
+              <KnowledgeBase />
+            </Suspense>
+          </ErrorBoundary>
+        </SiteSettingsRouteGuard>
+      } />
+      <Route path="/knowledge-base/artifacts/:id" element={
+        <SiteSettingsRouteGuard feature="knowledge">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <KnowledgeBaseArtifact />
+            </Suspense>
+          </ErrorBoundary>
+        </SiteSettingsRouteGuard>
+      } />
+      <Route path="/knowledge-base/techniques" element={
+        <SiteSettingsRouteGuard feature="knowledge">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <KnowledgeBaseTechniques />
+            </Suspense>
+          </ErrorBoundary>
+        </SiteSettingsRouteGuard>
+      } />
+      <Route path="/knowledge-base/techniques/:id" element={
+        <SiteSettingsRouteGuard feature="knowledge">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <KnowledgeBaseTechnique />
+            </Suspense>
+          </ErrorBoundary>
+        </SiteSettingsRouteGuard>
+      } />
+      <Route path="/knowledge-base/pattern-builder" element={
+        <SiteSettingsRouteGuard feature="knowledge">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <PatternBuilder />
             </Suspense>
           </ErrorBoundary>
         </SiteSettingsRouteGuard>

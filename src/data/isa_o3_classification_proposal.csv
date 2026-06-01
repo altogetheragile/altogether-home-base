@@ -1,0 +1,36 @@
+id,name,horizon,isa,layer,confidence,basis
+coord-backlog,Backlog,Coordination,Scope,Iterative,high,doc match: Delivery Backlogs
+coord-delivery-schedule,Delivery Schedule,Coordination,Approach,Iterative,high,doc match: Delivery Schedule
+coord-goal,Goal,Coordination,Intent,Iterative,high,doc match: Delivery Goals
+coord-governance,Governance,Coordination,Approach,Anchoring,proposed,Delivery governance = how decisions are made
+coord-integration-standard,Integration Standard,Coordination,Approach,Iterative,proposed,Integration standard = how we build/operate together
+coord-outcomes,Outcomes,Coordination,Intent,Evidence,proposed,Outcome evidence (Evidence-Intent cell)
+coord-purpose,Purpose,Coordination,Intent,Anchoring,proposed,Mirrors Purpose (Anchoring/Intent) at the Coordination horizon
+coord-solution-design,Solution Design,Coordination,Scope,Iterative,proposed,Solution design = what is being built
+coord-stakeholder-map,Stakeholder Map,Coordination,Scope,Iterative,proposed,Stakeholders = for whom (scope)
+coord-team-topology,Team Topology,Coordination,Approach,Iterative,proposed,Team topology = how we organise to deliver
+coord-user-beneficiary-profile,User and Beneficiary Profile,Coordination,Scope,Iterative,proposed,Beneficiary profile = for whom (scope)
+coord-vision,Vision,Coordination,Intent,Anchoring,high,doc match: Initiative Vision
+coord-way-of-working,Way of Working,Coordination,Approach,Anchoring,proposed,Way of working charter = enduring how
+org-brand,Brand,Organisation,Intent,Anchoring,proposed,Brand expresses enduring identity/why - sits with Purpose/Values
+org-business-model,Business Model,Organisation,Scope,Iterative,high,doc match: Business Model
+org-goals,Goals,Organisation,Intent,Iterative,high,doc match: Organisational Goals
+org-governance,Governance,Organisation,Approach,Anchoring,proposed,Governance = enduring rules for how decisions are made
+org-mission,Mission,Organisation,Scope,Anchoring,high,doc match: Mission
+org-operating-model,Operating Model,Organisation,Approach,Iterative,high,doc match: Operating Model
+org-portfolio-backlog,Portfolio Backlog,Organisation,Scope,Iterative,proposed,"Backlog = what/for whom, planned periodically"
+org-portfolio-roadmap,Portfolio Roadmap,Organisation,Scope,Iterative,proposed,Roadmap = planned what/when across portfolio
+org-purpose,Purpose,Organisation,Intent,Anchoring,high,doc match: Purpose
+org-strategic-outcomes,Strategic Outcomes and Market Signals,Organisation,Intent,Evidence,proposed,Outcomes+market signals = evidence of intent progress
+org-strategy,Strategy,Organisation,Approach,Iterative,high,doc match: Strategy
+org-value-proposition,Value Proposition,Organisation,Scope,Anchoring,proposed,Doc places Value Proposition at Anchoring/Scope (Coordination); mirror to Org
+org-values,Values,Organisation,Intent,Anchoring,high,doc match: Values
+org-vision,Vision,Organisation,Intent,Anchoring,high,doc match: Vision
+team-delivery-health-metrics,Delivery Health Metrics,Team,Approach,Evidence,proposed,Operate evidence - is the way we work effective
+team-goal,Goal,Team,Intent,Iterative,high,doc match: Team Goal
+team-output,Output,Team,Scope,Evidence,proposed,Output/Increment = Evidence-Scope cell
+team-output-feedback,Output Feedback,Team,Intent,Evidence,proposed,Feedback on whether output is valued = Outcome/Intent evidence
+team-plan,Plan,Team,Approach,Iterative,high,doc match: Team Plan
+team-quality-bar,Quality Bar,Team,Approach,Anchoring,proposed,Quality bar = enduring standard for how
+team-selected-work-items,Selected Work Items,Team,Scope,Iterative,proposed,Selected work = what we committed (scope)
+team-working-agreement,Working Agreement,Team,Approach,Anchoring,proposed,Working agreement = enduring how the team operates

@@ -18,7 +18,7 @@ const TOP_LINKS = [
 
 /* Items inside the Resources dropdown */
 const RESOURCE_LINKS = [
-  { label: 'Knowledge Base', to: '/knowledge', flag: 'show_knowledge' as const },
+  { label: 'Knowledge Base', to: '/knowledge-base', flag: 'show_knowledge' as const },
   { label: 'Blog', to: '/blog', flag: 'show_blog' as const },
   { label: 'Practice Exams', to: '/exams', flag: 'show_exams' as const },
   { label: 'AI Tools', to: '/ai-tools', flag: 'show_ai_tools' as const },

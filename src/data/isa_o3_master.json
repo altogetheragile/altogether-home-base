@@ -1,0 +1,1132 @@
+{
+  "meta": {
+    "generated": "2026-06-01",
+    "source": "Exported from Altogether Agile knowledge_items (Supabase, is_published=true)",
+    "artifacts": 35,
+    "techniques": 80
+  },
+  "artifacts": [
+    {
+      "id": "coord-backlog",
+      "name": "Backlog",
+      "horizon": "Coordination",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The ordered set of items defining what the initiative will deliver, anchored to its Goal.",
+      "description": "The ordered set of items defining what the initiative will deliver, anchored to its Goal.",
+      "question": "What will we deliver? In what order?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-delivery-schedule",
+      "name": "Delivery Schedule",
+      "horizon": "Coordination",
+      "isa": "Approach",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The schedule and milestones of when the Backlog items will be delivered, with key releases and review points.",
+      "description": "The schedule and milestones of when the Backlog items will be delivered, with key releases and review points.",
+      "question": "When will each piece land?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-goal",
+      "name": "Goal",
+      "horizon": "Coordination",
+      "isa": "Intent",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The next meaningful objective for the initiative, cascaded from organisational Goals.",
+      "description": "The next meaningful objective for the initiative, cascaded from organisational Goals.",
+      "question": "Why this goal next? What outcome are we pursuing? When?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-governance",
+      "name": "Governance",
+      "horizon": "Coordination",
+      "isa": "Approach",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The decision rights, forums, and thresholds within the initiative — who can decide on scope, schedule, and resourcing changes.",
+      "description": "The decision rights, forums, and thresholds within the initiative — who can decide on scope, schedule, and resourcing changes.",
+      "question": "Who decides what within this initiative, and how?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-integration-standard",
+      "name": "Integration Standard",
+      "horizon": "Coordination",
+      "isa": "Approach",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The shared standard for what counts as ready to integrate or release across the initiative's teams.",
+      "description": "The shared standard for what counts as ready to integrate or release across the initiative's teams.",
+      "question": "How do we ensure work from different teams fits together cleanly?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-outcomes",
+      "name": "Outcomes",
+      "horizon": "Coordination",
+      "isa": "Intent",
+      "layer": "Evidence",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The measurable evidence that tests whether the Goal is being met, drawn from real use of what the initiative has produced.",
+      "description": "The measurable evidence that tests whether the Goal is being met, drawn from real use of what the initiative has produced.",
+      "question": "Is the initiative producing the outcomes we hoped for?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-purpose",
+      "name": "Purpose",
+      "horizon": "Coordination",
+      "isa": "Intent",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "Why this initiative exists and what it is for, in service of the host organisation's Purpose. For a project or programme, this is the reason the temporary organisation has been formed. For a product or service, this is the reason the product exists and the value it is built to create.",
+      "description": "Why this initiative exists and what it is for, in service of the host organisation's Purpose. For a project or programme, this is the reason the temporary organisation has been formed. For a product or service, this is the reason the product exists and the value it is built to create.",
+      "question": "Why does this initiative exist?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-solution-design",
+      "name": "Solution Design",
+      "horizon": "Coordination",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The articulated description of what the solution looks like — its components, interfaces, behaviour, data — at a level that lets multiple teams build coherent parts.",
+      "description": "The articulated description of what the solution looks like — its components, interfaces, behaviour, data — at a level that lets multiple teams build coherent parts.",
+      "question": "What will the solution look like? What will it do?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-stakeholder-map",
+      "name": "Stakeholder Map",
+      "horizon": "Coordination",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The stakeholders with power to fund, block, support, or override the initiative, and what each one needs from it.",
+      "description": "The stakeholders with power to fund, block, support, or override the initiative, and what each one needs from it.",
+      "question": "Who can stop this, regardless of merit? Who needs convincing?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-team-topology",
+      "name": "Team Topology",
+      "horizon": "Coordination",
+      "isa": "Approach",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The set of teams delivering the initiative, the shape of each, and the way they interact.",
+      "description": "The set of teams delivering the initiative, the shape of each, and the way they interact.",
+      "question": "Who builds what? How do the teams relate?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-user-beneficiary-profile",
+      "name": "User and Beneficiary Profile",
+      "horizon": "Coordination",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The articulated understanding of who the initiative serves and what they need — their goals, contexts, jobs, and the value they would receive.",
+      "description": "The articulated understanding of who the initiative serves and what they need — their goals, contexts, jobs, and the value they would receive.",
+      "question": "Who are we serving, and what do they need?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-vision",
+      "name": "Vision",
+      "horizon": "Coordination",
+      "isa": "Intent",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The future state the initiative is bringing about — what the world looks like when the work is done.",
+      "description": "The future state the initiative is bringing about — what the world looks like when the work is done.",
+      "question": "Where is this initiative taking us?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "coord-way-of-working",
+      "name": "Way of Working",
+      "horizon": "Coordination",
+      "isa": "Approach",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The shared delivery practices, engineering standards, and ceremonies across the initiative's teams.",
+      "description": "The shared delivery practices, engineering standards, and ceremonies across the initiative's teams.",
+      "question": "How do the teams in this initiative work together?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-brand",
+      "name": "Brand",
+      "horizon": "Organisation",
+      "isa": "Intent",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "How the organisation is recognised, remembered, and trusted. The visible expression of the Value Proposition.",
+      "description": "How the organisation is recognised, remembered, and trusted. The visible expression of the Value Proposition.",
+      "question": "Who are we in the customer's mind?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-business-model",
+      "name": "Business Model",
+      "horizon": "Organisation",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "How the organisation creates, delivers, and captures value. The outward-facing commercial logic.",
+      "description": "How the organisation creates, delivers, and captures value. The outward-facing commercial logic.",
+      "question": "What do we sell, to whom, and how do we make money?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-goals",
+      "name": "Goals",
+      "horizon": "Organisation",
+      "isa": "Intent",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "Time-bound, measurable commitments on the way to the Vision.",
+      "description": "Time-bound, measurable commitments on the way to the Vision.",
+      "question": "What will we achieve, by when?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-governance",
+      "name": "Governance",
+      "horizon": "Organisation",
+      "isa": "Approach",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The decision rights, forums, and thresholds that determine who decides what across the organisation.",
+      "description": "The decision rights, forums, and thresholds that determine who decides what across the organisation.",
+      "question": "Who decides what, and how are decisions made?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-mission",
+      "name": "Mission",
+      "horizon": "Organisation",
+      "isa": "Scope",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "What the organisation does about its Purpose, in the present tense.",
+      "description": "What the organisation does about its Purpose, in the present tense.",
+      "question": "Why are we here today, and what do we do about it?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-operating-model",
+      "name": "Operating Model",
+      "horizon": "Organisation",
+      "isa": "Approach",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The capabilities, processes, structures, technology, partners, and people that turn the Business Model into a working reality.",
+      "description": "The capabilities, processes, structures, technology, partners, and people that turn the Business Model into a working reality.",
+      "question": "How do we run, day to day?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-portfolio-backlog",
+      "name": "Portfolio Backlog",
+      "horizon": "Organisation",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The ordered set of strategic initiatives the organisation will pursue to meet its Goals.",
+      "description": "The ordered set of strategic initiatives the organisation will pursue to meet its Goals.",
+      "question": "What initiatives will we run? In what order?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-portfolio-roadmap",
+      "name": "Portfolio Roadmap",
+      "horizon": "Organisation",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The schedule and milestones across the Portfolio Backlog — when initiatives are sequenced for delivery, with key review and decision points.",
+      "description": "The schedule and milestones across the Portfolio Backlog — when initiatives are sequenced for delivery, with key review and decision points.",
+      "question": "When will each initiative deliver, and how do they sequence?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-purpose",
+      "name": "Purpose",
+      "horizon": "Organisation",
+      "isa": "Intent",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The timeless reason the organisation exists.",
+      "description": "The timeless reason the organisation exists.",
+      "question": "Why do we exist at all?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-strategic-outcomes",
+      "name": "Strategic Outcomes and Market Signals",
+      "horizon": "Organisation",
+      "isa": "Intent",
+      "layer": "Evidence",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The evidence that tests whether the Strategy and Goals are working: customer behaviour, financial performance, market shifts, regulatory changes.",
+      "description": "The evidence that tests whether the Strategy and Goals are working: customer behaviour, financial performance, market shifts, regulatory changes.",
+      "question": "Is the Strategy actually delivering, and what is the world telling us?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-strategy",
+      "name": "Strategy",
+      "horizon": "Organisation",
+      "isa": "Approach",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The choices about where to compete and how to win.",
+      "description": "The choices about where to compete and how to win.",
+      "question": "Where will we play? How will we win?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-value-proposition",
+      "name": "Value Proposition",
+      "horizon": "Organisation",
+      "isa": "Scope",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The promise made to the customer; the hinge of the Business Model.",
+      "description": "The promise made to the customer; the hinge of the Business Model.",
+      "question": "Why would they choose us?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-values",
+      "name": "Values",
+      "horizon": "Organisation",
+      "isa": "Intent",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "Behaviours the organisation refuses to trade away, even when it would be profitable to.",
+      "description": "Behaviours the organisation refuses to trade away, even when it would be profitable to.",
+      "question": "How do we behave on the way?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "org-vision",
+      "name": "Vision",
+      "horizon": "Organisation",
+      "isa": "Intent",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The future the organisation is working toward, set far enough out to be ambitious and close enough to be accountable.",
+      "description": "The future the organisation is working toward, set far enough out to be ambitious and close enough to be accountable.",
+      "question": "Where are we going? When will we get there?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-delivery-health-metrics",
+      "name": "Delivery Health Metrics",
+      "horizon": "Team",
+      "isa": "Approach",
+      "layer": "Evidence",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The leading indicators of how the team's delivery system is performing.",
+      "description": "The leading indicators of how the team's delivery system is performing.",
+      "question": "How fast? How predictable? How clean?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-goal",
+      "name": "Goal",
+      "horizon": "Team",
+      "isa": "Intent",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The intent for the team's current cycle, cascaded from the initiative Goal.",
+      "description": "The intent for the team's current cycle, cascaded from the initiative Goal.",
+      "question": "Why this cycle? What must be true by the end of it?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-output",
+      "name": "Output",
+      "horizon": "Team",
+      "isa": "Scope",
+      "layer": "Evidence",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The integrated, usable result of the cycle that meets the Quality Bar.",
+      "description": "The integrated, usable result of the cycle that meets the Quality Bar.",
+      "question": "What did the cycle actually produce?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-output-feedback",
+      "name": "Output Feedback",
+      "horizon": "Team",
+      "isa": "Intent",
+      "layer": "Evidence",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The evidence from real use of the Output — whether anyone uses it, and whether it produces the outcomes the initiative Goal expected.",
+      "description": "The evidence from real use of the Output — whether anyone uses it, and whether it produces the outcomes the initiative Goal expected.",
+      "question": "Is what we built being used? Is it producing the change we hoped for?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-plan",
+      "name": "Plan",
+      "horizon": "Team",
+      "isa": "Approach",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The team's own plan for delivering the Goal during the cycle — the schedule and sequence of the chosen work.",
+      "description": "The team's own plan for delivering the Goal during the cycle — the schedule and sequence of the chosen work.",
+      "question": "When will each item move? In what order?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-quality-bar",
+      "name": "Quality Bar",
+      "horizon": "Team",
+      "isa": "Approach",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The shared standard every team output must meet to be considered complete.",
+      "description": "The shared standard every team output must meet to be considered complete.",
+      "question": "How do we know the work is really finished?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-selected-work-items",
+      "name": "Selected Work Items",
+      "horizon": "Team",
+      "isa": "Scope",
+      "layer": "Iterative",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The items pulled from the initiative Backlog into the team's current cycle.",
+      "description": "The items pulled from the initiative Backlog into the team's current cycle.",
+      "question": "What have we taken on this cycle?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    },
+    {
+      "id": "team-working-agreement",
+      "name": "Working Agreement",
+      "horizon": "Team",
+      "isa": "Approach",
+      "layer": "Anchoring",
+      "kind": "Artifact",
+      "facet": null,
+      "oneLiner": "The behavioural and practice norms a team chooses to operate by.",
+      "description": "The behavioural and practice norms a team chooses to operate by.",
+      "question": "How do we choose to behave as a team?",
+      "inheritable": false,
+      "counterparts": [],
+      "techniques": [],
+      "components": []
+    }
+  ],
+  "techniques": [
+    {
+      "id": "5-whys",
+      "name": "5 Whys",
+      "description": "A simple root cause analysis method that uncovers underlying problems by asking 'why' multiple times.",
+      "source": "Lean (Toyota Production System)",
+      "produces": []
+    },
+    {
+      "id": "a-b-testing",
+      "name": "A/B Testing",
+      "description": "A technique to compare multiple variants (A vs B) in a controlled experiment to identify the more effective design or feature based on measurable user behavior.",
+      "source": "Agile (Validation & Evaluation), Product Experimentation",
+      "produces": []
+    },
+    {
+      "id": "acceptance-criteria",
+      "name": "Acceptance Criteria",
+      "description": "Specific, measurable conditions that a solution must meet to be accepted by users or stakeholders. Often written in Given-When-Then format.",
+      "source": "BABOK (Validation & Evaluation), Agile (BDD), BCS",
+      "produces": []
+    },
+    {
+      "id": "accessibility-audit",
+      "name": "Accessibility Audit",
+      "description": "Technique to evaluate digital accessibility compliance and inclusion standards (e.g., WCAG).",
+      "source": "W3C Web Accessibility Initiative (WCAG)",
+      "produces": []
+    },
+    {
+      "id": "assumption-mapping",
+      "name": "Assumption Mapping",
+      "description": "A method to surface, categorize, and prioritize assumptions underpinning product ideas or business models.",
+      "source": "Lean UX / Product Discovery",
+      "produces": []
+    },
+    {
+      "id": "business-case",
+      "name": "Business Case",
+      "description": "A justification for a proposed initiative, evaluating benefits, costs, risks, and alignment to strategic goals. Supports go/no-go decision-making.",
+      "source": "BABOK (Needs Assessment), BCS (Strategic Analysis)",
+      "produces": []
+    },
+    {
+      "id": "business-model-canvas",
+      "name": "Business Model Canvas",
+      "description": "A strategic management framework, created by Alexander Osterwalder (2005 thesis, refined with Yves Pigneur), popularized through the book Business Model Generation (2010). Widely used as a global standard for business model design and innovation.",
+      "source": "Business Model Generation (Osterwalder & Pigneur, 2010)",
+      "produces": []
+    },
+    {
+      "id": "contextual-inquiry",
+      "name": "Contextual Inquiry",
+      "description": "A field research method involving observation and semi-structured interviews while users perform real tasks in their context.",
+      "source": "HCI / UX Research",
+      "produces": []
+    },
+    {
+      "id": "cost-of-delay",
+      "name": "Cost of Delay",
+      "description": "A quantifiable approach to express the economic impact of delaying work. It supports informed prioritization and trade-off decisions.",
+      "source": "Agile (Decision & Prioritization), SAFe",
+      "produces": []
+    },
+    {
+      "id": "cumulative-flow-diagram",
+      "name": "Cumulative Flow Diagram",
+      "description": "A visual chart showing how work is progressing through stages, used to spot bottlenecks and flow issues.",
+      "source": "Kanban, DevOps, Agile Metrics",
+      "produces": []
+    },
+    {
+      "id": "cumulative-flow-diagrams",
+      "name": "Cumulative Flow Diagrams",
+      "description": "A chart that shows the amount of work in different stages over time, revealing bottlenecks and delivery trends.",
+      "source": "Kanban, DevOps, Agile Metrics",
+      "produces": []
+    },
+    {
+      "id": "customer-interviews",
+      "name": "Customer Interviews",
+      "description": "Direct, structured or semi-structured conversations with users to explore their needs, motivations, and pain points.",
+      "source": "Lean Startup / Customer Development",
+      "produces": []
+    },
+    {
+      "id": "daily-stand-ups",
+      "name": "Daily Stand-ups",
+      "description": "A short, time-boxed daily meeting where team members synchronize work, identify blockers, and plan the next 24 hours.",
+      "source": "Agile (Scrum), BCS (People Techniques)",
+      "produces": []
+    },
+    {
+      "id": "definition-of-done-dod",
+      "name": "Definition of Done (DoD)",
+      "description": "A shared agreement among team members on the conditions a product increment must meet to be considered complete.",
+      "source": "Agile (Scrum), BABOK (Validation), BCS",
+      "produces": []
+    },
+    {
+      "id": "delivery-plan",
+      "name": "Delivery Plan",
+      "description": "An agile delivery plan is an adaptive plan for a product or project delivery.  The plan does not go into the detail of a delivery tkmeboxes (sprints), rather it is a high-level schedule of a delivery.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "design-studio-workshop",
+      "name": "Design Studio Workshop",
+      "description": "A collaborative sketching method for exploring and critiquing UI or solution ideas across team members.",
+      "source": "Lean UX, Agile UX",
+      "produces": []
+    },
+    {
+      "id": "design-studio-workshops",
+      "name": "Design Studio Workshops",
+      "description": "A time-boxed collaborative session where team members sketch, present, and iterate on UI or workflow designs in rounds.",
+      "source": "Lean UX, Agile UX",
+      "produces": []
+    },
+    {
+      "id": "empathy-map",
+      "name": "Empathy Map",
+      "description": "A collaborative visualization used to articulate what a user sees, hears, thinks, feels, says, and does to build empathy and insight.",
+      "source": "Gamestorming (Dave Gray, 2010)",
+      "produces": []
+    },
+    {
+      "id": "epic-user-story-miqpy9sb",
+      "name": "Epic User Story",
+      "description": "",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "estimation-shirt-sizing",
+      "name": "Estimation (Story Points, T-shirt sizing)",
+      "description": "Relative estimation techniques that measure effort or complexity rather than time. Useful for forecasting and iteration planning.",
+      "source": "BABOK (Estimation & Planning), Agile (Estimation), BCS",
+      "produces": []
+    },
+    {
+      "id": "experiment-cards",
+      "name": "Experiment Cards",
+      "description": "A structured card format used to define product assumptions, how they will be tested, and what success looks like.",
+      "source": "Testing Business Ideas (David J. Bland & Alexander Osterwalder, 2019)",
+      "produces": []
+    },
+    {
+      "id": "fake-door-tests",
+      "name": "Fake Door Tests",
+      "description": "A lightweight experiment that simulates a feature or offer to test user interest before investing in development.",
+      "source": "Lean Startup (Eric Ries, 2011)",
+      "produces": []
+    },
+    {
+      "id": "feature-slicing",
+      "name": "Feature Slicing",
+      "description": "Breaking down large features into smaller, independently valuable slices that can be developed and released incrementally.",
+      "source": "Agile (Incremental Delivery), BCS (Analytical Techniques)",
+      "produces": []
+    },
+    {
+      "id": "feature-toggles",
+      "name": "Feature Toggles",
+      "description": "A technique that allows features to be deployed but hidden or selectively enabled via toggles for safer delivery.",
+      "source": "Continuous Delivery (Humble & Farley); Martin Fowler",
+      "produces": []
+    },
+    {
+      "id": "feature-toggles-flags",
+      "name": "Feature Toggles / Flags",
+      "description": "A technique that allows code to be deployed to production with features turned off or hidden, enabling safe releases and testing.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "feature-user-story-mirmmdl6",
+      "name": "Feature User Story",
+      "description": "",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "fishbone-diagram",
+      "name": "Fishbone Diagram",
+      "description": "Also known as a Cause-and-Effect Diagram or Ishikawa Diagram, it helps teams visualize possible causes of a problem across categories like people, process, and tools.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "flow-metrics",
+      "name": "Flow Metrics",
+      "description": "Metrics like Cycle Time, Lead Time, and Throughput used to evaluate and improve delivery performance.",
+      "source": "Kanban, DevOps, Agile Metrics",
+      "produces": []
+    },
+    {
+      "id": "flow-metrics-cycle-time-lead-time",
+      "name": "Flow Metrics (Cycle Time, Lead Time)",
+      "description": "Metrics that track how long work items take to move through the delivery process, used to improve flow and predictability.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "functional-decomposition",
+      "name": "Functional Decomposition",
+      "description": "Breaking down complex processes or systems into smaller, more manageable parts for analysis, estimation, or development planning.",
+      "source": "BABOK (Modeling Techniques), BCS (Analytical Techniques)",
+      "produces": []
+    },
+    {
+      "id": "gherkin-bdd",
+      "name": "Gherkin/BDD",
+      "description": "A collaborative approach using structured 'Given-When-Then' syntax to define system behavior and automate acceptance testing.",
+      "source": "Cucumber (Aslak Hellesøy, 2008); BDD (Dan North, 2003)",
+      "produces": []
+    },
+    {
+      "id": "happiness-metric-niko-niko",
+      "name": "Happiness Metric / Niko-Niko",
+      "description": "A visual or quantitative method of checking team morale regularly, helping spot burnout or disengagement early.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "heuristic-evaluation",
+      "name": "Heuristic Evaluation",
+      "description": "Experts review a user interface against recognized usability principles (heuristics) to find friction points and opportunities for improvement.",
+      "source": "Jakob Nielsen & Rolf Molich (1990)",
+      "produces": []
+    },
+    {
+      "id": "how-might-we",
+      "name": "How Might We?",
+      "description": "A reframing technique that turns insights and problems into creative prompts by starting with 'How might we...?'",
+      "source": "IDEO / Stanford d.school (1970s onwards)",
+      "produces": []
+    },
+    {
+      "id": "impact-mapping",
+      "name": "Impact Mapping",
+      "description": "A strategic planning technique that connects deliverables to business goals by identifying actors, impacts, and deliverables to focus on outcomes over outputs.",
+      "source": "Agile (Discovery & Framing)",
+      "produces": []
+    },
+    {
+      "id": "impact-vs-effort-matrix",
+      "name": "Impact vs Effort Matrix",
+      "description": "A grid used to quickly assess and group items by their estimated impact and effort, guiding prioritization.",
+      "source": "Gamestorming (Dave Gray et al., 2010)",
+      "produces": []
+    },
+    {
+      "id": "impediment-lists",
+      "name": "Impediment Lists",
+      "description": "A running list of blockers or issues that hinder team progress, owned by the Scrum Master or team lead for resolution.",
+      "source": "Agile (Scrum/XP), BCS",
+      "produces": []
+    },
+    {
+      "id": "investment-appraisal",
+      "name": "Investment Appraisal",
+      "description": "Evaluating the financial viability and risk of proposed initiatives to inform resource allocation decisions across a portfolio.",
+      "source": "BCS (Strategic Analysis), PMI-PBA",
+      "produces": []
+    },
+    {
+      "id": "jobs-to-be-done",
+      "name": "Jobs To Be Done",
+      "description": "A customer-centric technique that focuses on understanding the job a user is trying to accomplish rather than product features alone.",
+      "source": "Agile (User-Centered Analysis)",
+      "produces": []
+    },
+    {
+      "id": "journey-mapping",
+      "name": "Journey Mapping",
+      "description": "A visual representation of the steps a user goes through when interacting with a product or service, often capturing emotions, pain points, and touchpoints.",
+      "source": "Adaptive Path / UX Design (1990s–2000s)",
+      "produces": []
+    },
+    {
+      "id": "lean-canvas",
+      "name": "Lean Canvas",
+      "description": "A 1-page business model format focused on startups and product-market fit, emphasizing problem/solution and key metrics.",
+      "source": "Running Lean (Ash Maurya, 2010)",
+      "produces": []
+    },
+    {
+      "id": "lean-governance-tools",
+      "name": "Lean Governance Tools",
+      "description": "Lightweight tools or checklists to ensure delivery aligns with strategic goals, risks are surfaced, and compliance is addressed without bureaucracy.",
+      "source": "Lean, Agile (Scaled Agile Framework), BCS (Project Delivery), AgilePM",
+      "produces": []
+    },
+    {
+      "id": "mind-mapping",
+      "name": "Mind Mapping",
+      "description": "A visual brainstorming technique that captures related ideas, problems, or solutions in a branching tree format.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "moscow-prioritization",
+      "name": "MoSCoW Prioritization",
+      "description": "A technique to categorize requirements into Must have, Should have, Could have, and Won\"\"\"t have. Helps manage scope and set delivery expectations.",
+      "source": "BABOK (Prioritization Techniques), BCS (Project Delivery), AgilePM",
+      "produces": []
+    },
+    {
+      "id": "okrs-objectives-and-key-results",
+      "name": "OKRs (Objectives and Key Results)",
+      "description": "A goal-setting framework to define and track objectives and their measurable outcomes (key results) over time.",
+      "source": "Agile (Discovery & Framing)",
+      "produces": []
+    },
+    {
+      "id": "opportunity-canvas",
+      "name": "Opportunity Canvas",
+      "description": "A lightweight canvas to identify customer problems, metrics, and potential solutions in early product discovery.",
+      "source": "Agile Product Discovery",
+      "produces": []
+    },
+    {
+      "id": "opportunity-solution-tree",
+      "name": "Opportunity Solution Tree",
+      "description": "A visual tool that links desired outcomes to opportunities and solution experiments for continuous discovery.",
+      "source": "Continuous Discovery Habits (Teresa Torres, 2016)",
+      "produces": []
+    },
+    {
+      "id": "opportunity-solution-tree-ost",
+      "name": "Opportunity Solution Tree (OST)",
+      "description": "A visual tool to map desired outcomes to opportunities and experiments. Helps teams continuously discover and deliver value.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "personas",
+      "name": "Personas",
+      "description": "Fictional, research-based profiles representing typical users, their goals, needs, and pain points.",
+      "source": "Agile (Discovery & Framing), Agile (User-Centered Analysis), BCS (Analytical Techniques)",
+      "produces": []
+    },
+    {
+      "id": "pestle",
+      "name": "PESTLE",
+      "description": "A technique used to analyze external macro-environmental factors—Political, Economic, Social, Technological, Legal, and Environmental—that could impact the strategy.",
+      "source": "BABOK (Analysis Techniques), BCS (Strategic Analysis)",
+      "produces": []
+    },
+    {
+      "id": "planning-poker",
+      "name": "Planning Poker",
+      "description": "A consensus-based estimation technique where team members assign story points to work items using cards, helping uncover uncertainty or assumptions.",
+      "source": "BABOK (Estimation & Planning), Agile (Scrum), BCS",
+      "produces": []
+    },
+    {
+      "id": "portfolio-roadmaps",
+      "name": "Portfolio Roadmaps",
+      "description": "High-level visual timelines showing planned delivery of major initiatives and their alignment to strategic themes across the organization.",
+      "source": "Agile (Portfolio Planning), BCS (Strategic Analysis)",
+      "produces": []
+    },
+    {
+      "id": "problem-statement",
+      "name": "Problem Statement",
+      "description": "A concise framing of the core user/customer problem a product or feature is intended to solve.",
+      "source": "Design Thinking / Engineering Problem Solving (20th century)",
+      "produces": []
+    },
+    {
+      "id": "product-backlog",
+      "name": "Product Backlog",
+      "description": "An ordered list of all the things known to be needed to add value to a product",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "product-vision-board",
+      "name": "Product Vision Board",
+      "description": "A lightweight visual tool that captures vision, target group, user needs, key product features, and business goals.",
+      "source": "Roman Pichler (2012)",
+      "produces": []
+    },
+    {
+      "id": "release-planning",
+      "name": "Release Planning",
+      "description": "Determining which features or capabilities will be delivered in upcoming releases, balancing value, risk, and capacity across time.",
+      "source": "Agile (Backlog Planning), BCS (Project Delivery)",
+      "produces": []
+    },
+    {
+      "id": "retrospective-techniques",
+      "name": "Retrospective Techniques",
+      "description": "Facilitated sessions using techniques like 4Ls, Start-Stop-Continue, or Sailboat to reflect on past iterations and identify improvements.",
+      "source": "Agile Retrospectives (Esther Derby & Diana Larsen, 2006)",
+      "produces": []
+    },
+    {
+      "id": "rice",
+      "name": "RICE",
+      "description": "A quantitative prioritization method that scores initiatives using Reach, Impact, Confidence, and Effort to inform sequencing.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "rice-reach-impact-confidence-effort",
+      "name": "RICE (Reach, Impact, Confidence, Effort)",
+      "description": "A scoring model that helps prioritize ideas or initiatives based on how many people it will affect (Reach), how much it will improve (Impact), certainty (Confidence), and effort to implement.",
+      "source": "Agile (Decision & Prioritization)",
+      "produces": []
+    },
+    {
+      "id": "risk-analysis",
+      "name": "Risk Analysis",
+      "description": "Identifying and evaluating risks related to release scope, timing, or quality, and determining mitigation or acceptance strategies.",
+      "source": "BABOK (Decision-Making Techniques), BCS (Strategic/Project Delivery)",
+      "produces": []
+    },
+    {
+      "id": "rolling-wave-planning",
+      "name": "Rolling Wave Planning",
+      "description": "A progressive elaboration technique where near-term work is planned in detail, while future work is planned at a higher level.",
+      "source": "BABOK (Planning), PMI-PBA, Agile",
+      "produces": []
+    },
+    {
+      "id": "service-blueprint",
+      "name": "Service Blueprint",
+      "description": "A diagram that maps out the user‚Äö√¥s interaction with the service and the behind-the-scenes processes, systems, and people enabling those experiences.",
+      "source": "G. Lynn Shostack (Harvard Business Review, 1982)",
+      "produces": []
+    },
+    {
+      "id": "service-blueprinting",
+      "name": "Service Blueprinting",
+      "description": "A visual map of the service process that includes customer interactions, frontstage actions, backstage processes, and support systems.",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "spikes",
+      "name": "Spikes",
+      "description": "Short, time-boxed tasks aimed at answering questions or exploring approaches to reduce technical, UX, or business uncertainty.",
+      "source": "Extreme Programming (XP)",
+      "produces": []
+    },
+    {
+      "id": "sprint-miov2esf",
+      "name": "Sprint",
+      "description": "",
+      "source": "",
+      "produces": []
+    },
+    {
+      "id": "story-mapping",
+      "name": "Story Mapping",
+      "description": "A technique to visualize the user journey and break down product functionality into slices for incremental delivery. Helps identify MVP and priorities.",
+      "source": "Agile (Backlog Management), BCS (Project Delivery)",
+      "produces": []
+    },
+    {
+      "id": "story-splitting",
+      "name": "Story Splitting",
+      "description": "Breaking down large or complex user stories into smaller, testable pieces that can be delivered within a sprint.",
+      "source": "Agile (Backlog Management), BCS",
+      "produces": []
+    },
+    {
+      "id": "storyboards",
+      "name": "Storyboards",
+      "description": "A sequential set of sketches or images to show how a user interacts with a product or service over time.",
+      "source": "Design Thinking / UX",
+      "produces": []
+    },
+    {
+      "id": "swot",
+      "name": "SWOT",
+      "description": "A structured planning method to identify internal Strengths and Weaknesses, and external Opportunities and Threats affecting an initiative or organization.",
+      "source": "BABOK (Analysis Techniques), BCS (Strategic Analysis)",
+      "produces": []
+    },
+    {
+      "id": "task-boards",
+      "name": "Task Boards",
+      "description": "Visual boards (physical or digital) that track the status of tasks from \"\"\"To Do\"\"\" to \"\"\"Done\"\"\". Common in Kanban and Scrum.",
+      "source": "Agile (Task Management), BABOK (Communication)",
+      "produces": []
+    },
+    {
+      "id": "team-working-agreements",
+      "name": "Team Working Agreements",
+      "description": "Team-developed rules and expectations for how they will work together, communicate, and resolve conflict.",
+      "source": "Agile Retrospectives (Derby & Larsen, 2006)",
+      "produces": []
+    },
+    {
+      "id": "technical-debt-radar",
+      "name": "Technical Debt Radar",
+      "description": "A tool or method to identify, categorize, and visualize technical debt, enabling better discussions and decision-making about system health.",
+      "source": "Ward Cunningham (1992, metaphor); ThoughtWorks Technology Radar (2000s)",
+      "produces": []
+    },
+    {
+      "id": "usability-testing",
+      "name": "Usability Testing",
+      "description": "A technique to evaluate how easily users can complete tasks using a prototype or working system, often revealing UX issues.",
+      "source": "Jakob Nielsen & Rolf Molich (1990s, UX Practice)",
+      "produces": []
+    },
+    {
+      "id": "use-cases",
+      "name": "Use Cases",
+      "description": "A structured textual technique to describe system interactions from the user's point of view, detailing steps and exceptions for each interaction.",
+      "source": "BABOK (Modeling Techniques), BCS (Analytical Techniques)",
+      "produces": []
+    },
+    {
+      "id": "user-journey-analytics",
+      "name": "User Journey Analytics",
+      "description": "A method for analyzing quantitative journey data alongside qualitative insights to identify drop-offs, pain points, and optimization areas.",
+      "source": "Product Analytics (Amplitude/Mixpanel)",
+      "produces": []
+    },
+    {
+      "id": "user-stories",
+      "name": "User Stories",
+      "description": "A concise, user-focused way of capturing functionality in the format: As a [user], I want [goal] so that [benefit]. Encourages value-driven planning.",
+      "source": "Extreme Programming (Kent Beck, 1999)",
+      "produces": []
+    },
+    {
+      "id": "value-proposition-canvas",
+      "name": "Value Proposition Canvas",
+      "description": "A visual tool used to ensure a product or service is positioned around what the customer values and needs. It maps customer jobs, pains, and gains to product features.",
+      "source": "Agile (Discovery & Framing)",
+      "produces": []
+    },
+    {
+      "id": "velocity-forecasting",
+      "name": "Velocity Forecasting",
+      "description": "Using a team\"\"\"s historical delivery rate (velocity) to estimate how much work can be completed in a future release cycle.",
+      "source": "Agile (Estimation & Planning), Scrum",
+      "produces": []
+    },
+    {
+      "id": "working-agreements",
+      "name": "Working Agreements",
+      "description": "Team-defined ground rules for collaboration, accountability, and decision-making.",
+      "source": "Agile Retrospectives (Derby & Larsen, 2006)",
+      "produces": []
+    },
+    {
+      "id": "wsjf-weighted-shortest-job-first",
+      "name": "WSJF (Weighted Shortest Job First)",
+      "description": "A prioritization model used to sequence jobs (features, capabilities, etc.) by weighing cost of delay against job duration. It maximizes economic benefit.",
+      "source": "Agile (Decision & Prioritization), SAFe",
+      "produces": []
+    }
+  ]
+}

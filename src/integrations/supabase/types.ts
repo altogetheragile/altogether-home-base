@@ -2223,6 +2223,8 @@ export type Database = {
           background: string | null
           category_id: string | null
           common_pitfalls: string[] | null
+          components: Json | null
+          counterparts: string[] | null
           created_at: string
           created_by: string | null
           decision_boundaries: string | null
@@ -2231,11 +2233,17 @@ export type Database = {
           domain_id: string | null
           emoji: string | null
           evidence_sources: string[] | null
+          facet: string | null
           governance_value: string | null
           has_ai_support: boolean | null
+          horizon: string | null
           icon: string | null
           id: string
+          inheritable: boolean | null
           inspect_adapt_signals: string[] | null
+          isa: string | null
+          kind: string | null
+          layer: string | null
           is_featured: boolean | null
           is_published: boolean | null
           item_type: string | null
@@ -2245,11 +2253,13 @@ export type Database = {
           name: string
           planning_focus_id: string | null
           primary_publication_id: string | null
+          produces: string[] | null
           publication_year: number | null
           reference_url: string | null
           related_techniques: string[] | null
           slug: string
           source: string | null
+          techniques: string[] | null
           typical_output: string | null
           updated_at: string
           updated_by: string | null
@@ -2264,6 +2274,8 @@ export type Database = {
           background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
+          components?: Json | null
+          counterparts?: string[] | null
           created_at?: string
           created_by?: string | null
           decision_boundaries?: string | null
@@ -2272,25 +2284,33 @@ export type Database = {
           domain_id?: string | null
           emoji?: string | null
           evidence_sources?: string[] | null
+          facet?: string | null
           governance_value?: string | null
           has_ai_support?: boolean | null
+          horizon?: string | null
           icon?: string | null
           id?: string
+          inheritable?: boolean | null
           inspect_adapt_signals?: string[] | null
+          isa?: string | null
           is_featured?: boolean | null
           is_published?: boolean | null
           item_type?: string | null
           key_terminology?: Json | null
+          kind?: string | null
+          layer?: string | null
           learning_value_summary?: string | null
           maturity_indicators?: string[] | null
           name: string
           planning_focus_id?: string | null
           primary_publication_id?: string | null
+          produces?: string[] | null
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
           slug: string
           source?: string | null
+          techniques?: string[] | null
           typical_output?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -2305,6 +2325,8 @@ export type Database = {
           background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
+          components?: Json | null
+          counterparts?: string[] | null
           created_at?: string
           created_by?: string | null
           decision_boundaries?: string | null
@@ -2313,25 +2335,33 @@ export type Database = {
           domain_id?: string | null
           emoji?: string | null
           evidence_sources?: string[] | null
+          facet?: string | null
           governance_value?: string | null
           has_ai_support?: boolean | null
+          horizon?: string | null
           icon?: string | null
           id?: string
+          inheritable?: boolean | null
           inspect_adapt_signals?: string[] | null
+          isa?: string | null
           is_featured?: boolean | null
           is_published?: boolean | null
           item_type?: string | null
           key_terminology?: Json | null
+          kind?: string | null
+          layer?: string | null
           learning_value_summary?: string | null
           maturity_indicators?: string[] | null
           name?: string
           planning_focus_id?: string | null
           primary_publication_id?: string | null
+          produces?: string[] | null
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
           slug?: string
           source?: string | null
+          techniques?: string[] | null
           typical_output?: string | null
           updated_at?: string
           updated_by?: string | null

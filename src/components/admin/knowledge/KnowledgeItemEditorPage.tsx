@@ -14,6 +14,7 @@ import { KnowledgeBreadcrumb } from './editor/KnowledgeBreadcrumb';
 // Import section components
 import { BasicInfoSection } from './editor/sections/BasicInfoSection';
 import { ClassificationSection } from './editor/sections/ClassificationSection';
+import { IsaO3Section } from './editor/sections/IsaO3Section';
 import { ContentSection } from './editor/sections/ContentSection';
 import { TemplatesSection } from './editor/sections/TemplatesSection';
 import { EnhancedSection } from './editor/sections/EnhancedSection';
@@ -42,6 +43,12 @@ const stepConfigs = [
     id: 'classification',
     title: 'Classification',
     description: 'Categorize and organize this knowledge item',
+    requiredFields: [] as (keyof KnowledgeItemFormData)[],
+  },
+  {
+    id: 'isa-o3',
+    title: 'ISA-O3 Placement',
+    description: 'Position on the Value Horizons map and framework links',
     requiredFields: [] as (keyof KnowledgeItemFormData)[],
   },
   {
@@ -146,6 +153,17 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
         category_ids: categoryIds,
         domain_ids: domainIds,
         tag_ids: tagIds,
+        // ISA-O3 fields with safe fallbacks
+        horizon: knowledgeItem.horizon ?? null,
+        isa: knowledgeItem.isa ?? null,
+        layer: knowledgeItem.layer ?? null,
+        facet: knowledgeItem.facet ?? null,
+        kind: knowledgeItem.kind ?? null,
+        inheritable: !!knowledgeItem.inheritable,
+        produces: Array.isArray(knowledgeItem.produces) ? knowledgeItem.produces : [],
+        counterparts: Array.isArray(knowledgeItem.counterparts) ? knowledgeItem.counterparts : [],
+        techniques: Array.isArray(knowledgeItem.techniques) ? knowledgeItem.techniques : [],
+        components: Array.isArray(knowledgeItem.components) ? knowledgeItem.components : [],
         // Ensure arrays are properly initialized with fallbacks
         common_pitfalls: Array.isArray(knowledgeItem.common_pitfalls) ? knowledgeItem.common_pitfalls : [],
         evidence_sources: Array.isArray(knowledgeItem.evidence_sources) ? knowledgeItem.evidence_sources : [],
@@ -412,16 +430,18 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       case 1:
         return <ClassificationSection />;
       case 2:
-        return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
+        return <IsaO3Section />;
       case 3:
-        return <UseCasesSection />;
+        return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
       case 4:
-        return <HowToSection knowledgeItemId={knowledgeItem?.id} />;
+        return <UseCasesSection />;
       case 5:
-        return <TemplatesSection knowledgeItemId={knowledgeItem?.id} />;
+        return <HowToSection knowledgeItemId={knowledgeItem?.id} />;
       case 6:
-        return <EnhancedSection />;
+        return <TemplatesSection knowledgeItemId={knowledgeItem?.id} />;
       case 7:
+        return <EnhancedSection />;
+      case 8:
         return <AnalyticsSection />;
       default:
         return <BasicInfoSection form={form} />;

@@ -3,6 +3,7 @@ import { z } from 'zod';
 // Item types for the type badge
 export const ITEM_TYPES = [
   'technique',
+  'artifact',
   'framework',
   'template',
   'concept',
@@ -30,7 +31,29 @@ export const knowledgeItemSchema = z.object({
   
   // Item Type (Technique, Framework, Template, etc.)
   item_type: z.enum(ITEM_TYPES).default('technique'),
-  
+
+  // ISA-O3 dimensions (artifacts mainly; null/blank for techniques)
+  horizon: z.string().optional().nullable(),
+  isa: z.string().optional().nullable(),
+  layer: z.string().optional().nullable(),
+  facet: z.string().optional().nullable(),
+  kind: z.string().optional().nullable(),
+  inheritable: z.boolean().default(false),
+  // ISA-O3 links stored as target slugs
+  produces: z.array(z.string()).default([]),
+  counterparts: z.array(z.string()).default([]),
+  techniques: z.array(z.string()).default([]),
+  // ISA-O3 components: [{ name, question, perspective }]
+  components: z
+    .array(
+      z.object({
+        name: z.string().default(''),
+        question: z.string().default(''),
+        perspective: z.string().default(''),
+      })
+    )
+    .default([]),
+
   // Content
   background: z.string().optional(),
   source: z.string().optional(),
@@ -104,6 +127,17 @@ export const knowledgeItemDefaults: KnowledgeItemFormData = {
   slug: '',
   description: '',
   item_type: 'technique',
+  // ISA-O3 dimensions
+  horizon: null,
+  isa: null,
+  layer: null,
+  facet: null,
+  kind: null,
+  inheritable: false,
+  produces: [],
+  counterparts: [],
+  techniques: [],
+  components: [],
   background: '',
   source: '',
   // Governance & Intent

@@ -59,7 +59,10 @@ const KNOWLEDGE_ITEM_COLUMNS = [
   'item_type', 'why_it_exists', 'typical_output',
   'what_good_looks_like', 'decisions_supported', 'decision_boundaries',
   'governance_value', 'use_this_when', 'avoid_when',
-  'inspect_adapt_signals', 'maturity_indicators'
+  'inspect_adapt_signals', 'maturity_indicators',
+  // ISA-O3 dimensions + links
+  'horizon', 'isa', 'layer', 'facet', 'kind', 'inheritable',
+  'produces', 'counterparts', 'techniques', 'components'
 ] as const;
 
 // Helper to pick only valid columns from input data
@@ -133,6 +136,17 @@ export interface KnowledgeItem {
   
   // NEW: Item type and governance fields
   item_type?: string;
+  // ISA-O3 dimensions
+  horizon?: string | null;
+  isa?: string | null;
+  layer?: string | null;
+  facet?: string | null;
+  kind?: string | null;
+  inheritable?: boolean;
+  produces?: string[];
+  counterparts?: string[];
+  techniques?: string[];
+  components?: Array<{ name: string; question: string; perspective: string }>;
   why_it_exists?: string;
   typical_output?: string;
   what_good_looks_like?: string[];
@@ -326,6 +340,8 @@ export const useKnowledgeItems = (params?: {
           learning_value_summary, common_pitfalls,
           item_type, use_this_when, avoid_when, decisions_supported,
           what_good_looks_like, typical_output,
+          horizon, isa, layer, facet, kind, inheritable,
+          produces, counterparts, techniques, components,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
             is_primary, rationale,
@@ -442,6 +458,8 @@ export const useKnowledgeItemById = (id: string) => {
           item_type, why_it_exists, typical_output,
           what_good_looks_like, decisions_supported, decision_boundaries, governance_value,
           use_this_when, avoid_when, inspect_adapt_signals, maturity_indicators,
+          horizon, isa, layer, facet, kind, inheritable,
+          produces, counterparts, techniques, components,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
             is_primary, rationale,
@@ -483,6 +501,8 @@ export const useKnowledgeItemBySlug = (slug: string) => {
           item_type, why_it_exists, typical_output,
           what_good_looks_like, decisions_supported, decision_boundaries, governance_value,
           use_this_when, avoid_when, inspect_adapt_signals, maturity_indicators,
+          horizon, isa, layer, facet, kind, inheritable,
+          produces, counterparts, techniques, components,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
             is_primary, rationale,

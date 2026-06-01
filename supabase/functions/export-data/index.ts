@@ -8,9 +8,56 @@ const corsHeaders = {
 };
 
 interface ExportRequest {
-  type: 'techniques' | 'events' | 'users' | 'analytics';
+  type: 'techniques' | 'events' | 'users' | 'analytics' | 'knowledge-base';
   format: 'csv' | 'json';
   filters?: Record<string, any>;
+}
+
+// Build the isa_o3_master.json shape (meta + artifacts[] + techniques[]) from
+// knowledge_items. Mirrors src/data/isa_o3_master.json so it round-trips with
+// the import-knowledge-json function.
+function buildKnowledgeBaseExport(rows: any[]) {
+  const artifacts = rows
+    .filter((r) => r.item_type === 'artifact')
+    .map((r) => ({
+      id: r.slug,
+      name: r.name,
+      horizon: r.horizon ?? null,
+      isa: r.isa ?? null,
+      layer: r.layer ?? null,
+      kind: r.kind ?? 'Artifact',
+      facet: r.facet ?? null,
+      oneLiner: r.description ?? '',
+      description: r.background || r.description || '',
+      question: r.why_it_exists ?? null,
+      inheritable: !!r.inheritable,
+      counterparts: r.counterparts ?? [],
+      techniques: r.techniques ?? [],
+      components: r.components ?? [],
+    }))
+    .sort((a, b) => (a.horizon || 'zz').localeCompare(b.horizon || 'zz') || a.id.localeCompare(b.id));
+
+  const techniques = rows
+    .filter((r) => r.item_type === 'technique')
+    .map((r) => ({
+      id: r.slug,
+      name: r.name,
+      description: r.description ?? '',
+      source: r.source ?? '',
+      produces: r.produces ?? [],
+    }))
+    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+
+  return {
+    meta: {
+      generated: new Date().toISOString().split('T')[0],
+      source: 'Exported from Altogether Agile knowledge_items (Supabase)',
+      artifacts: artifacts.length,
+      techniques: techniques.length,
+    },
+    artifacts,
+    techniques,
+  };
 }
 
 serve(async (req) => {
@@ -123,10 +170,32 @@ serve(async (req) => {
           .select('*')
           .order('created_at', { ascending: false })
           .limit(10000);
-        
+
         data = analytics || [];
         filename = 'search_analytics';
         break;
+
+      case 'knowledge-base': {
+        // Always JSON: a structured master document, not a flat table.
+        const { data: rows, error: kbErr } = await supabase
+          .from('knowledge_items')
+          .select(`
+            slug, name, item_type, description, background, source,
+            horizon, isa, layer, facet, kind, inheritable, why_it_exists,
+            produces, counterparts, techniques, components
+          `)
+          .order('slug');
+        if (kbErr) throw kbErr;
+
+        const master = buildKnowledgeBaseExport(rows || []);
+        return new Response(JSON.stringify(master, null, 2), {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Content-Disposition': `attachment; filename="isa_o3_master_${new Date().toISOString().split('T')[0]}.json"`,
+          },
+        });
+      }
 
       default:
         throw new Error(`Unsupported export type: ${type}`);
