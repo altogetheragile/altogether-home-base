@@ -182,7 +182,7 @@ serve(async (req) => {
 
     // ── 2. Critic / red-team pass ───────────────────────────────────────────
     // A skeptical reviewer scores the draft against ISA-O3 ordering and fit.
-    let assessment: { reviewed: boolean; revised: boolean; verdict?: string; summary?: string } = {
+    const assessment: { reviewed: boolean; revised: boolean; verdict?: string; summary?: string } = {
       reviewed: false,
       revised: false,
     };
