@@ -1,4 +1,5 @@
 {
+  "_README": "GENERATED FROM SUPABASE - DO NOT EDIT. Supabase is the single source of truth; edit content via the admin UI. This file is regenerated on each build by scripts/export-kb-json.mjs and is not read at runtime.",
   "meta": {
     "generated": "2026-06-01",
     "source": "Exported from Altogether Agile knowledge_items (Supabase, is_published=true)",

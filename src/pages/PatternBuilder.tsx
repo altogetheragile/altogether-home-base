@@ -19,6 +19,8 @@ interface PatternResult {
   steps: PatternStep[];
   cautions: string[];
   empty?: boolean;
+  runId?: string | null;
+  assessment?: { reviewed?: boolean; revised?: boolean; verdict?: string; summary?: string };
 }
 
 const PatternBuilder = () => {
@@ -28,10 +30,16 @@ const PatternBuilder = () => {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PatternResult | null>(null);
 
+  // Feedback state
+  const [comment, setComment] = useState('');
+  const [feedbackSent, setFeedbackSent] = useState(false);
+
   const submit = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
+    setComment('');
+    setFeedbackSent(false);
     try {
       const { data, error: fnError } = await supabase.functions.invoke('recommend-pattern', {
         body: { scenario },
@@ -43,6 +51,18 @@ const PatternBuilder = () => {
       setError((e as Error).message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendFeedback = async (value: 'up' | 'down') => {
+    if (!result?.runId) return;
+    try {
+      await supabase.functions.invoke('pattern-builder-feedback', {
+        body: { runId: result.runId, rating: value, comment: comment.trim() || undefined },
+      });
+      setFeedbackSent(true);
+    } catch {
+      // Non-blocking: feedback is best-effort.
     }
   };
 
@@ -102,6 +122,12 @@ const PatternBuilder = () => {
               </section>
             )}
 
+            {result.assessment?.reviewed && (
+              <p className="text-xs" style={{ color: p.muted }}>
+                ✓ Self-reviewed{result.assessment.revised ? ' and refined after a red-team pass' : ''}.
+              </p>
+            )}
+
             {result.empty || result.steps.length === 0 ? (
               <p className="text-sm" style={{ color: p.muted }}>
                 No clear pattern emerged for that scenario. Try adding more detail about your goals and team setup.
@@ -125,9 +151,9 @@ const PatternBuilder = () => {
                           ) : (
                             <span className="font-semibold" style={{ color: p.deepTeal }}>{s.artifactId}</span>
                           )}
-                          {(s.horizon || s.isa) && (
+                          {artifact && (artifact.horizon || artifact.isa) && (
                             <span className="text-[11px]" style={{ color: p.muted }}>
-                              {[s.horizon, s.isa].filter(Boolean).join(' · ')}
+                              {[artifact.horizon, artifact.isa].filter(Boolean).join(' · ')}
                             </span>
                           )}
                         </div>
@@ -164,6 +190,45 @@ const PatternBuilder = () => {
                     <li key={i} className="text-sm" style={{ color: p.body }}>{c}</li>
                   ))}
                 </ul>
+              </section>
+            )}
+
+            {/* Feedback */}
+            {result.runId && !result.empty && (
+              <section className="pt-2 border-t" style={{ borderColor: p.paleTeal }}>
+                {feedbackSent ? (
+                  <p className="text-sm" style={{ color: p.midTeal }}>Thanks for the feedback.</p>
+                ) : (
+                  <div className="space-y-2 max-w-md">
+                    <span className="text-sm font-semibold" style={{ color: p.body }}>Was this useful?</span>
+                    <textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      rows={2}
+                      placeholder="Optional: what worked or what was off? (add before rating)"
+                      className="w-full rounded-md p-2 text-sm outline-none"
+                      style={{ border: `1px solid ${p.paleTeal}`, color: p.body }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => sendFeedback('up')}
+                        aria-label="Helpful"
+                        className="rounded-md px-3 py-1.5 text-sm"
+                        style={{ background: p.white, border: `1px solid ${p.paleTeal}` }}
+                      >
+                        👍 Helpful
+                      </button>
+                      <button
+                        onClick={() => sendFeedback('down')}
+                        aria-label="Not helpful"
+                        className="rounded-md px-3 py-1.5 text-sm"
+                        style={{ background: p.white, border: `1px solid ${p.paleTeal}` }}
+                      >
+                        👎 Not quite
+                      </button>
+                    </div>
+                  </div>
+                )}
               </section>
             )}
           </div>

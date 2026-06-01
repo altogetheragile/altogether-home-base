@@ -49,6 +49,8 @@ function buildKnowledgeBaseExport(rows: any[]) {
     .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
   return {
+    _README: 'GENERATED FROM SUPABASE - DO NOT EDIT as a source of truth. Supabase is canonical; ' +
+      'edit content via the admin UI. Re-import edits via the import-knowledge-json function (upsert by slug).',
     meta: {
       generated: new Date().toISOString().split('T')[0],
       source: 'Exported from Altogether Agile knowledge_items (Supabase)',

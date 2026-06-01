@@ -3,3 +3,7 @@ project_id = "tdfbqmjmrqcovwnptiux"
 # Pattern Builder is a public tool; it does its own optional-auth rate limiting.
 [functions.recommend-pattern]
 verify_jwt = false
+
+# Public: records thumbs-up/down feedback for a Pattern Builder run.
+[functions.pattern-builder-feedback]
+verify_jwt = false
