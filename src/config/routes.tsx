@@ -86,6 +86,7 @@ const AdminTaxonomy = lazy(() => import('@/pages/admin/AdminTaxonomy'));
 const AdminKnowledgeAnalyticsRoute = lazy(() => import('@/pages/admin/AdminKnowledgeAnalyticsRoute'));
 const AdminKnowledgeImport = lazy(() => import('@/pages/admin/AdminKnowledgeImport'));
 const AdminPatternBuilderFeedback = lazy(() => import('@/pages/admin/AdminPatternBuilderFeedback'));
+const AdminKnowledgeItems = lazy(() => import('@/pages/admin/AdminKnowledgeItems'));
 const PreviewPage = lazy(() => import('@/components/admin/knowledge/PreviewPage').then(m => ({ default: m.PreviewPage })));
 
 // Admin Pages - Content & Media
@@ -441,6 +442,11 @@ export const AdminRoutes = () => {
         } />
         
         {/* Knowledge Management */}
+        <Route path="knowledge/items" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminKnowledgeItems />
+          </Suspense>
+        } />
         <Route path="knowledge/items/:id/edit" element={
           <Suspense fallback={<LoadingFallback />}>
             <EditKnowledgeItem />

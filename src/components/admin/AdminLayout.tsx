@@ -53,6 +53,7 @@ const navigation: NavGroup[] = [
       {
         label: 'Knowledge Base', icon: BookOpen, href: '/admin/knowledge',
         children: [
+          { label: 'Knowledge Items', href: '/admin/knowledge/items', icon: BookOpen },
           { label: 'Analytics', href: '/admin/knowledge/analytics', icon: BarChart3 },
           { label: 'Taxonomy', href: '/admin/knowledge/taxonomy', icon: Layers },
           { label: 'Imports', href: '/admin/knowledge/imports', icon: Upload },
