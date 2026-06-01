@@ -208,12 +208,17 @@ Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summ
         assessment.summary = typeof critique?.summary === 'string' ? critique.summary : undefined;
 
         // ── 3. Single repair pass if the critic found real problems ──────────
+        // Trigger on verdict alone: the critique may land in issues[] or, if the
+        // model put it there, in summary. Use whichever is present.
         const issues = Array.isArray(critique?.issues) ? critique.issues.filter((x: unknown) => typeof x === 'string') : [];
-        if (assessment.verdict === 'revise' && issues.length > 0) {
+        const critiqueText = issues.length > 0
+          ? issues.map((i: string) => `- ${i}`).join('\n')
+          : (assessment.summary || '');
+        if (assessment.verdict === 'revise' && critiqueText) {
           try {
             const repaired = await callClaude(
               apiKey,
-              `CATALOGUE:\n${catalogueStr}\n\nSCENARIO:\n${scenarioStr}\n\nYOUR PREVIOUS DRAFT:\n${JSON.stringify(result)}\n\nA reviewer raised these issues:\n- ${issues.join('\n- ')}\n\nProduce an improved recommendation that resolves them. ${OUTPUT_SCHEMA_HINT}`,
+              `CATALOGUE:\n${catalogueStr}\n\nSCENARIO:\n${scenarioStr}\n\nYOUR PREVIOUS DRAFT:\n${JSON.stringify(result)}\n\nA reviewer raised these issues:\n${critiqueText}\n\nProduce an improved recommendation that resolves them. ${OUTPUT_SCHEMA_HINT}`,
             );
             const revisedResult = shapeResult(repaired, artifactIds, techniqueIds, idToName);
             if (revisedResult.steps.length > 0) {
