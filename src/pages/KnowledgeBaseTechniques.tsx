@@ -39,6 +39,14 @@ const KnowledgeBaseTechniques = () => {
     });
   }, [kb.techniques, query, horizon, horizonsFor]);
 
+  // Horizon filtering only works once techniques are linked to artifacts
+  // (technique.produces). Hide the chips until that data exists, rather than
+  // showing a filter that always returns zero.
+  const hasHorizonData = useMemo(
+    () => [...horizonsFor.values()].some((s) => s.size > 0),
+    [horizonsFor],
+  );
+
   return (
     <KnowledgeBaseLayout
       title="Technique Library - Knowledge Base - Altogether Agile"
@@ -65,32 +73,36 @@ const KnowledgeBaseTechniques = () => {
           className="h-9 px-3 rounded-md text-sm flex-grow max-w-xs outline-none"
           style={{ border: `1px solid ${p.paleTeal}`, color: p.body }}
         />
-        <button
-          onClick={() => setHorizon(null)}
-          className="px-3 py-1 rounded-full text-xs font-semibold"
-          style={{
-            background: horizon === null ? p.deepTeal : p.white,
-            color: horizon === null ? p.white : p.deepTeal,
-            border: `1px solid ${p.paleTeal}`,
-          }}
-        >
-          All
-        </button>
-        {HORIZONS.map((h) => (
-          <button
-            key={h}
-            onClick={() => setHorizon(horizon === h ? null : h)}
-            className="px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5"
-            style={{
-              background: horizon === h ? p.deepTeal : p.white,
-              color: horizon === h ? p.white : p.deepTeal,
-              border: `1px solid ${p.paleTeal}`,
-            }}
-          >
-            <span className="w-2 h-2 rounded-full" style={{ background: HORIZON_DOT[h] }} />
-            {h}
-          </button>
-        ))}
+        {hasHorizonData && (
+          <>
+            <button
+              onClick={() => setHorizon(null)}
+              className="px-3 py-1 rounded-full text-xs font-semibold"
+              style={{
+                background: horizon === null ? p.deepTeal : p.white,
+                color: horizon === null ? p.white : p.deepTeal,
+                border: `1px solid ${p.paleTeal}`,
+              }}
+            >
+              All
+            </button>
+            {HORIZONS.map((h) => (
+              <button
+                key={h}
+                onClick={() => setHorizon(horizon === h ? null : h)}
+                className="px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5"
+                style={{
+                  background: horizon === h ? p.deepTeal : p.white,
+                  color: horizon === h ? p.white : p.deepTeal,
+                  border: `1px solid ${p.paleTeal}`,
+                }}
+              >
+                <span className="w-2 h-2 rounded-full" style={{ background: HORIZON_DOT[h] }} />
+                {h}
+              </button>
+            ))}
+          </>
+        )}
         <span className="text-xs ml-auto" style={{ color: p.muted }}>
           {filtered.length} technique{filtered.length === 1 ? '' : 's'}
         </span>
@@ -120,16 +132,18 @@ const KnowledgeBaseTechniques = () => {
                   )}
                 </div>
                 <p className="text-xs line-clamp-3" style={{ color: p.body }}>{t.description}</p>
-                <div className="flex items-center gap-2 mt-auto pt-1">
-                  <span className="flex items-center gap-1">
-                    {HORIZONS.filter((h) => hs.has(h)).map((h) => (
-                      <span key={h} className="w-2 h-2 rounded-full" style={{ background: HORIZON_DOT[h] }} title={h} />
-                    ))}
-                  </span>
-                  <span className="text-[11px]" style={{ color: p.muted }}>
-                    Used by {produced.length}
-                  </span>
-                </div>
+                {produced.length > 0 && (
+                  <div className="flex items-center gap-2 mt-auto pt-1">
+                    <span className="flex items-center gap-1">
+                      {HORIZONS.filter((h) => hs.has(h)).map((h) => (
+                        <span key={h} className="w-2 h-2 rounded-full" style={{ background: HORIZON_DOT[h] }} title={h} />
+                      ))}
+                    </span>
+                    <span className="text-[11px]" style={{ color: p.muted }}>
+                      Used by {produced.length}
+                    </span>
+                  </div>
+                )}
               </Link>
             );
           })}
