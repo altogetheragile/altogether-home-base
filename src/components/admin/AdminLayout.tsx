@@ -56,6 +56,7 @@ const navigation: NavGroup[] = [
           { label: 'Analytics', href: '/admin/knowledge/analytics', icon: BarChart3 },
           { label: 'Taxonomy', href: '/admin/knowledge/taxonomy', icon: Layers },
           { label: 'Imports', href: '/admin/knowledge/imports', icon: Upload },
+          { label: 'Pattern Feedback', href: '/admin/knowledge/pattern-feedback', icon: MessageSquare },
         ],
       },
       { label: 'Assets', icon: Upload, href: '/admin/assets' },

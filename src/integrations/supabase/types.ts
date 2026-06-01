@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      pattern_builder_runs: {
+        Row: {
+          assessment: Json
+          created_at: string
+          id: string
+          primary_horizon: string | null
+          result: Json
+          scenario: string
+          user_id: string | null
+          was_revised: boolean
+        }
+        Insert: {
+          assessment?: Json
+          created_at?: string
+          id?: string
+          primary_horizon?: string | null
+          result?: Json
+          scenario: string
+          user_id?: string | null
+          was_revised?: boolean
+        }
+        Update: {
+          assessment?: Json
+          created_at?: string
+          id?: string
+          primary_horizon?: string | null
+          result?: Json
+          scenario?: string
+          user_id?: string | null
+          was_revised?: boolean
+        }
+        Relationships: []
+      }
+      pattern_builder_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: string
+          run_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: string
+          run_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: string
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pattern_builder_feedback_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "pattern_builder_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_domains: {
         Row: {
           color: string | null

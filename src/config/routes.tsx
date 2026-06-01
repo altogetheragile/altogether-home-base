@@ -85,6 +85,7 @@ const CreateKnowledgeTemplate = lazy(() => import('@/pages/admin/CreateKnowledge
 const AdminTaxonomy = lazy(() => import('@/pages/admin/AdminTaxonomy'));
 const AdminKnowledgeAnalyticsRoute = lazy(() => import('@/pages/admin/AdminKnowledgeAnalyticsRoute'));
 const AdminKnowledgeImport = lazy(() => import('@/pages/admin/AdminKnowledgeImport'));
+const AdminPatternBuilderFeedback = lazy(() => import('@/pages/admin/AdminPatternBuilderFeedback'));
 const PreviewPage = lazy(() => import('@/components/admin/knowledge/PreviewPage').then(m => ({ default: m.PreviewPage })));
 
 // Admin Pages - Content & Media
@@ -483,6 +484,11 @@ export const AdminRoutes = () => {
         <Route path="knowledge/import" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminKnowledgeImport />
+          </Suspense>
+        } />
+        <Route path="knowledge/pattern-feedback" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminPatternBuilderFeedback />
           </Suspense>
         } />
         <Route path="knowledge/imports" element={
