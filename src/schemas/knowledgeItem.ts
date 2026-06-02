@@ -65,14 +65,14 @@ export const knowledgeItemSchema = z.object({
   source: z.string().optional(),
   
   // NEW: Governance & Intent Fields
-  why_it_exists: z.string().optional(),
-  typical_output: z.string().optional(),
+  why_it_exists: z.string().optional().nullable(),
+  typical_output: z.string().optional().nullable(),
   
   // NEW: Array fields for Read View sections
   what_good_looks_like: z.array(z.string()).default([]),
   decisions_supported: z.array(z.string()).default([]),
-  decision_boundaries: z.string().optional(),
-  governance_value: z.string().optional(),
+  decision_boundaries: z.string().optional().nullable(),
+  governance_value: z.string().optional().nullable(),
   use_this_when: z.array(z.string()).default([]),
   avoid_when: z.array(z.string()).default([]),
   
