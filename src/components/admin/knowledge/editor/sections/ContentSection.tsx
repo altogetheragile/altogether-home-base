@@ -4,6 +4,7 @@ import { BookOpen, FileText, Image, GripVertical, X, Info } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { Input } from '@/components/ui/input';
 import { MediaLibrary } from '@/components/ui/media-library';
 import { useKnowledgeItemMedia, useKnowledgeItemMediaMutations } from '@/hooks/useMediaAssets';
 import { KnowledgeItemFormData } from '@/schemas/knowledgeItem';
@@ -134,6 +135,24 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ knowledgeItemId 
                   <span>Rich text editor with formatting options</span>
                   <span>{field.value?.length || 0} characters</span>
                 </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="source"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Source</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Originator or reference (e.g. Scrum Framework, Roman Pichler 2012)"
+                    value={field.value || ''}
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

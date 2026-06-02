@@ -30,12 +30,20 @@ export interface KbArtifact {
   components: Component[];
 }
 
+export interface KbCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface KbTechnique {
   id: string;
+  uuid: string;
   name: string;
   description: string;
   source: string;
   produces: string[];
+  categories: KbCategory[];
 }
 
 const toArtifact = (i: KnowledgeItem): KbArtifact => ({
@@ -57,10 +65,12 @@ const toArtifact = (i: KnowledgeItem): KbArtifact => ({
 
 const toTechnique = (i: KnowledgeItem): KbTechnique => ({
   id: i.slug,
+  uuid: i.id,
   name: i.name,
   description: i.description ?? '',
   source: i.source ?? '',
   produces: i.produces ?? [],
+  categories: (i.categories ?? []).map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
 });
 
 export function useKnowledgeBase() {

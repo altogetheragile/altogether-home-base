@@ -1,11 +1,43 @@
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { KnowledgeBaseLayout } from '@/components/knowledge-base/KnowledgeBaseLayout';
 import { useKnowledgeBase } from '@/lib/knowledgeBase';
+import { useKnowledgeUseCases, type KnowledgeUseCase } from '@/hooks/useKnowledgeUseCases';
 import { colors as p } from '@/theme/colors';
+
+// Render the populated W5H fields of a use case as a small definition list.
+function UseCaseBody({ uc }: { uc: KnowledgeUseCase }) {
+  const rows: Array<[string, string | undefined]> = [
+    ['Who', uc.who],
+    ['What', uc.what],
+    ['When', uc.when_used],
+    ['Where', uc.where_used],
+    ['Why', uc.why],
+    ['How', uc.how],
+  ];
+  const present = rows.filter(([, v]) => v && v.trim());
+  return (
+    <div className="space-y-2">
+      {uc.summary && <p className="text-sm leading-relaxed" style={{ color: p.body }}>{uc.summary}</p>}
+      {present.length > 0 && (
+        <dl className="grid grid-cols-[64px_1fr] gap-x-3 gap-y-1 text-sm">
+          {present.map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="font-semibold" style={{ color: p.muted }}>{k}</dt>
+              <dd style={{ color: p.body }}>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
 
 const KnowledgeBaseTechnique = () => {
   const { id = '' } = useParams();
   const kb = useKnowledgeBase();
+  const technique = id ? kb.getTechnique(id) : null;
+  // Hook must run every render; disabled until we have the item's uuid.
+  const { data: useCases } = useKnowledgeUseCases(technique?.uuid || '');
 
   if (kb.loading) {
     return (
@@ -15,7 +47,6 @@ const KnowledgeBaseTechnique = () => {
     );
   }
 
-  const technique = kb.getTechnique(id);
   if (!technique) {
     if (kb.getArtifact(id)) return <Navigate to={`/knowledge-base/artifacts/${id}`} replace />;
     return (
@@ -27,6 +58,8 @@ const KnowledgeBaseTechnique = () => {
 
   const produces = kb.artifactsForTechnique(id);
   const related = kb.relatedTechniques(id);
+  const generic = (useCases || []).find((c) => c.case_type === 'generic');
+  const example = (useCases || []).find((c) => c.case_type === 'example');
 
   return (
     <KnowledgeBaseLayout
@@ -45,6 +78,22 @@ const KnowledgeBaseTechnique = () => {
 
         {technique.description && (
           <p className="mb-6 leading-relaxed" style={{ color: p.body }}>{technique.description}</p>
+        )}
+
+        {/* When to use */}
+        {generic && (
+          <section className="mb-6">
+            <h2 className="text-lg font-bold mb-2" style={{ color: p.deepTeal }}>When To Use It</h2>
+            <UseCaseBody uc={generic} />
+          </section>
+        )}
+
+        {/* Worked example */}
+        {example && (
+          <section className="mb-6">
+            <h2 className="text-lg font-bold mb-2" style={{ color: p.deepTeal }}>Example</h2>
+            <UseCaseBody uc={example} />
+          </section>
         )}
 
         {/* Used To Produce */}
@@ -86,12 +135,6 @@ const KnowledgeBaseTechnique = () => {
             </div>
           </section>
         )}
-
-        {/* How To Run It - authored slot */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold mb-2" style={{ color: p.deepTeal }}>How To Run It</h2>
-          <p className="text-sm italic" style={{ color: p.muted }}>Coming soon.</p>
-        </section>
       </div>
     </KnowledgeBaseLayout>
   );

@@ -13,14 +13,8 @@ import { KnowledgeBreadcrumb } from './editor/KnowledgeBreadcrumb';
 
 // Import section components
 import { BasicInfoSection } from './editor/sections/BasicInfoSection';
-import { ClassificationSection } from './editor/sections/ClassificationSection';
-import { IsaO3Section } from './editor/sections/IsaO3Section';
 import { ContentSection } from './editor/sections/ContentSection';
-import { TemplatesSection } from './editor/sections/TemplatesSection';
-import { EnhancedSection } from './editor/sections/EnhancedSection';
-import { UseCasesSection } from './editor/sections/UseCasesSection';
-import { HowToSection } from './editor/sections/HowToSection';
-import { AnalyticsSection } from './editor/sections/AnalyticsSection';
+import { IsaO3Section } from './editor/sections/IsaO3Section';
 
 // Import hooks for dropdown data
 import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
@@ -40,51 +34,15 @@ const stepConfigs = [
     requiredFields: ['name', 'slug'] as (keyof KnowledgeItemFormData)[],
   },
   {
-    id: 'classification',
-    title: 'Classification',
-    description: 'Categorize and organize this knowledge item',
+    id: 'content',
+    title: 'Content',
+    description: 'Background and source',
     requiredFields: [] as (keyof KnowledgeItemFormData)[],
   },
   {
     id: 'isa-o3',
-    title: 'ISA-O3 Placement',
-    description: 'Position on the Value Horizons map and framework links',
-    requiredFields: [] as (keyof KnowledgeItemFormData)[],
-  },
-  {
-    id: 'content',
-    title: 'Content',
-    description: 'Add the main content and background information',
-    requiredFields: [] as (keyof KnowledgeItemFormData)[],
-  },
-  {
-    id: 'use-cases',
-    title: 'Use Cases',
-    description: 'Define practical applications and examples',
-    requiredFields: [] as (keyof KnowledgeItemFormData)[],
-  },
-  {
-    id: 'how-to',
-    title: 'How-To Steps',
-    description: 'Create step-by-step instructions and guides',
-    requiredFields: [] as (keyof KnowledgeItemFormData)[],
-  },
-  {
-    id: 'templates',
-    title: 'Templates',
-    description: 'Associate templates and frameworks for practical application',
-    requiredFields: [] as (keyof KnowledgeItemFormData)[],
-  },
-  {
-    id: 'enhanced',
-    title: 'Enhanced Details',
-    description: 'Add advanced information, pitfalls, and terminology',
-    requiredFields: [] as (keyof KnowledgeItemFormData)[],
-  },
-  {
-    id: 'analytics',
-    title: 'Analytics & Insights',
-    description: 'Review performance metrics and recommendations',
+    title: 'Placement & Details',
+    description: 'Position on the Value Horizons map, links, details and category',
     requiredFields: [] as (keyof KnowledgeItemFormData)[],
   },
 ];
@@ -333,16 +291,30 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
     }
 
     const data = form.getValues();
-    
+
+    // The lean editor no longer edits decision-levels, domains or tags. Pass
+    // them as undefined so the update mutation SKIPS those junctions and never
+    // wipes the (superseded but still-stored) data. Category is still edited.
+    const safeData = {
+      ...data,
+      decision_level_ids: undefined,
+      domain_ids: undefined,
+      tag_ids: undefined,
+      primary_decision_level_id: undefined,
+      primary_domain_id: undefined,
+      decision_level_rationale: undefined,
+      domain_rationale: undefined,
+    };
+
     try {
       if (isEditing && knowledgeItem?.id) {
         await updateMutation.mutateAsync({
           id: knowledgeItem.id,
-          ...data,
-          primary_publication_id: data.primary_publication_id ?? undefined,
+          ...safeData,
+          primary_publication_id: safeData.primary_publication_id ?? undefined,
         });
       } else {
-        await createMutation.mutateAsync(data);
+        await createMutation.mutateAsync(safeData);
       }
       
       setLastSaved(new Date());
@@ -431,21 +403,9 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       case 0:
         return <BasicInfoSection form={form} />;
       case 1:
-        return <ClassificationSection />;
+        return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
       case 2:
         return <IsaO3Section />;
-      case 3:
-        return <ContentSection knowledgeItemId={knowledgeItem?.id} />;
-      case 4:
-        return <UseCasesSection />;
-      case 5:
-        return <HowToSection knowledgeItemId={knowledgeItem?.id} />;
-      case 6:
-        return <TemplatesSection knowledgeItemId={knowledgeItem?.id} />;
-      case 7:
-        return <EnhancedSection />;
-      case 8:
-        return <AnalyticsSection />;
       default:
         return <BasicInfoSection form={form} />;
     }

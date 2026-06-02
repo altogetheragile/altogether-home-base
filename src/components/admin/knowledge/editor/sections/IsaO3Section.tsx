@@ -1,8 +1,11 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Grid3x3, Link2, Plus, X } from 'lucide-react';
+import { Grid3x3, Link2, Plus, X, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { MultiSelectClassification } from '../MultiSelectClassification';
+import { useKnowledgeCategories } from '@/hooks/useKnowledgeCategories';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -139,9 +142,44 @@ function EnumSelect({
   );
 }
 
+// Edit a string[] as one item per line.
+function StringListField({
+  fieldName,
+  label,
+  placeholder,
+}: {
+  fieldName: 'what_good_looks_like' | 'common_pitfalls';
+  label: string;
+  placeholder: string;
+}) {
+  const form = useFormContext<KnowledgeItemFormData>();
+  const value: string[] = form.watch(fieldName) || [];
+  return (
+    <FormItem>
+      <FormLabel className="text-sm font-medium">{label}</FormLabel>
+      <FormControl>
+        <Textarea
+          rows={3}
+          placeholder={placeholder}
+          value={value.join('\n')}
+          onChange={(e) =>
+            form.setValue(
+              fieldName,
+              e.target.value.split('\n').map((s) => s.trim()).filter(Boolean),
+              { shouldDirty: true },
+            )
+          }
+        />
+      </FormControl>
+      <FormDescription className="text-xs">One per line</FormDescription>
+    </FormItem>
+  );
+}
+
 export const IsaO3Section: React.FC = () => {
   const form = useFormContext<KnowledgeItemFormData>();
   const { data: items } = useKnowledgeItems({ showUnpublished: true, limit: 500 });
+  const { data: categories, isLoading: categoriesLoading } = useKnowledgeCategories();
 
   const allOptions = (items || [])
     .map((i) => ({ slug: i.slug, name: i.name, item_type: i.item_type }))
@@ -378,6 +416,68 @@ export const IsaO3Section: React.FC = () => {
             <Plus className="h-4 w-4 mr-1" />
             Add Component
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Artifact details (surfaced on the artifact card) */}
+      {isArtifact && (
+        <Card className="shadow-sm border-border/50">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Details</CardTitle>
+            <CardDescription className="text-xs">Shown on the artifact page</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="why_it_exists"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Question</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={2}
+                      placeholder="The question this artifact answers"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <StringListField
+              fieldName="what_good_looks_like"
+              label="What good looks like"
+              placeholder="One signal per line"
+            />
+            <StringListField
+              fieldName="common_pitfalls"
+              label="Common pitfalls"
+              placeholder="One pitfall per line"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Category (library facet, all kinds) */}
+      <Card className="shadow-sm border-border/50">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FolderOpen className="h-4 w-4 text-primary" />
+            Category
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Used to group and filter in the Technique Library
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MultiSelectClassification
+            title="Category"
+            description="Choose the categories this item belongs to"
+            icon={<FolderOpen className="h-4 w-4 text-primary" />}
+            fieldName="category_ids"
+            items={categories || []}
+            isLoading={categoriesLoading}
+          />
         </CardContent>
       </Card>
     </div>

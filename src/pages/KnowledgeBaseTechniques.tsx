@@ -15,6 +15,14 @@ const KnowledgeBaseTechniques = () => {
   const kb = useKnowledgeBase();
   const [query, setQuery] = useState('');
   const [horizon, setHorizon] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+
+  // Categories present across techniques (the meaningful technique facet).
+  const categories = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of kb.techniques) for (const c of t.categories) m.set(c.slug, c.name);
+    return [...m.entries()].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [kb.techniques]);
 
   // Horizons each technique touches, via the artifacts it produces.
   const horizonsFor = useMemo(() => {
@@ -35,9 +43,10 @@ const KnowledgeBaseTechniques = () => {
       const matchesQuery =
         !q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
       const matchesHorizon = !horizon || horizonsFor.get(t.id)?.has(horizon);
-      return matchesQuery && matchesHorizon;
+      const matchesCategory = !category || t.categories.some((c) => c.slug === category);
+      return matchesQuery && matchesHorizon && matchesCategory;
     });
-  }, [kb.techniques, query, horizon, horizonsFor]);
+  }, [kb.techniques, query, horizon, category, horizonsFor]);
 
   // Horizon filtering only works once techniques are linked to artifacts
   // (technique.produces). Hide the chips until that data exists, rather than
@@ -107,6 +116,37 @@ const KnowledgeBaseTechniques = () => {
           {filtered.length} technique{filtered.length === 1 ? '' : 's'}
         </span>
       </div>
+
+      {/* Category filter */}
+      {categories.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <button
+            onClick={() => setCategory(null)}
+            className="px-3 py-1 rounded-full text-xs font-semibold"
+            style={{
+              background: category === null ? p.midTeal : p.white,
+              color: category === null ? p.white : p.deepTeal,
+              border: `1px solid ${p.paleTeal}`,
+            }}
+          >
+            All categories
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.slug}
+              onClick={() => setCategory(category === c.slug ? null : c.slug)}
+              className="px-3 py-1 rounded-full text-xs font-semibold"
+              style={{
+                background: category === c.slug ? p.midTeal : p.white,
+                color: category === c.slug ? p.white : p.deepTeal,
+                border: `1px solid ${p.paleTeal}`,
+              }}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Grid */}
       {kb.loading ? (
