@@ -172,7 +172,8 @@ serve(async (req) => {
         }
 
         // ISA-O3 / four-kind fields. Plain text columns pass through; list columns
-        // are split on , ; | or newlines; `inheritable` is parsed as a boolean.
+        // are split on ; | or newlines (NOT commas, which occur inside list items);
+        // `inheritable` is parsed as a boolean.
         const TEXT_FIELDS = [
           'item_type', 'horizon', 'isa', 'layer', 'facet', 'kind', 'shape', 'family', 'level',
           'why_it_exists', 'typical_output', 'decision_boundaries', 'governance_value',
@@ -182,7 +183,7 @@ serve(async (req) => {
           'use_this_when', 'avoid_when', 'inspect_adapt_signals', 'maturity_indicators',
         ];
         const toList = (val: any): string[] =>
-          String(val).split(/[,;|\n]/).map((s) => s.trim()).filter((s) => s.length > 0);
+          String(val).split(/[;|\n]/).map((s) => s.trim()).filter((s) => s.length > 0);
         for (const f of TEXT_FIELDS) {
           if (mappedData[f] !== undefined && String(mappedData[f]).trim() !== '') {
             kiData[f] = String(mappedData[f]).trim();

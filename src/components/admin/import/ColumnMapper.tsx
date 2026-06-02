@@ -68,15 +68,15 @@ const getTargetFields = (targetEntity: string) => {
         // Governance & intent
         { key: 'why_it_exists', label: 'Why It Exists / Question', required: false },
         { key: 'typical_output', label: 'Typical Output', required: false },
-        { key: 'what_good_looks_like', label: 'What Good Looks Like (list)', required: false },
-        { key: 'common_pitfalls', label: 'Common Pitfalls (list)', required: false },
-        { key: 'decisions_supported', label: 'Decisions Supported (list)', required: false },
+        { key: 'what_good_looks_like', label: 'What Good Looks Like (list; separate items with ;)', required: false },
+        { key: 'common_pitfalls', label: 'Common Pitfalls (list; separate items with ;)', required: false },
+        { key: 'decisions_supported', label: 'Decisions Supported (list; separate items with ;)', required: false },
         { key: 'decision_boundaries', label: 'Decision Boundaries', required: false },
         { key: 'governance_value', label: 'Governance Value', required: false },
-        { key: 'use_this_when', label: 'Use This When (list)', required: false },
-        { key: 'avoid_when', label: 'Avoid When (list)', required: false },
-        { key: 'inspect_adapt_signals', label: 'Inspect & Adapt Signals (list)', required: false },
-        { key: 'maturity_indicators', label: 'Maturity Indicators (list)', required: false },
+        { key: 'use_this_when', label: 'Use This When (list; separate items with ;)', required: false },
+        { key: 'avoid_when', label: 'Avoid When (list; separate items with ;)', required: false },
+        { key: 'inspect_adapt_signals', label: 'Inspect & Adapt Signals (list; separate items with ;)', required: false },
+        { key: 'maturity_indicators', label: 'Maturity Indicators (list; separate items with ;)', required: false },
       ];
     case 'events':
       return [
