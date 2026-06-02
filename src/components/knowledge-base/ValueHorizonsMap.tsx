@@ -16,78 +16,85 @@ const HORIZON_BORDER: Record<string, string> = {
   Team: '#F5C896',
 };
 
-// Concise, cell-level questions taken from the ISA-O3 Value Horizons canvas
-// (Template B). Keyed [horizon][layer][isa]. One short question per cell keeps
-// the canvas to a single page; the artifacts that live in the cell are listed
+// Concise, cell-level questions from the ISA-O3 Value Horizons canvas
+// (Template B), keyed [horizon][layer][isa]. Where a cell covers more than one
+// concern its question is split into several small questions (one per line)
+// rather than merged into one compound question. Short questions keep the
+// canvas to a single page; the artifacts that live in the cell are listed
 // beneath as small links.
-const CELL_QUESTIONS: Record<string, Record<string, Record<string, string>>> = {
+const CELL_QUESTIONS: Record<string, Record<string, Record<string, string[]>>> = {
   Organisation: {
     Anchoring: {
-      Intent: 'What is our purpose and direction?',
-      Scope: 'What do we do, and for whom?',
-      Approach: 'What rules guide how we decide?',
+      Intent: ['Who are we?', 'Why do we exist?', 'Where are we going?'],
+      Scope: ['What do we do?', 'Who do we serve?'],
+      Approach: ['What rules guide how we decide?'],
     },
     Iterative: {
-      Intent: 'What must we achieve this period?',
-      Scope: 'How do we create and capture value?',
-      Approach: 'How are we organised to operate?',
+      Intent: ['What must we achieve this period?'],
+      Scope: ['Who do we serve?', 'How do we create and capture value?'],
+      Approach: ['How do we compete?', 'How are we organised to deliver?'],
     },
     Evidence: {
-      Intent: 'What progress are we making toward our goals?',
-      Scope: 'What are we now able to offer that we could not before?',
-      Approach: 'Is the way we run things enabling or hindering us?',
+      Intent: ['What progress are we making toward our goals?'],
+      Scope: ['What are we now able to offer that we could not before?'],
+      Approach: ['Is the way we run things enabling or hindering us?'],
     },
   },
   Coordination: {
     Anchoring: {
-      Intent: "What is this initiative's purpose and direction?",
-      Scope: 'What do we offer, and to whom?',
-      Approach: 'Set delivery principles here, or inherit them.',
+      Intent: ['Who are we?', 'Why this initiative?', 'Where is it heading?'],
+      Scope: ['What do we offer?', 'To whom?'],
+      Approach: ['Set delivery principles here, or inherit them.'],
     },
     Iterative: {
-      Intent: 'What will success look like?',
-      Scope: 'What have we committed to deliver, and for whom?',
-      Approach: 'How and when will we deliver?',
+      Intent: ['Why are we doing this?', 'What will success look like?'],
+      Scope: ['What have we committed to deliver?', 'For whom?'],
+      Approach: ['How are we organised to deliver?', 'When will we deliver it?'],
     },
     Evidence: {
-      Intent: 'Is the work we delivered making a difference?',
-      Scope: 'What have we shipped?',
-      Approach: 'Is the way we are working together effective?',
+      Intent: ['Is the work we delivered making a difference?'],
+      Scope: ['What have we shipped?', 'Is it available to users?'],
+      Approach: ['Is the way we are working together effective?'],
     },
   },
   Team: {
     Anchoring: {
-      Intent: "What is this team's purpose and direction?",
-      Scope: "Set the team's remit here, or inherit it.",
-      Approach: 'Set team principles here, or inherit them.',
+      Intent: ['Who are we?', 'Why this team?', 'Where are we heading?'],
+      Scope: ["Set the team's remit here, or inherit it."],
+      Approach: ['Set team principles here, or inherit them.'],
     },
     Iterative: {
-      Intent: 'What are we trying to achieve this cycle?',
-      Scope: 'What have we committed to deliver this cycle?',
-      Approach: 'What is our approach and plan?',
+      Intent: ['What are we trying to achieve this cycle?'],
+      Scope: ['What have we committed to deliver this cycle?'],
+      Approach: ['How are we organised to work?', 'What is our plan?'],
     },
     Evidence: {
-      Intent: 'Is what we built being used and valued?',
-      Scope: 'Did we finish to the standard we agreed?',
-      Approach: 'What would make us work better next time?',
+      Intent: ['Is what we built being used?', 'Is it valued?'],
+      Scope: ['Did we finish to the standard we agreed?'],
+      Approach: ['What would make us work better next time?'],
     },
   },
 };
 
-function Cell({ question, artifacts }: { question?: string; artifacts: KbArtifact[] }) {
+function Cell({ questions, artifacts }: { questions?: string[]; artifacts: KbArtifact[] }) {
   const empty = artifacts.length === 0;
   return (
     <div
       className="rounded-md px-2 py-1.5 flex flex-col gap-1 min-h-[54px] justify-center"
       style={{ background: p.white, border: `1px solid ${p.paleTeal}` }}
     >
-      {question && (
-        <span
-          className="text-xs leading-snug"
-          style={{ color: empty ? p.muted : p.body, opacity: empty ? 0.7 : 1 }}
-        >
-          {question}
-        </span>
+      {questions && questions.length > 0 && (
+        <div className="flex flex-col gap-0.5">
+          {questions.map((q, i) => (
+            <span
+              key={i}
+              className="text-xs leading-snug"
+              style={{ color: empty ? p.muted : p.body, opacity: empty ? 0.7 : 1 }}
+            >
+              {q}
+            </span>
+          ))}
+        </div>
       )}
       {!empty && (
         <div className="leading-tight">
@@ -190,7 +197,7 @@ export function ValueHorizonsMap() {
                 {l}
               </div>
               {ISA.map((s) => (
-                <Cell key={s} question={CELL_QUESTIONS[h]?.[l]?.[s]} artifacts={grid[h][l][s]} />
+                <Cell key={s} questions={CELL_QUESTIONS[h]?.[l]?.[s]} artifacts={grid[h][l][s]} />
               ))}
             </Fragment>
           ))}
