@@ -23,14 +23,14 @@ const HORIZON_BORDER: Record<string, string> = {
 const CELL_QUESTIONS: Record<string, Record<string, Record<string, string>>> = {
   Organisation: {
     Anchoring: {
-      Intent: 'Who are we, why do we exist, and where are we going?',
-      Scope: 'What do we do and for whom?',
+      Intent: 'What is our purpose and direction?',
+      Scope: 'What do we do, and for whom?',
       Approach: 'What rules guide how we decide?',
     },
     Iterative: {
       Intent: 'What must we achieve this period?',
-      Scope: 'Who do we serve and how do we create and capture value?',
-      Approach: 'How do we compete and how are we organised to deliver?',
+      Scope: 'How do we create and capture value?',
+      Approach: 'How are we organised to operate?',
     },
     Evidence: {
       Intent: 'What progress are we making toward our goals?',
@@ -40,31 +40,31 @@ const CELL_QUESTIONS: Record<string, Record<string, Record<string, string>>> = {
   },
   Coordination: {
     Anchoring: {
-      Intent: 'Who are we, why this initiative, and where is it heading?',
+      Intent: "What is this initiative's purpose and direction?",
       Scope: 'What do we offer, and to whom?',
       Approach: 'Set delivery principles here, or inherit them.',
     },
     Iterative: {
-      Intent: 'Why are we doing this and what will success look like?',
-      Scope: 'What have we committed to deliver and for whom?',
-      Approach: 'How are we organised to deliver and when will we deliver it?',
+      Intent: 'What will success look like?',
+      Scope: 'What have we committed to deliver, and for whom?',
+      Approach: 'How and when will we deliver?',
     },
     Evidence: {
       Intent: 'Is the work we delivered making a difference?',
-      Scope: 'What have we shipped and is it available to users?',
+      Scope: 'What have we shipped?',
       Approach: 'Is the way we are working together effective?',
     },
   },
   Team: {
     Anchoring: {
-      Intent: 'Who are we, why this team, and where are we heading?',
+      Intent: "What is this team's purpose and direction?",
       Scope: "Set the team's remit here, or inherit it.",
       Approach: 'Set team principles here, or inherit them.',
     },
     Iterative: {
       Intent: 'What are we trying to achieve this cycle?',
       Scope: 'What have we committed to deliver this cycle?',
-      Approach: 'How are we organised to work and what is our plan?',
+      Approach: 'What is our approach and plan?',
     },
     Evidence: {
       Intent: 'Is what we built being used and valued?',
