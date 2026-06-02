@@ -344,7 +344,7 @@ export const useKnowledgeItems = (params?: {
           emoji, icon, created_at, updated_at, background,
           learning_value_summary, common_pitfalls,
           item_type, use_this_when, avoid_when, decisions_supported,
-          what_good_looks_like, typical_output,
+          what_good_looks_like, typical_output, why_it_exists,
           horizon, isa, layer, facet, kind, inheritable, shape, family, level,
           produces, counterparts, techniques, components,
           category_id, domain_id, planning_focus_id,

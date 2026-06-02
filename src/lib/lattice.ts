@@ -13,6 +13,7 @@ export interface LatticeNode {
   horizon: Horizon | null;
   shape: string | null;
   isa: string | null;
+  question: string | null;
 }
 
 const horizonRank = (h: string | null) => {
@@ -29,6 +30,7 @@ export function useLattice() {
     const byUuid = new Map<string, KnowledgeItem>(artifacts.map((a) => [a.id, a]));
     const node = (i: KnowledgeItem): LatticeNode => ({
       slug: i.slug, name: i.name, horizon: (i.horizon as Horizon) ?? null, shape: i.shape ?? null, isa: i.isa ?? null,
+      question: i.why_it_exists ?? null,
     });
 
     const anchorEdges = (edges || []).filter((e) => e.edge_type === 'anchors_to');
