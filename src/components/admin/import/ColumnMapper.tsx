@@ -52,6 +52,31 @@ const getTargetFields = (targetEntity: string) => {
         { key: 'example_how_much', label: 'Example / Use Case - How Much', required: false },
         { key: 'example_summary', label: 'Example / Use Case - Summary', required: false },
         { key: 'example_use_case', label: 'Example / Use Case', required: false },
+
+        // ISA-O3 / four-kind placement (keys are real knowledge_items columns)
+        { key: 'item_type', label: 'Item Type (technique / artifact / event / constituent)', required: false },
+        { key: 'horizon', label: 'Horizon (Organisation / Coordination / Team)', required: false },
+        { key: 'isa', label: 'ISA (Intent / Scope / Approach)', required: false },
+        { key: 'layer', label: 'Layer (Anchoring / Iterative / Evidence)', required: false },
+        { key: 'facet', label: 'Facet', required: false },
+        { key: 'kind', label: 'Kind', required: false },
+        { key: 'shape', label: 'Shape (container / anchor)', required: false },
+        { key: 'family', label: 'Family (constituent)', required: false },
+        { key: 'level', label: 'Level (epic / feature / story / task)', required: false },
+        { key: 'inheritable', label: 'Inheritable (true / false)', required: false },
+
+        // Governance & intent
+        { key: 'why_it_exists', label: 'Why It Exists / Question', required: false },
+        { key: 'typical_output', label: 'Typical Output', required: false },
+        { key: 'what_good_looks_like', label: 'What Good Looks Like (list)', required: false },
+        { key: 'common_pitfalls', label: 'Common Pitfalls (list)', required: false },
+        { key: 'decisions_supported', label: 'Decisions Supported (list)', required: false },
+        { key: 'decision_boundaries', label: 'Decision Boundaries', required: false },
+        { key: 'governance_value', label: 'Governance Value', required: false },
+        { key: 'use_this_when', label: 'Use This When (list)', required: false },
+        { key: 'avoid_when', label: 'Avoid When (list)', required: false },
+        { key: 'inspect_adapt_signals', label: 'Inspect & Adapt Signals (list)', required: false },
+        { key: 'maturity_indicators', label: 'Maturity Indicators (list)', required: false },
       ];
     case 'events':
       return [
@@ -161,6 +186,28 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
           example_how_much: ['example / use case - how much'],
           example_summary: ['example / use case - summary'],
           example_use_case: ['example / use case'],
+          // ISA-O3 / four-kind
+          item_type: ['item type', 'type'],
+          horizon: ['horizon'],
+          isa: ['isa', 'intent/scope/approach'],
+          layer: ['layer'],
+          facet: ['facet'],
+          kind: ['kind'],
+          shape: ['shape'],
+          family: ['family'],
+          level: ['level'],
+          inheritable: ['inheritable'],
+          why_it_exists: ['why it exists', 'question'],
+          typical_output: ['typical output', 'output'],
+          what_good_looks_like: ['what good looks like'],
+          common_pitfalls: ['common pitfalls', 'pitfalls'],
+          decisions_supported: ['decisions supported'],
+          decision_boundaries: ['decision boundaries'],
+          governance_value: ['governance value'],
+          use_this_when: ['use this when', 'use when'],
+          avoid_when: ['avoid when'],
+          inspect_adapt_signals: ['inspect & adapt signals', 'inspect and adapt signals', 'inspect adapt signals'],
+          maturity_indicators: ['maturity indicators'],
         };
         
         const alternatives = specialMappings[fieldKey] || [];

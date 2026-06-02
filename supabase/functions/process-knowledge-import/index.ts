@@ -134,10 +134,25 @@ serve(async (req) => {
       try {
         const rawData = row.raw_data as any;
         console.log('🔍 Processing row with mapped data:', row.mapped_data);
-        
-        // Use the mapped data from staging
-        const mappedData = row.mapped_data as Record<string, any>;
-        
+
+        // Resolve the row into a db-field-keyed object. The KnowledgeBaseImportManager
+        // path pre-writes db-keyed `mapped_data`; the generic ColumnMapper path stages
+        // `raw_data` only and saves `field_mappings` as { dbField: sourceColumn }, so
+        // apply those mappings to the raw row here.
+        const mappedData: Record<string, any> =
+          (row.mapped_data && Object.keys(row.mapped_data).length > 0)
+            ? (row.mapped_data as Record<string, any>)
+            : {};
+        if (Object.keys(mappedData).length === 0) {
+          for (const [dbField, sourceCol] of Object.entries(fieldMappings)) {
+            if (!sourceCol) continue;
+            const v = rawData?.[sourceCol as string];
+            if (v !== undefined && v !== null && String(v).trim() !== '') {
+              mappedData[dbField] = v;
+            }
+          }
+        }
+
         // Build knowledge item data
         const kiData: any = {
           name: mappedData.name || '',
@@ -155,6 +170,34 @@ serve(async (req) => {
         } else {
           throw new Error('Knowledge item name is required');
         }
+
+        // ISA-O3 / four-kind fields. Plain text columns pass through; list columns
+        // are split on , ; | or newlines; `inheritable` is parsed as a boolean.
+        const TEXT_FIELDS = [
+          'item_type', 'horizon', 'isa', 'layer', 'facet', 'kind', 'shape', 'family', 'level',
+          'why_it_exists', 'typical_output', 'decision_boundaries', 'governance_value',
+        ];
+        const ARRAY_FIELDS = [
+          'what_good_looks_like', 'common_pitfalls', 'decisions_supported',
+          'use_this_when', 'avoid_when', 'inspect_adapt_signals', 'maturity_indicators',
+        ];
+        const toList = (val: any): string[] =>
+          String(val).split(/[,;|\n]/).map((s) => s.trim()).filter((s) => s.length > 0);
+        for (const f of TEXT_FIELDS) {
+          if (mappedData[f] !== undefined && String(mappedData[f]).trim() !== '') {
+            kiData[f] = String(mappedData[f]).trim();
+          }
+        }
+        for (const f of ARRAY_FIELDS) {
+          if (mappedData[f] !== undefined && String(mappedData[f]).trim() !== '') {
+            kiData[f] = toList(mappedData[f]);
+          }
+        }
+        if (mappedData.inheritable !== undefined && String(mappedData.inheritable).trim() !== '') {
+          kiData.inheritable = /^(true|yes|y|1)$/i.test(String(mappedData.inheritable).trim());
+        }
+        // Imports are techniques unless an Item Type column says otherwise.
+        if (!kiData.item_type) kiData.item_type = 'technique';
         
         // Handle category
         let categoryId = null;
