@@ -14,33 +14,98 @@ const HORIZON_BORDER: Record<string, string> = {
   Team: '#F5C896',
 };
 
-function Cell({ artifacts, inheritablePrompt }: { artifacts: KbArtifact[]; inheritablePrompt: boolean }) {
+// Concise, cell-level questions taken from the ISA-O3 Value Horizons canvas
+// (Template B). Keyed [horizon][layer][isa]. One short question per cell keeps
+// the canvas to a single page; the artifacts that live in the cell are listed
+// beneath as small links.
+const CELL_QUESTIONS: Record<string, Record<string, Record<string, string>>> = {
+  Organisation: {
+    Anchoring: {
+      Intent: 'Who are we, why do we exist, and where are we going?',
+      Scope: 'What do we do and for whom?',
+      Approach: 'What rules guide how we decide?',
+    },
+    Iterative: {
+      Intent: 'What must we achieve this period?',
+      Scope: 'Who do we serve and how do we create and capture value?',
+      Approach: 'How do we compete and how are we organised to deliver?',
+    },
+    Evidence: {
+      Intent: 'What progress are we making toward our goals?',
+      Scope: 'What are we now able to offer that we could not before?',
+      Approach: 'Is the way we run things enabling or hindering us?',
+    },
+  },
+  Coordination: {
+    Anchoring: {
+      Intent: 'Who are we, why this initiative, and where is it heading?',
+      Scope: 'What do we offer, and to whom?',
+      Approach: 'Set delivery principles here, or inherit them.',
+    },
+    Iterative: {
+      Intent: 'Why are we doing this and what will success look like?',
+      Scope: 'What have we committed to deliver and for whom?',
+      Approach: 'How are we organised to deliver and when will we deliver it?',
+    },
+    Evidence: {
+      Intent: 'Is the work we delivered making a difference?',
+      Scope: 'What have we shipped and is it available to users?',
+      Approach: 'Is the way we are working together effective?',
+    },
+  },
+  Team: {
+    Anchoring: {
+      Intent: 'Who are we, why this team, and where are we heading?',
+      Scope: "Set the team's remit here, or inherit it.",
+      Approach: 'Set team principles here, or inherit them.',
+    },
+    Iterative: {
+      Intent: 'What are we trying to achieve this cycle?',
+      Scope: 'What have we committed to deliver this cycle?',
+      Approach: 'How are we organised to work and what is our plan?',
+    },
+    Evidence: {
+      Intent: 'Is what we built being used and valued?',
+      Scope: 'Did we finish to the standard we agreed?',
+      Approach: 'What would make us work better next time?',
+    },
+  },
+};
+
+function Cell({ question, artifacts }: { question?: string; artifacts: KbArtifact[] }) {
+  const empty = artifacts.length === 0;
   return (
     <div
-      className="rounded-lg p-2.5 flex flex-col gap-1.5 min-h-[68px]"
+      className="rounded-md px-2 py-1.5 flex flex-col gap-1 min-h-[54px] justify-center"
       style={{ background: p.white, border: `1px solid ${p.paleTeal}` }}
     >
-      {artifacts.length === 0 && inheritablePrompt && (
-        <span className="text-xs italic" style={{ color: p.muted, opacity: 0.7 }}>
-          Set here, or inherit
+      {question && (
+        <span
+          className="text-xs leading-snug"
+          style={{ color: empty ? p.muted : p.body, opacity: empty ? 0.7 : 1 }}
+        >
+          {question}
         </span>
       )}
-      {artifacts.map((a) => (
-        <Link
-          key={a.id}
-          to={`/knowledge-base/artifacts/${a.id}`}
-          className="block leading-snug group"
-          style={{ color: p.deepTeal }}
-          title={a.name}
-        >
-          <span className="text-sm group-hover:underline" style={{ color: p.body }}>
-            {a.question || a.oneLiner || a.name}
-          </span>
-          <span className="block text-[10px] uppercase tracking-wide mt-0.5" style={{ color: p.muted }}>
-            {a.name}
-          </span>
-        </Link>
-      ))}
+      {!empty && (
+        <div className="leading-tight">
+          {artifacts.map((a, i) => (
+            <span key={a.id}>
+              <Link
+                to={`/knowledge-base/artifacts/${a.id}`}
+                className="text-[10px] font-semibold uppercase tracking-wide hover:underline"
+                style={{ color: p.deepTeal }}
+                title={a.oneLiner || a.name}
+              >
+                {a.name}
+              </Link>
+              {i < artifacts.length - 1 && (
+                <span className="text-[10px]" style={{ color: p.muted }}> · </span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -54,14 +119,14 @@ export function ValueHorizonsMap() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Column headers */}
-      <div className="grid gap-1.5" style={{ gridTemplateColumns: '90px repeat(3, minmax(0, 1fr))' }}>
+      <div className="grid gap-1.5" style={{ gridTemplateColumns: '78px repeat(3, minmax(0, 1fr))' }}>
         <div />
         {ISA.map((s) => (
           <div
             key={s}
-            className="rounded-md px-3 py-1.5 text-sm font-semibold"
+            className="rounded-md px-3 py-1 text-sm font-semibold"
             style={{ background: p.skyTeal, color: p.deepTeal, border: `1px solid ${p.paleTeal}` }}
           >
             {s}
@@ -73,26 +138,26 @@ export function ValueHorizonsMap() {
       {HORIZONS.map((h) => (
         <div
           key={h}
-          className="rounded-xl p-2.5"
+          className="rounded-xl p-2"
           style={{ background: HORIZON_TINT[h], border: `1.5px solid ${HORIZON_BORDER[h]}` }}
         >
-          <div className="text-sm font-bold mb-2 px-0.5" style={{ color: p.deepTeal }}>
+          <div className="text-sm font-bold mb-1.5 px-0.5" style={{ color: p.deepTeal }}>
             {h}
           </div>
           {LAYERS.map((l) => (
             <div
               key={l}
               className="grid gap-1.5 mb-1.5 last:mb-0 items-stretch"
-              style={{ gridTemplateColumns: '90px repeat(3, minmax(0, 1fr))' }}
+              style={{ gridTemplateColumns: '78px repeat(3, minmax(0, 1fr))' }}
             >
               <div
-                className="flex items-center text-xs font-semibold uppercase tracking-wide px-1"
+                className="flex items-center text-[11px] font-semibold uppercase tracking-wide px-1"
                 style={{ color: p.midTeal }}
               >
                 {l}
               </div>
               {ISA.map((s) => (
-                <Cell key={s} artifacts={grid[h][l][s]} inheritablePrompt={l === 'Anchoring'} />
+                <Cell key={s} question={CELL_QUESTIONS[h]?.[l]?.[s]} artifacts={grid[h][l][s]} />
               ))}
             </div>
           ))}
