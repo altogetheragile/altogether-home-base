@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { colors as p } from '@/theme/colors';
 import { HORIZONS, ISA, LAYERS } from '@/lib/isaO3';
@@ -120,8 +121,9 @@ export function ValueHorizonsMap() {
 
   return (
     <div className="space-y-2">
-      {/* Column headers */}
-      <div className="grid gap-1.5" style={{ gridTemplateColumns: '78px repeat(3, minmax(0, 1fr))' }}>
+      {/* Column headers (leading spacers align with the vertical horizon label + layer label) */}
+      <div className="grid gap-1.5" style={{ gridTemplateColumns: '28px 74px repeat(3, minmax(0, 1fr))' }}>
+        <div />
         <div />
         {ISA.map((s) => (
           <div
@@ -134,22 +136,35 @@ export function ValueHorizonsMap() {
         ))}
       </div>
 
-      {/* Horizon blocks */}
+      {/* Horizon blocks — vertical horizon label spans all layer rows */}
       {HORIZONS.map((h) => (
         <div
           key={h}
-          className="rounded-xl p-2"
-          style={{ background: HORIZON_TINT[h], border: `1.5px solid ${HORIZON_BORDER[h]}` }}
+          className="rounded-xl p-2 grid gap-1.5"
+          style={{
+            background: HORIZON_TINT[h],
+            border: `1.5px solid ${HORIZON_BORDER[h]}`,
+            gridTemplateColumns: '28px 74px repeat(3, minmax(0, 1fr))',
+          }}
         >
-          <div className="text-sm font-bold mb-1.5 px-0.5" style={{ color: p.deepTeal }}>
-            {h}
+          <div
+            className="flex items-center justify-center rounded-md"
+            style={{
+              gridColumn: '1',
+              gridRow: `1 / ${LAYERS.length + 1}`,
+              background: p.white,
+              border: `1px solid ${HORIZON_BORDER[h]}`,
+            }}
+          >
+            <span
+              className="text-xs font-bold uppercase tracking-wide whitespace-nowrap"
+              style={{ color: p.deepTeal, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            >
+              {h}
+            </span>
           </div>
           {LAYERS.map((l) => (
-            <div
-              key={l}
-              className="grid gap-1.5 mb-1.5 last:mb-0 items-stretch"
-              style={{ gridTemplateColumns: '78px repeat(3, minmax(0, 1fr))' }}
-            >
+            <Fragment key={l}>
               <div
                 className="flex items-center text-[11px] font-semibold uppercase tracking-wide px-1"
                 style={{ color: p.midTeal }}
@@ -159,7 +174,7 @@ export function ValueHorizonsMap() {
               {ISA.map((s) => (
                 <Cell key={s} question={CELL_QUESTIONS[h]?.[l]?.[s]} artifacts={grid[h][l][s]} />
               ))}
-            </div>
+            </Fragment>
           ))}
         </div>
       ))}
