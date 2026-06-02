@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      knowledge_edges: {
+        Row: {
+          created_at: string
+          edge_type: string
+          from_level: string | null
+          id: string
+          source_id: string
+          target_id: string
+          to_level: string | null
+        }
+        Insert: {
+          created_at?: string
+          edge_type: string
+          from_level?: string | null
+          id?: string
+          source_id: string
+          target_id: string
+          to_level?: string | null
+        }
+        Update: {
+          created_at?: string
+          edge_type?: string
+          from_level?: string | null
+          id?: string
+          source_id?: string
+          target_id?: string
+          to_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_edges_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_edges_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pattern_builder_runs: {
         Row: {
           assessment: Json
@@ -2299,6 +2344,7 @@ export type Database = {
           emoji: string | null
           evidence_sources: string[] | null
           facet: string | null
+          family: string | null
           governance_value: string | null
           has_ai_support: boolean | null
           horizon: string | null
@@ -2309,6 +2355,8 @@ export type Database = {
           isa: string | null
           kind: string | null
           layer: string | null
+          level: string | null
+          shape: string | null
           is_featured: boolean | null
           is_published: boolean | null
           item_type: string | null
@@ -2350,6 +2398,7 @@ export type Database = {
           emoji?: string | null
           evidence_sources?: string[] | null
           facet?: string | null
+          family?: string | null
           governance_value?: string | null
           has_ai_support?: boolean | null
           horizon?: string | null
@@ -2364,6 +2413,8 @@ export type Database = {
           key_terminology?: Json | null
           kind?: string | null
           layer?: string | null
+          level?: string | null
+          shape?: string | null
           learning_value_summary?: string | null
           maturity_indicators?: string[] | null
           name: string
@@ -2401,6 +2452,7 @@ export type Database = {
           emoji?: string | null
           evidence_sources?: string[] | null
           facet?: string | null
+          family?: string | null
           governance_value?: string | null
           has_ai_support?: boolean | null
           horizon?: string | null
@@ -2415,6 +2467,8 @@ export type Database = {
           key_terminology?: Json | null
           kind?: string | null
           layer?: string | null
+          level?: string | null
+          shape?: string | null
           learning_value_summary?: string | null
           maturity_indicators?: string[] | null
           name?: string

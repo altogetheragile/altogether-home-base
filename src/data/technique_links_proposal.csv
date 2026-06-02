@@ -1,0 +1,80 @@
+technique_slug,technique_name,produces,confidence,rationale
+5-whys,5 Whys,,high,"A root-cause analysis aid; produces understanding, not a standing artifact."
+a-b-testing,A/B Testing,team-output-feedback,medium,Generates measured evidence from real use of variants of the output.
+acceptance-criteria,Acceptance Criteria,team-quality-user-expectations team-selected-work-items,high,"Defines the conditions an item must meet, populating the quality bar and detailing selected items."
+accessibility-audit,Accessibility Audit,team-quality-bar coord-integration-standard,medium,Sets accessibility conditions that become part of the quality/integration standard.
+assumption-mapping,Assumption Mapping,,high,A discovery/analysis aid that surfaces risks; produces no specific standing artifact.
+business-case,Business Case,coord-business-case,medium,Justifies and qualifies an initiative for inclusion/ordering in the portfolio backlog.
+business-model-canvas,Business Model Canvas,org-business-model,high,The canonical tool for articulating the organisation's business model.
+contextual-inquiry,Contextual Inquiry,coord-user-beneficiary-profile,high,Field research that builds the understanding of who is served and their needs.
+cost-of-delay,Cost of Delay,,high,Quantifies economic impact to inform ordering of backlog items.
+cumulative-flow-diagram,Cumulative Flow Diagram,team-delivery-health-metrics,high,Visualises flow stages over time as a delivery health indicator.
+customer-interviews,Customer Interviews,coord-user-beneficiary-profile,high,"Direct conversations that articulate user needs, motivations, and pains."
+daily-stand-ups,Daily Stand-ups,team-backlog,high,"A synchronisation event; produces coordination, not a standing artifact. An opportunity to inspect and adapt the team / sprint backlog. May produce a refined sprint backlog"
+definition-of-done-dod,Definition of Done (DoD),team-quality-bar coord-integration-standard,high,"The DoD is the team quality bar, and at scale the shared integration standard."
+delivery-plan,Delivery Plan,coord-delivery-schedule,high,Produces a high-level adaptive schedule of delivery for the initiative.
+design-studio-workshop,Design Studio Workshop,coord-solution-design,medium,Collaborative sketching that shapes the solution design.
+design-studio-workshops,Design Studio Workshops,coord-solution-design,medium,Iterative sketching sessions that produce candidate solution designs.
+empathy-map,Empathy Map,coord-user-beneficiary-profile,high,"Articulates what a user sees, thinks, feels and does, populating the beneficiary profile."
+epic-user-story,Epic User Story,coord-backlog-item,high,An epic is a large backlog item at the initiative level. Part of a backlog
+estimation-shirt-sizing,T-shirt sizing,,medium,Relative sizing feeds forecasting and release / delivery planning.
+experiment-cards,Experiment Cards,coord-backlog-item,medium,"Define and run tests producing evidence on assumptions about feasibility, desirability and viability. Experiment is an item on a (product) backlog"
+fake-door-tests,Fake Door Tests,coord-experiment-fake-door,medium,A lightweight experiment producing demand evidence before building.
+feature-slicing,Feature Slicing,,high,Breaks features into independently valuable slices that populate the backlog.
+feature-toggles,Feature Toggles,,low,A delivery/engineering practice; produces no standing planning artifact. A feature of a product increment
+,,,,
+feature-user-story,Feature User Story,,high,A feature-level story is a backlog item that can be pulled into a cycle. Part of a backlog
+fishbone-diagram,Fishbone Diagram,,low,"A cause-and-effect analysis aid; produces understanding, not an artifact."
+flow-metrics,Flow Metrics,,high,"Cycle time, lead time and throughput are core delivery health metrics."
+,,,,
+functional-decomposition,Functional Decomposition,coord-solution-design,low,"Breaks systems into parts, contributing to solution structure; weak artifact fit."
+gherkin-bdd,Gherkin/BDD,,medium,Given-When-Then specs define acceptance behaviour and quality conditions. Related to a backlog item
+happiness-metric-niko-niko,Happiness Metric / Niko-Niko,team-delivery-health-tracker,high,Morale tracking is a leading indicator of delivery system health.
+heuristic-evaluation,Heuristic Evaluation,,low,Expert usability review yielding feedback on the output; weak artifact fit.
+how-might-we,How Might We?,,low,A reframing/ideation prompt; produces no standing artifact.
+impact-mapping,Impact Mapping,coord-goal coord-outcomes,high,"Connects deliverables to goals via actors and impacts, framing goal and outcomes. Used to create a backlog"
+impact-vs-effort-matrix,Impact vs Effort Matrix,coord-backlog,medium,"Groups and prioritises items, informing backlog ordering."
+impediment-lists,Impediment Lists,team-delivery-health-metrics,low,A running blocker list reflecting delivery health; weak artifact fit.
+investment-appraisal,Investment Appraisal,org-portfolio-backlog,medium,Evaluates viability to inform portfolio allocation and ordering.
+jobs-to-be-done,Jobs To Be Done,coord-user-beneficiary-profile,high,"Focuses on the job the user is trying to accomplish, populating the beneficiary profile."
+journey-mapping,Journey Mapping,coord-user-beneficiary-profile,medium,"Maps user steps, emotions and pain points, enriching the beneficiary profile."
+lean-canvas,Lean Canvas,org-business-model,high,A one-page business model format for startups and product-market fit.
+lean-governance-tools,Lean Governance Tools,coord-governance org-governance,high,Lightweight tools that establish decision rights and alignment checks.
+mind-mapping,Mind Mapping,,low,A general brainstorming aid; no specific artifact produced.
+moscow-prioritization,MoSCoW Prioritization,coord-backlog,high,Categorises requirements to order the backlog and manage scope.
+okrs-objectives-and-key-results,OKRs (Objectives and Key Results),org-goals coord-goal,high,A goal-setting framework producing time-bound objectives with measurable results.
+opportunity-canvas,Opportunity Canvas,coord-user-beneficiary-profile,medium,"Captures customer problems, metrics and candidate solutions in discovery."
+opportunity-solution-tree,Opportunity Solution Tree,coord-outcomes,medium,Links desired outcomes to opportunities and experiments in continuous discovery.
+opportunity-solution-tree-ost,Opportunity Solution Tree (OST),coord-outcomes,medium,Maps outcomes to opportunities and experiments to discover value.
+personas,Personas,coord-user-beneficiary-profile,high,Research-based user profiles that directly populate the beneficiary profile.
+pestle,PESTLE,org-strategy,medium,Analyses external macro factors that inform strategic choices.
+planning-poker,Planning Poker,team-plan,medium,Consensus estimation that supports iteration planning.
+portfolio-roadmaps,Portfolio Roadmaps,org-portfolio-roadmap,high,Produces the high-level timeline sequencing initiatives against strategic themes.
+problem-statement,Problem Statement,coord-purpose,low,Frames the core problem to solve; loosely shapes initiative purpose.
+product-backlog,Product Backlog,coord-backlog,high,The ordered list of everything needed to add value is the initiative backlog.
+product-vision-board,Product Vision Board,coord-vision coord-user-beneficiary-profile,high,"Captures vision, target group, needs and goals for the product."
+release-planning,Release Planning,coord-delivery-schedule,high,Decides which capabilities are delivered when across releases.
+retrospective-techniques,Retrospective Techniques,team-working-agreement coord-way-of-working,high,Reflection sessions that drive process improvements and updated norms.
+rice,RICE,coord-backlog,high,"Scores initiatives by reach, impact, confidence and effort to order the backlog."
+rice-reach-impact-confidence-effort,"RICE (Reach, Impact, Confidence, Effort)",coord-backlog,high,A scoring model that prioritises and sequences backlog items.
+risk-analysis,Risk Analysis,coord-delivery-schedule,low,Evaluates release scope/timing risks feeding the schedule; weak artifact fit.
+rolling-wave-planning,Rolling Wave Planning,coord-delivery-schedule,medium,Progressive elaboration that shapes the near-term and outline delivery schedule.
+service-blueprint,Service Blueprint,coord-solution-design,high,Maps frontstage and backstage processes that define the solution.
+service-blueprinting,Service Blueprinting,coord-solution-design,high,"Visual map of service process, systems and people defining the solution."
+spikes,Spikes,,low,"Time-boxed exploration to reduce uncertainty; produces learning, not an artifact."
+sprint-miov2esf,Sprint,team-selected-work-items team-output,medium,A timebox that pulls in selected items and produces an integrated output.
+story-mapping,Story Mapping,coord-backlog team-selected-work-items,high,"Visualises the journey and slices functionality, building and ordering the backlog."
+story-splitting,Story Splitting,coord-backlog team-selected-work-items,high,Breaks large stories into smaller backlog items sized for a cycle.
+storyboards,Storyboards,coord-solution-design,low,Sketch sequences of user interaction that inform solution design; weak fit.
+swot,SWOT,org-strategy,medium,Surfaces internal/external factors that inform strategic choices.
+task-boards,Task Boards,team-plan,low,Visual tracking of task status reflecting the cycle plan; weak artifact fit.
+team-working-agreements,Team Working Agreements,team-working-agreement,high,Directly produces the team's behavioural and practice norms.
+technical-debt-radar,Technical Debt Radar,team-delivery-health-metrics,medium,Visualises system health to inform delivery health discussions.
+usability-testing,Usability Testing,team-output-feedback,high,"Evaluates real users completing tasks, producing evidence on the output."
+use-cases,Use Cases,coord-backlog team-selected-work-items,medium,Structured interaction descriptions that detail scope items to build.
+user-journey-analytics,User Journey Analytics,team-output-feedback,medium,Analyses real journey data to find drop-offs and optimisation evidence.
+user-stories,User Stories,coord-backlog team-selected-work-items,high,Captures functionality as backlog items pulled into a team cycle.
+value-proposition-canvas,Value Proposition Canvas,org-value-proposition coord-user-beneficiary-profile,high,"Maps customer jobs, pains and gains to the value proposition."
+velocity-forecasting,Velocity Forecasting,team-delivery-health-metrics team-plan,high,Uses historical velocity as a metric and to forecast cycle capacity.
+working-agreements,Working Agreements,team-working-agreement,high,Directly produces team ground rules for collaboration and decision-making.
+wsjf-weighted-shortest-job-first,WSJF (Weighted Shortest Job First),coord-backlog,high,Sequences items by cost of delay over duration to order the backlog.

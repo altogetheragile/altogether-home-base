@@ -62,7 +62,9 @@ const KNOWLEDGE_ITEM_COLUMNS = [
   'inspect_adapt_signals', 'maturity_indicators',
   // ISA-O3 dimensions + links
   'horizon', 'isa', 'layer', 'facet', 'kind', 'inheritable',
-  'produces', 'counterparts', 'techniques', 'components'
+  'produces', 'counterparts', 'techniques', 'components',
+  // Four-kind model
+  'shape', 'family', 'level'
 ] as const;
 
 // Helper to pick only valid columns from input data
@@ -143,6 +145,9 @@ export interface KnowledgeItem {
   facet?: string | null;
   kind?: string | null;
   inheritable?: boolean;
+  shape?: string | null;
+  family?: string | null;
+  level?: string | null;
   produces?: string[];
   counterparts?: string[];
   techniques?: string[];
@@ -340,7 +345,7 @@ export const useKnowledgeItems = (params?: {
           learning_value_summary, common_pitfalls,
           item_type, use_this_when, avoid_when, decisions_supported,
           what_good_looks_like, typical_output,
-          horizon, isa, layer, facet, kind, inheritable,
+          horizon, isa, layer, facet, kind, inheritable, shape, family, level,
           produces, counterparts, techniques, components,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
@@ -458,7 +463,7 @@ export const useKnowledgeItemById = (id: string) => {
           item_type, why_it_exists, typical_output,
           what_good_looks_like, decisions_supported, decision_boundaries, governance_value,
           use_this_when, avoid_when, inspect_adapt_signals, maturity_indicators,
-          horizon, isa, layer, facet, kind, inheritable,
+          horizon, isa, layer, facet, kind, inheritable, shape, family, level,
           produces, counterparts, techniques, components,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (
@@ -501,7 +506,7 @@ export const useKnowledgeItemBySlug = (slug: string) => {
           item_type, why_it_exists, typical_output,
           what_good_looks_like, decisions_supported, decision_boundaries, governance_value,
           use_this_when, avoid_when, inspect_adapt_signals, maturity_indicators,
-          horizon, isa, layer, facet, kind, inheritable,
+          horizon, isa, layer, facet, kind, inheritable, shape, family, level,
           produces, counterparts, techniques, components,
           category_id, domain_id, planning_focus_id,
           knowledge_item_decision_levels (

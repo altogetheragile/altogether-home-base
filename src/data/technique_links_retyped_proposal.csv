@@ -1,0 +1,99 @@
+technique_slug,technique_name,target_artifact,target_shape,proposed_edge_type,via_constituent,from_level,to_level,confidence,note
+5-whys,5 Whys,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+a-b-testing,A/B Testing,team-output-feedback,container,produce_or_shape,,,,draft,Fills/structures the team-output-feedback container.
+acceptance-criteria,Acceptance Criteria,team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
+acceptance-criteria,Acceptance Criteria,team-selected-work-items,container,produce_or_shape,,,,draft,Fills/structures the team-selected-work-items container.
+accessibility-audit,Accessibility Audit,coord-integration-standard,anchor,formalise,,,,draft,Formalises the coord-integration-standard anchor (likely via a field-content item).
+accessibility-audit,Accessibility Audit,team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
+assumption-mapping,Assumption Mapping,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+business-case,Business Case,org-portfolio-backlog,container,produce_or_shape,,,,draft,Fills/structures the org-portfolio-backlog container.
+business-model-canvas,Business Model Canvas,org-business-model,container,produce_or_shape,,,,draft,Fills/structures the org-business-model container.
+contextual-inquiry,Contextual Inquiry,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+cost-of-delay,Cost of Delay,coord-backlog,container,produce_or_shape,,,,draft,Orders/structures the container coord-backlog.
+cumulative-flow-diagram,Cumulative Flow Diagram,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+cumulative-flow-diagrams,Cumulative Flow Diagrams,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+customer-interviews,Customer Interviews,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+daily-stand-ups,Daily Stand-ups,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+definition-of-done-dod,Definition of Done (DoD),coord-integration-standard,anchor,formalise,,,,draft,Formalises the coord-integration-standard anchor (likely via a field-content item).
+definition-of-done-dod,Definition of Done (DoD),team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
+delivery-plan,Delivery Plan,coord-delivery-schedule,container,produce_or_shape,,,,draft,Fills/structures the coord-delivery-schedule container.
+design-studio-workshop,Design Studio Workshop,coord-solution-design,container,produce_or_shape,,,,draft,Fills/structures the coord-solution-design container.
+design-studio-workshops,Design Studio Workshops,coord-solution-design,container,produce_or_shape,,,,draft,Fills/structures the coord-solution-design container.
+empathy-map,Empathy Map,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+epic-user-story-miqpy9sb,Epic User Story,coord-backlog,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises coord-backlog.
+estimation-shirt-sizing,"Estimation (Story Points, T-shirt sizing)",team-plan,container,produce_or_shape,,,,draft,Fills/structures the team-plan container.
+experiment-cards,Experiment Cards,team-output-feedback,container,generate,ci-experiment,,,draft,Generates ci-experiment; that item then populates/formalises team-output-feedback.
+fake-door-tests,Fake Door Tests,team-output-feedback,container,produce_or_shape,,,,draft,Fills/structures the team-output-feedback container.
+feature-slicing,Feature Slicing,coord-backlog,container,decompose,ci-story,story,story,draft,Splits one item into smaller items; pick the real from/to levels.
+feature-slicing,Feature Slicing,team-selected-work-items,container,decompose,ci-story,story,story,draft,Splits one item into smaller items; pick the real from/to levels.
+feature-toggles,Feature Toggles,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+feature-toggles-flags,Feature Toggles / Flags,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+feature-user-story-mirmmdl6,Feature User Story,coord-backlog,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises coord-backlog.
+feature-user-story-mirmmdl6,Feature User Story,team-selected-work-items,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises team-selected-work-items.
+fishbone-diagram,Fishbone Diagram,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+flow-metrics,Flow Metrics,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+flow-metrics-cycle-time-lead-time,"Flow Metrics (Cycle Time, Lead Time)",team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+functional-decomposition,Functional Decomposition,coord-solution-design,container,decompose,ci-story,story,story,draft,Splits one item into smaller items; pick the real from/to levels.
+gherkin-bdd,Gherkin/BDD,team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
+gherkin-bdd,Gherkin/BDD,team-selected-work-items,container,produce_or_shape,,,,draft,Fills/structures the team-selected-work-items container.
+happiness-metric-niko-niko,Happiness Metric / Niko-Niko,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+heuristic-evaluation,Heuristic Evaluation,team-output-feedback,container,produce_or_shape,,,,draft,Fills/structures the team-output-feedback container.
+how-might-we,How Might We?,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+impact-mapping,Impact Mapping,coord-goal,anchor,formalise,,,,draft,Formalises the coord-goal anchor (likely via a field-content item).
+impact-mapping,Impact Mapping,coord-outcomes,container,produce_or_shape,,,,draft,Fills/structures the coord-outcomes container.
+impact-vs-effort-matrix,Impact vs Effort Matrix,coord-backlog,container,produce_or_shape,,,,draft,Orders/structures the container coord-backlog.
+impediment-lists,Impediment Lists,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+investment-appraisal,Investment Appraisal,org-portfolio-backlog,container,produce_or_shape,,,,draft,Fills/structures the org-portfolio-backlog container.
+jobs-to-be-done,Jobs To Be Done,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+journey-mapping,Journey Mapping,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+lean-canvas,Lean Canvas,org-business-model,container,produce_or_shape,,,,draft,Fills/structures the org-business-model container.
+lean-governance-tools,Lean Governance Tools,coord-governance,anchor,formalise,,,,draft,Formalises the coord-governance anchor (likely via a field-content item).
+lean-governance-tools,Lean Governance Tools,org-governance,anchor,formalise,,,,draft,Formalises the org-governance anchor (likely via a field-content item).
+mind-mapping,Mind Mapping,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+moscow-prioritization,MoSCoW Prioritization,coord-backlog,container,produce_or_shape,,,,draft,Orders/structures the container coord-backlog.
+okrs-objectives-and-key-results,OKRs (Objectives and Key Results),coord-goal,anchor,formalise,,,,draft,Formalises the coord-goal anchor (likely via a field-content item).
+okrs-objectives-and-key-results,OKRs (Objectives and Key Results),org-goals,anchor,formalise,,,,draft,Formalises the org-goals anchor (likely via a field-content item).
+opportunity-canvas,Opportunity Canvas,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+opportunity-solution-tree,Opportunity Solution Tree,coord-outcomes,container,produce_or_shape,,,,draft,Fills/structures the coord-outcomes container.
+opportunity-solution-tree-ost,Opportunity Solution Tree (OST),coord-outcomes,container,produce_or_shape,,,,draft,Fills/structures the coord-outcomes container.
+personas,Personas,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+pestle,PESTLE,org-strategy,anchor,formalise,,,,draft,Formalises the org-strategy anchor (likely via a field-content item).
+planning-poker,Planning Poker,team-plan,container,produce_or_shape,,,,draft,Fills/structures the team-plan container.
+portfolio-roadmaps,Portfolio Roadmaps,org-portfolio-roadmap,container,produce_or_shape,,,,draft,Fills/structures the org-portfolio-roadmap container.
+problem-statement,Problem Statement,coord-purpose,anchor,formalise,,,,draft,Formalises the coord-purpose anchor (likely via a field-content item).
+product-backlog,Product Backlog,coord-backlog,container,produce_or_shape,,,,draft,Orders/structures the container coord-backlog.
+product-vision-board,Product Vision Board,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+product-vision-board,Product Vision Board,coord-vision,anchor,formalise,,,,draft,Formalises the coord-vision anchor (likely via a field-content item).
+release-planning,Release Planning,coord-delivery-schedule,container,produce_or_shape,,,,draft,Fills/structures the coord-delivery-schedule container.
+retrospective-techniques,Retrospective Techniques,coord-way-of-working,anchor,formalise,,,,draft,Formalises the coord-way-of-working anchor (likely via a field-content item).
+retrospective-techniques,Retrospective Techniques,team-working-agreement,anchor,formalise,,,,draft,Formalises the team-working-agreement anchor (likely via a field-content item).
+rice,RICE,coord-backlog,container,produce_or_shape,,,,draft,Orders/structures the container coord-backlog.
+rice-reach-impact-confidence-effort,"RICE (Reach, Impact, Confidence, Effort)",coord-backlog,container,produce_or_shape,,,,draft,Orders/structures the container coord-backlog.
+risk-analysis,Risk Analysis,coord-delivery-schedule,container,produce_or_shape,,,,draft,Fills/structures the coord-delivery-schedule container.
+rolling-wave-planning,Rolling Wave Planning,coord-delivery-schedule,container,produce_or_shape,,,,draft,Fills/structures the coord-delivery-schedule container.
+service-blueprint,Service Blueprint,coord-solution-design,container,produce_or_shape,,,,draft,Fills/structures the coord-solution-design container.
+service-blueprinting,Service Blueprinting,coord-solution-design,container,produce_or_shape,,,,draft,Fills/structures the coord-solution-design container.
+spikes,Spikes,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
+sprint-miov2esf,Sprint,team-output,container,produce_or_shape,,,,draft,Fills/structures the team-output container.
+sprint-miov2esf,Sprint,team-selected-work-items,container,produce_or_shape,,,,draft,Fills/structures the team-selected-work-items container.
+story-mapping,Story Mapping,coord-backlog,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises coord-backlog.
+story-mapping,Story Mapping,team-selected-work-items,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises team-selected-work-items.
+story-splitting,Story Splitting,coord-backlog,container,decompose,ci-story,story,story,draft,Splits one item into smaller items; pick the real from/to levels.
+story-splitting,Story Splitting,team-selected-work-items,container,decompose,ci-story,story,story,draft,Splits one item into smaller items; pick the real from/to levels.
+storyboards,Storyboards,coord-solution-design,container,produce_or_shape,,,,draft,Fills/structures the coord-solution-design container.
+swot,SWOT,org-strategy,anchor,formalise,,,,draft,Formalises the org-strategy anchor (likely via a field-content item).
+task-boards,Task Boards,team-plan,container,produce_or_shape,,,,draft,Fills/structures the team-plan container.
+team-working-agreements,Team Working Agreements,team-working-agreement,anchor,formalise,,,,draft,Formalises the team-working-agreement anchor (likely via a field-content item).
+technical-debt-radar,Technical Debt Radar,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+usability-testing,Usability Testing,team-output-feedback,container,produce_or_shape,,,,draft,Fills/structures the team-output-feedback container.
+use-cases,Use Cases,coord-backlog,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises coord-backlog.
+use-cases,Use Cases,team-selected-work-items,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises team-selected-work-items.
+user-journey-analytics,User Journey Analytics,team-output-feedback,container,produce_or_shape,,,,draft,Fills/structures the team-output-feedback container.
+user-stories,User Stories,coord-backlog,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises coord-backlog.
+user-stories,User Stories,team-selected-work-items,container,generate,ci-story,,,draft,Generates ci-story; that item then populates/formalises team-selected-work-items.
+value-proposition-canvas,Value Proposition Canvas,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
+value-proposition-canvas,Value Proposition Canvas,org-value-proposition,anchor,formalise,,,,draft,Formalises the org-value-proposition anchor (likely via a field-content item).
+velocity-forecasting,Velocity Forecasting,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
+velocity-forecasting,Velocity Forecasting,team-plan,container,produce_or_shape,,,,draft,Fills/structures the team-plan container.
+working-agreements,Working Agreements,team-working-agreement,anchor,formalise,,,,draft,Formalises the team-working-agreement anchor (likely via a field-content item).
+wsjf-weighted-shortest-job-first,WSJF (Weighted Shortest Job First),coord-backlog,container,produce_or_shape,,,,draft,Orders/structures the container coord-backlog.

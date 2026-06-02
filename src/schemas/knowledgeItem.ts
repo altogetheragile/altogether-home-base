@@ -4,6 +4,8 @@ import { z } from 'zod';
 export const ITEM_TYPES = [
   'technique',
   'artifact',
+  'event',
+  'constituent',
   'framework',
   'template',
   'concept',
@@ -38,6 +40,10 @@ export const knowledgeItemSchema = z.object({
   layer: z.string().optional().nullable(),
   facet: z.string().optional().nullable(),
   kind: z.string().optional().nullable(),
+  // Four-kind model: artifact shape; constituent family/level
+  shape: z.string().optional().nullable(),
+  family: z.string().optional().nullable(),
+  level: z.string().optional().nullable(),
   inheritable: z.boolean().default(false),
   // ISA-O3 links stored as target slugs
   produces: z.array(z.string()).default([]),
@@ -133,6 +139,9 @@ export const knowledgeItemDefaults: KnowledgeItemFormData = {
   layer: null,
   facet: null,
   kind: null,
+  shape: null,
+  family: null,
+  level: null,
   inheritable: false,
   produces: [],
   counterparts: [],

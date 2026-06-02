@@ -103,7 +103,7 @@ function EnumSelect({
   label,
   options,
 }: {
-  fieldName: 'horizon' | 'isa' | 'layer' | 'kind';
+  fieldName: 'horizon' | 'isa' | 'layer' | 'kind' | 'shape' | 'family' | 'level';
   label: string;
   options: readonly string[];
 }) {
@@ -154,6 +154,7 @@ export const IsaO3Section: React.FC = () => {
   const horizon = form.watch('horizon');
   const derivedHorizon = horizonFromSlug(slug);
   const isArtifact = itemType === 'artifact';
+  const isConstituent = itemType === 'constituent';
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -238,6 +239,21 @@ export const IsaO3Section: React.FC = () => {
               )}
             />
           </div>
+
+          {/* Four-kind: artifact shape */}
+          {isArtifact && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <EnumSelect fieldName="shape" label="Shape" options={['container', 'anchor']} />
+            </div>
+          )}
+
+          {/* Four-kind: constituent family + level */}
+          {isConstituent && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <EnumSelect fieldName="family" label="Family" options={['queue_item', 'field_content']} />
+              <EnumSelect fieldName="level" label="Level" options={['epic', 'feature', 'story', 'task']} />
+            </div>
+          )}
         </CardContent>
       </Card>
 

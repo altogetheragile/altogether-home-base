@@ -29,6 +29,7 @@ function artifactToRow(a: any) {
     layer: oneOf(a.layer, LAYERS),
     facet: typeof a.facet === 'string' ? a.facet : null,
     kind: typeof a.kind === 'string' ? a.kind : 'Artifact',
+    shape: a.shape === 'anchor' || a.shape === 'container' ? a.shape : null,
     inheritable: !!a.inheritable,
     why_it_exists: typeof a.question === 'string' ? a.question : null,
     counterparts: strArr(a.counterparts),
@@ -45,6 +46,17 @@ function techniqueToRow(t: any) {
     description: t.description ?? null,
     source: typeof t.source === 'string' ? t.source : null,
     produces: strArr(t.produces),
+  }
+}
+
+function constituentToRow(c: any) {
+  return {
+    slug: c.id,
+    name: c.name,
+    item_type: 'constituent',
+    description: c.description ?? null,
+    family: c.family === 'queue_item' || c.family === 'field_content' ? c.family : null,
+    level: ['epic', 'feature', 'story', 'task'].includes(c.level) ? c.level : null,
   }
 }
 
@@ -95,10 +107,12 @@ serve(async (req) => {
     const master = body?.data ?? body
     const artifacts = Array.isArray(master?.artifacts) ? master.artifacts : []
     const techniques = Array.isArray(master?.techniques) ? master.techniques : []
+    const constituents = Array.isArray(master?.constituents) ? master.constituents : []
+    const edges = Array.isArray(master?.edges) ? master.edges : []
 
-    if (artifacts.length === 0 && techniques.length === 0) {
+    if (artifacts.length === 0 && techniques.length === 0 && constituents.length === 0 && edges.length === 0) {
       return new Response(
-        JSON.stringify({ success: false, message: 'No artifacts or techniques in payload' }),
+        JSON.stringify({ success: false, message: 'No artifacts, techniques, constituents or edges in payload' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -106,6 +120,7 @@ serve(async (req) => {
     const rows = [
       ...artifacts.filter((a: any) => a?.id && a?.name).map(artifactToRow),
       ...techniques.filter((t: any) => t?.id && t?.name).map(techniqueToRow),
+      ...constituents.filter((c: any) => c?.id && c?.name).map(constituentToRow),
     ]
 
     // Only update items that already exist (match by slug); never insert new
@@ -133,11 +148,47 @@ serve(async (req) => {
       else updated += 1
     }
 
+    // Typed edges: resolve source/target slugs to ids and upsert. Edges to
+    // unknown slugs are skipped; existing edges (same source+target+type) are
+    // left as-is (only from/to level is refreshed).
+    const VALID_EDGE_TYPES = new Set([
+      'convene', 'generate', 'decompose', 'populate', 'formalise',
+      'produce_or_shape', 'advance', 'anchors_to', 'cascades_to',
+    ])
+    let edgesUpserted = 0
+    const edgesSkipped: string[] = []
+    if (edges.length > 0) {
+      const { data: idMapRows } = await supabaseClient.from('knowledge_items').select('id, slug')
+      const idBySlug = new Map((idMapRows || []).map((r: any) => [r.slug, r.id]))
+      for (const e of edges) {
+        const sid = idBySlug.get(e.source)
+        const tid = idBySlug.get(e.target)
+        if (!sid || !tid || !VALID_EDGE_TYPES.has(e.edge_type)) {
+          edgesSkipped.push(`${e.source}->${e.target}:${e.edge_type}`)
+          continue
+        }
+        const { error } = await supabaseClient
+          .from('knowledge_edges')
+          .upsert(
+            {
+              source_id: sid,
+              target_id: tid,
+              edge_type: e.edge_type,
+              from_level: e.from_level ?? null,
+              to_level: e.to_level ?? null,
+            },
+            { onConflict: 'source_id,target_id,edge_type' },
+          )
+        if (error) errors.push(`edge ${e.source}->${e.target}: ${error.message}`)
+        else edgesUpserted += 1
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: errors.length === 0,
-        message: `Updated ${updated} items, skipped ${skipped.length} unknown slugs, ${errors.length} errors`,
-        details: { updated, skipped, errors },
+        message: `Updated ${updated} items, ${edgesUpserted} edges; skipped ${skipped.length} unknown slugs, ${edgesSkipped.length} unresolved edges, ${errors.length} errors`,
+        details: { updated, skipped, edgesUpserted, edgesSkipped, errors },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

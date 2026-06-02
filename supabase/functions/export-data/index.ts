@@ -16,7 +16,7 @@ interface ExportRequest {
 // Build the isa_o3_master.json shape (meta + artifacts[] + techniques[]) from
 // knowledge_items. Mirrors src/data/isa_o3_master.json so it round-trips with
 // the import-knowledge-json function.
-function buildKnowledgeBaseExport(rows: any[]) {
+function buildKnowledgeBaseExport(rows: any[], edgeRows: any[] = []) {
   const artifacts = rows
     .filter((r) => r.item_type === 'artifact')
     .map((r) => ({
@@ -26,6 +26,7 @@ function buildKnowledgeBaseExport(rows: any[]) {
       isa: r.isa ?? null,
       layer: r.layer ?? null,
       kind: r.kind ?? 'Artifact',
+      shape: r.shape ?? null,
       facet: r.facet ?? null,
       oneLiner: r.description ?? '',
       description: r.background || r.description || '',
@@ -48,6 +49,28 @@ function buildKnowledgeBaseExport(rows: any[]) {
     }))
     .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
+  const events = rows
+    .filter((r) => r.item_type === 'event')
+    .map((r) => ({ id: r.slug, name: r.name, horizon: r.horizon ?? null, description: r.description ?? '' }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const constituents = rows
+    .filter((r) => r.item_type === 'constituent')
+    .map((r) => ({ id: r.slug, name: r.name, family: r.family ?? null, level: r.level ?? null, description: r.description ?? '' }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Typed edges expressed by slug for a clean round-trip.
+  const edges = (edgeRows || [])
+    .filter((e) => e.source?.slug && e.target?.slug)
+    .map((e) => ({
+      source: e.source.slug,
+      target: e.target.slug,
+      edge_type: e.edge_type,
+      from_level: e.from_level ?? null,
+      to_level: e.to_level ?? null,
+    }))
+    .sort((a, b) => a.edge_type.localeCompare(b.edge_type) || a.source.localeCompare(b.source));
+
   return {
     _README: 'GENERATED FROM SUPABASE - DO NOT EDIT as a source of truth. Supabase is canonical; ' +
       'edit content via the admin UI. Re-import edits via the import-knowledge-json function (upsert by slug).',
@@ -56,9 +79,15 @@ function buildKnowledgeBaseExport(rows: any[]) {
       source: 'Exported from Altogether Agile knowledge_items (Supabase)',
       artifacts: artifacts.length,
       techniques: techniques.length,
+      events: events.length,
+      constituents: constituents.length,
+      edges: edges.length,
     },
     artifacts,
     techniques,
+    events,
+    constituents,
+    edges,
   };
 }
 
@@ -182,14 +211,20 @@ serve(async (req) => {
         const { data: rows, error: kbErr } = await supabase
           .from('knowledge_items')
           .select(`
-            slug, name, item_type, description, background, source,
+            id, slug, name, item_type, description, background, source,
             horizon, isa, layer, facet, kind, inheritable, why_it_exists,
-            produces, counterparts, techniques, components
+            shape, family, level, produces, counterparts, techniques, components
           `)
           .order('slug');
         if (kbErr) throw kbErr;
 
-        const master = buildKnowledgeBaseExport(rows || []);
+        // Typed edges, resolved to slugs via the two FKs.
+        const { data: edgeRows, error: edgeErr } = await supabase
+          .from('knowledge_edges')
+          .select('edge_type, from_level, to_level, source:source_id(slug), target:target_id(slug)');
+        if (edgeErr) throw edgeErr;
+
+        const master = buildKnowledgeBaseExport(rows || [], edgeRows || []);
         return new Response(JSON.stringify(master, null, 2), {
           headers: {
             ...corsHeaders,
