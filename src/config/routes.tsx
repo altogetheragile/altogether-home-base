@@ -31,6 +31,7 @@ const KnowledgeBase = lazy(() => import('@/pages/KnowledgeBase'));
 const KnowledgeBaseArtifact = lazy(() => import('@/pages/KnowledgeBaseArtifact'));
 const KnowledgeBaseTechniques = lazy(() => import('@/pages/KnowledgeBaseTechniques'));
 const KnowledgeBaseTechnique = lazy(() => import('@/pages/KnowledgeBaseTechnique'));
+const KnowledgeBaseLattice = lazy(() => import('@/pages/KnowledgeBaseLattice'));
 const PatternBuilder = lazy(() => import('@/pages/PatternBuilder'));
 const Testimonials = lazy(() => import('@/pages/Testimonials'));
 const Auth = lazy(() => import('@/pages/Auth'));
@@ -704,6 +705,15 @@ export const DynamicRoutes = () => {
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <KnowledgeBaseTechniques />
+            </Suspense>
+          </ErrorBoundary>
+        </SiteSettingsRouteGuard>
+      } />
+      <Route path="/knowledge-base/lattice" element={
+        <SiteSettingsRouteGuard feature="knowledge">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <KnowledgeBaseLattice />
             </Suspense>
           </ErrorBoundary>
         </SiteSettingsRouteGuard>

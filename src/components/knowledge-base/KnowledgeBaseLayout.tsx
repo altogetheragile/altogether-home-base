@@ -21,6 +21,7 @@ interface KnowledgeBaseLayoutProps {
 
 const SUBNAV = [
   { label: 'Map', to: '/knowledge-base' },
+  { label: 'Lattice', to: '/knowledge-base/lattice' },
   { label: 'Techniques', to: '/knowledge-base/techniques' },
   { label: 'Pattern Builder', to: '/knowledge-base/pattern-builder' },
 ];
