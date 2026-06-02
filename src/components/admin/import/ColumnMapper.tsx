@@ -21,7 +21,7 @@ const getTargetFields = (targetEntity: string) => {
         { key: 'name', label: 'Knowledge Item', required: true },
         { key: 'description', label: 'Knowledge Item Description', required: false },
         { key: 'background', label: 'Background', required: false },
-        { key: 'originator', label: 'Source', required: false },
+        { key: 'source', label: 'Source', required: false },
         { key: 'summary', label: 'Summary', required: false },
         
         // Taxonomy fields
@@ -161,7 +161,7 @@ export const ColumnMapper: React.FC<ColumnMapperProps> = ({ importRecord, header
           name: ['knowledge item', 'title', 'activity', 'technique'],
           description: ['knowledge item description', 'desc', 'content'],
           background: ['background'],
-          originator: ['source', 'author', 'created by'],
+          source: ['source', 'author', 'created by', 'originator'],
           summary: ['brief', 'overview', 'narrative form'],
           category_name: ['category'],
           category_description: ['category description'],
