@@ -282,9 +282,12 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
   const handleSave = async (shouldNavigateAway = false) => {
     const isValid = await form.trigger();
     if (!isValid) {
+      const fields = Object.keys(form.formState.errors);
       toast({
         title: "Validation Error",
-        description: "Please fix the errors before saving.",
+        description: fields.length
+          ? `Please fix: ${fields.join(', ')}`
+          : "Please fix the errors before saving.",
         variant: "destructive",
       });
       return;
