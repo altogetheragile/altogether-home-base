@@ -231,90 +231,112 @@ serve(async (req) => {
           }
         }
         
-        // Handle planning layer  
-        let planningLayerId = null;
-        if (mappedData.planning_layer_name) {
-          const layerSlug = createSlug(mappedData.planning_layer_name);
-          
-          const { data: existingLayer } = await supabaseClient
-            .from('planning_layers')
+        // Handle planning focus. Accept the ColumnMapper key (planning_focuses),
+        // the Excel-manager key (planning_focus_name) and the legacy key.
+        let planningFocusId = null;
+        const planningName = mappedData.planning_focuses || mappedData.planning_focus_name || mappedData.planning_layer_name;
+        const planningDesc = mappedData.planning_focus_description || mappedData.planning_layer_description;
+        if (planningName) {
+          const focusSlug = createSlug(planningName);
+
+          const { data: existingFocus } = await supabaseClient
+            .from('planning_focuses')
             .select('id')
-            .eq('slug', layerSlug)
+            .eq('slug', focusSlug)
             .single();
-          
-          if (existingLayer) {
-            planningLayerId = existingLayer.id;
+
+          if (existingFocus) {
+            planningFocusId = existingFocus.id;
           } else {
             // Get next display order
             const { data: maxOrder } = await supabaseClient
-              .from('planning_layers')
+              .from('planning_focuses')
               .select('display_order')
               .order('display_order', { ascending: false })
               .limit(1)
               .single();
-            
+
             const nextOrder = (maxOrder?.display_order || 0) + 1;
-            
-            const { data: newLayer, error: layerError } = await supabaseClient
-              .from('planning_layers')
+
+            const { data: newFocus, error: focusError } = await supabaseClient
+              .from('planning_focuses')
               .insert({
-                name: mappedData.planning_layer_name,
-                slug: layerSlug,
-                description: mappedData.planning_layer_description || null,
+                name: planningName,
+                slug: focusSlug,
+                description: planningDesc || null,
                 color: generateColor(),
                 display_order: nextOrder
               })
               .select('id')
               .single();
-            
-            if (layerError) throw layerError;
-            planningLayerId = newLayer.id;
+
+            if (focusError) throw focusError;
+            planningFocusId = newFocus.id;
           }
         }
         
-        // Handle activity domain
+        // Handle activity domain. Accept the ColumnMapper key (activity_domain_name)
+        // and the Excel-manager key (domain_name).
         let domainId = null;
-        if (mappedData.domain_name) {
-          const domainSlug = createSlug(mappedData.domain_name);
-          
+        const domainName = mappedData.domain_name || mappedData.activity_domain_name;
+        const domainDesc = mappedData.domain_description;
+        if (domainName) {
+          const domainSlug = createSlug(domainName);
+
           const { data: existingDomain } = await supabaseClient
             .from('activity_domains')
             .select('id')
             .eq('slug', domainSlug)
             .single();
-          
+
           if (existingDomain) {
             domainId = existingDomain.id;
           } else {
             const { data: newDomain, error: domainError } = await supabaseClient
               .from('activity_domains')
               .insert({
-                name: mappedData.domain_name,
+                name: domainName,
                 slug: domainSlug,
-                description: mappedData.domain_description || null,
+                description: domainDesc || null,
                 color: generateColor()
               })
               .select('id')
               .single();
-            
+
             if (domainError) throw domainError;
             domainId = newDomain.id;
           }
         }
-        
-        // Set foreign key relationships
-        if (categoryId) kiData.category_id = categoryId;
+
+        // Set foreign key relationships. Domain and planning focus are stored on
+        // the item (existing rows use these columns); category lives only in the
+        // junction table, so it is linked after insert.
         if (domainId) kiData.domain_id = domainId;
-        if (planningLayerId) kiData.planning_layer_id = planningLayerId;
-        
+        if (planningFocusId) kiData.planning_focus_id = planningFocusId;
+
         // Insert knowledge item
         const { data: newKI, error: kiError } = await supabaseClient
           .from('knowledge_items')
           .insert(kiData)
           .select('id')
           .single();
-        
+
         if (kiError) throw kiError;
+
+        // Link taxonomy via the junction tables (this is how the UI reads
+        // categories and domains; the direct FK alone does not surface them).
+        if (categoryId) {
+          const { error: catLinkError } = await supabaseClient
+            .from('knowledge_item_categories')
+            .insert({ knowledge_item_id: newKI.id, category_id: categoryId, is_primary: true });
+          if (catLinkError) console.error('Category link error:', catLinkError);
+        }
+        if (domainId) {
+          const { error: domainLinkError } = await supabaseClient
+            .from('knowledge_item_domains')
+            .insert({ knowledge_item_id: newKI.id, domain_id: domainId, is_primary: true });
+          if (domainLinkError) console.error('Domain link error:', domainLinkError);
+        }
         
         // Create use cases if we have the data
         const useCases = [];
