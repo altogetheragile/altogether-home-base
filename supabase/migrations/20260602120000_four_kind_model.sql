@@ -81,6 +81,13 @@ VALUES
   ('ci-business-model','Business Model','constituent','field_content',NULL,'The content that fills a Business Model canvas.',true)
 ON CONFLICT (slug) DO NOTHING;
 
+-- Acceptance criteria are a component of the Story constituent (story-internal),
+-- not a thing that shapes an artifact. The Acceptance Criteria / Gherkin-BDD
+-- techniques therefore carry no produce_or_shape/generate/decompose edge.
+UPDATE knowledge_items
+SET components = '[{"name":"Acceptance Criteria","question":"What conditions must hold for this story to be accepted?","perspective":"what"}]'::jsonb
+WHERE slug = 'ci-story';
+
 -- 6. Cross-horizon edges (safe to derive) ----------------------------------
 -- anchors_to: lower horizon references the same anchor at the higher horizon.
 -- cascades_to: a higher-horizon container feeds the one below.

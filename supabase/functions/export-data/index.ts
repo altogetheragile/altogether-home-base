@@ -56,7 +56,14 @@ function buildKnowledgeBaseExport(rows: any[], edgeRows: any[] = []) {
 
   const constituents = rows
     .filter((r) => r.item_type === 'constituent')
-    .map((r) => ({ id: r.slug, name: r.name, family: r.family ?? null, level: r.level ?? null, description: r.description ?? '' }))
+    .map((r) => ({
+      id: r.slug,
+      name: r.name,
+      family: r.family ?? null,
+      level: r.level ?? null,
+      description: r.description ?? '',
+      components: r.components ?? [],
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   // Typed edges expressed by slug for a clean round-trip.

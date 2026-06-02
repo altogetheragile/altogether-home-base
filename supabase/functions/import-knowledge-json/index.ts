@@ -57,6 +57,8 @@ function constituentToRow(c: any) {
     description: c.description ?? null,
     family: c.family === 'queue_item' || c.family === 'field_content' ? c.family : null,
     level: ['epic', 'feature', 'story', 'task'].includes(c.level) ? c.level : null,
+    // Constituents carry components too (e.g. a story's acceptance criteria).
+    components: Array.isArray(c.components) ? c.components : [],
   }
 }
 

@@ -300,7 +300,7 @@ export const IsaO3Section: React.FC = () => {
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">Components</CardTitle>
           <CardDescription className="text-xs">
-            The questions this artifact answers, each tagged with a perspective
+            The parts this item is made of (e.g. a story's acceptance criteria), each tagged with a perspective
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

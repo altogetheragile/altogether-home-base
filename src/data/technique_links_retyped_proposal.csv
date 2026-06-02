@@ -1,8 +1,7 @@
 technique_slug,technique_name,target_artifact,target_shape,proposed_edge_type,via_constituent,from_level,to_level,confidence,note
 5-whys,5 Whys,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
 a-b-testing,A/B Testing,team-output-feedback,container,produce_or_shape,,,,draft,Fills/structures the team-output-feedback container.
-acceptance-criteria,Acceptance Criteria,team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
-acceptance-criteria,Acceptance Criteria,team-selected-work-items,container,produce_or_shape,,,,draft,Fills/structures the team-selected-work-items container.
+acceptance-criteria,Acceptance Criteria,,,none,,,,decided,Story-internal: output is the ci-story Acceptance Criteria component. No artifact edge (DoD owns the Quality Bar relationship).
 accessibility-audit,Accessibility Audit,coord-integration-standard,anchor,formalise,,,,draft,Formalises the coord-integration-standard anchor (likely via a field-content item).
 accessibility-audit,Accessibility Audit,team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
 assumption-mapping,Assumption Mapping,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
@@ -15,7 +14,7 @@ cumulative-flow-diagrams,Cumulative Flow Diagrams,team-delivery-health-metrics,c
 customer-interviews,Customer Interviews,coord-user-beneficiary-profile,container,produce_or_shape,,,,draft,Fills/structures the coord-user-beneficiary-profile container.
 daily-stand-ups,Daily Stand-ups,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
 definition-of-done-dod,Definition of Done (DoD),coord-integration-standard,anchor,formalise,,,,draft,Formalises the coord-integration-standard anchor (likely via a field-content item).
-definition-of-done-dod,Definition of Done (DoD),team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
+definition-of-done-dod,Definition of Done (DoD),team-quality-bar,anchor,produce_or_shape,,,,decided,DoD shapes the Quality Bar and checks that acceptance criteria are met.
 delivery-plan,Delivery Plan,coord-delivery-schedule,container,produce_or_shape,,,,draft,Fills/structures the coord-delivery-schedule container.
 design-studio-workshop,Design Studio Workshop,coord-solution-design,container,produce_or_shape,,,,draft,Fills/structures the coord-solution-design container.
 design-studio-workshops,Design Studio Workshops,coord-solution-design,container,produce_or_shape,,,,draft,Fills/structures the coord-solution-design container.
@@ -34,8 +33,7 @@ fishbone-diagram,Fishbone Diagram,,,,,,,draft,No produce link in the draft; may 
 flow-metrics,Flow Metrics,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
 flow-metrics-cycle-time-lead-time,"Flow Metrics (Cycle Time, Lead Time)",team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
 functional-decomposition,Functional Decomposition,coord-solution-design,container,decompose,ci-story,story,story,draft,Splits one item into smaller items; pick the real from/to levels.
-gherkin-bdd,Gherkin/BDD,team-quality-bar,anchor,formalise,,,,draft,Formalises the team-quality-bar anchor (likely via a field-content item).
-gherkin-bdd,Gherkin/BDD,team-selected-work-items,container,produce_or_shape,,,,draft,Fills/structures the team-selected-work-items container.
+gherkin-bdd,Gherkin/BDD,,,none,,,,decided,Story-internal: expresses the ci-story acceptance criteria as scenarios. No artifact edge.
 happiness-metric-niko-niko,Happiness Metric / Niko-Niko,team-delivery-health-metrics,container,produce_or_shape,,,,draft,Fills/structures the team-delivery-health-metrics container.
 heuristic-evaluation,Heuristic Evaluation,team-output-feedback,container,produce_or_shape,,,,draft,Fills/structures the team-output-feedback container.
 how-might-we,How Might We?,,,,,,,draft,No produce link in the draft; may convene an event or generate an item - Alun to decide.
