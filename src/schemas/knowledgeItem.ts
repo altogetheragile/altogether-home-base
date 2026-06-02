@@ -92,10 +92,21 @@ export const knowledgeItemSchema = z.object({
   domain_ids: z.array(z.string().uuid()).default([]),
   tag_ids: z.array(z.string().uuid()).default([]),
   
-  // NEW: Primary selections and rationales for each classification type
-  primary_decision_level_id: z.string().uuid().optional().nullable(),
-  primary_category_id: z.string().uuid().optional().nullable(),
-  primary_domain_id: z.string().uuid().optional().nullable(),
+  // NEW: Primary selections and rationales for each classification type.
+  // Treat '' (no primary selected) as null, like primary_publication_id, so the
+  // uuid check doesn't reject an empty selection and block saving.
+  primary_decision_level_id: z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.string().uuid().optional().nullable()
+  ),
+  primary_category_id: z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.string().uuid().optional().nullable()
+  ),
+  primary_domain_id: z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.string().uuid().optional().nullable()
+  ),
   decision_level_rationale: z.string().optional(),
   category_rationale: z.string().optional(),
   domain_rationale: z.string().optional(),
