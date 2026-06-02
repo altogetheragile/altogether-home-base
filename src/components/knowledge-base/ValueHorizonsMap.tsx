@@ -29,11 +29,16 @@ function Cell({ artifacts, inheritablePrompt }: { artifacts: KbArtifact[]; inher
         <Link
           key={a.id}
           to={`/knowledge-base/artifacts/${a.id}`}
-          className="text-sm font-semibold leading-tight hover:underline"
+          className="block leading-snug group"
           style={{ color: p.deepTeal }}
-          title={a.oneLiner}
+          title={a.name}
         >
-          {a.name}
+          <span className="text-sm group-hover:underline" style={{ color: p.body }}>
+            {a.question || a.oneLiner || a.name}
+          </span>
+          <span className="block text-[10px] uppercase tracking-wide mt-0.5" style={{ color: p.muted }}>
+            {a.name}
+          </span>
         </Link>
       ))}
     </div>
