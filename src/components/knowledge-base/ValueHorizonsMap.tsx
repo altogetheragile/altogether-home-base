@@ -84,17 +84,12 @@ function Cell({ questions, artifacts }: { questions?: string[]; artifacts: KbArt
       style={{ background: p.white, border: `1px solid ${p.paleTeal}` }}
     >
       {questions && questions.length > 0 && (
-        <div className="flex flex-col gap-0.5">
-          {questions.map((q, i) => (
-            <span
-              key={i}
-              className="text-xs leading-snug"
-              style={{ color: empty ? p.muted : p.body, opacity: empty ? 0.7 : 1 }}
-            >
-              {q}
-            </span>
-          ))}
-        </div>
+        <p
+          className="text-xs leading-snug"
+          style={{ color: empty ? p.muted : p.body, opacity: empty ? 0.7 : 1 }}
+        >
+          {questions.join(' ')}
+        </p>
       )}
       {!empty && (
         <div className="leading-tight">
