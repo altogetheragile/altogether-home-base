@@ -8,6 +8,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { JsonLd, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { colors as p } from '@/theme/colors';
 
 // ─── Responsive CSS classes (media-query driven) ────────────────────────────
@@ -134,6 +135,27 @@ const About: React.FC = () => {
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/about`} />
       </Helmet>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'ProfilePage',
+        mainEntity: {
+          '@type': 'Person',
+          name: 'Alun Davies-Baker',
+          jobTitle: 'Agile Coach and Trainer',
+          description: 'Founder of Altogether Agile, with 25 years of hands-on agile experience as an ICF-accredited coach and accredited Scrum trainer.',
+          url: `${SITE_URL}/about`,
+          image: `${SITE_URL}/images/alun.webp`,
+          worksFor: {
+            '@type': 'Organization',
+            name: 'Altogether Agile',
+            url: SITE_URL,
+          },
+        },
+      }} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: `${SITE_URL}/` },
+        { name: 'About', url: `${SITE_URL}/about` },
+      ]} />
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}

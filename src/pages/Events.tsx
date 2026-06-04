@@ -8,6 +8,7 @@ import { EventCardQuote } from '@/components/testimonials/TestimonialComponents'
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { JsonLd, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { colors as p } from '@/theme/colors';
 
 const categoryColours: Record<string, { solid: string; pill: string; light: string }> = {
@@ -352,15 +353,46 @@ const Events: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>Agile Training Courses & Workshops UK - Altogether Agile</title>
-        <meta name="description" content="Framework-based agile training courses in the UK covering AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally by an experienced coach." />
-        <meta property="og:title" content="Agile Training Courses & Workshops UK - Altogether Agile" />
-        <meta property="og:description" content="Framework-based agile training courses in the UK covering AgilePM, Scrum Master, Product Owner, and more. Small-group workshops delivered personally." />
+        <title>Agile Training Courses in London & the UK - Altogether Agile</title>
+        <meta name="description" content="Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK." />
+        <meta property="og:title" content="Agile Training Courses in London & the UK - Altogether Agile" />
+        <meta property="og:description" content="Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. In person across the London area or live online across the UK." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:url" content={`${SITE_URL}/events`} />
         <meta property="og:type" content="website" />
         <link rel="canonical" href={`${SITE_URL}/events`} />
       </Helmet>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'Agile Training Courses and Workshops',
+        itemListElement: courses.map((course, index) => {
+          const firstDate = course.scheduledDates[0];
+          const courseUrl = firstDate
+            ? `${SITE_URL}/events/${firstDate.eventId}`
+            : `${SITE_URL}/courses/${course.id}`;
+          return {
+            '@type': 'ListItem',
+            position: index + 1,
+            item: {
+              '@type': 'Course',
+              name: course.title,
+              description: course.description,
+              url: courseUrl,
+              provider: {
+                '@type': 'Organization',
+                name: 'Altogether Agile',
+                url: SITE_URL,
+                areaServed: ['London', 'United Kingdom'],
+              },
+            },
+          };
+        }),
+      }} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: `${SITE_URL}/` },
+        { name: 'Courses and Workshops', url: `${SITE_URL}/events` },
+      ]} />
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
@@ -375,7 +407,7 @@ const Events: React.FC = () => {
               Every course, run personally.<br />No associates. No surprises.
             </h1>
             <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.7, margin: 0, maxWidth: 440 }}>
-              Browse the full catalogue below. Courses with a date scheduled show an orange badge - all others can be arranged for your team or organisation on request.
+              Browse the full catalogue below. Delivered in person across the London area at your site, or live online across the UK. Courses with a date scheduled show an orange badge - all others can be arranged for your team or organisation on request.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, justifyContent: 'flex-end', paddingBottom: isMobile ? 32 : 0 }}>

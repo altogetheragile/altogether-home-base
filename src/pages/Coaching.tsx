@@ -6,6 +6,7 @@ import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { JsonLd, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { colors as p } from '@/theme/colors';
 
 // ─── Responsive CSS classes (media-query driven) ────────────────────────────
@@ -230,6 +231,24 @@ const Coaching: React.FC = () => {
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/coaching`} />
       </Helmet>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        serviceType: 'Agile Coaching',
+        name: 'Agile Coaching and One-to-One Coaching',
+        description: 'Professional one-to-one coaching and agile team coaching using an ICF-aligned approach, drawing on 25 years of hands-on experience.',
+        url: `${SITE_URL}/coaching`,
+        provider: {
+          '@type': 'Organization',
+          name: 'Altogether Agile',
+          url: SITE_URL,
+        },
+        areaServed: ['London', 'United Kingdom'],
+      }} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: `${SITE_URL}/` },
+        { name: 'Coaching', url: `${SITE_URL}/coaching` },
+      ]} />
       <ResponsiveStyles />
 
       {/* ─── NAV ─── */}
