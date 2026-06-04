@@ -66,7 +66,10 @@ function buildMetaTags({ title, description, canonical, ogType = 'website', ogIm
   tags += `    <meta name="twitter:image" content="${img}" />\n`;
 
   if (jsonLd) {
-    tags += `    <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>\n`;
+    const blocks = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+    for (const block of blocks) {
+      tags += `    <script type="application/ld+json">${JSON.stringify(block)}</script>\n`;
+    }
   }
 
   tags += `    <meta name="prerender-status" content="prerendered" />\n`;
@@ -170,6 +173,59 @@ function courseJsonLd(course) {
   };
 }
 
+function profilePageJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: {
+      '@type': 'Person',
+      name: 'Alun Davies-Baker',
+      jobTitle: 'Agile Coach and Trainer',
+      description: 'Founder of Altogether Agile, with 25 years of hands-on agile experience as an ICF-accredited coach and accredited Scrum trainer.',
+      url: `${SITE_URL}/about`,
+      image: `${SITE_URL}/images/alun.webp`,
+      worksFor: { '@type': 'Organization', name: 'Altogether Agile', url: SITE_URL },
+    },
+  };
+}
+
+function coachingServiceJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    serviceType: 'Agile Coaching',
+    name: 'Agile Coaching and One-to-One Coaching',
+    description: 'Professional one-to-one coaching and agile team coaching using an ICF-aligned approach, drawing on 25 years of hands-on experience.',
+    url: `${SITE_URL}/coaching`,
+    provider: { '@type': 'Organization', name: 'Altogether Agile', url: SITE_URL },
+    areaServed: ['London', 'United Kingdom'],
+  };
+}
+
+function courseItemListJsonLd(templates) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Agile Training Courses and Workshops',
+    itemListElement: templates.map((course, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Course',
+        name: course.title,
+        description: truncate(course.description, 300),
+        url: `${SITE_URL}/courses/${course.id}`,
+        provider: {
+          '@type': 'Organization',
+          name: 'Altogether Agile',
+          url: SITE_URL,
+          areaServed: ['London', 'United Kingdom'],
+        },
+      },
+    })),
+  };
+}
+
 function breadcrumbJsonLd(items) {
   return {
     '@context': 'https://schema.org',
@@ -193,8 +249,8 @@ const STATIC_PAGES = {
     jsonLd: organizationJsonLd(),
   },
   '/events': {
-    title: 'Courses, Workshops & Masterclasses - Altogether Agile',
-    description: 'Browse upcoming agile courses, workshops, and masterclasses. Framework-based training delivered by an experienced agile coach and trainer.',
+    title: 'Agile Training Courses in London & the UK - Altogether Agile',
+    description: 'Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK.',
   },
   '/coaching': {
     title: 'Coaching - Altogether Agile',
@@ -280,6 +336,31 @@ async function main() {
 
   let succeeded = 0;
 
+  // Per-route structured data that depends on runtime data or multiple blocks
+  const dynamicJsonLd = {
+    '/about': [
+      profilePageJsonLd(),
+      breadcrumbJsonLd([
+        { name: 'Home', url: `${SITE_URL}/` },
+        { name: 'About', url: `${SITE_URL}/about` },
+      ]),
+    ],
+    '/events': [
+      courseItemListJsonLd(templates),
+      breadcrumbJsonLd([
+        { name: 'Home', url: `${SITE_URL}/` },
+        { name: 'Courses and Workshops', url: `${SITE_URL}/events` },
+      ]),
+    ],
+    '/coaching': [
+      coachingServiceJsonLd(),
+      breadcrumbJsonLd([
+        { name: 'Home', url: `${SITE_URL}/` },
+        { name: 'Coaching', url: `${SITE_URL}/coaching` },
+      ]),
+    ],
+  };
+
   // 1. Static pages
   for (const [route, meta] of Object.entries(STATIC_PAGES)) {
     const tags = buildMetaTags({
@@ -287,7 +368,7 @@ async function main() {
       description: meta.description,
       canonical: `${SITE_URL}${route === '/' ? '' : route}`,
       ogType: meta.ogType,
-      jsonLd: meta.jsonLd,
+      jsonLd: dynamicJsonLd[route] || meta.jsonLd,
     });
     writeHtml(route, injectMeta(baseHtml, tags));
     console.log(`  ok   ${route}`);
