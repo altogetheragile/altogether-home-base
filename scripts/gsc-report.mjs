@@ -19,15 +19,22 @@ const SITE_URL = 'sc-domain:altogetheragile.com'; // domain property
 // ── Auth ────────────────────────────────────────────────────────────
 
 function getAuthClient() {
-  if (!existsSync(TOKEN_PATH)) {
-    console.error('No token found. Run: node scripts/gsc-auth.mjs');
+  // Prefer env secrets (used by the scheduled remote agent, where the
+  // gitignored credential files are not present); fall back to local files.
+  let creds, token;
+  if (process.env.GSC_CREDENTIALS_JSON && process.env.GSC_TOKEN_JSON) {
+    creds = JSON.parse(process.env.GSC_CREDENTIALS_JSON);
+    token = JSON.parse(process.env.GSC_TOKEN_JSON);
+  } else if (existsSync(CREDS_PATH) && existsSync(TOKEN_PATH)) {
+    creds = JSON.parse(readFileSync(CREDS_PATH, 'utf-8'));
+    token = JSON.parse(readFileSync(TOKEN_PATH, 'utf-8'));
+  } else {
+    console.error('No credentials. Set GSC_CREDENTIALS_JSON + GSC_TOKEN_JSON env vars, or run: node scripts/gsc-auth.mjs');
     process.exit(1);
   }
 
-  const creds = JSON.parse(readFileSync(CREDS_PATH, 'utf-8'));
   const { client_id, client_secret } = creds.installed;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, 'http://localhost:3199');
-  const token = JSON.parse(readFileSync(TOKEN_PATH, 'utf-8'));
   oAuth2Client.setCredentials(token);
   return oAuth2Client;
 }
