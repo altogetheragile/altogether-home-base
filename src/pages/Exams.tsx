@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { JsonLd, BreadcrumbSchema } from '@/components/seo/JsonLd';
+import { BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { ClipboardList, Clock, Award, HelpCircle } from 'lucide-react';
 
 interface PublicExam {
@@ -77,15 +77,6 @@ const Exams = () => {
         <meta property="og:url" content={`${SITE_URL}/exams`} />
         <meta property="og:type" content="website" />
       </Helmet>
-      <JsonLd data={{
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: EXAM_FAQS.map((item) => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: { '@type': 'Answer', text: item.a },
-        })),
-      }} />
       <BreadcrumbSchema items={[
         { name: 'Home', url: `${SITE_URL}/` },
         { name: 'Practice Exams', url: `${SITE_URL}/exams` },
