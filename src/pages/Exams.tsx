@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { JsonLd, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { ClipboardList, Clock, Award, HelpCircle } from 'lucide-react';
 
 interface PublicExam {
@@ -33,6 +34,35 @@ const usePublishedExams = () =>
     },
   });
 
+// FAQ content. Mirrored in scripts/prerender.mjs as FAQPage JSON-LD so it is
+// crawler-visible. Figures match the published practice papers in the exams table.
+const EXAM_FAQS: { q: string; a: string }[] = [
+  {
+    q: 'What is the AgilePM Foundation exam?',
+    a: 'The AgilePM Foundation exam is a closed-book, multiple-choice paper that tests your knowledge of the AgilePM framework, including its principles, roles, products, and the agile project lifecycle. It is the entry-level AgilePM qualification and the prerequisite for the AgilePM Practitioner exam.',
+  },
+  {
+    q: 'How many questions are in the AgilePM Foundation exam?',
+    a: 'Our AgilePM3 Foundation practice papers contain 50 questions to answer in 40 minutes, with a pass mark of 30 out of 50. They follow the multiple-choice format of the Foundation paper and are based on the latest version of the AgilePM Handbook.',
+  },
+  {
+    q: 'Are these AgilePM practice exams free?',
+    a: 'Yes. Every practice paper on this page is free. You can sit a timed mock exam or switch to revision mode and work through the questions at your own pace, with answers and explanations.',
+  },
+  {
+    q: 'What is the difference between AgilePM Foundation and Practitioner?',
+    a: 'Foundation tests whether you understand the AgilePM framework and terminology. Practitioner goes further and tests whether you can apply the framework to a realistic project scenario. You need to pass Foundation before taking Practitioner.',
+  },
+  {
+    q: 'How should I prepare for the AgilePM Foundation exam?',
+    a: 'Read the AgilePM Handbook, learn the roles, products, and the eight principles, then practise under timed conditions. Sitting full practice papers helps you manage the time limit and spot the topics you still need to revise.',
+  },
+  {
+    q: 'Do you offer Scrum Master practice questions?',
+    a: 'Yes. Our Professional Scrum Master practice exam has 40 questions to answer in 30 minutes, with a pass mark of 34 out of 40, so you can prepare for the Scrum Master assessment alongside AgilePM.',
+  },
+];
+
 const Exams = () => {
   const { data: exams, isLoading } = usePublishedExams();
 
@@ -47,6 +77,19 @@ const Exams = () => {
         <meta property="og:url" content={`${SITE_URL}/exams`} />
         <meta property="og:type" content="website" />
       </Helmet>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: EXAM_FAQS.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      }} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: `${SITE_URL}/` },
+        { name: 'Practice Exams', url: `${SITE_URL}/exams` },
+      ]} />
       <Navigation />
 
       {/* Hero */}
@@ -154,6 +197,55 @@ const Exams = () => {
             <p style={{ color: p.muted, fontSize: 15 }}>Check back soon for practice exams.</p>
           </div>
         )}
+      </div>
+
+      {/* About the exams */}
+      <div style={{ background: '#fff', borderTop: '1px solid #E5E7EB' }}>
+        <div style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px' }}>
+          <h2 style={{ color: p.deepTeal, fontSize: 26, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.25 }}>
+            About the AgilePM Foundation Exam
+          </h2>
+          <p style={{ color: p.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
+            The AgilePM Foundation exam tests your understanding of the AgilePM framework: its eight
+            principles, the team roles, the products produced through a project, and the agile project
+            lifecycle. It is a closed-book, multiple-choice paper based on the AgilePM Handbook, and it
+            is the entry-level AgilePM qualification. Passing Foundation is the prerequisite for the
+            AgilePM Practitioner exam, which tests how well you can apply the framework to a real project
+            scenario.
+          </p>
+          <p style={{ color: p.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
+            Our free AgilePM3 Foundation practice papers follow the Foundation format: 50 questions to
+            complete in 40 minutes, with a pass mark of 30 out of 50. They are based on the latest version
+            of the AgilePM Handbook. Sit a paper as a timed mock exam to rehearse the real thing, or switch
+            to revision mode and work through the questions at your own pace with answers and explanations.
+          </p>
+
+          <h2 style={{ color: p.deepTeal, fontSize: 26, fontWeight: 800, margin: '40px 0 16px', lineHeight: 1.25 }}>
+            How to Prepare
+          </h2>
+          <ul style={{ color: p.muted, fontSize: 16, lineHeight: 1.7, margin: 0, paddingLeft: 22 }}>
+            <li>Read the AgilePM Handbook and learn the eight principles, the roles, and the products.</li>
+            <li>Understand the agile project lifecycle and how the phases fit together.</li>
+            <li>Practise under timed conditions so the 40-minute limit feels comfortable.</li>
+            <li>Use revision mode to focus on the topics you find hardest, then re-sit a full paper.</li>
+          </ul>
+
+          <h2 style={{ color: p.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>
+            Frequently Asked Questions
+          </h2>
+          <div>
+            {EXAM_FAQS.map((item) => (
+              <div key={item.q} style={{ borderTop: '1px solid #E5E7EB', padding: '20px 0' }}>
+                <h3 style={{ color: p.deepTeal, fontSize: 17, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.4 }}>
+                  {item.q}
+                </h3>
+                <p style={{ color: p.muted, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
+                  {item.a}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Footer />
