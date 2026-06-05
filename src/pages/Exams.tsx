@@ -43,7 +43,7 @@ const EXAM_FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'How many questions are in the AgilePM Foundation exam?',
-    a: 'Our AgilePM3 Foundation practice papers contain 50 questions to answer in 40 minutes, with a pass mark of 30 out of 50. They follow the multiple-choice format of the Foundation paper and are based on the latest version of the AgilePM Handbook.',
+    a: 'Our AgilePM3 Foundation practice papers contain 50 questions to answer in 40 minutes, with a pass mark of 25 out of 50 (50%). They follow the multiple-choice format of the Foundation paper and are based on the latest version of the AgilePM Handbook.',
   },
   {
     q: 'Are these AgilePM practice exams free?',
@@ -206,7 +206,7 @@ const Exams = () => {
           </p>
           <p style={{ color: p.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
             Our free AgilePM3 Foundation practice papers follow the Foundation format: 50 questions to
-            complete in 40 minutes, with a pass mark of 30 out of 50. They are based on the latest version
+            complete in 40 minutes, with a pass mark of 25 out of 50 (50%). They are based on the latest version
             of the AgilePM Handbook. Sit a paper as a timed mock exam to rehearse the real thing, or switch
             to revision mode and work through the questions at your own pace with answers and explanations.
           </p>
