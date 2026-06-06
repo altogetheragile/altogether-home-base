@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -352,16 +352,12 @@ const Events: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
-      <Helmet>
-        <title>Agile Training Courses in London & the UK - Altogether Agile</title>
-        <meta name="description" content="Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK." />
-        <meta property="og:title" content="Agile Training Courses in London & the UK - Altogether Agile" />
-        <meta property="og:description" content="Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. In person across the London area or live online across the UK." />
-        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
-        <meta property="og:url" content={`${SITE_URL}/events`} />
-        <meta property="og:type" content="website" />
-        <link rel="canonical" href={`${SITE_URL}/events`} />
-      </Helmet>
+      <SEOHead
+        title="Agile Training Courses in London & the UK - Altogether Agile"
+        description="Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK."
+        ogDescription="Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. In person across the London area or live online across the UK."
+        path="/events"
+      />
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'ItemList',

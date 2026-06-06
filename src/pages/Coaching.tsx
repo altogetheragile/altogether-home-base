@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { supabase } from '@/integrations/supabase/client';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
@@ -223,14 +223,11 @@ const Coaching: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
-      <Helmet>
-        <title>Coaching - Altogether Agile</title>
-        <meta name="description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
-        <meta property="og:title" content="Coaching - Altogether Agile" />
-        <meta property="og:description" content="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience." />
-        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
-        <link rel="canonical" href={`${SITE_URL}/coaching`} />
-      </Helmet>
+      <SEOHead
+        title="Coaching - Altogether Agile"
+        description="Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience."
+        path="/coaching"
+      />
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'Service',

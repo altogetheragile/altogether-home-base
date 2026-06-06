@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
 import { AboutSidebarQuotes } from '@/components/testimonials/TestimonialComponents';
 import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
@@ -127,14 +127,11 @@ const About: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
-      <Helmet>
-        <title>About Alun - Altogether Agile</title>
-        <meta name="description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer." />
-        <meta property="og:title" content="About Alun - Altogether Agile" />
-        <meta property="og:description" content="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer." />
-        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
-        <link rel="canonical" href={`${SITE_URL}/about`} />
-      </Helmet>
+      <SEOHead
+        title="About Alun - Altogether Agile"
+        description="Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer."
+        path="/about"
+      />
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'ProfilePage',

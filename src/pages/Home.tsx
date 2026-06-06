@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
-import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
+import { SEOHead } from '@/components/seo/SEOHead';
+import { BOOKING_URL } from '@/config/featureFlags';
 import { OrganizationSchema } from '@/components/seo/JsonLd';
 import { useCourseCards } from '@/hooks/useCourseCards';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
@@ -115,16 +115,11 @@ const Home: React.FC = () => {
 
   return (
     <div className="aa-page">
-      <Helmet>
-        <title>Altogether Agile - Agile Coaching & Training</title>
-        <meta name="description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
-        <meta property="og:title" content="Altogether Agile - Agile Coaching & Training" />
-        <meta property="og:description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
-        <meta name="twitter:description" content="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results." />
-        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
-        <meta property="og:type" content="website" />
-        <link rel="canonical" href={`${SITE_URL}/`} />
-      </Helmet>
+      <SEOHead
+        title="Altogether Agile - Agile Coaching & Training"
+        description="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results."
+        path="/"
+      />
       <OrganizationSchema />
 
       {/* ─── NAV ─── */}
