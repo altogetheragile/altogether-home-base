@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { AIToolbar, SaveStatus } from './AIToolbar';
 import { Button } from '@/components/ui/button';
 import { Save, ArrowLeft } from 'lucide-react';
@@ -23,6 +23,7 @@ import { UnifiedStoryData } from '@/types/story';
 import { useDebouncedCallback } from 'use-debounce';
 import { useStoryNumbering } from '@/hooks/useStoryNumbering';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
+import { useCanvasInteraction } from '@/hooks/canvas/useCanvasInteraction';
 const loadHtml2Canvas = () => import('html2canvas').then(m => m.default);
 
 // Adapter to convert canvas story data to UnifiedStoryData
@@ -79,8 +80,25 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
 }) => {
   // Element state
   const { items: elements, setItems: setElements, updateWithHistory: updateElementsWithHistory, undo, redo, canUndo, canRedo, resetHistory } = useCanvasHistory<CanvasElement>(initialData?.elements || []);
-  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
-  const [zoom, setZoom] = useState(1);
+
+  // Shared canvas interaction: selection, zoom, marquee, group drag, shortcuts, bounds
+  const {
+    selectedElementIds, setSelectedElementIds,
+    zoom, handleZoomIn, handleZoomOut,
+    isMarqueeSelecting, marqueeStart, marqueeEnd,
+    canvasRef,
+    handleGroupDragStart, handleGroupDragProgress, handleGroupMove,
+    getVisualPosition,
+    handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp,
+    canvasBounds,
+  } = useCanvasInteraction<CanvasElement>({
+    elements,
+    updateElementsWithHistory,
+    undo,
+    redo,
+    isBackgroundClick: (e) => !(e.target as HTMLElement).closest('[data-element-id]'),
+  });
+
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<CanvasElement | null>(null);
   const [splittingElement, setSplittingElement] = useState<CanvasElement | null>(null);
@@ -93,17 +111,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   // Compact view state
   const [isCompactView, setIsCompactView] = useState(false);
   
-  // Marquee selection state
-  const [isMarqueeSelecting, setIsMarqueeSelecting] = useState(false);
-  const [marqueeStart, setMarqueeStart] = useState({ x: 0, y: 0 });
-  const [marqueeEnd, setMarqueeEnd] = useState({ x: 0, y: 0 });
-  
-  // Group drag state
-  const [isDraggingGroup, setIsDraggingGroup] = useState(false);
-  const [groupDragDelta, setGroupDragDelta] = useState({ dx: 0, dy: 0 });
-  
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const wasMarqueeSelectingRef = useRef(false);
   
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
@@ -762,174 +769,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     return hasValidParent;
   }, [elements, selectedElementIds]);
 
-  // Group drag handlers
-  const handleGroupDragStart = useCallback(() => {
-    if (selectedElementIds.length > 1) {
-      setIsDraggingGroup(true);
-      setGroupDragDelta({ dx: 0, dy: 0 });
-    }
-  }, [selectedElementIds.length]);
-
-  const handleGroupDragProgress = useCallback((delta: { dx: number; dy: number }) => {
-    if (selectedElementIds.length > 1) {
-      let minX = Infinity, minY = Infinity;
-      elements.forEach(el => {
-        if (selectedElementIds.includes(el.id)) {
-          minX = Math.min(minX, el.position.x);
-          minY = Math.min(minY, el.position.y);
-        }
-      });
-      setGroupDragDelta({
-        dx: Math.max(delta.dx, -minX),
-        dy: Math.max(delta.dy, -minY),
-      });
-    }
-  }, [selectedElementIds, elements]);
-
-  const handleGroupMove = useCallback((_draggedId: string, delta: { dx: number; dy: number }) => {
-    setIsDraggingGroup(false);
-    setGroupDragDelta({ dx: 0, dy: 0 });
-    
-    let minX = Infinity, minY = Infinity;
-    elements.forEach(el => {
-      if (selectedElementIds.includes(el.id)) {
-        minX = Math.min(minX, el.position.x);
-        minY = Math.min(minY, el.position.y);
-      }
-    });
-    
-    const clampedDelta = {
-      dx: Math.max(delta.dx, -minX),
-      dy: Math.max(delta.dy, -minY),
-    };
-    
-    const updatedElements = elements.map(el => {
-      if (selectedElementIds.includes(el.id)) {
-        return {
-          ...el,
-          position: {
-            x: el.position.x + clampedDelta.dx,
-            y: el.position.y + clampedDelta.dy,
-          },
-        };
-      }
-      return el;
-    });
-    updateElementsWithHistory(updatedElements);
-  }, [selectedElementIds, elements, updateElementsWithHistory]);
-
-  const getVisualPosition = useCallback((element: CanvasElement) => {
-    if (isDraggingGroup && selectedElementIds.includes(element.id)) {
-      return {
-        x: element.position.x + groupDragDelta.dx,
-        y: element.position.y + groupDragDelta.dy,
-      };
-    }
-    return element.position;
-  }, [isDraggingGroup, groupDragDelta, selectedElementIds]);
-
-  // Marquee selection
-  const isElementInSelectionBox = useCallback((element: CanvasElement, box: { left: number; top: number; right: number; bottom: number }) => {
-    const { x, y } = element.position;
-    const { width, height } = element.size;
-    return x < box.right && x + width > box.left && y < box.bottom && y + height > box.top;
-  }, []);
-
-  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    
-    // Check if we clicked on an actual canvas element
-    const target = e.target as HTMLElement;
-    const clickedElement = target.closest('[data-element-id]');
-    if (clickedElement) return;
-    
-    canvasRef.current?.focus({ preventScroll: true });
-    
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const x = (e.clientX - rect.left) / zoom;
-    const y = (e.clientY - rect.top) / zoom;
-    
-    setIsMarqueeSelecting(true);
-    setMarqueeStart({ x, y });
-    setMarqueeEnd({ x, y });
-    
-    if (!e.shiftKey) {
-      setSelectedElementIds([]);
-    }
-  }, [zoom]);
-
-  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isMarqueeSelecting) return;
-    
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const x = (e.clientX - rect.left) / zoom;
-    const y = (e.clientY - rect.top) / zoom;
-    setMarqueeEnd({ x, y });
-  }, [isMarqueeSelecting, zoom]);
-
-  const handleCanvasMouseUp = useCallback((e: React.MouseEvent) => {
-    if (!isMarqueeSelecting) return;
-    
-    wasMarqueeSelectingRef.current = true;
-    setTimeout(() => { wasMarqueeSelectingRef.current = false; }, 0);
-    
-    const box = {
-      left: Math.min(marqueeStart.x, marqueeEnd.x),
-      top: Math.min(marqueeStart.y, marqueeEnd.y),
-      right: Math.max(marqueeStart.x, marqueeEnd.x),
-      bottom: Math.max(marqueeStart.y, marqueeEnd.y),
-    };
-    
-    const marqueeWidth = box.right - box.left;
-    const marqueeHeight = box.bottom - box.top;
-    
-    if (marqueeWidth > 5 || marqueeHeight > 5) {
-      const newSelected = elements.filter(el => isElementInSelectionBox(el, box)).map(el => el.id);
-      
-      if (e.shiftKey) {
-        setSelectedElementIds(prev => [...new Set([...prev, ...newSelected])]);
-      } else {
-        setSelectedElementIds(newSelected);
-      }
-    }
-    
-    setIsMarqueeSelecting(false);
-  }, [isMarqueeSelecting, marqueeStart, marqueeEnd, elements, isElementInSelectionBox]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
-        e.preventDefault();
-        redo();
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
-        e.preventDefault();
-        setSelectedElementIds(elements.map(el => el.id));
-        return;
-      }
-      if (e.key === 'Escape') {
-        setSelectedElementIds([]);
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [elements, undo, redo]);
-
-  // Zoom handlers
-  const handleZoomIn = useCallback(() => setZoom(prev => Math.min(prev + 0.1, 2)), []);
-  const handleZoomOut = useCallback(() => setZoom(prev => Math.max(prev - 0.1, 0.5)), []);
 
   // Export
   const handleExport = useCallback(async () => {
@@ -991,17 +830,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     navigate(`/projects/${projId}`);
   };
 
-  // Canvas bounds
-  const canvasBounds = useMemo(() => {
-    const MIN_WIDTH = 2000, MIN_HEIGHT = 1500, PADDING = 500;
-    if (elements.length === 0) return { width: MIN_WIDTH, height: MIN_HEIGHT };
-    let maxX = 0, maxY = 0;
-    elements.forEach(el => {
-      maxX = Math.max(maxX, el.position.x + el.size.width);
-      maxY = Math.max(maxY, el.position.y + el.size.height);
-    });
-    return { width: Math.max(MIN_WIDTH, maxX + PADDING), height: Math.max(MIN_HEIGHT, maxY + PADDING) };
-  }, [elements]);
 
   // Render element
   const renderElement = (element: CanvasElement) => {
