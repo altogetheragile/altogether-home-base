@@ -19,13 +19,3 @@ export const SafeText: React.FC<{ value: unknown; as?: keyof JSX.IntrinsicElemen
   if (!txt) return null;
   return <Comp className={className} style={style}>{txt}</Comp>;
 };
-
-// Debug-only pretty print (never for production UI text nodes)
-export const DebugObject: React.FC<{ value: unknown }> = ({ value }) => {
-  if (process.env.NODE_ENV === "production") return null;
-  return (
-    <pre className="mt-2 bg-gray-50 p-2 rounded text-xs overflow-x-auto">
-      {JSON.stringify(value, null, 2)}
-    </pre>
-  );
-};
