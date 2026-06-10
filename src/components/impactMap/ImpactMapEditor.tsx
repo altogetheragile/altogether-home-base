@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
+import { useDebouncedCallback } from 'use-debounce';
+import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import {
   ImpactMap,
   Actor,
@@ -32,19 +37,73 @@ const loadInitial = (): ImpactMap => {
   return exampleImpactMap();
 };
 
-export function ImpactMapEditor() {
-  const [map, setMap] = useState<ImpactMap>(loadInitial);
+interface ImpactMapEditorProps {
+  /** When opened from a saved project artifact, the stored map. */
+  initialData?: ImpactMap;
+  /** Present in artifact mode: autosaves back to this artifact instead of localStorage. */
+  artifactId?: string;
+  projectId?: string;
+}
+
+export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMapEditorProps = {}) {
+  const isArtifact = Boolean(artifactId && projectId);
+  const [map, setMap] = useState<ImpactMap>(() =>
+    initialData ? parseImpactMap(initialData) ?? emptyImpactMap() : loadInitial(),
+  );
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const diagramRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isFirstRender = useRef(true);
 
-  // Autosave
-  useEffect(() => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedProjectId = searchParams.get('projectId');
+  const { updateArtifact } = useProjectArtifactMutations();
+
+  const performArtifactSave = useDebouncedCallback(async (m: ImpactMap) => {
+    if (!artifactId || !projectId) return;
+    setSaveStatus('saving');
     try {
-      localStorage.setItem(STORAGE_KEY, toJson(map));
+      await updateArtifact.mutateAsync({ id: artifactId, updates: { data: { ...m } } });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch {
-      /* ignore quota errors */
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  }, 1500);
+
+  // Autosave: to the project artifact when opened from a project, otherwise to localStorage.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (isArtifact) {
+      performArtifactSave(map);
+    } else {
+      try {
+        localStorage.setItem(STORAGE_KEY, toJson(map));
+      } catch {
+        /* ignore quota errors */
+      }
     }
   }, [map]);
+
+  const handleSaveToProject = () => {
+    if (!user) {
+      toast.error('Please sign in to save to a project');
+      navigate('/auth');
+      return;
+    }
+    setSaveDialogOpen(true);
+  };
+  const handleSaveComplete = (projId: string) => {
+    toast.success('Impact map saved to project');
+    navigate(`/projects/${projId}`);
+  };
 
   // ── Immutable update helpers ──────────────────────────────────────────────
   const setGoal = (goal: string) => setMap((m) => ({ ...m, goal }));
@@ -174,6 +233,16 @@ export function ImpactMapEditor() {
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
+        {!isArtifact && (
+          <Button size="sm" onClick={handleSaveToProject}>
+            <Save className="mr-1.5 h-4 w-4" /> Save to Project
+          </Button>
+        )}
+        {isArtifact && saveStatus !== 'idle' && (
+          <span className="text-xs text-muted-foreground">
+            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save failed'}
+          </span>
+        )}
         <Button variant="outline" size="sm" onClick={() => setMap(exampleImpactMap())}>
           <Sparkles className="mr-1.5 h-4 w-4" /> Load Example
         </Button>
@@ -304,6 +373,17 @@ export function ImpactMapEditor() {
           </button>
         </div>
       </div>
+
+      <SaveToProjectDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        artifactType="impact-map"
+        artifactName={map.goal || 'Impact Map'}
+        artifactDescription={`${map.actors.length} actor${map.actors.length === 1 ? '' : 's'}`}
+        artifactData={map}
+        preselectedProjectId={preselectedProjectId || undefined}
+        onSaveComplete={handleSaveComplete}
+      />
     </div>
   );
 }

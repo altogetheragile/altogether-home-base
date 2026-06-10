@@ -288,6 +288,20 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'impact-map':
+        const ImpactMapEditor = React.lazy(() =>
+          import('@/components/impactMap/ImpactMapEditor').then(m => ({ default: m.ImpactMapEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading impact map...</div>}>
+            <ImpactMapEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
       default:
         return (
           <div className="bg-muted p-8 rounded-lg">
