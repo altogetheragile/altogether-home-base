@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw, Save } from 'lucide-react';
+import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useDebouncedCallback } from 'use-debounce';
@@ -52,6 +53,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   );
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [aiBusy, setAiBusy] = useState<string | null>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isFirstRender = useRef(true);
@@ -146,6 +148,77 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
     }));
   const deleteDeliverable = (actorId: string, impactId: string, delId: string) =>
     mapImpact(actorId, impactId, (i) => ({ ...i, deliverables: i.deliverables.filter((d) => d.id !== delId) }));
+
+  // ── AI assist (suggestions) ───────────────────────────────────────────────
+  const requireGoal = (): boolean => {
+    if (!map.goal.trim()) {
+      toast.error('Add a goal first, then let AI suggest.');
+      return false;
+    }
+    return true;
+  };
+
+  const suggest = async (
+    busyKey: string,
+    body: { level: 'actors' | 'impacts' | 'deliverables'; goal: string; actor?: string; impact?: string; existing: string[] },
+    apply: (labels: string[]) => void,
+  ) => {
+    if (!user) {
+      toast.error('Please sign in to use AI suggestions');
+      navigate('/auth');
+      return;
+    }
+    setAiBusy(busyKey);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-impact-map', { body });
+      if (error) throw error;
+      const suggestions: string[] = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      if (suggestions.length === 0) {
+        toast.info('No suggestions returned. Try rephrasing the goal.');
+        return;
+      }
+      apply(suggestions);
+      toast.success(`Added ${suggestions.length} AI suggestion${suggestions.length === 1 ? '' : 's'}`);
+    } catch {
+      toast.error('AI suggestion failed. Please try again.');
+    } finally {
+      setAiBusy(null);
+    }
+  };
+
+  const suggestActors = () => {
+    if (!requireGoal()) return;
+    suggest('actors', { level: 'actors', goal: map.goal, existing: map.actors.map((a) => a.label) }, (labels) =>
+      mapActors((a) => [...a, ...labels.map((l) => newActor(l))]),
+    );
+  };
+  const suggestImpacts = (actor: Actor) => {
+    if (!requireGoal()) return;
+    if (!actor.label.trim()) {
+      toast.error('Name the actor first.');
+      return;
+    }
+    suggest(
+      `impacts-${actor.id}`,
+      { level: 'impacts', goal: map.goal, actor: actor.label, existing: actor.impacts.map((i) => i.label) },
+      (labels) =>
+        mapActors((a) =>
+          a.map((x) => (x.id === actor.id ? { ...x, impacts: [...x.impacts, ...labels.map((l) => newImpact(l))] } : x)),
+        ),
+    );
+  };
+  const suggestDeliverables = (actor: Actor, impact: Impact) => {
+    if (!requireGoal()) return;
+    if (!actor.label.trim() || !impact.label.trim()) {
+      toast.error('Name the actor and impact first.');
+      return;
+    }
+    suggest(
+      `del-${impact.id}`,
+      { level: 'deliverables', goal: map.goal, actor: actor.label, impact: impact.label, existing: impact.deliverables.map((d) => d.label) },
+      (labels) => mapImpact(actor.id, impact.id, (i) => ({ ...i, deliverables: [...i.deliverables, ...labels.map((l) => newDeliverable(l))] })),
+    );
+  };
 
   // ── Export / import ───────────────────────────────────────────────────────
   const handleExportMM = () => {
@@ -343,34 +416,61 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
                           </button>
                         </div>
                       ))}
-                      <button
-                        className="impact-no-export flex items-center gap-1 text-xs font-medium hover:underline"
-                        style={{ color: LEVEL_META.deliverable.color }}
-                        onClick={() => addDeliverable(actor.id, impact.id)}
-                      >
-                        <Plus className="h-3.5 w-3.5" /> Add deliverable (What)
-                      </button>
+                      <div className="impact-no-export flex flex-wrap items-center gap-3">
+                        <button
+                          className="flex items-center gap-1 text-xs font-medium hover:underline"
+                          style={{ color: LEVEL_META.deliverable.color }}
+                          onClick={() => addDeliverable(actor.id, impact.id)}
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add deliverable (What)
+                        </button>
+                        <button
+                          className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+                          disabled={aiBusy !== null}
+                          onClick={() => suggestDeliverables(actor, impact)}
+                        >
+                          {aiBusy === `del-${impact.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Suggest (AI)
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
-                <button
-                  className="impact-no-export flex items-center gap-1 text-xs font-medium hover:underline"
-                  style={{ color: LEVEL_META.impact.color }}
-                  onClick={() => addImpact(actor.id)}
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add impact (How)
-                </button>
+                <div className="impact-no-export flex flex-wrap items-center gap-3">
+                  <button
+                    className="flex items-center gap-1 text-xs font-medium hover:underline"
+                    style={{ color: LEVEL_META.impact.color }}
+                    onClick={() => addImpact(actor.id)}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add impact (How)
+                  </button>
+                  <button
+                    className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+                    disabled={aiBusy !== null}
+                    onClick={() => suggestImpacts(actor)}
+                  >
+                    {aiBusy === `impacts-${actor.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Suggest (AI)
+                  </button>
+                </div>
               </div>
             </div>
           ))}
 
-          <button
-            className="impact-no-export flex items-center gap-1 text-sm font-semibold hover:underline"
-            style={{ color: LEVEL_META.actor.color }}
-            onClick={addActor}
-          >
-            <Plus className="h-4 w-4" /> Add actor (Who)
-          </button>
+          <div className="impact-no-export flex flex-wrap items-center gap-3">
+            <button
+              className="flex items-center gap-1 text-sm font-semibold hover:underline"
+              style={{ color: LEVEL_META.actor.color }}
+              onClick={addActor}
+            >
+              <Plus className="h-4 w-4" /> Add actor (Who)
+            </button>
+            <button
+              className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+              disabled={aiBusy !== null}
+              onClick={suggestActors}
+            >
+              {aiBusy === 'actors' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Suggest actors (AI)
+            </button>
+          </div>
         </div>
       </div>
 
