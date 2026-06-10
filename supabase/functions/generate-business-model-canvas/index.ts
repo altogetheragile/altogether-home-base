@@ -1,7 +1,7 @@
 // Deno + Supabase Edge Function
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import OpenAI from "https://esm.sh/openai@4.57.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { callClaudeJSON } from "../_shared/anthropic.ts";
 
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com';
 const corsHeaders = {
@@ -89,13 +89,13 @@ serve(async (req: Request) => {
       });
     }
 
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiKey) {
-      console.error("[BMC] CRITICAL: Missing OPENAI_API_KEY");
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!anthropicKey) {
+      console.error("[BMC] CRITICAL: Missing ANTHROPIC_API_KEY");
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "OpenAI API key not configured. Please contact support." 
+        JSON.stringify({
+          success: false,
+          error: "AI is not configured. Please contact support."
         }),
         { status: 500, headers }
       );
@@ -135,10 +135,6 @@ serve(async (req: Request) => {
     });
 
     console.log("[BMC] Generating BMC for:", companyName, industry);
-    console.log("[BMC] Initializing OpenAI client...");
-
-    const openai = new OpenAI({ apiKey: openaiKey });
-    console.log("[BMC] OpenAI client initialized");
 
     // Prompt: force JSON only; the UI expects camelCase keys
     const system = `
@@ -171,20 +167,14 @@ Product/Service: ${productService ?? ""}
 Additional context: ${additionalContext ?? ""}
 `;
 
-    console.log("[BMC] Calling OpenAI API...");
-    const resp = await openai.chat.completions.create({
-      model: "gpt-4o-mini",          // ← reliable, JSON-friendly
+    console.log("[BMC] Calling Claude API...");
+    const text = await callClaudeJSON({
+      system: system.trim(),
+      prompt: user.trim(),
+      maxTokens: 2000,
       temperature: 0.2,
-      messages: [
-        { role: "system", content: system.trim() },
-        { role: "user", content: user.trim() },
-      ],
-      // If your OpenAI SDK supports it, this is even better:
-      // response_format: { type: "json_object" },
     });
-    console.log("[BMC] OpenAI API call completed");
-
-    const text = resp.choices?.[0]?.message?.content ?? "";
+    console.log("[BMC] Claude API call completed");
     console.log("[BMC] Response length:", text?.length);
     console.log("[BMC] Response preview:", text?.slice(0, 300));
 

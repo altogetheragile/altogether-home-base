@@ -11,8 +11,9 @@ import {
   extractJSON,
   logPromptMetrics 
 } from "../_shared/prompt-utils.ts";
+import { callClaudeJSON } from "../_shared/anthropic.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const openAIApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -156,37 +157,12 @@ serve(async (req) => {
 
     console.log(`Generating ${storyLevel} with ${tokenValidation.tokenCount} tokens`);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 1200,
-        temperature: 0.2,
-        response_format: { type: "json_object" }
-      }),
+    const generatedContent = await callClaudeJSON({
+      system: systemPrompt,
+      prompt,
+      maxTokens: 1200,
+      temperature: 0.2,
     });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI API error:', response.status, errorData);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
-    }
-
-    const data = await response.json();
-    const generatedContent = data.choices?.[0]?.message?.content;
-
-    if (!generatedContent) {
-      console.error('Empty response from OpenAI:', data);
-      throw new Error('Empty response from OpenAI API');
-    }
 
     // Extract and parse JSON with validation
     const result = extractJSON(generatedContent);

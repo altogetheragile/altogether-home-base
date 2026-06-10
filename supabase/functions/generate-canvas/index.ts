@@ -1,7 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callClaudeJSON } from "../_shared/anthropic.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const openAIApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
 // Text processing utilities for BMC content
 const cleanupText = (text: string | string[] | any): string => {
@@ -349,40 +350,12 @@ serve(async (req) => {
 
     console.log('Generating canvas with OpenAI...', { canvasType: canvasType || type, inputData });
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        max_tokens: 4000,
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      }),
+    const generatedContent = await callClaudeJSON({
+      system: systemPrompt,
+      prompt: userPrompt,
+      maxTokens: 4000,
+      temperature: 0.7,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, response.statusText, errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-    }
-
-    const responseData = await response.json();
-    console.log('OpenAI response received');
-    
-    if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
-      console.error('Unexpected OpenAI response structure:', responseData);
-      throw new Error('Invalid response from OpenAI API');
-    }
-
-    // Parse the response and clean up content
-    const generatedContent = responseData.choices[0].message.content;
     
     let parsedContent;
     try {

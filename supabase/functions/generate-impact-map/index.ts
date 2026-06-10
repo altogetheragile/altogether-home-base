@@ -1,8 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.5';
+import { callClaudeJSON } from '../_shared/anthropic.ts';
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -44,7 +44,7 @@ function buildUserPrompt(req: SuggestRequest): string {
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
-  if (!openAIApiKey) return json({ error: 'OpenAI API key not configured' }, 500);
+  if (!Deno.env.get('ANTHROPIC_API_KEY')) return json({ error: 'AI is not configured' }, 500);
 
   // Require an authenticated user (consistent with the other AI functions).
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -79,30 +79,12 @@ serve(async (req) => {
   };
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${openAIApiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: buildUserPrompt(safeReq) },
-        ],
-        max_tokens: 400,
-        temperature: 0.5,
-        response_format: { type: 'json_object' },
-      }),
+    const content = await callClaudeJSON({
+      system: SYSTEM_PROMPT,
+      prompt: buildUserPrompt(safeReq),
+      maxTokens: 400,
+      temperature: 0.5,
     });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI API error:', response.status, errorData);
-      return json({ error: 'AI generation failed' }, 502);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) return json({ error: 'Empty response from AI' }, 502);
 
     let parsed: { suggestions?: unknown };
     try {
