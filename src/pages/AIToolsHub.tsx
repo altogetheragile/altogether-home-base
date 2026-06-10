@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
@@ -40,6 +40,14 @@ const AIToolsHub = () => {
       icon: ClipboardList,
       route: "/backlog",
       badge: "Prioritize",
+    },
+    {
+      id: "impact-map",
+      name: "Impact Map Builder",
+      description: "Build and export Impact Maps (Gojko Adzic). A guided flow walks you through goal, actors, impacts, and deliverables, with FreeMind, PNG, PDF, and JSON export.",
+      icon: Target,
+      route: "/impact-map",
+      badge: "Guided",
     },
   ];
 
