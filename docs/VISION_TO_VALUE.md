@@ -48,10 +48,15 @@
 > - Journey view: `JourneyBand` on `/ai-tools` (public, SEO) and `ProjectJourney` on the
 >   project page, both six stages with cascade-down/learning-up styling, driven by the registry.
 >
+> **BMC recoached (11 June 2026):** `/bmc-generator` now opens with a choice — "Coach me
+> through it" (recommended; `CoachedBMCEditor` fills the nine blocks via `CoachChat`, one
+> stretch each) or "Generate a draft with AI" (the existing one-shot generator kept as an
+> accelerator). Both keep the existing `bmc` artifact shape (`{formData, bmcData}`) so the
+> ArtifactViewer and exports are unchanged.
+>
 > **Still open in Increment 3:** (a) KB grounding of the coach and Canvas Picker — BLOCKED on
 > the `show_knowledge` publish and the `knowledge_items` seed (Technique to Artifact Map);
 > nothing to ground against until the KB publishes. (b) Modelling Canvas promote-to-artifact.
-> (c) Deferred: recoach the BMC generator (still one-shot AI).
 >
 > Deviations from this spec found during the build (carry into v1.3):
 > 1. §3 claimed `backlog_items` had `user_persona` and `epic`; neither existed. Resolved by
