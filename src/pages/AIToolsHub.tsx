@@ -20,11 +20,11 @@ const AIToolsHub = () => {
     },
     {
       id: "bmc-generator",
-      name: "Business Model Canvas Generator",
-      description: "Generate a comprehensive Business Model Canvas using AI. Fill in your company details and get a professional BMC instantly.",
+      name: "Business Model Canvas",
+      description: "Build a Business Model Canvas through a coaching conversation, in your own words, with one gentle stretch per block. Or generate a draft with AI and refine it.",
       icon: Sparkles,
       route: "/bmc-generator",
-      badge: "AI-Powered",
+      badge: "Coached",
     },
     {
       id: "user-story-canvas",

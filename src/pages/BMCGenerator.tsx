@@ -10,13 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, ArrowLeft, Save } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Save, MessageCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
+import { CoachedBMCEditor } from '@/components/bmc/CoachedBMCEditor';
 
 interface BMCData {
   keyPartners: string[];
@@ -85,6 +86,9 @@ const BMCGenerator = () => {
   const [generatedBMC, setGeneratedBMC] = useState<BMCData | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  // Coaching-first: choose how to fill the canvas. 'coach' (conversation) is the
+  // recommended path; 'generate' keeps the one-shot AI draft as an accelerator.
+  const [mode, setMode] = useState<'choose' | 'coach' | 'generate'>('choose');
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -161,8 +165,8 @@ const BMCGenerator = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
-        <title>Business Model Canvas Generator - Altogether Agile</title>
-        <meta name="description" content="Generate a comprehensive Business Model Canvas using AI. Fill in your company details and get a professional BMC instantly." />
+        <title>Business Model Canvas - Altogether Agile</title>
+        <meta name="description" content="Build a Business Model Canvas through a coaching conversation, in your own words, or generate a draft with AI to refine. Export to PNG and PDF." />
         <link rel="canonical" href={`${SITE_URL}/bmc-generator`} />
       </Helmet>
       <Navigation />
@@ -188,15 +192,58 @@ const BMCGenerator = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2">Business Model Canvas Generator</h1>
+              <h1 className="text-4xl font-bold mb-2">Business Model Canvas</h1>
               <p className="text-muted-foreground">
-                Generate a comprehensive Business Model Canvas using AI. Fill in your company details and get a professional BMC instantly.
+                Build a Business Model Canvas through a coaching conversation, in your own words, or generate a draft with AI to refine.
               </p>
             </div>
 
-            {!generatedBMC ? (
+            {mode === 'choose' && (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Card className="cursor-pointer transition-shadow hover:shadow-lg" onClick={() => setMode('coach')}>
+                  <CardHeader>
+                    <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      <MessageCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <CardTitle>Coach me through it</CardTitle>
+                    <CardDescription>
+                      Fill each block in conversation. The coach asks open questions and offers one gentle stretch per block, and never writes content you did not say. Recommended.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="default">Start coaching <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer transition-shadow hover:shadow-lg" onClick={() => setMode('generate')}>
+                  <CardHeader>
+                    <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                      <Sparkles className="h-5 w-5 text-accent-foreground" />
+                    </div>
+                    <CardTitle>Generate a draft with AI</CardTitle>
+                    <CardDescription>
+                      Give a few company details and get a first-pass canvas instantly, then edit and refine it. A faster start when you already know the shape.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline">Generate a draft <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {mode === 'coach' && (
+              <CoachedBMCEditor
+                preselectedProjectId={preselectedProjectId || undefined}
+                onBack={() => setMode('choose')}
+              />
+            )}
+
+            {mode === 'generate' && (!generatedBMC ? (
               <Card>
                 <CardHeader>
+                  <Button variant="ghost" size="sm" className="mb-2 w-fit -ml-2" onClick={() => setMode('choose')}>
+                    <ArrowLeft className="mr-1.5 h-4 w-4" /> Choose a different way
+                  </Button>
                   <CardTitle>Company Information</CardTitle>
                   <CardDescription>
                     Provide details about your company to generate a tailored Business Model Canvas
@@ -339,7 +386,7 @@ const BMCGenerator = () => {
                   </CardContent>
                 </Card>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </main>

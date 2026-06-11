@@ -304,6 +304,10 @@ const STATIC_PAGES = {
     title: 'Ways of Working - Altogether Agile',
     description: 'Capture your team working agreements and run short coached retrospectives that produce one improvement action at a time. Export to PNG, PDF, JSON and Markdown.',
   },
+  '/bmc-generator': {
+    title: 'Business Model Canvas - Altogether Agile',
+    description: 'Build a Business Model Canvas through a coaching conversation, in your own words, or generate a draft with AI to refine. Export to PNG and PDF.',
+  },
   '/canvases': {
     title: 'Canvas Catalogue - Altogether Agile',
     description: 'Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. Fill each through a coaching conversation, then export.',
