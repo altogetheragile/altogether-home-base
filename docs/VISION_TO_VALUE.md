@@ -13,6 +13,16 @@
 > (`src/utils/backlog/backlogCsv.ts`), provenance chips, one-question-upstream
 > (`src/components/backlog/UpstreamIntentPrompt.tsx`). Verified end-to-end under RLS.
 >
+> **Known issue found 11 June 2026 (backlog dual-model):** project backlogs have two
+> stores that disagree. `/backlog` Save-to-Project writes only the `product-backlog`
+> artifact JSON (`createArtifact`); ArtifactViewer edit-mode *loads* from the relational
+> `backlog_items` table but *saves* to the artifact JSON; Impact Map Send-to-Backlog writes
+> relational rows. Result: edits do not round-trip, and items with a null relational
+> `item_type` render as "Story" (e.g. an "Epic" shows as a Story). Recommendation: make the
+> relational `backlog_items` table the single source for project backlogs (Save-to-Project
+> and the artifact editor read AND write relational rows; the artifact row becomes a pointer
+> or is dropped). Not yet implemented.
+>
 > Deviations from this spec found during the build (carry into v1.3):
 > 1. §3 claimed `backlog_items` had `user_persona` and `epic`; neither existed. Resolved by
 >    adding both columns in the Increment 1 migration.
