@@ -11,6 +11,10 @@ The site's interactive tools and how they're implemented are documented in
 (BMC generator, User Story / Project Modelling canvases, Product Backlog, Impact
 Map Builder) or the AI edge functions.
 
+The roadmap that turns these tools into one "idea to value" coaching pipeline is
+**[docs/VISION_TO_VALUE.md](docs/VISION_TO_VALUE.md)** (approved, incremental
+build). Read it before building pipeline/coaching features.
+
 ## Key conventions (non-obvious)
 
 - **AI is Claude.** All AI runs in Supabase Edge Functions calling Claude Sonnet
