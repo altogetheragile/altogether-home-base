@@ -4,11 +4,21 @@
 **Audience:** Claude Code, working in `altogetheragile/altogether-home-base`
 **Status:** Approved for incremental build. Read alongside `TOOLS.md`, which stays the tool inventory of record.
 
-> Implementation note (added on save): the spec's §3 inventory states `backlog_items`
-> includes `user_persona` and `epic`. Direct inspection of the generated Supabase types
-> on 11 June 2026 shows neither column exists. Resolve before building the CSV "Epic Link"
-> mapping and Persona Studio (`user_persona` reference) — either add the columns or adjust
-> the mappings. Tracked as an open decision.
+> Implementation notes (build log)
+>
+> **Increment 1: DONE and live (commit 530e2517, 11 June 2026).** Migration
+> `20260611120000_vision_to_value_increment_1.sql` applied to prod: `project_artifact_links`
+> (+RLS), `projects.intent_statement`/`kind`, `backlog_items.user_persona`/`epic`. Pipeline
+> Registry at `src/config/pipeline.ts`. Impact Map Send-to-Backlog, Backlog CSV
+> (`src/utils/backlog/backlogCsv.ts`), provenance chips, one-question-upstream
+> (`src/components/backlog/UpstreamIntentPrompt.tsx`). Verified end-to-end under RLS.
+>
+> Deviations from this spec found during the build (carry into v1.3):
+> 1. §3 claimed `backlog_items` had `user_persona` and `epic`; neither existed. Resolved by
+>    adding both columns in the Increment 1 migration.
+> 2. §6.4 assumes MoSCoW priorities (Must/Should/Could/Won't). The backlog actually uses
+>    critical/high/medium/low. The CSV mapper handles both vocabularies; there is no "Won't"
+>    value to exclude, so that toggle is not implemented.
 
 ---
 
