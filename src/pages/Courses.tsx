@@ -46,11 +46,11 @@ const Courses = () => {
         .in('module_id', moduleIds);
 
       const moduleToCourseLookup: Record<string, string> = {};
-      (modules || []).forEach(m => { moduleToCourseLookup[m.id] = m.course_id; });
+      (modules || []).forEach(m => { if (m.course_id) moduleToCourseLookup[m.id] = m.course_id; });
 
       const countByCourse: Record<string, number> = {};
       (lessons || []).forEach(l => {
-        const cid = moduleToCourseLookup[l.module_id];
+        const cid = l.module_id ? moduleToCourseLookup[l.module_id] : undefined;
         if (cid) countByCourse[cid] = (countByCourse[cid] || 0) + 1;
       });
 

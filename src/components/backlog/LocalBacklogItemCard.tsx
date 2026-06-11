@@ -165,6 +165,11 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                       {childrenCount} children
                     </Badge>
                   )}
+                  {item.source && (
+                    <Badge variant="outline" className="text-xs max-w-[220px] truncate" title={item.source}>
+                      {sourceLabels[item.source] || item.source}
+                    </Badge>
+                  )}
                 </div>
                 
                 <h4 className="font-medium text-sm">{item.title}</h4>

@@ -122,7 +122,7 @@ const CoursePlayer = ({ courseSlug }: CoursePlayerProps) => {
         .eq('user_id', user.id)
         .in('lesson_id', lessonIds);
 
-      setCompletedIds(new Set((data || []).map(d => d.lesson_id)));
+      setCompletedIds(new Set((data || []).map(d => d.lesson_id).filter((id): id is string => id !== null)));
     };
 
     fetchProgress();

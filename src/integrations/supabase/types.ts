@@ -12,118 +12,33 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
-      knowledge_edges: {
-        Row: {
-          created_at: string
-          edge_type: string
-          from_level: string | null
-          id: string
-          source_id: string
-          target_id: string
-          to_level: string | null
-        }
-        Insert: {
-          created_at?: string
-          edge_type: string
-          from_level?: string | null
-          id?: string
-          source_id: string
-          target_id: string
-          to_level?: string | null
-        }
-        Update: {
-          created_at?: string
-          edge_type?: string
-          from_level?: string | null
-          id?: string
-          source_id?: string
-          target_id?: string
-          to_level?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "knowledge_edges_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "knowledge_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "knowledge_edges_target_id_fkey"
-            columns: ["target_id"]
-            isOneToOne: false
-            referencedRelation: "knowledge_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pattern_builder_runs: {
-        Row: {
-          assessment: Json
-          created_at: string
-          id: string
-          primary_horizon: string | null
-          result: Json
-          scenario: string
-          user_id: string | null
-          was_revised: boolean
-        }
-        Insert: {
-          assessment?: Json
-          created_at?: string
-          id?: string
-          primary_horizon?: string | null
-          result?: Json
-          scenario: string
-          user_id?: string | null
-          was_revised?: boolean
-        }
-        Update: {
-          assessment?: Json
-          created_at?: string
-          id?: string
-          primary_horizon?: string | null
-          result?: Json
-          scenario?: string
-          user_id?: string | null
-          was_revised?: boolean
-        }
-        Relationships: []
-      }
-      pattern_builder_feedback: {
-        Row: {
-          comment: string | null
-          created_at: string
-          id: string
-          rating: string
-          run_id: string
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          rating: string
-          run_id: string
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          rating?: string
-          run_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pattern_builder_feedback_run_id_fkey"
-            columns: ["run_id"]
-            isOneToOne: false
-            referencedRelation: "pattern_builder_runs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       activity_domains: {
         Row: {
           color: string | null
@@ -422,6 +337,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          epic: string | null
           estimated_effort: number | null
           estimated_value: number | null
           id: string
@@ -436,6 +352,7 @@ export type Database = {
           target_release: string | null
           title: string
           updated_at: string | null
+          user_persona: string | null
           user_story_id: string | null
         }
         Insert: {
@@ -444,6 +361,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          epic?: string | null
           estimated_effort?: number | null
           estimated_value?: number | null
           id?: string
@@ -458,6 +376,7 @@ export type Database = {
           target_release?: string | null
           title: string
           updated_at?: string | null
+          user_persona?: string | null
           user_story_id?: string | null
         }
         Update: {
@@ -466,6 +385,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          epic?: string | null
           estimated_effort?: number | null
           estimated_value?: number | null
           id?: string
@@ -480,6 +400,7 @@ export type Database = {
           target_release?: string | null
           title?: string
           updated_at?: string | null
+          user_persona?: string | null
           user_story_id?: string | null
         }
         Relationships: [
@@ -727,6 +648,27 @@ export type Database = {
           },
         ]
       }
+      certification_bodies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       classification_config: {
         Row: {
           classification_type: string
@@ -825,51 +767,6 @@ export type Database = {
           id?: string
           user_id?: string
           vote_type?: string
-        }
-        Relationships: []
-      }
-      certification_bodies: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      courses: {
-        Row: {
-          id: string
-          slug: string
-          title: string
-          description: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          slug: string
-          title: string
-          description?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          slug?: string
-          title?: string
-          description?: string | null
-          created_at?: string
         }
         Relationships: []
       }
@@ -1044,6 +941,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      courses: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          slug: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          slug: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          slug?: string
+          title?: string
+        }
+        Relationships: []
       }
       data_imports: {
         Row: {
@@ -1757,6 +1678,45 @@ export type Database = {
         }
         Relationships: []
       }
+      isa_dimensions: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       kb_feedback: {
         Row: {
           comment: string | null
@@ -1791,50 +1751,6 @@ export type Database = {
             columns: ["knowledge_item_id"]
             isOneToOne: false
             referencedRelation: "knowledge_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      lessons: {
-        Row: {
-          id: string
-          module_id: string
-          title: string
-          type: string
-          duration: string
-          chapter_ref: string | null
-          notes_html: string | null
-          video_url: string | null
-          position: number
-        }
-        Insert: {
-          id?: string
-          module_id: string
-          title: string
-          type: string
-          duration: string
-          chapter_ref?: string | null
-          notes_html?: string | null
-          video_url?: string | null
-          position: number
-        }
-        Update: {
-          id?: string
-          module_id?: string
-          title?: string
-          type?: string
-          duration?: string
-          chapter_ref?: string | null
-          notes_html?: string | null
-          video_url?: string | null
-          position?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lessons_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
@@ -1877,6 +1793,51 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      knowledge_edges: {
+        Row: {
+          created_at: string
+          edge_type: string
+          from_level: string | null
+          id: string
+          source_id: string
+          target_id: string
+          to_level: string | null
+        }
+        Insert: {
+          created_at?: string
+          edge_type: string
+          from_level?: string | null
+          id?: string
+          source_id: string
+          target_id: string
+          to_level?: string | null
+        }
+        Update: {
+          created_at?: string
+          edge_type?: string
+          from_level?: string | null
+          id?: string
+          source_id?: string
+          target_id?: string
+          to_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_edges_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_edges_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledge_item_categories: {
         Row: {
@@ -2023,6 +1984,45 @@ export type Database = {
           },
           {
             foreignKeyName: "knowledge_item_domains_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_item_isa_dimensions: {
+        Row: {
+          created_at: string
+          is_primary: boolean | null
+          isa_dimension_id: string
+          knowledge_item_id: string
+          rationale: string | null
+        }
+        Insert: {
+          created_at?: string
+          is_primary?: boolean | null
+          isa_dimension_id: string
+          knowledge_item_id: string
+          rationale?: string | null
+        }
+        Update: {
+          created_at?: string
+          is_primary?: boolean | null
+          isa_dimension_id?: string
+          knowledge_item_id?: string
+          rationale?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_item_isa_dimensions_isa_dimension_id_fkey"
+            columns: ["isa_dimension_id"]
+            isOneToOne: false
+            referencedRelation: "isa_dimensions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_item_isa_dimensions_knowledge_item_id_fkey"
             columns: ["knowledge_item_id"]
             isOneToOne: false
             referencedRelation: "knowledge_items"
@@ -2333,8 +2333,8 @@ export type Database = {
           background: string | null
           category_id: string | null
           common_pitfalls: string[] | null
-          components: Json | null
-          counterparts: string[] | null
+          components: Json
+          counterparts: string[]
           created_at: string
           created_by: string | null
           decision_boundaries: string | null
@@ -2350,29 +2350,29 @@ export type Database = {
           horizon: string | null
           icon: string | null
           id: string
-          inheritable: boolean | null
+          inheritable: boolean
           inspect_adapt_signals: string[] | null
-          isa: string | null
-          kind: string | null
-          layer: string | null
-          level: string | null
-          shape: string | null
           is_featured: boolean | null
           is_published: boolean | null
+          isa: string | null
           item_type: string | null
           key_terminology: Json | null
+          kind: string | null
+          layer: string | null
           learning_value_summary: string | null
+          level: string | null
           maturity_indicators: string[] | null
           name: string
           planning_focus_id: string | null
           primary_publication_id: string | null
-          produces: string[] | null
+          produces: string[]
           publication_year: number | null
           reference_url: string | null
           related_techniques: string[] | null
+          shape: string | null
           slug: string
           source: string | null
-          techniques: string[] | null
+          techniques: string[]
           typical_output: string | null
           updated_at: string
           updated_by: string | null
@@ -2387,8 +2387,8 @@ export type Database = {
           background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
-          components?: Json | null
-          counterparts?: string[] | null
+          components?: Json
+          counterparts?: string[]
           created_at?: string
           created_by?: string | null
           decision_boundaries?: string | null
@@ -2404,29 +2404,29 @@ export type Database = {
           horizon?: string | null
           icon?: string | null
           id?: string
-          inheritable?: boolean | null
+          inheritable?: boolean
           inspect_adapt_signals?: string[] | null
-          isa?: string | null
           is_featured?: boolean | null
           is_published?: boolean | null
+          isa?: string | null
           item_type?: string | null
           key_terminology?: Json | null
           kind?: string | null
           layer?: string | null
-          level?: string | null
-          shape?: string | null
           learning_value_summary?: string | null
+          level?: string | null
           maturity_indicators?: string[] | null
           name: string
           planning_focus_id?: string | null
           primary_publication_id?: string | null
-          produces?: string[] | null
+          produces?: string[]
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
+          shape?: string | null
           slug: string
           source?: string | null
-          techniques?: string[] | null
+          techniques?: string[]
           typical_output?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -2441,8 +2441,8 @@ export type Database = {
           background?: string | null
           category_id?: string | null
           common_pitfalls?: string[] | null
-          components?: Json | null
-          counterparts?: string[] | null
+          components?: Json
+          counterparts?: string[]
           created_at?: string
           created_by?: string | null
           decision_boundaries?: string | null
@@ -2458,29 +2458,29 @@ export type Database = {
           horizon?: string | null
           icon?: string | null
           id?: string
-          inheritable?: boolean | null
+          inheritable?: boolean
           inspect_adapt_signals?: string[] | null
-          isa?: string | null
           is_featured?: boolean | null
           is_published?: boolean | null
+          isa?: string | null
           item_type?: string | null
           key_terminology?: Json | null
           kind?: string | null
           layer?: string | null
-          level?: string | null
-          shape?: string | null
           learning_value_summary?: string | null
+          level?: string | null
           maturity_indicators?: string[] | null
           name?: string
           planning_focus_id?: string | null
           primary_publication_id?: string | null
-          produces?: string[] | null
+          produces?: string[]
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
+          shape?: string | null
           slug?: string
           source?: string | null
-          techniques?: string[] | null
+          techniques?: string[]
           typical_output?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -2770,6 +2770,50 @@ export type Database = {
           },
         ]
       }
+      lessons: {
+        Row: {
+          chapter_ref: string | null
+          duration: string
+          id: string
+          module_id: string | null
+          notes_html: string | null
+          position: number
+          title: string
+          type: string
+          video_url: string | null
+        }
+        Insert: {
+          chapter_ref?: string | null
+          duration: string
+          id?: string
+          module_id?: string | null
+          notes_html?: string | null
+          position: number
+          title: string
+          type: string
+          video_url?: string | null
+        }
+        Update: {
+          chapter_ref?: string | null
+          duration?: string
+          id?: string
+          module_id?: string | null
+          notes_html?: string | null
+          position?: number
+          title?: string
+          type?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       levels: {
         Row: {
           id: string
@@ -2811,35 +2855,6 @@ export type Database = {
           virtual_url?: string | null
         }
         Relationships: []
-      }
-      modules: {
-        Row: {
-          id: string
-          course_id: string
-          title: string
-          position: number
-        }
-        Insert: {
-          id?: string
-          course_id: string
-          title: string
-          position: number
-        }
-        Update: {
-          id?: string
-          course_id?: string
-          title?: string
-          position?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "modules_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       media_assets: {
         Row: {
@@ -2903,6 +2918,35 @@ export type Database = {
           usage_count?: number | null
         }
         Relationships: []
+      }
+      modules: {
+        Row: {
+          course_id: string | null
+          id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          course_id?: string | null
+          id?: string
+          position: number
+          title: string
+        }
+        Update: {
+          course_id?: string | null
+          id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       page_style_templates: {
         Row: {
@@ -2973,6 +3017,71 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pattern_builder_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: string
+          run_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: string
+          run_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: string
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pattern_builder_feedback_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "pattern_builder_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pattern_builder_runs: {
+        Row: {
+          assessment: Json
+          created_at: string
+          id: string
+          primary_horizon: string | null
+          result: Json
+          scenario: string
+          user_id: string | null
+          was_revised: boolean
+        }
+        Insert: {
+          assessment?: Json
+          created_at?: string
+          id?: string
+          primary_horizon?: string | null
+          result?: Json
+          scenario: string
+          user_id?: string | null
+          was_revised?: boolean
+        }
+        Update: {
+          assessment?: Json
+          created_at?: string
+          id?: string
+          primary_horizon?: string | null
+          result?: Json
+          scenario?: string
+          user_id?: string | null
+          was_revised?: boolean
         }
         Relationships: []
       }
@@ -3102,6 +3211,50 @@ export type Database = {
         }
         Relationships: []
       }
+      project_artifact_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          from_id: string
+          from_type: string
+          id: string
+          link_kind: string
+          project_id: string
+          to_id: string
+          to_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          from_id: string
+          from_type: string
+          id?: string
+          link_kind: string
+          project_id: string
+          to_id: string
+          to_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          from_id?: string
+          from_type?: string
+          id?: string
+          link_kind?: string
+          project_id?: string
+          to_id?: string
+          to_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_artifact_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_artifacts: {
         Row: {
           artifact_type: string
@@ -3159,7 +3312,9 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          intent_statement: string | null
           is_archived: boolean | null
+          kind: string
           name: string
           updated_at: string
         }
@@ -3169,7 +3324,9 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          intent_statement?: string | null
           is_archived?: boolean | null
+          kind?: string
           name: string
           updated_at?: string
         }
@@ -3179,7 +3336,9 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          intent_statement?: string | null
           is_archived?: boolean | null
+          kind?: string
           name?: string
           updated_at?: string
         }
@@ -3931,6 +4090,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_progress: {
+        Row: {
+          completed_at: string | null
+          id: string
+          lesson_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_reading_progress: {
         Row: {
           completed_at: string | null
@@ -4026,42 +4214,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      user_progress: {
-        Row: {
-          id: string
-          user_id: string
-          lesson_id: string
-          completed_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          lesson_id: string
-          completed_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          lesson_id?: string
-          completed_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_progress_lesson_id_fkey"
-            columns: ["lesson_id"]
-            isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_progress_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_stories: {
         Row: {
@@ -4393,6 +4545,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],

@@ -14,7 +14,7 @@ interface CourseRow {
   id: string;
   slug: string;
   title: string;
-  created_at: string;
+  created_at: string | null;
   lesson_count: number;
 }
 
@@ -47,11 +47,11 @@ const AdminSelfPacedCourses = () => {
         .in('module_id', moduleIds);
 
       const moduleToCourseLookup: Record<string, string> = {};
-      (modules || []).forEach(m => { moduleToCourseLookup[m.id] = m.course_id; });
+      (modules || []).forEach(m => { if (m.course_id) moduleToCourseLookup[m.id] = m.course_id; });
 
       const countByCourse: Record<string, number> = {};
       (lessons || []).forEach(l => {
-        const cid = moduleToCourseLookup[l.module_id];
+        const cid = l.module_id ? moduleToCourseLookup[l.module_id] : undefined;
         if (cid) countByCourse[cid] = (countByCourse[cid] || 0) + 1;
       });
 
@@ -101,7 +101,7 @@ const AdminSelfPacedCourses = () => {
                   <TableCell className="text-muted-foreground">{course.slug}</TableCell>
                   <TableCell>{course.lesson_count}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(course.created_at).toLocaleDateString('en-GB')}
+                    {course.created_at ? new Date(course.created_at).toLocaleDateString('en-GB') : 'n/a'}
                   </TableCell>
                 </TableRow>
               ))}

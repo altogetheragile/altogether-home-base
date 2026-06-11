@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw, Save, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw, Save, Loader2, ListPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSendToBacklog } from '@/hooks/useSendToBacklog';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
@@ -63,6 +64,32 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
   const { updateArtifact } = useProjectArtifactMutations();
+  const sendToBacklog = useSendToBacklog();
+
+  // Send to Backlog is only available once the map is saved within a project
+  // (we need a stable artifact id + project id to record provenance).
+  const canSendToBacklog = Boolean(artifactId && projectId);
+
+  const handleSendToBacklog = (deliverables: { nodeId: string; title: string }[]) => {
+    const items = deliverables.filter((d) => d.title.trim().length > 0);
+    if (!canSendToBacklog) {
+      toast.error('Save this map to a project first, then send deliverables to its backlog.');
+      return;
+    }
+    if (items.length === 0) {
+      toast.info('Add a deliverable before sending to the backlog.');
+      return;
+    }
+    sendToBacklog.mutate({
+      projectId: projectId!,
+      fromArtifactId: artifactId!,
+      source: `From Impact Map: ${map.goal || 'Untitled'}`,
+      deliverables: items,
+    });
+  };
+
+  const allDeliverables = () =>
+    map.actors.flatMap((a) => a.impacts.flatMap((i) => i.deliverables.map((d) => ({ nodeId: d.id, title: d.label }))));
 
   const performArtifactSave = useDebouncedCallback(async (m: ImpactMap) => {
     if (!artifactId || !projectId) return;
@@ -322,6 +349,16 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
         <Button variant="outline" size="sm" onClick={() => setMap(emptyImpactMap())}>
           <RotateCcw className="mr-1.5 h-4 w-4" /> Clear
         </Button>
+        {canSendToBacklog && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={sendToBacklog.isPending}
+            onClick={() => handleSendToBacklog(allDeliverables())}
+          >
+            {sendToBacklog.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <ListPlus className="mr-1.5 h-4 w-4" />} Send all to Backlog
+          </Button>
+        )}
         <div className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={handleExportMM}>
           <Download className="mr-1.5 h-4 w-4" /> FreeMind .mm
@@ -407,6 +444,17 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
                         <div key={d.id} className="flex items-center gap-2 rounded bg-background px-2 py-1">
                           {levelChip('deliverable')}
                           {nodeInput(d.label, LEVEL_META.deliverable.question, (v) => updateDeliverable(actor.id, impact.id, d.id, v), LEVEL_META.deliverable.color)}
+                          {canSendToBacklog && (
+                            <button
+                              aria-label="Send deliverable to backlog"
+                              title="Send to backlog"
+                              className="impact-no-export text-muted-foreground hover:text-foreground disabled:opacity-50"
+                              disabled={sendToBacklog.isPending}
+                              onClick={() => handleSendToBacklog([{ nodeId: d.id, title: d.label }])}
+                            >
+                              <ListPlus className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button
                             aria-label="Delete deliverable"
                             className="impact-no-export text-muted-foreground hover:text-destructive"

@@ -17,6 +17,9 @@ import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd'
 import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
 import { useLocalBacklogItems, LocalBacklogItemInput, LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
 import { useBacklogItems } from '@/hooks/useBacklogItems';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { exportBacklogCsv, type BacklogCsvFormat, FORMAT_LABELS } from '@/utils/backlog/backlogCsv';
+import { UpstreamIntentPrompt } from '@/components/backlog/UpstreamIntentPrompt';
 import { supabase } from '@/integrations/supabase/client';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { exportToCSV } from '@/utils/exportUtils';
@@ -93,6 +96,15 @@ const ProductBacklog: React.FC = () => {
 
     exportToCSV(exportData, 'product-backlog');
     toast.success('Backlog exported successfully');
+  };
+
+  const handleExportFormat = (format: BacklogCsvFormat) => {
+    if (!items.length) {
+      toast.error('No backlog items to export');
+      return;
+    }
+    exportBacklogCsv(items, format);
+    toast.success(`Exported for ${FORMAT_LABELS[format]}`);
   };
 
   const handleSaveComplete = () => {
@@ -184,16 +196,26 @@ const ProductBacklog: React.FC = () => {
               <Save className="h-4 w-4 mr-2" />
               Save to Project
             </Button>
-            <Button 
-              variant="outline"
-              onClick={handleExportBacklog}
-              disabled={!hasItems}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={!hasItems}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExportFormat('jira')}>Jira CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportFormat('azure-devops')}>Azure DevOps CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportFormat('trello')}>Trello CSV</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportBacklog}>Generic CSV</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+
+        {/* One-question-upstream: capture why this work exists, once per project */}
+        {projectId && <UpstreamIntentPrompt projectId={projectId} />}
 
         {/* Unsaved changes warning */}
         {hasItems && (
