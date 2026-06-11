@@ -233,8 +233,8 @@ export function WaysOfWorkingEditor({ initialData, artifactId, projectId }: Ways
             {wow.agreements.map((a, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="text-muted-foreground">•</span>
-                <input value={a} placeholder="A working agreement..." onChange={(e) => updateAgreement(i, e.target.value)} className="wow-edit flex-1 bg-transparent text-sm focus:outline-none" />
-                <span className="wow-export-only flex-1 text-sm">{a}</span>
+                <input value={a} placeholder="A working agreement..." onChange={(e) => updateAgreement(i, e.target.value)} className="wow-edit flex-1 bg-transparent text-sm text-slate-900 focus:outline-none" />
+                <span className="wow-export-only flex-1 text-sm text-slate-900">{a}</span>
                 <button aria-label="Remove agreement" className="wow-no-export text-muted-foreground hover:text-destructive" onClick={() => removeAgreement(i)}><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             ))}
@@ -262,7 +262,7 @@ export function WaysOfWorkingEditor({ initialData, artifactId, projectId }: Ways
                     <button aria-label="Delete retro" className="wow-no-export text-muted-foreground hover:text-destructive" onClick={() => deleteRetro(r.id)}><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
-                {r.action && <p className="text-sm font-medium"><Check className="mr-1 inline h-3.5 w-3.5" />{r.action}</p>}
+                {r.action && <p className="text-sm font-medium text-slate-900"><Check className="mr-1 inline h-3.5 w-3.5" />{r.action}</p>}
                 {r.improve_one_thing && <p className="text-xs text-muted-foreground">Improve: {r.improve_one_thing}</p>}
                 {r.what_worked && <p className="text-xs text-muted-foreground">Worked: {r.what_worked}</p>}
               </div>

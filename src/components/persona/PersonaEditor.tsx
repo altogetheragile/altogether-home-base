@@ -243,9 +243,9 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
                 value={persona[key]}
                 placeholder={coach.question}
                 onChange={(e) => setField(key, e.target.value)}
-                className="persona-edit w-full resize-none overflow-hidden bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                className="persona-edit w-full resize-none overflow-hidden bg-transparent text-sm text-slate-900 placeholder:text-muted-foreground/60 focus:outline-none"
               />
-              <div className="persona-export-only whitespace-pre-wrap text-sm text-foreground">{persona[key]}</div>
+              <div className="persona-export-only whitespace-pre-wrap text-sm text-slate-900">{persona[key]}</div>
               {coachField === key && (
                 <div className="persona-no-export mt-2">
                   <CoachChat
@@ -275,9 +275,9 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
             value={persona.quote}
             placeholder="A short line in their own voice..."
             onChange={(e) => setField('quote', e.target.value)}
-            className="persona-edit w-full resize-none overflow-hidden bg-transparent text-sm italic text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            className="persona-edit w-full resize-none overflow-hidden bg-transparent text-sm italic text-slate-900 placeholder:text-muted-foreground/60 focus:outline-none"
           />
-          <div className="persona-export-only whitespace-pre-wrap text-sm italic text-foreground">{persona.quote}</div>
+          <div className="persona-export-only whitespace-pre-wrap text-sm italic text-slate-900">{persona.quote}</div>
           {coachField === 'quote' && (
             <div className="persona-no-export mt-2">
               <CoachChat

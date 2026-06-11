@@ -180,9 +180,9 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
                 placeholder={cell.coach.question}
                 onChange={(e) => setCell(cell.key, e.target.value)}
                 rows={cell.wide ? 2 : 3}
-                className="canvas-edit w-full resize-none overflow-hidden bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                className="canvas-edit w-full resize-none overflow-hidden bg-transparent text-sm text-slate-900 placeholder:text-muted-foreground/60 focus:outline-none"
               />
-              <div className="canvas-export-only whitespace-pre-wrap text-sm text-foreground">{data[cell.key]}</div>
+              <div className="canvas-export-only whitespace-pre-wrap text-sm text-slate-900">{data[cell.key]}</div>
               {coachCell === cell.key && (
                 <div className="canvas-no-export mt-2">
                   <CoachChat

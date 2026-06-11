@@ -233,9 +233,9 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
                   value={b.outcome}
                   onChange={(e) => updateBenefit(b.id, { outcome: e.target.value })}
                   placeholder="The outcome we are trying to create"
-                  className="benefit-edit flex-1 bg-transparent text-base font-semibold focus:outline-none"
+                  className="benefit-edit flex-1 bg-transparent text-base font-semibold text-slate-900 focus:outline-none"
                 />
-                <div className="benefit-export-only flex-1 text-base font-semibold">{b.outcome}</div>
+                <div className="benefit-export-only flex-1 text-base font-semibold text-slate-900">{b.outcome}</div>
                 <div className="benefit-no-export flex items-center gap-2">
                   <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground" onClick={() => setCoachFor(coachFor === b.id ? null : b.id)}>
                     <MessageCircle className="h-3.5 w-3.5" /> {coachFor === b.id ? 'Hide' : 'Ask the coach'}
@@ -248,12 +248,12 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
                 <div>
                   <label className="text-xs font-bold tracking-wide text-muted-foreground">LEADING INDICATOR</label>
                   <input value={b.leading_indicator} onChange={(e) => updateBenefit(b.id, { leading_indicator: e.target.value })} placeholder="What you watch to see it coming" className="benefit-edit mt-1 w-full rounded-md border border-border bg-background p-2 text-sm" />
-                  <div className="benefit-export-only mt-1 text-sm">{b.leading_indicator}</div>
+                  <div className="benefit-export-only mt-1 text-sm text-slate-900">{b.leading_indicator}</div>
                 </div>
                 <div>
                   <label className="text-xs font-bold tracking-wide text-muted-foreground">TARGET</label>
                   <input value={b.target} onChange={(e) => updateBenefit(b.id, { target: e.target.value })} placeholder="e.g. under 3 days" className="benefit-edit mt-1 w-full rounded-md border border-border bg-background p-2 text-sm" />
-                  <div className="benefit-export-only mt-1 text-sm">{b.target}</div>
+                  <div className="benefit-export-only mt-1 text-sm text-slate-900">{b.target}</div>
                 </div>
               </div>
 
@@ -282,7 +282,7 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
                           <input value={r.note} onChange={(e) => updateReading(b.id, r.id, { note: e.target.value })} placeholder="note" className="flex-1 rounded-md border border-border bg-background p-1 text-xs" />
                           <button aria-label="Remove reading" className="benefit-no-export text-muted-foreground hover:text-destructive" onClick={() => removeReading(b.id, r.id)}><Trash2 className="h-3.5 w-3.5" /></button>
                         </div>
-                        <div className="benefit-export-only text-xs">{r.date}: {r.value}{r.note ? ` (${r.note})` : ''}</div>
+                        <div className="benefit-export-only text-xs text-slate-900">{r.date}: {r.value}{r.note ? ` (${r.note})` : ''}</div>
                       </div>
                     ))}
                   </div>
