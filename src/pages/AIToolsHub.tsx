@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
@@ -71,6 +71,14 @@ const AIToolsHub = () => {
       description: "Agree how your team works, then keep it honest. Run a short coached retrospective that lands on one improvement action at a time. Export to PNG, PDF, JSON and Markdown.",
       icon: RefreshCw,
       route: "/ways-of-working",
+      badge: "Coached",
+    },
+    {
+      id: "probe-tracker",
+      name: "Probe Tracker",
+      description: "Run your output options as safe-to-fail experiments. A simple kanban moves each probe from Planned to Running to Kept or Killed, with the signal that would prove it wrong.",
+      icon: FlaskConical,
+      route: "/probes",
       badge: "Coached",
     },
   ];

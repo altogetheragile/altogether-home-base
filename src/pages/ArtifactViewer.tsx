@@ -308,6 +308,20 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'probe-tracker':
+        const ProbeTrackerEditor = React.lazy(() =>
+          import('@/components/probeTracker/ProbeTrackerEditor').then(m => ({ default: m.ProbeTrackerEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading probe tracker...</div>}>
+            <ProbeTrackerEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
       case 'business-case':
       case 'product-vision': {
         const CoachedCanvasEditor = React.lazy(() =>

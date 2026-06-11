@@ -95,7 +95,7 @@ export const PIPELINE: PipelineToolDef[] = [
   { key: 'business-case', name: 'Business Case Canvas', route: '/canvases/business-case', viewerCase: 'business-case', stages: ['intent', 'scope'], allowedLinkKinds: ['derived_from'], status: 'live' },
   { key: 'product-vision', name: 'Product Vision Canvas', route: '/canvases/product-vision', viewerCase: 'product-vision', stages: ['intent'], allowedLinkKinds: ['derived_from'], status: 'live' },
   { key: 'persona', name: 'Persona Studio', route: '/personas', viewerCase: 'persona', stages: ['intent', 'scope'], allowedLinkKinds: ['derived_from'], status: 'live' },
-  { key: 'probe-tracker', name: 'Probe Tracker', route: '/probes', stages: ['outputs'], allowedLinkKinds: ['tests'], status: 'planned' },
+  { key: 'probe-tracker', name: 'Probe Tracker', route: '/probes', viewerCase: 'probe-tracker', stages: ['outputs'], allowedLinkKinds: ['tests'], status: 'live' },
   { key: 'benefits-scorecard', name: 'Benefits Scorecard', route: '/benefits', stages: ['outcomes'], allowedLinkKinds: ['measures'], status: 'planned' },
   { key: 'coaching-session', name: 'Coaching Studio', route: '/coach', stages: ['intent', 'scope', 'approach', 'operate', 'outputs', 'outcomes'], allowedLinkKinds: ['derived_from'], status: 'planned' },
   { key: 'ways-of-working', name: 'Retro Coach and Ways of Working', route: '/ways-of-working', viewerCase: 'ways-of-working', stages: ['operate'], allowedLinkKinds: ['derived_from'], status: 'live' },
