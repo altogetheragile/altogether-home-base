@@ -5,6 +5,8 @@
 //   HOW  -> impacts: the behaviour changes we want from each actor
 //   WHAT -> deliverables: what we could do to support each impact
 
+import type { CellCoach } from './coaching';
+
 export interface Deliverable {
   id: string;
   label: string;
@@ -30,29 +32,33 @@ export interface ImpactMap {
 export type ImpactLevel = 'goal' | 'actor' | 'impact' | 'deliverable';
 
 // Coaching metadata used to walk people through the technique, one level at a time.
-export const LEVEL_META: Record<ImpactLevel, { tag: string; question: string; help: string; color: string }> = {
+export const LEVEL_META: Record<ImpactLevel, CellCoach> = {
   goal: {
     tag: 'WHY',
     question: 'What is the goal?',
     help: 'A measurable business objective. Make it specific and time-bound, for example "Grow active users by 20% by Q4". Avoid listing features here.',
+    stretch: 'If you achieved this and nothing felt different, how would you know?',
     color: '#004D4D',
   },
   actor: {
     tag: 'WHO',
     question: 'Who can help or hinder the goal?',
     help: 'The people or roles whose behaviour affects the goal. Be concrete: "New visitors", "Returning customers", "Support team".',
+    stretch: 'Whose behaviour are you assuming will not change?',
     color: '#1A9090',
   },
   impact: {
     tag: 'HOW',
     question: 'How should their behaviour change?',
     help: 'The impact you want each actor to have, framed as a behaviour change, for example "Sign up faster" or "Return more often". Include impacts that hinder the goal too.',
+    stretch: 'Which of these changes would happen anyway, without you?',
     color: '#E08A4E',
   },
   deliverable: {
     tag: 'WHAT',
     question: 'What could we do to support that?',
     help: 'The deliverables, features, or activities that might cause the impact. These are options to test, not commitments.',
+    stretch: 'Which of these are you most attached to, and what would tell you to drop it?',
     color: '#9C8A6A',
   },
 };

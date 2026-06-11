@@ -91,6 +91,14 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   const allDeliverables = () =>
     map.actors.flatMap((a) => a.impacts.flatMap((i) => i.deliverables.map((d) => ({ nodeId: d.id, title: d.label }))));
 
+  // Surface a level's stretch question once the user has content at that level.
+  const levelHasContent: Record<'goal' | 'actor' | 'impact' | 'deliverable', boolean> = {
+    goal: map.goal.trim().length > 0,
+    actor: map.actors.length > 0,
+    impact: map.actors.some((a) => a.impacts.length > 0),
+    deliverable: map.actors.some((a) => a.impacts.some((i) => i.deliverables.length > 0)),
+  };
+
   const performArtifactSave = useDebouncedCallback(async (m: ImpactMap) => {
     if (!artifactId || !projectId) return;
     setSaveStatus('saving');
@@ -323,9 +331,16 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {(['goal', 'actor', 'impact', 'deliverable'] as const).map((lvl) => (
-            <div key={lvl} className="flex items-start gap-2 rounded-md bg-background/60 p-2">
-              {levelChip(lvl)}
-              <span className="text-xs text-muted-foreground">{LEVEL_META[lvl].question}</span>
+            <div key={lvl} className="rounded-md bg-background/60 p-2">
+              <div className="flex items-start gap-2">
+                {levelChip(lvl)}
+                <span className="text-xs text-muted-foreground">{LEVEL_META[lvl].question}</span>
+              </div>
+              {levelHasContent[lvl] && (
+                <p className="mt-1.5 text-xs italic" style={{ color: LEVEL_META[lvl].color }}>
+                  {LEVEL_META[lvl].stretch}
+                </p>
+              )}
             </div>
           ))}
         </div>
