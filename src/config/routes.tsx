@@ -41,6 +41,7 @@ const AIToolsHub = lazy(() => import('@/pages/AIToolsHub'));
 const BMCGenerator = lazy(() => import('@/pages/BMCGenerator'));
 const ProjectModellingCanvas = lazy(() => import('@/pages/ProjectModellingCanvas'));
 const ImpactMap = lazy(() => import('@/pages/ImpactMap'));
+const PersonaStudio = lazy(() => import('@/pages/PersonaStudio'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const CoursePage = lazy(() => import('@/pages/CoursePage'));
 const BlogPost = lazy(() => import('@/pages/BlogPost'));
@@ -219,6 +220,13 @@ export const PublicRoutes = () => {
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
           <ImpactMap />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/personas" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <PersonaStudio />
         </Suspense>
       </ErrorBoundary>
     } />

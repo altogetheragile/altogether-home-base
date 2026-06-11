@@ -280,6 +280,14 @@ const STATIC_PAGES = {
     title: 'AI Tools - Altogether Agile',
     description: 'Free AI-powered agile tools to support your team. Business model canvas generator and more.',
   },
+  '/impact-map': {
+    title: 'Impact Map Builder - Altogether Agile',
+    description: 'Build and export Impact Maps (Gojko Adzic): goal, actors, impacts and deliverables, with FreeMind, PNG, PDF, JSON and Markdown export.',
+  },
+  '/personas': {
+    title: 'Persona Studio - Altogether Agile',
+    description: 'Build and export a coached persona: a named character with goals, pains and behaviours, grounded in Jobs to Be Done.',
+  },
   '/privacy': {
     title: 'Privacy Policy - Altogether Agile',
     description: 'Altogether Agile privacy policy. How we collect, use, and protect your personal data.',

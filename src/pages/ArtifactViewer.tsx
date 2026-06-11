@@ -279,6 +279,20 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'persona':
+        const PersonaEditor = React.lazy(() =>
+          import('@/components/persona/PersonaEditor').then(m => ({ default: m.PersonaEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading persona...</div>}>
+            <PersonaEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
       default:
         return (
           <div className="bg-muted p-8 rounded-lg">

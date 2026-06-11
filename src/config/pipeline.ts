@@ -94,7 +94,7 @@ export const PIPELINE: PipelineToolDef[] = [
   // --- Planned (roadmap; see VISION_TO_VALUE.md sections 6.2, 6.6-6.10) ---
   { key: 'business-case', name: 'Business Case Canvas', route: '/canvases', stages: ['intent', 'scope'], allowedLinkKinds: ['derived_from'], status: 'planned' },
   { key: 'product-vision', name: 'Product Vision Canvas', route: '/canvases', stages: ['intent'], allowedLinkKinds: ['derived_from'], status: 'planned' },
-  { key: 'persona', name: 'Persona Studio', route: '/personas', stages: ['intent', 'scope'], allowedLinkKinds: ['derived_from'], status: 'planned' },
+  { key: 'persona', name: 'Persona Studio', route: '/personas', viewerCase: 'persona', stages: ['intent', 'scope'], allowedLinkKinds: ['derived_from'], status: 'live' },
   { key: 'probe-tracker', name: 'Probe Tracker', route: '/probes', stages: ['outputs'], allowedLinkKinds: ['tests'], status: 'planned' },
   { key: 'benefits-scorecard', name: 'Benefits Scorecard', route: '/benefits', stages: ['outcomes'], allowedLinkKinds: ['measures'], status: 'planned' },
   { key: 'coaching-session', name: 'Coaching Studio', route: '/coach', stages: ['intent', 'scope', 'approach', 'operate', 'outputs', 'outcomes'], allowedLinkKinds: ['derived_from'], status: 'planned' },

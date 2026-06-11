@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target } from 'lucide-react';
+import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,6 +97,10 @@ export default function ProjectDetail() {
                 <DropdownMenuItem onClick={() => navigate(`/impact-map?projectId=${projectId}`)}>
                   <Target className="h-4 w-4 mr-2" />
                   Impact Map
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/personas?projectId=${projectId}`)}>
+                  <UserCircle className="h-4 w-4 mr-2" />
+                  Persona
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(`/backlog?projectId=${projectId}`)}>
                   <ClipboardList className="h-4 w-4 mr-2" />

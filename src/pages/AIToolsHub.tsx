@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
@@ -48,6 +48,14 @@ const AIToolsHub = () => {
       icon: Target,
       route: "/impact-map",
       badge: "Guided",
+    },
+    {
+      id: "persona-studio",
+      name: "Persona Studio",
+      description: "Shape a clear, named persona through a coaching conversation: their role, context, goals, pains, behaviours and voice. Export to PNG, PDF, JSON and Markdown.",
+      icon: UserCircle,
+      route: "/personas",
+      badge: "Coached",
     },
   ];
 
