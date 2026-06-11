@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ArtifactsList } from '@/components/projects/ArtifactsList';
+import { ProjectJourney } from '@/components/pipeline/ProjectJourney';
 import { Separator } from '@/components/ui/separator';
 
 export default function ProjectDetail() {
@@ -139,10 +140,13 @@ export default function ProjectDetail() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <ArtifactsList 
-            artifacts={artifacts || []} 
-            projectId={projectId!}
-          />
+          <>
+            <ProjectJourney artifacts={artifacts || []} projectId={projectId!} />
+            <ArtifactsList
+              artifacts={artifacts || []}
+              projectId={projectId!}
+            />
+          </>
         )}
       </div>
     </div>
