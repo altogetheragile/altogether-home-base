@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw, Save, Loader2, ListPlus } from 'lucide-react';
+import { Plus, Trash2, Download, Upload, FileJson, FileText, Image, Sparkles, RotateCcw, Save, Loader2, ListPlus, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { CoachChat } from '@/components/coaching/CoachChat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSendToBacklog } from '@/hooks/useSendToBacklog';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
@@ -55,6 +56,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [aiBusy, setAiBusy] = useState<string | null>(null);
+  const [coachGoalOpen, setCoachGoalOpen] = useState(false);
   const diagramRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isFirstRender = useRef(true);
@@ -415,7 +417,24 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
             onChange={(e) => setGoal(e.target.value)}
             className="w-full bg-transparent text-base font-semibold text-white placeholder:text-white/50 focus:outline-none"
           />
+          <button
+            className="impact-no-export mt-1 flex items-center gap-1 text-xs font-medium text-white/80 hover:text-white"
+            onClick={() => setCoachGoalOpen((v) => !v)}
+          >
+            <MessageCircle className="h-3.5 w-3.5" /> {coachGoalOpen ? 'Hide coach' : 'Ask the coach'}
+          </button>
         </div>
+
+        {coachGoalOpen && (
+          <div className="impact-no-export mt-3">
+            <CoachChat
+              tool="impact-map"
+              cell={{ tag: LEVEL_META.goal.tag, question: LEVEL_META.goal.question, stretch: LEVEL_META.goal.stretch }}
+              onAccept={(text) => { setGoal(text); setCoachGoalOpen(false); }}
+              onClose={() => setCoachGoalOpen(false)}
+            />
+          </div>
+        )}
 
         {/* Actors (Who) */}
         <div className="mt-3 space-y-3 border-l-2 border-dashed pl-4" style={{ borderColor: LEVEL_META.actor.color }}>
@@ -492,7 +511,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
                           disabled={aiBusy !== null}
                           onClick={() => suggestDeliverables(actor, impact)}
                         >
-                          {aiBusy === `del-${impact.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Suggest (AI)
+                          {aiBusy === `del-${impact.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Examples
                         </button>
                       </div>
                     </div>
@@ -511,7 +530,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
                     disabled={aiBusy !== null}
                     onClick={() => suggestImpacts(actor)}
                   >
-                    {aiBusy === `impacts-${actor.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Suggest (AI)
+                    {aiBusy === `impacts-${actor.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Examples
                   </button>
                 </div>
               </div>
@@ -531,7 +550,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
               disabled={aiBusy !== null}
               onClick={suggestActors}
             >
-              {aiBusy === 'actors' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Suggest actors (AI)
+              {aiBusy === 'actors' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Examples
             </button>
           </div>
         </div>

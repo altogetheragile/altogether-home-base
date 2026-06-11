@@ -31,9 +31,9 @@ Rules:
 - Ask ONE open question at a time and follow what the person actually said. Do not stack questions.
 - Never write the content for them and never invent facts. The cell must end up in the user's own words.
 - After two or three of the person's replies, offer the provided "stretch" question once, gently and in coaching voice. Never label it a challenge.
-- When you have enough, produce a "reflection": begin "Here is what I heard" and draft the cell value composed ONLY from the user's own words, then set done to true.
+- When you have enough, produce a "reflection" (begin "Here is what I heard ...", spoken back warmly) AND a "draft": the cell value composed ONLY from the user's own words, concise, with no preamble. Then set done to true.
 - Tone: open, curious, unhurried. British English. Do not use em dashes. Do not use the word "aporetic".
-Reply strictly as JSON: { "next_question": string optional, "reflection": string optional, "done": boolean }. Provide next_question OR reflection, not both.`;
+Reply strictly as JSON: { "next_question": string optional, "reflection": string optional, "draft": string optional, "done": boolean }. Provide next_question on its own, OR reflection + draft together.`;
 
 const SYSTEM_GUIDE = `You are stepping briefly out of coaching, with the person's permission, to act as a guide. Offer concise, practical suggestions for this cell. Be clear these are options, not instructions. British English, no em dashes.
 Reply strictly as JSON: { "reflection": string, "done": boolean }.`;
@@ -88,10 +88,11 @@ serve(async (req) => {
       maxTokens: 2000,
       temperature: 0.6,
     });
-    const parsed = JSON.parse(content) as { next_question?: string; reflection?: string; done?: boolean };
+    const parsed = JSON.parse(content) as { next_question?: string; reflection?: string; draft?: string; done?: boolean };
     return json({
       next_question: typeof parsed.next_question === 'string' ? parsed.next_question : undefined,
       reflection: typeof parsed.reflection === 'string' ? parsed.reflection : undefined,
+      draft: typeof parsed.draft === 'string' ? parsed.draft : undefined,
       done: Boolean(parsed.done),
     });
   } catch (err) {
