@@ -162,7 +162,12 @@ export function WaysOfWorkingEditor({ initialData, artifactId, projectId }: Ways
 
   return (
     <div className="space-y-6">
-      <style>{`.exporting .wow-no-export { display: none !important; }`}</style>
+      <style>{`
+        .exporting .wow-no-export { display: none !important; }
+        .wow-export-only { display: none; }
+        .exporting .wow-edit { display: none !important; }
+        .exporting .wow-export-only { display: inline !important; }
+      `}</style>
 
       <div className="flex flex-wrap items-center gap-2">
         {!isArtifact && (
@@ -228,7 +233,8 @@ export function WaysOfWorkingEditor({ initialData, artifactId, projectId }: Ways
             {wow.agreements.map((a, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="text-muted-foreground">•</span>
-                <input value={a} placeholder="A working agreement..." onChange={(e) => updateAgreement(i, e.target.value)} className="flex-1 bg-transparent text-sm focus:outline-none" />
+                <input value={a} placeholder="A working agreement..." onChange={(e) => updateAgreement(i, e.target.value)} className="wow-edit flex-1 bg-transparent text-sm focus:outline-none" />
+                <span className="wow-export-only flex-1 text-sm">{a}</span>
                 <button aria-label="Remove agreement" className="wow-no-export text-muted-foreground hover:text-destructive" onClick={() => removeAgreement(i)}><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             ))}

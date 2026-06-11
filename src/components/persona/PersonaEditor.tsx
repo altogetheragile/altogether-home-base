@@ -9,6 +9,7 @@ import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
+import { AutoTextarea } from '@/components/coaching/AutoTextarea';
 import {
   Persona,
   PersonaField,
@@ -142,7 +143,12 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
 
   return (
     <div className="space-y-6">
-      <style>{`.exporting .persona-no-export { display: none !important; }`}</style>
+      <style>{`
+        .exporting .persona-no-export { display: none !important; }
+        .persona-export-only { display: none; }
+        .exporting .persona-edit { display: none !important; }
+        .exporting .persona-export-only { display: block !important; }
+      `}</style>
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
@@ -160,7 +166,7 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
           <Sparkles className="mr-1.5 h-4 w-4" /> Load Example
         </Button>
         <Button variant="outline" size="sm" onClick={() => setPersona(emptyPersona())}>
-          <RotateCcw className="mr-1.5 h-4 w-4" /> Clear
+          <RotateCcw className="mr-1.5 h-4 w-4" /> New persona
         </Button>
         <div className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={() => handleExportImage('png')}>
@@ -199,8 +205,9 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
                 value={persona.name}
                 placeholder="Name this persona..."
                 onChange={(e) => setField('name', e.target.value)}
-                className="w-full bg-transparent text-lg font-semibold text-white placeholder:text-white/50 focus:outline-none"
+                className="persona-edit w-full bg-transparent text-lg font-semibold text-white placeholder:text-white/50 focus:outline-none"
               />
+              <div className="persona-export-only text-lg font-semibold text-white">{persona.name}</div>
             </div>
           </div>
           <div className="persona-no-export mt-2 flex items-center gap-3">
@@ -232,13 +239,13 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
                   <MessageCircle className="h-3.5 w-3.5" /> {coachField === key ? 'Hide' : 'Ask the coach'}
                 </button>
               </div>
-              <textarea
+              <AutoTextarea
                 value={persona[key]}
                 placeholder={coach.question}
                 onChange={(e) => setField(key, e.target.value)}
-                rows={2}
-                className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                className="persona-edit w-full resize-none overflow-hidden bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
               />
+              <div className="persona-export-only whitespace-pre-wrap text-sm text-foreground">{persona[key]}</div>
               {coachField === key && (
                 <div className="persona-no-export mt-2">
                   <CoachChat
@@ -264,13 +271,13 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
               <MessageCircle className="h-3.5 w-3.5" /> {coachField === 'quote' ? 'Hide' : 'Ask the coach'}
             </button>
           </div>
-          <textarea
+          <AutoTextarea
             value={persona.quote}
             placeholder="A short line in their own voice..."
             onChange={(e) => setField('quote', e.target.value)}
-            rows={2}
-            className="w-full resize-none bg-transparent text-sm italic text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            className="persona-edit w-full resize-none overflow-hidden bg-transparent text-sm italic text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
           />
+          <div className="persona-export-only whitespace-pre-wrap text-sm italic text-foreground">{persona.quote}</div>
           {coachField === 'quote' && (
             <div className="persona-no-export mt-2">
               <CoachChat

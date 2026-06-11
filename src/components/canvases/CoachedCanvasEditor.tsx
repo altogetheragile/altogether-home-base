@@ -8,6 +8,7 @@ import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
+import { AutoTextarea } from '@/components/coaching/AutoTextarea';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
 import type { CanvasDef } from '@/config/canvases';
 
@@ -132,7 +133,12 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
 
   return (
     <div className="space-y-6">
-      <style>{`.exporting .canvas-no-export { display: none !important; }`}</style>
+      <style>{`
+        .exporting .canvas-no-export { display: none !important; }
+        .canvas-export-only { display: none; }
+        .exporting .canvas-edit { display: none !important; }
+        .exporting .canvas-export-only { display: block !important; }
+      `}</style>
 
       <div className="flex flex-wrap items-center gap-2">
         {!isArtifact && (
@@ -169,13 +175,14 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
                   <MessageCircle className="h-3.5 w-3.5" /> {coachCell === cell.key ? 'Hide' : 'Ask the coach'}
                 </button>
               </div>
-              <textarea
+              <AutoTextarea
                 value={data[cell.key]}
                 placeholder={cell.coach.question}
                 onChange={(e) => setCell(cell.key, e.target.value)}
                 rows={cell.wide ? 2 : 3}
-                className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                className="canvas-edit w-full resize-none overflow-hidden bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
               />
+              <div className="canvas-export-only whitespace-pre-wrap text-sm text-foreground">{data[cell.key]}</div>
               {coachCell === cell.key && (
                 <div className="canvas-no-export mt-2">
                   <CoachChat
