@@ -183,7 +183,7 @@ const BMCGenerator = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
             </Button>
-            <h2 className="text-xl font-semibold">Business Model Canvas Generator</h2>
+            <h2 className="text-xl font-semibold">Business Model Canvas</h2>
           </div>
         </div>
       </div>

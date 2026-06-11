@@ -42,6 +42,19 @@ function balancedJson(s: string): string {
 }
 
 /**
+ * Enforce the house style "no em dashes" rule on model output. The system prompts
+ * ask for this, but the model still slips them in, so we strip them deterministically.
+ * Prose em dashes (and spaced en dashes) become a comma; numeric en-dash ranges
+ * like "5–10" are left as a hyphen.
+ */
+function stripEmDashes(s: string): string {
+  return s
+    .replace(/\s*—\s*/g, ', ')   // em dash, spaced or not
+    .replace(/ – /g, ', ')        // spaced en dash used as punctuation
+    .replace(/–/g, '-');          // any remaining en dash (e.g. ranges) -> hyphen
+}
+
+/**
  * Call Claude and return a clean JSON-object STRING (not parsed), so callers can
  * keep their existing extractJSON / JSON.parse logic unchanged.
  *
@@ -92,5 +105,5 @@ export async function callClaudeJSON({
     throw new Error('Empty response from Anthropic API');
   }
 
-  return balancedJson(text);
+  return stripEmDashes(balancedJson(text));
 }
