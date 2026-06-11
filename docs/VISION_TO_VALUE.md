@@ -21,7 +21,10 @@
 > `item_type` render as "Story" (e.g. an "Epic" shows as a Story). Recommendation: make the
 > relational `backlog_items` table the single source for project backlogs (Save-to-Project
 > and the artifact editor read AND write relational rows; the artifact row becomes a pointer
-> or is dropped). Not yet implemented.
+> or is dropped). RESOLVED 11 June 2026: added `useProjectBacklog` (relational CRUD);
+> ProductBacklog uses it in project mode (items auto-persist, no Save-to-Project snapshot);
+> standalone Save-to-Project now writes relational rows; ArtifactViewer routes backlog
+> editing to `/backlog?projectId`. Verified: Epic item_type round-trips relationally.
 >
 > Deviations from this spec found during the build (carry into v1.3):
 > 1. §3 claimed `backlog_items` had `user_persona` and `epic`; neither existed. Resolved by

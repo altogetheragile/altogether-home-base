@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjects, useProjectMutations } from "@/hooks/useProjects";
 import { useProjectArtifactMutations } from "@/hooks/useProjectArtifacts";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, FolderOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
@@ -74,7 +75,35 @@ export const SaveToProjectDialog = ({
         return;
       }
 
-      // Create artifact
+      // Product backlogs live in the relational backlog_items table (the single
+      // source). Write the draft items there so they appear in the project's backlog.
+      if (artifactType === 'product-backlog') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const items: any[] = (artifactData?.items as any[]) ?? [];
+        if (items.length > 0) {
+          const { data: { user } } = await supabase.auth.getUser();
+          const rows = items.map((it, index) => ({
+            project_id: projectId,
+            title: it.title,
+            description: it.description ?? null,
+            acceptance_criteria: it.acceptance_criteria ?? null,
+            priority: it.priority ?? 'medium',
+            status: it.status ?? 'idea',
+            source: it.source ?? null,
+            tags: it.tags ?? null,
+            target_release: it.target_release ?? null,
+            estimated_value: it.estimated_value ?? null,
+            estimated_effort: it.estimated_effort ?? null,
+            item_type: it.item_type ?? 'story',
+            backlog_position: index,
+            created_by: user?.id ?? null,
+          }));
+          const { error: rowsError } = await supabase.from('backlog_items').insert(rows);
+          if (rowsError) throw rowsError;
+        }
+      }
+
+      // Create artifact (pointer / metadata; backlog data lives relationally)
       const artifact = await createArtifact.mutateAsync({
         project_id: projectId,
         artifact_type: artifactType,
@@ -85,7 +114,7 @@ export const SaveToProjectDialog = ({
       // Close dialog and reset form
       onOpenChange(false);
       resetForm();
-      
+
       // Notify parent after cleanup
       onSaveComplete?.(projectId, artifact.id);
       

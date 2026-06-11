@@ -72,30 +72,6 @@ export default function ArtifactViewer() {
   };
 
   // Backlog handlers
-  const handleStartEditBacklog = () => {
-    // Use live database items instead of artifact snapshot
-    const items = liveBacklogItems || [];
-    // Convert to LocalBacklogItem format with positions
-    const localItems: LocalBacklogItem[] = items.map((item: any, index: number) => ({
-      id: item.id || crypto.randomUUID(),
-      title: item.title,
-      description: item.description || null,
-      acceptance_criteria: item.acceptance_criteria || null,
-      priority: item.priority || 'medium',
-      status: item.status || 'idea',
-      source: item.source || null,
-      estimated_value: item.estimated_value || null,
-      estimated_effort: item.estimated_effort || null,
-      tags: item.tags || null,
-      target_release: item.target_release || null,
-      backlog_position: item.backlog_position ?? index,
-      item_type: item.item_type || 'story',
-      parent_item_id: item.parent_item_id || null,
-    }));
-    setEditedBacklogItems(localItems);
-    setIsEditingBacklog(true);
-  };
-
   const handleSaveBacklogChanges = async () => {
     if (!artifact) return;
     
@@ -360,9 +336,9 @@ export default function ArtifactViewer() {
       }
       return (
         <>
-          <Button variant="outline" onClick={handleStartEditBacklog}>
+          <Button variant="outline" onClick={() => navigate(`/backlog?projectId=${projectId}`)}>
             <Pencil className="h-4 w-4 mr-2" />
-            Edit
+            Edit in Backlog
           </Button>
           <Button variant="outline" onClick={handleExportBacklog}>
             <Download className="h-4 w-4 mr-2" />

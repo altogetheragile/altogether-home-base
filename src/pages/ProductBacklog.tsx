@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd';
 import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
-import { useLocalBacklogItems, LocalBacklogItemInput, LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
-import { useBacklogItems } from '@/hooks/useBacklogItems';
+import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
+import { useProjectBacklog } from '@/hooks/useProjectBacklog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { exportBacklogCsv, type BacklogCsvFormat, FORMAT_LABELS } from '@/utils/backlog/backlogCsv';
 import { UpstreamIntentPrompt } from '@/components/backlog/UpstreamIntentPrompt';
@@ -31,45 +31,15 @@ const ProductBacklog: React.FC = () => {
   const projectId = searchParams.get('projectId');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const hasInitialized = useRef(false);
 
-  // Fetch existing backlog items from database when projectId is provided
-  const { data: existingItems, isLoading: isLoadingItems } = useBacklogItems(projectId || undefined);
-
-  const { 
-    items, 
-    addItem, 
-    updateItem, 
-    deleteItem, 
-    reorderItems, 
-    clearItems,
-    hasItems,
-    setAllItems
-  } = useLocalBacklogItems();
-
-  // Load existing backlog items from database when projectId is provided
-  useEffect(() => {
-    if (existingItems && existingItems.length > 0 && !hasInitialized.current) {
-      hasInitialized.current = true;
-      const localItems: LocalBacklogItem[] = existingItems.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        acceptance_criteria: item.acceptance_criteria,
-        priority: item.priority || 'medium',
-        status: item.status || 'idea',
-        source: item.source,
-        estimated_value: item.estimated_value,
-        estimated_effort: item.estimated_effort,
-        tags: item.tags,
-        target_release: item.target_release,
-        backlog_position: item.backlog_position || 0,
-        item_type: (item.item_type || 'story') as import('@/types/story').ItemType,
-        parent_item_id: item.parent_item_id || null,
-      }));
-      setAllItems(localItems);
-    }
-  }, [existingItems, setAllItems]);
+  // In project mode the relational backlog_items table is the single source and
+  // every change auto-persists. Standalone mode keeps a local draft + Save to Project.
+  const local = useLocalBacklogItems();
+  const project = useProjectBacklog(projectId || undefined);
+  const inProject = !!projectId;
+  const { items, addItem, updateItem, deleteItem, reorderItems, clearItems, hasItems } =
+    inProject ? project : local;
+  const isLoadingItems = inProject ? project.isLoading : false;
 
   const handleAddItem = (input: LocalBacklogItemInput) => {
     addItem(input);
@@ -107,10 +77,12 @@ const ProductBacklog: React.FC = () => {
     toast.success(`Exported for ${FORMAT_LABELS[format]}`);
   };
 
-  const handleSaveComplete = () => {
+  const handleSaveComplete = (savedProjectId: string) => {
     clearItems();
-    toast.success('Backlog saved to project successfully');
     setSaveDialogOpen(false);
+    toast.success('Backlog saved to project');
+    // Land on the project-scoped (relational) backlog so the saved items are shown.
+    navigate(`/backlog?projectId=${savedProjectId}`);
   };
 
   // Check authentication
@@ -188,14 +160,16 @@ const ProductBacklog: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="default"
-              onClick={() => setSaveDialogOpen(true)}
-              disabled={!hasItems}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save to Project
-            </Button>
+            {!inProject && (
+              <Button
+                variant="default"
+                onClick={() => setSaveDialogOpen(true)}
+                disabled={!hasItems}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save to Project
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" disabled={!hasItems}>
@@ -228,8 +202,8 @@ const ProductBacklog: React.FC = () => {
           </Alert>
         )}
 
-        {/* Unsaved changes warning */}
-        {hasItems && (
+        {/* Unsaved changes warning (standalone only; project mode auto-persists) */}
+        {!inProject && hasItems && (
           <Alert variant="default" className="mb-6 border-amber-500/50 bg-amber-500/10">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <AlertDescription className="text-amber-700 dark:text-amber-300">
