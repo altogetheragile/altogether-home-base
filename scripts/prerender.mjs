@@ -288,6 +288,10 @@ const STATIC_PAGES = {
     title: 'Persona Studio - Altogether Agile',
     description: 'Build and export a coached persona: a named character with goals, pains and behaviours, grounded in Jobs to Be Done.',
   },
+  '/coach': {
+    title: 'Coaching Studio - Altogether Agile',
+    description: 'A standalone coaching conversation on whatever you bring. Think out loud, then harvest the conversation: the coach proposes where each goal, idea, probe or measure could live, with one tap to send it there.',
+  },
   '/benefits': {
     title: 'Benefits Scorecard - Altogether Agile',
     description: 'Track whether the numbers actually moved. Each outcome carries a leading indicator, a target and dated readings, with a trend line and a Benefits on a Page PDF export.',

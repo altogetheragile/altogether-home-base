@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart } from 'lucide-react';
+import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart, MessagesSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +82,10 @@ export default function ProjectDetail() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate(`/coach?projectId=${projectId}`)}>
+                  <MessagesSquare className="h-4 w-4 mr-2" />
+                  Coaching Studio
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(`/bmc-generator?projectId=${projectId}`)}>
                   <Sparkles className="h-4 w-4 mr-2" />
                   Business Model Canvas

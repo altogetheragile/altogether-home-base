@@ -45,6 +45,7 @@ const PersonaStudio = lazy(() => import('@/pages/PersonaStudio'));
 const WaysOfWorking = lazy(() => import('@/pages/WaysOfWorking'));
 const ProbeTracker = lazy(() => import('@/pages/ProbeTracker'));
 const BenefitsScorecard = lazy(() => import('@/pages/BenefitsScorecard'));
+const CoachingStudio = lazy(() => import('@/pages/CoachingStudio'));
 const CanvasCatalogue = lazy(() => import('@/pages/CanvasCatalogue'));
 const CoachedCanvasPage = lazy(() => import('@/pages/CoachedCanvasPage'));
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -253,6 +254,13 @@ export const PublicRoutes = () => {
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
           <BenefitsScorecard />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/coach" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <CoachingStudio />
         </Suspense>
       </ErrorBoundary>
     } />

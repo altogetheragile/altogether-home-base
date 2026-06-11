@@ -11,7 +11,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-type CoachMode = 'coach' | 'guide';
+type CoachMode = 'coach' | 'guide' | 'session';
 interface Turn { role: 'user' | 'coach'; text: string }
 interface ReflectRequest {
   tool: string;
@@ -37,6 +37,16 @@ Reply strictly as JSON: { "next_question": string optional, "reflection": string
 
 const SYSTEM_GUIDE = `You are stepping briefly out of coaching, with the person's permission, to act as a guide. Offer concise, practical suggestions for this cell. Be clear these are options, not instructions. British English, no em dashes.
 Reply strictly as JSON: { "reflection": string, "done": boolean }.`;
+
+const SYSTEM_SESSION = `You are an experienced agile coach in a standalone coaching conversation on whatever topic the person brings. This is not tied to filling a single field, so keep exploring with them.
+Rules:
+- Ask ONE open question at a time and follow what the person actually said. Do not stack questions.
+- Never tell them what to do and never invent facts. Help them think in their own words.
+- Open by contracting: ask what would make this conversation useful to them.
+- After a few exchanges, offer the provided "stretch" question once, gently and in coaching voice. Never label it a challenge.
+- Do not try to wrap up or summarise unless the person asks; keep done false. The person will choose when to harvest the conversation.
+- Tone: open, curious, unhurried. British English. Do not use em dashes. Do not use the word "aporetic".
+Reply strictly as JSON: { "next_question": string, "done": boolean }.`;
 
 function buildPrompt(req: ReflectRequest): string {
   const transcript = (req.conversation ?? [])
@@ -79,11 +89,12 @@ serve(async (req) => {
     return json({ error: 'tool, cellTag and question are required' }, 400);
   }
 
-  const mode: CoachMode = body.mode === 'guide' ? 'guide' : 'coach';
+  const mode: CoachMode = body.mode === 'guide' ? 'guide' : body.mode === 'session' ? 'session' : 'coach';
+  const system = mode === 'guide' ? SYSTEM_GUIDE : mode === 'session' ? SYSTEM_SESSION : SYSTEM_COACH;
 
   try {
     const content = await callClaudeJSON({
-      system: mode === 'guide' ? SYSTEM_GUIDE : SYSTEM_COACH,
+      system,
       prompt: buildPrompt(body),
       maxTokens: 2000,
       temperature: 0.6,

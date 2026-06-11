@@ -336,6 +336,20 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'coaching-session':
+        const CoachingStudioEditor = React.lazy(() =>
+          import('@/components/coachingStudio/CoachingStudioEditor').then(m => ({ default: m.CoachingStudioEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading coaching session...</div>}>
+            <CoachingStudioEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
       case 'business-case':
       case 'product-vision': {
         const CoachedCanvasEditor = React.lazy(() =>

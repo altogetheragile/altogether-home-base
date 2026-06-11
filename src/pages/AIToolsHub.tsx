@@ -4,11 +4,19 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart, MessagesSquare } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
   const tools = [
+    {
+      id: "coaching-studio",
+      name: "Coaching Studio",
+      description: "A standalone coaching conversation on whatever you bring. Think out loud, then harvest it: the coach proposes where each goal, idea, probe or measure could live, with one tap to send it there.",
+      icon: MessagesSquare,
+      route: "/coach",
+      badge: "Coached",
+    },
     {
       id: "bmc-generator",
       name: "Business Model Canvas Generator",
