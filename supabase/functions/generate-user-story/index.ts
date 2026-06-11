@@ -82,8 +82,8 @@ serve(async (req) => {
   const userAgent = req.headers.get('user-agent') || 'unknown';
 
   let rawRequest: GenerateStoryRequest;
-  const storyLevel: StoryLevel = 'story';
-  
+  let storyLevel: StoryLevel = 'story';
+
   try {
     rawRequest = await req.json();
     storyLevel = rawRequest.storyLevel || 'story';
@@ -120,7 +120,8 @@ serve(async (req) => {
 
     // Sanitize all input fields
     const sanitizedRequest = sanitizeObject(rawRequest);
-    const { storyLevel, userInput, parentContext, additionalFields, parentId } = sanitizedRequest;
+    storyLevel = sanitizedRequest.storyLevel || storyLevel;
+    const { userInput, parentContext, additionalFields, parentId } = sanitizedRequest;
 
     // Validate required fields
     const validation = validateRequiredFields(storyLevel, userInput, parentId);
@@ -160,7 +161,7 @@ serve(async (req) => {
     const generatedContent = await callClaudeJSON({
       system: systemPrompt,
       prompt,
-      maxTokens: 1200,
+      maxTokens: 4000,
       temperature: 0.2,
     });
 
