@@ -288,6 +288,10 @@ const STATIC_PAGES = {
     title: 'Persona Studio - Altogether Agile',
     description: 'Build and export a coached persona: a named character with goals, pains and behaviours, grounded in Jobs to Be Done.',
   },
+  '/benefits': {
+    title: 'Benefits Scorecard - Altogether Agile',
+    description: 'Track whether the numbers actually moved. Each outcome carries a leading indicator, a target and dated readings, with a trend line and a Benefits on a Page PDF export.',
+  },
   '/probes': {
     title: 'Probe Tracker - Altogether Agile',
     description: 'Run your output options as safe-to-fail experiments. A simple kanban moves each probe from Planned to Running to Kept or Killed, with the signal that would prove it wrong.',

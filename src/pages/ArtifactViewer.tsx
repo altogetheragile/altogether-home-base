@@ -322,6 +322,20 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'benefits-scorecard':
+        const BenefitsScorecardEditor = React.lazy(() =>
+          import('@/components/benefitsScorecard/BenefitsScorecardEditor').then(m => ({ default: m.BenefitsScorecardEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading benefits scorecard...</div>}>
+            <BenefitsScorecardEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
       case 'business-case':
       case 'product-vision': {
         const CoachedCanvasEditor = React.lazy(() =>

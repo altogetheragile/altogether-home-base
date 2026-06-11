@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
@@ -79,6 +79,14 @@ const AIToolsHub = () => {
       description: "Run your output options as safe-to-fail experiments. A simple kanban moves each probe from Planned to Running to Kept or Killed, with the signal that would prove it wrong.",
       icon: FlaskConical,
       route: "/probes",
+      badge: "Coached",
+    },
+    {
+      id: "benefits-scorecard",
+      name: "Benefits Scorecard",
+      description: "Track whether the numbers actually moved. Each outcome carries a leading indicator, a target and dated readings, with a trend line and a Benefits on a Page PDF export.",
+      icon: LineChart,
+      route: "/benefits",
       badge: "Coached",
     },
   ];

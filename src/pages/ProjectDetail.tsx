@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical } from 'lucide-react';
+import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,6 +109,10 @@ export default function ProjectDetail() {
                 <DropdownMenuItem onClick={() => navigate(`/probes?projectId=${projectId}`)}>
                   <FlaskConical className="h-4 w-4 mr-2" />
                   Probe Tracker
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/benefits?projectId=${projectId}`)}>
+                  <LineChart className="h-4 w-4 mr-2" />
+                  Benefits Scorecard
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(`/ways-of-working?projectId=${projectId}`)}>
                   <RefreshCw className="h-4 w-4 mr-2" />
