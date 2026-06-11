@@ -26,6 +26,33 @@
 > standalone Save-to-Project now writes relational rows; ArtifactViewer routes backlog
 > editing to `/backlog?projectId`. Verified: Epic item_type round-trips relationally.
 >
+> **Increment 2: DONE and live (11 June 2026).** `coach-reflect` edge fn (coach|guide modes);
+> `CellCoach` + reusable `CoachChat` (Contracted Mode Switch); Impact Map stretch + Ask the
+> coach; Persona Studio (`/personas`, public `user-uploads` bucket, migration
+> `20260611130000`); Canvas catalogue (`/canvases` + `/canvases/:key`) with the data-driven
+> coached-canvas engine, Business Case + Product Vision, and the (ungrounded) Canvas Picker.
+>
+> **Increment 3: DONE and live (11 June 2026), except KB grounding (blocked).** New artifact
+> tools, each coached, exported (PNG/PDF/JSON/Markdown) and wired into routes, ArtifactViewer,
+> the pipeline registry (`status: 'live'` + `viewerCase`), the AI Tools Hub, Project Tools and
+> `prerender.mjs` (now 51 pages):
+> - Ways of Working / Retro Coach (`/ways-of-working`, `ways-of-working`).
+> - Probe Tracker (`/probes`, `probe-tracker`) — experiment kanban Planned→Running→Kept/Killed.
+> - Benefits Scorecard (`/benefits`, `benefits-scorecard`) — readings + trend sparkline +
+>   Benefits on a Page PDF.
+> - Coaching Studio (`/coach`, `coaching-session`) — free coached conversation (new `session`
+>   mode in `coach-reflect`) + harvest-to-pipeline via the new `coach-harvest` edge fn
+>   (classifies into goal/backlog/probe/benefit/persona/agreement/note). Send-to-backlog writes
+>   a real `backlog_items` row; other destinations open the tool and stay recorded in the
+>   session. Both edge fns deployed and verified end-to-end with a temp user.
+> - Journey view: `JourneyBand` on `/ai-tools` (public, SEO) and `ProjectJourney` on the
+>   project page, both six stages with cascade-down/learning-up styling, driven by the registry.
+>
+> **Still open in Increment 3:** (a) KB grounding of the coach and Canvas Picker — BLOCKED on
+> the `show_knowledge` publish and the `knowledge_items` seed (Technique to Artifact Map);
+> nothing to ground against until the KB publishes. (b) Modelling Canvas promote-to-artifact.
+> (c) Deferred: recoach the BMC generator (still one-shot AI).
+>
 > Deviations from this spec found during the build (carry into v1.3):
 > 1. §3 claimed `backlog_items` had `user_persona` and `epic`; neither existed. Resolved by
 >    adding both columns in the Increment 1 migration.

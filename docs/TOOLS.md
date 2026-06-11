@@ -80,6 +80,50 @@ text and per-level AI suggestions.
   (artifact_type `impact-map`); when opened from a project artifact it
   auto-saves back to the artifact.
 
+### Coaching Studio — `/coach`
+A standalone coached conversation (not tied to a cell), the pipeline's front door.
+Free chat via `coach-reflect` (`session` mode), then **harvest**: `coach-harvest`
+reads the transcript and proposes where each thing lands (goal, backlog, probe,
+benefit, persona, agreement, note) in the person's own words. Send-to-backlog
+writes a real `backlog_items` row when saved in a project; other destinations open
+the tool and stay recorded in the session.
+- Frontend: `src/components/coachingStudio/CoachingStudioEditor.tsx`,
+  `src/types/coachingSession.ts`.
+- Persistence: Save to Project (artifact_type `coaching-session`: transcript +
+  harvested items + where they went).
+
+### Persona Studio — `/personas`
+Coached persona (role, context, goals, pains, behaviours, voice) plus an avatar
+image (public `user-uploads` bucket). Exports PNG/PDF/JSON/Markdown.
+`src/components/persona/PersonaEditor.tsx`; artifact_type `persona`.
+
+### Canvas Catalogue — `/canvases` and `/canvases/:canvasKey`
+Data-driven coached-canvas engine (`src/config/canvases.ts` +
+`CoachedCanvasEditor`). Business Model Canvas, Business Case, Product Vision, plus
+a Canvas Picker. artifact_types `business-case`, `product-vision` (BMC via `bmc`).
+
+### Probe Tracker — `/probes`
+Experiment kanban for the Outputs stage: each output option is an
+option-as-hypothesis card moving Planned → Running → Kept/Killed, with the
+smallest test and the signal that would prove it wrong. Coached on the test.
+`src/components/probeTracker/ProbeTrackerEditor.tsx`; artifact_type `probe-tracker`.
+
+### Benefits Scorecard — `/benefits`
+Outcomes and Value stage: each outcome has a leading indicator, target and dated
+readings, with an inline trend sparkline and a Benefits on a Page PDF export.
+`src/components/benefitsScorecard/BenefitsScorecardEditor.tsx`; artifact_type
+`benefits-scorecard`.
+
+### Ways of Working — `/ways-of-working`
+Operate stage: working agreements plus short coached retrospectives that land on
+one improvement action at a time (standing stretch displayed).
+`src/components/waysOfWorking/WaysOfWorkingEditor.tsx`; artifact_type
+`ways-of-working`.
+
+The Hub and each project page open with a six-stage **journey view**
+(`src/components/pipeline/JourneyBand.tsx` and `ProjectJourney.tsx`), driven by the
+Pipeline Registry (`src/config/pipeline.ts`).
+
 ## Adjacent features (not in the Hub)
 
 ### Practice Exams — `/exams`
@@ -100,6 +144,9 @@ on 2026-06-10 and verified working end-to-end (signed-in):
 
 - `generate-impact-map`, `generate-user-story`, `generate-canvas`,
   `generate-business-model-canvas` — Claude via `_shared/anthropic.ts`.
+- `coach-reflect` — non-directive coach with `coach`|`guide`|`session` modes
+  (fills one cell, or runs a free Coaching Studio session).
+- `coach-harvest` — classifies a coaching transcript into pipeline destinations.
 - `recommend-pattern` — Anthropic (KB Pattern Builder, currently unpublished).
 
 `OPENAI_API_KEY` still exists as a secret but is no longer used by these functions.
