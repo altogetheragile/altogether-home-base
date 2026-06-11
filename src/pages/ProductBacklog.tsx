@@ -217,6 +217,17 @@ const ProductBacklog: React.FC = () => {
         {/* One-question-upstream: capture why this work exists, once per project */}
         {projectId && <UpstreamIntentPrompt projectId={projectId} />}
 
+        {/* This backlog has no project context: explain how to link it */}
+        {!projectId && (
+          <Alert className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              This backlog is not linked to a project, so it will not capture your project's intent or item provenance.
+              Open a project and choose <strong>Project Tools &gt; Product Backlog</strong>, or use <strong>Save to Project</strong> above to link it.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Unsaved changes warning */}
         {hasItems && (
           <Alert variant="default" className="mb-6 border-amber-500/50 bg-amber-500/10">

@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Sparkles, FileText, Hexagon, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,8 +76,8 @@ export default function ProjectDetail() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Artifact
+                  <Wrench className="h-4 w-4 mr-2" />
+                  Project Tools
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -92,6 +92,10 @@ export default function ProjectDetail() {
                 <DropdownMenuItem onClick={() => navigate(`/project-modelling?projectId=${projectId}`)}>
                   <Hexagon className="h-4 w-4 mr-2" />
                   Project Model
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/impact-map?projectId=${projectId}`)}>
+                  <Target className="h-4 w-4 mr-2" />
+                  Impact Map
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(`/backlog?projectId=${projectId}`)}>
                   <ClipboardList className="h-4 w-4 mr-2" />
