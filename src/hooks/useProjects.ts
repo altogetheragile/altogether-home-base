@@ -72,15 +72,25 @@ export const useProjectStats = (projectId: string) => {
   return useQuery({
     queryKey: ['project-stats', projectId],
     queryFn: async () => {
-      // Get counts for all project artifacts
+      // Counts come from the relational backlog_items table (by item_type) and
+      // BMCs from saved bmc artifacts. The backlog is the single source for work items.
+      const backlogCount = (itemType: string) =>
+        supabase
+          .from('backlog_items')
+          .select('*', { count: 'exact', head: true })
+          .eq('project_id', projectId)
+          .eq('item_type', itemType);
+
       const [
         { count: userStoriesCount },
         { count: epicsCount },
-        { count: featuresCount }
+        { count: featuresCount },
+        { count: bmcsCount },
       ] = await Promise.all([
-        supabase.from('user_stories').select('*', { count: 'exact', head: true }).eq('project_id', projectId),
-        supabase.from('epics').select('*', { count: 'exact', head: true }).eq('project_id', projectId),
-        supabase.from('features').select('*', { count: 'exact', head: true }).eq('project_id', projectId)
+        backlogCount('story'),
+        backlogCount('epic'),
+        backlogCount('feature'),
+        supabase.from('project_artifacts').select('*', { count: 'exact', head: true }).eq('project_id', projectId).eq('artifact_type', 'bmc'),
       ]);
 
       return {
@@ -88,7 +98,7 @@ export const useProjectStats = (projectId: string) => {
         user_stories_count: userStoriesCount || 0,
         epics_count: epicsCount || 0,
         features_count: featuresCount || 0,
-        bmcs_count: 0, // TODO: Add BMC count when BMC table is created
+        bmcs_count: bmcsCount || 0,
       } as ProjectStats;
     },
     enabled: !!projectId,

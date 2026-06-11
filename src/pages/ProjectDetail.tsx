@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
+import LogoFull from '@/components/LogoFull';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
@@ -46,8 +47,8 @@ export default function ProjectDetail() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
-                AltogetherAgile
+              <Link to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
+                <LogoFull height={32} />
               </Link>
               <Separator orientation="vertical" className="h-6" />
               <Button

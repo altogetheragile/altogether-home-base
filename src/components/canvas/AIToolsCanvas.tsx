@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import LogoFull from '@/components/LogoFull';
 import { Separator } from '@/components/ui/separator';
 import BMCCanvasElement from './elements/BMCCanvasElement';
 import { StoryCardElement } from './elements/StoryCardElement';
@@ -929,8 +930,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       {!artifactId && (
         <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
           <div className="flex items-center gap-3">
-            <Link to="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
-              AltogetherAgile
+            <Link to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
+              <LogoFull height={32} />
             </Link>
             <Separator orientation="vertical" className="h-6" />
             <Button
