@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
@@ -63,6 +63,14 @@ const AIToolsHub = () => {
       description: "Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. A picker recommends one, then you fill it through conversation and export.",
       icon: FileSpreadsheet,
       route: "/canvases",
+      badge: "Coached",
+    },
+    {
+      id: "ways-of-working",
+      name: "Ways of Working",
+      description: "Agree how your team works, then keep it honest. Run a short coached retrospective that lands on one improvement action at a time. Export to PNG, PDF, JSON and Markdown.",
+      icon: RefreshCw,
+      route: "/ways-of-working",
       badge: "Coached",
     },
   ];

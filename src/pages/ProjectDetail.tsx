@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,6 +105,10 @@ export default function ProjectDetail() {
                 <DropdownMenuItem onClick={() => navigate(`/canvases?projectId=${projectId}`)}>
                   <FileSpreadsheet className="h-4 w-4 mr-2" />
                   Canvas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/ways-of-working?projectId=${projectId}`)}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Ways of Working
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(`/backlog?projectId=${projectId}`)}>
                   <ClipboardList className="h-4 w-4 mr-2" />

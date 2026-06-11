@@ -294,6 +294,20 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'ways-of-working':
+        const WaysOfWorkingEditor = React.lazy(() =>
+          import('@/components/waysOfWorking/WaysOfWorkingEditor').then(m => ({ default: m.WaysOfWorkingEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading ways of working...</div>}>
+            <WaysOfWorkingEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
       case 'business-case':
       case 'product-vision': {
         const CoachedCanvasEditor = React.lazy(() =>

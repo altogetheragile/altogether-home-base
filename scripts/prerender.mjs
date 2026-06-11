@@ -288,6 +288,10 @@ const STATIC_PAGES = {
     title: 'Persona Studio - Altogether Agile',
     description: 'Build and export a coached persona: a named character with goals, pains and behaviours, grounded in Jobs to Be Done.',
   },
+  '/ways-of-working': {
+    title: 'Ways of Working - Altogether Agile',
+    description: 'Capture your team working agreements and run short coached retrospectives that produce one improvement action at a time. Export to PNG, PDF, JSON and Markdown.',
+  },
   '/canvases': {
     title: 'Canvas Catalogue - Altogether Agile',
     description: 'Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. Fill each through a coaching conversation, then export.',

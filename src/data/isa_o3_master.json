@@ -1,10 +1,10 @@
 {
   "_README": "GENERATED FROM SUPABASE - DO NOT EDIT. Supabase is the single source of truth; edit content via the admin UI. This file is regenerated on each build by scripts/export-kb-json.mjs and is not read at runtime.",
   "meta": {
-    "generated": "2026-06-01",
+    "generated": "2026-06-11",
     "source": "Exported from Altogether Agile knowledge_items (Supabase, is_published=true)",
     "artifacts": 35,
-    "techniques": 80
+    "techniques": 81
   },
   "artifacts": [
     {
@@ -21,7 +21,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Items of value",
+          "question": "What slices of outcome are being delivered?",
+          "perspective": "what"
+        },
+        {
+          "name": "Priority order",
+          "question": "How are items sequenced for delivery?",
+          "perspective": "how"
+        },
+        {
+          "name": "Owners",
+          "question": "Who is accountable for each item?",
+          "perspective": "who"
+        },
+        {
+          "name": "Acceptance criteria",
+          "question": "How will done be tested?",
+          "perspective": "how"
+        },
+        {
+          "name": "Estimates",
+          "question": "When, given its size, is each item likely to land?",
+          "perspective": "when"
+        }
+      ]
     },
     {
       "id": "coord-delivery-schedule",
@@ -37,7 +63,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Milestones",
+          "question": "When are agreed points of progress expected?",
+          "perspective": "when"
+        },
+        {
+          "name": "Dependencies",
+          "question": "How are items, teams, and parties linked?",
+          "perspective": "how"
+        },
+        {
+          "name": "Resources",
+          "question": "Who is committed to the schedule?",
+          "perspective": "who"
+        },
+        {
+          "name": "Locations",
+          "question": "Where will work take place?",
+          "perspective": "where"
+        },
+        {
+          "name": "Deliverables",
+          "question": "What will arrive at each milestone?",
+          "perspective": "what"
+        }
+      ]
     },
     {
       "id": "coord-goal",
@@ -51,9 +103,38 @@
       "description": "The next meaningful objective for the initiative, cascaded from organisational Goals.",
       "question": "Why this goal next? What outcome are we pursuing? When?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "org-goals",
+        "team-goal"
+      ],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Outcome statement",
+          "question": "What change is being aimed for in this delivery cycle?",
+          "perspective": "what"
+        },
+        {
+          "name": "Measure",
+          "question": "What evidence will show progress?",
+          "perspective": "what"
+        },
+        {
+          "name": "Timeframe",
+          "question": "When must the goal be met?",
+          "perspective": "when"
+        },
+        {
+          "name": "Owner",
+          "question": "Who is accountable for this goal across teams?",
+          "perspective": "who"
+        },
+        {
+          "name": "Linkage to organisation goals",
+          "question": "Why does this goal serve organisational intent?",
+          "perspective": "why"
+        }
+      ]
     },
     {
       "id": "coord-governance",
@@ -67,7 +148,9 @@
       "description": "The decision rights, forums, and thresholds within the initiative — who can decide on scope, schedule, and resourcing changes.",
       "question": "Who decides what within this initiative, and how?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "org-governance"
+      ],
       "techniques": [],
       "components": []
     },
@@ -101,7 +184,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Outcomes observed",
+          "question": "What change did coordination actually deliver?",
+          "perspective": "what"
+        },
+        {
+          "name": "Beneficiary feedback",
+          "question": "Who used the result, and what do they say?",
+          "perspective": "who"
+        },
+        {
+          "name": "Comparison to delivery goals",
+          "question": "Why did the outcome differ from the goal?",
+          "perspective": "why"
+        },
+        {
+          "name": "Review point",
+          "question": "When in the delivery cycle is this review made?",
+          "perspective": "when"
+        },
+        {
+          "name": "Method",
+          "question": "How were evidence and feedback collected?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "coord-purpose",
@@ -115,7 +224,9 @@
       "description": "Why this initiative exists and what it is for, in service of the host organisation's Purpose. For a project or programme, this is the reason the temporary organisation has been formed. For a product or service, this is the reason the product exists and the value it is built to create.",
       "question": "Why does this initiative exist?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "org-purpose"
+      ],
       "techniques": [],
       "components": []
     },
@@ -195,9 +306,37 @@
       "description": "The future state the initiative is bringing about — what the world looks like when the work is done.",
       "question": "Where is this initiative taking us?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "org-vision"
+      ],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Aspirational outcome",
+          "question": "Why is this coordinated effort being undertaken?",
+          "perspective": "why"
+        },
+        {
+          "name": "Beneficiaries",
+          "question": "Who is this effort for?",
+          "perspective": "who"
+        },
+        {
+          "name": "Scope of change",
+          "question": "What will be affected by the effort?",
+          "perspective": "what"
+        },
+        {
+          "name": "Boundaries",
+          "question": "Where does the effort start and stop?",
+          "perspective": "where"
+        },
+        {
+          "name": "Timeframe",
+          "question": "When does the vision apply?",
+          "perspective": "when"
+        }
+      ]
     },
     {
       "id": "coord-way-of-working",
@@ -213,7 +352,38 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Participating teams",
+          "question": "Who is bound by the charter?",
+          "perspective": "who"
+        },
+        {
+          "name": "Cadences and events",
+          "question": "When do teams meet, review, and integrate?",
+          "perspective": "when"
+        },
+        {
+          "name": "Communication channels",
+          "question": "Where do conversations happen and decisions get recorded?",
+          "perspective": "where"
+        },
+        {
+          "name": "Decision rights",
+          "question": "How are decisions allocated across roles?",
+          "perspective": "how"
+        },
+        {
+          "name": "Working agreements",
+          "question": "How will teams work together day to day?",
+          "perspective": "how"
+        },
+        {
+          "name": "Escalation paths",
+          "question": "How are issues escalated when local decision rights are exceeded?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "org-brand",
@@ -245,7 +415,53 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Customer segments",
+          "question": "Who does the organisation serve?",
+          "perspective": "who"
+        },
+        {
+          "name": "Value proposition",
+          "question": "What does the organisation offer each segment?",
+          "perspective": "what"
+        },
+        {
+          "name": "Channels",
+          "question": "Where does value reach the customer?",
+          "perspective": "where"
+        },
+        {
+          "name": "Customer relationships",
+          "question": "How does the organisation engage with each segment?",
+          "perspective": "how"
+        },
+        {
+          "name": "Revenue streams",
+          "question": "How is value captured commercially?",
+          "perspective": "how"
+        },
+        {
+          "name": "Key activities",
+          "question": "How does the organisation create and deliver value?",
+          "perspective": "how"
+        },
+        {
+          "name": "Key resources",
+          "question": "What assets does the model depend on?",
+          "perspective": "what"
+        },
+        {
+          "name": "Key partners",
+          "question": "Who outside the organisation does the model rely on?",
+          "perspective": "who"
+        },
+        {
+          "name": "Cost structure",
+          "question": "How is the economic shape of the model put together?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "org-goals",
@@ -259,9 +475,38 @@
       "description": "Time-bound, measurable commitments on the way to the Vision.",
       "question": "What will we achieve, by when?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "coord-goal",
+        "team-goal"
+      ],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Outcome statement",
+          "question": "What change is this goal seeking to bring about?",
+          "perspective": "what"
+        },
+        {
+          "name": "Measure of success",
+          "question": "What evidence will show the goal has been achieved?",
+          "perspective": "what"
+        },
+        {
+          "name": "Timeframe",
+          "question": "When must this goal be achieved?",
+          "perspective": "when"
+        },
+        {
+          "name": "Owner",
+          "question": "Who is accountable for achieving this goal?",
+          "perspective": "who"
+        },
+        {
+          "name": "Strategic linkage",
+          "question": "Why is this goal a priority now, and how does it serve Vision and Strategy?",
+          "perspective": "why"
+        }
+      ]
     },
     {
       "id": "org-governance",
@@ -275,7 +520,9 @@
       "description": "The decision rights, forums, and thresholds that determine who decides what across the organisation.",
       "question": "Who decides what, and how are decisions made?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "coord-governance"
+      ],
       "techniques": [],
       "components": []
     },
@@ -293,7 +540,28 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Activity",
+          "question": "What does the organisation actually do?",
+          "perspective": "what"
+        },
+        {
+          "name": "Beneficiary",
+          "question": "Who does the organisation serve through that activity?",
+          "perspective": "who"
+        },
+        {
+          "name": "Distinction",
+          "question": "Why is the contribution different from others doing similar work?",
+          "perspective": "why"
+        },
+        {
+          "name": "Operating arena",
+          "question": "Where does the organisation operate?",
+          "perspective": "where"
+        }
+      ]
     },
     {
       "id": "org-operating-model",
@@ -309,7 +577,38 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Structure",
+          "question": "Where does authority and grouping sit in the organisation?",
+          "perspective": "where"
+        },
+        {
+          "name": "Roles and accountabilities",
+          "question": "Who is responsible for what?",
+          "perspective": "who"
+        },
+        {
+          "name": "Processes",
+          "question": "How does work get done repeatably?",
+          "perspective": "how"
+        },
+        {
+          "name": "Information flows",
+          "question": "How do data, decisions, and signals move through the organisation?",
+          "perspective": "how"
+        },
+        {
+          "name": "Governance",
+          "question": "Who decides what, and in which forum?",
+          "perspective": "who"
+        },
+        {
+          "name": "Locations and footprint",
+          "question": "Where does work physically and digitally take place?",
+          "perspective": "where"
+        }
+      ]
     },
     {
       "id": "org-portfolio-backlog",
@@ -331,7 +630,7 @@
       "id": "org-portfolio-roadmap",
       "name": "Portfolio Roadmap",
       "horizon": "Organisation",
-      "isa": "Scope",
+      "isa": "Approach",
       "layer": "Iterative",
       "kind": "Artifact",
       "facet": null,
@@ -355,9 +654,32 @@
       "description": "The timeless reason the organisation exists.",
       "question": "Why do we exist at all?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "coord-purpose"
+      ],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Reason for being",
+          "question": "Why does the organisation exist beyond making money?",
+          "perspective": "why"
+        },
+        {
+          "name": "Beneficiaries",
+          "question": "Who are the people whose lives the organisation aims to improve?",
+          "perspective": "who"
+        },
+        {
+          "name": "Distinctive contribution",
+          "question": "What unique change does the organisation seek to make in the world?",
+          "perspective": "what"
+        },
+        {
+          "name": "Enduring horizon",
+          "question": "When, if ever, should this Purpose be expected to change?",
+          "perspective": "when"
+        }
+      ]
     },
     {
       "id": "org-strategic-outcomes",
@@ -373,7 +695,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Outcomes observed",
+          "question": "What change has actually happened?",
+          "perspective": "what"
+        },
+        {
+          "name": "Stakeholder feedback",
+          "question": "Who has been affected, and what do they say about the result?",
+          "perspective": "who"
+        },
+        {
+          "name": "Comparison to intent",
+          "question": "Why does the outcome differ from what was intended?",
+          "perspective": "why"
+        },
+        {
+          "name": "Review point",
+          "question": "When is this review being made?",
+          "perspective": "when"
+        },
+        {
+          "name": "Method of evidence-gathering",
+          "question": "How was the evidence collected?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "org-strategy",
@@ -389,7 +737,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Winning aspiration",
+          "question": "Why is the organisation pursuing this strategy?",
+          "perspective": "why"
+        },
+        {
+          "name": "Where to play",
+          "question": "Where will the organisation compete?",
+          "perspective": "where"
+        },
+        {
+          "name": "How to win",
+          "question": "How will the organisation earn advantage in those arenas?",
+          "perspective": "how"
+        },
+        {
+          "name": "Capabilities required",
+          "question": "What strengths must the organisation have to execute the strategy?",
+          "perspective": "what"
+        },
+        {
+          "name": "Management systems",
+          "question": "How will the strategy be governed and operated?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "org-value-proposition",
@@ -405,7 +779,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Beneficiary segment",
+          "question": "Who is the proposition for?",
+          "perspective": "who"
+        },
+        {
+          "name": "Jobs to be done",
+          "question": "What is the beneficiary trying to achieve?",
+          "perspective": "what"
+        },
+        {
+          "name": "Pain relievers",
+          "question": "Why does this proposition matter against the beneficiary’s pains?",
+          "perspective": "why"
+        },
+        {
+          "name": "Gain creators",
+          "question": "Why does this proposition matter against the beneficiary’s gains?",
+          "perspective": "why"
+        },
+        {
+          "name": "Differentiation",
+          "question": "How is this proposition different from the alternatives?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "org-values",
@@ -421,7 +821,28 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Named behaviours",
+          "question": "How do people in this organisation behave when at their best?",
+          "perspective": "how"
+        },
+        {
+          "name": "Identity markers",
+          "question": "Who belongs in this organisation, and what marks them out?",
+          "perspective": "who"
+        },
+        {
+          "name": "Decision filters",
+          "question": "Why might one course of action be preferred over another?",
+          "perspective": "why"
+        },
+        {
+          "name": "Continuity commitment",
+          "question": "When are these values held, and when might they be tested?",
+          "perspective": "when"
+        }
+      ]
     },
     {
       "id": "org-vision",
@@ -435,9 +856,32 @@
       "description": "The future the organisation is working toward, set far enough out to be ambitious and close enough to be accountable.",
       "question": "Where are we going? When will we get there?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "coord-vision"
+      ],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Aspirational future state",
+          "question": "Why is this future worth striving for?",
+          "perspective": "why"
+        },
+        {
+          "name": "Time horizon",
+          "question": "When does the organisation aim to reach this future state?",
+          "perspective": "when"
+        },
+        {
+          "name": "Success picture",
+          "question": "What does success look like when the vision is achieved?",
+          "perspective": "what"
+        },
+        {
+          "name": "Scope of ambition",
+          "question": "Where, in which arenas or markets, does this vision apply?",
+          "perspective": "where"
+        }
+      ]
     },
     {
       "id": "team-delivery-health-metrics",
@@ -467,9 +911,38 @@
       "description": "The intent for the team's current cycle, cascaded from the initiative Goal.",
       "question": "Why this cycle? What must be true by the end of it?",
       "inheritable": false,
-      "counterparts": [],
+      "counterparts": [
+        "org-goals",
+        "coord-goal"
+      ],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Outcome",
+          "question": "What is the team working towards this iteration?",
+          "perspective": "what"
+        },
+        {
+          "name": "Success measure",
+          "question": "What evidence will show the goal is met?",
+          "perspective": "what"
+        },
+        {
+          "name": "Timeframe",
+          "question": "When does this goal apply?",
+          "perspective": "when"
+        },
+        {
+          "name": "Owning team",
+          "question": "Who owns this goal?",
+          "perspective": "who"
+        },
+        {
+          "name": "Reason",
+          "question": "Why does this goal matter now?",
+          "perspective": "why"
+        }
+      ]
     },
     {
       "id": "team-output",
@@ -485,7 +958,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Working output",
+          "question": "What did the team produce?",
+          "perspective": "what"
+        },
+        {
+          "name": "Definition of done met",
+          "question": "How was the increment confirmed as done?",
+          "perspective": "how"
+        },
+        {
+          "name": "Recipients",
+          "question": "Who receives or uses the increment?",
+          "perspective": "who"
+        },
+        {
+          "name": "Date completed",
+          "question": "When was the increment made available?",
+          "perspective": "when"
+        },
+        {
+          "name": "Environment",
+          "question": "Where is the increment deployed or in use?",
+          "perspective": "where"
+        }
+      ]
     },
     {
       "id": "team-output-feedback",
@@ -501,7 +1000,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Outcomes observed",
+          "question": "What change did the team’s work produce?",
+          "perspective": "what"
+        },
+        {
+          "name": "User feedback",
+          "question": "Who used the result, and what do they say?",
+          "perspective": "who"
+        },
+        {
+          "name": "Comparison to team goal",
+          "question": "Why did the outcome differ from the team goal?",
+          "perspective": "why"
+        },
+        {
+          "name": "Review point",
+          "question": "When in the iteration is this review made?",
+          "perspective": "when"
+        },
+        {
+          "name": "Method",
+          "question": "How was the evidence gathered?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "team-plan",
@@ -517,7 +1042,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Iteration scope",
+          "question": "What has the team committed to in this iteration?",
+          "perspective": "what"
+        },
+        {
+          "name": "Iteration goal",
+          "question": "Why does this iteration matter?",
+          "perspective": "why"
+        },
+        {
+          "name": "Capacity",
+          "question": "Who is available, and for how much effort?",
+          "perspective": "who"
+        },
+        {
+          "name": "Schedule of events",
+          "question": "When do the iteration’s touch-points happen?",
+          "perspective": "when"
+        },
+        {
+          "name": "Dependencies",
+          "question": "How is the plan linked to other teams or work?",
+          "perspective": "how"
+        }
+      ]
     },
     {
       "id": "team-quality-bar",
@@ -549,7 +1100,33 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Items",
+          "question": "What pieces of work are waiting?",
+          "perspective": "what"
+        },
+        {
+          "name": "Priority",
+          "question": "How are items ordered for the team to pull?",
+          "perspective": "how"
+        },
+        {
+          "name": "Owner",
+          "question": "Who grooms and orders the backlog?",
+          "perspective": "who"
+        },
+        {
+          "name": "Acceptance criteria",
+          "question": "How will each item be confirmed as done?",
+          "perspective": "how"
+        },
+        {
+          "name": "Estimates",
+          "question": "When, given its size, is each item likely to land?",
+          "perspective": "when"
+        }
+      ]
     },
     {
       "id": "team-working-agreement",
@@ -565,7 +1142,38 @@
       "inheritable": false,
       "counterparts": [],
       "techniques": [],
-      "components": []
+      "components": [
+        {
+          "name": "Team members",
+          "question": "Who is in the team?",
+          "perspective": "who"
+        },
+        {
+          "name": "Purpose",
+          "question": "Why does this team exist?",
+          "perspective": "why"
+        },
+        {
+          "name": "Goals",
+          "question": "What does success look like for this team?",
+          "perspective": "what"
+        },
+        {
+          "name": "Working agreements",
+          "question": "How will the team work together?",
+          "perspective": "how"
+        },
+        {
+          "name": "Boundaries and scope",
+          "question": "Where does the team’s remit start and stop?",
+          "perspective": "where"
+        },
+        {
+          "name": "Cadences",
+          "question": "When does the team meet, review, and plan?",
+          "perspective": "when"
+        }
+      ]
     }
   ],
   "techniques": [
@@ -595,6 +1203,13 @@
       "name": "Accessibility Audit",
       "description": "Technique to evaluate digital accessibility compliance and inclusion standards (e.g., WCAG).",
       "source": "W3C Web Accessibility Initiative (WCAG)",
+      "produces": []
+    },
+    {
+      "id": "affinity-mapping",
+      "name": "Affinity Mapping",
+      "description": "A sense-making technique for organising a large number of ideas, observations or research notes into natural groupings. Participants cluster related items, then name each cluster, revealing themes that were not obvious in the raw data.",
+      "source": "Jiro Kawakita (KJ Method), 1960s",
       "produces": []
     },
     {
@@ -654,13 +1269,6 @@
       "produces": []
     },
     {
-      "id": "daily-stand-ups",
-      "name": "Daily Stand-ups",
-      "description": "A short, time-boxed daily meeting where team members synchronize work, identify blockers, and plan the next 24 hours.",
-      "source": "Agile (Scrum), BCS (People Techniques)",
-      "produces": []
-    },
-    {
       "id": "definition-of-done-dod",
       "name": "Definition of Done (DoD)",
       "description": "A shared agreement among team members on the conditions a product increment must meet to be considered complete.",
@@ -689,6 +1297,13 @@
       "produces": []
     },
     {
+      "id": "dot-voting",
+      "name": "Dot Voting",
+      "description": "A simple group decision technique where participants allocate a fixed number of dots across options to reveal collective preference. It quickly narrows a long list to a shortlist without lengthy debate.",
+      "source": "Dotmocracy, widely used in facilitation",
+      "produces": []
+    },
+    {
       "id": "empathy-map",
       "name": "Empathy Map",
       "description": "A collaborative visualization used to articulate what a user sees, hears, thinks, feels, says, and does to build empathy and insight.",
@@ -696,7 +1311,7 @@
       "produces": []
     },
     {
-      "id": "epic-user-story-miqpy9sb",
+      "id": "epic-user-story",
       "name": "Epic User Story",
       "description": "",
       "source": "",
@@ -707,6 +1322,13 @@
       "name": "Estimation (Story Points, T-shirt sizing)",
       "description": "Relative estimation techniques that measure effort or complexity rather than time. Useful for forecasting and iteration planning.",
       "source": "BABOK (Estimation & Planning), Agile (Estimation), BCS",
+      "produces": []
+    },
+    {
+      "id": "example-mapping",
+      "name": "Example Mapping",
+      "description": "A collaborative discovery technique that breaks a user story into its business rules and concrete examples. Using four colours of card (story, rules, examples, questions), the team explores a story together before development, surfacing unknowns early and agreeing scope.",
+      "source": "Matt Wynne (Cucumber), 2015",
       "produces": []
     },
     {
@@ -1015,13 +1637,6 @@
       "name": "Spikes",
       "description": "Short, time-boxed tasks aimed at answering questions or exploring approaches to reduce technical, UX, or business uncertainty.",
       "source": "Extreme Programming (XP)",
-      "produces": []
-    },
-    {
-      "id": "sprint-miov2esf",
-      "name": "Sprint",
-      "description": "",
-      "source": "",
       "produces": []
     },
     {
