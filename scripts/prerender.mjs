@@ -288,6 +288,18 @@ const STATIC_PAGES = {
     title: 'Persona Studio - Altogether Agile',
     description: 'Build and export a coached persona: a named character with goals, pains and behaviours, grounded in Jobs to Be Done.',
   },
+  '/canvases': {
+    title: 'Canvas Catalogue - Altogether Agile',
+    description: 'Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. Fill each through a coaching conversation, then export.',
+  },
+  '/canvases/business-case': {
+    title: 'Business Case Canvas - Altogether Agile',
+    description: 'Build a coached Business Case: vision, options, costs and benefits, investment appraisal and risk.',
+  },
+  '/canvases/product-vision': {
+    title: 'Product Vision Canvas - Altogether Agile',
+    description: 'Shape product direction with a coached Product Vision canvas (after Roman Pichler): vision, target group, needs, product and business goals.',
+  },
   '/privacy': {
     title: 'Privacy Policy - Altogether Agile',
     description: 'Altogether Agile privacy policy. How we collect, use, and protect your personal data.',

@@ -42,6 +42,8 @@ const BMCGenerator = lazy(() => import('@/pages/BMCGenerator'));
 const ProjectModellingCanvas = lazy(() => import('@/pages/ProjectModellingCanvas'));
 const ImpactMap = lazy(() => import('@/pages/ImpactMap'));
 const PersonaStudio = lazy(() => import('@/pages/PersonaStudio'));
+const CanvasCatalogue = lazy(() => import('@/pages/CanvasCatalogue'));
+const CoachedCanvasPage = lazy(() => import('@/pages/CoachedCanvasPage'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const CoursePage = lazy(() => import('@/pages/CoursePage'));
 const BlogPost = lazy(() => import('@/pages/BlogPost'));
@@ -227,6 +229,20 @@ export const PublicRoutes = () => {
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
           <PersonaStudio />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/canvases" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <CanvasCatalogue />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/canvases/:canvasKey" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <CoachedCanvasPage />
         </Suspense>
       </ErrorBoundary>
     } />

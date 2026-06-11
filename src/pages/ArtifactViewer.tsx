@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import LogoFull from '@/components/LogoFull';
+import { canvasByKey } from '@/config/canvases';
 import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
 import { useBacklogItems } from '@/hooks/useBacklogItems';
@@ -293,6 +294,25 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'business-case':
+      case 'product-vision': {
+        const CoachedCanvasEditor = React.lazy(() =>
+          import('@/components/canvases/CoachedCanvasEditor').then(m => ({ default: m.CoachedCanvasEditor }))
+        );
+        const def = canvasByKey(artifact.artifact_type);
+        if (!def) return <div className="bg-muted p-8 rounded-lg"><p className="text-muted-foreground">Unknown canvas</p></div>;
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading canvas...</div>}>
+            <CoachedCanvasEditor
+              def={def}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
+      }
       default:
         return (
           <div className="bg-muted p-8 rounded-lg">

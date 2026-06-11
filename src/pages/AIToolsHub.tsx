@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle } from "lucide-react";
+import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 
 const AIToolsHub = () => {
@@ -55,6 +55,14 @@ const AIToolsHub = () => {
       description: "Shape a clear, named persona through a coaching conversation: their role, context, goals, pains, behaviours and voice. Export to PNG, PDF, JSON and Markdown.",
       icon: UserCircle,
       route: "/personas",
+      badge: "Coached",
+    },
+    {
+      id: "canvas-catalogue",
+      name: "Canvas Catalogue",
+      description: "Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. A picker recommends one, then you fill it through conversation and export.",
+      icon: FileSpreadsheet,
+      route: "/canvases",
       badge: "Coached",
     },
   ];
