@@ -10,9 +10,12 @@ import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
 import { AutoTextarea } from '@/components/coaching/AutoTextarea';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
+import { confirmReplace } from '@/utils/confirmDiscard';
 import type { CanvasDef } from '@/config/canvases';
 
 type CanvasData = Record<string, string>;
+
+const canvasHasContent = (d: CanvasData): boolean => Object.values(d).some((v) => (v || '').trim() !== '');
 
 const downloadText = (text: string, filename: string, mime: string): void => {
   const blob = new Blob([text], { type: mime });
@@ -86,8 +89,9 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
       isFirstRender.current = false;
       return;
     }
-    if (isArtifact) performArtifactSave(data);
-    else {
+    if (isArtifact) {
+      if (canvasHasContent(data)) performArtifactSave(data);
+    } else {
       try {
         localStorage.setItem(storageKey, JSON.stringify(data));
       } catch {
@@ -151,7 +155,7 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save failed'}
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => setData(emptyData(def))}>
+        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(canvasHasContent(data))) setData(emptyData(def)); }}>
           <RotateCcw className="mr-1.5 h-4 w-4" /> Clear
         </Button>
         <div className="mx-1 h-6 w-px bg-border" />

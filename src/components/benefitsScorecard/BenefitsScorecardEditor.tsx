@@ -9,6 +9,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
+import { confirmReplace } from '@/utils/confirmDiscard';
 import {
   BenefitsScorecard,
   Benefit,
@@ -23,6 +24,8 @@ import {
 
 const STORAGE_KEY = 'benefitsScorecard.v1';
 const TEAL = '#004D4D';
+
+const scorecardHasContent = (s: BenefitsScorecard): boolean => s.benefits.length > 0;
 
 const downloadText = (text: string, filename: string, mime: string): void => {
   const blob = new Blob([text], { type: mime });
@@ -116,8 +119,9 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
       isFirstRender.current = false;
       return;
     }
-    if (isArtifact) performArtifactSave(scorecard);
-    else {
+    if (isArtifact) {
+      if (scorecardHasContent(scorecard)) performArtifactSave(scorecard);
+    } else {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(scorecard));
       } catch {
@@ -211,8 +215,8 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save failed'}
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => setScorecard(exampleBenefitsScorecard())}><RotateCcw className="mr-1.5 h-4 w-4" /> Example</Button>
-        <Button variant="outline" size="sm" onClick={() => setScorecard(emptyBenefitsScorecard())}><RotateCcw className="mr-1.5 h-4 w-4" /> Clear</Button>
+        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(scorecardHasContent(scorecard))) setScorecard(exampleBenefitsScorecard()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Example</Button>
+        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(scorecardHasContent(scorecard))) setScorecard(emptyBenefitsScorecard()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Clear</Button>
         <div className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={() => handleExportImage('png')}><Image className="mr-1.5 h-4 w-4" /> PNG</Button>
         <Button variant="outline" size="sm" onClick={() => handleExportImage('pdf')}><FileText className="mr-1.5 h-4 w-4" /> Benefits on a Page (PDF)</Button>

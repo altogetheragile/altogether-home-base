@@ -9,6 +9,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
+import { confirmReplace } from '@/utils/confirmDiscard';
 import {
   WaysOfWorking,
   RetroAction,
@@ -21,6 +22,9 @@ import {
 
 const STORAGE_KEY = 'waysOfWorking.v1';
 const TEAL = '#004D4D';
+
+const wowHasContent = (w: WaysOfWorking): boolean =>
+  w.agreements.some((a) => a.trim() !== '') || w.retro_actions.length > 0;
 
 const downloadText = (text: string, filename: string, mime: string): void => {
   const blob = new Blob([text], { type: mime });
@@ -89,8 +93,9 @@ export function WaysOfWorkingEditor({ initialData, artifactId, projectId }: Ways
       isFirstRender.current = false;
       return;
     }
-    if (isArtifact) performArtifactSave(wow);
-    else {
+    if (isArtifact) {
+      if (wowHasContent(wow)) performArtifactSave(wow);
+    } else {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(wow));
       } catch {
@@ -178,8 +183,8 @@ export function WaysOfWorkingEditor({ initialData, artifactId, projectId }: Ways
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save failed'}
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => setWow(exampleWaysOfWorking())}><RotateCcw className="mr-1.5 h-4 w-4" /> Example</Button>
-        <Button variant="outline" size="sm" onClick={() => setWow(emptyWaysOfWorking())}><RotateCcw className="mr-1.5 h-4 w-4" /> Clear</Button>
+        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(wowHasContent(wow))) setWow(exampleWaysOfWorking()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Example</Button>
+        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(wowHasContent(wow))) setWow(emptyWaysOfWorking()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Clear</Button>
         <div className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={() => handleExportImage('png')}><Image className="mr-1.5 h-4 w-4" /> PNG</Button>
         <Button variant="outline" size="sm" onClick={() => handleExportImage('pdf')}><FileText className="mr-1.5 h-4 w-4" /> PDF</Button>

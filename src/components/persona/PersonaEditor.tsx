@@ -21,8 +21,12 @@ import {
 } from '@/types/persona';
 import { toJson, toMarkdown, fileStem, downloadText } from '@/utils/persona/exportPersona';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
+import { confirmReplace } from '@/utils/confirmDiscard';
 
 const STORAGE_KEY = 'persona.v1';
+
+const CONTENT_FIELDS: PersonaField[] = ['name', 'role', 'context', 'goals', 'pains', 'behaviours', 'quote'];
+const personaHasContent = (p: Persona): boolean => CONTENT_FIELDS.some((k) => p[k].trim() !== '');
 
 const loadInitial = (): Persona => {
   try {
@@ -54,6 +58,7 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
   const [uploading, setUploading] = useState(false);
   const diagramRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
   const isFirstRender = useRef(true);
 
   const { user } = useAuth();
@@ -104,8 +109,11 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
       isFirstRender.current = false;
       return;
     }
-    if (isArtifact) performArtifactSave(persona);
-    else {
+    if (isArtifact) {
+      // Never let an emptied editor silently overwrite a saved artifact. Clearing
+      // the editor must not wipe the stored record without an explicit save.
+      if (personaHasContent(persona)) performArtifactSave(persona);
+    } else {
       try {
         localStorage.setItem(STORAGE_KEY, toJson(persona));
       } catch {
@@ -128,6 +136,20 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
   };
 
   const handleExportJson = () => { downloadText(toJson(persona), `${fileStem(persona)}.json`, 'application/json'); toast.success('JSON exported'); };
+  const handleImportJson = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const parsed = parsePersona(JSON.parse(await file.text()));
+      if (!parsed) { toast.error('That file is not a valid persona JSON.'); return; }
+      if (!confirmReplace(personaHasContent(persona))) return;
+      setPersona(parsed);
+      toast.success('Persona restored from JSON');
+    } catch {
+      toast.error('Could not read that file.');
+    }
+  };
   const handleExportMarkdown = () => { downloadText(toMarkdown(persona), `${fileStem(persona)}.md`, 'text/markdown'); toast.success('Markdown exported'); };
   const handleExportImage = async (format: 'png' | 'pdf') => {
     if (!diagramRef.current) return;
@@ -162,10 +184,10 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save failed'}
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => setPersona(examplePersona())}>
+        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(personaHasContent(persona))) setPersona(examplePersona()); }}>
           <Sparkles className="mr-1.5 h-4 w-4" /> Load Example
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setPersona(emptyPersona())}>
+        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(personaHasContent(persona))) setPersona(emptyPersona()); }}>
           <RotateCcw className="mr-1.5 h-4 w-4" /> New persona
         </Button>
         <div className="mx-1 h-6 w-px bg-border" />
@@ -181,6 +203,10 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
         <Button variant="outline" size="sm" onClick={handleExportMarkdown}>
           <FileText className="mr-1.5 h-4 w-4" /> Markdown
         </Button>
+        <Button variant="outline" size="sm" onClick={() => importRef.current?.click()}>
+          <Upload className="mr-1.5 h-4 w-4" /> Import JSON
+        </Button>
+        <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImportJson} />
       </div>
 
       {/* Persona card (exportable) */}
