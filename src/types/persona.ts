@@ -12,6 +12,8 @@ export interface Persona {
   pains: string;
   behaviours: string;
   quote: string;
+  /** Public URL of an optional persona image/avatar. */
+  image: string;
 }
 
 export type PersonaField = keyof Persona;
@@ -34,9 +36,10 @@ export const FIELD_LABELS: Record<PersonaField, string> = {
   pains: 'Pains',
   behaviours: 'Behaviours',
   quote: 'Quote',
+  image: 'Image',
 };
 
-export const emptyPersona = (): Persona => ({ name: '', role: '', context: '', goals: '', pains: '', behaviours: '', quote: '' });
+export const emptyPersona = (): Persona => ({ name: '', role: '', context: '', goals: '', pains: '', behaviours: '', quote: '', image: '' });
 
 export const examplePersona = (): Persona => ({
   name: 'Priya, the time-poor product lead',
@@ -46,6 +49,7 @@ export const examplePersona = (): Persona => ({
   pains: 'Spreadsheets drift from reality; hard to show outcomes, not just output',
   behaviours: 'Lives in Slack and a backlog tool; skims, rarely reads long documents',
   quote: 'I do not need another tool, I need to see whether any of this is working.',
+  image: '',
 });
 
 export const parsePersona = (raw: unknown): Persona | null => {
@@ -59,5 +63,6 @@ export const parsePersona = (raw: unknown): Persona | null => {
     pains: String(o.pains ?? ''),
     behaviours: String(o.behaviours ?? ''),
     quote: String(o.quote ?? ''),
+    image: String(o.image ?? ''),
   };
 };

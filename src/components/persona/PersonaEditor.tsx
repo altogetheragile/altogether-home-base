@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Sparkles, RotateCcw, Save, Image, FileText, FileJson, MessageCircle } from 'lucide-react';
+import { Sparkles, RotateCcw, Save, Image, FileText, FileJson, MessageCircle, Upload, X, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useDebouncedCallback } from 'use-debounce';
@@ -49,7 +50,9 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [coachField, setCoachField] = useState<PersonaField | null>(null);
+  const [uploading, setUploading] = useState(false);
   const diagramRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLInputElement>(null);
   const isFirstRender = useRef(true);
 
   const { user } = useAuth();
@@ -59,6 +62,28 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
   const { updateArtifact } = useProjectArtifactMutations();
 
   const setField = (key: PersonaField, value: string) => setPersona((p) => ({ ...p, [key]: value }));
+
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file.'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Please choose an image under 5MB.'); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `personas/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from('user-uploads').upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from('user-uploads').getPublicUrl(path);
+      setField('image', data.publicUrl);
+      toast.success('Image added');
+    } catch (err) {
+      toast.error('Upload failed: ' + (err instanceof Error ? err.message : 'please try again'));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const performArtifactSave = useDebouncedCallback(async (p: Persona) => {
     if (!artifactId || !projectId) return;
@@ -155,13 +180,44 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
       {/* Persona card (exportable) */}
       <div ref={diagramRef} className="rounded-lg border border-border bg-white p-5">
         <div className="rounded-lg p-3 text-white" style={{ backgroundColor: '#004D4D' }}>
-          <div className="mb-1 text-[10px] font-bold tracking-wide text-white/70">PERSONA</div>
-          <input
-            value={persona.name}
-            placeholder="Name this persona..."
-            onChange={(e) => setField('name', e.target.value)}
-            className="w-full bg-transparent text-lg font-semibold text-white placeholder:text-white/50 focus:outline-none"
-          />
+          <div className="flex items-center gap-3">
+            {persona.image ? (
+              <img
+                src={persona.image}
+                alt=""
+                crossOrigin="anonymous"
+                className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white/30"
+              />
+            ) : (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/15">
+                <UserCircle className="h-9 w-9 text-white/70" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 text-[10px] font-bold tracking-wide text-white/70">PERSONA</div>
+              <input
+                value={persona.name}
+                placeholder="Name this persona..."
+                onChange={(e) => setField('name', e.target.value)}
+                className="w-full bg-transparent text-lg font-semibold text-white placeholder:text-white/50 focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="persona-no-export mt-2 flex items-center gap-3">
+            <button
+              onClick={() => avatarRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-1 text-xs text-white/80 hover:text-white disabled:opacity-50"
+            >
+              <Upload className="h-3.5 w-3.5" /> {uploading ? 'Uploading...' : persona.image ? 'Change photo' : 'Add photo'}
+            </button>
+            {persona.image && (
+              <button onClick={() => setField('image', '')} className="flex items-center gap-1 text-xs text-white/80 hover:text-white">
+                <X className="h-3.5 w-3.5" /> Remove
+              </button>
+            )}
+            <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
+          </div>
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
