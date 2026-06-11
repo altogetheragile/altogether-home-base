@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Project, ProjectStats } from '@/hooks/useProjects';
+import { Project, ProjectStats, useProjectStats } from '@/hooks/useProjects';
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
 import { useCanvas } from '@/hooks/useCanvas';
@@ -35,13 +35,16 @@ interface ProjectCardProps {
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
-  stats,
+  stats: statsProp,
   onOpen: _onOpen,
   onEdit,
   onArchive,
   onDelete,
 }) => {
   const navigate = useNavigate();
+  // Fetch live counts unless a stats prop was supplied.
+  const { data: liveStats } = useProjectStats(project.id);
+  const stats = statsProp ?? liveStats;
 
   // Fetch canvas data to check for BMC
   const { data: canvas } = useCanvas(project.id);
