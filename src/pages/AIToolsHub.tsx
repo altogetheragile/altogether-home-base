@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart, MessagesSquare } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
+import { JourneyBand } from "@/components/pipeline/JourneyBand";
 
 const AIToolsHub = () => {
   const tools = [
@@ -124,6 +125,7 @@ const AIToolsHub = () => {
         {/* Tools Grid */}
         <section className="py-16 px-4">
           <div className="max-w-7xl mx-auto">
+            <JourneyBand />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {tools.map((tool) => {
                 const Icon = tool.icon;
