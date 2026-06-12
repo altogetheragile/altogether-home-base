@@ -30,9 +30,6 @@ inventory of record.
    are not yet. This is the only piece of the original Increment 3 blocker still
    open.
 2. **Modelling Canvas promote-to-artifact** (section 6.5). Not built.
-3. **User Story Canvas pipeline wiring** (section 6.3). "Import deliverables" from
-   a linked Impact Map is not built; "Push to Backlog" exists only as a basic
-   add-to-backlog (no `fk_backlog_items_user_story`, no provenance links).
 
 Everything else in sections 1 to 12 is built and live, including Suggest a Path
 (section 6.9a).
@@ -182,9 +179,14 @@ engine. The **Canvas Picker is grounded**: a scenario textarea calls
 `business-model-canvas` / `business-case` / `product-vision-board`), showing the
 grounded diagnosis; the manual radios remain as a fallback.
 
-### 6.3 User Story Canvas (`/user-story-canvas`): PARTIAL
-Import deliverables from a linked Impact Map: not built. Push to Backlog is a basic
-add-to-backlog without the user-story FK or provenance links.
+### 6.3 User Story Canvas (`/user-story-canvas`): DONE
+**Import deliverables** from the project's Impact Map artifacts: each deliverable
+becomes a story card seeded with the deliverable text (and the actor as persona),
+carrying provenance (`importedFrom`). **Push to Backlog** now creates a
+`user_stories` row and links the backlog item via `fk_backlog_items_user_story`,
+and writes `project_artifact_links` (`user_story` -> `backlog_item`, plus the
+originating `impact-map` deliverable when imported), all `derived_from`. Priority is
+normalised and persona carried across.
 
 ### 6.4 Product Backlog (`/backlog`): DONE
 CSV export (Jira, Azure DevOps, Trello); provenance chips; one-question-upstream;
@@ -391,8 +393,7 @@ know?"
 1. **Per-cell coach grounding**, blocked on data: give the coach question ladders a
    Knowledge Base home (a `question` item type, or fields on artifact items), then
    ground `coach-reflect` through `recommend-pattern`.
-2. **User Story Canvas pipeline wiring (6.3)** and **Modelling Canvas promote-to
-   (6.5)**, buildable now.
+2. **Modelling Canvas promote-to (6.5)**, buildable now.
 3. **RICE** as a fourth prioritisation scheme (registry entry only).
 
 *End of specification, version 1.4.*

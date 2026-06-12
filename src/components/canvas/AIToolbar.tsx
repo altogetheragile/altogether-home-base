@@ -16,6 +16,7 @@ import {
   ListOrdered,
   Minimize2,
   Maximize2,
+  Target,
 } from 'lucide-react';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -45,6 +46,8 @@ interface AIToolbarProps {
   // Compact view
   isCompactView?: boolean;
   onToggleCompactView?: () => void;
+  // Import deliverables from a linked Impact Map (project mode)
+  onImportDeliverables?: () => void;
 }
 
 export const AIToolbar: React.FC<AIToolbarProps> = ({
@@ -66,6 +69,7 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
   canRenumberChildren = false,
   isCompactView = false,
   onToggleCompactView,
+  onImportDeliverables,
 }) => {
   return (
     <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
@@ -124,6 +128,18 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
         <FileText className="h-4 w-4 mr-2 text-green-500" />
         Story
       </Button>
+
+      {onImportDeliverables && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onImportDeliverables}
+          title="Import deliverables from a linked Impact Map as story cards"
+        >
+          <Target className="h-4 w-4 mr-2 text-orange-500" />
+          Import deliverables
+        </Button>
+      )}
 
       <Separator orientation="vertical" className="h-6" />
 

@@ -3,7 +3,8 @@ import { AIToolbar, SaveStatus } from './AIToolbar';
 import { Button } from '@/components/ui/button';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
+import { useProjectArtifactMutations, useProjectArtifacts } from '@/hooks/useProjectArtifacts';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import LogoFull from '@/components/LogoFull';
@@ -14,7 +15,6 @@ import { StickyNoteElement } from './elements/StickyNoteElement';
 import { EpicCardElement } from './elements/EpicCardElement';
 import { FeatureCardElement } from './elements/FeatureCardElement';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
-import { useCreateBacklogItem } from '@/hooks/useBacklogItems';
 import { UnifiedStoryEditDialog } from '@/components/stories';
 import { SplitStoryDialog } from '@/components/stories/SplitStoryDialog';
 import { EpicEditDialog } from './EpicEditDialog';
@@ -115,12 +115,13 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   
   const [searchParams] = useSearchParams();
   const preselectedProjectId = searchParams.get('projectId');
-  
+  const targetProjectId = projectId || preselectedProjectId || undefined;
+
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const createBacklogItem = useCreateBacklogItem();
   const { updateArtifact } = useProjectArtifactMutations();
+  const { data: projectArtifacts } = useProjectArtifacts(targetProjectId);
   
   // Story numbering hook
   const { getNextNumber, getChildNumbers, getNextChildNumberUnderParent } = useStoryNumbering(elements);
@@ -292,8 +293,6 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   }, [isCompactView, elements, repositionElementsToPreventOverlap, updateElementsWithHistory]);
 
   const handleAddToBacklog = useCallback(async (storyData: any) => {
-    const targetProjectId = projectId || preselectedProjectId;
-    
     if (!targetProjectId) {
       toast({
         title: "Cannot Add to Backlog",
@@ -304,23 +303,141 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     }
 
     try {
-      await createBacklogItem.mutateAsync({
+      const { data: { user: u } } = await supabase.auth.getUser();
+      const priority = String(storyData.priority || 'medium').toLowerCase();
+      const safePriority = ['low', 'medium', 'high', 'critical'].includes(priority) ? priority : 'medium';
+
+      // Best-effort: create a user_stories row so the backlog item can link via the
+      // existing fk_backlog_items_user_story foreign key (spec 6.3).
+      let userStoryId: string | null = null;
+      try {
+        const { data: us } = await supabase
+          .from('user_stories')
+          .insert({
+            title: storyData.title || 'Untitled Story',
+            description: storyData.story || storyData.description || null,
+            acceptance_criteria: storyData.acceptanceCriteria || null,
+            story_points: storyData.storyPoints || null,
+            priority: safePriority,
+            created_by: u?.id ?? null,
+          } as any)
+          .select('id')
+          .single();
+        userStoryId = us?.id ?? null;
+      } catch {
+        // Fall back to a backlog item without the FK.
+      }
+
+      const { data: maxPos } = await supabase
+        .from('backlog_items')
+        .select('backlog_position')
+        .eq('project_id', targetProjectId)
+        .order('backlog_position', { ascending: false })
+        .limit(1);
+      const position = (maxPos?.[0]?.backlog_position ?? -1) + 1;
+      const imported = storyData.importedFrom;
+
+      const { data: item, error } = await supabase
+        .from('backlog_items')
+        .insert({
+          project_id: targetProjectId,
+          title: storyData.title || 'Untitled Story',
+          description: storyData.story || storyData.description || null,
+          acceptance_criteria: storyData.acceptanceCriteria || null,
+          priority: safePriority,
+          status: 'idea',
+          source: imported ? `From Impact Map: ${imported.goal || 'goal'}` : 'User Story Canvas',
+          estimated_effort: storyData.storyPoints || null,
+          user_persona: storyData.user_persona || null,
+          user_story_id: userStoryId,
+          backlog_position: position,
+          created_by: u?.id ?? null,
+        } as any)
+        .select('id')
+        .single();
+      if (error) throw error;
+
+      // Provenance: the story came from the User Story Canvas, and (if imported)
+      // originally from an Impact Map deliverable. Both recorded as derived_from.
+      const links: Record<string, unknown>[] = [{
         project_id: targetProjectId,
-        title: storyData.title || 'Untitled Story',
-        description: storyData.story || storyData.description || null,
-        priority: storyData.priority || 'Medium',
-        status: 'New',
-        source: 'User Story Canvas',
-        estimated_value: null,
-        estimated_effort: storyData.storyPoints || null,
-        tags: null,
-        target_release: null,
-        acceptance_criteria: storyData.acceptanceCriteria || null,
-      });
-    } catch (error) {
-      // Error toast is handled by the hook
+        from_type: 'user_story',
+        from_id: `${artifactId || 'user-story-canvas'}#story:${storyData.storyNumber || ''}`,
+        to_type: 'backlog_item',
+        to_id: item.id,
+        link_kind: 'derived_from',
+        created_by: u?.id ?? null,
+      }];
+      if (imported?.artifactId && imported?.nodeId) {
+        links.push({
+          project_id: targetProjectId,
+          from_type: 'impact-map',
+          from_id: `${imported.artifactId}#deliverable:${imported.nodeId}`,
+          to_type: 'backlog_item',
+          to_id: item.id,
+          link_kind: 'derived_from',
+          created_by: u?.id ?? null,
+        });
+      }
+      await supabase.from('project_artifact_links').insert(links as any);
+
+      toast({ title: 'Added to backlog', description: storyData.title || 'Story' });
+    } catch (error: any) {
+      toast({ title: 'Failed to add to backlog', description: error?.message || 'Please try again', variant: 'destructive' });
     }
-  }, [createBacklogItem, projectId, preselectedProjectId, toast]);
+  }, [targetProjectId, artifactId, toast]);
+
+  // Import deliverables from a linked Impact Map: each becomes a story card seeded
+  // with the deliverable text, carrying provenance so a later push to backlog is
+  // traceable to the originating deliverable (spec 6.3).
+  const handleImportDeliverables = useCallback(() => {
+    if (!targetProjectId) {
+      toast({ title: 'No project', description: 'Save this canvas to a project, then import its Impact Map deliverables.', variant: 'destructive' });
+      return;
+    }
+    const impactMaps = (projectArtifacts || []).filter((a) => a.artifact_type === 'impact-map');
+    if (impactMaps.length === 0) {
+      toast({ title: 'No Impact Map found', description: 'Add an Impact Map to this project first.' });
+      return;
+    }
+    const newStories: CanvasElement[] = [];
+    impactMaps.forEach((art) => {
+      const data = (art.data || {}) as { goal?: string; actors?: { label?: string; impacts?: { deliverables?: { id: string; label?: string }[] }[] }[] };
+      const goal = data.goal || '';
+      (data.actors || []).forEach((a) =>
+        (a.impacts || []).forEach((im) =>
+          (im.deliverables || []).forEach((d) => {
+            if (!d?.label) return;
+            const idx = newStories.length;
+            newStories.push({
+              id: crypto.randomUUID(),
+              type: 'story',
+              position: { x: 60 + (idx % 4) * 320, y: 60 + Math.floor(idx / 4) * 200 },
+              size: CARD_SIZE,
+              content: {
+                title: d.label,
+                story: `As ${a.label || 'a user'}, I want ${d.label}`,
+                description: `As ${a.label || 'a user'}, I want ${d.label}`,
+                acceptanceCriteria: [],
+                priority: 'medium',
+                storyPoints: 0,
+                storyNumber: '',
+                user_persona: a.label || '',
+                source: 'Impact Map',
+                importedFrom: { artifactId: art.id, nodeId: d.id, goal },
+              },
+            });
+          }),
+        ),
+      );
+    });
+    if (newStories.length === 0) {
+      toast({ title: 'No deliverables', description: 'That Impact Map has no deliverables yet.' });
+      return;
+    }
+    updateElementsWithHistory([...elements, ...newStories]);
+    toast({ title: 'Imported', description: `${newStories.length} deliverable${newStories.length === 1 ? '' : 's'} added as story cards` });
+  }, [targetProjectId, projectArtifacts, elements, updateElementsWithHistory, toast]);
 
   const handleAddElement = useCallback((type: string) => {
     const getElementSize = (t: string) => {
@@ -986,6 +1103,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           canRenumberChildren={canRenumberChildren}
           isCompactView={isCompactView}
           onToggleCompactView={handleToggleCompactView}
+          onImportDeliverables={targetProjectId ? handleImportDeliverables : undefined}
         />
       </div>
 
