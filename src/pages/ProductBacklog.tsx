@@ -6,15 +6,18 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  ClipboardList, 
+import {
+  ClipboardList,
   ArrowLeft,
   Save,
   Download,
-  AlertTriangle
+  AlertTriangle,
+  List,
+  Columns
 } from 'lucide-react';
 import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd';
 import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
+import { StoryMap } from '@/components/backlog/StoryMap';
 import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
 import { useProjectBacklog } from '@/hooks/useProjectBacklog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -31,6 +34,7 @@ const ProductBacklog: React.FC = () => {
   const projectId = searchParams.get('projectId');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [view, setView] = useState<'list' | 'story-map'>('list');
 
   // In project mode the relational backlog_items table is the single source and
   // every change auto-persists. Standalone mode keeps a local draft + Save to Project.
@@ -160,6 +164,14 @@ const ProductBacklog: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="mr-1 flex items-center rounded-md border border-border p-0.5">
+              <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" className="h-8 px-2" onClick={() => setView('list')}>
+                <List className="mr-1.5 h-4 w-4" /> List
+              </Button>
+              <Button variant={view === 'story-map' ? 'secondary' : 'ghost'} size="sm" className="h-8 px-2" onClick={() => setView('story-map')}>
+                <Columns className="mr-1.5 h-4 w-4" /> Story Map
+              </Button>
+            </div>
             {!inProject && (
               <Button
                 variant="default"
@@ -215,14 +227,20 @@ const ProductBacklog: React.FC = () => {
 
         {/* Main Content */}
         <div className="space-y-6">
-          <LocalBacklogQuickAdd onAddItem={handleAddItem} potentialParents={items} />
-          <LocalBacklogList 
-            items={items} 
-            onUpdateItem={updateItem}
-            onDeleteItem={deleteItem}
-            onReorderItems={reorderItems}
-            onAddItem={handleAddItem}
-          />
+          {view === 'list' ? (
+            <>
+              <LocalBacklogQuickAdd onAddItem={handleAddItem} potentialParents={items} />
+              <LocalBacklogList
+                items={items}
+                onUpdateItem={updateItem}
+                onDeleteItem={deleteItem}
+                onReorderItems={reorderItems}
+                onAddItem={handleAddItem}
+              />
+            </>
+          ) : (
+            <StoryMap items={items} />
+          )}
         </div>
       </main>
       
