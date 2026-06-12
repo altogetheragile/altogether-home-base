@@ -351,6 +351,19 @@ const Navigation = () => {
                       >
                         Dashboard
                       </Link>
+                      <Link
+                        to="/dashboard?tab=projects"
+                        role="menuitem"
+                        tabIndex={-1}
+                        style={dropdownItemStyle}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = p.skyTeal)}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        onFocus={(e) => (e.currentTarget.style.background = p.skyTeal)}
+                        onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
+                        onClick={() => setIsDashOpen(false)}
+                      >
+                        My Projects
+                      </Link>
                       {showAdminLinks && (
                         <Link
                           to="/admin/events"
@@ -515,6 +528,14 @@ const Navigation = () => {
                     style={{ display: 'block', padding: '12px 24px', color: p.deepTeal, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    to="/dashboard?tab=projects"
+                    role="menuitem"
+                    onClick={() => setIsMenuOpen(false)}
+                    style={{ display: 'block', padding: '12px 24px', color: p.deepTeal, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    My Projects
                   </Link>
                   {showAdminLinks && (
                     <Link

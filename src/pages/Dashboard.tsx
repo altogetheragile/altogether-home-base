@@ -14,7 +14,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { data: registrationsData, isLoading: registrationsLoading, isError: registrationsError, refetch: refetchRegistrations } = useUserRegistrations();
   const registrations: UserRegistrationWithEvent[] = registrationsData ?? [];
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'overview';
 
   return (
@@ -33,7 +33,7 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content - Tabs */}
-        <Tabs defaultValue={tab} className="mt-8">
+        <Tabs value={tab} onValueChange={(v) => setSearchParams(v === 'overview' ? {} : { tab: v }, { replace: true })} className="mt-8">
           <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
