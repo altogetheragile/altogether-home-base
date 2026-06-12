@@ -1,316 +1,400 @@
 # Vision to Value: Tool Pipeline Specification
 
-**Version:** 1.2 (10 June 2026). Supersedes 1.1; adds the Pipeline Registry, the Contracted Mode Switch, and Knowledge Base grounding constraints.
+**Version:** 1.4 (12 June 2026). Supersedes 1.2 and the unversioned build log.
+This is the as-built record: Increments 1 to 3 and sections 6.12 to 6.14 are
+live. Remaining gaps and the one external blocker are listed explicitly.
 **Audience:** Claude Code, working in `altogetheragile/altogether-home-base`
-**Status:** Approved for incremental build. Read alongside `TOOLS.md`, which stays the tool inventory of record.
+**Status:** Built and live. Read alongside `TOOLS.md`, which stays the tool
+inventory of record.
 
-> Implementation notes (build log)
->
-> **Increment 1: DONE and live (commit 530e2517, 11 June 2026).** Migration
-> `20260611120000_vision_to_value_increment_1.sql` applied to prod: `project_artifact_links`
-> (+RLS), `projects.intent_statement`/`kind`, `backlog_items.user_persona`/`epic`. Pipeline
-> Registry at `src/config/pipeline.ts`. Impact Map Send-to-Backlog, Backlog CSV
-> (`src/utils/backlog/backlogCsv.ts`), provenance chips, one-question-upstream
-> (`src/components/backlog/UpstreamIntentPrompt.tsx`). Verified end-to-end under RLS.
->
-> **Known issue found 11 June 2026 (backlog dual-model):** project backlogs have two
-> stores that disagree. `/backlog` Save-to-Project writes only the `product-backlog`
-> artifact JSON (`createArtifact`); ArtifactViewer edit-mode *loads* from the relational
-> `backlog_items` table but *saves* to the artifact JSON; Impact Map Send-to-Backlog writes
-> relational rows. Result: edits do not round-trip, and items with a null relational
-> `item_type` render as "Story" (e.g. an "Epic" shows as a Story). Recommendation: make the
-> relational `backlog_items` table the single source for project backlogs (Save-to-Project
-> and the artifact editor read AND write relational rows; the artifact row becomes a pointer
-> or is dropped). RESOLVED 11 June 2026: added `useProjectBacklog` (relational CRUD);
-> ProductBacklog uses it in project mode (items auto-persist, no Save-to-Project snapshot);
-> standalone Save-to-Project now writes relational rows; ArtifactViewer routes backlog
-> editing to `/backlog?projectId`. Verified: Epic item_type round-trips relationally.
->
-> **Increment 2: DONE and live (11 June 2026).** `coach-reflect` edge fn (coach|guide modes);
-> `CellCoach` + reusable `CoachChat` (Contracted Mode Switch); Impact Map stretch + Ask the
-> coach; Persona Studio (`/personas`, public `user-uploads` bucket, migration
-> `20260611130000`); Canvas catalogue (`/canvases` + `/canvases/:key`) with the data-driven
-> coached-canvas engine, Business Case + Product Vision, and the (ungrounded) Canvas Picker.
->
-> **Increment 3: DONE and live (11 June 2026), except KB grounding (blocked).** New artifact
-> tools, each coached, exported (PNG/PDF/JSON/Markdown) and wired into routes, ArtifactViewer,
-> the pipeline registry (`status: 'live'` + `viewerCase`), the AI Tools Hub, Project Tools and
-> `prerender.mjs` (now 51 pages):
-> - Ways of Working / Retro Coach (`/ways-of-working`, `ways-of-working`).
-> - Probe Tracker (`/probes`, `probe-tracker`) — experiment kanban Planned→Running→Kept/Killed.
-> - Benefits Scorecard (`/benefits`, `benefits-scorecard`) — readings + trend sparkline +
->   Benefits on a Page PDF.
-> - Coaching Studio (`/coach`, `coaching-session`) — free coached conversation (new `session`
->   mode in `coach-reflect`) + harvest-to-pipeline via the new `coach-harvest` edge fn
->   (classifies into goal/backlog/probe/benefit/persona/agreement/note). Send-to-backlog writes
->   a real `backlog_items` row; other destinations open the tool and stay recorded in the
->   session. Both edge fns deployed and verified end-to-end with a temp user.
-> - Journey view: `JourneyBand` on `/ai-tools` (public, SEO) and `ProjectJourney` on the
->   project page, both six stages with cascade-down/learning-up styling, driven by the registry.
->
-> **BMC recoached (11 June 2026):** `/bmc-generator` now opens with a choice — "Coach me
-> through it" (recommended; `CoachedBMCEditor` fills the nine blocks via `CoachChat`, one
-> stretch each) or "Generate a draft with AI" (the existing one-shot generator kept as an
-> accelerator). Both keep the existing `bmc` artifact shape (`{formData, bmcData}`) so the
-> ArtifactViewer and exports are unchanged.
->
-> **Still open in Increment 3:** (a) KB grounding of the coach and Canvas Picker — BLOCKED on
-> the `show_knowledge` publish and the `knowledge_items` seed (Technique to Artifact Map);
-> nothing to ground against until the KB publishes. (b) Modelling Canvas promote-to-artifact.
->
-> Deviations from this spec found during the build (carry into v1.3):
-> 1. §3 claimed `backlog_items` had `user_persona` and `epic`; neither existed. Resolved by
->    adding both columns in the Increment 1 migration.
-> 2. §6.4 assumes MoSCoW priorities (Must/Should/Could/Won't). The backlog actually uses
->    critical/high/medium/low. The CSV mapper handles both vocabularies; there is no "Won't"
->    value to exclude, so that toggle is not implemented.
+---
+
+## 0. Status at a Glance
+
+| Increment / feature | State |
+|---|---|
+| 1: The thread of value | DONE and live |
+| 2: The coach | DONE and live |
+| 3: Value actualisation and the studio | DONE and live |
+| 6.12 Journey Map Studio | DONE and live |
+| 6.13 Story Map view | DONE and live |
+| 6.14 Prioritisation Schemes | DONE and live (migration applied) |
+| Canvas Picker Knowledge Base grounding | DONE and live |
+
+**Outstanding:**
+
+1. **Per-cell coach grounding** of `coach-reflect`. BLOCKED: the coach question
+   ladders still need a Knowledge Base home (a `question` item type, or fields on
+   artifact items) before per-cell coaching can be grounded. The catalogue is
+   enriched and published, so the Canvas Picker is grounded, but the coach cells
+   are not yet. This is the only piece of the original Increment 3 blocker still
+   open.
+2. **Modelling Canvas promote-to-artifact** (section 6.5). Not built.
+3. **User Story Canvas pipeline wiring** (section 6.3). "Import deliverables" from
+   a linked Impact Map is not built; "Push to Backlog" exists only as a basic
+   add-to-backlog (no `fk_backlog_items_user_story`, no provenance links).
+
+**Drafted, not built:** Suggest a Path (section 6.9a), a guide-mode extension that
+offers a grounded `recommend-pattern` flow from a coaching session. Spec written;
+implementation pending.
+
+Everything else in sections 1 to 12 is built and live.
 
 ---
 
 ## 1. Purpose and Positioning
 
-Turn the five separate AI Tools Hub tools into one pipeline that walks a person from idea to value actualisation, structured on ISA-O3 and delivered as coaching.
+Turn the separate AI Tools Hub tools into one pipeline that walks a person from
+idea to value actualisation, structured on ISA-O3 and delivered as coaching.
 
 Two principles govern every design decision:
 
-1. **The artifact is the container; the coaching conversation is how it fills.** The AI asks open questions, follows the answers, then offers one gentle stretch question per cell. It never writes content first. It reflects the person's own words back as a draft the person edits. The output is always in the user's voice.
-2. **The journey is the cascade down and the learning returning up.** Intent, Scope and Approach flow down; Operate, Outputs and Outcomes return evidence up. The right-hand side (probes, indicators, benefits) is what no competitor tool offers and must not be cut from scope.
+1. **The artifact is the container; the coaching conversation is how it fills.**
+   The AI asks open questions, follows the answers, then offers one gentle stretch
+   question per cell. It never writes content first. It reflects the person's own
+   words back as a draft the person edits. The output is always in the user's
+   voice.
+2. **The journey is the cascade down and the learning returning up.** Intent,
+   Scope and Approach flow down; Operate, Outputs and Outcomes return evidence up.
+   The right-hand side (probes, indicators, benefits) is what no competitor tool
+   offers and must not be cut from scope.
 
-Do not use the word "aporetic" anywhere user-facing. The stretch questions are presented as coaching. Tone: open, curious, unhurried. Never "CHALLENGE" as a label in these tools.
+Do not use the word "aporetic" anywhere user-facing. The stretch questions are
+presented as coaching. Tone: open, curious, unhurried. Never "CHALLENGE" as a
+label in these tools.
 
 ## 2. The Stage Model
 
 | Stage | Question the coach holds | Primary artifacts |
 |---|---|---|
 | Intent | Why does this matter, who does it serve, what would be different? | Coaching Studio, Impact Map (goal, actors), canvas catalogue (vision side), Persona Studio |
-| Scope | What value, whose needs, which options, what timeframe? | Impact Map (impacts, deliverables), Persona Studio, User Story Canvas, Product Backlog, canvas catalogue (economics) |
-| Approach | How will we organise, assure quality, schedule? | Modelling Canvas (artifact brainstorm), future Collaboration and Build canvases (out of scope v1) |
-| Operate | How are we working, and what one thing would most improve us? | Retro Coach and Ways of Working (new) |
-| Outputs | Which output options are we testing, and what would kill each? | Probe Tracker, an experiment kanban (new) |
-| Outcomes and Value | The numbers moved; did anything actually change? | Benefits Scorecard (new) |
+| Scope | What value, whose needs, which options, what timeframe? | Impact Map (impacts, deliverables), Persona Studio, Journey Map Studio, User Story Canvas, Product Backlog, canvas catalogue (economics) |
+| Approach | How will we organise, assure quality, schedule? | Modelling Canvas (artifact brainstorm) |
+| Operate | How are we working, and what one thing would most improve us? | Retro Coach and Ways of Working |
+| Outputs | Which output options are we testing, and what would kill each? | Probe Tracker |
+| Outcomes and Value | The numbers moved; did anything actually change? | Benefits Scorecard |
 
-Stage names follow ISA-O3 exactly. Operate is about how the team works, not merely whether the solution runs: working agreements, retrospection, improvement.
+Stage names follow ISA-O3 exactly. Operate is about how the team works, not merely
+whether the solution runs: working agreements, retrospection, improvement.
 
-A **journey lives in the existing Projects container**, but the word "project" must not be assumed. Add `kind` ('project' | 'product' | 'team') to `projects`; all UI copy keys off it (Project, Product, Initiative). The neutral word in shared copy is "initiative". Product-led organisations must never be forced through project language.
+A **journey lives in the existing Projects container**, but the word "project"
+must not be assumed. `kind` ('project' | 'product' | 'team') is on `projects`; UI
+copy keys off it. The neutral word in shared copy is "initiative".
 
-Entry at any stage is allowed. When a user starts mid-journey (for example, straight into the Backlog), the coach asks exactly one upstream question ("Before we prioritise: in a sentence, why does this work exist?") and stores the answer as the project's `intent_statement`. Never force a user back to the start.
+Entry at any stage is allowed. When a user starts mid-journey (for example,
+straight into the Backlog), the coach asks exactly one upstream question and
+stores the answer as the project's `intent_statement`. Never force a user back to
+the start.
 
-## 3. Verified Codebase Inventory (what we build on)
+### 2.1 The Canonical New-Product Flow
 
-Confirmed by direct inspection on 10 June 2026:
+The flow the journey view should teach for a new product, in order: Product Vision
+canvas, then a full Impact Map (goal, actors, impacts, deliverables), then Personas
+for the primary actors, then a Journey Map per primary persona, then a deliberate
+revisit of the Product Vision and Impact Map (the journey almost always sends you
+back: a missing actor, an impact that dissolves on contact with reality), then a
+Story Map whose backbone comes from the journey stages with the Impact Map Whats as
+the cards, and finally a sliced release into the Backlog. Edit-in-place is the
+norm: the same artifacts evolve; versions do not multiply. The coach prompts the
+re-walks.
 
-- `project_artifacts` table: `id`, `project_id`, `name`, `artifact_type`, `data` (JSON), `created_at`, `created_by`. `src/pages/ArtifactViewer.tsx` switches on `artifact_type` (`bmc`, `project-model`, `product-backlog`, `canvas`, `user_story`, `impact-map`).
-- `backlog_items` is a **relational table** (not artifact JSON) with `parent_item_id`, `product_id`, `project_id`, and `fk_backlog_items_user_story`. Item shape includes `title`, `description`, `acceptance_criteria[]`, `priority`, `user_persona`, `tags[]`, `epic`, `source`.
-- Impact Map: `src/types/impactMap.ts` has `LEVEL_META` (tag, question, help, colour per level): the coaching pattern already prototyped. Exports: FreeMind, PNG, PDF, JSON, Markdown; JSON import.
-- AI: Supabase Edge Functions (Deno) calling Claude Sonnet 4.6 via `supabase/functions/_shared/anthropic.ts` -> `callClaudeJSON`. Auth-gated. Known quirks: no JSON mode, no assistant prefill, so strict-JSON system prompt plus first-balanced-object extraction; set generous `max_tokens` or Sonnet truncates into invalid JSON.
-- Knowledge Base and Pattern Builder (unpublished, `show_knowledge = false`): `recommend-pattern` edge function plus `_shared/pattern-grounding.ts`, which already models `horizon`, `isa`, `artifactId` (slugs `org-*`, `coord-*`, `team-*`) and enforces the contract that the model may only reference catalogue ids.
-- Canvas tooling shared via `src/hooks/canvas/*` and `src/utils/canvas/canvasExporter.ts` (PNG/PDF).
-- SEO: `scripts/prerender.mjs` is the source of truth for crawler meta. Every new or renamed route needs an entry there **and** in the React `SEOHead`.
+## 3. Verified Codebase Inventory (built on)
 
-## 4. Schema Additions
+- `project_artifacts` table: `id`, `project_id`, `name`, `artifact_type`, `data`
+  (JSON), `created_at`, `created_by`. `src/pages/ArtifactViewer.tsx` switches on
+  `artifact_type`: `bmc`, `project-model`, `product-backlog`, `canvas`,
+  `user_story`, `impact-map`, `persona`, `business-case`, `product-vision`,
+  `probe-tracker`, `benefits-scorecard`, `coaching-session`, `ways-of-working`,
+  `journey-map`.
+- `backlog_items` is a relational table with `parent_item_id`, `product_id`,
+  `project_id`, `fk_backlog_items_user_story`, `title`, `description`,
+  `acceptance_criteria[]`, `priority`, `priority_data` (jsonb, scheme scores),
+  `user_persona`, `tags[]`, `epic`, `target_release`, `item_type`, `source`.
+- AI: Supabase Edge Functions (Deno) calling Claude Sonnet 4.6 via
+  `supabase/functions/_shared/anthropic.ts` -> `callClaudeJSON`. Auth-gated (the
+  exception is `recommend-pattern`, which is public with per-user rate limiting).
+- Knowledge Base: `recommend-pattern` plus `_shared/pattern-grounding.ts`. The
+  catalogue (`knowledge_items` + `knowledge_edges`) is enriched and published.
+- Canvas tooling shared via `src/hooks/canvas/*` and
+  `src/utils/canvas/canvasExporter.ts` (PNG/PDF).
+- SEO: `scripts/prerender.mjs` is the source of truth for crawler meta. Every tool
+  route has an entry there and in the React `SEOHead`.
+
+## 4. Schema Additions (built)
 
 ### 4.1 Artifact links (provenance)
 
-New table `project_artifact_links`:
+`project_artifact_links` (with RLS): `id`, `project_id`, `from_type`, `from_id`
+(artifact id or composite path `<artifact_id>#deliverable:<node_id>` /
+`#stage:<id>:<row>`), `to_type`, `to_id`, `link_kind` ('derived_from' | 'measures'
+| 'tests'), `created_at`. The `source` field on backlog items carries a
+human-readable provenance string for display without a join.
 
-```
-id uuid pk
-project_id uuid fk
-from_type text        -- 'impact-map' | 'business-case' | 'user_story' | 'backlog_item' | 'probe' | 'indicator'
-from_id text          -- artifact id, or composite path for nodes inside JSON artifacts, e.g. '<artifact_id>#deliverable:<node_id>'
-to_type text
-to_id text
-link_kind text        -- 'derived_from' | 'measures' | 'tests'
-created_at timestamptz
-```
+### 4.2 Container and item fields
 
-Rationale: backlog items are relational while impact map nodes live inside artifact JSON, so a links table with composite ids covers both without migrating either. The existing `source` field on backlog items should also be populated with a human-readable provenance string ("From Impact Map: <goal>") for display without a join.
+`projects.intent_statement` (nullable), `projects.kind` (default 'project'), and
+`projects.prioritisation_scheme` (nullable; default computed from `kind`).
+`backlog_items.priority_data` (jsonb) holds scheme-specific scores (WSJF).
 
-### 4.2 Container fields
+Migrations: `20260611120000` (links table, container fields,
+`backlog_items.user_persona`/`epic`); `20260611130000` (Persona Studio, public
+`user-uploads` bucket); `20260612160000` (prioritisation schemes).
 
-Add `intent_statement text` (nullable) and `kind text default 'project'` to `projects`. Written by the one-question-upstream behaviour; displayed at the top of the journey view and prepended to every coaching prompt as grounding context.
-
-## 5. The Coaching Layer
+## 5. The Coaching Layer (built)
 
 ### 5.1 Cell metadata pattern
 
-Generalise the Impact Map's `LEVEL_META` into a shared type in `src/types/coaching.ts`:
+`CellCoach` in `src/types/coaching.ts` (`tag`, `question`, `help`, `stretch`,
+`color`). The Impact Map levels carry their `stretch` questions.
 
-```ts
-export interface CellCoach {
-  tag: string;        // short label, e.g. 'WHY'
-  question: string;   // the open question
-  help: string;       // one or two sentences of guidance
-  stretch: string;    // the gentle stretch question (aporetic, in coaching voice)
-  color: string;      // brand colour
-}
-```
+### 5.2 The coach interaction (`coach-reflect` edge function)
 
-Add `stretch` to the existing Impact Map levels:
+Built and deployed. Modes `coach`, `guide`, `session`. Per-cell grounding is the
+blocked item: the question ladders are static until they have a Knowledge Base home
+(section 0, item 1).
 
-- goal: "If you achieved this and nothing felt different, how would you know?"
-- actor: "Whose behaviour are you assuming will not change?"
-- impact: "Which of these changes would happen anyway, without you?"
-- deliverable: "Which of these are you most attached to, and what would tell you to drop it?"
+### 5.3 "Suggest (AI)" buttons
 
-Stretch questions for every other tool's cells are supplied in Appendix A. House rules for writing more: open form, aimed at the work never the person, one per cell, no jargon.
+"Ask the coach" routes through `coach-reflect`; example generation is a
+clearly-marked secondary action, never auto-inserted.
 
-### 5.2 The coach interaction (new edge function `coach-reflect`)
+### 5.4 Pipeline Registry
 
-One reusable function, called by any tool:
-
-- **Input:** `{ tool, cell, intent_statement, conversation: [{role, text}], draft?: string }`
-- **Behaviour:** Claude is system-prompted as a coach following ICF-style non-directive practice: ask one open question at a time; follow what the person said; after two or three exchanges offer the cell's `stretch` question; then offer a reflection: "Here is what I heard" as a draft cell value composed only from the user's own words. Never invent facts. Never answer the question for them.
-- **Output (strict JSON):** `{ next_question?: string, reflection?: string, done: boolean }`
-- Use `callClaudeJSON`; generous `max_tokens` (2000+).
-- **Grounding (increment 3+):** pass relevant catalogue context from the Knowledge Base via the `recommend-pattern` grounding contract so questions can reference ISA-O3 patterns by id only. Until then the question ladders are static per cell.
-
-### 5.3 Repositioning existing "Suggest (AI)" buttons
-
-Keep them, but relabel "Ask the coach" and route through `coach-reflect`. Suggestion-style generation remains available as a secondary "Give me examples" action; examples are clearly marked as examples and never auto-inserted.
-
-### 5.4 Pipeline Registry (the extension seam)
-
-A single declarative source of truth, `src/config/pipeline.ts` (v1; may move to a table later), listing: the six stages in order; the artifact types belonging to each stage; each type's route, viewer case, coach metadata reference, and allowed link kinds. The journey view, the Canvas Picker and the coach all read the registry. **Adding a future tool (Collaboration Network, Wardley view, Event Storming board) must require only a registry entry plus its component**, no changes to the journey, picker or coach plumbing. Build increment 1 features against the registry from the start, not hard-coded stage lists.
+`src/config/pipeline.ts` lists the six stages and every tool's key, route,
+`viewerCase`, stages, allowed link kinds and status. Two sibling registries follow
+the same pattern: `src/config/toolIcons.ts` (one icon and brand colour per tool,
+read by every surface) and `src/config/prioritisationSchemes.ts` (the backlog
+schemes, section 6.14). Adding a tool is a registry entry plus the component.
 
 ### 5.5 Contracted Mode Switch (coach versus guide)
 
-Recommending is not coaching. The boundary is a designed, reusable component, not a prompt nuance:
+Built as the reusable `CoachChat` with a `mode` field. Coach (Deep Teal) and guide
+(Orange) voices are visually distinct; the switch is permissioned and recorded in
+the session artifact.
 
-- **Contract at session start:** "This is a coaching conversation. At the end I will ask whether you would like suggestions."
-- **Permissioned switch:** the coach only recommends after asking, for example "Would it be useful if I stepped out of coaching for a moment and suggested where these things could live?", and receiving a yes. The harvest step in the Coaching Studio uses this.
-- **Legible modes:** coach voice and guide voice are visually distinct (coach in Deep Teal register, Guide badged in Orange). The user must always know which hat is talking.
-- **Mid-session "what should I do?":** the coach neither refuses nor slips into advice; it offers the switch.
-- **Guide mode is grounded:** recommendations come through the `recommend-pattern` grounding contract, citing catalogue entries only, never improvised.
-- Implement as a shared component and a `mode` field in the `coach-reflect` contract (`'coach' | 'guide'`), with the switch event recorded in the session artifact.
+## 6. Tool-by-Tool (status per tool)
 
-## 6. Tool-by-Tool Changes
+### 6.1 Impact Map Builder (`/impact-map`): DONE
+`stretch` in `LEVEL_META`; Send to Backlog creates `backlog_items` rows plus
+`project_artifact_links` (`derived_from`) via `useSendToBacklog`.
 
-### 6.1 Impact Map Builder (`/impact-map`): Stages: Intent and Scope
-- Add `stretch` to `LEVEL_META`; surface it in the existing coaching panel after the user has content at that level.
-- New action on a deliverable and on bulk-select: **Send to Backlog**. Creates `backlog_items` rows (`title` = deliverable label, `source` = provenance string, `project_id` from the open project) plus `project_artifact_links` rows (`derived_from`).
-- No export changes (already the standard the others must meet).
+### 6.2 Canvas catalogue (`/canvases`): DONE, now grounded
+BMC recoached; Business Case and Product Vision canvases via the coached-canvas
+engine. The **Canvas Picker is grounded**: a scenario textarea calls
+`recommend-pattern` and maps the returned flow to a canvas (technique
+`business-model-canvas` / `business-case` / `product-vision-board`), showing the
+grounded diagnosis; the manual radios remain as a fallback.
 
-### 6.2 Canvas catalogue (`/canvases`): Stages: Intent and Scope economics
-The BMC is kept, not replaced. The catalogue offers coached canvases as alternative containers, recommended by context:
-- **Business Model Canvas** (`bmc`, existing): repositioned from one-shot generation to cell-by-cell coaching via `coach-reflect`. The generator becomes a secondary "Give me examples" action.
-- **Business Case canvas** (`business-case`, new): cells follow the Business Case Edition: Business Vision, Options, Solution Overview, Strategic Alignment, Costs and Benefits as best, expected and worst ranges, Investment Appraisal, Investment Risk, Assumptions Risks and Dependencies.
-- **Product Vision canvas** (`product-vision`, new): Vision, Target Group, Needs, Product, Business Goals, after Roman Pichler's Product Vision Board, coached.
-- **Canvas Picker:** three or four coach questions ("Is this a new venture, a funded change, or a product direction?") recommend which canvas to open. Increment 3 grounds this in the Knowledge Base via the `recommend-pattern` contract, which is exactly the Pattern Builder's job.
-- Each canvas: coached cells (Appendix A), PDF export in the house template (reuse the `fill-bmc-pdf` pattern), `prerender.mjs` and `SEOHead` entries for new routes. No redirects; `/bmc-generator` remains and gains the coaching layer.
+### 6.3 User Story Canvas (`/user-story-canvas`): PARTIAL
+Import deliverables from a linked Impact Map: not built. Push to Backlog is a basic
+add-to-backlog without the user-story FK or provenance links.
 
-### 6.3 User Story Canvas (`/user-story-canvas`): Stage: Scope
-- New entry path: **Import deliverables** from a linked Impact Map; each becomes a story card seeded with the deliverable text; `generate-user-story` reframed to coach-then-draft (uses the user's persona and acceptance criteria answers).
-- **Push to Backlog** uses the existing `fk_backlog_items_user_story`; write provenance links.
+### 6.4 Product Backlog (`/backlog`): DONE
+CSV export (Jira, Azure DevOps, Trello); provenance chips; one-question-upstream;
+relational single source via `useProjectBacklog`. Now also carries the Story Map
+view (6.13) and Prioritisation Schemes (6.14).
 
-### 6.4 Product Backlog (`/backlog`): Stage: Scope commit
-- **CSV export** with three column mappings, selected at export: Jira (Summary, Description, Priority, Labels, Epic Link), Azure DevOps (Title, Description, Priority, Tags, Area Path blank), Trello (Name, Desc, Labels). MoSCoW maps to priority: Must=Highest/1, Should=High/2, Could=Medium/3, Won't=excluded by default with a toggle.
-- Show provenance chip on items that carry `source` or links ("From Impact Map").
-- One-question-upstream behaviour on first open in a project without `intent_statement`.
+### 6.5 Modelling Canvas (`/project-modelling`): PARTIAL
+Repositioned and renamed in copy; pulls Knowledge Base items. Promote-to is not
+built.
 
-### 6.5 Modelling Canvas (`/project-modelling`): team artifact brainstorm, any stage
-Repositioned: not a project tool but the team's space to brainstorm which artifacts and elements their work needs, before and while filling them. It already pulls Knowledge Base items; lean into that.
-- **Promote to:** a sticky or hexi can become an Impact Map deliverable, a story, a backlog item, **or a new artifact of a chosen type** (opens the Canvas Picker), writing the provenance link.
-- UI copy becomes "Modelling Canvas"; the route stays for SEO.
+### 6.6 Probe Tracker (`/probes`): DONE
+### 6.7 Benefits Scorecard (`/benefits`): DONE
+### 6.8 Persona Studio (`/personas`): DONE
+Coached fields plus avatar; also has **Import JSON** restore (section 12).
 
-### 6.6 Probe Tracker (new, `/probes`): Stage: Outputs
-An **experiment kanban**. Columns: Planned, Running, Decided (Kept / Killed). Each card is an option-as-hypothesis: `{ option, output, probe, signal, status: 'planned'|'running'|'kept'|'killed', decided_at, note }`. artifact_type `probe-tracker`.
-- Coached fields: probe ("What is the smallest test?"), signal ("What would prove this wrong?" as the stretch).
-- Seed cards from Backlog epics or a canvas Options cell (links, `tests`).
-- Drag between columns; deciding a card requires a one-line learning note. Inherits Save to Project, viewer case, auto-save.
+### 6.9 Coaching Studio (`/coach`): DONE
+ICF-style arc plus harvest via `coach-harvest`
+(goal/backlog/probe/benefit/persona/agreement/note).
 
-### 6.7 Benefits Scorecard (new, `/benefits`): Stage: Outcomes and Value
-- artifact_type `benefits-scorecard`. Data: array of `{ outcome, leading_indicator, target, readings: [{date, value, note}] }`, seeded from the Impact Map goal and Business Case Benefits cell via links (`measures`).
-- The coach's standing stretch on review: "The numbers moved; did anything actually change?"
-- Simple line spark per indicator; PDF one-pager export ("Benefits on a Page").
+### 6.9a Suggest a Path: DRAFTED, not built
+A guide-mode extension to the harvest: a permissioned, badged end-of-session offer
+that synthesises the session into a scenario, calls `recommend-pattern`, and renders
+the grounded flow with per-step "open the tool" actions. Buildable now (needs only
+the enriched catalogue, not the question ladders). Full draft spec held alongside
+this document.
 
-### 6.8 Persona Studio (new, `/personas`): Stages: Intent and Scope
-- artifact_type `persona`. Fields: name, role, context, goals, pains, behaviours, quote. Coached through the Named Character and Jobs to Be Done questions from the ABC Beneficiaries technique guide.
-- Links: derived_from an Impact Map actor; stories and backlog items reference it through the existing `user_persona` field.
-- Stretch: "Who would be inconvenienced by this succeeding?" lives here, with the persona asked to answer it.
+### 6.10 Retro Coach and Ways of Working (`/ways-of-working`): DONE
+### 6.11 Journey view (`/ai-tools` rework): DONE
+`JourneyBand` (public) and `ProjectJourney`, six stages, registry-driven.
 
-### 6.9 Coaching Studio (new, `/coach`): any stage, often the front door
-A standalone coached conversation on any topic, not tied to a cell. ICF-style arc: contract ("what would make this conversation useful?"), explore, one stretch, then **harvest**: the coach proposes where each output lands ("this sounds like a goal; these three are backlog candidates; this concern belongs on the Probe board") with one-tap send-to actions that write artifacts and links.
-- artifact_type `coaching-session`: transcript plus harvested items and where they went.
-- Reuses `coach-reflect` with a session-level system prompt. This is the headline differentiator: a credentialled coaching practice expressed as software, and the cleanest entry to the whole pipeline.
+### 6.12 Journey Map Studio (`/journey-map`, `journey-map`): DONE
+A coached grid: journey stages across the top, rows for doing, thinking, feeling,
+pains and opportunities, anchored to a persona. Each cell is coached. Pains and
+opportunities promote to the backlog as candidates with provenance
+(`journey-map` -> `backlog_item`, `derived_from`). Exports PNG, PDF, JSON, Markdown.
+Wired into the registries, routes, prerender, ArtifactViewer, the AI Tools Hub and
+the project Add Tool menu. Standing stretch: "Which stage do we not actually have
+evidence for?"
 
-### 6.10 Retro Coach and Ways of Working (new, `/ways-of-working`): Stage: Operate
-- artifact_type `ways-of-working`: `{ agreements: [...], retro_actions: [{date, what_worked, improve_one_thing, action, status}] }`.
-- The Retro Coach runs a short coached retrospective: what is working well, what one thing would most improve us, what will we do. Actions can push to the Backlog (link `derived_from`).
-- Standing stretch: "What works well that we have quietly become afraid to change?"
-- This gives the Development Approach its review mechanism and makes Operate a first-class stage rather than a label.
+### 6.13 Story Map view (Backlog): DONE
+A List / Story Map toggle on `/backlog`. The Story Map is a read-only view over the
+existing `backlog_items` (no new data model, after Jeff Patton): backbone columns
+are the epics, cards sit beneath their epic ancestor via `parent_item_id`,
+horizontal slices are releases (`target_release`, with an Unscheduled row). Each
+slice exports its own CSV. Editing stays in the list view.
 
-### 6.11 Journey view (`/ai-tools` rework)
-- The hub page becomes the journey: six stages left to right, down-cascade and return-arrow styling consistent with the Aporetic Canvas (Inherited Intent down, Learning Returning up), each stage showing the project's artifacts of that stage with status, plus "start here" affordances. Tool cards remain reachable individually.
-- Requires sign-in to start a journey (AI is auth-gated anyway); browsing the page is public for SEO.
+### 6.14 Prioritisation Schemes (Backlog): DONE
+A scheme registry (`src/config/prioritisationSchemes.ts`): each scheme declares its
+options or fields, how to rank and sort an item, its CSV behaviour and a coach
+stretch.
+- **simple**: critical, high, medium, low.
+- **moscow**: Must, Should, Could, Won't (Dai Clegg, DSDM). Won't is excluded from
+  CSV by default, with a toggle in the export menu.
+- **wsjf**: value, time criticality and risk reduction over job size (Cost of
+  Delay, after Reinertsen, popularised in SAFe). Four scores stored in
+  `backlog_items.priority_data`, with a live computed score.
 
-## 7. Exports (target state per tool)
+Per-journey setting `projects.prioritisation_scheme` (nullable; the app computes the
+default from `kind`: project -> moscow, otherwise simple). A scheme selector sits on
+the backlog header; the Estimation tab renders the active scheme via a scheme
+context (`SchemeContext`); CSV ranks and filters by the active scheme. Resolves
+deviation 2. RICE is the natural next scheme (KB slug `rice` exists).
 
-| Tool | PDF (house style) | CSV | Markdown | JSON | PNG |
+## 7. Exports (actual state)
+
+| Tool | PDF | CSV | Markdown | JSON | PNG |
 |---|---|---|---|---|---|
-| Impact Map | yes (exists) | no | yes (exists) | yes (exists) | yes (exists) |
-| Business Case | yes | no | yes | yes | no |
-| Story Canvas | no | via Backlog | yes | yes | yes (exists) |
-| Backlog | printable wall | **yes: Jira, ADO, Trello** | yes | yes | no |
-| Probe Tracker | yes | yes (simple) | yes | yes | no |
-| Benefits Scorecard | **yes: Benefits on a Page** | yes (readings) | yes | yes | no |
-| Persona Studio | yes (persona card) | no | yes | yes | no |
-| Coaching Studio | no | no | yes (session notes) | yes | no |
-| Ways of Working | yes (agreement on a page) | no | yes | yes | no |
+| Impact Map | yes | no | yes | yes | yes |
+| Business Case / Product Vision | yes | no | yes | yes | no |
+| Story Canvas | no | via Backlog | yes | yes | yes |
+| Backlog | printable wall | yes: Jira, ADO, Trello, per-slice | yes | yes | no |
+| Probe Tracker | yes | yes | yes | yes | no |
+| Benefits Scorecard | yes: Benefits on a Page | yes | yes | yes | no |
+| Persona Studio | yes | no | yes | yes (export and import) | yes |
+| Journey Map Studio | yes | no | yes | yes | yes |
+| Coaching Studio | no | no | yes | yes | no |
+| Ways of Working | yes | no | yes | yes | no |
 
-PDF and CSV remain behind sign-in (already true for anything touching AI; extend to these export buttons). Track export events and tool-to-course-page clicks from day one.
+PDF and CSV remain behind sign-in.
 
-## 8. Build Increments
+## 8. Build Increments (as delivered)
 
-**Increment 1: the thread of value (smallest end-to-end win)**
-1. `project_artifact_links` migration; `intent_statement` on projects.
-2. Impact Map: Send to Backlog. Backlog: provenance chips, CSV export (all three mappings), one-question-upstream.
-3. `prerender.mjs` untouched routes; verify no SEO regression.
-- *Acceptance:* a signed-in user goes from a goal to a Jira-importable CSV without re-typing anything, and every backlog item shows where it came from.
-
-**Increment 2: the coach**
-1. `coach-reflect` edge function; `CellCoach` type; `stretch` added to Impact Map levels.
-2. Canvas catalogue: BMC recoached, Business Case and Product Vision canvases added, simple (ungrounded) Canvas Picker. PDF exports, SEO entries.
-3. Persona Studio, wired to Impact Map actors and the backlog `user_persona` field.
-- *Acceptance:* no tool writes user-facing content the user did not say first; every canvas cell can be filled through conversation alone; a persona created from an actor appears on a story.
-
-**Increment 3: value actualisation and the studio**
-1. Probe Tracker (experiment kanban) and Benefits Scorecard with links to Options, Backlog and Goal.
-2. Coaching Studio with harvest-to-pipeline; Retro Coach and Ways of Working.
-3. Journey view rework of `/ai-tools`; Modelling Canvas promote-to-artifact.
-4. KB grounding of the coach and the Canvas Picker (behind the existing `show_knowledge` flag until the KB publishes). **Constraints verified in code:** the recommender's catalogue is built live from `knowledge_items` (slug, name, item_type, description, horizon, isa, layer); `pattern-grounding.ts` drops any id not in the catalogue and expects artifact slugs matching `org-*`, `coord-*` or `team-*`. Therefore: (a) every Vision to Value artifact type needs a correctly slugged, horizon-and-ISA-tagged `knowledge_items` row before the Picker can recommend it; (b) descriptions are the matching signal, write them richly; (c) coach question ladders need a KB home (new item_type `question`, or fields on artifact items) before coach grounding; (d) the seed content source is the Technique to Artifact Map (Delivery Usage Map v8, page 3), to be converted to the `import-knowledge-json` format.
-- *Acceptance:* an initiative can show, on one screen, intent at the top and indicator readings at the bottom, connected by links; a coaching session can populate three different artifact types without retyping.
+- **Increment 1 (DONE, 530e2517):** links table; `intent_statement`/`kind`; Impact
+  Map Send to Backlog; Backlog provenance chips, CSV, one-question-upstream.
+- **Increment 2 (DONE):** `coach-reflect`; `CellCoach`; Impact Map stretch; Persona
+  Studio; Canvas catalogue; BMC recoached.
+- **Increment 3 (DONE):** Probe Tracker; Benefits Scorecard; Coaching Studio +
+  `coach-harvest`; Ways of Working; Journey view.
+- **v1.4 (DONE):** Journey Map Studio (6.12), Story Map view (6.13), Prioritisation
+  Schemes (6.14), Canvas Picker grounding (6.2), plus the hardening in section 12.
 
 ## 9. Engineering Notes (carry into every prompt)
 
-- Claude via `callClaudeJSON`: strict-JSON system prompt, first-balanced-object extraction, generous `max_tokens`, no assistant prefill.
-- Deploy: `npx supabase functions deploy <name> --project-ref wqaplkypnetifpqrungv`.
-- All AI behind auth. `OPENAI_API_KEY` is dead; do not reintroduce.
-- House style: British English, no em dashes anywhere (UI copy, code comments, PDFs), "artifact" not "artefact", Title Case for headings, brand colours Deep Teal `#004D4D` and Orange `#FF9715`, DM Sans and DM Serif Display.
-- Every new route: `prerender.mjs` AND `SEOHead`.
-- New `knowledge_items` slugs must match `org-*`, `coord-*` or `team-*` or grounding silently drops them.
-- Build stage-aware features against the Pipeline Registry (5.4), never a hard-coded stage list.
+- Claude via `callClaudeJSON`: strict-JSON system prompt, first-balanced-object
+  extraction, generous `max_tokens`, no assistant prefill.
+- Deploy edge functions: `npx supabase functions deploy <name> --project-ref wqaplkypnetifpqrungv`.
+- All AI behind auth, except `recommend-pattern` (public, rate-limited). Edge
+  functions are CORS-locked to the production origin, so browser calls only work in
+  production; verify AI UI in prod or via a direct function call, not local dev.
+- House style: British English, no em dashes anywhere, "artifact" not "artefact",
+  Title Case headings, Deep Teal `#004D4D` and Orange `#FF9715`, DM Sans and DM
+  Serif Display.
+- Every new route: `prerender.mjs` AND `SEOHead`. Every new tool: a Pipeline
+  Registry entry AND a `toolIcons` entry.
+- New `knowledge_items` slugs must match `org-*`, `coord-*` or `team-*` or grounding
+  silently drops them.
+- **Knowledge Base imports:** `scripts/import-knowledge.mjs` (update existing slugs
+  only, upsert typed edges) and `scripts/backup-knowledge.mjs` run locally with the
+  service role key from `.env`. The `import-knowledge-json` edge function keeps its
+  admin gate for the app. The importer writes a whole row per slug, so enrichment
+  payloads must carry full entries, not just changed fields.
+- **Destructive editor actions:** Clear, New and Load Example pass through
+  `confirmReplace` (`src/utils/confirmDiscard.ts`) and are hidden in artifact mode.
+  Auto-save must never persist a fully-empty state over a saved artifact.
+- **Coached-tool exports:** the export region is a hardcoded white card. Any text
+  shown in the export must use an explicit colour (for example `text-slate-900`),
+  never a theme token, or it renders invisibly in html2canvas and in dark mode.
+  Verify exports against the rendered image in both themes.
+- Build stage-aware features against the Pipeline Registry, never a hard-coded
+  stage list. Build backlog priority features against the scheme registry.
 
 ## 10. Out of Scope (v1)
 
-Approach-stage canvases (Collaboration Network, Build and Quality) as tools; sprint or delivery team boards; email-gating separate from auth; multi-user simultaneous editing; Wardley or Event Storming tools.
+Approach-stage canvases (Collaboration Network, Build and Quality) as tools; sprint
+or delivery team boards; email-gating separate from auth; multi-user simultaneous
+editing; Wardley or Event Storming tools.
+
+## 11. Deviations Found During the Build
+
+1. v1.2 claimed `backlog_items` had `user_persona` and `epic`; neither existed.
+   Added in the Increment 1 migration.
+2. v1.2 assumed MoSCoW priorities; the backlog used critical/high/medium/low.
+   Resolved by Prioritisation Schemes (6.14): MoSCoW is now a selectable scheme with
+   the Won't-from-CSV toggle.
+3. Section 6.3 (User Story Canvas) was never assigned an increment and is recorded
+   as partial.
+
+## 12. Hardening and Polish (post-increment, all live)
+
+1. **Dark-mode export fix.** Persona, Business Case, Product Vision, Benefits
+   Scorecard and Ways of Working cards rendered value text invisibly in PNG/PDF
+   exports (and on screen in dark mode) because they used theme text colours on a
+   hardcoded white card. All such text now uses an explicit dark colour. Verified by
+   exporting each tool through the real html2canvas and jsPDF path in both themes.
+2. **Data-loss guards.** Clear/New/Load Example confirm before discarding
+   (`confirmReplace`); artifact-mode auto-save no longer persists a fully-empty
+   state; the scratchpad buttons are hidden entirely in artifact mode.
+3. **Persona Import JSON.** A restore action paired with the existing JSON export.
+4. **Back to Project navigation.** Tools opened from a project's Add Tool menu
+   (`?projectId=`) show a Back to Project link instead of only Back to AI Tools.
+5. **Centralised tool icons and colours.** `src/config/toolIcons.ts` is the single
+   source; the Hub, Add Tool menu, artifact cards and the viewer header read from
+   it, each tool in its own brand colour.
+6. **My Projects link.** A direct link in the orange Dashboard dropdown and the
+   mobile menu to `/dashboard?tab=projects` (signed-in users only); the dashboard
+   tabs are URL-driven.
+7. **Knowledge Base enrichment.** The catalogue was enriched (richer descriptions,
+   technique-to-artifact edges) and imported via the CLI importer, unblocking the
+   Canvas Picker grounding (6.2). Per-cell coach grounding remains blocked on the
+   question-ladder Knowledge Base home.
 
 ---
 
 ## Appendix A: Stretch Questions by Cell (coaching voice)
 
-**Business Case.** Vision: "What in today's way of working actually works, and might this break it?" Options: "Which option had you already chosen before the others were written down?" Solution Overview: "Which optional part is actually load-bearing?" Strategic Alignment: "If the strategy shifted next quarter, which part of this case would fall?" Costs and Benefits: "What does your worst case still quietly assume will go right?" Investment Appraisal: "When do the costs land against the benefits, and can you survive the gap?" Investment Risk: "Which risk are you leaving out because naming it would weaken the case?" Assumptions: "Which assumption are you relying on most and testing least?"
+Built into the tools.
 
-**Stories.** Persona: "Who would be inconvenienced by this succeeding?" Acceptance: "What would make you reject this even if every criterion passed?"
+**Business Case.** Vision: "What in today's way of working actually works, and might
+this break it?" Options: "Which option had you already chosen before the others were
+written down?" Solution Overview: "Which optional part is actually load-bearing?"
+Strategic Alignment: "If the strategy shifted next quarter, which part of this case
+would fall?" Costs and Benefits: "What does your worst case still quietly assume will
+go right?" Investment Appraisal: "When do the costs land against the benefits, and
+can you survive the gap?" Investment Risk: "Which risk are you leaving out because
+naming it would weaken the case?" Assumptions: "Which assumption are you relying on
+most and testing least?"
 
-**Backlog.** Prioritisation: "Which Must would you quietly trade away under pressure?" Scope: "What are you choosing not to build, and who agreed to that?"
+**Stories.** Persona: "Who would be inconvenienced by this succeeding?" Acceptance:
+"What would make you reject this even if every criterion passed?"
+
+**Backlog.** Simple/MoSCoW: "Which Must would you quietly trade away under pressure?"
+WSJF: "Which of these numbers is a guess wearing a decimal point?" Scope: "What are
+you choosing not to build, and who agreed to that?"
+
+**Journey Map.** Per stage: "What is this persona trying to get done here?" Stretch:
+"Which stage do we not actually have evidence for?"
 
 **Probes.** "If this probe succeeds, what will you stop doing?"
 
-**Benefits.** "If every number improved and nothing really changed, how would you know?"
+**Benefits.** "If every number improved and nothing really changed, how would you
+know?"
 
 **Ways of Working.** "What works well that we have quietly become afraid to change?"
 
-**Coaching Studio (session level).** "What are you hoping I will not ask about?" (use sparingly, only once trust is established in the session).
+**Coaching Studio (session level).** "What are you hoping I will not ask about?"
+(use sparingly, only once trust is established).
 
-*End of specification.*
+---
+
+## Appendix B: What Remains
+
+1. **Per-cell coach grounding**, blocked on data: give the coach question ladders a
+   Knowledge Base home (a `question` item type, or fields on artifact items), then
+   ground `coach-reflect` through `recommend-pattern`.
+2. **Suggest a Path (6.9a)**, buildable now: the guide-mode session-to-pattern offer.
+3. **User Story Canvas pipeline wiring (6.3)** and **Modelling Canvas promote-to
+   (6.5)**, buildable now.
+4. **RICE** as a fourth prioritisation scheme (registry entry only).
+
+*End of specification, version 1.4.*
