@@ -17,6 +17,7 @@ const mapRow = (item: Record<string, unknown>, index: number): LocalBacklogItem 
   description: (item.description as string) ?? null,
   acceptance_criteria: (item.acceptance_criteria as string[]) ?? null,
   priority: (item.priority as string) || 'medium',
+  priority_data: (item.priority_data as Record<string, number>) ?? null,
   status: (item.status as string) || 'idea',
   source: (item.source as string) ?? null,
   estimated_value: (item.estimated_value as number) ?? null,

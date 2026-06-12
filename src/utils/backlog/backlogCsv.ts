@@ -1,9 +1,11 @@
 import { exportToCSV } from '@/utils/exportUtils';
+import type { PrioritisationScheme } from '@/config/prioritisationSchemes';
+import { compareByScheme } from '@/config/prioritisationSchemes';
 
-// CSV export with tool-specific column mappings (see VISION_TO_VALUE.md 6.4).
-// Note: this app's backlog uses critical/high/medium/low priorities, not MoSCoW.
-// The mapper handles both vocabularies; "Won't" exclusion only bites if MoSCoW
-// values are present (they are not in the current scheme).
+// CSV export with tool-specific column mappings (see VISION_TO_VALUE.md 6.4, 6.14).
+// The active prioritisation scheme decides the rank (WSJF ranks by score, MoSCoW
+// and Simple by their ordered values) and which items are excluded by default
+// (MoSCoW Won't). Without a scheme it falls back to vocabulary-based ranking.
 
 export type BacklogCsvFormat = 'jira' | 'azure-devops' | 'trello';
 
@@ -11,6 +13,7 @@ export interface BacklogExportItem {
   title: string;
   description?: string | null;
   priority?: string | null;
+  priority_data?: Record<string, number> | null;
   status?: string | null;
   tags?: string[] | null;
   epic?: string | null;
@@ -56,16 +59,22 @@ export const FORMAT_LABELS: Record<BacklogCsvFormat, string> = {
 export const exportBacklogCsv = (
   items: BacklogExportItem[],
   format: BacklogCsvFormat,
-  opts: { includeWont?: boolean } = {},
+  opts: { includeWont?: boolean; scheme?: PrioritisationScheme } = {},
 ): void => {
-  const rows = opts.includeWont ? items : items.filter((i) => !isWont(i.priority));
+  const scheme = opts.scheme;
+  const rankFn = (i: BacklogExportItem) => (scheme ? scheme.rank(i) : rankOf(i.priority));
+  const excluded = (i: BacklogExportItem) =>
+    scheme?.excludeFromCsv ? scheme.excludeFromCsv(i) : isWont(i.priority);
+
+  let rows = opts.includeWont ? items.slice() : items.filter((i) => !excluded(i));
+  if (scheme) rows = rows.sort((a, b) => compareByScheme(scheme, a, b));
 
   if (format === 'jira') {
     exportToCSV(
       rows.map((i) => ({
         Summary: i.title,
         Description: i.description || '',
-        Priority: JIRA_PRIORITY[rankOf(i.priority)],
+        Priority: JIRA_PRIORITY[rankFn(i)],
         Labels: (i.tags || []).map((t) => t.replace(/\s+/g, '-')).join(' '),
         'Epic Link': i.epic || '',
       })),
@@ -76,7 +85,7 @@ export const exportBacklogCsv = (
       rows.map((i) => ({
         Title: i.title,
         Description: i.description || '',
-        Priority: String(rankOf(i.priority)),
+        Priority: String(rankFn(i)),
         Tags: (i.tags || []).join('; '),
         'Area Path': '',
       })),

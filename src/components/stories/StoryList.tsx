@@ -95,7 +95,7 @@ export function StoryList() {
           title: data.title,
           description: data.description ?? undefined,
           status: data.status as 'draft' | 'ready' | 'in_progress' | 'done',
-          priority: data.priority ?? undefined,
+          priority: (data.priority ?? undefined) as 'critical' | 'high' | 'medium' | 'low' | undefined,
           story_points: data.story_points ?? undefined,
           acceptance_criteria: data.acceptance_criteria?.filter(c => c.trim()) || [],
         });

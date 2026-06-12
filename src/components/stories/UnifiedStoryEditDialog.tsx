@@ -30,6 +30,7 @@ const defaultData: UnifiedStoryData = {
   acceptance_criteria: [],
   story_points: null,
   priority: 'medium',
+  priority_data: {},
   estimated_value: null,
   estimated_effort: null,
   confidence_level: null,

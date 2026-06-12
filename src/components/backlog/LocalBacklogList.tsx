@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Layers, List } from 'lucide-react';
 import { UnifiedStoryEditDialog } from '@/components/stories/UnifiedStoryEditDialog';
-import { UnifiedStoryData, StoryPriority } from '@/types/story';
+import { UnifiedStoryData } from '@/types/story';
 import { AddChildDialog } from './AddChildDialog';
 import { SplitStoryDialog, SplitConfig } from '@/components/stories/SplitStoryDialog';
 
@@ -181,6 +181,7 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
         description: data.description,
         acceptance_criteria: data.acceptance_criteria,
         priority: data.priority || 'medium',
+        priority_data: data.priority_data ?? undefined,
         status: data.status || 'idea',
         source: data.source,
         estimated_value: data.estimated_value,
@@ -254,7 +255,8 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
       title: item.title,
       description: item.description,
       acceptance_criteria: item.acceptance_criteria,
-      priority: (item.priority as StoryPriority) || undefined,
+      priority: item.priority || undefined,
+      priority_data: item.priority_data ?? undefined,
       status: item.status,
       source: item.source,
       estimated_value: item.estimated_value,

@@ -17,7 +17,10 @@ export interface UnifiedStoryData {
   
   // Estimation
   story_points?: number | null;
-  priority?: StoryPriority;
+  /** The active scheme's priority value (simple: critical..low; moscow: must..won't). */
+  priority?: string;
+  /** Scheme-specific numeric scores (e.g. WSJF: business_value, time_criticality, risk_opportunity, job_size). */
+  priority_data?: Record<string, number> | null;
   estimated_value?: number | null;
   estimated_effort?: number | null;
   confidence_level?: number | null;

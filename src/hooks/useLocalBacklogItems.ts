@@ -7,6 +7,8 @@ export interface LocalBacklogItem {
   description: string | null;
   acceptance_criteria: string[] | null;
   priority: string;
+  /** Scheme-specific numeric scores (WSJF). */
+  priority_data?: Record<string, number> | null;
   status: string;
   source: string | null;
   estimated_value: number | null;

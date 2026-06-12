@@ -18,9 +18,13 @@ import {
 import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd';
 import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
 import { StoryMap } from '@/components/backlog/StoryMap';
+import { SchemeProvider } from '@/components/backlog/SchemeContext';
+import { useProjectScheme } from '@/hooks/useProjectScheme';
+import { SCHEMES, getScheme, type SchemeId } from '@/config/prioritisationSchemes';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocalBacklogItems, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
 import { useProjectBacklog } from '@/hooks/useProjectBacklog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { exportBacklogCsv, type BacklogCsvFormat, FORMAT_LABELS } from '@/utils/backlog/backlogCsv';
 import { UpstreamIntentPrompt } from '@/components/backlog/UpstreamIntentPrompt';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,6 +39,9 @@ const ProductBacklog: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [view, setView] = useState<'list' | 'story-map'>('list');
+  const { scheme, setScheme } = useProjectScheme(projectId || undefined);
+  const activeScheme = getScheme(scheme);
+  const [includeWont, setIncludeWont] = useState(false);
 
   // In project mode the relational backlog_items table is the single source and
   // every change auto-persists. Standalone mode keeps a local draft + Save to Project.
@@ -77,7 +84,7 @@ const ProductBacklog: React.FC = () => {
       toast.error('No backlog items to export');
       return;
     }
-    exportBacklogCsv(items, format);
+    exportBacklogCsv(items, format, { scheme: activeScheme, includeWont });
     toast.success(`Exported for ${FORMAT_LABELS[format]}`);
   };
 
@@ -136,6 +143,7 @@ const ProductBacklog: React.FC = () => {
   }
 
   return (
+    <SchemeProvider scheme={scheme}>
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>Product Backlog | Altogether Agile</title>
@@ -164,6 +172,16 @@ const ProductBacklog: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Select value={scheme} onValueChange={(v) => setScheme(v as SchemeId)}>
+              <SelectTrigger className="h-9 w-[170px]" title="How this backlog is prioritised">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(SCHEMES).map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="mr-1 flex items-center rounded-md border border-border p-0.5">
               <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" className="h-8 px-2" onClick={() => setView('list')}>
                 <List className="mr-1.5 h-4 w-4" /> List
@@ -190,6 +208,18 @@ const ProductBacklog: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {activeScheme.id === 'moscow' && (
+                  <>
+                    <DropdownMenuCheckboxItem
+                      checked={includeWont}
+                      onCheckedChange={setIncludeWont}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      Include Won't items
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => handleExportFormat('jira')}>Jira CSV</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExportFormat('azure-devops')}>Azure DevOps CSV</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExportFormat('trello')}>Trello CSV</DropdownMenuItem>
@@ -257,6 +287,7 @@ const ProductBacklog: React.FC = () => {
         preselectedProjectId={projectId || undefined}
       />
     </div>
+    </SchemeProvider>
   );
 };
 
