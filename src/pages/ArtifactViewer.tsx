@@ -295,6 +295,20 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      case 'journey-map':
+        const JourneyMapEditor = React.lazy(() =>
+          import('@/components/journeyMap/JourneyMapEditor').then(m => ({ default: m.JourneyMapEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading journey map...</div>}>
+            <JourneyMapEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
       case 'ways-of-working':
         const WaysOfWorkingEditor = React.lazy(() =>
           import('@/components/waysOfWorking/WaysOfWorkingEditor').then(m => ({ default: m.WaysOfWorkingEditor }))

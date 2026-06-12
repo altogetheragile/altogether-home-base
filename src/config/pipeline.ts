@@ -99,6 +99,7 @@ export const PIPELINE: PipelineToolDef[] = [
   { key: 'benefits-scorecard', name: 'Benefits Scorecard', route: '/benefits', viewerCase: 'benefits-scorecard', stages: ['outcomes'], allowedLinkKinds: ['measures'], status: 'live' },
   { key: 'coaching-session', name: 'Coaching Studio', route: '/coach', viewerCase: 'coaching-session', stages: ['intent', 'scope', 'approach', 'operate', 'outputs', 'outcomes'], allowedLinkKinds: ['derived_from'], status: 'live' },
   { key: 'ways-of-working', name: 'Retro Coach and Ways of Working', route: '/ways-of-working', viewerCase: 'ways-of-working', stages: ['operate'], allowedLinkKinds: ['derived_from'], status: 'live' },
+  { key: 'journey-map', name: 'Journey Map Studio', route: '/journey-map', viewerCase: 'journey-map', stages: ['scope'], allowedLinkKinds: ['derived_from'], status: 'live' },
 ];
 
 export const getStage = (id: PipelineStage): StageDef | undefined => STAGES.find((s) => s.id === id);

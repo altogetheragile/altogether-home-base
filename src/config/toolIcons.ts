@@ -12,6 +12,7 @@ import {
   FlaskConical,
   LineChart,
   RefreshCw,
+  Map as MapIcon,
 } from 'lucide-react';
 
 export interface ToolVisual {
@@ -37,6 +38,7 @@ export const TOOL_VISUALS: Record<string, ToolVisual> = {
   'probe-tracker': { icon: FlaskConical, color: '#007A7A' },
   'benefits-scorecard': { icon: LineChart, color: '#FF9715' },
   'ways-of-working': { icon: RefreshCw, color: '#1A9090' },
+  'journey-map': { icon: MapIcon, color: '#3F8080' },
 };
 
 const FALLBACK: ToolVisual = { icon: FileText, color: '#6B7280' };

@@ -292,6 +292,10 @@ const STATIC_PAGES = {
     title: 'Coaching Studio - Altogether Agile',
     description: 'A standalone coaching conversation on whatever you bring. Think out loud, then harvest the conversation: the coach proposes where each goal, idea, probe or measure could live, with one tap to send it there.',
   },
+  '/journey-map': {
+    title: 'Journey Map Studio - Altogether Agile',
+    description: 'Map a persona journey stage by stage: what they are doing, thinking and feeling, the pains and the opportunities. Coached throughout, with pains and opportunities you can send to the backlog.',
+  },
   '/benefits': {
     title: 'Benefits Scorecard - Altogether Agile',
     description: 'Track whether the numbers actually moved. Each outcome carries a leading indicator, a target and dated readings, with a trend line and a Benefits on a Page PDF export.',

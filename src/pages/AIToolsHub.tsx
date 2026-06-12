@@ -68,6 +68,14 @@ const AIToolsHub = () => {
       badge: "Coached",
     },
     {
+      id: "journey-map",
+      name: "Journey Map Studio",
+      description: "Walk a persona through their journey, one stage at a time: what they are doing, thinking and feeling, the pains and the opportunities. Coached throughout, with pains and opportunities you can send straight to the backlog.",
+      typeKey: "journey-map",
+      route: "/journey-map",
+      badge: "Coached",
+    },
+    {
       id: "canvas-catalogue",
       name: "Canvas Catalogue",
       description: "Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. A picker recommends one, then you fill it through conversation and export.",

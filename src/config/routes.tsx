@@ -46,6 +46,7 @@ const WaysOfWorking = lazy(() => import('@/pages/WaysOfWorking'));
 const ProbeTracker = lazy(() => import('@/pages/ProbeTracker'));
 const BenefitsScorecard = lazy(() => import('@/pages/BenefitsScorecard'));
 const CoachingStudio = lazy(() => import('@/pages/CoachingStudio'));
+const JourneyMap = lazy(() => import('@/pages/JourneyMap'));
 const CanvasCatalogue = lazy(() => import('@/pages/CanvasCatalogue'));
 const CoachedCanvasPage = lazy(() => import('@/pages/CoachedCanvasPage'));
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -261,6 +262,13 @@ export const PublicRoutes = () => {
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
           <CoachingStudio />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/journey-map" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <JourneyMap />
         </Suspense>
       </ErrorBoundary>
     } />
