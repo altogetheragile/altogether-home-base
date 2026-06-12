@@ -45,8 +45,8 @@ const CanvasCatalogue = () => {
       <main className="flex-grow">
         <section className="border-b border-border bg-gradient-to-b from-accent to-background px-4 py-10">
           <div className="mx-auto max-w-5xl">
-            <Link to="/ai-tools" className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to AI Tools
+            <Link to={projectId ? `/projects/${projectId}` : '/ai-tools'} className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> {projectId ? 'Back to Project' : 'Back to AI Tools'}
             </Link>
             <h1 className="text-3xl font-bold text-foreground md:text-4xl">Canvas Catalogue</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
