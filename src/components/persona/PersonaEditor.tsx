@@ -184,12 +184,16 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save failed'}
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(personaHasContent(persona))) setPersona(examplePersona()); }}>
-          <Sparkles className="mr-1.5 h-4 w-4" /> Load Example
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(personaHasContent(persona))) setPersona(emptyPersona()); }}>
-          <RotateCcw className="mr-1.5 h-4 w-4" /> New persona
-        </Button>
+        {!isArtifact && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(personaHasContent(persona))) setPersona(examplePersona()); }}>
+              <Sparkles className="mr-1.5 h-4 w-4" /> Load Example
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(personaHasContent(persona))) setPersona(emptyPersona()); }}>
+              <RotateCcw className="mr-1.5 h-4 w-4" /> New persona
+            </Button>
+          </>
+        )}
         <div className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={() => handleExportImage('png')}>
           <Image className="mr-1.5 h-4 w-4" /> PNG

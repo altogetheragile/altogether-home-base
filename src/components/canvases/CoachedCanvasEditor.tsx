@@ -155,9 +155,11 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save failed'}
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(canvasHasContent(data))) setData(emptyData(def)); }}>
-          <RotateCcw className="mr-1.5 h-4 w-4" /> Clear
-        </Button>
+        {!isArtifact && (
+          <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(canvasHasContent(data))) setData(emptyData(def)); }}>
+            <RotateCcw className="mr-1.5 h-4 w-4" /> Clear
+          </Button>
+        )}
         <div className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={() => handleExportImage('png')}><Image className="mr-1.5 h-4 w-4" /> PNG</Button>
         <Button variant="outline" size="sm" onClick={() => handleExportImage('pdf')}><FileText className="mr-1.5 h-4 w-4" /> PDF</Button>
