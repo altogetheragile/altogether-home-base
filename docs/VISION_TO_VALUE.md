@@ -27,12 +27,10 @@ inventory of record.
    ladders still need a Knowledge Base home (a `question` item type, or fields on
    artifact items) before per-cell coaching can be grounded. The catalogue is
    enriched and published, so the Canvas Picker is grounded, but the coach cells
-   are not yet. This is the only piece of the original Increment 3 blocker still
-   open.
-2. **Modelling Canvas promote-to-artifact** (section 6.5). Not built.
+   are not yet. This is now the only open item in the spec.
 
 Everything else in sections 1 to 12 is built and live, including Suggest a Path
-(section 6.9a).
+(section 6.9a) and Modelling Canvas promote-to (section 6.5).
 
 ---
 
@@ -193,9 +191,14 @@ CSV export (Jira, Azure DevOps, Trello); provenance chips; one-question-upstream
 relational single source via `useProjectBacklog`. Now also carries the Story Map
 view (6.13) and Prioritisation Schemes (6.14).
 
-### 6.5 Modelling Canvas (`/project-modelling`): PARTIAL
-Repositioned and renamed in copy; pulls Knowledge Base items. Promote-to is not
-built.
+### 6.5 Modelling Canvas (`/project-modelling`): DONE
+Repositioned and renamed in copy; pulls Knowledge Base items. Selecting a single
+sticky or hexi shows a **Promote to** bar: **Backlog item** creates a
+`backlog_items` row (story) with a `project_artifact_links` provenance link
+(`project-model` -> `backlog_item`, `derived_from`), and **New artifact** opens the
+Canvas Picker to seed a new artifact of a chosen type. (Direct injection of an
+Impact Map deliverable node is deferred; promoting to the backlog covers the
+story/backlog target.)
 
 ### 6.6 Probe Tracker (`/probes`): DONE
 ### 6.7 Benefits Scorecard (`/benefits`): DONE
@@ -393,7 +396,6 @@ know?"
 1. **Per-cell coach grounding**, blocked on data: give the coach question ladders a
    Knowledge Base home (a `question` item type, or fields on artifact items), then
    ground `coach-reflect` through `recommend-pattern`.
-2. **Modelling Canvas promote-to (6.5)**, buildable now.
-3. **RICE** as a fourth prioritisation scheme (registry entry only).
+2. **RICE** as a fourth prioritisation scheme (registry entry only).
 
 *End of specification, version 1.4.*

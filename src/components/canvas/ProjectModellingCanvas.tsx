@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, ArrowUpRight } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import LogoFull from '@/components/LogoFull';
 import { Separator } from '@/components/ui/separator';
@@ -503,6 +504,63 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     .map(el => el.data.id)
     .filter(Boolean);
 
+  // Promote-to (spec 6.5): a selected sticky or hexi can flow into the pipeline.
+  const targetProjectId = projectId || preselectedProjectId || undefined;
+  const selectedSingle = selectedElementIds.length === 1
+    ? elements.find((e) => e.id === selectedElementIds[0])
+    : undefined;
+  const promotable = !!selectedSingle && selectedSingle.type !== 'artifact-link';
+  const promoteText = (el?: CanvasElement): string =>
+    String(el?.data?.label ?? el?.data?.text ?? el?.data?.title ?? '').trim();
+
+  const promoteToBacklog = useCallback(async () => {
+    const el = selectedSingle;
+    const text = promoteText(el);
+    if (!el || !text) { toast.error('Add some text to this element first.'); return; }
+    if (!targetProjectId) { toast.info('Save this canvas to a project first, then you can promote elements.'); return; }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: maxPos } = await supabase
+        .from('backlog_items')
+        .select('backlog_position')
+        .eq('project_id', targetProjectId)
+        .order('backlog_position', { ascending: false })
+        .limit(1);
+      const position = (maxPos?.[0]?.backlog_position ?? -1) + 1;
+      const { data: item, error } = await supabase
+        .from('backlog_items')
+        .insert({
+          project_id: targetProjectId,
+          title: text.length > 120 ? `${text.slice(0, 117)}...` : text,
+          description: text,
+          source: 'From Modelling Canvas',
+          status: 'idea',
+          backlog_position: position,
+          created_by: user?.id ?? null,
+        } as any)
+        .select('id')
+        .single();
+      if (error) throw error;
+      await supabase.from('project_artifact_links').insert({
+        project_id: targetProjectId,
+        from_type: 'project-model',
+        from_id: `${artifactId || 'project-modelling'}#element:${el.id}`,
+        to_type: 'backlog_item',
+        to_id: item.id,
+        link_kind: 'derived_from',
+        created_by: user?.id ?? null,
+      } as any);
+      toast.success('Promoted to the backlog');
+    } catch (e) {
+      toast.error('Could not promote: ' + (e instanceof Error ? e.message : 'please try again'));
+    }
+  }, [selectedSingle, targetProjectId, artifactId]);
+
+  const promoteToNewArtifact = useCallback(() => {
+    // Opens the Canvas Picker so the element can seed a new artifact of a chosen type.
+    const url = targetProjectId ? `/canvases?projectId=${targetProjectId}` : '/canvases';
+    window.open(url, '_blank');
+  }, [targetProjectId]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -569,6 +627,31 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           />
         </div>
       </div>
+
+      {/* Promote-to bar: appears when a single sticky or hexi is selected (6.5) */}
+      {promotable && (
+        <div className="border-b bg-accent/30">
+          <div className="flex items-center gap-2 px-4 py-1.5">
+            <span className="text-xs text-muted-foreground">
+              Selected: <strong>{promoteText(selectedSingle).slice(0, 48) || 'element'}</strong>
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" className="h-7">
+                  <ArrowUpRight className="mr-1 h-3.5 w-3.5" /> Promote to...
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={promoteToBacklog}>Backlog item (story)</DropdownMenuItem>
+                <DropdownMenuItem onClick={promoteToNewArtifact}>New artifact (choose a canvas)...</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {!targetProjectId && (
+              <span className="text-xs text-muted-foreground">Save to a project to enable.</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Canvas Area */}
       <div 
