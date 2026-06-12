@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
 import { useProjectArtifacts } from '@/hooks/useProjectArtifacts';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wrench, Sparkles, FileText, Hexagon, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart, MessagesSquare } from 'lucide-react';
+import { ArrowLeft, Wrench } from 'lucide-react';
+import { getToolVisual } from '@/config/toolIcons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,50 +84,27 @@ export default function ProjectDetail() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate(`/coach?projectId=${projectId}`)}>
-                  <MessagesSquare className="h-4 w-4 mr-2" />
-                  Coaching Studio
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/bmc-generator?projectId=${projectId}`)}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Business Model Canvas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/user-story-canvas?projectId=${projectId}`)}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  User Story Canvas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/project-modelling?projectId=${projectId}`)}>
-                  <Hexagon className="h-4 w-4 mr-2" />
-                  Project Model
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/impact-map?projectId=${projectId}`)}>
-                  <Target className="h-4 w-4 mr-2" />
-                  Impact Map
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/personas?projectId=${projectId}`)}>
-                  <UserCircle className="h-4 w-4 mr-2" />
-                  Persona
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/canvases?projectId=${projectId}`)}>
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  Canvas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/probes?projectId=${projectId}`)}>
-                  <FlaskConical className="h-4 w-4 mr-2" />
-                  Probe Tracker
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/benefits?projectId=${projectId}`)}>
-                  <LineChart className="h-4 w-4 mr-2" />
-                  Benefits Scorecard
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/ways-of-working?projectId=${projectId}`)}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Ways of Working
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/backlog?projectId=${projectId}`)}>
-                  <ClipboardList className="h-4 w-4 mr-2" />
-                  Product Backlog
-                </DropdownMenuItem>
+                {[
+                  { label: 'Coaching Studio', route: '/coach', typeKey: 'coaching-session' },
+                  { label: 'Business Model Canvas', route: '/bmc-generator', typeKey: 'bmc' },
+                  { label: 'User Story Canvas', route: '/user-story-canvas', typeKey: 'user_story' },
+                  { label: 'Project Model', route: '/project-modelling', typeKey: 'project-model' },
+                  { label: 'Impact Map', route: '/impact-map', typeKey: 'impact-map' },
+                  { label: 'Persona', route: '/personas', typeKey: 'persona' },
+                  { label: 'Canvas', route: '/canvases', typeKey: 'canvas' },
+                  { label: 'Probe Tracker', route: '/probes', typeKey: 'probe-tracker' },
+                  { label: 'Benefits Scorecard', route: '/benefits', typeKey: 'benefits-scorecard' },
+                  { label: 'Ways of Working', route: '/ways-of-working', typeKey: 'ways-of-working' },
+                  { label: 'Product Backlog', route: '/backlog', typeKey: 'product-backlog' },
+                ].map(({ label, route, typeKey }) => {
+                  const { icon: Icon, color } = getToolVisual(typeKey);
+                  return (
+                    <DropdownMenuItem key={route} onClick={() => navigate(`${route}?projectId=${projectId}`)}>
+                      <Icon className="h-4 w-4 mr-2" style={{ color }} />
+                      {label}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

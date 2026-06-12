@@ -7,6 +7,7 @@ import { useProject } from '@/hooks/useProjects';
 import { useBacklogItems } from '@/hooks/useBacklogItems';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil, Save, Download, X } from 'lucide-react';
+import { getToolVisual } from '@/config/toolIcons';
 import { Separator } from '@/components/ui/separator';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
@@ -473,6 +474,10 @@ export default function ArtifactViewer() {
               {returnTo === 'project-model' ? 'Back to Project Model' : 'Back to Project'}
             </Button>
             <Separator orientation="vertical" className="h-5" />
+            {(() => {
+              const { icon: Icon, color } = getToolVisual(artifact.artifact_type);
+              return <Icon className="h-5 w-5 shrink-0" style={{ color }} />;
+            })()}
             <h1 className="text-xl font-semibold">{artifact.name}</h1>
           </div>
         </div>

@@ -2,19 +2,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Sparkles, 
-  FileText, 
-  Layout, 
+import {
   Trash2,
   ExternalLink,
   MoreHorizontal,
   FolderInput,
   Pencil,
   GripVertical,
-  Hexagon,
-  ClipboardList
 } from 'lucide-react';
+import { getToolVisual } from '@/config/toolIcons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,20 +40,8 @@ interface ArtifactCardProps {
 }
 
 const getArtifactIcon = (type: string) => {
-  switch (type) {
-    case 'bmc':
-      return <Sparkles className="h-5 w-5 text-primary" />;
-    case 'canvas':
-      return <Layout className="h-5 w-5 text-blue-500" />;
-    case 'user_story':
-      return <FileText className="h-5 w-5 text-green-500" />;
-    case 'project-model':
-      return <Hexagon className="h-5 w-5 text-purple-500" />;
-    case 'product-backlog':
-      return <ClipboardList className="h-5 w-5 text-orange-500" />;
-    default:
-      return <FileText className="h-5 w-5 text-muted-foreground" />;
-  }
+  const { icon: Icon, color } = getToolVisual(type);
+  return <Icon className="h-5 w-5" style={{ color }} />;
 };
 
 const getArtifactTypeName = (type: string) => {

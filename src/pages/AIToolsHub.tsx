@@ -4,9 +4,10 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutTemplate, ArrowRight, ClipboardList, Target, UserCircle, FileSpreadsheet, RefreshCw, FlaskConical, LineChart, MessagesSquare } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { SITE_URL } from "@/config/featureFlags";
 import { JourneyBand } from "@/components/pipeline/JourneyBand";
+import { getToolVisual } from "@/config/toolIcons";
 
 const AIToolsHub = () => {
   const tools = [
@@ -14,7 +15,7 @@ const AIToolsHub = () => {
       id: "coaching-studio",
       name: "Coaching Studio",
       description: "A standalone coaching conversation on whatever you bring. Think out loud, then harvest it: the coach proposes where each goal, idea, probe or measure could live, with one tap to send it there.",
-      icon: MessagesSquare,
+      typeKey: "coaching-session",
       route: "/coach",
       badge: "Coached",
     },
@@ -22,7 +23,7 @@ const AIToolsHub = () => {
       id: "bmc-generator",
       name: "Business Model Canvas",
       description: "Build a Business Model Canvas through a coaching conversation, in your own words, with one gentle stretch per block. Or generate a draft with AI and refine it.",
-      icon: Sparkles,
+      typeKey: "bmc",
       route: "/bmc-generator",
       badge: "Coached",
     },
@@ -30,7 +31,7 @@ const AIToolsHub = () => {
       id: "user-story-canvas",
       name: "User Story Canvas",
       description: "Create AI-powered user stories and strategic frameworks on an interactive canvas. Visualize your project planning with intelligent tools.",
-      icon: LayoutTemplate,
+      typeKey: "user_story",
       route: "/user-story-canvas",
       badge: "AI-Powered",
     },
@@ -38,7 +39,7 @@ const AIToolsHub = () => {
       id: "project-modelling",
       name: "Project Modelling Canvas",
       description: "Brainstorm and visually model your project using hexagonal elements, knowledge items, planning focuses, and sticky notes.",
-      icon: LayoutTemplate,
+      typeKey: "project-model",
       route: "/project-modelling",
       badge: "Brainstorm",
     },
@@ -46,7 +47,7 @@ const AIToolsHub = () => {
       id: "product-backlog",
       name: "Product Backlog",
       description: "Capture, prioritize, and manage your product backlog. Track enhancements, bugs, and ideas with drag-and-drop ordering.",
-      icon: ClipboardList,
+      typeKey: "product-backlog",
       route: "/backlog",
       badge: "Prioritize",
     },
@@ -54,7 +55,7 @@ const AIToolsHub = () => {
       id: "impact-map",
       name: "Impact Map Builder",
       description: "Build and export Impact Maps (Gojko Adzic). A guided flow walks you through goal, actors, impacts, and deliverables, with FreeMind, PNG, PDF, and JSON export.",
-      icon: Target,
+      typeKey: "impact-map",
       route: "/impact-map",
       badge: "Guided",
     },
@@ -62,7 +63,7 @@ const AIToolsHub = () => {
       id: "persona-studio",
       name: "Persona Studio",
       description: "Shape a clear, named persona through a coaching conversation: their role, context, goals, pains, behaviours and voice. Export to PNG, PDF, JSON and Markdown.",
-      icon: UserCircle,
+      typeKey: "persona",
       route: "/personas",
       badge: "Coached",
     },
@@ -70,7 +71,7 @@ const AIToolsHub = () => {
       id: "canvas-catalogue",
       name: "Canvas Catalogue",
       description: "Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. A picker recommends one, then you fill it through conversation and export.",
-      icon: FileSpreadsheet,
+      typeKey: "canvas",
       route: "/canvases",
       badge: "Coached",
     },
@@ -78,7 +79,7 @@ const AIToolsHub = () => {
       id: "ways-of-working",
       name: "Ways of Working",
       description: "Agree how your team works, then keep it honest. Run a short coached retrospective that lands on one improvement action at a time. Export to PNG, PDF, JSON and Markdown.",
-      icon: RefreshCw,
+      typeKey: "ways-of-working",
       route: "/ways-of-working",
       badge: "Coached",
     },
@@ -86,7 +87,7 @@ const AIToolsHub = () => {
       id: "probe-tracker",
       name: "Probe Tracker",
       description: "Run your output options as safe-to-fail experiments. A simple kanban moves each probe from Planned to Running to Kept or Killed, with the signal that would prove it wrong.",
-      icon: FlaskConical,
+      typeKey: "probe-tracker",
       route: "/probes",
       badge: "Coached",
     },
@@ -94,7 +95,7 @@ const AIToolsHub = () => {
       id: "benefits-scorecard",
       name: "Benefits Scorecard",
       description: "Track whether the numbers actually moved. Each outcome carries a leading indicator, a target and dated readings, with a trend line and a Benefits on a Page PDF export.",
-      icon: LineChart,
+      typeKey: "benefits-scorecard",
       route: "/benefits",
       badge: "Coached",
     },
@@ -128,16 +129,16 @@ const AIToolsHub = () => {
             <JourneyBand />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {tools.map((tool) => {
-                const Icon = tool.icon;
+                const { icon: Icon, color } = getToolVisual(tool.typeKey);
                 return (
-                  <Card 
-                    key={tool.id} 
+                  <Card
+                    key={tool.id}
                     className="hover:shadow-lg transition-shadow duration-300 border-border"
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-lg bg-primary/10">
-                          <Icon className="h-8 w-8 text-primary" />
+                        <div className="p-3 rounded-lg" style={{ backgroundColor: `${color}1A` }}>
+                          <Icon className="h-8 w-8" style={{ color }} />
                         </div>
                         <span className="px-3 py-1 text-xs font-semibold rounded-full bg-accent text-accent-foreground">
                           {tool.badge}
