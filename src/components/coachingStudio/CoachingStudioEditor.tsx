@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, Send, Save, Sparkles, FileJson, FileText, ArrowRight, Check } from 'lucide-react';
+import { Loader2, Send, Save, Sparkles, FileJson, FileText, ArrowRight, Check, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,13 +13,16 @@ import {
   CoachingSession,
   HarvestedItem,
   HarvestDestination,
+  PathStep,
   HARVEST_DESTINATIONS,
   destinationMeta,
   emptyCoachingSession,
   parseCoachingSession,
 } from '@/types/coachingSession';
+import { toolForStep, prettySlug } from '@/config/pathTools';
 
 const TEAL = '#004D4D';
+const ORANGE = '#FF9715';
 const SESSION_STRETCH = 'If this conversation went really well, what would be different afterwards?';
 const newId = () => crypto.randomUUID();
 
@@ -49,6 +52,7 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [harvesting, setHarvesting] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const [started, setStarted] = useState<boolean>(() => (initialData ? (parseCoachingSession(initialData)?.transcript.length ?? 0) > 0 : false));
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -205,6 +209,61 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
     }
   };
 
+  // Suggest a Path (6.9a): a guide-mode offer. Synthesise a scenario from what the
+  // session already holds (no extra AI call), call recommend-pattern, and map each
+  // step to a pipeline tool. Permissioned and end-of-session, badged as guide.
+  const synthesiseScenario = (): string => {
+    const parts: string[] = [];
+    if (session.topic) parts.push(session.topic);
+    if (session.summary) parts.push(session.summary);
+    session.harvested.forEach((h) => parts.push(`${h.destination}: ${h.text}`));
+    let s = parts.join('. ').trim();
+    if (s.length < 10) s = session.transcript.filter((t) => t.role === 'user').map((t) => t.text).join(' ').trim();
+    return s;
+  };
+
+  const suggestPath = async () => {
+    const scenario = synthesiseScenario();
+    if (scenario.length < 10) { toast.info('Have a little more of the conversation, then I can suggest a path.'); return; }
+    setSuggesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('recommend-pattern', { body: { scenario } });
+      if (error) throw error;
+      if (!data?.success) { toast.error(data?.error || 'Could not suggest a path right now.'); return; }
+      const steps: PathStep[] = (data.data?.steps || []).map(
+        (st: { order?: number; artifactId: string; techniqueIds?: string[]; rationale?: string }) => {
+          const tool = toolForStep(st.artifactId, st.techniqueIds || []);
+          return {
+            order: typeof st.order === 'number' ? st.order : 0,
+            artifactId: st.artifactId,
+            techniqueIds: st.techniqueIds || [],
+            rationale: st.rationale || '',
+            toolRoute: tool?.route,
+            toolName: tool?.name,
+          };
+        },
+      );
+      setSession((s) => ({ ...s, suggested_path: { diagnosis: data.data?.diagnosis || '', generatedAt: new Date().toISOString(), steps } }));
+      toast.success('Here is a path from where you are.');
+    } catch {
+      toast.error('Could not reach the recommender. Please try again.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const openStep = (idx: number) => {
+    const step = session.suggested_path?.steps[idx];
+    if (!step?.toolRoute) return;
+    const url = preselectedProjectId ? `${step.toolRoute}?projectId=${preselectedProjectId}` : step.toolRoute;
+    window.open(url, '_blank');
+    setSession((s) =>
+      s.suggested_path
+        ? { ...s, suggested_path: { ...s.suggested_path, steps: s.suggested_path.steps.map((st, i) => (i === idx ? { ...st, opened: true } : st)) } }
+        : s,
+    );
+  };
+
   const handleSaveToProject = () => {
     if (!user) {
       toast.error('Please sign in to save to a project');
@@ -227,6 +286,13 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
     if (session.harvested.length) {
       lines.push('## Harvested', '');
       session.harvested.forEach((h) => lines.push(`- [${destinationMeta(h.destination).label}]${h.sent ? ' (sent)' : ''} ${h.text}`));
+    }
+    if (session.suggested_path) {
+      lines.push('', '## Suggested path', '');
+      if (session.suggested_path.diagnosis) lines.push(session.suggested_path.diagnosis, '');
+      session.suggested_path.steps.forEach((st) =>
+        lines.push(`${st.order}. ${st.toolName || prettySlug(st.artifactId)}${st.rationale ? `. ${st.rationale}` : ''}`),
+      );
     }
     return lines.join('\n');
   };
@@ -333,6 +399,51 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Suggest a Path (6.9a): guide-mode, permissioned, badged distinct from the coach. */}
+      {(session.harvested.length > 0 || session.summary) && (
+        <div className="rounded-lg border-2 p-4" style={{ borderColor: ORANGE }}>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="rounded px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: ORANGE }}>GUIDE</span>
+            <h2 className="text-lg font-semibold" style={{ color: ORANGE }}>Suggest a path</h2>
+          </div>
+          {!session.suggested_path ? (
+            <>
+              <p className="mb-3 text-sm text-muted-foreground">
+                Would it help if I stepped out of coaching for a moment and suggested a path from here, grounded in the Knowledge Base? You can ignore it, or open any step.
+              </p>
+              <Button size="sm" style={{ backgroundColor: ORANGE }} disabled={suggesting} onClick={suggestPath}>
+                {suggesting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Compass className="mr-1.5 h-4 w-4" />}
+                Suggest a path
+              </Button>
+            </>
+          ) : (
+            <div className="space-y-3">
+              {session.suggested_path.diagnosis && <p className="text-sm text-muted-foreground">{session.suggested_path.diagnosis}</p>}
+              <ol className="space-y-2">
+                {session.suggested_path.steps.map((step, i) => (
+                  <li key={i} className="rounded-md border border-border bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900">{step.order}. {step.toolName || prettySlug(step.artifactId)}</p>
+                        {step.rationale && <p className="mt-0.5 text-xs text-muted-foreground">{step.rationale}</p>}
+                      </div>
+                      {step.toolRoute && (
+                        step.opened ? (
+                          <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-green-700"><Check className="h-3.5 w-3.5" /> Opened</span>
+                        ) : (
+                          <Button size="sm" variant="outline" className="shrink-0" onClick={() => openStep(i)}>Open <ArrowRight className="ml-1 h-3.5 w-3.5" /></Button>
+                        )
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <Button size="sm" variant="ghost" onClick={() => setSession((s) => ({ ...s, suggested_path: undefined }))}>Dismiss path</Button>
+            </div>
+          )}
         </div>
       )}
 

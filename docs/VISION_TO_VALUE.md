@@ -34,11 +34,8 @@ inventory of record.
    a linked Impact Map is not built; "Push to Backlog" exists only as a basic
    add-to-backlog (no `fk_backlog_items_user_story`, no provenance links).
 
-**Drafted, not built:** Suggest a Path (section 6.9a), a guide-mode extension that
-offers a grounded `recommend-pattern` flow from a coaching session. Spec written;
-implementation pending.
-
-Everything else in sections 1 to 12 is built and live.
+Everything else in sections 1 to 12 is built and live, including Suggest a Path
+(section 6.9a).
 
 ---
 
@@ -207,12 +204,14 @@ Coached fields plus avatar; also has **Import JSON** restore (section 12).
 ICF-style arc plus harvest via `coach-harvest`
 (goal/backlog/probe/benefit/persona/agreement/note).
 
-### 6.9a Suggest a Path: DRAFTED, not built
-A guide-mode extension to the harvest: a permissioned, badged end-of-session offer
-that synthesises the session into a scenario, calls `recommend-pattern`, and renders
-the grounded flow with per-step "open the tool" actions. Buildable now (needs only
-the enriched catalogue, not the question ladders). Full draft spec held alongside
-this document.
+### 6.9a Suggest a Path: DONE
+A guide-mode extension to the harvest: a permissioned, badged (Orange) end-of-session
+offer that synthesises the session (topic, harvest summary, harvested items) into a
+scenario with no extra AI call, calls `recommend-pattern`, and renders the grounded
+flow. Each step maps to a pipeline tool via `src/config/pathTools.ts` (technique
+first, then catalogue artifact); steps with no tool show as guidance. Opening a step
+opens the tool and records it on the session; the path persists in `suggested_path`
+on the `coaching-session` artifact and appears in the Markdown and JSON exports.
 
 ### 6.10 Retro Coach and Ways of Working (`/ways-of-working`): DONE
 ### 6.11 Journey view (`/ai-tools` rework): DONE
@@ -392,9 +391,8 @@ know?"
 1. **Per-cell coach grounding**, blocked on data: give the coach question ladders a
    Knowledge Base home (a `question` item type, or fields on artifact items), then
    ground `coach-reflect` through `recommend-pattern`.
-2. **Suggest a Path (6.9a)**, buildable now: the guide-mode session-to-pattern offer.
-3. **User Story Canvas pipeline wiring (6.3)** and **Modelling Canvas promote-to
+2. **User Story Canvas pipeline wiring (6.3)** and **Modelling Canvas promote-to
    (6.5)**, buildable now.
-4. **RICE** as a fourth prioritisation scheme (registry entry only).
+3. **RICE** as a fourth prioritisation scheme (registry entry only).
 
 *End of specification, version 1.4.*

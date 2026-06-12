@@ -19,11 +19,31 @@ export interface HarvestedItem {
   sent: boolean;
 }
 
+// Suggest a Path (see VISION_TO_VALUE.md 6.9a): a guide-mode offer that turns the
+// session into a grounded recommend-pattern flow, each step optionally opening a
+// pipeline tool. Stored on the session so it persists.
+export interface PathStep {
+  order: number;
+  artifactId: string; // ISA-O3 catalogue slug
+  techniqueIds: string[];
+  rationale: string;
+  toolRoute?: string;
+  toolName?: string;
+  opened?: boolean;
+}
+
+export interface SuggestedPath {
+  diagnosis: string;
+  generatedAt: string;
+  steps: PathStep[];
+}
+
 export interface CoachingSession {
   topic: string;
   transcript: SessionTurn[];
   summary: string;
   harvested: HarvestedItem[];
+  suggested_path?: SuggestedPath;
 }
 
 export const HARVEST_DESTINATIONS: { value: HarvestDestination; label: string; route: string }[] = [
@@ -65,10 +85,30 @@ export const parseCoachingSession = (raw: unknown): CoachingSession | null => {
         };
       })
     : [];
+  const sp = o.suggested_path as Record<string, unknown> | undefined;
+  const suggested_path: SuggestedPath | undefined = sp && Array.isArray(sp.steps)
+    ? {
+        diagnosis: String(sp.diagnosis ?? ''),
+        generatedAt: String(sp.generatedAt ?? ''),
+        steps: sp.steps.map((st) => {
+          const x = (st ?? {}) as Record<string, unknown>;
+          return {
+            order: typeof x.order === 'number' ? x.order : 0,
+            artifactId: String(x.artifactId ?? ''),
+            techniqueIds: Array.isArray(x.techniqueIds) ? (x.techniqueIds.filter((t) => typeof t === 'string') as string[]) : [],
+            rationale: String(x.rationale ?? ''),
+            toolRoute: typeof x.toolRoute === 'string' ? x.toolRoute : undefined,
+            toolName: typeof x.toolName === 'string' ? x.toolName : undefined,
+            opened: Boolean(x.opened),
+          };
+        }),
+      }
+    : undefined;
   return {
     topic: String(o.topic ?? ''),
     transcript,
     summary: String(o.summary ?? ''),
     harvested,
+    ...(suggested_path ? { suggested_path } : {}),
   };
 };
