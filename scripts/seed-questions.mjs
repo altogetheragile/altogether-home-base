@@ -46,6 +46,16 @@ const PERSONA = [
   { cell: 'quote', open: 'What might they say?', stretch: 'Would they say this out loud, or only think it?' },
 ];
 
+// Impact Map Builder grounds against coord-goal. Its cells pass the level tags
+// WHY / WHO / HOW / WHAT, so cell_key is the lowercased tag (from src/types/impactMap.ts).
+const IMPACT_ARTIFACT = 'coord-goal';
+const IMPACT_MAP = [
+  { cell: 'why', open: 'What is the goal?', stretch: 'If you achieved this and nothing felt different, how would you know?' },
+  { cell: 'who', open: 'Who can help or hinder the goal?', stretch: 'Whose behaviour are you assuming will not change?' },
+  { cell: 'how', open: 'How should their behaviour change?', stretch: 'Which of these changes would happen anyway, without you?' },
+  { cell: 'what', open: 'What could we do to support that?', stretch: 'Which of these are you most attached to, and what would tell you to drop it?' },
+];
+
 const rows = [];
 for (const p of PERSONA) {
   rows.push({
@@ -57,8 +67,18 @@ for (const p of PERSONA) {
     description: p.stretch, coaches_slug: ARTIFACT, cell_key: p.cell, rung: 'stretch', ladder_order: 9, is_published: true,
   });
 }
+for (const m of IMPACT_MAP) {
+  rows.push({
+    slug: `q-impact-map-${m.cell}-open`, name: `Impact Map ${m.cell}: open`, item_type: 'question',
+    description: m.open, coaches_slug: IMPACT_ARTIFACT, cell_key: m.cell, rung: 'open', ladder_order: 1, is_published: true,
+  });
+  rows.push({
+    slug: `q-impact-map-${m.cell}-stretch`, name: `Impact Map ${m.cell}: stretch`, item_type: 'question',
+    description: m.stretch, coaches_slug: IMPACT_ARTIFACT, cell_key: m.cell, rung: 'stretch', ladder_order: 9, is_published: true,
+  });
+}
 
-console.log(`Coach question rows to upsert: ${rows.length} (Persona, ${PERSONA.length} cells)`);
+console.log(`Coach question rows to upsert: ${rows.length} (Persona ${PERSONA.length} cells, Impact Map ${IMPACT_MAP.length} cells)`);
 console.log(`Mode: ${apply ? 'APPLY (writing)' : 'DRY RUN (no writes)'}`);
 if (!apply) {
   console.log('\nDry run only. Re-run with --apply to write.');
