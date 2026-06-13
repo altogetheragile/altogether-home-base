@@ -230,7 +230,10 @@ export default function ArtifactViewer() {
           );
         }
         // Use live database items instead of artifact snapshot
-        const backlogItems: LocalBacklogItem[] = (liveBacklogItems || []).map((item: any, index: number) => ({
+        const backlogItems: LocalBacklogItem[] = (liveBacklogItems || [])
+          // This artifact is one product backlog; show only its items.
+          .filter((item: any) => (item.backlog_artifact_id ?? null) === artifact.id)
+          .map((item: any, index: number) => ({
           id: item.id || crypto.randomUUID(),
           title: item.title,
           description: item.description || null,
@@ -450,7 +453,7 @@ export default function ArtifactViewer() {
       }
       return (
         <>
-          <Button variant="outline" onClick={() => navigate(`/backlog?projectId=${projectId}`)}>
+          <Button variant="outline" onClick={() => navigate(`/backlog?projectId=${projectId}&backlogId=${artifact.id}`)}>
             <Pencil className="h-4 w-4 mr-2" />
             Edit in Backlog
           </Button>

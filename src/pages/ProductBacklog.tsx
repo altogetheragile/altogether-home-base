@@ -36,6 +36,7 @@ const ProductBacklog: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
+  const backlogId = searchParams.get('backlogId');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [view, setView] = useState<'list' | 'story-map'>('list');
@@ -46,7 +47,7 @@ const ProductBacklog: React.FC = () => {
   // In project mode the relational backlog_items table is the single source and
   // every change auto-persists. Standalone mode keeps a local draft + Save to Project.
   const local = useLocalBacklogItems();
-  const project = useProjectBacklog(projectId || undefined);
+  const project = useProjectBacklog(projectId || undefined, backlogId || undefined);
   const inProject = !!projectId;
   const { items, addItem, updateItem, deleteItem, reorderItems, clearItems, hasItems } =
     inProject ? project : local;

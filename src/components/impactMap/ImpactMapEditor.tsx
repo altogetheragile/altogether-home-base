@@ -10,6 +10,7 @@ import { useSendToBacklog } from '@/hooks/useSendToBacklog';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
+import { SendToBacklogDialog } from './SendToBacklogDialog';
 import {
   ImpactMap,
   Actor,
@@ -57,6 +58,8 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [coachGoalOpen, setCoachGoalOpen] = useState(false);
+  const [backlogDialogOpen, setBacklogDialogOpen] = useState(false);
+  const [pendingDeliverables, setPendingDeliverables] = useState<{ nodeId: string; title: string; description?: string }[]>([]);
   const diagramRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isFirstRender = useRef(true);
@@ -72,6 +75,8 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   // (we need a stable artifact id + project id to record provenance).
   const canSendToBacklog = Boolean(artifactId && projectId);
 
+  // Sending opens a dialog to pick (or create) the target product backlog; the
+  // chosen backlog is then passed to the mutation.
   const handleSendToBacklog = (deliverables: { nodeId: string; title: string; description?: string }[]) => {
     const items = deliverables.filter((d) => d.title.trim().length > 0);
     if (!canSendToBacklog) {
@@ -82,11 +87,17 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
       toast.info('Add a deliverable before sending to the backlog.');
       return;
     }
+    setPendingDeliverables(items);
+    setBacklogDialogOpen(true);
+  };
+
+  const sendToChosenBacklog = (backlogArtifactId: string) => {
     sendToBacklog.mutate({
       projectId: projectId!,
       fromArtifactId: artifactId!,
       source: `From Impact Map: ${map.goal || 'Untitled'}`,
-      deliverables: items,
+      deliverables: pendingDeliverables,
+      backlogArtifactId,
     });
   };
 
@@ -581,6 +592,15 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
         preselectedProjectId={preselectedProjectId || undefined}
         onSaveComplete={handleSaveComplete}
       />
+      {canSendToBacklog && projectId && (
+        <SendToBacklogDialog
+          open={backlogDialogOpen}
+          onOpenChange={setBacklogDialogOpen}
+          projectId={projectId}
+          count={pendingDeliverables.length}
+          onConfirm={sendToChosenBacklog}
+        />
+      )}
     </div>
   );
 }

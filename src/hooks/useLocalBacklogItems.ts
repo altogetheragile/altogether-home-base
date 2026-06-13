@@ -20,6 +20,8 @@ export interface LocalBacklogItem {
   // Hierarchy fields
   item_type: ItemType;
   parent_item_id?: string | null;
+  /** The product-backlog artifact this item belongs to (null = ungrouped). */
+  backlog_artifact_id?: string | null;
 }
 
 export type LocalBacklogItemInput = Omit<LocalBacklogItem, 'id' | 'backlog_position'>;

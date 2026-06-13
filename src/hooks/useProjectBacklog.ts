@@ -37,20 +37,23 @@ const mapRow = (item: Record<string, unknown>, index: number): LocalBacklogItem 
   backlog_position: (item.backlog_position as number) ?? index,
   item_type: ((item.item_type as string) || 'story') as ItemType,
   parent_item_id: (item.parent_item_id as string) ?? null,
+  backlog_artifact_id: (item.backlog_artifact_id as string) ?? null,
 });
 
-export function useProjectBacklog(projectId?: string) {
+export function useProjectBacklog(projectId?: string, backlogId?: string) {
   const queryClient = useQueryClient();
-  const key = ['backlog-items', projectId];
+  const key = ['backlog-items', projectId, backlogId ?? 'all'];
 
   const { data, isLoading } = useQuery({
     queryKey: key,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('backlog_items')
         .select('*')
-        .eq('project_id', projectId!)
-        .order('backlog_position', { ascending: true });
+        .eq('project_id', projectId!);
+      // Scope to one product backlog when given; otherwise show all project items.
+      if (backlogId) q = q.eq('backlog_artifact_id', backlogId);
+      const { data, error } = await q.order('backlog_position', { ascending: true });
       if (error) throw error;
       return (data || []).map((row, i) => mapRow(row as Record<string, unknown>, i));
     },
@@ -63,7 +66,8 @@ export function useProjectBacklog(projectId?: string) {
   const addItem = useCallback(async (input: LocalBacklogItemInput) => {
     if (!projectId) return;
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('backlog_items').insert({
+    // Cast: generated types lag the backlog_artifact_id column.
+    const { error } = await (supabase.from('backlog_items') as any).insert({
       project_id: projectId,
       title: input.title,
       description: input.description,
@@ -78,12 +82,13 @@ export function useProjectBacklog(projectId?: string) {
       target_release: input.target_release,
       item_type: input.item_type || 'story',
       parent_item_id: input.parent_item_id ?? null,
+      backlog_artifact_id: backlogId ?? null,
       backlog_position: items.length,
       created_by: user?.id ?? null,
     });
     if (error) { toast.error('Failed to add item: ' + error.message); return; }
     invalidate();
-  }, [projectId, items.length, invalidate]);
+  }, [projectId, backlogId, items.length, invalidate]);
 
   const updateItem = useCallback(async (id: string, updates: Partial<LocalBacklogItem>) => {
     const { error } = await supabase.from('backlog_items').update(updates).eq('id', id);

@@ -17,6 +17,8 @@ interface SendArgs {
   /** Human-readable provenance string stored on the backlog item, e.g. "From Impact Map: <goal>". */
   source: string;
   deliverables: DeliverableToSend[];
+  /** The product-backlog artifact to add the items to (null = the project's ungrouped backlog). */
+  backlogArtifactId?: string | null;
 }
 
 /**
@@ -29,21 +31,37 @@ export function useSendToBacklog() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ projectId, fromArtifactId, source, deliverables }: SendArgs) => {
+    mutationFn: async ({ projectId, fromArtifactId, source, deliverables, backlogArtifactId }: SendArgs) => {
       if (deliverables.length === 0) return { created: 0, skipped: 0 };
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Only send deliverables not already sent from this map: a provenance link
-      // (from_id '<artifactId>#deliverable:<nodeId>') exists for each one sent, so
-      // re-running "Send all" adds only the new What items.
-      const { data: existing } = await supabase
+      // Only send deliverables not already sent from this map TO THIS backlog: a
+      // provenance link ('<artifactId>#deliverable:<nodeId>') exists per item sent,
+      // so re-running "Send all" to the same backlog adds only new What items, while
+      // the same deliverable can still populate a different backlog.
+      const { data: links } = await supabase
         .from('project_artifact_links')
-        .select('from_id')
+        .select('from_id, to_id')
         .eq('project_id', projectId)
         .eq('from_type', 'impact-map')
         .eq('to_type', 'backlog_item');
-      const alreadySent = new Set((existing || []).map((r) => r.from_id as string));
-      const fresh = deliverables.filter((d) => !alreadySent.has(`${fromArtifactId}#deliverable:${d.nodeId}`));
+      const linkRows = links || [];
+      const sentHere = new Set<string>();
+      if (linkRows.length > 0) {
+        // Cast: generated types lag the backlog_artifact_id column.
+        const { data: its } = await (supabase.from('backlog_items') as any)
+          .select('id, backlog_artifact_id')
+          .in('id', linkRows.map((l) => l.to_id as string));
+        const backlogOf = new Map(
+          (its || []).map((i: { id: string; backlog_artifact_id?: string }) => [i.id, i.backlog_artifact_id ?? null]),
+        );
+        for (const l of linkRows) {
+          if ((backlogOf.get(l.to_id as string) ?? null) === (backlogArtifactId ?? null)) {
+            sentHere.add(l.from_id as string);
+          }
+        }
+      }
+      const fresh = deliverables.filter((d) => !sentHere.has(`${fromArtifactId}#deliverable:${d.nodeId}`));
       const skipped = deliverables.length - fresh.length;
       if (fresh.length === 0) return { created: 0, skipped };
 
@@ -59,13 +77,13 @@ export function useSendToBacklog() {
       let created = 0;
       for (const d of fresh) {
         const title = d.title.trim() || 'Untitled deliverable';
-        const { data: item, error: itemErr } = await supabase
-          .from('backlog_items')
+        const { data: item, error: itemErr } = await (supabase.from('backlog_items') as any)
           .insert({
             project_id: projectId,
             title,
             description: d.description?.trim() || null,
             source,
+            backlog_artifact_id: backlogArtifactId ?? null,
             backlog_position: position++,
             created_by: user?.id ?? null,
           })
