@@ -6,6 +6,8 @@ export interface DeliverableToSend {
   /** The impact-map deliverable node id (used to build the provenance link). */
   nodeId: string;
   title: string;
+  /** Optional full story sentence (As a..., I need..., so that...) for the item body. */
+  description?: string;
 }
 
 interface SendArgs {
@@ -48,6 +50,7 @@ export function useSendToBacklog() {
           .insert({
             project_id: projectId,
             title,
+            description: d.description?.trim() || null,
             source,
             backlog_position: position++,
             created_by: user?.id ?? null,

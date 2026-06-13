@@ -72,7 +72,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   // (we need a stable artifact id + project id to record provenance).
   const canSendToBacklog = Boolean(artifactId && projectId);
 
-  const handleSendToBacklog = (deliverables: { nodeId: string; title: string }[]) => {
+  const handleSendToBacklog = (deliverables: { nodeId: string; title: string; description?: string }[]) => {
     const items = deliverables.filter((d) => d.title.trim().length > 0);
     if (!canSendToBacklog) {
       toast.error('Save this map to a project first, then send deliverables to its backlog.');
@@ -90,8 +90,16 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
     });
   };
 
+  // The impact map encodes a story: actor (who) + deliverable (what) + impact (so that).
+  const storyText = (actorLabel: string, deliverableLabel: string, impactLabel: string) =>
+    `As ${actorLabel || 'a user'}, I need ${deliverableLabel}${impactLabel ? `, so that ${impactLabel}` : ''}`;
+
   const allDeliverables = () =>
-    map.actors.flatMap((a) => a.impacts.flatMap((i) => i.deliverables.map((d) => ({ nodeId: d.id, title: d.label }))));
+    map.actors.flatMap((a) =>
+      a.impacts.flatMap((i) =>
+        i.deliverables.map((d) => ({ nodeId: d.id, title: d.label, description: storyText(a.label, d.label, i.label) })),
+      ),
+    );
 
   // Surface a level's stretch question once the user has content at that level.
   const levelHasContent: Record<'goal' | 'actor' | 'impact' | 'deliverable', boolean> = {
@@ -491,7 +499,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
                               title="Send to backlog"
                               className="impact-no-export text-muted-foreground hover:text-foreground disabled:opacity-50"
                               disabled={sendToBacklog.isPending}
-                              onClick={() => handleSendToBacklog([{ nodeId: d.id, title: d.label }])}
+                              onClick={() => handleSendToBacklog([{ nodeId: d.id, title: d.label, description: storyText(actor.label, d.label, impact.label) }])}
                             >
                               <ListPlus className="h-3.5 w-3.5" />
                             </button>

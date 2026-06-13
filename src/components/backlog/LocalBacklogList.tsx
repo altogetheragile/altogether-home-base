@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Filter, Layers, List } from 'lucide-react';
 import { UnifiedStoryEditDialog } from '@/components/stories/UnifiedStoryEditDialog';
 import { useActiveScheme } from '@/components/backlog/SchemeContext';
@@ -61,6 +62,21 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'hierarchical'>('hierarchical');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.size} item${selectedIds.size === 1 ? '' : 's'}? This cannot be undone.`)) return;
+    selectedIds.forEach((id) => onDeleteItem(id));
+    setSelectedIds(new Set());
+  };
   
   // Dialog state
   const [editingItem, setEditingItem] = useState<LocalBacklogItem | null>(null);
@@ -287,23 +303,35 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
           onDragEnd={() => setDraggedIndex(null)}
           className={draggedIndex === index ? 'opacity-50' : ''}
         >
-          <LocalBacklogItemCard
-            item={item}
-            index={index}
-            onUpdate={(updates) => onUpdateItem(item.id, updates)}
-            onDelete={() => onDeleteItem(item.id)}
-            onEdit={() => handleEdit(item)}
-            onMoveUp={isEditable && index > 0 ? () => handleMoveUp(index) : undefined}
-            onMoveDown={isEditable && index < filteredItems.length - 1 ? () => handleMoveDown(index) : undefined}
-            isDragging={draggedIndex === index}
-            isEditable={isEditable}
-            childrenCount={childrenCount}
-            onAddChild={onAddItem && item.item_type !== 'story' ? () => setAddChildParent(item) : undefined}
-            onSplitByCriteria={(item.acceptance_criteria?.length || 0) >= 2 && onAddItem ? () => setSplitItem(item) : undefined}
-            indentLevel={indentLevel}
-            isExpanded={isExpanded}
-            onToggleExpand={childrenCount > 0 ? () => toggleExpand(item.id) : undefined}
-          />
+          <div className="flex items-start gap-2">
+            {isEditable && (
+              <Checkbox
+                checked={selectedIds.has(item.id)}
+                onCheckedChange={() => toggleSelect(item.id)}
+                aria-label="Select for bulk delete"
+                className="mt-3 shrink-0"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <LocalBacklogItemCard
+                item={item}
+                index={index}
+                onUpdate={(updates) => onUpdateItem(item.id, updates)}
+                onDelete={() => onDeleteItem(item.id)}
+                onEdit={() => handleEdit(item)}
+                onMoveUp={isEditable && index > 0 ? () => handleMoveUp(index) : undefined}
+                onMoveDown={isEditable && index < filteredItems.length - 1 ? () => handleMoveDown(index) : undefined}
+                isDragging={draggedIndex === index}
+                isEditable={isEditable}
+                childrenCount={childrenCount}
+                onAddChild={onAddItem && item.item_type !== 'story' ? () => setAddChildParent(item) : undefined}
+                onSplitByCriteria={(item.acceptance_criteria?.length || 0) >= 2 && onAddItem ? () => setSplitItem(item) : undefined}
+                indentLevel={indentLevel}
+                isExpanded={isExpanded}
+                onToggleExpand={childrenCount > 0 ? () => toggleExpand(item.id) : undefined}
+              />
+            </div>
+          </div>
         </div>
         {/* Render children */}
         {isExpanded && children.map((child, childIndex) => 
@@ -395,6 +423,15 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
           {filteredItems.length} items
         </Badge>
       </div>
+
+      {/* Bulk actions */}
+      {isEditable && selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete}>Delete selected</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear</Button>
+        </div>
+      )}
 
       {/* List */}
       {filteredItems.length === 0 ? (
