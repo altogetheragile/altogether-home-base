@@ -357,6 +357,26 @@ editing; Wardley or Event Storming tools.
    importer, grounding the Canvas Picker (6.2). Coaching questions then moved into
    the Knowledge Base as `question` items, grounding the coach per cell (5.2), with
    a static fallback so nothing breaks before a ladder is seeded.
+8. **Adversarial red-team review and remediation.** A multi-agent review (six
+   dimensions, each finding independently verified by a skeptic) was run over this
+   session's changes. It surfaced 22 confirmed findings, all fixed or deliberately
+   retained. The most important:
+   - **`backlog_items` RLS was fully permissive** (`USING (true)`), so any
+     authenticated user could read or write another user's backlog via a tool URL.
+     This pre-dated the session; the new write paths broadened it. Fixed with an
+     ownership-scoped policy (migration `20260613130000`), mirroring
+     `project_artifact_links`.
+   - **Coach question ladders are keyed by tool, not artifact slug**, so tools that
+     share an ISA-O3 artifact (Persona and Journey Map) no longer collide on a
+     ladder.
+   - **Ordinal scheme rank is cross-vocabulary**, so legacy critical/high/medium/low
+     items rank correctly under MoSCoW.
+   - **Provenance links are best-effort** across all promote/push paths (a link
+     failure no longer reports total failure or orphans a `user_stories` row), and
+     push-to-backlog preserves the scheme priority and `priority_data`.
+   Retained by design: the empty-save guard (data-loss safety; destructive buttons
+   are already hidden in artifact mode) and manual on-screen backlog ordering (only
+   export is scheme-ranked).
 
 ---
 
