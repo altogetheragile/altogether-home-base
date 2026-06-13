@@ -129,7 +129,7 @@ A User Story describes a specific feature from an end user's perspective. Please
 
 **Core Fields:**
 1. **Title**: Brief, descriptive title (max 60 chars)
-2. **Story**: Proper "As a [user], I want [feature], so that [benefit]" format
+2. **Story**: Proper "As a [user], I need [feature], so that [benefit]" format
 3. **Acceptance Criteria**: 3-5 testable Given-When-Then statements
 4. **Priority**: Business priority (High, Medium, Low)
 5. **Story Points**: Complexity estimate (1, 2, 3, 5, 8, 13)
@@ -155,7 +155,7 @@ A User Story describes a specific feature from an end user's perspective. Please
 Return a JSON object with this structure:
 {
   "title": "Story title",
-  "story": "As a [role], I want [feature] so that [benefit]",
+  "story": "As a [role], I need [feature] so that [benefit]",
   "acceptanceCriteria": ["Given... When... Then...", "..."],
   "priority": "High|Medium|Low",
   "storyPoints": 5,

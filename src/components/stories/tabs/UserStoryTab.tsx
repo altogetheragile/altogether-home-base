@@ -62,7 +62,7 @@ export function UserStoryTab({ data, onChange, mode }: UserStoryTabProps) {
           id="title"
           value={data.title || ''}
           onChange={(e) => onChange({ title: e.target.value })}
-          placeholder={mode === 'epic' ? 'Enter epic title...' : 'As a [user], I want [goal]...'}
+          placeholder={mode === 'epic' ? 'Enter epic title...' : 'As a [user], I need [goal]...'}
         />
       </div>
 

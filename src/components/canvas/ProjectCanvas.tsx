@@ -520,7 +520,7 @@ function getDefaultContent(type: string) {
     case 'story':
       return {
         title: 'New User Story',
-        story: 'As a [user], I want [goal] so that [benefit]',
+        story: 'As a [user], I need [goal] so that [benefit]',
         priority: 'medium',
         storyPoints: 3,
         status: 'backlog',

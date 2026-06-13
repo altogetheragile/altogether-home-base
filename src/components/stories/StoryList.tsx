@@ -297,7 +297,7 @@ export function StoryList() {
                         </div>
                       )}
                       <CardTitle className="text-lg leading-tight">
-                        {story.title.startsWith('As a') ? story.title : `As a user, I want ${story.title.toLowerCase()}`}
+                        {story.title.startsWith('As a') ? story.title : `As a user, I need ${story.title.toLowerCase()}`}
                       </CardTitle>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">

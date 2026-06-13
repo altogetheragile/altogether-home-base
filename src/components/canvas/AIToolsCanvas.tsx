@@ -424,8 +424,10 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
               size: CARD_SIZE,
               content: {
                 title: d.label,
-                story: `As ${a.label || 'a user'}, I want ${d.label}`,
-                description: `As ${a.label || 'a user'}, I want ${d.label}`,
+                // The Impact Map already encodes a story: actor (who) + deliverable
+                // (what) + impact (so that). Seed the full triple.
+                story: `As ${a.label || 'a user'}, I need ${d.label}${im.label ? `, so that ${im.label}` : ''}`,
+                description: `As ${a.label || 'a user'}, I need ${d.label}${im.label ? `, so that ${im.label}` : ''}`,
                 acceptanceCriteria: [],
                 priority: 'medium',
                 storyPoints: 0,
@@ -502,7 +504,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       case 'story':
         return {
           title: 'New User Story',
-          description: 'As a user, I want to...',
+          description: 'As a user, I need to...',
           acceptanceCriteria: [],
           priority: 'medium',
           storyPoints: 0,
@@ -1300,7 +1302,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
               benefit = 'I can provide the required information';
             }
             
-            return `As a ${persona}, I want ${want}, so that ${benefit}`;
+            return `As a ${persona}, I need ${want}, so that ${benefit}`;
           };
           
           config.childStories.forEach((child, index) => {
