@@ -410,7 +410,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     }
     const newStories: CanvasElement[] = [];
     impactMaps.forEach((art) => {
-      const data = (art.data || {}) as { goal?: string; actors?: { label?: string; impacts?: { deliverables?: { id: string; label?: string }[] }[] }[] };
+      const data = (art.data || {}) as { goal?: string; actors?: { label?: string; impacts?: { label?: string; deliverables?: { id: string; label?: string }[] }[] }[] };
       const goal = data.goal || '';
       (data.actors || []).forEach((a) =>
         (a.impacts || []).forEach((im) =>
