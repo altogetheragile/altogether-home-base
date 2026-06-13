@@ -30,8 +30,22 @@ export function useSendToBacklog() {
 
   return useMutation({
     mutationFn: async ({ projectId, fromArtifactId, source, deliverables }: SendArgs) => {
-      if (deliverables.length === 0) return 0;
+      if (deliverables.length === 0) return { created: 0, skipped: 0 };
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Only send deliverables not already sent from this map: a provenance link
+      // (from_id '<artifactId>#deliverable:<nodeId>') exists for each one sent, so
+      // re-running "Send all" adds only the new What items.
+      const { data: existing } = await supabase
+        .from('project_artifact_links')
+        .select('from_id')
+        .eq('project_id', projectId)
+        .eq('from_type', 'impact-map')
+        .eq('to_type', 'backlog_item');
+      const alreadySent = new Set((existing || []).map((r) => r.from_id as string));
+      const fresh = deliverables.filter((d) => !alreadySent.has(`${fromArtifactId}#deliverable:${d.nodeId}`));
+      const skipped = deliverables.length - fresh.length;
+      if (fresh.length === 0) return { created: 0, skipped };
 
       // Starting backlog position (append to the end of this project's list).
       const { data: maxPos } = await supabase
@@ -43,7 +57,7 @@ export function useSendToBacklog() {
       let position = (maxPos?.[0]?.backlog_position ?? -1) + 1;
 
       let created = 0;
-      for (const d of deliverables) {
+      for (const d of fresh) {
         const title = d.title.trim() || 'Untitled deliverable';
         const { data: item, error: itemErr } = await supabase
           .from('backlog_items')
@@ -71,11 +85,22 @@ export function useSendToBacklog() {
         if (linkErr) throw linkErr;
         created++;
       }
-      return created;
+      return { created, skipped };
     },
-    onSuccess: (count) => {
+    onSuccess: ({ created, skipped }) => {
       queryClient.invalidateQueries({ queryKey: ['backlog-items'] });
-      toast.success(`Sent ${count} deliverable${count === 1 ? '' : 's'} to the backlog`);
+      if (created === 0) {
+        toast.info(
+          skipped > 0
+            ? 'Those deliverables are already in the backlog.'
+            : 'Nothing new to send.',
+        );
+      } else {
+        toast.success(
+          `Sent ${created} new item${created === 1 ? '' : 's'} to the backlog` +
+            (skipped > 0 ? ` (${skipped} already there)` : ''),
+        );
+      }
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'Please try again';
