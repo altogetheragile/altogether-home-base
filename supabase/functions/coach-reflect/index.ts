@@ -11,6 +11,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Which Knowledge Base artifact a tool grounds its coaching questions against.
+// When a published question ladder exists for (coaches_slug, cell_key), it replaces
+// the static opening and stretch the app sends; otherwise the app's strings stand.
+const COACH_GROUNDING: Record<string, string> = {
+  persona: 'coord-user-beneficiary-profile',
+  'journey-map': 'coord-user-beneficiary-profile',
+  'impact-map': 'coord-goal',
+  'business-case': 'coord-vision',
+  'product-vision': 'coord-vision',
+  bmc: 'org-business-model',
+  'benefits-scorecard': 'coord-outcomes',
+  'ways-of-working': 'coord-way-of-working',
+};
+
 type CoachMode = 'coach' | 'guide' | 'session';
 interface Turn { role: 'user' | 'coach'; text: string }
 interface ReflectRequest {
@@ -48,7 +62,7 @@ Rules:
 - Tone: open, curious, unhurried. British English. Do not use em dashes. Do not use the word "aporetic".
 Reply strictly as JSON: { "next_question": string, "done": boolean }.`;
 
-function buildPrompt(req: ReflectRequest): string {
+function buildPrompt(req: ReflectRequest, followups: string[] = []): string {
   const transcript = (req.conversation ?? [])
     .map((t) => `${t.role === 'user' ? 'Person' : 'Coach'}: ${t.text}`)
     .join('\n') || '(no conversation yet)';
@@ -58,6 +72,9 @@ function buildPrompt(req: ReflectRequest): string {
     req.intentStatement ? `The initiative exists to: ${req.intentStatement}.` : '',
     `The opening question for this cell is: "${req.question}"`,
     `The stretch question to offer after a few exchanges is: "${req.stretch}"`,
+    followups.length
+      ? `Further questions from the coaching practice library you may draw on, one at a time, if they fit what the person says: ${followups.map((f) => `"${f}"`).join('; ')}`
+      : '',
     `Number of replies the person has given so far: ${userTurns}.`,
     '',
     'Conversation so far:',
@@ -92,10 +109,38 @@ serve(async (req) => {
   const mode: CoachMode = body.mode === 'guide' ? 'guide' : body.mode === 'session' ? 'session' : 'coach';
   const system = mode === 'guide' ? SYSTEM_GUIDE : mode === 'session' ? SYSTEM_SESSION : SYSTEM_COACH;
 
+  // Ground the question ladder from the Knowledge Base when one is published for
+  // this tool's cell. Falls back to the static question/stretch the app sent.
+  let followups: string[] = [];
+  const coachesSlug = COACH_GROUNDING[body.tool];
+  if (coachesSlug && mode === 'coach') {
+    try {
+      const { data: ladder } = await supabase
+        .from('knowledge_items')
+        .select('description, rung, ladder_order')
+        .eq('item_type', 'question')
+        .eq('is_published', true)
+        .eq('coaches_slug', coachesSlug)
+        .eq('cell_key', body.cellTag.toLowerCase())
+        .order('ladder_order', { ascending: true });
+      if (ladder && ladder.length) {
+        const open = ladder.find((r) => r.rung === 'open') ?? ladder[0];
+        const stretch = ladder.find((r) => r.rung === 'stretch');
+        if (open?.description) body.question = open.description;
+        if (stretch?.description) body.stretch = stretch.description;
+        followups = ladder
+          .filter((r) => r.rung === 'follow_up' && typeof r.description === 'string')
+          .map((r) => r.description as string);
+      }
+    } catch (e) {
+      console.error('coach-reflect ladder lookup failed; using static questions:', e);
+    }
+  }
+
   try {
     const content = await callClaudeJSON({
       system,
-      prompt: buildPrompt(body),
+      prompt: buildPrompt(body, followups),
       maxTokens: 2000,
       temperature: 0.6,
     });
