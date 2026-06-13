@@ -20,17 +20,16 @@ inventory of record.
 | 6.13 Story Map view | DONE and live |
 | 6.14 Prioritisation Schemes | DONE and live (migration applied) |
 | Canvas Picker Knowledge Base grounding | DONE and live |
+| Per-cell coach grounding | DONE (mechanism live; ladders seeded per tool) |
 
-**Outstanding:**
+**Outstanding:** none of the original scope. Every spec item is built. The only
+remaining work is content and an optional extra: seeding the remaining tools'
+question ladders (Persona is seeded as the proof; others fall back to their static
+questions until seeded), and adding RICE as a fourth prioritisation scheme.
 
-1. **Per-cell coach grounding** of `coach-reflect`. BLOCKED: the coach question
-   ladders still need a Knowledge Base home (a `question` item type, or fields on
-   artifact items) before per-cell coaching can be grounded. The catalogue is
-   enriched and published, so the Canvas Picker is grounded, but the coach cells
-   are not yet. This is now the only open item in the spec.
-
-Everything else in sections 1 to 12 is built and live, including Suggest a Path
-(section 6.9a) and Modelling Canvas promote-to (section 6.5).
+Everything in sections 1 to 12 is built and live, including Suggest a Path
+(section 6.9a), Modelling Canvas promote-to (section 6.5) and per-cell coach
+grounding (section 5.2).
 
 ---
 
@@ -141,9 +140,14 @@ Migrations: `20260611120000` (links table, container fields,
 
 ### 5.2 The coach interaction (`coach-reflect` edge function)
 
-Built and deployed. Modes `coach`, `guide`, `session`. Per-cell grounding is the
-blocked item: the question ladders are static until they have a Knowledge Base home
-(section 0, item 1).
+Built and deployed. Modes `coach`, `guide`, `session`. **Per-cell grounding is now
+live:** coaching questions are Knowledge Base items (`item_type = 'question'`,
+columns `coaches_slug` / `cell_key` / `rung` / `ladder_order`, migration
+`20260613120000`). `coach-reflect` maps the tool to a KB artifact (`COACH_GROUNDING`),
+queries the published ladder for the cell, and uses the KB opening / stretch /
+follow-up questions when present, falling back to the static `CellCoach` strings the
+app sends when not. `scripts/seed-questions.mjs` upserts the ladders; the Persona
+ladders are seeded as the proof, other tools seed as their content lands.
 
 ### 5.3 "Suggest (AI)" buttons
 
@@ -348,10 +352,11 @@ editing; Wardley or Event Storming tools.
 6. **My Projects link.** A direct link in the orange Dashboard dropdown and the
    mobile menu to `/dashboard?tab=projects` (signed-in users only); the dashboard
    tabs are URL-driven.
-7. **Knowledge Base enrichment.** The catalogue was enriched (richer descriptions,
-   technique-to-artifact edges) and imported via the CLI importer, unblocking the
-   Canvas Picker grounding (6.2). Per-cell coach grounding remains blocked on the
-   question-ladder Knowledge Base home.
+7. **Knowledge Base enrichment and coach grounding.** The catalogue was enriched
+   (richer descriptions, technique-to-artifact edges) and imported via the CLI
+   importer, grounding the Canvas Picker (6.2). Coaching questions then moved into
+   the Knowledge Base as `question` items, grounding the coach per cell (5.2), with
+   a static fallback so nothing breaks before a ladder is seeded.
 
 ---
 
@@ -393,9 +398,12 @@ know?"
 
 ## Appendix B: What Remains
 
-1. **Per-cell coach grounding**, blocked on data: give the coach question ladders a
-   Knowledge Base home (a `question` item type, or fields on artifact items), then
-   ground `coach-reflect` through `recommend-pattern`.
-2. **RICE** as a fourth prioritisation scheme (registry entry only).
+Every spec item is built. What is left is content and one optional extra:
+
+1. **Seed the remaining tools' question ladders** (section 5.2). Persona is seeded
+   as the proof; the others fall back to their static questions until their rows are
+   added to `scripts/seed-questions.mjs` (and a `COACH_GROUNDING` entry exists). No
+   code change, just content.
+2. **RICE** as a fourth prioritisation scheme (a `prioritisationSchemes.ts` entry).
 
 *End of specification, version 1.4.*
