@@ -21,6 +21,7 @@ inventory of record.
 | 6.14 Prioritisation Schemes | DONE and live (migration applied) |
 | Canvas Picker Knowledge Base grounding | DONE and live |
 | Per-cell coach grounding | DONE (mechanism live; ladders seeded per tool) |
+| Multiple product backlogs per project | DONE and live (migration applied; e2e verified) |
 
 **Outstanding:** none of the original scope. Every spec item is built and every
 coached tool's question ladders are seeded. The only optional extra left is adding
@@ -125,10 +126,15 @@ human-readable provenance string for display without a join.
 `projects.intent_statement` (nullable), `projects.kind` (default 'project'), and
 `projects.prioritisation_scheme` (nullable; default computed from `kind`).
 `backlog_items.priority_data` (jsonb) holds scheme-specific scores (WSJF).
+`backlog_items.backlog_artifact_id` (nullable, FK to `project_artifacts` with
+`on delete set null`) ties an item to one product backlog; null means the
+project's ungrouped backlog, so legacy items keep showing in the all-items view.
 
 Migrations: `20260611120000` (links table, container fields,
 `backlog_items.user_persona`/`epic`); `20260611130000` (Persona Studio, public
-`user-uploads` bucket); `20260612160000` (prioritisation schemes).
+`user-uploads` bucket); `20260612160000` (prioritisation schemes);
+`20260613130000` (scope `backlog_items` RLS to project/product ownership);
+`20260613140000` (multiple backlogs: `backlog_items.backlog_artifact_id`).
 
 ## 5. The Coaching Layer (built)
 
@@ -173,7 +179,12 @@ the session artifact.
 
 ### 6.1 Impact Map Builder (`/impact-map`): DONE
 `stretch` in `LEVEL_META`; Send to Backlog creates `backlog_items` rows plus
-`project_artifact_links` (`derived_from`) via `useSendToBacklog`.
+`project_artifact_links` (`derived_from`) via `useSendToBacklog`. **Send all to
+Backlog** opens `SendToBacklogDialog` to pick an existing product backlog or
+create a new one for the project, and each item carries the full story sentence
+(`As <actor>, I need <deliverable>, so that <impact>`). Dedup is **per backlog**:
+re-sending the same map to the same backlog adds only new What items, while the
+same deliverable can still populate a different backlog.
 
 ### 6.2 Canvas catalogue (`/canvases`): DONE, now grounded
 BMC recoached; Business Case and Product Vision canvases via the coached-canvas
@@ -194,7 +205,13 @@ normalised and persona carried across.
 ### 6.4 Product Backlog (`/backlog`): DONE
 CSV export (Jira, Azure DevOps, Trello); provenance chips; one-question-upstream;
 relational single source via `useProjectBacklog`. Now also carries the Story Map
-view (6.13) and Prioritisation Schemes (6.14).
+view (6.13) and Prioritisation Schemes (6.14). **Multiple backlogs per project:**
+a product backlog is a `project_artifacts` row (`artifact_type 'product-backlog'`),
+so it appears as a card on the project page and opens in the ArtifactViewer
+scoped to its own items (`backlog_artifact_id`). `/backlog?projectId=&backlogId=`
+scopes the full tool to one backlog; without `backlogId` it shows every item in
+the project. Verified end-to-end against the live deploy by
+`e2e/backlog-flow.deployed.spec.ts`. Multi-select delete is supported.
 
 ### 6.5 Modelling Canvas (`/project-modelling`): DONE
 Repositioned and renamed in copy; pulls Knowledge Base items. Selecting a single
