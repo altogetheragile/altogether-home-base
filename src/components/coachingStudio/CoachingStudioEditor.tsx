@@ -245,8 +245,10 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
       );
       setSession((s) => ({ ...s, suggested_path: { diagnosis: data.data?.diagnosis || '', generatedAt: new Date().toISOString(), steps } }));
       toast.success('Here is a path from where you are.');
-    } catch {
-      toast.error('Could not reach the recommender. Please try again.');
+    } catch (e) {
+      const ctx = (e as { context?: { json?: () => Promise<{ error?: string }> } })?.context;
+      const body = ctx?.json ? await ctx.json().catch(() => null) : null;
+      toast.error(body?.error || 'Could not reach the recommender. Please try again.');
     } finally {
       setSuggesting(false);
     }

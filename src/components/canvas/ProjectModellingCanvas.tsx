@@ -541,7 +541,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         .select('id')
         .single();
       if (error) throw error;
-      await supabase.from('project_artifact_links').insert({
+      // Provenance is best-effort: the item exists, so a link failure must not
+      // report failure and prompt a duplicate promote.
+      const { error: linkErr } = await supabase.from('project_artifact_links').insert({
         project_id: targetProjectId,
         from_type: 'project-model',
         from_id: `${artifactId || 'project-modelling'}#element:${el.id}`,
@@ -550,6 +552,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
         link_kind: 'derived_from',
         created_by: user?.id ?? null,
       } as any);
+      if (linkErr) console.error('Promoted, but provenance link failed:', linkErr.message);
       toast.success('Promoted to the backlog');
     } catch (e) {
       toast.error('Could not promote: ' + (e instanceof Error ? e.message : 'please try again'));

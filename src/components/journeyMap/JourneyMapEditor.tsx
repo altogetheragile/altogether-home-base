@@ -157,7 +157,9 @@ export function JourneyMapEditor({ initialData, artifactId, projectId }: Journey
         .select('id')
         .single();
       if (error) throw error;
-      await supabase.from('project_artifact_links').insert({
+      // Provenance is best-effort: the item exists, so a link failure must not
+      // report failure and prompt a duplicate promote.
+      const { error: linkErr } = await supabase.from('project_artifact_links').insert({
         project_id: projectId,
         from_type: 'journey-map',
         from_id: `${artifactId}#stage:${stage.id}:${rowKey}`,
@@ -166,6 +168,7 @@ export function JourneyMapEditor({ initialData, artifactId, projectId }: Journey
         link_kind: 'derived_from',
         created_by: user?.id ?? null,
       });
+      if (linkErr) console.error('Promoted, but provenance link failed:', linkErr.message);
       toast.success('Sent to the backlog as a candidate');
     } catch {
       toast.error('Could not send to the backlog. Please try again.');

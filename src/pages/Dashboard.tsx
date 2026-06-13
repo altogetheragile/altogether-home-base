@@ -15,7 +15,9 @@ const Dashboard = () => {
   const { data: registrationsData, isLoading: registrationsLoading, isError: registrationsError, refetch: refetchRegistrations } = useUserRegistrations();
   const registrations: UserRegistrationWithEvent[] = registrationsData ?? [];
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'overview';
+  const KNOWN_TABS = ['overview', 'events', 'projects', 'activity'];
+  const rawTab = searchParams.get('tab');
+  const tab = rawTab && KNOWN_TABS.includes(rawTab) ? rawTab : 'overview';
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,7 +35,7 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content - Tabs */}
-        <Tabs value={tab} onValueChange={(v) => setSearchParams(v === 'overview' ? {} : { tab: v }, { replace: true })} className="mt-8">
+        <Tabs value={tab} onValueChange={(v) => { const next = new URLSearchParams(searchParams); if (v === 'overview') next.delete('tab'); else next.set('tab', v); setSearchParams(next, { replace: true }); }} className="mt-8">
           <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Layers, List } from 'lucide-react';
 import { UnifiedStoryEditDialog } from '@/components/stories/UnifiedStoryEditDialog';
+import { useActiveScheme } from '@/components/backlog/SchemeContext';
 import { UnifiedStoryData } from '@/types/story';
 import { AddChildDialog } from './AddChildDialog';
 import { SplitStoryDialog, SplitConfig } from '@/components/stories/SplitStoryDialog';
@@ -30,13 +31,6 @@ const STATUS_FILTERS = [
   { value: 'done', label: 'Done' },
 ];
 
-const PRIORITY_FILTERS = [
-  { value: 'all', label: 'All Priorities' },
-  { value: 'critical', label: 'Critical' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
 
 const TYPE_FILTERS = [
   { value: 'all', label: 'All Types' },
@@ -55,6 +49,13 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
 }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const scheme = useActiveScheme();
+  // Priority filter options follow the active scheme; scored schemes (WSJF) have no
+  // discrete priority to filter by.
+  const priorityFilters = [
+    { value: 'all', label: 'All Priorities' },
+    ...(scheme.type === 'ordinal' ? (scheme.options || []).map((o) => ({ value: o.value, label: o.label })) : []),
+  ];
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -353,18 +354,20 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
           </SelectContent>
         </Select>
         
+        {scheme.type === 'ordinal' && (
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
           <SelectTrigger className="w-[140px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {PRIORITY_FILTERS.map((p) => (
+            {priorityFilters.map((p) => (
               <SelectItem key={p.value} value={p.value}>
                 {p.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        )}
 
         {/* View mode toggle */}
         <div className="flex border rounded-md">

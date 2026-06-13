@@ -11,13 +11,23 @@ import type { LocalBacklogItem, LocalBacklogItemInput } from '@/hooks/useLocalBa
 // docs/VISION_TO_VALUE.md backlog dual-model note); every mutation persists
 // immediately, so there is no separate "Save to Project" snapshot in project mode.
 
+// Keep only finite numeric scores; the jsonb is unvalidated at the DB level.
+const sanitizeScores = (v: unknown): Record<string, number> | null => {
+  if (!v || typeof v !== 'object') return null;
+  const out: Record<string, number> = {};
+  for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+    if (typeof val === 'number' && Number.isFinite(val)) out[k] = val;
+  }
+  return out;
+};
+
 const mapRow = (item: Record<string, unknown>, index: number): LocalBacklogItem => ({
   id: String(item.id),
   title: String(item.title ?? ''),
   description: (item.description as string) ?? null,
   acceptance_criteria: (item.acceptance_criteria as string[]) ?? null,
   priority: (item.priority as string) || 'medium',
-  priority_data: (item.priority_data as Record<string, number>) ?? null,
+  priority_data: sanitizeScores(item.priority_data),
   status: (item.status as string) || 'idea',
   source: (item.source as string) ?? null,
   estimated_value: (item.estimated_value as number) ?? null,
@@ -59,6 +69,7 @@ export function useProjectBacklog(projectId?: string) {
       description: input.description,
       acceptance_criteria: input.acceptance_criteria,
       priority: input.priority,
+      priority_data: input.priority_data ?? {},
       status: input.status,
       source: input.source,
       estimated_value: input.estimated_value,

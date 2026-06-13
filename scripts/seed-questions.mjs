@@ -35,7 +35,10 @@ if (!SUPABASE_URL || !SERVICE_ROLE) {
   process.exit(1);
 }
 
-const ARTIFACT = 'coord-user-beneficiary-profile'; // Persona Studio grounds against this
+// coaches_slug holds the TOOL key (not an artifact slug), so tools that share an
+// ISA-O3 artifact (Persona and Journey Map both relate to the beneficiary profile)
+// never collide on a ladder. coach-reflect queries by body.tool.
+const ARTIFACT = 'persona';
 const PERSONA = [
   { cell: 'name', open: 'Who is this person? Give them a name.', stretch: 'Is this a real type of person you have met, or one you wish existed?' },
   { cell: 'role', open: 'What is their role or situation?', stretch: 'What part of their role do they find hardest to admit?' },
@@ -46,9 +49,9 @@ const PERSONA = [
   { cell: 'quote', open: 'What might they say?', stretch: 'Would they say this out loud, or only think it?' },
 ];
 
-// Impact Map Builder grounds against coord-goal. Its cells pass the level tags
-// WHY / WHO / HOW / WHAT, so cell_key is the lowercased tag (from src/types/impactMap.ts).
-const IMPACT_ARTIFACT = 'coord-goal';
+// Impact Map Builder: cells pass the level tags WHY / WHO / HOW / WHAT, so cell_key
+// is the lowercased tag (from src/types/impactMap.ts). Keyed by the tool.
+const IMPACT_ARTIFACT = 'impact-map';
 const IMPACT_MAP = [
   { cell: 'why', open: 'What is the goal?', stretch: 'If you achieved this and nothing felt different, how would you know?' },
   { cell: 'who', open: 'Who can help or hinder the goal?', stretch: 'Whose behaviour are you assuming will not change?' },

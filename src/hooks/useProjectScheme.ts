@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { SchemeId, defaultSchemeForKind } from '@/config/prioritisationSchemes';
+import { SchemeId, SCHEMES, defaultSchemeForKind } from '@/config/prioritisationSchemes';
 
 // Read and update a project's prioritisation_scheme. When the column is null the
 // default is computed from projects.kind (project -> moscow, otherwise simple),
@@ -22,7 +22,8 @@ export function useProjectScheme(projectId?: string) {
       .maybeSingle()
       .then(({ data }: { data: { prioritisation_scheme?: string | null; kind?: string | null } | null }) => {
         if (cancelled || !data) return;
-        setSchemeState((data.prioritisation_scheme as SchemeId) || defaultSchemeForKind(data.kind));
+        const raw = data.prioritisation_scheme;
+        setSchemeState(raw && raw in SCHEMES ? (raw as SchemeId) : defaultSchemeForKind(data.kind));
       });
     return () => {
       cancelled = true;

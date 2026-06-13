@@ -13,6 +13,8 @@ import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/Bu
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
 import { LocalBacklogList } from '@/components/backlog/LocalBacklogList';
 import { LocalBacklogQuickAdd } from '@/components/backlog/LocalBacklogQuickAdd';
+import { SchemeProvider } from '@/components/backlog/SchemeContext';
+import { useProjectScheme } from '@/hooks/useProjectScheme';
 import { LocalBacklogItem, LocalBacklogItemInput } from '@/hooks/useLocalBacklogItems';
 import { exportToCSV } from '@/utils/exportUtils';
 import { toast } from 'sonner';
@@ -25,6 +27,7 @@ export default function ArtifactViewer() {
   const { data: artifact, isLoading: isLoadingArtifact } = useProjectArtifact(artifactId || '');
   const { data: project, isLoading: isLoadingProject } = useProject(projectId || '');
   const { data: liveBacklogItems } = useBacklogItems(projectId);
+  const { scheme: backlogScheme } = useProjectScheme(projectId);
   const { updateArtifact } = useProjectArtifactMutations();
   const bmcRef = useRef<BusinessModelCanvasRef>(null);
   
@@ -212,16 +215,18 @@ export default function ArtifactViewer() {
       case 'product-backlog':
         if (isEditingBacklog) {
           return (
-            <div className="max-w-4xl mx-auto space-y-6">
-              <LocalBacklogQuickAdd onAddItem={handleAddBacklogItem} />
-              <LocalBacklogList 
-                items={editedBacklogItems}
-                onUpdateItem={handleUpdateBacklogItem}
-                onDeleteItem={handleDeleteBacklogItem}
-                onReorderItems={handleReorderBacklogItems}
-                isEditable={true}
-              />
-            </div>
+            <SchemeProvider scheme={backlogScheme}>
+              <div className="max-w-4xl mx-auto space-y-6">
+                <LocalBacklogQuickAdd onAddItem={handleAddBacklogItem} />
+                <LocalBacklogList
+                  items={editedBacklogItems}
+                  onUpdateItem={handleUpdateBacklogItem}
+                  onDeleteItem={handleDeleteBacklogItem}
+                  onReorderItems={handleReorderBacklogItems}
+                  isEditable={true}
+                />
+              </div>
+            </SchemeProvider>
           );
         }
         // Use live database items instead of artifact snapshot
@@ -240,17 +245,20 @@ export default function ArtifactViewer() {
           backlog_position: item.backlog_position ?? index,
           item_type: item.item_type || 'story',
           parent_item_id: item.parent_item_id || null,
+          priority_data: item.priority_data ?? null,
         }));
         return (
-          <div className="max-w-4xl mx-auto">
-            <LocalBacklogList 
-              items={backlogItems}
-              onUpdateItem={() => {}}
-              onDeleteItem={() => {}}
-              onReorderItems={() => {}}
-              isEditable={false}
-            />
-          </div>
+          <SchemeProvider scheme={backlogScheme}>
+            <div className="max-w-4xl mx-auto">
+              <LocalBacklogList
+                items={backlogItems}
+                onUpdateItem={() => {}}
+                onDeleteItem={() => {}}
+                onReorderItems={() => {}}
+                isEditable={false}
+              />
+            </div>
+          </SchemeProvider>
         );
       case 'canvas':
       case 'user_story':

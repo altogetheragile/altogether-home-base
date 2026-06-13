@@ -40,6 +40,17 @@ export interface PrioritisationScheme {
   excludeFromCsv?: (item: PrioritisationItem) => boolean;
 }
 
+// Cross-vocabulary rank so an item stored under one ordinal scheme still ranks
+// correctly when viewed/exported under another (e.g. a legacy 'high'/'critical'
+// item under MoSCoW). 1 = highest .. 4 = lowest.
+const ordinalRank = (p?: string | null): number =>
+  ({
+    critical: 1, must: 1, highest: 1,
+    high: 2, should: 2,
+    medium: 3, could: 3,
+    low: 4, lowest: 4, "won't": 4, wont: 4, would: 4,
+  }[(p || '').toLowerCase().trim()] ?? 3);
+
 const num = (d: Record<string, number> | null | undefined, k: string): number => {
   const v = d?.[k];
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
@@ -67,7 +78,7 @@ export const SCHEMES: Record<SchemeId, PrioritisationScheme> = {
       { value: 'medium', label: 'Medium', color: 'bg-primary text-primary-foreground' },
       { value: 'low', label: 'Low', color: 'bg-muted text-muted-foreground' },
     ],
-    rank: (i) => ({ critical: 1, high: 2, medium: 3, low: 4 }[(i.priority || '').toLowerCase()] ?? 3),
+    rank: (i) => ordinalRank(i.priority),
   },
   moscow: {
     id: 'moscow',
@@ -81,7 +92,7 @@ export const SCHEMES: Record<SchemeId, PrioritisationScheme> = {
       { value: 'could', label: 'Could', color: 'bg-primary text-primary-foreground' },
       { value: "won't", label: "Won't", color: 'bg-muted text-muted-foreground' },
     ],
-    rank: (i) => ({ must: 1, should: 2, could: 3, "won't": 4, wont: 4 }[(i.priority || '').toLowerCase()] ?? 3),
+    rank: (i) => ordinalRank(i.priority),
     excludeFromCsv: (i) => ['won\'t', 'wont'].includes((i.priority || '').toLowerCase()),
   },
   wsjf: {

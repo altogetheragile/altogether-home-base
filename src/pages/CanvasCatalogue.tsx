@@ -69,8 +69,10 @@ const CanvasCatalogue = () => {
         return;
       }
       setAi({ diagnosis: data.data?.diagnosis || '', canvas: canvasFromPattern(data.data?.steps || []) });
-    } catch {
-      setAiError('Something went wrong reaching the coach. Please try again.');
+    } catch (e) {
+      const ctx = (e as { context?: { json?: () => Promise<{ error?: string }> } })?.context;
+      const body = ctx?.json ? await ctx.json().catch(() => null) : null;
+      setAiError(body?.error || 'Something went wrong reaching the coach. Please try again.');
     } finally {
       setLoading(false);
     }

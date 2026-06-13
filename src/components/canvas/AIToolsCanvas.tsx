@@ -344,7 +344,8 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           title: storyData.title || 'Untitled Story',
           description: storyData.story || storyData.description || null,
           acceptance_criteria: storyData.acceptanceCriteria || null,
-          priority: safePriority,
+          priority: storyData.priority || 'medium',
+          priority_data: storyData.priority_data ?? {},
           status: 'idea',
           source: imported ? `From Impact Map: ${imported.goal || 'goal'}` : 'User Story Canvas',
           estimated_effort: storyData.storyPoints || null,
@@ -355,7 +356,11 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
         } as any)
         .select('id')
         .single();
-      if (error) throw error;
+      if (error) {
+        // Avoid orphaning the user_stories row we just created.
+        if (userStoryId) await supabase.from('user_stories').delete().eq('id', userStoryId);
+        throw error;
+      }
 
       // Provenance: the story came from the User Story Canvas, and (if imported)
       // originally from an Impact Map deliverable. Both recorded as derived_from.
@@ -379,7 +384,10 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
           created_by: u?.id ?? null,
         });
       }
-      await supabase.from('project_artifact_links').insert(links as any);
+      // Provenance is best-effort: the backlog item already exists, so a link
+      // failure must not report total failure (which would prompt a duplicate re-add).
+      const { error: linkErr } = await supabase.from('project_artifact_links').insert(links as any);
+      if (linkErr) console.error('Backlog item created but provenance link failed:', linkErr.message);
 
       toast({ title: 'Added to backlog', description: storyData.title || 'Story' });
     } catch (error: any) {

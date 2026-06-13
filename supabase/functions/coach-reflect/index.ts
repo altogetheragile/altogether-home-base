@@ -11,20 +11,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Which Knowledge Base artifact a tool grounds its coaching questions against.
-// When a published question ladder exists for (coaches_slug, cell_key), it replaces
-// the static opening and stretch the app sends; otherwise the app's strings stand.
-const COACH_GROUNDING: Record<string, string> = {
-  persona: 'coord-user-beneficiary-profile',
-  'journey-map': 'coord-user-beneficiary-profile',
-  'impact-map': 'coord-goal',
-  'business-case': 'coord-vision',
-  'product-vision': 'coord-vision',
-  bmc: 'org-business-model',
-  'benefits-scorecard': 'coord-outcomes',
-  'ways-of-working': 'coord-way-of-working',
-};
-
+// Coaching question ladders are keyed by the calling TOOL (stored in
+// knowledge_items.coaches_slug as the tool key), so two tools that relate to the
+// same ISA-O3 artifact (e.g. Persona and Journey Map) never share a ladder. When a
+// published ladder exists for (tool, cell_key) it replaces the static opening and
+// stretch the app sends; otherwise the app's strings stand.
 type CoachMode = 'coach' | 'guide' | 'session';
 interface Turn { role: 'user' | 'coach'; text: string }
 interface ReflectRequest {
@@ -112,7 +103,7 @@ serve(async (req) => {
   // Ground the question ladder from the Knowledge Base when one is published for
   // this tool's cell. Falls back to the static question/stretch the app sent.
   let followups: string[] = [];
-  const coachesSlug = COACH_GROUNDING[body.tool];
+  const coachesSlug = body.tool;
   if (coachesSlug && mode === 'coach') {
     try {
       const { data: ladder } = await supabase
