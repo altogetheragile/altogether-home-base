@@ -22,7 +22,7 @@ import {
   newDeliverable,
   parseImpactMap,
 } from '@/types/impactMap';
-import { toFreeMind, toMarkdown, toJson, downloadText, fileStem } from '@/utils/impactMap/exportImpactMap';
+import { toFreeMind, toOpml, toMarkdown, toJson, downloadText, fileStem } from '@/utils/impactMap/exportImpactMap';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
 
 const STORAGE_KEY = 'impactMap.v1';
@@ -262,6 +262,10 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
     downloadText(toFreeMind(map), `${fileStem(map)}.mm`, 'application/x-freemind');
     toast.success('FreeMind .mm exported');
   };
+  const handleExportOpml = () => {
+    downloadText(toOpml(map), `${fileStem(map)}.opml`, 'text/x-opml');
+    toast.success('OPML exported');
+  };
   const handleExportJson = () => {
     downloadText(toJson(map), `${fileStem(map)}.json`, 'application/json');
     toast.success('JSON exported');
@@ -379,6 +383,9 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
         <div className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={handleExportMM}>
           <Download className="mr-1.5 h-4 w-4" /> FreeMind .mm
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleExportOpml}>
+          <Download className="mr-1.5 h-4 w-4" /> OPML
         </Button>
         <Button variant="outline" size="sm" onClick={() => handleExportImage('png')}>
           <Image className="mr-1.5 h-4 w-4" /> PNG

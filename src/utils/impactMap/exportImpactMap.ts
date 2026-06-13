@@ -47,6 +47,49 @@ export const toFreeMind = (map: ImpactMap): string => {
   return `<map version="1.0.1">\n${root}\n</map>\n`;
 };
 
+/**
+ * Export to OPML 2.0, an XML outline format read by outliners and mind-mappers
+ * (OmniOutliner, Dynalist, Workflowy importers, etc.). Impact maps are trees, so
+ * goal -> actors -> impacts -> deliverables maps onto nested <outline> nodes.
+ */
+export const toOpml = (map: ImpactMap): string => {
+  const pad = (depth: number) => '  '.repeat(depth);
+  const outline = (text: string, children: string[], depth: number): string => {
+    const attr = `text="${xmlEscape(text || ' ')}"`;
+    if (children.length === 0) return `${pad(depth)}<outline ${attr}/>`;
+    return `${pad(depth)}<outline ${attr}>\n${children.join('\n')}\n${pad(depth)}</outline>`;
+  };
+  const goalNode = outline(
+    map.goal || 'Goal',
+    (map.actors ?? []).map((actor) =>
+      outline(
+        actor.label,
+        actor.impacts.map((impact) =>
+          outline(
+            impact.label,
+            impact.deliverables.map((d) => outline(d.label, [], 5)),
+            4,
+          ),
+        ),
+        3,
+      ),
+    ),
+    2,
+  );
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<opml version="2.0">',
+    '  <head>',
+    `    <title>Impact Map: ${xmlEscape(map.goal || 'Goal')}</title>`,
+    '  </head>',
+    '  <body>',
+    goalNode,
+    '  </body>',
+    '</opml>',
+    '',
+  ].join('\n');
+};
+
 /** Export to a Markdown outline. */
 export const toMarkdown = (map: ImpactMap): string => {
   const lines: string[] = [];
