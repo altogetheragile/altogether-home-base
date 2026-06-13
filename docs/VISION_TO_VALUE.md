@@ -22,10 +22,9 @@ inventory of record.
 | Canvas Picker Knowledge Base grounding | DONE and live |
 | Per-cell coach grounding | DONE (mechanism live; ladders seeded per tool) |
 
-**Outstanding:** none of the original scope. Every spec item is built. The only
-remaining work is content and an optional extra: seeding the remaining tools'
-question ladders (Persona is seeded as the proof; others fall back to their static
-questions until seeded), and adding RICE as a fourth prioritisation scheme.
+**Outstanding:** none of the original scope. Every spec item is built and every
+coached tool's question ladders are seeded. The only optional extra left is adding
+RICE as a fourth prioritisation scheme.
 
 Everything in sections 1 to 12 is built and live, including Suggest a Path
 (section 6.9a), Modelling Canvas promote-to (section 6.5) and per-cell coach
@@ -146,8 +145,10 @@ columns `coaches_slug` / `cell_key` / `rung` / `ladder_order`, migration
 `20260613120000`). `coach-reflect` maps the tool to a KB artifact (`COACH_GROUNDING`),
 queries the published ladder for the cell, and uses the KB opening / stretch /
 follow-up questions when present, falling back to the static `CellCoach` strings the
-app sends when not. `scripts/seed-questions.mjs` upserts the ladders; the Persona
-ladders are seeded as the proof, other tools seed as their content lands.
+app sends when not. `scripts/seed-questions.mjs` upserts the ladders, keyed by tool
+so tools that share an ISA-O3 artifact never collide; all nine coached tools
+(Persona, Impact Map, Journey Map, Business Case, Product Vision, BMC, Ways of
+Working, Probe Tracker, Benefits Scorecard) are seeded.
 
 ### 5.3 "Suggest (AI)" buttons
 
@@ -418,12 +419,9 @@ know?"
 
 ## Appendix B: What Remains
 
-Every spec item is built. What is left is content and one optional extra:
+Every spec item is built and all nine coached tools' question ladders are seeded.
+One optional extra remains:
 
-1. **Seed the remaining tools' question ladders** (section 5.2). Persona is seeded
-   as the proof; the others fall back to their static questions until their rows are
-   added to `scripts/seed-questions.mjs` (and a `COACH_GROUNDING` entry exists). No
-   code change, just content.
-2. **RICE** as a fourth prioritisation scheme (a `prioritisationSchemes.ts` entry).
+1. **RICE** as a fourth prioritisation scheme (a `prioritisationSchemes.ts` entry).
 
 *End of specification, version 1.4.*
