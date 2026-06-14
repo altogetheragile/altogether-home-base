@@ -1,4 +1,4 @@
-import type { PatternResult } from '@/types/pattern';
+import type { PatternResult, QAPair } from '@/types/pattern';
 
 // Resolver for human-readable Knowledge Base names (satisfied by useKnowledgeBase()).
 interface NameLookup {
@@ -13,10 +13,14 @@ export function patternStem(scenario: string): string {
   return base || 'pattern';
 }
 
-export function toMarkdown(scenario: string, result: PatternResult, kb: NameLookup): string {
+export function toMarkdown(scenario: string, result: PatternResult, kb: NameLookup, qa: QAPair[] = []): string {
   const lines: string[] = ['# Recommended Pattern', ''];
   if (scenario.trim()) {
     lines.push('## Scenario', '', scenario.trim(), '');
+  }
+  if (qa.length) {
+    lines.push('## Clarifying Questions', '');
+    for (const a of qa) lines.push(`**${a.question}**`, '', a.answer, '');
   }
   if (result.diagnosis) {
     lines.push('## Diagnosis', '', result.diagnosis, '');
@@ -39,8 +43,8 @@ export function toMarkdown(scenario: string, result: PatternResult, kb: NameLook
   return lines.join('\n');
 }
 
-export function toJson(scenario: string, result: PatternResult): string {
-  return JSON.stringify({ scenario, result }, null, 2);
+export function toJson(scenario: string, result: PatternResult, qa: QAPair[] = []): string {
+  return JSON.stringify({ scenario, answers: qa, result }, null, 2);
 }
 
 /** Trigger a client-side download of text content. */

@@ -29,6 +29,17 @@ Your job:
 3. Order it sensibly: settle Intent before Scope before Approach, and let higher
    horizons set context for lower ones.
 
+Read the variables, not the label. A scenario's surface words (start-up, SAFe,
+project, enterprise, "just add it to the backlog") often point the wrong way.
+Diagnose from the decisive variables underneath, never the label:
+- endpoint: a real finish line, or open-ended work?
+- demand: proven and paying, or assumed and unvalidated?
+- predictability: foreseeable, or interrupt-driven?
+- units: one team / one product / one backlog, or genuinely many?
+- fixed constraint: which of time, cost or scope is immovable, and what flexes?
+When the presenting framing and the decisive variable diverge, say so in the
+diagnosis ("presented as X; the deciding factor is actually Y").
+
 Rules:
 - Use ONLY artifacts and techniques from the catalogue, referenced by their exact
   id. Never invent items or ids.
@@ -39,6 +50,30 @@ Rules:
 - Return STRICT JSON matching the schema. No prose, no markdown, outside the JSON.`;
 
 const OUTPUT_SCHEMA_HINT = `Return STRICT JSON: { "diagnosis": string, "primaryHorizon": "Organisation|Coordination|Team", "steps": [{ "order": number, "horizon": string, "isa": string, "artifactId": string, "techniqueIds": string[], "rationale": string }], "cautions": string[] }`;
+
+// Triage runs before any recommendation, so the adviser consults before it
+// prescribes and does not solve the presenting problem by reflex.
+const TRIAGE_SYSTEM = `You are a consulting coach triaging a product or project scenario BEFORE any
+recommendation is made. Your goal is to avoid prescribing for the presenting
+problem when the real problem may be different.
+
+Decide whether the scenario already reveals the DECISIVE variables, or whether you
+would be guessing. The decisive variables are:
+- endpoint: a real finish line, or open-ended work?
+- demand: proven and paying, or assumed and unvalidated?
+- predictability: foreseeable, or interrupt-driven?
+- units: one team / one product / one backlog, or genuinely many?
+- fixed constraint: which of time, cost or scope is immovable, and what flexes?
+
+If one or more decisive variables are unknown AND would change the recommendation,
+return 2 to 3 OPEN, non-leading questions that surface them - the questions a good
+consultant asks to separate the presenting problem from the real one. Never ask
+leading or multiple-choice questions, and never hint at the answer you expect.
+
+Return STRICT JSON only, no prose or markdown outside it:
+{ "decision": "clarify" | "ready", "questions": string[], "note": string }
+Use "ready" only when the scenario already pins down the decisive variables. The
+"note" is one short sentence on what is still unclear (clarify) or why it is ready.`;
 
 function stripFences(text: string): string {
   return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
@@ -59,7 +94,7 @@ function parseJsonLoose(text: string): any {
 }
 
 // Single Anthropic Messages call returning parsed JSON (or throws).
-async function callClaude(apiKey: string, userMessage: string, maxTokens = 4096): Promise<any> {
+async function callClaude(apiKey: string, system: string, userMessage: string, maxTokens = 4096): Promise<any> {
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -71,7 +106,7 @@ async function callClaude(apiKey: string, userMessage: string, maxTokens = 4096)
       model: ANTHROPIC_MODEL,
       max_tokens: maxTokens,
       temperature: 0.2,
-      system: SYSTEM_INSTRUCTION,
+      system,
       messages: [{ role: 'user', content: userMessage }],
     }),
   });
@@ -125,10 +160,25 @@ serve(async (req) => {
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) return json({ success: false, error: 'Pattern Builder is not configured yet.' }, 500);
 
-    const { scenario } = await req.json().catch(() => ({ scenario: '' }));
+    const body = await req.json().catch(() => ({}));
+    const scenario = body?.scenario;
+    // answers: prior clarifying Q&A from the triage step. force: user chose to
+    // skip questions ("just give me a pattern anyway").
+    const force = body?.force === true;
+    const qa: { question: string; answer: string }[] = Array.isArray(body?.answers)
+      ? body.answers
+          .filter((a: unknown): a is { question: string; answer: string } =>
+            !!a && typeof (a as any).question === 'string' && typeof (a as any).answer === 'string')
+          .map((a: { question: string; answer: string }) => ({ question: a.question, answer: a.answer.trim() }))
+          .filter((a: { answer: string }) => a.answer.length > 0)
+      : [];
     if (!scenario || typeof scenario !== 'string' || scenario.trim().length < 10) {
       return json({ success: false, error: 'Please describe your scenario in a sentence or two.' }, 400);
     }
+    const scenarioStr = scenario.trim();
+    const enrichedScenario = qa.length > 0
+      ? `${scenarioStr}\n\nClarifying questions and the user's answers:\n${qa.map((a) => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n')}`
+      : scenarioStr;
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -151,6 +201,35 @@ serve(async (req) => {
         p_window_minutes: 60,
       });
       if (ok === false) return json({ success: false, error: 'Rate limit reached. Please try again later.' }, 429);
+    }
+
+    // ── Triage gate: consult before prescribing ─────────────────────────────
+    // On the first pass (no prior answers, not forced), check whether the
+    // scenario reveals the decisive variables. If not, ask open questions and
+    // stop here rather than prescribe for the presenting problem. One round only.
+    if (!force && qa.length === 0) {
+      try {
+        const triage = await callClaude(
+          apiKey,
+          TRIAGE_SYSTEM,
+          `SCENARIO:\n${scenarioStr}\n\nReturn the triage JSON.`,
+          768,
+        );
+        if (triage?.decision === 'clarify') {
+          const questions = (Array.isArray(triage.questions) ? triage.questions : [])
+            .filter((q: unknown): q is string => typeof q === 'string' && q.trim().length > 0)
+            .map((q: string) => q.trim())
+            .slice(0, 3);
+          if (questions.length > 0) {
+            return json({
+              success: true,
+              data: { status: 'clarify', questions, note: typeof triage.note === 'string' ? triage.note : undefined },
+            });
+          }
+        }
+      } catch (_) {
+        // If triage fails, fall through and prescribe rather than blocking the user.
+      }
     }
 
     // Build a terse catalogue from the live knowledge base.
@@ -178,14 +257,14 @@ serve(async (req) => {
       })),
     };
     const catalogueStr = JSON.stringify(catalogue);
-    const scenarioStr = scenario.trim();
 
     // ── 1. Generate draft pattern ───────────────────────────────────────────
     let parsed: any;
     try {
       parsed = await callClaude(
         apiKey,
-        `CATALOGUE:\n${catalogueStr}\n\nSCENARIO:\n${scenarioStr}\n\n${OUTPUT_SCHEMA_HINT}`,
+        SYSTEM_INSTRUCTION,
+        `CATALOGUE:\n${catalogueStr}\n\nSCENARIO:\n${enrichedScenario}\n\n${OUTPUT_SCHEMA_HINT}`,
       );
     } catch (e) {
       const msg = String((e as Error).message || '');
@@ -204,15 +283,16 @@ serve(async (req) => {
       try {
         const critique = await callClaude(
           apiKey,
+          SYSTEM_INSTRUCTION,
           `You are red-teaming an ISA-O3 pattern recommendation. Be skeptical and specific.
 
 CATALOGUE (ids must come from here):\n${catalogueStr}
 
-SCENARIO:\n${scenarioStr}
+SCENARIO:\n${enrichedScenario}
 
 PROPOSED PATTERN:\n${JSON.stringify(result)}
 
-Judge it on: (a) does the diagnosis match the scenario; (b) correct ordering - Intent before Scope before Approach, and higher horizons setting context for lower ones; (c) are the technique-to-artifact pairings sensible, not just valid; (d) right altitude (4-8 steps, no obvious missing gap); (e) every id exists in the catalogue.
+Judge it on: (a) does the diagnosis match the scenario; (b) correct ordering - Intent before Scope before Approach, and higher horizons setting context for lower ones; (c) are the technique-to-artifact pairings sensible, not just valid; (d) right altitude (4-8 steps, no obvious missing gap); (e) every id exists in the catalogue; (f) is the recommendation anchored on a surface label (start-up, SAFe, project, enterprise, "ongoing Scrum") rather than the decisive variable (endpoint, demand, predictability, number of units, which constraint is fixed)? If so, return revise and name the variable it should have keyed on.
 
 Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summary": "one short sentence" }. Use "revise" only for substantive problems, not nitpicks.`,
           1024,
@@ -232,7 +312,8 @@ Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summ
           try {
             const repaired = await callClaude(
               apiKey,
-              `CATALOGUE:\n${catalogueStr}\n\nSCENARIO:\n${scenarioStr}\n\nYOUR PREVIOUS DRAFT:\n${JSON.stringify(result)}\n\nA reviewer raised these issues:\n${critiqueText}\n\nProduce an improved recommendation that resolves them. ${OUTPUT_SCHEMA_HINT}`,
+              SYSTEM_INSTRUCTION,
+              `CATALOGUE:\n${catalogueStr}\n\nSCENARIO:\n${enrichedScenario}\n\nYOUR PREVIOUS DRAFT:\n${JSON.stringify(result)}\n\nA reviewer raised these issues:\n${critiqueText}\n\nProduce an improved recommendation that resolves them. ${OUTPUT_SCHEMA_HINT}`,
             );
             const revisedResult = shapeResult(repaired, artifactIds, techniqueIds, idToName);
             if (revisedResult.steps.length > 0) {
@@ -257,7 +338,7 @@ Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summ
     if (result.steps.length === 0) {
       return json({
         success: true,
-        data: { ...result, assessment, runId: null, empty: true },
+        data: { status: 'pattern', ...result, assessment, runId: null, empty: true },
       });
     }
 
@@ -267,7 +348,7 @@ Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summ
       const { data: run } = await supabase
         .from('pattern_builder_runs')
         .insert({
-          scenario: scenarioStr.slice(0, 4000),
+          scenario: enrichedScenario.slice(0, 4000),
           primary_horizon: result.primaryHorizon,
           result,
           assessment,
@@ -279,7 +360,7 @@ Return STRICT JSON only: { "verdict": "ok" | "revise", "issues": string[], "summ
       runId = run?.id ?? null;
     } catch (_) { /* persistence is best-effort */ }
 
-    return json({ success: true, data: { ...result, assessment, runId } });
+    return json({ success: true, data: { status: 'pattern', ...result, assessment, runId } });
   } catch (error) {
     console.error('recommend-pattern error:', error);
     return json({ success: false, error: (error as Error).message }, 500);

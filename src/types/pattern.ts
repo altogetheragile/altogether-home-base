@@ -20,8 +20,15 @@ export interface PatternResult {
   assessment?: { reviewed?: boolean; revised?: boolean; verdict?: string; summary?: string };
 }
 
+export interface QAPair {
+  question: string;
+  answer: string;
+}
+
 // What gets persisted as a 'pattern' project artifact (artifact.data).
 export interface SavedPattern {
   scenario: string;
+  /** Clarifying questions the triage step asked, with the user's answers. */
+  answers?: QAPair[];
   result: PatternResult;
 }

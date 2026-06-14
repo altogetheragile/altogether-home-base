@@ -1,20 +1,22 @@
 import { Link } from 'react-router-dom';
 import { useKnowledgeBase } from '@/lib/knowledgeBase';
 import { colors as p } from '@/theme/colors';
-import type { PatternResult } from '@/types/pattern';
+import type { PatternResult, QAPair } from '@/types/pattern';
 
 interface PatternResultViewProps {
   /** Optional only to tolerate a malformed saved artifact; the guard handles it. */
   result?: PatternResult;
   /** Shown as context when viewing a saved pattern (omitted in the live builder). */
   scenario?: string;
+  /** Clarifying Q&A captured during triage, shown when present. */
+  qa?: QAPair[];
 }
 
 /**
  * Read-only render of a Pattern Builder result (diagnosis, recommended flow,
  * cautions). Shared by the builder page and the saved 'pattern' project artifact.
  */
-export function PatternResultView({ result, scenario }: PatternResultViewProps) {
+export function PatternResultView({ result, scenario, qa }: PatternResultViewProps) {
   const kb = useKnowledgeBase();
   if (!result) {
     return <p className="text-sm" style={{ color: p.muted }}>This pattern has no content.</p>;
@@ -26,6 +28,20 @@ export function PatternResultView({ result, scenario }: PatternResultViewProps) 
         <section>
           <h2 className="text-lg font-bold mb-1" style={{ color: p.deepTeal }}>Scenario</h2>
           <p className="text-sm leading-relaxed" style={{ color: p.body }}>{scenario}</p>
+        </section>
+      )}
+
+      {qa && qa.length > 0 && (
+        <section>
+          <h2 className="text-lg font-bold mb-1" style={{ color: p.deepTeal }}>Clarifying Questions</h2>
+          <dl className="space-y-2">
+            {qa.map((a, i) => (
+              <div key={i}>
+                <dt className="text-sm font-semibold" style={{ color: p.body }}>{a.question}</dt>
+                <dd className="text-sm" style={{ color: p.muted }}>{a.answer}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
       )}
 

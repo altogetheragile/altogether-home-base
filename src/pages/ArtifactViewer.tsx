@@ -324,10 +324,10 @@ export default function ArtifactViewer() {
         const PatternResultView = React.lazy(() =>
           import('@/components/patternBuilder/PatternResultView').then(m => ({ default: m.PatternResultView }))
         );
-        const pd = artifact.data as { scenario?: string; result?: import('@/types/pattern').PatternResult };
+        const pd = artifact.data as unknown as import('@/types/pattern').SavedPattern;
         return (
           <React.Suspense fallback={<div className="flex justify-center p-8">Loading pattern...</div>}>
-            <PatternResultView scenario={pd?.scenario} result={pd?.result} />
+            <PatternResultView scenario={pd?.scenario} result={pd?.result} qa={pd?.answers} />
           </React.Suspense>
         );
       }

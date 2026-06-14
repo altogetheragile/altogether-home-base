@@ -9,7 +9,7 @@ import { colors as p } from '@/theme/colors';
 import { PatternResultView } from '@/components/patternBuilder/PatternResultView';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { toMarkdown, toJson, downloadText, patternStem } from '@/utils/patternBuilder/exportPattern';
-import type { PatternResult } from '@/types/pattern';
+import type { PatternResult, QAPair } from '@/types/pattern';
 
 // Where a logged-out "Sign In to Save" round-trip stashes the in-progress pattern.
 const RESUME_KEY = 'pattern:resume';
@@ -24,6 +24,13 @@ const PatternBuilder = () => {
   const [result, setResult] = useState<PatternResult | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
 
+  // Triage (consult-before-prescribe): the adviser may ask open questions before
+  // it recommends. `clarify` holds those; `answers` holds the user's replies;
+  // `qa` is the answered set carried into the result, save, and export.
+  const [clarify, setClarify] = useState<{ questions: string[]; note?: string } | null>(null);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [qa, setQa] = useState<QAPair[]>([]);
+
   // Feedback state
   const [comment, setComment] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
@@ -34,10 +41,11 @@ const PatternBuilder = () => {
     try {
       const stash = sessionStorage.getItem(RESUME_KEY);
       if (stash) {
-        const parsed = JSON.parse(stash) as { scenario?: string; result?: PatternResult };
+        const parsed = JSON.parse(stash) as { scenario?: string; result?: PatternResult; answers?: QAPair[] };
         if (parsed?.result) {
           setResult(parsed.result);
           if (parsed.scenario) setScenario(parsed.scenario);
+          if (Array.isArray(parsed.answers)) setQa(parsed.answers);
           toast.success('Your pattern is back. You can save it to a project now.');
         }
         sessionStorage.removeItem(RESUME_KEY);
@@ -47,24 +55,51 @@ const PatternBuilder = () => {
     }
   }, []);
 
-  const submit = async () => {
+  // Core call. answersToSend present => skip triage and prescribe. force => the
+  // user chose to skip questions. Neither => first pass, triage may ask questions.
+  const runPattern = async (opts?: { answersToSend?: QAPair[]; force?: boolean }) => {
     setLoading(true);
     setError(null);
-    setResult(null);
     setComment('');
     setFeedbackSent(false);
     try {
       const { data, error: fnError } = await supabase.functions.invoke('recommend-pattern', {
-        body: { scenario },
+        body: { scenario, answers: opts?.answersToSend, force: opts?.force },
       });
       if (fnError) throw new Error('The adviser is unavailable right now. Please try again.');
       if (!data?.success) throw new Error(data?.error || 'Something went wrong. Please try again.');
-      setResult(data.data as PatternResult);
+
+      const d = data.data;
+      if (d?.status === 'clarify' && Array.isArray(d.questions) && d.questions.length > 0) {
+        setClarify({ questions: d.questions, note: d.note });
+        setAnswers(d.questions.map(() => ''));
+        setResult(null);
+        setQa([]);
+      } else {
+        // A pattern came back. Record the Q&A that produced it (if any).
+        setQa(opts?.answersToSend ?? []);
+        setResult(d as PatternResult);
+        setClarify(null);
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fresh "Build Pattern": clear any prior questions/answers, let triage decide.
+  const submit = () => {
+    setClarify(null);
+    setResult(null);
+    setQa([]);
+    runPattern();
+  };
+
+  const continueWithAnswers = () => {
+    if (!clarify) return;
+    const pairs: QAPair[] = clarify.questions.map((q, i) => ({ question: q, answer: (answers[i] || '').trim() }));
+    runPattern({ answersToSend: pairs.filter((a) => a.answer.length > 0) });
   };
 
   const sendFeedback = async (value: 'up' | 'down') => {
@@ -83,17 +118,17 @@ const PatternBuilder = () => {
 
   const exportMarkdown = () => {
     if (!result) return;
-    downloadText(`${patternStem(scenario)}.md`, toMarkdown(scenario, result, kb), 'text/markdown');
+    downloadText(`${patternStem(scenario)}.md`, toMarkdown(scenario, result, kb, qa), 'text/markdown');
   };
   const exportJson = () => {
     if (!result) return;
-    downloadText(`${patternStem(scenario)}.json`, toJson(scenario, result), 'application/json');
+    downloadText(`${patternStem(scenario)}.json`, toJson(scenario, result, qa), 'application/json');
   };
 
   // Logged-out: stash the work and the return path, then go to sign in.
   const signInToSave = () => {
     try {
-      sessionStorage.setItem(RESUME_KEY, JSON.stringify({ scenario, result }));
+      sessionStorage.setItem(RESUME_KEY, JSON.stringify({ scenario, result, answers: qa }));
       sessionStorage.setItem('auth:returnTo', '/knowledge-base/pattern-builder?resume=1');
     } catch {
       /* storage may be unavailable; sign-in still proceeds */
@@ -117,8 +152,8 @@ const PatternBuilder = () => {
           Pattern Builder
         </h1>
         <p className="text-sm mb-4" style={{ color: p.body }}>
-          Describe your product or project. The adviser suggests a sequenced flow of artifacts and
-          techniques, drawn only from the framework.
+          Describe your product or project. The adviser may ask a question or two to find the real
+          problem, then suggests a sequenced flow of artifacts and techniques, drawn only from the framework.
         </p>
 
         <textarea
@@ -146,6 +181,46 @@ const PatternBuilder = () => {
         {error && (
           <div className="rounded-lg p-3 mb-4 text-sm" style={{ background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA' }}>
             {error}
+          </div>
+        )}
+
+        {/* Triage: open questions before the adviser prescribes */}
+        {clarify && !result && (
+          <div className="rounded-xl p-4 mb-6 space-y-3" style={{ background: p.skyTeal, border: `1px solid ${p.paleTeal}` }}>
+            <p className="text-sm font-semibold" style={{ color: p.deepTeal }}>
+              A couple of questions first, to find the real problem before recommending.
+            </p>
+            {clarify.note && <p className="text-xs" style={{ color: p.muted }}>{clarify.note}</p>}
+            {clarify.questions.map((q, i) => (
+              <div key={i} className="space-y-1">
+                <label className="text-sm font-medium" style={{ color: p.body }}>{q}</label>
+                <textarea
+                  value={answers[i] || ''}
+                  onChange={(e) => setAnswers((prev) => prev.map((a, j) => (j === i ? e.target.value : a)))}
+                  rows={2}
+                  className="w-full rounded-md p-2 text-sm outline-none"
+                  style={{ border: `1px solid ${p.paleTeal}`, color: p.body, background: p.white }}
+                />
+              </div>
+            ))}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                onClick={continueWithAnswers}
+                disabled={loading}
+                className="rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-50"
+                style={{ background: p.orange, color: p.deepTeal }}
+              >
+                {loading ? 'Thinking...' : 'Continue'}
+              </button>
+              <button
+                onClick={() => runPattern({ force: true })}
+                disabled={loading}
+                className="text-xs underline disabled:opacity-50"
+                style={{ color: p.muted }}
+              >
+                Just give me a pattern anyway
+              </button>
+            </div>
           </div>
         )}
 
@@ -193,7 +268,7 @@ const PatternBuilder = () => {
               </div>
             )}
 
-            <PatternResultView result={result} />
+            <PatternResultView result={result} qa={qa} />
 
             {/* Feedback */}
             {result.runId && !result.empty && (
@@ -244,7 +319,7 @@ const PatternBuilder = () => {
           artifactType="pattern"
           artifactName={patternName}
           artifactDescription={result.diagnosis?.slice(0, 200) || undefined}
-          artifactData={{ scenario, result }}
+          artifactData={{ scenario, answers: qa, result }}
           onSaveComplete={(projectId, artifactId) => {
             toast.success('Pattern saved to project');
             navigate(`/projects/${projectId}/artifacts/${artifactId}`);
