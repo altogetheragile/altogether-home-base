@@ -56,6 +56,8 @@ const getArtifactTypeName = (type: string) => {
       return 'Project Model';
     case 'product-backlog':
       return 'Product Backlog';
+    case 'pattern':
+      return 'Pattern';
     default:
       return type;
   }

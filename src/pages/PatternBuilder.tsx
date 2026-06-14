@@ -1,38 +1,51 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { KnowledgeBaseLayout } from '@/components/knowledge-base/KnowledgeBaseLayout';
 import { useKnowledgeBase } from '@/lib/knowledgeBase';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { colors as p } from '@/theme/colors';
+import { PatternResultView } from '@/components/patternBuilder/PatternResultView';
+import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
+import { toMarkdown, toJson, downloadText, patternStem } from '@/utils/patternBuilder/exportPattern';
+import type { PatternResult } from '@/types/pattern';
 
-interface PatternStep {
-  order: number;
-  horizon: string | null;
-  isa: string | null;
-  artifactId: string;
-  techniqueIds: string[];
-  rationale: string;
-}
-interface PatternResult {
-  diagnosis: string;
-  primaryHorizon: string | null;
-  steps: PatternStep[];
-  cautions: string[];
-  empty?: boolean;
-  runId?: string | null;
-  assessment?: { reviewed?: boolean; revised?: boolean; verdict?: string; summary?: string };
-}
+// Where a logged-out "Sign In to Save" round-trip stashes the in-progress pattern.
+const RESUME_KEY = 'pattern:resume';
 
 const PatternBuilder = () => {
   const kb = useKnowledgeBase();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [scenario, setScenario] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PatternResult | null>(null);
+  const [saveOpen, setSaveOpen] = useState(false);
 
   // Feedback state
   const [comment, setComment] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
+
+  // Restore a pattern stashed before a "Sign In to Save" redirect, so logging in
+  // never loses the user's work. Mirrors the BMC Generator resume flow.
+  useEffect(() => {
+    try {
+      const stash = sessionStorage.getItem(RESUME_KEY);
+      if (stash) {
+        const parsed = JSON.parse(stash) as { scenario?: string; result?: PatternResult };
+        if (parsed?.result) {
+          setResult(parsed.result);
+          if (parsed.scenario) setScenario(parsed.scenario);
+          toast.success('Your pattern is back. You can save it to a project now.');
+        }
+        sessionStorage.removeItem(RESUME_KEY);
+      }
+    } catch {
+      /* ignore corrupt stash */
+    }
+  }, []);
 
   const submit = async () => {
     setLoading(true);
@@ -65,6 +78,32 @@ const PatternBuilder = () => {
       // Non-blocking: feedback is best-effort.
     }
   };
+
+  const savable = !!result && !result.empty && (result.steps?.length ?? 0) > 0;
+
+  const exportMarkdown = () => {
+    if (!result) return;
+    downloadText(`${patternStem(scenario)}.md`, toMarkdown(scenario, result, kb), 'text/markdown');
+  };
+  const exportJson = () => {
+    if (!result) return;
+    downloadText(`${patternStem(scenario)}.json`, toJson(scenario, result), 'application/json');
+  };
+
+  // Logged-out: stash the work and the return path, then go to sign in.
+  const signInToSave = () => {
+    try {
+      sessionStorage.setItem(RESUME_KEY, JSON.stringify({ scenario, result }));
+      sessionStorage.setItem('auth:returnTo', '/knowledge-base/pattern-builder?resume=1');
+    } catch {
+      /* storage may be unavailable; sign-in still proceeds */
+    }
+    navigate('/auth');
+  };
+
+  const patternName = scenario.trim()
+    ? `Pattern: ${scenario.trim().slice(0, 50)}${scenario.trim().length > 50 ? '...' : ''}`
+    : 'Recommended Pattern';
 
   return (
     <KnowledgeBaseLayout
@@ -112,86 +151,49 @@ const PatternBuilder = () => {
 
         {result && (
           <div className="space-y-6">
-            {result.diagnosis && (
-              <section>
-                <h2 className="text-lg font-bold mb-1" style={{ color: p.deepTeal }}>Diagnosis</h2>
-                <p className="text-sm leading-relaxed" style={{ color: p.body }}>{result.diagnosis}</p>
-                {result.primaryHorizon && (
-                  <p className="text-xs mt-1" style={{ color: p.muted }}>Primary horizon: {result.primaryHorizon}</p>
+            {/* Save / export bar */}
+            {savable && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg p-3" style={{ background: p.skyTeal, border: `1px solid ${p.paleTeal}` }}>
+                {user ? (
+                  <button
+                    onClick={() => setSaveOpen(true)}
+                    className="rounded-lg px-4 py-2 text-sm font-bold"
+                    style={{ background: p.orange, color: p.deepTeal }}
+                  >
+                    Save to Project
+                  </button>
+                ) : (
+                  <button
+                    onClick={signInToSave}
+                    className="rounded-lg px-4 py-2 text-sm font-bold"
+                    style={{ background: p.orange, color: p.deepTeal }}
+                  >
+                    Sign In to Save
+                  </button>
                 )}
-              </section>
+                <button
+                  onClick={exportMarkdown}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold"
+                  style={{ background: p.white, color: p.deepTeal, border: `1px solid ${p.paleTeal}` }}
+                >
+                  Export Markdown
+                </button>
+                <button
+                  onClick={exportJson}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold"
+                  style={{ background: p.white, color: p.deepTeal, border: `1px solid ${p.paleTeal}` }}
+                >
+                  Export JSON
+                </button>
+                {!user && (
+                  <span className="text-xs" style={{ color: p.muted }}>
+                    Export works without an account. Sign in to keep it on a project.
+                  </span>
+                )}
+              </div>
             )}
 
-            {result.assessment?.reviewed && (
-              <p className="text-xs" style={{ color: p.muted }}>
-                ✓ Self-reviewed{result.assessment.revised ? ' and refined after a red-team pass' : ''}.
-              </p>
-            )}
-
-            {result.empty || result.steps.length === 0 ? (
-              <p className="text-sm" style={{ color: p.muted }}>
-                No clear pattern emerged for that scenario. Try adding more detail about your goals and team setup.
-              </p>
-            ) : (
-              <section>
-                <h2 className="text-lg font-bold mb-2" style={{ color: p.deepTeal }}>Recommended Flow</h2>
-                <ol className="space-y-3">
-                  {result.steps.map((s) => {
-                    const artifact = kb.getArtifact(s.artifactId);
-                    return (
-                      <li key={s.order} className="rounded-xl p-4" style={{ background: p.white, border: `1px solid ${p.paleTeal}` }}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold" style={{ background: p.deepTeal, color: p.white }}>
-                            {s.order}
-                          </span>
-                          {artifact ? (
-                            <Link to={`/knowledge-base/artifacts/${s.artifactId}`} className="font-semibold hover:underline" style={{ color: p.deepTeal }}>
-                              {artifact.name}
-                            </Link>
-                          ) : (
-                            <span className="font-semibold" style={{ color: p.deepTeal }}>{s.artifactId}</span>
-                          )}
-                          {artifact && (artifact.horizon || artifact.isa) && (
-                            <span className="text-[11px]" style={{ color: p.muted }}>
-                              {[artifact.horizon, artifact.isa].filter(Boolean).join(' · ')}
-                            </span>
-                          )}
-                        </div>
-                        {s.rationale && <p className="text-sm mb-2" style={{ color: p.body }}>{s.rationale}</p>}
-                        {s.techniqueIds.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {s.techniqueIds.map((tid) => {
-                              const t = kb.getTechnique(tid);
-                              return (
-                                <Link
-                                  key={tid}
-                                  to={`/knowledge-base/techniques/${tid}`}
-                                  className="rounded-full px-2.5 py-0.5 text-xs font-semibold hover:underline"
-                                  style={{ background: p.skyTeal, color: p.deepTeal, border: `1px solid ${p.paleTeal}` }}
-                                >
-                                  {t?.name || tid}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ol>
-              </section>
-            )}
-
-            {result.cautions.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold mb-2" style={{ color: p.deepTeal }}>Cautions</h2>
-                <ul className="list-disc pl-5 space-y-1">
-                  {result.cautions.map((c, i) => (
-                    <li key={i} className="text-sm" style={{ color: p.body }}>{c}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            <PatternResultView result={result} />
 
             {/* Feedback */}
             {result.runId && !result.empty && (
@@ -234,6 +236,21 @@ const PatternBuilder = () => {
           </div>
         )}
       </div>
+
+      {user && result && (
+        <SaveToProjectDialog
+          open={saveOpen}
+          onOpenChange={setSaveOpen}
+          artifactType="pattern"
+          artifactName={patternName}
+          artifactDescription={result.diagnosis?.slice(0, 200) || undefined}
+          artifactData={{ scenario, result }}
+          onSaveComplete={(projectId, artifactId) => {
+            toast.success('Pattern saved to project');
+            navigate(`/projects/${projectId}/artifacts/${artifactId}`);
+          }}
+        />
+      )}
     </KnowledgeBaseLayout>
   );
 };
