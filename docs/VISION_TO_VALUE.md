@@ -23,6 +23,8 @@ inventory of record.
 | Per-cell coach grounding | DONE (mechanism live; ladders seeded per tool) |
 | Multiple product backlogs per project | DONE and live (migration applied; e2e verified) |
 | Pattern Builder save and export | DONE and live (e2e verified) |
+| Pattern Builder triage (consult before prescribe) | DONE and live (Phase 1; edge fn deployed) |
+| KB framework enrichment (+31 techniques, -9 dups) | DONE and live (applied; backup taken) |
 
 **Outstanding:** none of the original scope. Every spec item is built and every
 coached tool's question ladders are seeded. The only optional extra left is adding
@@ -187,8 +189,34 @@ create a new one for the project, and each item carries the full story sentence
 re-sending the same map to the same backlog adds only new What items, while the
 same deliverable can still populate a different backlog.
 
-### 6.1a Pattern Builder (`/knowledge-base/pattern-builder`): DONE, now savable
-The public KB adviser (`recommend-pattern`) now keeps its output. **Export**
+### 6.1a Pattern Builder (`/knowledge-base/pattern-builder`): DONE, savable, consultative
+
+**Consult before prescribe (Phase 1).** `recommend-pattern` now runs a triage step
+before recommending: given the scenario it decides whether the decisive variables
+(endpoint, demand, predictability, units, which constraint is fixed) are clear,
+and if not returns 2-3 open, non-leading questions instead of a pattern. The user
+answers one round, then it diagnoses and recommends on the enriched scenario,
+naming the presenting framing versus the deciding factor ("presented as X; the
+deciding factor is actually Y"). A "just give me a pattern anyway" escape keeps
+the fast lane. The system prompt carries the read-the-variables-not-the-label
+principle and the critic pass adds a label-trap check. The clarifying Q&A is
+carried into the result, the saved artifact and the exports. Phase 2 (deferred):
+Coaching Studio handoff for tangled cases, and worked exemplars as an editable
+table.
+
+**KB framework enrichment.** Added 31 techniques the named frameworks use that were
+missing (Scrum: timeboxing, backlog refinement, daily standup, sprint review,
+burndown; Kanban: WIP limits, explicit policies, classes of service, SLE, Monte
+Carlo forecasting, replenishment; DSDM/AgilePM: prototyping, facilitated workshop,
+PRL; LeSS/SAFe: PI planning, scrum of scrums, dependency mapping, architectural
+runway, system demo, inspect and adapt, portfolio Kanban; Lean Start-up: MVP,
+build-measure-learn, validated learning, pivot-or-persevere, concierge/Wizard of
+Oz, smoke test, cohort analysis), and removed 9 duplicate/stub technique rows so
+the adviser no longer sees ambiguous ids. Tooling: `scripts/insert-knowledge.mjs`
+(insert-only seed loader), `scripts/dedupe-knowledge.mjs` (reference-safe),
+`kb-seeds/KB_Seed_Enrichment_v2.json`.
+
+**Save and export.** The public KB adviser (`recommend-pattern`) keeps its output. **Export**
 (Markdown or JSON) works for everyone with no account. Logged-out users get
 **Sign In to Save**, which stashes `{ scenario, result }` in `sessionStorage`
 with `auth:returnTo` and restores it on return (the BMC resume pattern), so
