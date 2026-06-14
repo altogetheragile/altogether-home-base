@@ -1,0 +1,43 @@
+{
+  "_note": "Enrichment seed: techniques used by the named frameworks that were missing from the KB. INSERT-only (new slugs). Apply with scripts/insert-knowledge.mjs. Descriptions kept to ~1 sentence; the Pattern Builder uses the first 160 chars.",
+  "artifacts": [],
+  "constituents": [],
+  "edges": [],
+  "techniques": [
+    { "id": "timeboxing", "name": "Timeboxing", "source": "Scrum / DSDM", "description": "Fixing a hard time limit for a piece of work so that scope and decisions flex to fit the box, rather than the deadline moving." },
+    { "id": "backlog-refinement", "name": "Backlog Refinement", "source": "Scrum", "description": "Ongoing clarifying, splitting and ordering of upcoming backlog items so they are ready before a team commits to them." },
+    { "id": "daily-standup", "name": "Daily Standup", "source": "Scrum", "description": "A short daily sync where the team inspects progress toward the goal and surfaces impediments early." },
+    { "id": "sprint-review-demo", "name": "Sprint Review / Demo", "source": "Scrum", "description": "A working-software review with stakeholders to inspect the increment and adapt the backlog from real feedback." },
+    { "id": "burndown-burnup-chart", "name": "Burndown / Burnup Chart", "source": "Scrum", "description": "A simple chart tracking remaining or completed work against time to expose whether a goal is on track." },
+
+    { "id": "wip-limits", "name": "WIP Limits", "source": "Kanban", "description": "Capping the number of items allowed in each workflow state to expose bottlenecks and improve flow." },
+    { "id": "explicit-workflow-policies", "name": "Explicit Workflow Policies", "source": "Kanban", "description": "Making the rules for how work moves through each state visible and agreed, including a clear definition of workflow." },
+    { "id": "classes-of-service", "name": "Classes of Service", "source": "Kanban", "description": "Distinct handling policies for different work types (expedite, fixed-date, standard) to manage urgency and risk." },
+    { "id": "service-level-expectation", "name": "Service Level Expectation (SLE)", "source": "Kanban", "description": "A probabilistic forecast of how long an item will take to flow, used as a delivery commitment." },
+    { "id": "throughput-monte-carlo-forecasting", "name": "Throughput / Monte Carlo Forecasting", "source": "Kanban", "description": "Forecasting delivery dates probabilistically from historical throughput rather than from estimates." },
+    { "id": "replenishment-meeting", "name": "Replenishment Meeting", "source": "Kanban", "description": "A regular cadence to pull the next most valuable items into the committed queue." },
+
+    { "id": "prototyping", "name": "Prototyping", "source": "DSDM / AgilePM", "description": "Building low-fidelity, often throwaway models of a solution to test understanding and reduce risk early." },
+    { "id": "iterative-development-modelling", "name": "Iterative Development and Modelling", "source": "DSDM / AgilePM", "description": "Evolving the solution in short iterations with frequent demonstration rather than a single big build." },
+    { "id": "facilitated-workshop", "name": "Facilitated Workshop", "source": "DSDM / AgilePM", "description": "A structured, neutrally facilitated session to reach shared decisions quickly across stakeholders." },
+    { "id": "prioritised-requirements-list", "name": "Prioritised Requirements List", "source": "DSDM / AgilePM", "description": "A MoSCoW-prioritised list of requirements that fixes time and cost while flexing scope." },
+
+    { "id": "big-room-pi-planning", "name": "Big Room / PI Planning", "source": "SAFe", "description": "A cross-team planning event where all teams plan a shared increment together and surface dependencies face to face." },
+    { "id": "scrum-of-scrums", "name": "Scrum of Scrums", "source": "SAFe / Scrum", "description": "A regular cross-team sync where representatives coordinate shared work and resolve inter-team impediments." },
+    { "id": "communities-of-practice", "name": "Communities of Practice", "source": "SAFe / LeSS", "description": "Cross-team groups that share and align practice in a discipline without central control." },
+    { "id": "dependency-mapping-program-board", "name": "Dependency Mapping / Program Board", "source": "SAFe", "description": "Visualising cross-team dependencies and their timing so they can be sequenced or removed." },
+    { "id": "multi-team-backlog-refinement", "name": "Multi-team Backlog Refinement", "source": "LeSS", "description": "Several teams refining one shared product backlog together to keep a single ordering." },
+    { "id": "architectural-runway-enablers", "name": "Architectural Runway and Enablers", "source": "SAFe", "description": "Building just-enough technical foundation ahead of features so future work can flow without big up-front design." },
+    { "id": "system-demo", "name": "System Demo", "source": "SAFe", "description": "An integrated demo of the whole solution across teams to get aligned feedback each increment." },
+    { "id": "inspect-and-adapt", "name": "Inspect and Adapt", "source": "SAFe", "description": "A recurring cross-team retrospective and problem-solving workshop on the whole system of delivery." },
+    { "id": "portfolio-kanban", "name": "Portfolio Kanban", "source": "SAFe", "description": "Visualising and limiting big initiatives (epics) as they flow through funnel-to-done states at portfolio level." },
+
+    { "id": "minimum-viable-product", "name": "Minimum Viable Product (MVP)", "source": "Lean Start-up", "description": "The smallest thing you can build to test a critical assumption and start learning from real users." },
+    { "id": "build-measure-learn", "name": "Build-Measure-Learn", "source": "Lean Start-up", "description": "The core loop: build an experiment, measure real behaviour, and learn whether to persevere or pivot." },
+    { "id": "validated-learning", "name": "Validated Learning / Innovation Accounting", "source": "Lean Start-up", "description": "Measuring progress by evidence of learning about the business model, not by features shipped." },
+    { "id": "pivot-or-persevere", "name": "Pivot or Persevere", "source": "Lean Start-up", "description": "A scheduled decision, made on evidence, to change direction or keep going on the current hypothesis." },
+    { "id": "concierge-wizard-of-oz", "name": "Concierge / Wizard of Oz Test", "source": "Lean Start-up", "description": "Manually delivering a service behind the scenes to test demand before building the technology." },
+    { "id": "smoke-landing-page-test", "name": "Smoke / Landing Page Test", "source": "Lean Start-up", "description": "A lightweight test, such as a landing page, that measures intent to buy or sign up before building." },
+    { "id": "cohort-analysis", "name": "Cohort Analysis", "source": "Lean Start-up", "description": "Tracking groups of users over time to read actionable metrics rather than vanity totals." }
+  ]
+}
