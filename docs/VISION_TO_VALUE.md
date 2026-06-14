@@ -22,6 +22,7 @@ inventory of record.
 | Canvas Picker Knowledge Base grounding | DONE and live |
 | Per-cell coach grounding | DONE (mechanism live; ladders seeded per tool) |
 | Multiple product backlogs per project | DONE and live (migration applied; e2e verified) |
+| Pattern Builder save and export | DONE and live (e2e verified) |
 
 **Outstanding:** none of the original scope. Every spec item is built and every
 coached tool's question ladders are seeded. The only optional extra left is adding
@@ -185,6 +186,17 @@ create a new one for the project, and each item carries the full story sentence
 (`As <actor>, I need <deliverable>, so that <impact>`). Dedup is **per backlog**:
 re-sending the same map to the same backlog adds only new What items, while the
 same deliverable can still populate a different backlog.
+
+### 6.1a Pattern Builder (`/knowledge-base/pattern-builder`): DONE, now savable
+The public KB adviser (`recommend-pattern`) now keeps its output. **Export**
+(Markdown or JSON) works for everyone with no account. Logged-out users get
+**Sign In to Save**, which stashes `{ scenario, result }` in `sessionStorage`
+with `auth:returnTo` and restores it on return (the BMC resume pattern), so
+logging in no longer loses the pattern. Logged-in users get **Save to Project**
+via `SaveToProjectDialog`; a pattern persists as a `project_artifacts` row
+(`artifact_type 'pattern'`, data `{ scenario, result }`), shows as a card on the
+project page, and opens read-only in the ArtifactViewer via the shared
+`PatternResultView`. No migration (reuses `project_artifacts`).
 
 ### 6.2 Canvas catalogue (`/canvases`): DONE, now grounded
 BMC recoached; Business Case and Product Vision canvases via the coached-canvas
