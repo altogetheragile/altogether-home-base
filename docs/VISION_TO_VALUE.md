@@ -34,6 +34,17 @@ Everything in sections 1 to 12 is built and live, including Suggest a Path
 (section 6.9a), Modelling Canvas promote-to (section 6.5) and per-cell coach
 grounding (section 5.2).
 
+**Next session starts here (Pattern Builder Phase 2, not built):**
+1. Coaching Studio handoff for tangled scenarios (the triage `refer` case): pre-seed
+   a `/coach` session and reuse Suggest a Path (6.9a) to return to a pattern.
+2. Worked exemplars as an editable table (the five "Read the Variables, Not the
+   Label" vignettes plus Magpie), few-shot into the triage step.
+3. Wire the 31 new techniques into the KB map (their `produces` / edges to the
+   artifacts they create); today they are catalogue-only.
+4. Grounding nudge so multi-team cases reach explicit scaling moves (PI Planning,
+   Scrum of Scrums) when dependencies are structural, not political.
+5. Produce the handout / facilitator pack of the "Read the Variables" exercise.
+
 ---
 
 ## 1. Purpose and Positioning
