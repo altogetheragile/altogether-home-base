@@ -127,8 +127,25 @@ Pipeline Registry (`src/config/pipeline.ts`).
 ## Adjacent features (not in the Hub)
 
 ### Practice Exams — `/exams`
-AgilePM Foundation and Professional Scrum Master mock exams (Supabase `exams`
-table, `ExamPlayer`). Timed and revision modes. No AI. Public.
+AgilePM Foundation/Practitioner and Professional Scrum Master mock exams (Supabase
+`exams` + `questions` tables, `ExamPlayer`). Timed and revision modes. No AI. Public.
+
+Foundation-style papers are flat multiple-choice (single or comma-separated
+multi-answer) and are loaded via the admin Bulk Import (xlsx). The
+**Practitioner** format is different: a shared case-study scenario applies to
+every question, and the four questions split into parts with sub-question items
+in three styles (Matching, single-answer, "select 2" multiple-response). That is
+supported by:
+- `exams.scenario` (markdown, rendered as a pinned side-by-side panel in the
+  player via `marked` + `dompurify`) and `exams.shuffle` (set `false` so
+  Practitioner items keep scenario order); `questions.option_h` (8th option, for
+  matching questions with up to 8 Column-2 choices).
+- `scripts/build-practitioner-exam.mjs` — parses a Practitioner paper written in
+  the Harbour-Quarter Markdown format (scenario + Question/Part/item booklet +
+  marking scheme) and emits a migration that inserts the exam and flattens every
+  item onto the `questions` table. Re-runnable for future Practitioner papers.
+  Matching rows become one single-select item each; "select 2" parts become
+  comma-answer items; rationales land in `questions.reference` (shown in review).
 
 ### Knowledge Base + Pattern Builder — `/knowledge-base`
 Built and in production, but **unpublished** — gated by `show_knowledge = false`

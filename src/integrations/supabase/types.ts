@@ -1538,6 +1538,8 @@ export type Database = {
           duration_minutes: number
           id: string
           pass_mark: number
+          scenario: string | null
+          shuffle: boolean
           slug: string
           status: string
           title: string
@@ -1550,6 +1552,8 @@ export type Database = {
           duration_minutes?: number
           id?: string
           pass_mark?: number
+          scenario?: string | null
+          shuffle?: boolean
           slug: string
           status?: string
           title: string
@@ -1562,6 +1566,8 @@ export type Database = {
           duration_minutes?: number
           id?: string
           pass_mark?: number
+          scenario?: string | null
+          shuffle?: boolean
           slug?: string
           status?: string
           title?: string
@@ -3457,6 +3463,11 @@ export type Database = {
           option_e: string
           option_f: string
           option_g: string
+          option_h: string
+          part: string | null
+          part_instruction: string | null
+          item_type: string | null
+          question_number: number | null
           question_text: string
           reference: string | null
           sort_order: number | null
@@ -3476,6 +3487,11 @@ export type Database = {
           option_e?: string
           option_f?: string
           option_g?: string
+          option_h?: string
+          part?: string | null
+          part_instruction?: string | null
+          item_type?: string | null
+          question_number?: number | null
           question_text: string
           reference?: string | null
           sort_order?: number | null
@@ -3495,6 +3511,11 @@ export type Database = {
           option_e?: string
           option_f?: string
           option_g?: string
+          option_h?: string
+          part?: string | null
+          part_instruction?: string | null
+          item_type?: string | null
+          question_number?: number | null
           question_text?: string
           reference?: string | null
           sort_order?: number | null

@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { colors as p } from '@/theme/colors';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -17,6 +19,8 @@ interface Exam {
   id: string;
   title: string;
   description: string | null;
+  scenario: string | null;
+  shuffle: boolean;
   duration_minutes: number;
   pass_mark: number;
   total_questions: number;
@@ -25,6 +29,10 @@ interface Exam {
 interface Question {
   id: string;
   area: string;
+  question_number: number | null;
+  part: string | null;
+  item_type: string | null;
+  part_instruction: string | null;
   question_text: string;
   option_a: string;
   option_b: string;
@@ -33,6 +41,7 @@ interface Question {
   option_e: string;
   option_f: string;
   option_g: string;
+  option_h: string;
   correct_answer: string;
   reference: string | null;
   sort_order: number | null;
@@ -46,6 +55,20 @@ interface Answer {
   flagged: boolean;
 }
 
+interface PartItem {
+  globalIndex: number;
+  q: Question;
+}
+
+interface PartGroup {
+  key: string;
+  qnum: number;
+  part: string;
+  itemType: string;
+  instruction: string;
+  items: PartItem[];
+}
+
 /* ─── Data hooks ─── */
 const usePublicExam = (slug: string | undefined) =>
   useQuery({
@@ -54,7 +77,7 @@ const usePublicExam = (slug: string | undefined) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('exams')
-        .select('id, title, description, duration_minutes, pass_mark, total_questions')
+        .select('id, title, description, scenario, shuffle, duration_minutes, pass_mark, total_questions')
         .eq('slug', slug!)
         .eq('status', 'published')
         .single();
@@ -70,7 +93,7 @@ const usePublicQuestions = (examId: string | undefined, enabled: boolean) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, area, question_text, option_a, option_b, option_c, option_d, option_e, option_f, option_g, correct_answer, reference, sort_order')
+        .select('id, area, question_number, part, item_type, part_instruction, question_text, option_a, option_b, option_c, option_d, option_e, option_f, option_g, option_h, correct_answer, reference, sort_order')
         .eq('exam_id', examId!)
         .eq('status', 'published')
         .order('sort_order', { ascending: true, nullsFirst: false })
@@ -139,12 +162,50 @@ const ExamPlayer = () => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [practiceRevealed, setPracticeRevealed] = useState(false);
+  const [scenarioTab, setScenarioTab] = useState<'question' | 'scenario'>('question');
 
-  // Shuffle questions when they load
+  // Scenario markdown -> sanitized HTML (Practitioner papers only)
+  const scenarioHtml = useMemo(
+    () => (exam?.scenario ? DOMPurify.sanitize(marked.parse(exam.scenario, { async: false }) as string) : ''),
+    [exam?.scenario],
+  );
+
+  // Group items into Question -> Part blocks (Practitioner papers carry question_number/part)
+  const parts = useMemo<PartGroup[]>(() => {
+    const map = new Map<string, PartGroup>();
+    questions.forEach((q, idx) => {
+      const key = `${q.question_number ?? 0}-${q.part ?? ''}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          qnum: q.question_number ?? 0,
+          part: q.part ?? '',
+          itemType: q.item_type ?? 'single',
+          instruction: q.part_instruction ?? '',
+          items: [],
+        });
+      }
+      map.get(key)!.items.push({ globalIndex: idx, q });
+    });
+    return Array.from(map.values());
+  }, [questions]);
+
+  const grouped = !!exam?.scenario;
+
+  // Set a single matching-row answer (each row is its own markable item)
+  const selectMatchRow = (globalIndex: number, letter: string) => {
+    setAnswers((prev) => {
+      const cur = prev[globalIndex]?.selected || [];
+      const next = cur.includes(letter) ? [] : [letter];
+      return { ...prev, [globalIndex]: { ...prev[globalIndex], selected: next } };
+    });
+  };
+
+  // Order questions when they load (Practitioner papers keep scenario order; others shuffle)
   useEffect(() => {
     if (rawQuestions && rawQuestions.length > 0 && questions.length === 0) {
-      const shuffled = shuffle(rawQuestions);
-      const limited = exam ? shuffled.slice(0, exam.total_questions) : shuffled;
+      const ordered = exam && exam.shuffle === false ? rawQuestions : shuffle(rawQuestions);
+      const limited = exam ? ordered.slice(0, exam.total_questions) : ordered;
       setQuestions(limited);
       const initialAnswers: Record<number, Answer> = {};
       limited.forEach((_, i) => { initialAnswers[i] = { selected: [], flagged: false }; });
@@ -256,6 +317,7 @@ const ExamPlayer = () => {
   const goTo = (idx: number) => {
     setCurrentIdx(idx);
     setPracticeRevealed(false);
+    setScenarioTab('question');
   };
 
   const goNext = () => { if (currentIdx < questions.length - 1) goTo(currentIdx + 1); };
@@ -448,10 +510,15 @@ const ExamPlayer = () => {
       { letter: 'E', text: q.option_e },
       { letter: 'F', text: q.option_f },
       { letter: 'G', text: q.option_g },
+      { letter: 'H', text: q.option_h },
     ].filter((o) => o.text.trim() !== '');
 
     const isMulti = q.correct_answer.includes(',');
     const correctLetters = q.correct_answer.split(',');
+    const isMatch = grouped && q.item_type === 'match';
+    const currentPart = grouped
+      ? parts.find((pt) => pt.items.some((it) => it.globalIndex === currentIdx))
+      : undefined;
 
     const getOptionStyle = (letter: string): React.CSSProperties => {
       const isSelected = currentAnswer?.selected.includes(letter);
@@ -475,7 +542,7 @@ const ExamPlayer = () => {
         <Helmet><title>{`${exam.title} - Question ${currentIdx + 1}`}</title></Helmet>
         <Navigation />
 
-        <div id="main-content" style={{ flex: 1, maxWidth: 1100, margin: '0 auto', padding: '24px 24px 40px', width: '100%' }}>
+        <div id="main-content" style={{ flex: 1, maxWidth: exam.scenario ? 1280 : 1100, margin: '0 auto', padding: '24px 24px 40px', width: '100%' }}>
           {/* Top bar: timer + progress */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -509,20 +576,65 @@ const ExamPlayer = () => {
             )}
           </div>
 
-          <div className="aa-exam-layout">
-            {/* Question panel */}
-            <div style={{ flex: 1 }}>
-              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: 28 }}>
-                {/* Area badge */}
-                <span style={{
-                  display: 'inline-block', background: p.skyTeal, color: p.deepTeal,
-                  fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                  textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12,
-                }}>
-                  {q.area}
-                </span>
+          {/* Scenario / Question tabs */}
+          {exam.scenario && (
+            <div className="aa-tabbar" style={{ gap: 8, marginBottom: 12 }}>
+              <ScenarioTabBtn active={scenarioTab === 'question'} onClick={() => setScenarioTab('question')}>Question</ScenarioTabBtn>
+              <ScenarioTabBtn active={scenarioTab === 'scenario'} onClick={() => setScenarioTab('scenario')}>Project Scenario</ScenarioTabBtn>
+            </div>
+          )}
 
-                <p style={{ color: p.deepTeal, fontSize: 17, fontWeight: 600, lineHeight: 1.5, margin: '0 0 20px' }}>
+          <div className={exam.scenario ? 'aa-prac-layout' : 'aa-exam-layout'} data-tab={scenarioTab}>
+            {/* Scenario panel (Practitioner papers) */}
+            {exam.scenario && (
+              <div className="aa-scenario" data-active={scenarioTab === 'scenario'}>
+                <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: 20, maxWidth: 860 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: p.deepTeal, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Project Scenario
+                  </div>
+                  <div className="aa-scenario-body" dangerouslySetInnerHTML={{ __html: scenarioHtml }} />
+                </div>
+              </div>
+            )}
+
+            {/* Question panel */}
+            <div className="aa-question" data-active={scenarioTab === 'question'} style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: 28 }}>
+                {/* Part header badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                  <span style={{
+                    display: 'inline-block', background: p.skyTeal, color: p.deepTeal,
+                    fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                    textTransform: 'uppercase', letterSpacing: '0.05em',
+                  }}>
+                    {q.area}
+                  </span>
+                  {isMatch && currentPart && (
+                    <span style={{ fontSize: 12, color: p.muted, fontWeight: 600 }}>
+                      Matching — {currentPart.items.length} rows
+                    </span>
+                  )}
+                </div>
+
+                {/* Part instruction (Practitioner) */}
+                {grouped && q.part_instruction && (
+                  <p style={{ color: p.body, fontSize: 14, lineHeight: 1.55, margin: '0 0 16px' }}>
+                    {q.part_instruction}
+                  </p>
+                )}
+
+                {isMatch && currentPart ? (
+                  <MatchingPart
+                    items={currentPart.items}
+                    answers={answers}
+                    mode={mode}
+                    currentIdx={currentIdx}
+                    onSelect={selectMatchRow}
+                    onFocusRow={goTo}
+                  />
+                ) : (
+                <>
+                <p style={{ color: p.deepTeal, fontSize: 17, fontWeight: 600, lineHeight: 1.5, margin: '0 0 20px', whiteSpace: 'pre-line' }}>
                   {q.question_text}
                 </p>
 
@@ -577,9 +689,11 @@ const ExamPlayer = () => {
                     );
                   })}
                 </div>
+                </>
+                )}
 
                 {/* Confirm button for multi-answer in practice mode */}
-                {isMulti && mode === 'practice' && !practiceRevealed && currentAnswer?.selected.length > 0 && (
+                {!isMatch && isMulti && mode === 'practice' && !practiceRevealed && currentAnswer?.selected.length > 0 && (
                   <button
                     onClick={confirmMultiAnswer}
                     style={{
@@ -638,8 +752,11 @@ const ExamPlayer = () => {
               </div>
             </div>
 
-            {/* Progress grid sidebar */}
+            {/* Progress sidebar */}
             <div className="aa-exam-sidebar">
+              {grouped ? (
+                <GroupedProgress parts={parts} answers={answers} currentIdx={currentIdx} onGoTo={goTo} />
+              ) : (
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: 16 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: p.deepTeal, marginBottom: 10 }}>Progress</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 }}>
@@ -683,6 +800,7 @@ const ExamPlayer = () => {
                   </span>
                 </div>
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -786,7 +904,7 @@ const ExamPlayer = () => {
                     )}
                     <span style={{ fontSize: 11, color: p.muted, marginLeft: 'auto' }}>{q.area}</span>
                   </div>
-                  <p style={{ color: p.deepTeal, fontSize: 15, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px' }}>
+                  <p style={{ color: p.deepTeal, fontSize: 15, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px', whiteSpace: 'pre-line' }}>
                     {q.question_text}
                   </p>
 
@@ -800,6 +918,7 @@ const ExamPlayer = () => {
                       { letter: 'E', text: q.option_e },
                       { letter: 'F', text: q.option_f },
                       { letter: 'G', text: q.option_g },
+                      { letter: 'H', text: q.option_h },
                     ].filter((o) => o.text.trim() !== '').map(({ letter, text }) => {
                       const isThisCorrect = qCorrectLetters.includes(letter);
                       const wasSelected = a?.selected.includes(letter);
@@ -866,13 +985,204 @@ const StatPill = ({ label, value, color }: { label: string; value: number; color
   </div>
 );
 
+const MATCH_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+const MatchingPart = ({ items, answers, mode, currentIdx, onSelect, onFocusRow }: {
+  items: PartItem[];
+  answers: Record<number, Answer>;
+  mode: Mode;
+  currentIdx: number;
+  onSelect: (globalIndex: number, letter: string) => void;
+  onFocusRow: (globalIndex: number) => void;
+}) => {
+  const first = items[0].q as unknown as Record<string, string>;
+  const options = MATCH_LETTERS
+    .map((l) => ({ letter: l, text: (first[`option_${l.toLowerCase()}`] || '').trim() }))
+    .filter((o) => o.text !== '');
+
+  return (
+    <div>
+      {/* Column 2 legend */}
+      <div style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: '12px 14px', marginBottom: 16, background: '#F8FAFC' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: p.deepTeal, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+          Options (Column 2)
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '5px 16px' }}>
+          {options.map((o) => (
+            <div key={o.letter} style={{ fontSize: 13, color: p.body, lineHeight: 1.4 }}>
+              <strong style={{ color: p.deepTeal }}>{o.letter}.</strong> {o.text}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Matching grid: one row per Column-1 item, one oval per option */}
+      <div style={{ overflowX: 'auto' }}>
+        <table className="aa-match-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
+          <thead>
+            <tr>
+              <th style={{ width: 26 }} />
+              <th />
+              {options.map((o) => (
+                <th key={o.letter} style={{ width: 34, fontSize: 12, fontWeight: 700, color: p.deepTeal, paddingBottom: 6 }}>{o.letter}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it, ri) => {
+              const sel = answers[it.globalIndex]?.selected[0];
+              const correct = it.q.correct_answer;
+              const reveal = mode === 'practice' && !!sel;
+              const isCurrent = it.globalIndex === currentIdx;
+              return (
+                <tr key={it.globalIndex} style={{ background: isCurrent ? p.skyTeal : 'transparent', borderTop: '1px solid #EEF2F6' }}>
+                  <td style={{ fontWeight: 700, color: p.muted, fontSize: 13, padding: '10px 6px', verticalAlign: 'top' }}>{ri + 1}</td>
+                  <td
+                    onClick={() => onFocusRow(it.globalIndex)}
+                    style={{ padding: '10px 12px 10px 2px', fontSize: 14, color: p.body, lineHeight: 1.45, cursor: 'pointer', verticalAlign: 'top' }}
+                  >
+                    {it.q.question_text}
+                  </td>
+                  {options.map((o) => {
+                    const chosen = sel === o.letter;
+                    const isCorrect = reveal && correct === o.letter;
+                    const isWrong = reveal && chosen && correct !== o.letter;
+                    let bg = '#fff';
+                    let bd = '#CBD5E1';
+                    if (isCorrect) { bg = '#10B981'; bd = '#10B981'; }
+                    else if (isWrong) { bg = '#EF4444'; bd = '#EF4444'; }
+                    else if (chosen) { bg = p.deepTeal; bd = p.deepTeal; }
+                    return (
+                      <td key={o.letter} style={{ textAlign: 'center', padding: '8px 4px', verticalAlign: 'top' }}>
+                        <button
+                          onClick={() => { onFocusRow(it.globalIndex); onSelect(it.globalIndex, o.letter); }}
+                          aria-label={`Row ${ri + 1}, option ${o.letter}`}
+                          style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${bd}`, background: bg, cursor: 'pointer', padding: 0 }}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const GroupedProgress = ({ parts, answers, currentIdx, onGoTo }: {
+  parts: PartGroup[];
+  answers: Record<number, Answer>;
+  currentIdx: number;
+  onGoTo: (i: number) => void;
+}) => {
+  const byQ = new Map<number, PartGroup[]>();
+  parts.forEach((pt) => {
+    if (!byQ.has(pt.qnum)) byQ.set(pt.qnum, []);
+    byQ.get(pt.qnum)!.push(pt);
+  });
+  return (
+    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: p.deepTeal, marginBottom: 12 }}>Progress</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {Array.from(byQ.entries()).map(([qnum, qParts]) => (
+          <div key={qnum}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: p.muted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
+              Question {qnum}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {qParts.map((pt) => (
+                <div key={pt.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: p.deepTeal, width: 12, flexShrink: 0 }}>{pt.part}</span>
+                  <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                    {pt.items.map((it, idx) => {
+                      const a = answers[it.globalIndex];
+                      const isCurrent = it.globalIndex === currentIdx;
+                      let bg = '#F3F4F6';
+                      let col: string = p.muted;
+                      let bd = 'transparent';
+                      if (a?.flagged) { bg = '#FFFBEB'; col = '#B45309'; }
+                      else if (a?.selected.length) { bg = p.paleTeal; col = p.deepTeal; }
+                      if (isCurrent) bd = p.deepTeal;
+                      return (
+                        <button
+                          key={it.globalIndex}
+                          onClick={() => onGoTo(it.globalIndex)}
+                          style={{
+                            width: 22, height: 22, borderRadius: 5, border: `2px solid ${bd}`,
+                            background: bg, color: col, fontSize: 10, fontWeight: 700,
+                            cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+                          }}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 14, fontSize: 11, color: p.muted }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 2, background: p.paleTeal, border: '1px solid ' + p.lightTeal }} /> Answered
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 2, background: '#FFFBEB', border: '1px solid #FDE68A' }} /> Flagged
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 2, background: '#F3F4F6', border: `2px solid ${p.deepTeal}` }} /> Current
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const ScenarioTabBtn = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    style={{
+      flex: 1, padding: '9px 14px', borderRadius: 8,
+      border: `1px solid ${active ? p.deepTeal : '#D1D5DB'}`,
+      background: active ? p.deepTeal : '#fff',
+      color: active ? '#fff' : p.muted,
+      fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+    }}
+  >
+    {children}
+  </button>
+);
+
 const ExamLayoutStyles = () => (
   <style>{`
     .aa-exam-layout { display: flex; gap: 24px; align-items: flex-start; }
     .aa-exam-sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 80px; }
+    /* Practitioner: Question / Scenario tabbed layout at all widths */
+    .aa-prac-layout { display: flex; gap: 24px; align-items: flex-start; }
+    .aa-prac-layout .aa-scenario { flex: 1; min-width: 0; }
+    .aa-prac-layout .aa-question { flex: 1; min-width: 0; }
+    .aa-prac-layout .aa-scenario[data-active="false"] { display: none; }
+    .aa-prac-layout .aa-question[data-active="false"] { display: none; }
+    .aa-prac-layout[data-tab="scenario"] .aa-exam-sidebar { display: none; }
+    .aa-tabbar { display: flex; }
+    .aa-scenario-body { font-size: 13px; color: #374151; line-height: 1.55; }
+    .aa-scenario-body h1, .aa-scenario-body h2, .aa-scenario-body h3 { font-size: 14px; color: ${p.deepTeal}; margin: 14px 0 6px; }
+    .aa-scenario-body p { margin: 0 0 10px; }
+    .aa-scenario-body ul { margin: 0 0 10px; padding-left: 18px; }
+    .aa-scenario-body li { margin-bottom: 3px; }
+    .aa-scenario-body strong { color: ${p.deepTeal}; }
+    .aa-scenario-body table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+    .aa-scenario-body th, .aa-scenario-body td { border: 1px solid #E5E7EB; padding: 5px 7px; text-align: left; vertical-align: top; }
+    .aa-scenario-body th { background: #F8FAFC; }
     @media (max-width: 767px) {
       .aa-exam-layout { flex-direction: column-reverse; }
       .aa-exam-sidebar { width: 100%; position: static; }
+      .aa-prac-layout { flex-direction: column; }
+      .aa-prac-layout .aa-exam-sidebar { width: 100%; position: static; margin-top: 16px; }
     }
   `}</style>
 );
