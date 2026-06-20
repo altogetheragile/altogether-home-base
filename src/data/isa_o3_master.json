@@ -1,10 +1,10 @@
 {
   "_README": "GENERATED FROM SUPABASE - DO NOT EDIT. Supabase is the single source of truth; edit content via the admin UI. This file is regenerated on each build by scripts/export-kb-json.mjs and is not read at runtime.",
   "meta": {
-    "generated": "2026-06-11",
+    "generated": "2026-06-20",
     "source": "Exported from Altogether Agile knowledge_items (Supabase, is_published=true)",
     "artifacts": 35,
-    "techniques": 81
+    "techniques": 105
   },
   "artifacts": [
     {
@@ -15,7 +15,7 @@
       "layer": "Iterative",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The ordered set of items defining what the initiative will deliver, anchored to its Goal.",
+      "oneLiner": "The ordered set of items defining what the initiative will deliver, anchored to its Goal. Best held spatially as a story map (backbone of activities, slices as releases) and prioritised with an explicit scheme such as MoSCoW or WSJF; breadth changes are deliberate scope acts.",
       "description": "The ordered set of items defining what the initiative will deliver, anchored to its Goal.",
       "question": "What will we deliver? In what order?",
       "inheritable": false,
@@ -57,7 +57,7 @@
       "layer": "Iterative",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The schedule and milestones of when the Backlog items will be delivered, with key releases and review points.",
+      "oneLiner": "The shape of delivery over time: increments now, next and later, with appetite rather than estimate where the work is uncertain. A standing wager re-bet each increment, not a promise register.",
       "description": "The schedule and milestones of when the Backlog items will be delivered, with key releases and review points.",
       "question": "When will each piece land?",
       "inheritable": false,
@@ -99,7 +99,7 @@
       "layer": "Iterative",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The next meaningful objective for the initiative, cascaded from organisational Goals.",
+      "oneLiner": "The measurable goal the initiative is accountable for, anchored to the Organisation horizon intent it inherits. The root of an Impact Map and the reference every benefit is later measured against.",
       "description": "The next meaningful objective for the initiative, cascaded from organisational Goals.",
       "question": "Why this goal next? What outcome are we pursuing? When?",
       "inheritable": false,
@@ -178,7 +178,7 @@
       "layer": "Evidence",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The measurable evidence that tests whether the Goal is being met, drawn from real use of what the initiative has produced.",
+      "oneLiner": "The changes that would show the intent is real, each paired with a leading indicator, a target and readings over time. The evidence that returns up the cascade; if every number improved and nothing really changed, this artifact is where you would find out.",
       "description": "The measurable evidence that tests whether the Goal is being met, drawn from real use of what the initiative has produced.",
       "question": "Is the initiative producing the outcomes we hoped for?",
       "inheritable": false,
@@ -238,7 +238,7 @@
       "layer": "Iterative",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The articulated description of what the solution looks like — its components, interfaces, behaviour, data — at a level that lets multiple teams build coherent parts.",
+      "oneLiner": "The shape of the solution held as the current decision trail plus snapshots, never a finished blueprint. Options stay plural until probes decide; the design is the set of decisions the team currently stands behind.",
       "description": "The articulated description of what the solution looks like — its components, interfaces, behaviour, data — at a level that lets multiple teams build coherent parts.",
       "question": "What will the solution look like? What will it do?",
       "inheritable": false,
@@ -254,7 +254,7 @@
       "layer": "Iterative",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The stakeholders with power to fund, block, support, or override the initiative, and what each one needs from it.",
+      "oneLiner": "Who surrounds the initiative and how decisions travel: the onion of those who deliver, are consulted and are affected. Governance follows these people, not the calendar.",
       "description": "The stakeholders with power to fund, block, support, or override the initiative, and what each one needs from it.",
       "question": "Who can stop this, regardless of merit? Who needs convincing?",
       "inheritable": false,
@@ -286,7 +286,7 @@
       "layer": "Iterative",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The articulated understanding of who the initiative serves and what they need — their goals, contexts, jobs, and the value they would receive.",
+      "oneLiner": "Who the initiative serves, detailed from their own side: personas derived from the goal's actors, with jobs to be done, pains and behaviours. Choosing which profiles to design for is a breadth-of-scope decision; journey maps hang off these profiles.",
       "description": "The articulated understanding of who the initiative serves and what they need — their goals, contexts, jobs, and the value they would receive.",
       "question": "Who are we serving, and what do they need?",
       "inheritable": false,
@@ -302,7 +302,7 @@
       "layer": "Anchoring",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The future state the initiative is bringing about — what the world looks like when the work is done.",
+      "oneLiner": "The change this initiative exists to make, stated as someone's world before and after. The founding hypothesis every other Coordination artifact serves; best generated with a Product Vision Board or a Before-and-After narrative.",
       "description": "The future state the initiative is bringing about — what the world looks like when the work is done.",
       "question": "Where is this initiative taking us?",
       "inheritable": false,
@@ -346,7 +346,7 @@
       "layer": "Anchoring",
       "kind": "Artifact",
       "facet": null,
-      "oneLiner": "The shared delivery practices, engineering standards, and ceremonies across the initiative's teams.",
+      "oneLiner": "How the initiative's people agree to work: working agreements plus the improvement actions retrospectives produce. Refreshed when the people or the work change; the standing challenge is what works well that the team has quietly become afraid to change.",
       "description": "The shared delivery practices, engineering standards, and ceremonies across the initiative's teams.",
       "question": "How do the teams in this initiative work together?",
       "inheritable": false,
@@ -1213,6 +1213,13 @@
       "produces": []
     },
     {
+      "id": "architectural-runway-enablers",
+      "name": "Architectural Runway and Enablers",
+      "description": "Building just-enough technical foundation ahead of features so future work can flow without big up-front design.",
+      "source": "SAFe",
+      "produces": []
+    },
+    {
       "id": "assumption-mapping",
       "name": "Assumption Mapping",
       "description": "A method to surface, categorize, and prioritize assumptions underpinning product ideas or business models.",
@@ -1220,9 +1227,37 @@
       "produces": []
     },
     {
+      "id": "backlog-refinement",
+      "name": "Backlog Refinement",
+      "description": "Ongoing clarifying, splitting and ordering of upcoming backlog items so they are ready before a team commits to them.",
+      "source": "Scrum",
+      "produces": []
+    },
+    {
+      "id": "big-room-pi-planning",
+      "name": "Big Room / PI Planning",
+      "description": "A cross-team planning event where all teams plan a shared increment together and surface dependencies face to face.",
+      "source": "SAFe",
+      "produces": []
+    },
+    {
+      "id": "build-measure-learn",
+      "name": "Build-Measure-Learn",
+      "description": "The core loop: build an experiment, measure real behaviour, and learn whether to persevere or pivot.",
+      "source": "Lean Start-up",
+      "produces": []
+    },
+    {
+      "id": "burndown-burnup-chart",
+      "name": "Burndown / Burnup Chart",
+      "description": "A simple chart tracking remaining or completed work against time to expose whether a goal is on track.",
+      "source": "Scrum",
+      "produces": []
+    },
+    {
       "id": "business-case",
       "name": "Business Case",
-      "description": "A justification for a proposed initiative, evaluating benefits, costs, risks, and alignment to strategic goals. Supports go/no-go decision-making.",
+      "description": "The justification for investment and its continued justification in flight: vision, options with a chosen one, costs and benefits as ranges, investment appraisal and risk. Outline at Feasibility, baselined at the commit point, re-checked each increment: kill or continue.",
       "source": "BABOK (Needs Assessment), BCS (Strategic Analysis)",
       "produces": []
     },
@@ -1231,6 +1266,34 @@
       "name": "Business Model Canvas",
       "description": "A strategic management framework, created by Alexander Osterwalder (2005 thesis, refined with Yves Pigneur), popularized through the book Business Model Generation (2010). Widely used as a global standard for business model design and innovation.",
       "source": "Business Model Generation (Osterwalder & Pigneur, 2010)",
+      "produces": []
+    },
+    {
+      "id": "classes-of-service",
+      "name": "Classes of Service",
+      "description": "Distinct handling policies for different work types (expedite, fixed-date, standard) to manage urgency and risk.",
+      "source": "Kanban",
+      "produces": []
+    },
+    {
+      "id": "cohort-analysis",
+      "name": "Cohort Analysis",
+      "description": "Tracking groups of users over time to read actionable metrics rather than vanity totals.",
+      "source": "Lean Start-up",
+      "produces": []
+    },
+    {
+      "id": "communities-of-practice",
+      "name": "Communities of Practice",
+      "description": "Cross-team groups that share and align practice in a discipline without central control.",
+      "source": "SAFe / LeSS",
+      "produces": []
+    },
+    {
+      "id": "concierge-wizard-of-oz",
+      "name": "Concierge / Wizard of Oz Test",
+      "description": "Manually delivering a service behind the scenes to test demand before building the technology.",
+      "source": "Lean Start-up",
       "produces": []
     },
     {
@@ -1243,7 +1306,7 @@
     {
       "id": "cost-of-delay",
       "name": "Cost of Delay",
-      "description": "A quantifiable approach to express the economic impact of delaying work. It supports informed prioritization and trade-off decisions.",
+      "description": "Donald Reinertsen's economic lens: what it costs per unit time not to have a thing. The number that turns prioritisation arguments into arithmetic and underpins WSJF.",
       "source": "Agile (Decision & Prioritization), SAFe",
       "produces": []
     },
@@ -1255,13 +1318,6 @@
       "produces": []
     },
     {
-      "id": "cumulative-flow-diagrams",
-      "name": "Cumulative Flow Diagrams",
-      "description": "A chart that shows the amount of work in different stages over time, revealing bottlenecks and delivery trends.",
-      "source": "Kanban, DevOps, Agile Metrics",
-      "produces": []
-    },
-    {
       "id": "customer-interviews",
       "name": "Customer Interviews",
       "description": "Direct, structured or semi-structured conversations with users to explore their needs, motivations, and pain points.",
@@ -1269,9 +1325,16 @@
       "produces": []
     },
     {
+      "id": "daily-standup",
+      "name": "Daily Standup",
+      "description": "A short daily sync where the team inspects progress toward the goal and surfaces impediments early.",
+      "source": "Scrum",
+      "produces": []
+    },
+    {
       "id": "definition-of-done-dod",
       "name": "Definition of Done (DoD)",
-      "description": "A shared agreement among team members on the conditions a product increment must meet to be considered complete.",
+      "description": "Scrum's quality bar (Schwaber and Sutherland): the agreed conditions under which work is genuinely complete, including testing and review. The convergent half of a development approach; tightens at retrospectives as the team learns what bites.",
       "source": "Agile (Scrum), BABOK (Validation), BCS",
       "produces": []
     },
@@ -1283,16 +1346,16 @@
       "produces": []
     },
     {
-      "id": "design-studio-workshop",
-      "name": "Design Studio Workshop",
-      "description": "A collaborative sketching method for exploring and critiquing UI or solution ideas across team members.",
-      "source": "Lean UX, Agile UX",
+      "id": "dependency-mapping-program-board",
+      "name": "Dependency Mapping / Program Board",
+      "description": "Visualising cross-team dependencies and their timing so they can be sequenced or removed.",
+      "source": "SAFe",
       "produces": []
     },
     {
-      "id": "design-studio-workshops",
-      "name": "Design Studio Workshops",
-      "description": "A time-boxed collaborative session where team members sketch, present, and iterate on UI or workflow designs in rounds.",
+      "id": "design-studio-workshop",
+      "name": "Design Studio Workshop",
+      "description": "A collaborative sketching method for exploring and critiquing UI or solution ideas across team members.",
       "source": "Lean UX, Agile UX",
       "produces": []
     },
@@ -1306,7 +1369,7 @@
     {
       "id": "empathy-map",
       "name": "Empathy Map",
-      "description": "A collaborative visualization used to articulate what a user sees, hears, thinks, feels, says, and does to build empathy and insight.",
+      "description": "A fast collaborative read of what a beneficiary says, thinks, does and feels. Lighter than a persona; often the bridge from stakeholder talk to genuine needs.",
       "source": "Gamestorming (Dave Gray, 2010)",
       "produces": []
     },
@@ -1334,8 +1397,22 @@
     {
       "id": "experiment-cards",
       "name": "Experiment Cards",
-      "description": "A structured card format used to define product assumptions, how they will be tested, and what success looks like.",
+      "description": "Test and Learning Cards after David Bland and Alexander Osterwalder (Strategyzer): each probe made falsifiable as hypothesis, test, metric and learning. The safe-to-fail instrument that selects between solution options before commitment.",
       "source": "Testing Business Ideas (David J. Bland & Alexander Osterwalder, 2019)",
+      "produces": []
+    },
+    {
+      "id": "explicit-workflow-policies",
+      "name": "Explicit Workflow Policies",
+      "description": "Making the rules for how work moves through each state visible and agreed, including a clear definition of workflow.",
+      "source": "Kanban",
+      "produces": []
+    },
+    {
+      "id": "facilitated-workshop",
+      "name": "Facilitated Workshop",
+      "description": "A structured, neutrally facilitated session to reach shared decisions quickly across stakeholders.",
+      "source": "DSDM / AgilePM",
       "produces": []
     },
     {
@@ -1360,13 +1437,6 @@
       "produces": []
     },
     {
-      "id": "feature-toggles-flags",
-      "name": "Feature Toggles / Flags",
-      "description": "A technique that allows code to be deployed to production with features turned off or hidden, enabling safe releases and testing.",
-      "source": "",
-      "produces": []
-    },
-    {
       "id": "feature-user-story-mirmmdl6",
       "name": "Feature User Story",
       "description": "",
@@ -1385,13 +1455,6 @@
       "name": "Flow Metrics",
       "description": "Metrics like Cycle Time, Lead Time, and Throughput used to evaluate and improve delivery performance.",
       "source": "Kanban, DevOps, Agile Metrics",
-      "produces": []
-    },
-    {
-      "id": "flow-metrics-cycle-time-lead-time",
-      "name": "Flow Metrics (Cycle Time, Lead Time)",
-      "description": "Metrics that track how long work items take to move through the delivery process, used to improve flow and predictability.",
-      "source": "",
       "produces": []
     },
     {
@@ -1425,14 +1488,14 @@
     {
       "id": "how-might-we",
       "name": "How Might We?",
-      "description": "A reframing technique that turns insights and problems into creative prompts by starting with 'How might we...?'",
+      "description": "IDEO's reframing move: turn a pain or insight into an open design question. The divergent opener for needs work before any solution is named.",
       "source": "IDEO / Stanford d.school (1970s onwards)",
       "produces": []
     },
     {
       "id": "impact-mapping",
       "name": "Impact Mapping",
-      "description": "A strategic planning technique that connects deliverables to business goals by identifying actors, impacts, and deliverables to focus on outcomes over outputs.",
+      "description": "Gojko Adzic's four-level tree from Why (goal) to Who (actors) to How (behaviour changes) to What (deliverables). Starts from a business goal, not a system, so non-technical groups take to it quickly; the map is disposable and re-walked at each increment review so goals that no longer connect to deliverables get pruned.",
       "source": "Agile (Discovery & Framing)",
       "produces": []
     },
@@ -1451,30 +1514,44 @@
       "produces": []
     },
     {
+      "id": "inspect-and-adapt",
+      "name": "Inspect and Adapt",
+      "description": "A recurring cross-team retrospective and problem-solving workshop on the whole system of delivery.",
+      "source": "SAFe",
+      "produces": []
+    },
+    {
       "id": "investment-appraisal",
       "name": "Investment Appraisal",
-      "description": "Evaluating the financial viability and risk of proposed initiatives to inform resource allocation decisions across a portfolio.",
+      "description": "Maps development and ongoing running costs against benefits over time, answering when the costs land against the benefits and whether the initiative can survive the gap.",
       "source": "BCS (Strategic Analysis), PMI-PBA",
+      "produces": []
+    },
+    {
+      "id": "iterative-development-modelling",
+      "name": "Iterative Development and Modelling",
+      "description": "Evolving the solution in short iterations with frequent demonstration rather than a single big build.",
+      "source": "DSDM / AgilePM",
       "produces": []
     },
     {
       "id": "jobs-to-be-done",
       "name": "Jobs To Be Done",
-      "description": "A customer-centric technique that focuses on understanding the job a user is trying to accomplish rather than product features alone.",
+      "description": "Clayton Christensen's framing: people hire products to get a job done. Asks what progress the person is trying to make in a circumstance, which surfaces needs that feature-talk hides; pairs with personas to explain why a behaviour change would actually happen.",
       "source": "Agile (User-Centered Analysis)",
       "produces": []
     },
     {
       "id": "journey-mapping",
       "name": "Journey Mapping",
-      "description": "A visual representation of the steps a user goes through when interacting with a product or service, often capturing emotions, pain points, and touchpoints.",
+      "description": "Service design practice, popularised by Adaptive Path: one persona's experience as stages across the top with doing, thinking, feeling and pain rows beneath. Exposes where asserted impacts meet reality; its stages seed a story map backbone and its pains become impact or story candidates.",
       "source": "Adaptive Path / UX Design (1990s–2000s)",
       "produces": []
     },
     {
       "id": "lean-canvas",
       "name": "Lean Canvas",
-      "description": "A 1-page business model format focused on startups and product-market fit, emphasizing problem/solution and key metrics.",
+      "description": "Ash Maurya's adaptation of Osterwalder's Business Model Canvas: an investable case on one page with its assumptions exposed for testing. The natural outline Business Case form at Feasibility, carrying best, expected and worst ranges.",
       "source": "Running Lean (Ash Maurya, 2010)",
       "produces": []
     },
@@ -1493,16 +1570,30 @@
       "produces": []
     },
     {
+      "id": "minimum-viable-product",
+      "name": "Minimum Viable Product (MVP)",
+      "description": "The smallest thing you can build to test a critical assumption and start learning from real users.",
+      "source": "Lean Start-up",
+      "produces": []
+    },
+    {
       "id": "moscow-prioritization",
       "name": "MoSCoW Prioritization",
-      "description": "A technique to categorize requirements into Must have, Should have, Could have, and Won\"\"\"t have. Helps manage scope and set delivery expectations.",
+      "description": "Dai Clegg's prioritisation, originating within DSDM: Must, Should, Could, Won't (this time). Forces a genuine Must apart from the merely wanted and makes exclusion explicit; native vocabulary for AgilePM-aligned work.",
       "source": "BABOK (Prioritization Techniques), BCS (Project Delivery), AgilePM",
+      "produces": []
+    },
+    {
+      "id": "multi-team-backlog-refinement",
+      "name": "Multi-team Backlog Refinement",
+      "description": "Several teams refining one shared product backlog together to keep a single ordering.",
+      "source": "LeSS",
       "produces": []
     },
     {
       "id": "okrs-objectives-and-key-results",
       "name": "OKRs (Objectives and Key Results)",
-      "description": "A goal-setting framework to define and track objectives and their measurable outcomes (key results) over time.",
+      "description": "Andy Grove's Objectives and Key Results, popularised by John Doerr: ties intended outcomes to measurable signals the organisation already tracks. The natural formalisation of goals and the review form for benefits.",
       "source": "Agile (Discovery & Framing)",
       "produces": []
     },
@@ -1521,16 +1612,9 @@
       "produces": []
     },
     {
-      "id": "opportunity-solution-tree-ost",
-      "name": "Opportunity Solution Tree (OST)",
-      "description": "A visual tool to map desired outcomes to opportunities and experiments. Helps teams continuously discover and deliver value.",
-      "source": "",
-      "produces": []
-    },
-    {
       "id": "personas",
       "name": "Personas",
-      "description": "Fictional, research-based profiles representing typical users, their goals, needs, and pain points.",
+      "description": "Evidence-based archetypes in the Alan Cooper tradition: a named character with context, goals, pains and behaviours. The actor names who matters from the goal's side; the persona details them from their own side, and choosing which personas to design for is a breadth-of-scope decision.",
       "source": "Agile (Discovery & Framing), Agile (User-Centered Analysis), BCS (Analytical Techniques)",
       "produces": []
     },
@@ -1542,6 +1626,13 @@
       "produces": []
     },
     {
+      "id": "pivot-or-persevere",
+      "name": "Pivot or Persevere",
+      "description": "A scheduled decision, made on evidence, to change direction or keep going on the current hypothesis.",
+      "source": "Lean Start-up",
+      "produces": []
+    },
+    {
       "id": "planning-poker",
       "name": "Planning Poker",
       "description": "A consensus-based estimation technique where team members assign story points to work items using cards, helping uncover uncertainty or assumptions.",
@@ -1549,10 +1640,24 @@
       "produces": []
     },
     {
+      "id": "portfolio-kanban",
+      "name": "Portfolio Kanban",
+      "description": "Visualising and limiting big initiatives (epics) as they flow through funnel-to-done states at portfolio level.",
+      "source": "SAFe",
+      "produces": []
+    },
+    {
       "id": "portfolio-roadmaps",
       "name": "Portfolio Roadmaps",
       "description": "High-level visual timelines showing planned delivery of major initiatives and their alignment to strategic themes across the organization.",
       "source": "Agile (Portfolio Planning), BCS (Strategic Analysis)",
+      "produces": []
+    },
+    {
+      "id": "prioritised-requirements-list",
+      "name": "Prioritised Requirements List",
+      "description": "A MoSCoW-prioritised list of requirements that fixes time and cost while flexing scope.",
+      "source": "DSDM / AgilePM",
       "produces": []
     },
     {
@@ -1572,8 +1677,15 @@
     {
       "id": "product-vision-board",
       "name": "Product Vision Board",
-      "description": "A lightweight visual tool that captures vision, target group, user needs, key product features, and business goals.",
+      "description": "Roman Pichler's one-page vision: Vision, Target Group, Needs, Product, Business Goals. States driver and objective in a form people can repeat from memory; the founding hypothesis a new product journey starts from.",
       "source": "Roman Pichler (2012)",
+      "produces": []
+    },
+    {
+      "id": "prototyping",
+      "name": "Prototyping",
+      "description": "Building low-fidelity, often throwaway models of a solution to test understanding and reduce risk early.",
+      "source": "DSDM / AgilePM",
       "produces": []
     },
     {
@@ -1584,9 +1696,16 @@
       "produces": []
     },
     {
+      "id": "replenishment-meeting",
+      "name": "Replenishment Meeting",
+      "description": "A regular cadence to pull the next most valuable items into the committed queue.",
+      "source": "Kanban",
+      "produces": []
+    },
+    {
       "id": "retrospective-techniques",
       "name": "Retrospective Techniques",
-      "description": "Facilitated sessions using techniques like 4Ls, Start-Stop-Continue, or Sailboat to reflect on past iterations and identify improvements.",
+      "description": "After Norman Kerth and Derby and Larsen: the regular heartbeat that turns delivery into learning. What worked, what would most improve us, one action; the mechanism that keeps the ways-of-working artifact alive.",
       "source": "Agile Retrospectives (Esther Derby & Diana Larsen, 2006)",
       "produces": []
     },
@@ -1595,13 +1714,6 @@
       "name": "RICE",
       "description": "A quantitative prioritization method that scores initiatives using Reach, Impact, Confidence, and Effort to inform sequencing.",
       "source": "",
-      "produces": []
-    },
-    {
-      "id": "rice-reach-impact-confidence-effort",
-      "name": "RICE (Reach, Impact, Confidence, Effort)",
-      "description": "A scoring model that helps prioritize ideas or initiatives based on how many people it will affect (Reach), how much it will improve (Impact), certainty (Confidence), and effort to implement.",
-      "source": "Agile (Decision & Prioritization)",
       "produces": []
     },
     {
@@ -1619,6 +1731,13 @@
       "produces": []
     },
     {
+      "id": "scrum-of-scrums",
+      "name": "Scrum of Scrums",
+      "description": "A regular cross-team sync where representatives coordinate shared work and resolve inter-team impediments.",
+      "source": "SAFe / Scrum",
+      "produces": []
+    },
+    {
       "id": "service-blueprint",
       "name": "Service Blueprint",
       "description": "A diagram that maps out the user‚Äö√¥s interaction with the service and the behind-the-scenes processes, systems, and people enabling those experiences.",
@@ -1626,10 +1745,17 @@
       "produces": []
     },
     {
-      "id": "service-blueprinting",
-      "name": "Service Blueprinting",
-      "description": "A visual map of the service process that includes customer interactions, frontstage actions, backstage processes, and support systems.",
-      "source": "",
+      "id": "service-level-expectation",
+      "name": "Service Level Expectation (SLE)",
+      "description": "A probabilistic forecast of how long an item will take to flow, used as a delivery commitment.",
+      "source": "Kanban",
+      "produces": []
+    },
+    {
+      "id": "smoke-landing-page-test",
+      "name": "Smoke / Landing Page Test",
+      "description": "A lightweight test, such as a landing page, that measures intent to buy or sign up before building.",
+      "source": "Lean Start-up",
       "produces": []
     },
     {
@@ -1640,9 +1766,16 @@
       "produces": []
     },
     {
+      "id": "sprint-review-demo",
+      "name": "Sprint Review / Demo",
+      "description": "A working-software review with stakeholders to inspect the increment and adapt the backlog from real feedback.",
+      "source": "Scrum",
+      "produces": []
+    },
+    {
       "id": "story-mapping",
       "name": "Story Mapping",
-      "description": "A technique to visualize the user journey and break down product functionality into slices for incremental delivery. Helps identify MVP and priorities.",
+      "description": "Jeff Patton's spatial backlog: a backbone of user activities across the top, options and detail hanging beneath, sliced horizontally into releases. The map is the prioritised requirements list in spatial form; re-slicing it re-prioritises the list and keeps breadth-of-scope decisions visible.",
       "source": "Agile (Backlog Management), BCS (Project Delivery)",
       "produces": []
     },
@@ -1668,6 +1801,13 @@
       "produces": []
     },
     {
+      "id": "system-demo",
+      "name": "System Demo",
+      "description": "An integrated demo of the whole solution across teams to get aligned feedback each increment.",
+      "source": "SAFe",
+      "produces": []
+    },
+    {
       "id": "task-boards",
       "name": "Task Boards",
       "description": "Visual boards (physical or digital) that track the status of tasks from \"\"\"To Do\"\"\" to \"\"\"Done\"\"\". Common in Kanban and Scrum.",
@@ -1686,6 +1826,20 @@
       "name": "Technical Debt Radar",
       "description": "A tool or method to identify, categorize, and visualize technical debt, enabling better discussions and decision-making about system health.",
       "source": "Ward Cunningham (1992, metaphor); ThoughtWorks Technology Radar (2000s)",
+      "produces": []
+    },
+    {
+      "id": "throughput-monte-carlo-forecasting",
+      "name": "Throughput / Monte Carlo Forecasting",
+      "description": "Forecasting delivery dates probabilistically from historical throughput rather than from estimates.",
+      "source": "Kanban",
+      "produces": []
+    },
+    {
+      "id": "timeboxing",
+      "name": "Timeboxing",
+      "description": "Fixing a hard time limit for a piece of work so that scope and decisions flex to fit the box, rather than the deadline moving.",
+      "source": "Scrum / DSDM",
       "produces": []
     },
     {
@@ -1712,8 +1866,15 @@
     {
       "id": "user-stories",
       "name": "User Stories",
-      "description": "A concise, user-focused way of capturing functionality in the format: As a [user], I want [goal] so that [benefit]. Encourages value-driven planning.",
+      "description": "Requirements as conversations in a beneficiary's voice: who, what, why, with acceptance criteria. Written against INVEST; each story should trace to the deliverable and persona it serves.",
       "source": "Extreme Programming (Kent Beck, 1999)",
+      "produces": []
+    },
+    {
+      "id": "validated-learning",
+      "name": "Validated Learning / Innovation Accounting",
+      "description": "Measuring progress by evidence of learning about the business model, not by features shipped.",
+      "source": "Lean Start-up",
       "produces": []
     },
     {
@@ -1731,16 +1892,23 @@
       "produces": []
     },
     {
+      "id": "wip-limits",
+      "name": "WIP Limits",
+      "description": "Capping the number of items allowed in each workflow state to expose bottlenecks and improve flow.",
+      "source": "Kanban",
+      "produces": []
+    },
+    {
       "id": "working-agreements",
       "name": "Working Agreements",
-      "description": "Team-defined ground rules for collaboration, accountability, and decision-making.",
+      "description": "Common XP and Scrum practice: governance as a one-page social contract the team wrote itself. Refreshed when the people or the work change, not on a schedule.",
       "source": "Agile Retrospectives (Derby & Larsen, 2006)",
       "produces": []
     },
     {
       "id": "wsjf-weighted-shortest-job-first",
       "name": "WSJF (Weighted Shortest Job First)",
-      "description": "A prioritization model used to sequence jobs (features, capabilities, etc.) by weighing cost of delay against job duration. It maximizes economic benefit.",
+      "description": "Cost of Delay over job size, after Donald Reinertsen and popularised in SAFe: business value, time criticality, and risk reduction or opportunity enablement scored against duration. Orders work by economic urgency rather than gut feel.",
       "source": "Agile (Decision & Prioritization), SAFe",
       "produces": []
     }
