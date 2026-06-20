@@ -399,8 +399,8 @@ const STATIC_PAGES = {
     jsonLd: organizationJsonLd(),
   },
   '/events': {
-    title: 'Agile Training Courses in London & the UK - Altogether Agile',
-    description: 'Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK.',
+    title: 'Agile Training Courses, London & UK - Altogether Agile',
+    description: 'Framework-based agile training: AgilePM, Scrum Master, Product Owner and more. In person across London at your site, or live online across the UK.',
   },
   '/coaching': {
     title: 'Coaching - Altogether Agile',
@@ -411,7 +411,7 @@ const STATIC_PAGES = {
     description: 'Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation.',
   },
   '/exams': {
-    title: 'AgilePM & Scrum Practice Exam Questions - Altogether Agile',
+    title: 'AgilePM & Scrum Practice Exams - Altogether Agile',
     description: 'Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification.',
   },
   '/about': {
@@ -440,19 +440,19 @@ const STATIC_PAGES = {
   },
   '/coach': {
     title: 'Coaching Studio - Altogether Agile',
-    description: 'A standalone coaching conversation on whatever you bring. Think out loud, then harvest the conversation: the coach proposes where each goal, idea, probe or measure could live, with one tap to send it there.',
+    description: 'A standalone coaching conversation on whatever you bring. Think out loud, then harvest each goal, idea, probe or measure straight into the right tool.',
   },
   '/journey-map': {
     title: 'Journey Map Studio - Altogether Agile',
-    description: 'Map a persona journey stage by stage: what they are doing, thinking and feeling, the pains and the opportunities. Coached throughout, with pains and opportunities you can send to the backlog.',
+    description: 'Map a persona journey stage by stage: doing, thinking, feeling, pains and opportunities. Coached throughout, sending opportunities to your backlog.',
   },
   '/benefits': {
     title: 'Benefits Scorecard - Altogether Agile',
-    description: 'Track whether the numbers actually moved. Each outcome carries a leading indicator, a target and dated readings, with a trend line and a Benefits on a Page PDF export.',
+    description: 'Track whether the numbers actually moved: each outcome gets a leading indicator, a target, dated readings and a trend line, with a Benefits on a Page PDF.',
   },
   '/probes': {
     title: 'Probe Tracker - Altogether Agile',
-    description: 'Run your output options as safe-to-fail experiments. A simple kanban moves each probe from Planned to Running to Kept or Killed, with the signal that would prove it wrong.',
+    description: 'Run your options as safe-to-fail experiments. A simple kanban moves each probe from Planned to Running to Kept or Killed, with its falsifying signal.',
   },
   '/ways-of-working': {
     title: 'Ways of Working - Altogether Agile',
@@ -488,7 +488,7 @@ const STATIC_PAGES = {
   },
   '/courses': {
     title: 'Self-paced Courses - Altogether Agile',
-    description: 'Browse self-paced agile courses from Altogether Agile.',
+    description: 'Browse self-paced agile courses from Altogether Agile: learn AgilePM, Scrum and more at your own pace, with practical, framework-based material.',
   },
 };
 
