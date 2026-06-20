@@ -15,6 +15,8 @@ import { useSeoContent, useUpdateSeo, metaDescriptionStatus, type SeoItem, type 
 
 const KIND_LABEL: Record<SeoItem['kind'], string> = { exam: 'Exam', course: 'Course', blog: 'Blog' };
 const ORIGIN = 'https://altogetheragile.com';
+// The prerender appends this brand suffix to every page <title>.
+const TITLE_SUFFIX = ' - Altogether Agile';
 
 interface GscSitemap { lastSubmitted?: string; lastDownloaded?: string; errors?: string; warnings?: string; contents?: { type: string; submitted: string; indexed: string }[] }
 interface GscIndexRow { url: string; verdict: string; coverage: string; lastCrawl: string | null }
@@ -310,7 +312,16 @@ const AdminSEO = () => {
             <div>
               <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">SEO title</Label>
               <Input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} placeholder={editing?.label} className="mt-1" />
-              <p className="text-[10px] text-muted-foreground text-right mt-0.5">{seoTitle.length} / 60</p>
+              {(() => {
+                const rendered = `${seoTitle.trim() || editing?.label || ''}${TITLE_SUFFIX}`;
+                const over = rendered.length > 60;
+                return (
+                  <div className="mt-0.5 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-muted-foreground truncate" title={rendered}>Renders as: {rendered}</span>
+                    <span className={`text-[10px] shrink-0 ${over ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>{rendered.length} / 60</span>
+                  </div>
+                );
+              })()}
             </div>
             <div>
               <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">SEO description</Label>
