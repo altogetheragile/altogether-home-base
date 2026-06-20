@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ExternalLink, Pencil, RefreshCw, UploadCloud } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ExternalLink, Pencil, RefreshCw, UploadCloud, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSeoContent, useUpdateSeo, metaDescriptionStatus, type SeoItem, type SeoTable } from '@/hooks/useSeoContent';
@@ -33,6 +34,24 @@ const toneClass: Record<'good' | 'warn' | 'bad', string> = {
   bad: 'bg-red-100 text-red-800 hover:bg-red-100',
 };
 
+type SortState = { key: string; dir: 'asc' | 'desc' };
+
+const SortHeader = ({ sort, setSort, sortKey, children, className }: {
+  sort: SortState; setSort: Dispatch<SetStateAction<SortState>>; sortKey: string; children: ReactNode; className?: string;
+}) => (
+  <TableHead
+    className={`cursor-pointer select-none ${className || ''}`}
+    onClick={() => setSort((s) => ({ key: sortKey, dir: s.key === sortKey && s.dir === 'asc' ? 'desc' : 'asc' }))}
+  >
+    <span className="inline-flex items-center gap-1">
+      {children}
+      {sort.key === sortKey
+        ? (sort.dir === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />)
+        : <ArrowUpDown className="h-3.5 w-3.5 opacity-30" />}
+    </span>
+  </TableHead>
+);
+
 const AdminSEO = () => {
   const { data: items = [], isLoading, error } = useSeoContent();
   const updateSeo = useUpdateSeo();
@@ -40,6 +59,13 @@ const AdminSEO = () => {
   const [editing, setEditing] = useState<SeoItem | null>(null);
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
+
+  // Filtering + sorting
+  const [q, setQ] = useState('');
+  const [typeF, setTypeF] = useState('all');
+  const [statusF, setStatusF] = useState('all');
+  const [healthSort, setHealthSort] = useState<SortState>({ key: 'type', dir: 'asc' });
+  const [metaSort, setMetaSort] = useState<SortState>({ key: 'type', dir: 'asc' });
 
   // Search Console (via the seo-search-console edge function)
   const [gsc, setGsc] = useState<GscReport | null>(null);
@@ -112,6 +138,28 @@ const AdminSEO = () => {
 
   const editable = items.filter((i) => i.editableHere);
 
+  const filterItem = (it: SeoItem, useStatus: boolean) => {
+    if (q && !it.label.toLowerCase().includes(q.toLowerCase())) return false;
+    if (typeF !== 'all' && it.kind !== typeF) return false;
+    if (useStatus && statusF !== 'all' && metaDescriptionStatus(it).tone !== statusF) return false;
+    return true;
+  };
+  const sortItems = (arr: SeoItem[], sort: SortState) => {
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    const tone = (i: SeoItem) => ({ good: 0, warn: 1, bad: 2 })[metaDescriptionStatus(i).tone];
+    return [...arr].sort((a, b) => {
+      let c = 0;
+      if (sort.key === 'type') c = a.kind.localeCompare(b.kind);
+      else if (sort.key === 'chars') c = metaDescriptionStatus(a).length - metaDescriptionStatus(b).length;
+      else if (sort.key === 'status') c = tone(a) - tone(b);
+      else c = a.label.localeCompare(b.label);
+      if (c === 0) c = a.label.localeCompare(b.label);
+      return c * dir;
+    });
+  };
+  const healthRows = sortItems(items.filter((i) => filterItem(i, true)), healthSort);
+  const metaRows = sortItems(editable.filter((i) => filterItem(i, false)), metaSort);
+
   return (
     <div className="space-y-6">
       <div>
@@ -138,19 +186,41 @@ const AdminSEO = () => {
           </div>
           <Card>
             <CardHeader><CardTitle>Meta description health</CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Input placeholder="Search pages…" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 max-w-xs" />
+                <Select value={typeF} onValueChange={setTypeF}>
+                  <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    <SelectItem value="exam">Exams</SelectItem>
+                    <SelectItem value="course">Courses</SelectItem>
+                    <SelectItem value="blog">Blog</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusF} onValueChange={setStatusF}>
+                  <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="warn">Needs work</SelectItem>
+                    <SelectItem value="bad">Missing</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="ml-auto text-xs text-gray-400">{healthRows.length} shown</span>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Type</TableHead>
-                    <TableHead>Page</TableHead>
-                    <TableHead className="w-24 text-right">Chars</TableHead>
-                    <TableHead className="w-32">Status</TableHead>
+                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="type" className="w-20">Type</SortHeader>
+                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="page">Page</SortHeader>
+                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="chars" className="w-24">Chars</SortHeader>
+                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="status" className="w-32">Status</SortHeader>
                     <TableHead className="w-28">Override?</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((it) => {
+                  {healthRows.map((it) => {
                     const st = metaDescriptionStatus(it);
                     const dup = duplicateTitles.has((it.seoTitle || it.label).trim().toLowerCase());
                     return (
@@ -173,6 +243,9 @@ const AdminSEO = () => {
                       </TableRow>
                     );
                   })}
+                  {healthRows.length === 0 && (
+                    <TableRow><TableCell colSpan={5} className="text-center text-gray-400 py-6">No pages match your filters.</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -187,19 +260,31 @@ const AdminSEO = () => {
           </p>
           <Card>
             <CardHeader><CardTitle>Exams &amp; Courses</CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Input placeholder="Search pages…" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 max-w-xs" />
+                <Select value={typeF} onValueChange={setTypeF}>
+                  <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    <SelectItem value="exam">Exams</SelectItem>
+                    <SelectItem value="course">Courses</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="ml-auto text-xs text-gray-400">{metaRows.length} shown</span>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Type</TableHead>
-                    <TableHead>Page</TableHead>
+                    <SortHeader sort={metaSort} setSort={setMetaSort} sortKey="type" className="w-20">Type</SortHeader>
+                    <SortHeader sort={metaSort} setSort={setMetaSort} sortKey="page">Page</SortHeader>
                     <TableHead className="w-28">SEO title</TableHead>
                     <TableHead className="w-32">SEO description</TableHead>
                     <TableHead className="w-20 text-right">Edit</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {editable.map((it) => (
+                  {metaRows.map((it) => (
                     <TableRow key={`${it.table}-${it.id}`}>
                       <TableCell><Badge variant="outline">{KIND_LABEL[it.kind]}</Badge></TableCell>
                       <TableCell>{it.label}</TableCell>
@@ -210,6 +295,9 @@ const AdminSEO = () => {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {metaRows.length === 0 && (
+                    <TableRow><TableCell colSpan={5} className="text-center text-gray-400 py-6">No pages match your filters.</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
