@@ -8,10 +8,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ExternalLink, Pencil } from 'lucide-react';
+import { ExternalLink, Pencil, RefreshCw, UploadCloud } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useSeoContent, useUpdateSeo, metaDescriptionStatus, type SeoItem, type SeoTable } from '@/hooks/useSeoContent';
 
 const KIND_LABEL: Record<SeoItem['kind'], string> = { exam: 'Exam', course: 'Course', blog: 'Blog' };
+const ORIGIN = 'https://altogetheragile.com';
+
+interface GscSitemap { lastSubmitted?: string; lastDownloaded?: string; errors?: string; warnings?: string; contents?: { type: string; submitted: string; indexed: string }[] }
+interface GscIndexRow { url: string; verdict: string; coverage: string; lastCrawl: string | null }
+interface GscAnalyticsRow { keys: string[]; clicks: number; impressions: number; ctr: number; position: number }
+interface GscReport { sitemap: GscSitemap | null; index: GscIndexRow[]; queries: GscAnalyticsRow[]; pages: GscAnalyticsRow[]; error?: string }
+
+const verdictClass = (v: string) => (v === 'PASS' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-amber-100 text-amber-800 hover:bg-amber-100');
+const shortPath = (u: string) => u.replace(ORIGIN, '') || '/';
+const fmtDate = (s: string | null | undefined) => (s ? s.slice(0, 10) : '—');
 
 const toneClass: Record<'good' | 'warn' | 'bad', string> = {
   good: 'bg-green-100 text-green-800 hover:bg-green-100',
@@ -22,9 +34,42 @@ const toneClass: Record<'good' | 'warn' | 'bad', string> = {
 const AdminSEO = () => {
   const { data: items = [], isLoading, error } = useSeoContent();
   const updateSeo = useUpdateSeo();
+  const { toast } = useToast();
   const [editing, setEditing] = useState<SeoItem | null>(null);
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
+
+  // Search Console (via the seo-search-console edge function)
+  const [gsc, setGsc] = useState<GscReport | null>(null);
+  const [gscLoading, setGscLoading] = useState(false);
+  const [gscError, setGscError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadGsc = async () => {
+    setGscLoading(true);
+    setGscError(null);
+    const urls = [
+      `${ORIGIN}/exams`,
+      `${ORIGIN}/courses`,
+      ...items.filter((i) => i.editableHere).map((i) => `${ORIGIN}${i.url}`),
+    ];
+    const { data, error: invokeErr } = await supabase.functions.invoke('seo-search-console', { body: { action: 'report', urls } });
+    if (invokeErr) setGscError(invokeErr.message);
+    else if ((data as GscReport)?.error) setGscError((data as GscReport).error!);
+    else setGsc(data as GscReport);
+    setGscLoading(false);
+  };
+
+  const submitSitemap = async () => {
+    setSubmitting(true);
+    const { data, error: invokeErr } = await supabase.functions.invoke('seo-search-console', { body: { action: 'submit' } });
+    setSubmitting(false);
+    const errMsg = invokeErr?.message || (data as { error?: string })?.error;
+    if (errMsg) { toast({ title: 'Submit failed', description: errMsg, variant: 'destructive' }); return; }
+    toast({ title: 'Sitemap submitted', description: 'Google will re-read it shortly.' });
+    const sm = (data as { sitemap?: GscSitemap })?.sitemap;
+    if (sm) setGsc((g) => (g ? { ...g, sitemap: sm } : g));
+  };
 
   // Duplicate effective titles (a common SEO issue)
   const duplicateTitles = useMemo(() => {
@@ -76,6 +121,7 @@ const AdminSEO = () => {
         <TabsList>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="meta">Meta editor</TabsTrigger>
+          <TabsTrigger value="search-console">Search Console</TabsTrigger>
         </TabsList>
 
         {/* ── Health ── */}
@@ -166,6 +212,91 @@ const AdminSEO = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Search Console ── */}
+        <TabsContent value="search-console" className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={loadGsc} disabled={gscLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${gscLoading ? 'animate-spin' : ''}`} />
+              {gscLoading ? 'Loading…' : gsc ? 'Refresh' : 'Load Search Console data'}
+            </Button>
+            <Button variant="outline" onClick={submitSitemap} disabled={submitting}>
+              <UploadCloud className="h-4 w-4 mr-2" />{submitting ? 'Submitting…' : 'Submit sitemap'}
+            </Button>
+          </div>
+
+          {gscError && <div className="rounded-md bg-red-50 text-red-700 p-3 text-sm">{gscError}</div>}
+          {!gsc && !gscError && <p className="text-sm text-gray-500">Live data from Google Search Console — index status, sitemap, and top queries for the last 28 days.</p>}
+
+          {gsc && (
+            <>
+              {gsc.sitemap && (
+                <Card>
+                  <CardHeader><CardTitle>Sitemap</CardTitle></CardHeader>
+                  <CardContent className="text-sm text-gray-700 space-y-1">
+                    <div>Last submitted: <span className="tabular-nums">{fmtDate(gsc.sitemap.lastSubmitted)}</span> · Last downloaded: <span className="tabular-nums">{fmtDate(gsc.sitemap.lastDownloaded)}</span></div>
+                    <div>Errors: {gsc.sitemap.errors ?? 0} · Warnings: {gsc.sitemap.warnings ?? 0}</div>
+                    {gsc.sitemap.contents?.map((c) => <div key={c.type}>{c.type}: {c.submitted} submitted, {c.indexed} indexed</div>)}
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card>
+                <CardHeader><CardTitle>Index status</CardTitle></CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow><TableHead>Page</TableHead><TableHead className="w-28">Verdict</TableHead><TableHead>Coverage</TableHead><TableHead className="w-28">Last crawl</TableHead></TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {gsc.index.map((r) => (
+                        <TableRow key={r.url}>
+                          <TableCell className="font-mono text-xs">{shortPath(r.url)}</TableCell>
+                          <TableCell><Badge className={verdictClass(r.verdict)}>{r.verdict}</Badge></TableCell>
+                          <TableCell className="text-sm text-gray-600">{r.coverage}</TableCell>
+                          <TableCell className="text-sm tabular-nums">{fmtDate(r.lastCrawl)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader><CardTitle>Top queries (28d)</CardTitle></CardHeader>
+                  <CardContent>
+                    {gsc.queries.length === 0 ? <p className="text-sm text-gray-400">No data</p> : (
+                      <Table>
+                        <TableHeader><TableRow><TableHead>Query</TableHead><TableHead className="w-16 text-right">Clicks</TableHead><TableHead className="w-16 text-right">Impr</TableHead><TableHead className="w-16 text-right">Pos</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                          {gsc.queries.map((r) => (
+                            <TableRow key={r.keys[0]}><TableCell className="text-sm">{r.keys[0]}</TableCell><TableCell className="text-right tabular-nums text-sm">{r.clicks}</TableCell><TableCell className="text-right tabular-nums text-sm">{r.impressions}</TableCell><TableCell className="text-right tabular-nums text-sm">{r.position.toFixed(1)}</TableCell></TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle>Top pages (28d)</CardTitle></CardHeader>
+                  <CardContent>
+                    {gsc.pages.length === 0 ? <p className="text-sm text-gray-400">No data</p> : (
+                      <Table>
+                        <TableHeader><TableRow><TableHead>Page</TableHead><TableHead className="w-16 text-right">Clicks</TableHead><TableHead className="w-16 text-right">Impr</TableHead><TableHead className="w-16 text-right">Pos</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                          {gsc.pages.map((r) => (
+                            <TableRow key={r.keys[0]}><TableCell className="font-mono text-xs">{shortPath(r.keys[0])}</TableCell><TableCell className="text-right tabular-nums text-sm">{r.clicks}</TableCell><TableCell className="text-right tabular-nums text-sm">{r.impressions}</TableCell><TableCell className="text-right tabular-nums text-sm">{r.position.toFixed(1)}</TableCell></TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
