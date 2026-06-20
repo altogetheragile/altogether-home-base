@@ -28,6 +28,19 @@ const verdictClass = (v: string) => (v === 'PASS' ? 'bg-green-100 text-green-800
 const shortPath = (u: string) => u.replace(ORIGIN, '') || '/';
 const fmtDate = (s: string | null | undefined) => (s ? s.slice(0, 10) : '—');
 
+const sortGscIndex = (rows: GscIndexRow[], sort: { key: string; dir: 'asc' | 'desc' }) => {
+  const dir = sort.dir === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    let c = 0;
+    if (sort.key === 'page') c = shortPath(a.url).localeCompare(shortPath(b.url));
+    else if (sort.key === 'verdict') c = a.verdict.localeCompare(b.verdict);
+    else if (sort.key === 'coverage') c = a.coverage.localeCompare(b.coverage);
+    else if (sort.key === 'crawl') c = (a.lastCrawl || '').localeCompare(b.lastCrawl || '');
+    if (c === 0) c = shortPath(a.url).localeCompare(shortPath(b.url));
+    return c * dir;
+  });
+};
+
 const toneClass: Record<'good' | 'warn' | 'bad', string> = {
   good: 'bg-green-100 text-green-800 hover:bg-green-100',
   warn: 'bg-amber-100 text-amber-800 hover:bg-amber-100',
@@ -66,6 +79,7 @@ const AdminSEO = () => {
   const [statusF, setStatusF] = useState('all');
   const [healthSort, setHealthSort] = useState<SortState>({ key: 'type', dir: 'asc' });
   const [metaSort, setMetaSort] = useState<SortState>({ key: 'type', dir: 'asc' });
+  const [indexSort, setIndexSort] = useState<SortState>({ key: 'verdict', dir: 'asc' });
 
   // Search Console (via the seo-search-console edge function)
   const [gsc, setGsc] = useState<GscReport | null>(null);
@@ -337,10 +351,15 @@ const AdminSEO = () => {
                 <CardContent>
                   <Table>
                     <TableHeader>
-                      <TableRow><TableHead>Page</TableHead><TableHead className="w-28">Verdict</TableHead><TableHead>Coverage</TableHead><TableHead className="w-28">Last crawl</TableHead></TableRow>
+                      <TableRow>
+                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="page">Page</SortHeader>
+                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="verdict" className="w-28">Verdict</SortHeader>
+                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="coverage">Coverage</SortHeader>
+                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="crawl" className="w-28">Last crawl</SortHeader>
+                      </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {gsc.index.map((r) => (
+                      {sortGscIndex(gsc.index, indexSort).map((r) => (
                         <TableRow key={r.url}>
                           <TableCell className="font-mono text-xs">{shortPath(r.url)}</TableCell>
                           <TableCell><Badge className={verdictClass(r.verdict)}>{r.verdict}</Badge></TableCell>
