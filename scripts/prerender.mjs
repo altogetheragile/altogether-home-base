@@ -46,6 +46,24 @@ function truncate(str, len = 160) {
   return str.length > len ? str.slice(0, len - 1) + '…' : str;
 }
 
+/** Format a date to YYYY-MM-DD for <lastmod>; returns '' if invalid/missing. */
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return Number.isNaN(dt.getTime()) ? '' : dt.toISOString().slice(0, 10);
+}
+
+/** Build a sitemap XML document from [{ loc, lastmod }] entries. */
+function buildSitemap(entries) {
+  const urls = entries
+    .map(({ loc, lastmod }) => {
+      const lm = lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : '';
+      return `  <url>\n    <loc>${loc}</loc>${lm}\n  </url>`;
+    })
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+}
+
 /** Build meta tag block to inject into <head>. */
 function buildMetaTags({ title, description, canonical, ogType = 'website', ogImage, jsonLd }) {
   const img = ogImage || `${SITE_URL}/og-image.png`;
@@ -173,6 +191,26 @@ function courseJsonLd(course) {
   };
 }
 
+/** Derive the qualification subject from an exam title (drops "- Paper N" / "- Sample"). */
+function examSubject(title) {
+  return title.replace(/\s*[-–]\s*(Paper|Sample).*$/i, '').trim() || title;
+}
+
+function examJsonLd(exam) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Quiz',
+    name: exam.title,
+    description: truncate(exam.description || `Practice exam: ${exam.title}.`, 300),
+    url: `${SITE_URL}/exams/${exam.slug}`,
+    educationalUse: 'practice',
+    learningResourceType: 'Practice exam',
+    isAccessibleForFree: true,
+    about: { '@type': 'Thing', name: examSubject(exam.title) },
+    provider: { '@type': 'Organization', name: 'Altogether Agile', url: SITE_URL },
+  };
+}
+
 function profilePageJsonLd() {
   return {
     '@context': 'https://schema.org',
@@ -238,6 +276,28 @@ function breadcrumbJsonLd(items) {
     })),
   };
 }
+
+function faqPageJsonLd(faqs) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+}
+
+// Mirror of EXAM_FAQS in src/pages/Exams.tsx (kept in sync so it is crawler-visible).
+const EXAM_FAQS = [
+  { q: 'What is the AgilePM Foundation exam?', a: 'The AgilePM Foundation exam is a closed-book, multiple-choice paper that tests your knowledge of the AgilePM framework, including its principles, roles, products, and the agile project lifecycle. It is the entry-level AgilePM qualification and the prerequisite for the AgilePM Practitioner exam.' },
+  { q: 'How many questions are in the AgilePM Foundation exam?', a: 'Our AgilePM3 Foundation practice papers contain 50 questions to answer in 40 minutes, with a pass mark of 25 out of 50 (50%). They follow the multiple-choice format of the Foundation paper and are based on the latest version of the AgilePM Handbook.' },
+  { q: 'Are these AgilePM practice exams free?', a: 'Yes. Every practice paper on this page is free. You can sit a timed mock exam or switch to revision mode and work through the questions at your own pace, with answers and explanations.' },
+  { q: 'What is the difference between AgilePM Foundation and Practitioner?', a: 'Foundation tests whether you understand the AgilePM framework and terminology. Practitioner goes further and tests whether you can apply the framework to a realistic project scenario. You need to pass Foundation before taking Practitioner.' },
+  { q: 'How should I prepare for the AgilePM Foundation exam?', a: 'Read the AgilePM Handbook, learn the roles, products, and the eight principles, then practise under timed conditions. Sitting full practice papers helps you manage the time limit and spot the topics you still need to revise.' },
+  { q: 'Do you offer Scrum Master practice questions?', a: 'Yes. Our Professional Scrum Master practice exam has 40 questions to answer in 30 minutes, with a pass mark of 34 out of 40, so you can prepare for the Scrum Master assessment alongside AgilePM.' },
+];
 
 // ── Static page definitions ─────────────────────────────────────────
 
@@ -366,11 +426,11 @@ async function main() {
       .eq('is_published', true),
     supabase
       .from('exams')
-      .select('slug, title, description')
+      .select('slug, title, description, updated_at')
       .eq('status', 'published'),
     supabase
       .from('event_templates')
-      .select('id, title, description')
+      .select('id, title, description, created_at')
       .eq('is_published', true),
   ]);
 
@@ -404,6 +464,7 @@ async function main() {
       ]),
     ],
     '/exams': [
+      faqPageJsonLd(EXAM_FAQS),
       breadcrumbJsonLd([
         { name: 'Home', url: `${SITE_URL}/` },
         { name: 'Practice Exams', url: `${SITE_URL}/exams` },
@@ -452,6 +513,14 @@ async function main() {
       title,
       description,
       canonical: `${SITE_URL}${route}`,
+      jsonLd: [
+        examJsonLd(exam),
+        breadcrumbJsonLd([
+          { name: 'Home', url: `${SITE_URL}/` },
+          { name: 'Practice Exams', url: `${SITE_URL}/exams` },
+          { name: exam.title, url: `${SITE_URL}${route}` },
+        ]),
+      ],
     });
     writeHtml(route, injectMeta(baseHtml, tags));
     console.log(`  ok   ${route}`);
@@ -474,6 +543,28 @@ async function main() {
     console.log(`  ok   ${route}`);
     succeeded++;
   }
+
+  // 6. Sitemap — generated from the same data so new exams/courses/posts auto-appear
+  const sitemapEntries = [
+    ...Object.keys(STATIC_PAGES).map((route) => ({
+      loc: `${SITE_URL}${route === '/' ? '/' : route}`,
+      lastmod: '',
+    })),
+    ...posts.map((post) => ({
+      loc: `${SITE_URL}/blog/${post.slug}`,
+      lastmod: fmtDate(post.updated_at || post.published_at),
+    })),
+    ...exams.map((exam) => ({
+      loc: `${SITE_URL}/exams/${exam.slug}`,
+      lastmod: fmtDate(exam.updated_at),
+    })),
+    ...templates.map((course) => ({
+      loc: `${SITE_URL}/courses/${course.id}`,
+      lastmod: fmtDate(course.created_at),
+    })),
+  ];
+  writeFileSync(resolve(DIST, 'sitemap.xml'), buildSitemap(sitemapEntries), 'utf-8');
+  console.log(`  ok   /sitemap.xml (${sitemapEntries.length} urls)`);
 
   console.log(`\nPrerendered meta tags for ${succeeded} pages\n`);
 }
