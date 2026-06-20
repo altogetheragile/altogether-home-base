@@ -13,7 +13,8 @@ import { createServer } from 'http';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CREDS_PATH = resolve(__dirname, 'gsc-credentials.json');
 const TOKEN_PATH = resolve(__dirname, 'gsc-token.json');
-const SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly'];
+// Read-write scope (superset of readonly): allows reporting AND sitemap submit.
+const SCOPES = ['https://www.googleapis.com/auth/webmasters'];
 
 async function main() {
   const creds = JSON.parse(readFileSync(CREDS_PATH, 'utf-8'));
