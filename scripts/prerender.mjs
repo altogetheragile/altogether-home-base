@@ -53,6 +53,15 @@ function fmtDate(d) {
   return Number.isNaN(dt.getTime()) ? '' : dt.toISOString().slice(0, 10);
 }
 
+// Pages that are prerendered/indexable but kept OUT of the sitemap: interactive
+// tool/app pages and boilerplate legal pages have no search value and would only
+// dilute crawl focus. They remain reachable via internal links.
+const SITEMAP_EXCLUDE = new Set([
+  '/impact-map', '/personas', '/coach', '/journey-map', '/benefits', '/probes',
+  '/ways-of-working', '/bmc-generator', '/canvases', '/canvases/business-case',
+  '/canvases/product-vision', '/privacy', '/terms', '/cookies',
+]);
+
 /** Build a sitemap XML document from [{ loc, lastmod }] entries. */
 function buildSitemap(entries) {
   const urls = entries
@@ -546,10 +555,12 @@ async function main() {
 
   // 6. Sitemap — generated from the same data so new exams/courses/posts auto-appear
   const sitemapEntries = [
-    ...Object.keys(STATIC_PAGES).map((route) => ({
-      loc: `${SITE_URL}${route === '/' ? '/' : route}`,
-      lastmod: '',
-    })),
+    ...Object.keys(STATIC_PAGES)
+      .filter((route) => !SITEMAP_EXCLUDE.has(route))
+      .map((route) => ({
+        loc: `${SITE_URL}${route === '/' ? '/' : route}`,
+        lastmod: '',
+      })),
     ...posts.map((post) => ({
       loc: `${SITE_URL}/blog/${post.slug}`,
       lastmod: fmtDate(post.updated_at || post.published_at),
