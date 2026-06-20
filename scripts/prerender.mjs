@@ -16,11 +16,18 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import { Resvg } from '@resvg/resvg-js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const DIST = resolve(ROOT, 'dist');
 const SITE_URL = 'https://altogetheragile.com';
+
+// Brand TTFs embedded into generated OG images (resvg cannot read the woff2 the site ships).
+const OG_FONTS = [
+  resolve(__dirname, 'assets/DMSerifDisplay.ttf'),
+  resolve(__dirname, 'assets/DMSans.ttf'),
+];
 
 // Load .env for local builds (Vercel sets env vars via dashboard)
 const envPath = resolve(ROOT, '.env');
@@ -218,6 +225,80 @@ function examJsonLd(exam) {
     about: { '@type': 'Thing', name: examSubject(exam.title) },
     provider: { '@type': 'Organization', name: 'Altogether Agile', url: SITE_URL },
   };
+}
+
+// ── Per-exam OG image generation ─────────────────────────────────────
+
+/** Greedy word-wrap into at most `maxLines` lines of <= `maxChars`. */
+function wrapText(text, maxChars, maxLines = 2) {
+  const words = text.split(/\s+/);
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    if (cur && (cur + ' ' + w).length > maxChars) {
+      lines.push(cur);
+      cur = w;
+    } else {
+      cur = cur ? cur + ' ' + w : w;
+    }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) {
+    const head = lines.slice(0, maxLines - 1);
+    head.push(lines.slice(maxLines - 1).join(' '));
+    return head;
+  }
+  return lines;
+}
+
+/** Branded 1200x630 social card SVG for an exam. */
+function examOgSvg(exam) {
+  // Break on " - " so the paper number wraps cleanly, without a dangling hyphen.
+  const titleLines = wrapText(exam.title.replace(/\s-\s/g, ' '), 22, 2);
+  const stats = [
+    exam.total_questions ? `${exam.total_questions} questions` : null,
+    exam.pass_mark && exam.total_questions ? `${Math.round((exam.pass_mark / exam.total_questions) * 100)}% to pass` : null,
+    exam.duration_minutes ? `${exam.duration_minutes} min` : null,
+  ].filter(Boolean).join('   ·   ');
+
+  const titleY = titleLines.length === 1 ? 350 : 312;
+  const titleSvg = titleLines
+    .map((line, i) => `<text x="80" y="${titleY + i * 84}" font-family="DM Serif Display" font-size="72" fill="#FFFFFF">${escapeHtml(line)}</text>`)
+    .join('');
+  const statsY = titleY + (titleLines.length - 1) * 84 + 66;
+
+  return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#004D4D"/>
+      <stop offset="1" stop-color="#007A7A"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="16" height="630" fill="#FF9715"/>
+  <text x="80" y="110" font-family="DM Sans" font-size="30" fill="#FFFFFF" letter-spacing="3">ALTOGETHER AGILE</text>
+  <text x="80" y="225" font-family="DM Sans" font-size="26" fill="#FF9715" letter-spacing="4">FREE PRACTICE EXAM</text>
+  ${titleSvg}
+  <text x="80" y="${statsY}" font-family="DM Sans" font-size="30" fill="#B2DFDF">${escapeHtml(stats)}</text>
+  <text x="80" y="582" font-family="DM Sans" font-size="26" fill="#D9F2F2">altogetheragile.com/exams</text>
+</svg>`;
+}
+
+/** Render an exam's OG card to dist/og/exams/<slug>.png; returns the public URL or null. */
+function writeExamOgImage(exam) {
+  try {
+    const png = new Resvg(examOgSvg(exam), {
+      fitTo: { mode: 'width', value: 1200 },
+      font: { fontFiles: OG_FONTS, loadSystemFonts: false, defaultFontFamily: 'DM Sans' },
+    }).render().asPng();
+    const dir = resolve(DIST, 'og', 'exams');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(resolve(dir, `${exam.slug}.png`), png);
+    return `${SITE_URL}/og/exams/${exam.slug}.png`;
+  } catch (err) {
+    console.warn(`  warn  OG image failed for ${exam.slug}: ${err.message}`);
+    return null;
+  }
 }
 
 function profilePageJsonLd() {
@@ -435,7 +516,7 @@ async function main() {
       .eq('is_published', true),
     supabase
       .from('exams')
-      .select('slug, title, description, updated_at')
+      .select('slug, title, description, updated_at, total_questions, pass_mark, duration_minutes')
       .eq('status', 'published'),
     supabase
       .from('event_templates')
@@ -518,10 +599,12 @@ async function main() {
     const route = `/exams/${exam.slug}`;
     const title = `${exam.title} - Altogether Agile`;
     const description = truncate(exam.description || `Practice exam: ${exam.title}. Free mock exam questions with answers.`);
+    const ogImage = writeExamOgImage(exam);
     const tags = buildMetaTags({
       title,
       description,
       canonical: `${SITE_URL}${route}`,
+      ogImage,
       jsonLd: [
         examJsonLd(exam),
         breadcrumbJsonLd([
