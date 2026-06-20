@@ -3,7 +3,7 @@ import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
   FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, LayoutDashboard,
   Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList,
-  ChevronRight,
+  ChevronRight, Search,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -61,6 +61,7 @@ const navigation: NavGroup[] = [
         ],
       },
       { label: 'Assets', icon: Upload, href: '/admin/assets' },
+      { label: 'SEO', icon: Search, href: '/admin/seo' },
     ],
   },
   {
