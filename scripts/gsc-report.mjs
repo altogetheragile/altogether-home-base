@@ -7,39 +7,58 @@
  */
 
 import { google } from 'googleapis';
-import { readFileSync, existsSync } from 'fs';
+import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { getAuthClient, SITE_URL } from './gsc-auth-client.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CREDS_PATH = resolve(__dirname, 'gsc-credentials.json');
-const TOKEN_PATH = resolve(__dirname, 'gsc-token.json');
-const SITE_URL = 'sc-domain:altogetheragile.com'; // domain property
-
-// ── Auth ────────────────────────────────────────────────────────────
-
-function getAuthClient() {
-  // Prefer env secrets (used by the scheduled remote agent, where the
-  // gitignored credential files are not present); fall back to local files.
-  let creds, token;
-  if (process.env.GSC_CREDENTIALS_JSON && process.env.GSC_TOKEN_JSON) {
-    creds = JSON.parse(process.env.GSC_CREDENTIALS_JSON);
-    token = JSON.parse(process.env.GSC_TOKEN_JSON);
-  } else if (existsSync(CREDS_PATH) && existsSync(TOKEN_PATH)) {
-    creds = JSON.parse(readFileSync(CREDS_PATH, 'utf-8'));
-    token = JSON.parse(readFileSync(TOKEN_PATH, 'utf-8'));
-  } else {
-    console.error('No credentials. Set GSC_CREDENTIALS_JSON + GSC_TOKEN_JSON env vars, or run: node scripts/gsc-auth.mjs');
-    process.exit(1);
-  }
-
-  const { client_id, client_secret } = creds.installed;
-  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, 'http://localhost:3199');
-  oAuth2Client.setCredentials(token);
-  return oAuth2Client;
-}
 
 // ── Helpers ─────────────────────────────────────────────────────────
+
+/** Read an env var, falling back to the project .env file (local runs). */
+function readEnv(name) {
+  if (process.env[name]) return process.env[name];
+  try {
+    const env = readFileSync(resolve(__dirname, '..', '.env'), 'utf-8');
+    const line = env.split('\n').find((l) => l.startsWith(name + '='));
+    return line ? line.slice(name.length + 1).replace(/^['"]|['"]$/g, '').trim() : '';
+  } catch {
+    return '';
+  }
+}
+
+const ORIGIN = 'https://altogetheragile.com';
+
+/** Pages to inspect: fixed hubs plus every published exam and course (from Supabase). */
+async function buildInspectionUrls() {
+  const base = [
+    `${ORIGIN}/`,
+    `${ORIGIN}/blog`,
+    `${ORIGIN}/events`,
+    `${ORIGIN}/coaching`,
+    `${ORIGIN}/exams`,
+    `${ORIGIN}/courses`,
+    `${ORIGIN}/about`,
+  ];
+  const url = readEnv('VITE_SUPABASE_URL');
+  const key = readEnv('VITE_SUPABASE_ANON_KEY');
+  if (!url || !key) return base;
+  try {
+    const supabase = createClient(url, key);
+    const [examsRes, templatesRes] = await Promise.all([
+      supabase.from('exams').select('slug').eq('status', 'published'),
+      supabase.from('event_templates').select('id').eq('is_published', true),
+    ]);
+    const examUrls = (examsRes.data || []).map((e) => `${ORIGIN}/exams/${e.slug}`);
+    const courseUrls = (templatesRes.data || []).map((c) => `${ORIGIN}/courses/${c.id}`);
+    return [...base, ...examUrls, ...courseUrls];
+  } catch (err) {
+    console.warn('  Could not fetch exam/course URLs from Supabase:', err.message);
+    return base;
+  }
+}
 
 function formatNum(n) {
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
@@ -99,21 +118,7 @@ async function performanceByDate(searchconsole) {
   return res.data.rows || [];
 }
 
-async function indexStatus(searchconsole) {
-  // URL inspection for a sample of key pages
-  const urls = [
-    'https://altogetheragile.com/',
-    'https://altogetheragile.com/blog',
-    'https://altogetheragile.com/events',
-    'https://altogetheragile.com/knowledge',
-    'https://altogetheragile.com/coaching',
-    'https://altogetheragile.com/exams',
-    'https://altogetheragile.com/about',
-    'https://altogetheragile.com/blog/ai-adoption-strategy-200-years-old',
-    'https://altogetheragile.com/blog/humans-in-the-loop-cynefin-ai-agents',
-    'https://altogetheragile.com/blog/mvp-thinking-age-of-ai',
-  ];
-
+async function indexStatus(searchconsole, urls) {
   const results = [];
   for (const url of urls) {
     try {
@@ -188,9 +193,10 @@ async function main() {
     }
   }
 
-  // 2. Index status for key pages
+  // 2. Index status for key pages (hubs + every published exam and course)
   console.log('--- Index Status (key pages) ---\n');
-  const indexResults = await indexStatus(searchconsole);
+  const inspectUrls = await buildInspectionUrls();
+  const indexResults = await indexStatus(searchconsole, inspectUrls);
   const colUrl = 40;
   console.log(`  ${'URL'.padEnd(colUrl)} ${'Verdict'.padEnd(12)} ${'Coverage'.padEnd(30)} ${'Last Crawl'.padEnd(12)} Crawled As`);
   console.log(`  ${'-'.repeat(colUrl)} ${'-'.repeat(12)} ${'-'.repeat(30)} ${'-'.repeat(12)} ----------`);
