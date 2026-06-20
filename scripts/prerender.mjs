@@ -516,11 +516,11 @@ async function main() {
       .eq('is_published', true),
     supabase
       .from('exams')
-      .select('slug, title, description, updated_at, total_questions, pass_mark, duration_minutes')
+      .select('slug, title, description, seo_title, seo_description, updated_at, total_questions, pass_mark, duration_minutes')
       .eq('status', 'published'),
     supabase
       .from('event_templates')
-      .select('id, title, description, created_at')
+      .select('id, title, description, seo_title, seo_description, created_at')
       .eq('is_published', true),
   ]);
 
@@ -597,8 +597,8 @@ async function main() {
   // 3. Exams
   for (const exam of exams) {
     const route = `/exams/${exam.slug}`;
-    const title = `${exam.title} - Altogether Agile`;
-    const description = truncate(exam.description || `Practice exam: ${exam.title}. Free mock exam questions with answers.`);
+    const title = `${exam.seo_title || exam.title} - Altogether Agile`;
+    const description = truncate(exam.seo_description || exam.description || `Practice exam: ${exam.title}. Free mock exam questions with answers.`);
     const ogImage = writeExamOgImage(exam);
     const tags = buildMetaTags({
       title,
@@ -622,8 +622,8 @@ async function main() {
   // 5. Course templates
   for (const course of templates) {
     const route = `/courses/${course.id}`;
-    const title = `${course.title} - Altogether Agile`;
-    const description = truncate(course.description || `Agile course: ${course.title}`);
+    const title = `${course.seo_title || course.title} - Altogether Agile`;
+    const description = truncate(course.seo_description || course.description || `Agile course: ${course.title}`);
     const tags = buildMetaTags({
       title,
       description,

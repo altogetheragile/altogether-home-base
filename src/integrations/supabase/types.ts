@@ -1202,6 +1202,8 @@ export type Database = {
           level_id: string | null
           popularity_score: number | null
           prerequisites: string[] | null
+          seo_description: string | null
+          seo_title: string | null
           short_description: string | null
           target_audience: string | null
           template_tags: string[] | null
@@ -1232,6 +1234,8 @@ export type Database = {
           level_id?: string | null
           popularity_score?: number | null
           prerequisites?: string[] | null
+          seo_description?: string | null
+          seo_title?: string | null
           short_description?: string | null
           target_audience?: string | null
           template_tags?: string[] | null
@@ -1262,6 +1266,8 @@ export type Database = {
           level_id?: string | null
           popularity_score?: number | null
           prerequisites?: string[] | null
+          seo_description?: string | null
+          seo_title?: string | null
           short_description?: string | null
           target_audience?: string | null
           template_tags?: string[] | null
@@ -1539,6 +1545,8 @@ export type Database = {
           id: string
           pass_mark: number
           scenario: string | null
+          seo_description: string | null
+          seo_title: string | null
           shuffle: boolean
           slug: string
           status: string
@@ -1553,6 +1561,8 @@ export type Database = {
           id?: string
           pass_mark?: number
           scenario?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           shuffle?: boolean
           slug: string
           status?: string
@@ -1567,6 +1577,8 @@ export type Database = {
           id?: string
           pass_mark?: number
           scenario?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           shuffle?: boolean
           slug?: string
           status?: string
