@@ -39,3 +39,6 @@ bun.lockb
 # Google API credentials
 scripts/gsc-credentials.json
 scripts/gsc-token.json
+
+# Supabase CLI local cache (machine-specific, regenerated on link)
+supabase/.temp/
