@@ -1,0 +1,128 @@
+
+=== Google Search Console Report: altogetheragile.com ===
+
+Period: 2026-05-28 to 2026-06-24
+
+--- Sitemaps ---
+
+  https://altogetheragile.com/sitemap.xml
+    Last submitted: 2026-06-20T11:31:33.181Z
+    Last downloaded: 2026-06-20T11:31:34.642Z
+    Errors: 0, Warnings: 0
+    web: 40 submitted, 0 indexed
+
+--- Index Status (key pages) ---
+
+  URL                                      Verdict      Coverage                       Last Crawl   Crawled As
+  ---------------------------------------- ------------ ------------------------------ ------------ ----------
+  /                                        PASS         Submitted and indexed          2026-06-24   MOBILE
+  /blog                                    PASS         Submitted and indexed          2026-06-22   MOBILE
+  /events                                  PASS         Submitted and indexed          2026-05-17   MOBILE
+  /coaching                                PASS         Submitted and indexed          2026-06-21   MOBILE
+  /exams                                   NEUTRAL      Crawled - currently not indexed 2026-04-02   MOBILE
+  /courses                                 NEUTRAL      URL is unknown to Google       N/A          N/A
+  /about                                   PASS         Submitted and indexed          2026-05-24   MOBILE
+  /exams/agilepm-practitioner-paper-1      NEUTRAL      Crawled - currently not indexed 2026-06-20   MOBILE
+  /exams/professional-scrum-master         NEUTRAL      Crawled - currently not indexed 2026-06-20   MOBILE
+  /exams/agilepm-foundation---paper-2      NEUTRAL      Crawled - currently not indexed 2026-06-20   MOBILE
+  /exams/agilepm-foundation-paper-1        NEUTRAL      Crawled - currently not indexed 2026-06-20   MOBILE
+  /courses/0a8cc86f-9e9a-4f30-9d46-42bf49d8c464 NEUTRAL      Discovered - currently not indexed N/A          CRAWLING_USER_AGENT_UNSPECIFIED
+  /courses/8dd37f68-3f39-4828-8040-cb3a6795ae8f NEUTRAL      URL is unknown to Google       N/A          N/A
+  /courses/07dfb544-7e96-4a23-9406-06a2eee920ea NEUTRAL      URL is unknown to Google       N/A          N/A
+  /courses/d34a6eaa-6eaa-4e1c-aafc-edef6cf8b80b PASS         Submitted and indexed          2026-05-08   MOBILE
+  /courses/44ad3b52-64d5-410e-8d61-e5139ebc912f NEUTRAL      Discovered - currently not indexed N/A          CRAWLING_USER_AGENT_UNSPECIFIED
+  /courses/0659b96b-e7f3-4b07-a336-fa7fefaaf994 PASS         Submitted and indexed          2026-04-25   MOBILE
+  /courses/80903e81-5136-4a42-9a2d-8e1571e7e76d NEUTRAL      URL is unknown to Google       N/A          N/A
+  /courses/d4df7836-09d5-4f9a-a57f-26a87c31b9f3 NEUTRAL      Discovered - currently not indexed N/A          CRAWLING_USER_AGENT_UNSPECIFIED
+  /courses/757ccb59-1f34-4338-9582-756cfdc5a17a PASS         Submitted and indexed          2026-05-05   MOBILE
+  /courses/3941ffb1-cffa-43bd-9663-571da6b2911a PASS         Submitted and indexed          2026-06-24   MOBILE
+
+--- Top 25 Queries ---
+
+  Query                                               Clicks    Impr     CTR    Pos
+  -------------------------------------------------- ------- ------- ------- ------
+  agile ai                                                 0       3    0.0%   59.3
+  agile awareness training                                 0       1    0.0%   64.0
+  agile foundation exam                                    0       5    0.0%   46.8
+  agile innovation workshops                               0      11    0.0%   71.4
+  agile pm foundation exam                                 0      64    0.0%   58.1
+  agile pm test                                            0       2    0.0%   58.0
+  agile practitioners                                      0       6    0.0%   45.7
+  agile project management foundation exam                 0       2    0.0%   60.0
+  agile project management foundation exam questions       0       1    0.0%   47.0
+  agile project management workshop                        0       1    0.0%   67.0
+  agile thinking courses london                            0      38    0.0%   45.7
+  agile thinking training london                           0      38    0.0%   59.6
+  agile thinking trainings                                 0       6    0.0%   40.0
+  agile thinking trainings london                          0      39    0.0%   57.0
+  agile transformation training                            0       5    0.0%   72.8
+  agile transformation workshop                            0       4    0.0%   77.3
+  agile workshop                                           0       6    0.0%   81.3
+  agile workshops                                          0       1    0.0%   48.0
+  agileba foundation                                       0       1    0.0%   32.0
+  agilepm exam only                                        0       1    0.0%   26.0
+  agilepm foundation exam                                  0     113    0.0%   56.7
+  agilepm foundation exam questions                        0       6    0.0%   53.3
+  agilepm foundation practice exam                         0       2    0.0%   31.5
+  agilepm-foundation practice test                         0       2    0.0%   36.5
+  kelley o'connell scrum: the basics course                0       1    0.0%   38.0
+
+--- Top 25 Pages ---
+
+  Page                                                          Clicks    Impr     CTR    Pos
+  ------------------------------------------------------------ ------- ------- ------- ------
+  /                                                                  5      15   33.3%    1.7
+  /about                                                             1      13    7.7%    2.0
+  /events                                                            1     172    0.6%   53.0
+  http://altogetheragile.com/                                        0      11    0.0%   10.2
+  /blog                                                              0       6    0.0%    2.5
+  /blog/ai-adoption-strategy-200-years-old                           0       5    0.0%    7.4
+  /blog/humans-in-the-loop-cynefin-ai-agents                         0       8    0.0%    9.5
+  /blog/mvp-thinking-age-of-ai                                       0       4    0.0%   27.0
+  /blog/pdca-cycle-explained                                         0      11    0.0%    8.7
+  /blog/top-agile-failures                                           0       1    0.0%   20.0
+  /contact                                                           0      10    0.0%    2.1
+  /cookies                                                           0       3    0.0%    4.7
+  /courses/0659b96b-e7f3-4b07-a336-fa7fefaaf994                      0       6    0.0%   31.5
+  /courses/3941ffb1-cffa-43bd-9663-571da6b2911a                      0       4    0.0%   14.0
+  /courses/757ccb59-1f34-4338-9582-756cfdc5a17a                      0       9    0.0%   35.2
+  /courses/d34a6eaa-6eaa-4e1c-aafc-edef6cf8b80b                      0       3    0.0%    2.0
+  /portfolio-items/agilepm-foundation-practice-exam-foundation/       0     207    0.0%   55.7
+  /privacy                                                           0       4    0.0%    3.3
+  /testimonials                                                      0       7    0.0%    3.9
+  https://www.altogetheragile.com/coaching                           0       1    0.0%    6.0
+  https://www.altogetheragile.com/privacy                            0       3    0.0%    1.7
+
+--- Daily Performance (last 28 days) ---
+
+  Date          Clicks    Impr     CTR    Pos
+  ------------ ------- ------- ------- ------
+  2026-05-28         0      25    0.0%   51.2
+  2026-05-29         0      16    0.0%   35.1
+  2026-05-30         0      19    0.0%   48.1
+  2026-05-31         0      28    0.0%   43.7
+  2026-06-01         1      14    7.1%   51.1
+  2026-06-02         0      14    0.0%   66.4
+  2026-06-03         0       7    0.0%   49.6
+  2026-06-04         0      10    0.0%   39.1
+  2026-06-05         0      10    0.0%   48.1
+  2026-06-06         0      27    0.0%   52.6
+  2026-06-07         0      28    0.0%   45.4
+  2026-06-08         0      11    0.0%   57.2
+  2026-06-09         0      11    0.0%   54.8
+  2026-06-10         0      10    0.0%   49.6
+  2026-06-11         0       7    0.0%   50.9
+  2026-06-12         0       5    0.0%   52.2
+  2026-06-13         0       5    0.0%   62.4
+  2026-06-14         0      11    0.0%   62.1
+  2026-06-15         2      44    4.5%   58.2
+  2026-06-16         2      24    8.3%   61.8
+  2026-06-17         1      21    4.8%   57.2
+  2026-06-18         1      31    3.2%   47.0
+  2026-06-19         0      13    0.0%   44.3
+  2026-06-20         0       9    0.0%   42.2
+  2026-06-21         0      17    0.0%   48.4
+  2026-06-22         0       5    0.0%   27.2
+  ──────────── ------- -------
+  TOTAL              7     422
+
