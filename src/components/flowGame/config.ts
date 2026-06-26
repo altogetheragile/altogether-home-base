@@ -48,6 +48,28 @@ export function stageCount(items: { column: ColumnId }[], stage: Specialism): nu
   return items.filter((i) => stageOf(i.column) === stage).length;
 }
 
+/** The column an item must be pulled FROM to fill a given stage's Active lane. */
+const UPSTREAM: Record<Specialism, ColumnId> = {
+  analysis: 'backlog',
+  development: 'analysis-done',
+  test: 'development-done',
+};
+
+/** TWiG "Maximize WIP": a stage that's below its limit while upstream work is
+ *  waiting — i.e. capacity left idle. Returns the first such stage, or null. */
+export function underfilledStage(
+  items: { column: ColumnId }[],
+  wipLimits: Record<Specialism, number> | null,
+): Specialism | null {
+  if (!wipLimits) return null;
+  for (const stage of ACTIVE_COLUMNS) {
+    const below = stageCount(items, stage) < wipLimits[stage];
+    const upstreamHasWork = items.some((i) => i.column === UPSTREAM[stage]);
+    if (below && upstreamHasWork) return stage;
+  }
+  return null;
+}
+
 // ============= Workers =============
 
 export const WORKERS: WorkerDef[] = [

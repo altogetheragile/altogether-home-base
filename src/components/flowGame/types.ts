@@ -118,6 +118,9 @@ export interface RoundState {
   wipLimits: Record<Specialism, number> | null;
   /** When false, WIP limits are shown but not enforced on pulls (TWiG "Enforce WIP"). */
   enforceWip: boolean;
+  /** TWiG "Maximize WIP": the day can't run while a stage is below its limit and
+   *  upstream work is available to pull in — don't leave capacity idle. */
+  maximizeWip: boolean;
   dayPhase: 'assign' | 'results';
 }
 
@@ -136,6 +139,7 @@ export type GameAction =
   | { type: 'REORDER_ITEM'; activeId: string; overId: string }
   | { type: 'SET_WIP'; stage: Specialism; value: number }
   | { type: 'SET_ENFORCE_WIP'; enforce: boolean }
+  | { type: 'SET_MAXIMIZE_WIP'; maximize: boolean }
   | { type: 'ASSIGN_WORKER'; workerId: string; cardId: string }
   | { type: 'UNASSIGN_WORKER'; workerId: string }
   | { type: 'RUN_DAY' }

@@ -14,6 +14,7 @@ function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>)
     // round 2 enforces the limits the player set. Either can be toggled in play.
     wipLimits: wipLimits ?? { ...DEFAULT_WIP_LIMITS },
     enforceWip: roundNumber === 2,
+    maximizeWip: false,
     dayPhase: 'assign',
   };
 }
@@ -84,6 +85,11 @@ function reducer(state: GameState, action: GameAction): GameState {
     case 'SET_ENFORCE_WIP': {
       if (!state.round) return state;
       return { ...state, round: { ...state.round, enforceWip: action.enforce } };
+    }
+
+    case 'SET_MAXIMIZE_WIP': {
+      if (!state.round) return state;
+      return { ...state, round: { ...state.round, maximizeWip: action.maximize } };
     }
 
     case 'ASSIGN_WORKER': {
@@ -189,6 +195,7 @@ export function useFlowGame() {
   const reorderItem = useCallback((activeId: string, overId: string) => dispatch({ type: 'REORDER_ITEM', activeId, overId }), []);
   const setWip = useCallback((stage: Specialism, value: number) => dispatch({ type: 'SET_WIP', stage, value }), []);
   const setEnforceWip = useCallback((enforce: boolean) => dispatch({ type: 'SET_ENFORCE_WIP', enforce }), []);
+  const setMaximizeWip = useCallback((maximize: boolean) => dispatch({ type: 'SET_MAXIMIZE_WIP', maximize }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_DAY' }), []);
   const nextDay = useCallback(() => dispatch({ type: 'NEXT_DAY' }), []);
 
@@ -217,6 +224,7 @@ export function useFlowGame() {
     reorderItem,
     setWip,
     setEnforceWip,
+    setMaximizeWip,
     assignWorker,
     unassignWorker,
     runDay,

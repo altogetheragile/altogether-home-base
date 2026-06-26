@@ -14,6 +14,7 @@ export default function FlowGame() {
     reorderItem,
     setWip,
     setEnforceWip,
+    setMaximizeWip,
     assignWorker,
     unassignWorker,
     runDay,
@@ -40,6 +41,7 @@ export default function FlowGame() {
             onUnassignWorker={unassignWorker}
             onSetWip={setWip}
             onSetEnforceWip={setEnforceWip}
+            onSetMaximizeWip={setMaximizeWip}
             onRunDay={runDay}
             onNextDay={nextDay}
           />

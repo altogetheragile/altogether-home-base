@@ -8,7 +8,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import type { RoundState, Specialism } from './types';
-import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf } from './config';
+import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf, underfilledStage } from './config';
 import { StageColumn } from './StageColumn';
 import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
@@ -51,6 +51,7 @@ interface BoardViewProps {
   onUnassignWorker: (workerId: string) => void;
   onSetWip: (stage: Specialism, value: number) => void;
   onSetEnforceWip: (enforce: boolean) => void;
+  onSetMaximizeWip: (maximize: boolean) => void;
   onRunDay: () => void;
   onNextDay: () => void;
 }
@@ -63,6 +64,7 @@ export function BoardView({
   onUnassignWorker,
   onSetWip,
   onSetEnforceWip,
+  onSetMaximizeWip,
   onRunDay,
   onNextDay,
 }: BoardViewProps) {
@@ -120,6 +122,9 @@ export function BoardView({
   const items = round.items;
   const backlogItems = items.filter((i) => i.column === 'backlog');
   const doneItems = items.filter((i) => i.column === 'done');
+  // Maximize WIP: block Run Day while a stage is below its limit with work waiting.
+  const blockedStage = round.maximizeWip ? underfilledStage(items, round.wipLimits) : null;
+  const stageLabel = blockedStage ? STAGES.find((s) => s.stage === blockedStage)?.label : null;
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] p-4 gap-3">
@@ -148,20 +153,26 @@ export function BoardView({
 
         <div className="shrink-0 flex items-center gap-3">
           {round.wipLimits && (
-            <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={round.enforceWip}
-                onChange={(e) => onSetEnforceWip(e.target.checked)}
-                className="accent-primary"
-              />
-              Enforce WIP
-            </label>
+            <div className="flex flex-col gap-0.5">
+              <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none">
+                <input type="checkbox" checked={round.enforceWip} onChange={(e) => onSetEnforceWip(e.target.checked)} className="accent-primary" />
+                Enforce WIP
+              </label>
+              <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none">
+                <input type="checkbox" checked={round.maximizeWip} onChange={(e) => onSetMaximizeWip(e.target.checked)} className="accent-primary" />
+                Maximize WIP
+              </label>
+            </div>
           )}
           {canInteract && (
-            <Button onClick={onRunDay} size="lg" disabled={round.assignments.length === 0}>
-              Run Day
-            </Button>
+            <div className="flex flex-col items-end gap-0.5">
+              <Button onClick={onRunDay} size="lg" disabled={round.assignments.length === 0 || !!blockedStage}>
+                Run Day
+              </Button>
+              {blockedStage && (
+                <span className="text-[10px] text-amber-700 leading-tight">Fill {stageLabel} to its WIP limit first</span>
+              )}
+            </div>
           )}
         </div>
       </div>

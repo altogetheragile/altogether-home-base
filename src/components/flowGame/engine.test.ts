@@ -19,6 +19,7 @@ function round(items: WorkItem[], over: Partial<RoundState> = {}): RoundState {
     dayHistory: [],
     wipLimits: null,
     enforceWip: false,
+    maximizeWip: false,
     dayPhase: 'assign',
     ...over,
   };
