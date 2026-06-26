@@ -100,6 +100,13 @@ export function StageColumn({
         </div>
       </div>
 
+      {/* Breach nudge — the teaching cue: drain, don't dodge */}
+      {isOver && enforceWip && (
+        <div className="border-x border-destructive bg-destructive/10 text-destructive text-[10px] font-medium text-center py-0.5 px-2 leading-tight">
+          Over WIP — finish something before starting more
+        </div>
+      )}
+
       {/* Active | Done lanes */}
       <div className={cn('grid grid-cols-2 gap-px flex-1 border rounded-b-lg overflow-hidden', isOver && enforceWip ? 'border-destructive' : 'border-border')}>
         <Lane id={colId(stage, 'active')} title="Active" active>
