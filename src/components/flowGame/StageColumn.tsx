@@ -109,7 +109,7 @@ export function StageColumn({
 
       {/* Active | Done lanes */}
       <div className={cn('grid grid-cols-2 gap-px flex-1 border rounded-b-lg overflow-hidden', isOver && enforceWip ? 'border-destructive' : 'border-border')}>
-        <Lane id={colId(stage, 'active')} title="Active" active>
+        <Lane id={`lane:${colId(stage, 'active')}`} title="Active" active>
           {activeItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-3">—</div>}
           {activeItems.map((item) => (
             <WorkItemCard
@@ -119,11 +119,12 @@ export function StageColumn({
               currentDay={currentDay}
               isSelected={!!selectedWorkerId && canInteract}
               onClick={() => canInteract && onAssignCard(item.id)}
+              draggable={canInteract}
             />
           ))}
         </Lane>
 
-        <Lane id={colId(stage, 'done')} title="Done ✓">
+        <Lane id={`lane:${colId(stage, 'done')}`} title="Done ✓">
           {doneItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-3">—</div>}
           {doneItems.map((item) => (
             <WorkItemCard

@@ -1,4 +1,4 @@
-import { useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { WorkItem, WorkerAssignment, Specialism } from './types';
 import { WORKERS, ACTIVE_COLUMNS, stageOf, laneOf } from './config';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,8 @@ interface WorkItemCardProps {
   onClick: () => void;
   /** Current day, used to show the item's age while it's in flow. */
   currentDay?: number;
-  /** When true the card can be dragged to pull it onward. */
+  /** When true the card can be dragged (to pull/reorder) and is a drop target
+   *  (for reordering and for assigning a dragged worker). */
   draggable?: boolean;
 }
 
@@ -47,7 +48,10 @@ function EffortPips({ item }: { item: WorkItem }) {
 }
 
 export function WorkItemCard({ item, assignments, isSelected, onClick, currentDay, draggable }: WorkItemCardProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: item.id, disabled: !draggable });
+  const drag = useDraggable({ id: `card:${item.id}`, disabled: !draggable });
+  const drop = useDroppable({ id: `card:${item.id}`, disabled: !draggable });
+  const { attributes, listeners, isDragging } = drag;
+  const setNodeRef = (node: HTMLElement | null) => { drag.setNodeRef(node); drop.setNodeRef(node); };
   const cardAssignments = assignments.filter((a) => a.cardId === item.id);
   const stage = stageOf(item.column);
   const isActive = laneOf(item.column) === 'active';
@@ -66,6 +70,7 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, currentDa
         'w-full rounded-md border p-1.5 transition-all text-sm select-none',
         draggable && 'cursor-grab active:cursor-grabbing',
         isDragging && 'opacity-40',
+        drop.isOver && !isDragging && 'ring-2 ring-primary/60',
         isSelected && 'ring-2 ring-primary border-primary',
         item.blocked && 'border-destructive bg-destructive/5',
         !item.blocked && !isSelected && 'border-border bg-card',

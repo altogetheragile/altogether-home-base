@@ -133,6 +133,7 @@ export interface GameState {
 export type GameAction =
   | { type: 'START_ROUND'; roundNumber: 1 | 2; wipLimits?: Record<Specialism, number> }
   | { type: 'PULL_ITEM'; cardId: string }
+  | { type: 'REORDER_ITEM'; activeId: string; overId: string }
   | { type: 'SET_WIP'; stage: Specialism; value: number }
   | { type: 'SET_ENFORCE_WIP'; enforce: boolean }
   | { type: 'ASSIGN_WORKER'; workerId: string; cardId: string }

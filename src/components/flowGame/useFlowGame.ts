@@ -61,6 +61,19 @@ function reducer(state: GameState, action: GameAction): GameState {
       return { ...state, round: { ...state.round, items } };
     }
 
+    case 'REORDER_ITEM': {
+      if (!state.round) return state;
+      const items = [...state.round.items];
+      const ai = items.findIndex((i) => i.id === action.activeId);
+      const oi = items.findIndex((i) => i.id === action.overId);
+      if (ai < 0 || oi < 0 || ai === oi) return state;
+      if (items[ai].column !== items[oi].column) return state; // reorder within a lane only
+      const [moved] = items.splice(ai, 1);
+      const dest = items.findIndex((i) => i.id === action.overId);
+      items.splice(dest, 0, moved);
+      return { ...state, round: { ...state.round, items } };
+    }
+
     case 'SET_WIP': {
       if (!state.round) return state;
       const base = state.round.wipLimits ?? { analysis: 3, development: 3, test: 3 };
@@ -173,6 +186,7 @@ export function useFlowGame() {
   );
 
   const pullItem = useCallback((cardId: string) => dispatch({ type: 'PULL_ITEM', cardId }), []);
+  const reorderItem = useCallback((activeId: string, overId: string) => dispatch({ type: 'REORDER_ITEM', activeId, overId }), []);
   const setWip = useCallback((stage: Specialism, value: number) => dispatch({ type: 'SET_WIP', stage, value }), []);
   const setEnforceWip = useCallback((enforce: boolean) => dispatch({ type: 'SET_ENFORCE_WIP', enforce }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_DAY' }), []);
@@ -200,6 +214,7 @@ export function useFlowGame() {
   return {
     state,
     pullItem,
+    reorderItem,
     setWip,
     setEnforceWip,
     assignWorker,

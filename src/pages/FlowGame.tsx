@@ -11,6 +11,7 @@ export default function FlowGame() {
   const {
     state,
     pullItem,
+    reorderItem,
     setWip,
     setEnforceWip,
     assignWorker,
@@ -34,6 +35,7 @@ export default function FlowGame() {
           <BoardView
             round={state.round}
             onPullItem={pullItem}
+            onReorderItem={reorderItem}
             onAssignWorker={assignWorker}
             onUnassignWorker={unassignWorker}
             onSetWip={setWip}

@@ -8,7 +8,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import type { RoundState, Specialism } from './types';
-import { DAYS_PER_ROUND, STAGES, pullTarget } from './config';
+import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf } from './config';
 import { StageColumn } from './StageColumn';
 import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
@@ -21,7 +21,7 @@ import type { WorkItem, WorkerAssignment } from './types';
  *  it's a child component (a useDroppable hook in BoardView's body would sit
  *  outside the context it renders and never register). */
 function DoneColumn({ items, assignments, canInteract }: { items: WorkItem[]; assignments: WorkerAssignment[]; canInteract: boolean }) {
-  const { setNodeRef, isOver } = useDroppable({ id: 'done', disabled: !canInteract });
+  const { setNodeRef, isOver } = useDroppable({ id: 'lane:done', disabled: !canInteract });
   return (
     <div className="flex flex-col w-[150px] shrink-0">
       <div className="rounded-t-lg px-2 py-2 border border-b-0 bg-muted border-border">
@@ -46,6 +46,7 @@ function DoneColumn({ items, assignments, canInteract }: { items: WorkItem[]; as
 interface BoardViewProps {
   round: RoundState;
   onPullItem: (cardId: string) => void;
+  onReorderItem: (activeId: string, overId: string) => void;
   onAssignWorker: (workerId: string, cardId: string) => void;
   onUnassignWorker: (workerId: string) => void;
   onSetWip: (stage: Specialism, value: number) => void;
@@ -57,6 +58,7 @@ interface BoardViewProps {
 export function BoardView({
   round,
   onPullItem,
+  onReorderItem,
   onAssignWorker,
   onUnassignWorker,
   onSetWip,
@@ -77,14 +79,40 @@ export function BoardView({
   const handleSelectWorker = (workerId: string) =>
     setSelectedWorkerId((prev) => (prev === workerId ? null : workerId));
 
-  // Drop a dragged card onto a lane: only pull if it landed on the item's valid next zone.
+  // One handler routes three gestures by id namespace:
+  //   worker:<id> -> card:<id>  = assign a worker to an active card
+  //   card:<id>   -> lane:<col> = pull the card onward (if a valid next zone)
+  //   card:<id>   -> card:<id>  = reorder within the same lane
   const handleDragEnd = (e: DragEndEvent) => {
-    const cardId = String(e.active.id);
+    const active = String(e.active.id);
     const over = e.over?.id ? String(e.over.id) : null;
     if (!over) return;
-    const item = round.items.find((i) => i.id === cardId);
-    if (!item) return;
-    if (pullTarget(item.column) === over) onPullItem(cardId);
+
+    if (active.startsWith('worker:')) {
+      if (over.startsWith('card:')) {
+        const workerId = active.slice('worker:'.length);
+        const cardId = over.slice('card:'.length);
+        const item = round.items.find((i) => i.id === cardId);
+        if (item && laneOf(item.column) === 'active') onAssignWorker(workerId, cardId);
+      }
+      return;
+    }
+
+    if (active.startsWith('card:')) {
+      const cardId = active.slice('card:'.length);
+      const item = round.items.find((i) => i.id === cardId);
+      if (!item) return;
+      if (over.startsWith('lane:')) {
+        if (pullTarget(item.column) === over.slice('lane:'.length)) onPullItem(cardId);
+      } else if (over.startsWith('card:')) {
+        const overId = over.slice('card:'.length);
+        if (overId === cardId) return;
+        const overItem = round.items.find((i) => i.id === overId);
+        if (!overItem) return;
+        if (overItem.column === item.column) onReorderItem(cardId, overId); // same lane → reorder
+        else if (pullTarget(item.column) === overItem.column) onPullItem(cardId); // dropped onto a card in the target lane → pull
+      }
+    }
   };
 
   const lastSummary = round.dayHistory[round.dayHistory.length - 1];
@@ -95,6 +123,8 @@ export function BoardView({
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] p-4 gap-3">
+      {/* DndContext spans the worker pool AND the board so pawns can be dragged onto cards */}
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       {/* Top bar */}
       <div className="flex items-center gap-4 flex-wrap shrink-0">
         <div className="shrink-0">
@@ -137,7 +167,6 @@ export function BoardView({
       </div>
 
       {/* Board */}
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="flex gap-2 overflow-x-auto flex-1 min-h-0 pb-2">
           {/* Backlog — narrow single column; cards drag into Analysis */}
           <div className="flex flex-col w-[150px] shrink-0">
