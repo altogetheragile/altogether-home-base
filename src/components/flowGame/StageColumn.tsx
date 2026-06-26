@@ -18,6 +18,34 @@ interface StageColumnProps {
   onSetWip: (stage: Specialism, value: number) => void;
 }
 
+/** Segmented capacity bar — limit slots that fill as work enters the stage, with
+ *  red overflow slots when WIP is breached. Makes the limit feel physical. */
+function CapacityBar({ total, limit, enforced }: { total: number; limit: number; enforced: boolean }) {
+  const filled = Math.min(total, limit);
+  const over = Math.max(0, total - limit);
+  const atLimit = total >= limit;
+  return (
+    <div className="flex items-stretch gap-0.5 h-2" aria-hidden>
+      {Array.from({ length: limit }).map((_, i) => (
+        <div
+          key={`s${i}`}
+          className={cn(
+            'flex-1 h-2 rounded-sm',
+            i < filled
+              ? atLimit
+                ? over > 0 && enforced ? 'bg-destructive' : 'bg-amber-500'
+                : 'bg-primary'
+              : 'bg-muted-foreground/15',
+          )}
+        />
+      ))}
+      {Array.from({ length: over }).map((_, i) => (
+        <div key={`o${i}`} className="flex-1 h-2 rounded-sm bg-destructive" />
+      ))}
+    </div>
+  );
+}
+
 function Lane({ id, title, active, children }: { id: string; title: string; active?: boolean; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id, disabled: !active });
   return (
@@ -99,6 +127,18 @@ export function StageColumn({
           )}
         </div>
       </div>
+
+      {/* Capacity bar — the WIP limit made physical (P3: feel the limit) */}
+      {wipLimit != null && (
+        <div
+          className={cn(
+            'border-x px-2 py-1',
+            isOver && enforceWip ? 'border-destructive bg-destructive/5' : 'border-border bg-muted/40',
+          )}
+        >
+          <CapacityBar total={total} limit={wipLimit} enforced={enforceWip} />
+        </div>
+      )}
 
       {/* Breach nudge — the teaching cue: drain, don't dodge */}
       {isOver && enforceWip && (
