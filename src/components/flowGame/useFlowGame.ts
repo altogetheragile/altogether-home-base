@@ -1,5 +1,5 @@
 import { useReducer, useCallback } from 'react';
-import type { GameState, GameAction, RoundState, Specialism } from './types';
+import type { GameState, GameAction, RoundState, Specialism, Prediction } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
 import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, pullTarget, stageOf, stageCount } from './config';
 
@@ -24,6 +24,7 @@ const initialState: GameState = {
   round: null,
   round1Metrics: null,
   round2Metrics: null,
+  prediction: null,
 };
 
 function reducer(state: GameState, action: GameAction): GameState {
@@ -167,6 +168,9 @@ function reducer(state: GameState, action: GameAction): GameState {
       return { ...state, phase: 'metrics-final', round2Metrics: action.metrics };
     }
 
+    case 'SET_PREDICTION':
+      return { ...state, prediction: action.prediction };
+
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
 
@@ -210,6 +214,11 @@ export function useFlowGame() {
     []
   );
 
+  const setPrediction = useCallback(
+    (prediction: Prediction) => dispatch({ type: 'SET_PREDICTION', prediction }),
+    []
+  );
+
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   const getUnassignedWorkers = useCallback(() => {
@@ -231,6 +240,7 @@ export function useFlowGame() {
     nextDay,
     startRound,
     setPhase,
+    setPrediction,
     reset,
     getUnassignedWorkers,
   };

@@ -124,11 +124,16 @@ export interface RoundState {
   dayPhase: 'assign' | 'results';
 }
 
+/** Player's pre-reveal guess for how Round 2's avg cycle time compares to Round 1. */
+export type Prediction = 'lower' | 'same' | 'higher';
+
 export interface GameState {
   phase: GamePhase;
   round: RoundState | null;
   round1Metrics: RoundMetrics | null;
   round2Metrics: RoundMetrics | null;
+  /** Captured on the WIP-setup screen before Round 2; revealed against the result. */
+  prediction: Prediction | null;
 }
 
 // ============= Actions =============
@@ -145,5 +150,6 @@ export type GameAction =
   | { type: 'RUN_DAY' }
   | { type: 'NEXT_DAY' }
   | { type: 'END_ROUND'; metrics: RoundMetrics }
+  | { type: 'SET_PREDICTION'; prediction: Prediction }
   | { type: 'SET_PHASE'; phase: GamePhase }
   | { type: 'RESET' };

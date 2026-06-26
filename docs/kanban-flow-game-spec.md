@@ -164,3 +164,29 @@ Match AltogetherAgile brand conventions:
 - Game state should be a single serialisable object (for Supabase later)
 - Worker and card data should come from a config object (easy to swap in EPR scenario)
 - Metrics calculation should be a pure function (testable, reusable for multiplayer analytics)
+
+---
+
+## Phase 2 Enhancements (TWiG-inspired)
+
+Built after the first live release to deepen the learning, modelled on the TWiG
+(The WIP Game) reference. Implemented on `feat/flow-game-p3-p6`.
+
+- **Pull flow + split lanes.** Each active stage is split into Active and Done
+  lanes; the player pulls work forward by drag-and-drop (no system auto-move).
+- **Editable + enforceable WIP** with two TWiG toggles: *Enforce WIP* (pulls into
+  a full stage are blocked) and *Maximize WIP* (the day cannot be run while a
+  stage sits below its limit with upstream work waiting - do not leave capacity
+  idle).
+- **In-round Reports panel** - live throughput / WIP / cycle-time / CFD plus an
+  Aging Work Items list (in-flight items oldest-first, red past 8 days).
+- **P3 - Feel the WIP limit.** A segmented capacity bar per stage fills as work
+  enters: primary under the limit, amber at the limit, red overflow when breached.
+- **P4 - Idle-worker & bottleneck visibility.** Worker pool shows "N idle"; a
+  stage that is full with work queued in front of it gets a "Bottleneck" badge.
+- **P5 - Predict-then-reveal + interactive Little's Law.** Before Round 2 the
+  player commits to a directional guess (cycle time Lower / Same / Higher); the
+  result screen reveals guess vs actual. A slider-driven Little's Law calculator
+  lets them feel cycle time = WIP / throughput.
+- **P6 - Seeded randomness + debrief.** Both rounds face the same blocker/dice
+  sequence so the comparison is fair, plus a short end-of-game debrief. (Planned.)

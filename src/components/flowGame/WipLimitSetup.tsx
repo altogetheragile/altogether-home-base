@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { Specialism } from './types';
+import type { Specialism, Prediction } from './types';
 import { DEFAULT_WIP_LIMITS, ACTIVE_COLUMNS } from './config';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const COLUMN_LABELS: Record<Specialism, string> = {
   analysis: 'Analysis',
@@ -9,18 +10,32 @@ const COLUMN_LABELS: Record<Specialism, string> = {
   test: 'Test',
 };
 
+const PREDICTIONS: { value: Prediction; label: string }[] = [
+  { value: 'lower', label: 'Lower' },
+  { value: 'same', label: 'About the same' },
+  { value: 'higher', label: 'Higher' },
+];
+
 interface WipLimitSetupProps {
+  round1CycleTime: number;
   onStart: (limits: Record<Specialism, number>) => void;
+  onPredict: (prediction: Prediction) => void;
 }
 
-export function WipLimitSetup({ onStart }: WipLimitSetupProps) {
+export function WipLimitSetup({ round1CycleTime, onStart, onPredict }: WipLimitSetupProps) {
   const [limits, setLimits] = useState<Record<Specialism, number>>({ ...DEFAULT_WIP_LIMITS });
+  const [prediction, setPrediction] = useState<Prediction | null>(null);
 
   const updateLimit = (col: Specialism, delta: number) => {
     setLimits((prev) => ({
       ...prev,
       [col]: Math.max(1, Math.min(10, prev[col] + delta)),
     }));
+  };
+
+  const handleStart = () => {
+    if (prediction) onPredict(prediction);
+    onStart(limits);
   };
 
   return (
@@ -54,9 +69,46 @@ export function WipLimitSetup({ onStart }: WipLimitSetupProps) {
         ))}
       </div>
 
-      <Button size="lg" onClick={() => onStart(limits)} className="text-lg px-8 py-6">
+      {/* Predict-then-reveal: commit to a guess before playing Round 2 */}
+      <div className="border-t pt-6 space-y-3">
+        <p className="font-medium">
+          Make a prediction first
+        </p>
+        <p className="text-sm text-muted-foreground">
+          In Round 1 your average cycle time was{' '}
+          <strong>{round1CycleTime.toFixed(1)} days</strong>. With these WIP limits, Round 2's
+          average cycle time will be:
+        </p>
+        <div className="flex justify-center gap-2">
+          {PREDICTIONS.map((p) => (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => setPrediction(p.value)}
+              className={cn(
+                'px-4 py-2 rounded-md border text-sm font-medium transition-colors',
+                prediction === p.value
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card hover:bg-muted border-border',
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Button
+        size="lg"
+        onClick={handleStart}
+        disabled={!prediction}
+        className="text-lg px-8 py-6"
+      >
         Start Round 2
       </Button>
+      {!prediction && (
+        <p className="text-xs text-muted-foreground -mt-4">Pick a prediction to continue</p>
+      )}
     </div>
   );
 }

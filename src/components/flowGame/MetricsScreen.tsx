@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ScatterChart, Scatter, LineChart, Line,
 } from 'recharts';
-import type { RoundMetrics, GamePhase } from './types';
+import type { RoundMetrics, GamePhase, Prediction } from './types';
 import { CumulativeFlowDiagram } from './CumulativeFlowDiagram';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,8 +12,88 @@ interface MetricsScreenProps {
   round1Metrics: RoundMetrics;
   round2Metrics: RoundMetrics | null;
   phase: GamePhase;
+  prediction?: Prediction | null;
   onContinue: () => void;
   onPlayAgain: () => void;
+}
+
+const PREDICTION_LABELS: Record<Prediction, string> = {
+  lower: 'Lower',
+  same: 'About the same',
+  higher: 'Higher',
+};
+
+/** Classify the actual Round 2 vs Round 1 cycle-time outcome (0.5d dead-band = "same"). */
+function actualDirection(r1: number, r2: number): Prediction {
+  const delta = r2 - r1;
+  if (Math.abs(delta) <= 0.5) return 'same';
+  return delta < 0 ? 'lower' : 'higher';
+}
+
+/** Reveal the player's prediction against what actually happened. */
+function PredictionReveal({ prediction, r1, r2 }: { prediction: Prediction; r1: number; r2: number }) {
+  const actual = actualDirection(r1, r2);
+  const correct = prediction === actual;
+  return (
+    <div
+      className={cn(
+        'border rounded-lg p-4 max-w-2xl mx-auto text-center space-y-1',
+        correct ? 'border-emerald-300 bg-emerald-50' : 'border-amber-300 bg-amber-50',
+      )}
+    >
+      <p className="font-bold">
+        {correct ? 'You called it.' : 'Not quite.'}
+      </p>
+      <p className="text-sm">
+        You predicted Round 2's cycle time would be <strong>{PREDICTION_LABELS[prediction].toLowerCase()}</strong>.
+        It came out <strong>{PREDICTION_LABELS[actual].toLowerCase()}</strong> ({r1.toFixed(1)}d → {r2.toFixed(1)}d).
+      </p>
+    </div>
+  );
+}
+
+/** Interactive Little's Law: drag WIP / throughput, watch cycle time fall out. */
+function LittlesLawCalculator({ defaultWip, defaultThroughput }: { defaultWip: number; defaultThroughput: number }) {
+  const [wip, setWip] = useState(Math.max(1, Math.round(defaultWip)));
+  const [thr, setThr] = useState(Math.max(1, Math.round(defaultThroughput * 10)) / 10);
+  const cycleTime = thr > 0 ? wip / thr : 0;
+  return (
+    <div className="bg-muted/50 border rounded-lg p-6 space-y-4 max-w-2xl mx-auto">
+      <h3 className="text-lg font-bold text-center">Try it yourself</h3>
+      <p className="text-center text-sm text-muted-foreground">
+        Drag the sliders. Cycle time is just WIP divided by throughput - lower your WIP and
+        cycle time drops.
+      </p>
+      <div className="space-y-3">
+        <div>
+          <div className="flex justify-between text-sm font-medium mb-1">
+            <span>Average WIP</span>
+            <span className="font-mono">{wip} items</span>
+          </div>
+          <input
+            type="range" min={1} max={20} step={1} value={wip}
+            onChange={(e) => setWip(Number(e.target.value))}
+            className="w-full accent-primary"
+          />
+        </div>
+        <div>
+          <div className="flex justify-between text-sm font-medium mb-1">
+            <span>Throughput</span>
+            <span className="font-mono">{thr.toFixed(1)} items/day</span>
+          </div>
+          <input
+            type="range" min={0.1} max={5} step={0.1} value={thr}
+            onChange={(e) => setThr(Number(e.target.value))}
+            className="w-full accent-primary"
+          />
+        </div>
+      </div>
+      <div className="text-center font-mono text-sm pt-2 border-t">
+        <span className="text-muted-foreground">Cycle Time = {wip} / {thr.toFixed(1)} = </span>
+        <span className="text-xl font-bold text-primary">{cycleTime.toFixed(1)} days</span>
+      </div>
+    </div>
+  );
 }
 
 function MetricsPanel({ metrics, label, color }: { metrics: RoundMetrics; label: string; color: string }) {
@@ -66,7 +146,7 @@ function MetricsPanel({ metrics, label, color }: { metrics: RoundMetrics; label:
   );
 }
 
-export function MetricsScreen({ round1Metrics, round2Metrics, phase, onContinue, onPlayAgain }: MetricsScreenProps) {
+export function MetricsScreen({ round1Metrics, round2Metrics, phase, prediction, onContinue, onPlayAgain }: MetricsScreenProps) {
   const [showCfd, setShowCfd] = useState(false);
   const isFinal = phase === 'metrics-final';
 
@@ -75,6 +155,15 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, onContinue,
       <h2 className="text-3xl font-bold text-center">
         {isFinal ? 'Round Comparison' : 'Round 1 Results'}
       </h2>
+
+      {/* Predict-then-reveal (P5): how did the player's guess hold up? */}
+      {isFinal && prediction && round2Metrics && (
+        <PredictionReveal
+          prediction={prediction}
+          r1={round1Metrics.averageCycleTime}
+          r2={round2Metrics.averageCycleTime}
+        />
+      )}
 
       {/* Side-by-side panels */}
       <div className={cn('flex gap-8', isFinal ? 'flex-col lg:flex-row' : 'justify-center')}>
@@ -129,6 +218,12 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, onContinue,
           </div>
         )}
       </div>
+
+      {/* Interactive Little's Law (P5) - seeded from the latest round's numbers */}
+      <LittlesLawCalculator
+        defaultWip={(round2Metrics ?? round1Metrics).averageWip}
+        defaultThroughput={(round2Metrics ?? round1Metrics).throughputRate}
+      />
 
       {/* Dig deeper - CFD */}
       <div className="max-w-2xl mx-auto">
