@@ -163,6 +163,7 @@ export function BoardView({
               wipLimits={round.wipLimits}
               enforceWip={round.enforceWip}
               canInteract={canInteract}
+              currentDay={round.day}
               selectedWorkerId={selectedWorkerId}
               onAssignCard={handleAssignCard}
               onSetWip={onSetWip}

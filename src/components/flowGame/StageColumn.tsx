@@ -12,6 +12,7 @@ interface StageColumnProps {
   wipLimits: Record<Specialism, number> | null;
   enforceWip: boolean;
   canInteract: boolean;
+  currentDay: number;
   selectedWorkerId: string | null;
   onAssignCard: (cardId: string) => void;
   onSetWip: (stage: Specialism, value: number) => void;
@@ -42,6 +43,7 @@ export function StageColumn({
   wipLimits,
   enforceWip,
   canInteract,
+  currentDay,
   selectedWorkerId,
   onAssignCard,
   onSetWip,
@@ -107,6 +109,7 @@ export function StageColumn({
               key={item.id}
               item={item}
               assignments={assignments}
+              currentDay={currentDay}
               isSelected={!!selectedWorkerId && canInteract}
               onClick={() => canInteract && onAssignCard(item.id)}
             />
@@ -120,6 +123,7 @@ export function StageColumn({
               key={item.id}
               item={item}
               assignments={assignments}
+              currentDay={currentDay}
               isSelected={false}
               onClick={() => {}}
               draggable={canInteract}

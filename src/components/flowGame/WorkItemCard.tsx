@@ -15,6 +15,8 @@ interface WorkItemCardProps {
   assignments: WorkerAssignment[];
   isSelected: boolean;
   onClick: () => void;
+  /** Current day, used to show the item's age while it's in flow. */
+  currentDay?: number;
   /** When true the card can be dragged to pull it onward. */
   draggable?: boolean;
 }
@@ -44,11 +46,16 @@ function EffortPips({ item }: { item: WorkItem }) {
   );
 }
 
-export function WorkItemCard({ item, assignments, isSelected, onClick, draggable }: WorkItemCardProps) {
+export function WorkItemCard({ item, assignments, isSelected, onClick, currentDay, draggable }: WorkItemCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: item.id, disabled: !draggable });
   const cardAssignments = assignments.filter((a) => a.cardId === item.id);
   const stage = stageOf(item.column);
   const isActive = laneOf(item.column) === 'active';
+  // Age = days since it left the backlog, while still in flow.
+  const age =
+    item.startDay != null && item.endDay == null && currentDay != null
+      ? currentDay - item.startDay + 1
+      : null;
 
   return (
     <div
@@ -66,9 +73,16 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, draggable
     >
       <div className="flex items-center justify-between gap-1">
         <span className="font-medium truncate text-xs">{item.title}</span>
-        {item.blocked && (
-          <span className="shrink-0 text-[9px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded">BLOCKED</span>
-        )}
+        <span className="shrink-0 flex items-center gap-1">
+          {item.blocked && (
+            <span className="text-[9px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded">BLOCKED</span>
+          )}
+          {age != null && (
+            <span className={cn('text-[9px] font-medium', age >= 8 ? 'text-destructive' : 'text-muted-foreground')}>
+              {age}d
+            </span>
+          )}
+        </span>
       </div>
 
       {item.column !== 'done' && <EffortPips item={item} />}

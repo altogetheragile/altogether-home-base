@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, RoundState, Specialism } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, WORKERS, pullTarget, stageOf, stageCount } from './config';
+import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, pullTarget, stageOf, stageCount } from './config';
 
 function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>): RoundState {
   return {
@@ -10,8 +10,10 @@ function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>)
     items: createItems(),
     assignments: [],
     dayHistory: [],
-    wipLimits: wipLimits ?? null,
-    enforceWip: !!wipLimits, // round 2 enforces by default; round 1 has no limits
+    // Limits are always editable; round 1 starts with them OFF (the chaos baseline),
+    // round 2 enforces the limits the player set. Either can be toggled in play.
+    wipLimits: wipLimits ?? { ...DEFAULT_WIP_LIMITS },
+    enforceWip: roundNumber === 2,
     dayPhase: 'assign',
   };
 }
