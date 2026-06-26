@@ -13,6 +13,7 @@ import { StageColumn } from './StageColumn';
 import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
 import { DaySummary } from './DaySummary';
+import { RoundReport } from './RoundReport';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { WorkItem, WorkerAssignment } from './types';
@@ -152,6 +153,7 @@ export function BoardView({
         </div>
 
         <div className="shrink-0 flex items-center gap-3">
+          <RoundReport round={round} />
           {round.wipLimits && (
             <div className="flex flex-col gap-0.5">
               <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none">
