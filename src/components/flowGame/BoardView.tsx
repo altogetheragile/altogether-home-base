@@ -8,7 +8,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import type { RoundState, Specialism } from './types';
-import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf, underfilledStage } from './config';
+import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf, underfilledStage, bottleneckStage } from './config';
 import { StageColumn } from './StageColumn';
 import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
@@ -126,6 +126,8 @@ export function BoardView({
   // Maximize WIP: block Run Day while a stage is below its limit with work waiting.
   const blockedStage = round.maximizeWip ? underfilledStage(items, round.wipLimits) : null;
   const stageLabel = blockedStage ? STAGES.find((s) => s.stage === blockedStage)?.label : null;
+  // Bottleneck: a full stage with work queued in front of it (P4: see where flow stalls).
+  const bottleneck = bottleneckStage(items, round.wipLimits);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] p-4 gap-3">
@@ -204,6 +206,7 @@ export function BoardView({
               assignments={round.assignments}
               wipLimits={round.wipLimits}
               enforceWip={round.enforceWip}
+              isBottleneck={bottleneck === s.stage}
               canInteract={canInteract}
               currentDay={round.day}
               selectedWorkerId={selectedWorkerId}

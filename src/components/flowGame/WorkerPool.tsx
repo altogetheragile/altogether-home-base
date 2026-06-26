@@ -77,8 +77,20 @@ function WorkerPawn({
 
 export function WorkerPool({ assignments, selectedWorkerId, onSelectWorker, onUnassign, disabled }: WorkerPoolProps) {
   const assignedIds = new Set(assignments.map((a) => a.workerId));
+  const idle = WORKERS.length - assignedIds.size;
   return (
     <div className="flex items-center gap-3">
+      {!disabled && (
+        <span
+          className={cn(
+            'text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap shrink-0',
+            idle > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800',
+          )}
+          title="Workers not assigned to a card today sit idle and do no work."
+        >
+          {idle > 0 ? `${idle} idle` : 'All working'}
+        </span>
+      )}
       <div className="flex gap-2 flex-wrap justify-center">
         {WORKERS.map((worker) => (
           <WorkerPawn

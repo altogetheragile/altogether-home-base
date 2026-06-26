@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics } from './engine';
-import { stageOf, laneOf, colId, pullTarget, stageCount } from './config';
+import { stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData } from './types';
 
 /** Force the d6 to a known value (rollDie = floor(random*6)+1). */
@@ -45,6 +45,41 @@ describe('flow game config helpers', () => {
     // Active lanes and Done are not player-pullable.
     expect(pullTarget('analysis-active')).toBeNull();
     expect(pullTarget('done')).toBeNull();
+  });
+
+  it('underfilledStage flags a stage below its limit with upstream work (Maximize WIP)', () => {
+    const items = createItems(); // all 20 in backlog
+    const limits = { analysis: 3, development: 3, test: 3 };
+    // Analysis is empty (0/3) with a full backlog upstream -> underfilled.
+    expect(underfilledStage(items, limits)).toBe('analysis');
+    // Fill analysis to its limit (all Active, nothing handed to analysis-done yet);
+    // now no stage is underfilled — dev/test have no upstream work waiting.
+    items[0].column = 'analysis-active';
+    items[1].column = 'analysis-active';
+    items[2].column = 'analysis-active';
+    expect(underfilledStage(items, limits)).toBeNull();
+    // Hand one analysis item to its Done lane -> development is now underfilled (fed).
+    items[2].column = 'analysis-done';
+    expect(underfilledStage(items, limits)).toBe('development');
+    // No limits -> never underfilled.
+    expect(underfilledStage(items, null)).toBeNull();
+  });
+
+  it('bottleneckStage flags a full stage with work queued in front of it', () => {
+    const items = createItems();
+    const limits = { analysis: 3, development: 2, test: 3 };
+    // Development is full (2/2) and Analysis-Done has work waiting to enter it.
+    items[0].column = 'development-active';
+    items[1].column = 'development-active';
+    items[2].column = 'analysis-done';
+    items[3].column = 'analysis-done';
+    expect(bottleneckStage(items, limits)).toBe('development');
+    // Drain development below its limit -> no longer the constraint.
+    items[1].column = 'development-done'; // still counts toward dev stage... keep it full
+    // Move one dev item onward to test so development stageCount drops to 1 (< 2).
+    items[1].column = 'test-active';
+    expect(bottleneckStage(items, limits)).toBeNull();
+    expect(bottleneckStage(items, null)).toBeNull();
   });
 
   it('stageCount counts both lanes of a stage (what WIP caps)', () => {

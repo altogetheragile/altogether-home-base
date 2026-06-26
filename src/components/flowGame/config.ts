@@ -70,6 +70,27 @@ export function underfilledStage(
   return null;
 }
 
+/** The bottleneck stage: one that's at/over its WIP limit while work is queued
+ *  directly in front of it (it can't accept more, so flow stalls there). Returns
+ *  the most-starved such stage, or null. Needs limits to define "full". */
+export function bottleneckStage(
+  items: { column: ColumnId }[],
+  wipLimits: Record<Specialism, number> | null,
+): Specialism | null {
+  if (!wipLimits) return null;
+  let best: Specialism | null = null;
+  let bestQueue = 0;
+  for (const stage of ACTIVE_COLUMNS) {
+    const full = stageCount(items, stage) >= wipLimits[stage];
+    const queue = items.filter((i) => i.column === UPSTREAM[stage]).length;
+    if (full && queue > bestQueue) {
+      best = stage;
+      bestQueue = queue;
+    }
+  }
+  return best;
+}
+
 // ============= Workers =============
 
 export const WORKERS: WorkerDef[] = [

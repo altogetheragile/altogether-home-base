@@ -11,6 +11,7 @@ interface StageColumnProps {
   assignments: WorkerAssignment[];
   wipLimits: Record<Specialism, number> | null;
   enforceWip: boolean;
+  isBottleneck?: boolean;
   canInteract: boolean;
   currentDay: number;
   selectedWorkerId: string | null;
@@ -70,6 +71,7 @@ export function StageColumn({
   assignments,
   wipLimits,
   enforceWip,
+  isBottleneck,
   canInteract,
   currentDay,
   selectedWorkerId,
@@ -92,7 +94,17 @@ export function StageColumn({
           isOver && enforceWip ? 'bg-destructive/10 border-destructive' : 'bg-muted border-border',
         )}
       >
-        <h3 className="font-semibold text-sm">{label}</h3>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <h3 className="font-semibold text-sm">{label}</h3>
+          {isBottleneck && (
+            <span
+              className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-orange-500 text-white whitespace-nowrap"
+              title="This stage is full while work queues in front of it — it's limiting your flow."
+            >
+              Bottleneck
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
