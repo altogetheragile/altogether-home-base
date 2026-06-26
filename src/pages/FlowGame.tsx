@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 export default function FlowGame() {
   const {
     state,
+    pullItem,
     assignWorker,
     unassignWorker,
     runDay,
@@ -30,6 +31,7 @@ export default function FlowGame() {
         return (
           <BoardView
             round={state.round}
+            onPullItem={pullItem}
             onAssignWorker={assignWorker}
             onUnassignWorker={unassignWorker}
             onRunDay={runDay}

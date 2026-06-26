@@ -4,7 +4,6 @@ import type {
   DaySummaryData,
   RoundMetrics,
   RoundState,
-  Specialism,
   ColumnId,
   ColumnSnapshot,
 } from './types';
@@ -14,6 +13,9 @@ import {
   OFF_SPEC_MULTIPLIER,
   BLOCKER_CHANCE,
   BLOCKER_EFFORT,
+  stageOf,
+  laneOf,
+  colId,
 } from './config';
 
 // ============= Item Factory =============
@@ -35,9 +37,12 @@ export function createItems(): WorkItem[] {
 // ============= Snapshot =============
 
 export function snapshotColumns(items: WorkItem[]): ColumnSnapshot {
+  // Aggregate the split lanes back to one band per stage so the CFD stays readable.
   const snap: ColumnSnapshot = { backlog: 0, analysis: 0, development: 0, test: 0, done: 0 };
   for (const item of items) {
-    snap[item.column]++;
+    if (item.column === 'backlog') snap.backlog++;
+    else if (item.column === 'done') snap.done++;
+    else snap[stageOf(item.column)!]++;
   }
   return snap;
 }
@@ -53,11 +58,12 @@ export function rollDie(): number {
 export function applyBlockers(items: WorkItem[], _day: number): { items: WorkItem[]; blockedIds: string[] } {
   const blockedIds: string[] = [];
   const updated = items.map((item) => {
-    if (item.column === 'backlog' || item.column === 'done' || item.blocked) return item;
+    // Only items actively being worked (an Active lane) can get blocked.
+    if (laneOf(item.column) !== 'active' || item.blocked) return item;
     if (Math.random() < BLOCKER_CHANCE) {
-      const column = item.column as Specialism;
+      const stage = stageOf(item.column)!;
       blockedIds.push(item.id);
-      return { ...item, blocked: true, blockerEffort: BLOCKER_EFFORT[column] };
+      return { ...item, blocked: true, blockerEffort: BLOCKER_EFFORT[stage] };
     }
     return item;
   });
@@ -66,13 +72,6 @@ export function applyBlockers(items: WorkItem[], _day: number): { items: WorkIte
 
 // ============= Day Simulation =============
 
-function nextColumn(column: ColumnId): ColumnId | null {
-  const order: ColumnId[] = ['backlog', 'analysis', 'development', 'test', 'done'];
-  const idx = order.indexOf(column);
-  if (idx < 0 || idx >= order.length - 1) return null;
-  return order[idx + 1];
-}
-
 export function applyDayBlockers(state: RoundState): { items: WorkItem[]; blockedIds: string[] } {
   return applyBlockers(state.items, state.day);
 }
@@ -80,8 +79,10 @@ export function applyDayBlockers(state: RoundState): { items: WorkItem[]; blocke
 export function simulateDay(state: RoundState): { items: WorkItem[]; summary: DaySummaryData } {
   const day = state.day;
 
-  // Blockers were already applied before assignment phase — don't re-apply
-  // Step 1: Process worker assignments
+  // Blockers were already applied before the assignment phase — don't re-apply.
+  // Workers do their effort; an item that finishes its stage drops into that
+  // stage's Done lane (waiting to be PULLED onward — the player decides that,
+  // not the engine). No cross-stage advance, no auto-pull from backlog.
   const rolls: DayRollResult[] = [];
   const workingItems = state.items.map((item) => ({ ...item }));
   const blockersCleared: string[] = [];
@@ -91,23 +92,17 @@ export function simulateDay(state: RoundState): { items: WorkItem[]; summary: Da
     if (!worker) continue;
 
     const item = workingItems.find((i) => i.id === assignment.cardId);
-    if (!item || item.column === 'backlog' || item.column === 'done') continue;
+    // Workers can only act on items in an Active lane.
+    if (!item || laneOf(item.column) !== 'active') continue;
 
+    const stage = stageOf(item.column)!;
     const roll = rollDie();
-    const column = item.column as Specialism;
-    const isSpecialist = worker.specialism === column;
+    const isSpecialist = worker.specialism === stage;
     const multiplier = isSpecialist ? 1 : OFF_SPEC_MULTIPLIER;
     const effectiveWork = Math.round(roll * multiplier);
 
-    rolls.push({
-      workerId: worker.id,
-      cardId: item.id,
-      roll,
-      effectiveWork,
-      isSpecialist,
-    });
+    rolls.push({ workerId: worker.id, cardId: item.id, roll, effectiveWork, isSpecialist });
 
-    // If blocked, apply work to blocker first
     if (item.blocked) {
       item.blockerEffort = Math.max(0, item.blockerEffort - effectiveWork);
       if (item.blockerEffort <= 0) {
@@ -116,39 +111,16 @@ export function simulateDay(state: RoundState): { items: WorkItem[]; summary: Da
         blockersCleared.push(item.id);
       }
     } else {
-      // Apply work to current column's effort
-      item.effortRemaining[column] = Math.max(0, item.effortRemaining[column] - effectiveWork);
+      item.effortRemaining[stage] = Math.max(0, item.effortRemaining[stage] - effectiveWork);
     }
   }
 
-  // Step 3: Move completed items forward & track completions
-  // Respect WIP limits when advancing items between columns
-  const wipLimits = state.wipLimits;
-  const itemsCompleted: string[] = [];
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const item of workingItems) {
-      if (item.column === 'backlog' || item.column === 'done') continue;
-      const col = item.column as Specialism;
-      if (item.effortRemaining[col] <= 0 && !item.blocked) {
-        const next = nextColumn(item.column);
-        if (!next) continue;
-        // Enforce WIP limit on the destination column (not done — done is unlimited)
-        if (next !== 'done' && wipLimits) {
-          const destCount = workingItems.filter((i) => i.column === next).length;
-          if (destCount >= wipLimits[next as Specialism]) continue; // blocked by WIP limit
-        }
-        item.column = next;
-        if (item.startDay === null && next !== 'backlog') {
-          item.startDay = day;
-        }
-        if (next === 'done') {
-          item.endDay = day;
-          itemsCompleted.push(item.id);
-        }
-        changed = true;
-      }
+  // Finished-this-stage → move to the stage's Done lane (intra-stage only).
+  for (const item of workingItems) {
+    if (laneOf(item.column) !== 'active' || item.blocked) continue;
+    const stage = stageOf(item.column)!;
+    if (item.effortRemaining[stage] <= 0) {
+      item.column = colId(stage, 'done');
     }
   }
 
@@ -157,7 +129,7 @@ export function simulateDay(state: RoundState): { items: WorkItem[]; summary: Da
     summary: {
       day,
       rolls,
-      itemsCompleted,
+      itemsCompleted: [], // completion now happens via the player's PULL to Done
       blockersApplied: [],
       blockersCleared,
       columnSnapshot: snapshotColumns(workingItems),
@@ -168,11 +140,11 @@ export function simulateDay(state: RoundState): { items: WorkItem[]; summary: Da
 // ============= Metrics Calculation =============
 
 export function calculateMetrics(dayHistory: DaySummaryData[], items: WorkItem[], totalDays: number): RoundMetrics {
-  // Throughput per day
-  const throughputPerDay = Array.from({ length: totalDays }, (_, i) => {
-    const daySummary = dayHistory.find((d) => d.day === i + 1);
-    return daySummary ? daySummary.itemsCompleted.length : 0;
-  });
+  // Throughput per day — items now reach Done via the player's PULL, so count by
+  // each item's endDay rather than the (now empty) per-day itemsCompleted list.
+  const throughputPerDay = Array.from({ length: totalDays }, (_, i) =>
+    items.filter((it) => it.endDay === i + 1).length,
+  );
 
   // Cycle time per completed item
   const completedItems = items.filter((i) => i.endDay !== null && i.startDay !== null);

@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, RoundState, Specialism } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, WORKERS } from './config';
+import { DAYS_PER_ROUND, WORKERS, pullTarget, stageOf, stageCount } from './config';
 
 function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>): RoundState {
   return {
@@ -25,19 +25,33 @@ const initialState: GameState = {
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'START_ROUND': {
+      // Everything starts in the backlog — the PLAYER pulls work in (no auto-pull).
       const round = createRound(action.roundNumber, action.wipLimits);
-      // Pull first few items into analysis
-      let pullCount = action.wipLimits ? action.wipLimits.analysis : 3;
-      pullCount = Math.min(pullCount, round.items.length);
-      for (let i = 0; i < pullCount; i++) {
-        round.items[i].column = 'analysis';
-        round.items[i].startDay = 1;
-      }
-      // Apply blockers for day 1 so the player sees them before assigning
-      const { items: blockedItems } = applyDayBlockers({ ...round, items: round.items });
-      round.items = blockedItems;
       const phase = action.roundNumber === 1 ? 'playing-round-1' : 'playing-round-2';
       return { ...state, phase, round };
+    }
+
+    case 'PULL_ITEM': {
+      if (!state.round || state.round.dayPhase !== 'assign') return state;
+      const item = state.round.items.find((i) => i.id === action.cardId);
+      if (!item) return state;
+      const dest = pullTarget(item.column);
+      if (!dest) return state; // not a pullable position
+      // WIP limit (round 2): a stage's Active+Done together can't exceed its limit.
+      const destStage = stageOf(dest);
+      const limits = state.round.wipLimits;
+      if (destStage && limits && stageCount(state.round.items, destStage) >= limits[destStage]) {
+        return state; // stage full — finish something before starting more
+      }
+      const day = state.round.day;
+      const items = state.round.items.map((i) => {
+        if (i.id !== action.cardId) return i;
+        const next = { ...i, column: dest };
+        if (i.column === 'backlog') next.startDay = day; // first time it enters flow
+        if (dest === 'done') next.endDay = day;
+        return next;
+      });
+      return { ...state, round: { ...state.round, items } };
     }
 
     case 'ASSIGN_WORKER': {
@@ -89,24 +103,9 @@ function reducer(state: GameState, action: GameAction): GameState {
         return { ...state, phase: 'metrics-final', round2Metrics: metrics };
       }
 
-      // Pull items from backlog into analysis where there's space
+      // No auto-pull — the player pulls work in during the assignment phase.
+      // Just roll the day forward and surface new blockers on active work.
       const items = state.round.items.map((item) => ({ ...item }));
-      const wipLimits = state.round.wipLimits;
-
-      const backlogItems = items.filter((i) => i.column === 'backlog');
-      const analysisCount = items.filter((i) => i.column === 'analysis').length;
-      // No WIP limits (round 1): pull up to 3 per day so WIP balloons
-      // With WIP limits: respect the limit
-      const maxPull = wipLimits
-        ? Math.max(0, wipLimits.analysis - analysisCount)
-        : Math.max(0, 3);
-      const pullCount = Math.min(maxPull, backlogItems.length);
-      for (let i = 0; i < pullCount; i++) {
-        backlogItems[i].column = 'analysis';
-        backlogItems[i].startDay = nextDay;
-      }
-
-      // Apply blockers for the new day so the player sees them before assigning
       const roundForBlockers: RoundState = { ...state.round, day: nextDay, items };
       const { items: blockedItems } = applyDayBlockers(roundForBlockers);
 
@@ -154,6 +153,7 @@ export function useFlowGame() {
     []
   );
 
+  const pullItem = useCallback((cardId: string) => dispatch({ type: 'PULL_ITEM', cardId }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_DAY' }), []);
   const nextDay = useCallback(() => dispatch({ type: 'NEXT_DAY' }), []);
 
@@ -178,6 +178,7 @@ export function useFlowGame() {
 
   return {
     state,
+    pullItem,
     assignWorker,
     unassignWorker,
     runDay,

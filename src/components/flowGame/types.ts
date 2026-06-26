@@ -1,6 +1,18 @@
 // ============= Column & Board =============
 
-export type ColumnId = 'backlog' | 'analysis' | 'development' | 'test' | 'done';
+// Each active stage is split into an Active lane (being worked) and a Done lane
+// (finished this stage, waiting to be PULLED to the next stage by the player).
+export type ColumnId =
+  | 'backlog'
+  | 'analysis-active'
+  | 'analysis-done'
+  | 'development-active'
+  | 'development-done'
+  | 'test-active'
+  | 'test-done'
+  | 'done';
+
+export type Lane = 'active' | 'done';
 
 export interface ColumnDef {
   id: ColumnId;
@@ -118,6 +130,7 @@ export interface GameState {
 
 export type GameAction =
   | { type: 'START_ROUND'; roundNumber: 1 | 2; wipLimits?: Record<Specialism, number> }
+  | { type: 'PULL_ITEM'; cardId: string }
   | { type: 'ASSIGN_WORKER'; workerId: string; cardId: string }
   | { type: 'UNASSIGN_WORKER'; workerId: string }
   | { type: 'RUN_DAY' }

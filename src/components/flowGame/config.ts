@@ -1,16 +1,52 @@
-import type { ColumnDef, WorkerDef, WorkItemDef, Specialism } from './types';
+import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism } from './types';
 
 // ============= Columns =============
 
 export const COLUMNS: ColumnDef[] = [
   { id: 'backlog', label: 'Backlog', type: 'queue' },
-  { id: 'analysis', label: 'Analysis', type: 'active' },
-  { id: 'development', label: 'Development', type: 'active' },
-  { id: 'test', label: 'Test', type: 'active' },
+  { id: 'analysis-active', label: 'Analysis', type: 'active' },
+  { id: 'analysis-done', label: 'Analysis Done', type: 'active' },
+  { id: 'development-active', label: 'Development', type: 'active' },
+  { id: 'development-done', label: 'Development Done', type: 'active' },
+  { id: 'test-active', label: 'Test', type: 'active' },
+  { id: 'test-done', label: 'Test Done', type: 'active' },
   { id: 'done', label: 'Done', type: 'output' },
 ];
 
 export const ACTIVE_COLUMNS: Specialism[] = ['analysis', 'development', 'test'];
+
+// Board layout: Backlog, three two-lane stages, then Done.
+export const STAGES: { stage: Specialism; label: string }[] = [
+  { stage: 'analysis', label: 'Analysis' },
+  { stage: 'development', label: 'Development' },
+  { stage: 'test', label: 'Test' },
+];
+
+// ── Column helpers (pure) ──
+export function stageOf(col: ColumnId): Specialism | null {
+  if (col === 'backlog' || col === 'done') return null;
+  return col.split('-')[0] as Specialism;
+}
+export function laneOf(col: ColumnId): Lane | null {
+  if (col === 'backlog' || col === 'done') return null;
+  return col.endsWith('-active') ? 'active' : 'done';
+}
+export const colId = (stage: Specialism, lane: Lane): ColumnId => `${stage}-${lane}` as ColumnId;
+
+/** Where a PULLABLE item goes next (player-driven). null = not pullable. */
+export function pullTarget(col: ColumnId): ColumnId | null {
+  switch (col) {
+    case 'backlog': return 'analysis-active';
+    case 'analysis-done': return 'development-active';
+    case 'development-done': return 'test-active';
+    case 'test-done': return 'done';
+    default: return null; // active lanes & done are not pullable
+  }
+}
+/** Count of items in a stage (both lanes) — what the WIP limit caps. */
+export function stageCount(items: { column: ColumnId }[], stage: Specialism): number {
+  return items.filter((i) => stageOf(i.column) === stage).length;
+}
 
 // ============= Workers =============
 
