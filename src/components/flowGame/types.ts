@@ -116,6 +116,8 @@ export interface RoundState {
   assignments: WorkerAssignment[];
   dayHistory: DaySummaryData[];
   wipLimits: Record<Specialism, number> | null;
+  /** When false, WIP limits are shown but not enforced on pulls (TWiG "Enforce WIP"). */
+  enforceWip: boolean;
   dayPhase: 'assign' | 'results';
 }
 
@@ -131,6 +133,8 @@ export interface GameState {
 export type GameAction =
   | { type: 'START_ROUND'; roundNumber: 1 | 2; wipLimits?: Record<Specialism, number> }
   | { type: 'PULL_ITEM'; cardId: string }
+  | { type: 'SET_WIP'; stage: Specialism; value: number }
+  | { type: 'SET_ENFORCE_WIP'; enforce: boolean }
   | { type: 'ASSIGN_WORKER'; workerId: string; cardId: string }
   | { type: 'UNASSIGN_WORKER'; workerId: string }
   | { type: 'RUN_DAY' }

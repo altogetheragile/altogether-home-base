@@ -11,6 +11,8 @@ export default function FlowGame() {
   const {
     state,
     pullItem,
+    setWip,
+    setEnforceWip,
     assignWorker,
     unassignWorker,
     runDay,
@@ -34,6 +36,8 @@ export default function FlowGame() {
             onPullItem={pullItem}
             onAssignWorker={assignWorker}
             onUnassignWorker={unassignWorker}
+            onSetWip={setWip}
+            onSetEnforceWip={setEnforceWip}
             onRunDay={runDay}
             onNextDay={nextDay}
           />

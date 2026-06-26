@@ -11,6 +11,7 @@ function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>)
     assignments: [],
     dayHistory: [],
     wipLimits: wipLimits ?? null,
+    enforceWip: !!wipLimits, // round 2 enforces by default; round 1 has no limits
     dayPhase: 'assign',
   };
 }
@@ -37,10 +38,14 @@ function reducer(state: GameState, action: GameAction): GameState {
       if (!item) return state;
       const dest = pullTarget(item.column);
       if (!dest) return state; // not a pullable position
-      // WIP limit (round 2): a stage's Active+Done together can't exceed its limit.
+      // WIP limit: a stage's Active+Done together can't exceed its limit — but only
+      // when enforcement is on (the player can toggle it, TWiG-style).
       const destStage = stageOf(dest);
       const limits = state.round.wipLimits;
-      if (destStage && limits && stageCount(state.round.items, destStage) >= limits[destStage]) {
+      if (
+        state.round.enforceWip && destStage && limits &&
+        stageCount(state.round.items, destStage) >= limits[destStage]
+      ) {
         return state; // stage full — finish something before starting more
       }
       const day = state.round.day;
@@ -52,6 +57,18 @@ function reducer(state: GameState, action: GameAction): GameState {
         return next;
       });
       return { ...state, round: { ...state.round, items } };
+    }
+
+    case 'SET_WIP': {
+      if (!state.round) return state;
+      const base = state.round.wipLimits ?? { analysis: 3, development: 3, test: 3 };
+      const value = Math.max(1, Math.min(20, action.value));
+      return { ...state, round: { ...state.round, wipLimits: { ...base, [action.stage]: value } } };
+    }
+
+    case 'SET_ENFORCE_WIP': {
+      if (!state.round) return state;
+      return { ...state, round: { ...state.round, enforceWip: action.enforce } };
     }
 
     case 'ASSIGN_WORKER': {
@@ -154,6 +171,8 @@ export function useFlowGame() {
   );
 
   const pullItem = useCallback((cardId: string) => dispatch({ type: 'PULL_ITEM', cardId }), []);
+  const setWip = useCallback((stage: Specialism, value: number) => dispatch({ type: 'SET_WIP', stage, value }), []);
+  const setEnforceWip = useCallback((enforce: boolean) => dispatch({ type: 'SET_ENFORCE_WIP', enforce }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_DAY' }), []);
   const nextDay = useCallback(() => dispatch({ type: 'NEXT_DAY' }), []);
 
@@ -179,6 +198,8 @@ export function useFlowGame() {
   return {
     state,
     pullItem,
+    setWip,
+    setEnforceWip,
     assignWorker,
     unassignWorker,
     runDay,
