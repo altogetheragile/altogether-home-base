@@ -118,6 +118,10 @@ export const BLOCKER_EFFORT: Record<Specialism, number> = {
 export const DAYS_PER_ROUND = 20;
 export const ITEMS_PER_ROUND = 20;
 
+/** Shared RNG seed for both rounds — fixes the variability so the WIP-limit
+ *  effect, not luck, drives the difference between Round 1 and Round 2. */
+export const FLOW_SEED = 0x9e3779b1;
+
 // ============= Work Items =============
 
 function makeItem(index: number): WorkItemDef {

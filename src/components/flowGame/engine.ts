@@ -49,18 +49,37 @@ export function snapshotColumns(items: WorkItem[]): ColumnSnapshot {
 
 // ============= Dice & Randomness =============
 
-export function rollDie(): number {
-  return Math.floor(Math.random() * 6) + 1;
+/** A pure RNG keyed by arbitrary parts. Same key + same seed → same value, so a
+ *  given (day, item, worker) draws identically in BOTH rounds: the variability
+ *  is held fixed and only the player's WIP decisions change the outcome. */
+export type Rng = (...parts: (string | number)[]) => number;
+
+export function makeSeededRng(seed: number): Rng {
+  return (...parts) => {
+    let h = seed >>> 0;
+    const str = parts.join('|');
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 0x01000193) >>> 0;
+    }
+    h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+    h ^= h >>> 13;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
+/** Roll a d6 from the seeded stream, keyed so the draw is reproducible. */
+export function rollDie(rng: Rng, ...key: (string | number)[]): number {
+  return Math.floor(rng(...key) * 6) + 1;
 }
 
 // ============= Blocker Logic =============
 
-export function applyBlockers(items: WorkItem[], _day: number): { items: WorkItem[]; blockedIds: string[] } {
+export function applyBlockers(items: WorkItem[], day: number, rng: Rng): { items: WorkItem[]; blockedIds: string[] } {
   const blockedIds: string[] = [];
   const updated = items.map((item) => {
     // Only items actively being worked (an Active lane) can get blocked.
     if (laneOf(item.column) !== 'active' || item.blocked) return item;
-    if (Math.random() < BLOCKER_CHANCE) {
+    if (rng(day, item.id, 'blocker') < BLOCKER_CHANCE) {
       const stage = stageOf(item.column)!;
       blockedIds.push(item.id);
       return { ...item, blocked: true, blockerEffort: BLOCKER_EFFORT[stage] };
@@ -73,10 +92,10 @@ export function applyBlockers(items: WorkItem[], _day: number): { items: WorkIte
 // ============= Day Simulation =============
 
 export function applyDayBlockers(state: RoundState): { items: WorkItem[]; blockedIds: string[] } {
-  return applyBlockers(state.items, state.day);
+  return applyBlockers(state.items, state.day, makeSeededRng(state.seed));
 }
 
-export function simulateDay(state: RoundState): { items: WorkItem[]; summary: DaySummaryData } {
+export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.seed)): { items: WorkItem[]; summary: DaySummaryData } {
   const day = state.day;
 
   // Blockers were already applied before the assignment phase — don't re-apply.
@@ -96,7 +115,7 @@ export function simulateDay(state: RoundState): { items: WorkItem[]; summary: Da
     if (!item || laneOf(item.column) !== 'active') continue;
 
     const stage = stageOf(item.column)!;
-    const roll = rollDie();
+    const roll = rollDie(rng, day, item.id, worker.id);
     const isSpecialist = worker.specialism === stage;
     const multiplier = isSpecialist ? 1 : OFF_SPEC_MULTIPLIER;
     const effectiveWork = Math.round(roll * multiplier);

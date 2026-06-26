@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, RoundState, Specialism, Prediction } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, pullTarget, stageOf, stageCount } from './config';
+import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, FLOW_SEED, pullTarget, stageOf, stageCount } from './config';
 
 function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>): RoundState {
   return {
@@ -15,6 +15,7 @@ function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>)
     wipLimits: wipLimits ?? { ...DEFAULT_WIP_LIMITS },
     enforceWip: roundNumber === 2,
     maximizeWip: false,
+    seed: FLOW_SEED,
     dayPhase: 'assign',
   };
 }

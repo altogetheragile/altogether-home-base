@@ -52,6 +52,45 @@ function PredictionReveal({ prediction, r1, r2 }: { prediction: Prediction; r1: 
   );
 }
 
+/** End-of-game debrief: plain-language takeaways from the two rounds. */
+function Debrief({ r1, r2 }: { r1: RoundMetrics; r2: RoundMetrics }) {
+  const cycleDelta = r1.averageCycleTime - r2.averageCycleTime; // +ve = faster in R2
+  const wipDelta = r1.averageWip - r2.averageWip; // +ve = less WIP in R2
+  const doneDelta = r2.totalCompleted - r1.totalCompleted; // +ve = more done in R2
+  const dir = (v: number, faster: string, slower: string, same: string) =>
+    Math.abs(v) <= 0.5 ? same : v > 0 ? faster : slower;
+
+  const points = [
+    `Average WIP went from ${r1.averageWip.toFixed(1)} to ${r2.averageWip.toFixed(1)} items - ${dir(
+      wipDelta, 'less work in progress at once', 'more work in progress at once', 'about the same WIP',
+    )}.`,
+    `Average cycle time went from ${r1.averageCycleTime.toFixed(1)} to ${r2.averageCycleTime.toFixed(1)} days - ${dir(
+      cycleDelta, 'items flowed through faster', 'items took longer', 'roughly unchanged',
+    )}.`,
+    `Items completed went from ${r1.totalCompleted} to ${r2.totalCompleted} - ${dir(
+      doneDelta, 'more finished work', 'less finished work', 'a similar amount',
+    )}.`,
+  ];
+
+  return (
+    <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 space-y-3 max-w-2xl mx-auto">
+      <h3 className="text-lg font-bold text-center">Debrief</h3>
+      <ul className="space-y-2 text-sm">
+        {points.map((pt, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="text-primary font-bold">•</span>
+            <span>{pt}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-sm text-muted-foreground text-center pt-2 border-t">
+        Same work, same people, same luck - both rounds ran the same simulation. The only thing
+        you changed was how much work you allowed in progress. That is the lever WIP limits give you.
+      </p>
+    </div>
+  );
+}
+
 /** Interactive Little's Law: drag WIP / throughput, watch cycle time fall out. */
 function LittlesLawCalculator({ defaultWip, defaultThroughput }: { defaultWip: number; defaultThroughput: number }) {
   const [wip, setWip] = useState(Math.max(1, Math.round(defaultWip)));
@@ -241,6 +280,9 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, prediction,
           </div>
         )}
       </div>
+
+      {/* Debrief (P6) - plain-language takeaways from the fair comparison */}
+      {isFinal && round2Metrics && <Debrief r1={round1Metrics} r2={round2Metrics} />}
 
       {/* Actions */}
       <div className="flex justify-center gap-4">

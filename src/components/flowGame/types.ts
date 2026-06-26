@@ -121,6 +121,9 @@ export interface RoundState {
   /** TWiG "Maximize WIP": the day can't run while a stage is below its limit and
    *  upstream work is available to pull in — don't leave capacity idle. */
   maximizeWip: boolean;
+  /** Seed for the round's deterministic RNG. Both rounds share a seed so the
+   *  variability (dice, blockers) is held fixed and only WIP decisions differ. */
+  seed: number;
   dayPhase: 'assign' | 'results';
 }
 

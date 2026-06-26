@@ -1,14 +1,17 @@
-import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createItems, simulateDay, applyBlockers, calculateMetrics } from './engine';
+import { describe, it, expect } from 'vitest';
+import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
+import type { Rng } from './engine';
 import { stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData } from './types';
 
-/** Force the d6 to a known value (rollDie = floor(random*6)+1). */
-function mockRoll(value: number) {
-  // value 1..6 -> random in [(v-1)/6, v/6); pick the midpoint
-  vi.spyOn(Math, 'random').mockReturnValue((value - 0.5) / 6);
+/** A stub RNG that makes every d6 roll a known value (rollDie = floor(rng*6)+1). */
+function fixedRoll(value: number): Rng {
+  return () => (value - 0.5) / 6; // midpoint of the bucket that maps to `value`
 }
-afterEach(() => vi.restoreAllMocks());
+/** A stub RNG returning a constant 0..1 (e.g. 0 always blocks, 1 never blocks). */
+function fixedRng(value: number): Rng {
+  return () => value;
+}
 
 function round(items: WorkItem[], over: Partial<RoundState> = {}): RoundState {
   return {
@@ -20,6 +23,7 @@ function round(items: WorkItem[], over: Partial<RoundState> = {}): RoundState {
     wipLimits: null,
     enforceWip: false,
     maximizeWip: false,
+    seed: 1,
     dayPhase: 'assign',
     ...over,
   };
@@ -112,9 +116,9 @@ describe('simulateDay — worker effort', () => {
     const item = items[0];
     item.column = 'analysis-active';
     item.effortRemaining = { analysis: 6, development: 6, test: 6 };
-    mockRoll(4);
     const { items: out } = simulateDay(
       round([item], { assignments: [{ workerId: 'w1', cardId: item.id }] }), // w1 = analysis specialist
+      fixedRoll(4),
     );
     expect(out[0].effortRemaining.analysis).toBe(2); // 6 - 4
     expect(out[0].column).toBe('analysis-active'); // not finished, stays active
@@ -125,9 +129,9 @@ describe('simulateDay — worker effort', () => {
     const item = items[0];
     item.column = 'analysis-active';
     item.effortRemaining = { analysis: 10, development: 6, test: 6 };
-    mockRoll(5);
     const { items: out } = simulateDay(
       round([item], { assignments: [{ workerId: 'w3', cardId: item.id }] }), // w3 = development (off-spec here)
+      fixedRoll(5),
     );
     // round(5 * 0.6) = round(3) = 3
     expect(out[0].effortRemaining.analysis).toBe(7);
@@ -138,9 +142,9 @@ describe('simulateDay — worker effort', () => {
     const item = items[0];
     item.column = 'development-active';
     item.effortRemaining = { analysis: 0, development: 3, test: 6 };
-    mockRoll(6); // 6 >= 3 -> finishes development
     const { items: out } = simulateDay(
       round([item], { assignments: [{ workerId: 'w3', cardId: item.id }] }),
+      fixedRoll(6), // 6 >= 3 -> finishes development
     );
     expect(out[0].effortRemaining.development).toBe(0);
     expect(out[0].column).toBe('development-done'); // waits to be pulled, does NOT jump to test
@@ -152,9 +156,9 @@ describe('simulateDay — worker effort', () => {
     const a = items[0];
     a.column = 'analysis-done';
     a.effortRemaining = { analysis: 0, development: 6, test: 6 };
-    mockRoll(6);
     const { items: out } = simulateDay(
       round([a], { assignments: [{ workerId: 'w3', cardId: a.id }] }),
+      fixedRoll(6),
     );
     expect(out[0].column).toBe('analysis-done'); // untouched
     expect(out[0].effortRemaining.development).toBe(6);
@@ -169,9 +173,9 @@ describe('simulateDay — blockers', () => {
     item.blocked = true;
     item.blockerEffort = 3;
     item.effortRemaining = { analysis: 6, development: 6, test: 6 };
-    mockRoll(4); // 4 clears the 3-effort blocker
     const { items: out } = simulateDay(
       round([item], { assignments: [{ workerId: 'w1', cardId: item.id }] }),
+      fixedRoll(4), // 4 clears the 3-effort blocker
     );
     expect(out[0].blocked).toBe(false);
     expect(out[0].blockerEffort).toBe(0);
@@ -185,11 +189,29 @@ describe('applyBlockers', () => {
     items[0].column = 'analysis-active';
     items[1].column = 'analysis-done';
     items[2].column = 'backlog';
-    vi.spyOn(Math, 'random').mockReturnValue(0); // always below BLOCKER_CHANCE
-    const { items: out } = applyBlockers(items, 1);
+    const { items: out } = applyBlockers(items, 1, fixedRng(0)); // 0 < BLOCKER_CHANCE -> always blocks
     expect(out[0].blocked).toBe(true); // active -> can block
     expect(out[1].blocked).toBe(false); // done lane -> never
     expect(out[2].blocked).toBe(false); // backlog -> never
+  });
+});
+
+describe('makeSeededRng', () => {
+  it('is deterministic for a seed+key and varies across keys (fair, reproducible luck)', () => {
+    const a = makeSeededRng(42);
+    const b = makeSeededRng(42);
+    // same seed + same key -> identical draw (so both rounds see the same variability)
+    expect(a(5, 'item-3', 'w1')).toBe(b(5, 'item-3', 'w1'));
+    // different keys generally differ
+    expect(a(5, 'item-3', 'w1')).not.toBe(a(6, 'item-3', 'w1'));
+    // a different seed gives a different stream
+    expect(makeSeededRng(43)(5, 'item-3', 'w1')).not.toBe(a(5, 'item-3', 'w1'));
+    // every draw is a valid probability
+    for (let d = 1; d <= 20; d++) {
+      const v = a(d, 'item-1', 'w2');
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
   });
 });
 

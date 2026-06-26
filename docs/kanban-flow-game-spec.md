@@ -188,5 +188,7 @@ Built after the first live release to deepen the learning, modelled on the TWiG
   player commits to a directional guess (cycle time Lower / Same / Higher); the
   result screen reveals guess vs actual. A slider-driven Little's Law calculator
   lets them feel cycle time = WIP / throughput.
-- **P6 - Seeded randomness + debrief.** Both rounds face the same blocker/dice
-  sequence so the comparison is fair, plus a short end-of-game debrief. (Planned.)
+- **P6 - Seeded randomness + debrief.** A pure key-seeded RNG (shared seed across
+  both rounds) holds the variability fixed so the WIP-limit effect, not luck,
+  drives the difference. The final screen ends with a plain-language debrief of
+  what changed between the rounds.
