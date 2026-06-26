@@ -73,11 +73,8 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, draggable
 
       {item.column !== 'done' && <EffortPips item={item} />}
 
-      {isActive && stage && (
-        <div className="mt-1 text-[10px] text-muted-foreground leading-tight">
-          {item.effortRemaining[stage]} {SPECIALISM_SHORT[stage]} left
-          {item.blocked && <span className="text-destructive ml-1">· {item.blockerEffort} to unblock</span>}
-        </div>
+      {isActive && item.blocked && (
+        <div className="mt-1 text-[10px] text-destructive leading-tight">{item.blockerEffort} to unblock</div>
       )}
 
       {item.column === 'done' && item.startDay != null && item.endDay != null && (
