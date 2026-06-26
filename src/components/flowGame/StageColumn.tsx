@@ -72,7 +72,7 @@ export function StageColumn({
               !isOver && !isAt && 'bg-muted-foreground/10 text-muted-foreground',
             )}
           >
-            {total}{wipLimit != null ? ` / ${wipLimit}` : ''}
+            WIP {total}{wipLimit != null ? ` / ${wipLimit}` : ''}
           </span>
           {wipLimit != null && (
             <div className="flex items-center gap-0.5">

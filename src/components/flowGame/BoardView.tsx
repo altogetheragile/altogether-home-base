@@ -15,6 +15,33 @@ import { WorkerPool } from './WorkerPool';
 import { DaySummary } from './DaySummary';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { WorkItem, WorkerAssignment } from './types';
+
+/** Done is a drop target for Test-Done cards. Must live INSIDE <DndContext>, so
+ *  it's a child component (a useDroppable hook in BoardView's body would sit
+ *  outside the context it renders and never register). */
+function DoneColumn({ items, assignments, canInteract }: { items: WorkItem[]; assignments: WorkerAssignment[]; canInteract: boolean }) {
+  const { setNodeRef, isOver } = useDroppable({ id: 'done', disabled: !canInteract });
+  return (
+    <div className="flex flex-col w-[150px] shrink-0">
+      <div className="rounded-t-lg px-2 py-2 border border-b-0 bg-muted border-border">
+        <h3 className="font-semibold text-sm">Done</h3>
+      </div>
+      <div
+        ref={setNodeRef}
+        className={cn(
+          'flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 space-y-1.5 min-h-[200px] overflow-y-auto',
+          isOver && 'ring-2 ring-primary ring-inset bg-primary/5',
+        )}
+      >
+        {items.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
+        {items.map((item) => (
+          <WorkItemCard key={item.id} item={item} assignments={assignments} isSelected={false} onClick={() => {}} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface BoardViewProps {
   round: RoundState;
@@ -65,7 +92,6 @@ export function BoardView({
   const items = round.items;
   const backlogItems = items.filter((i) => i.column === 'backlog');
   const doneItems = items.filter((i) => i.column === 'done');
-  const doneZone = useDroppable({ id: 'done', disabled: !canInteract });
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] p-4 gap-3">
@@ -144,23 +170,7 @@ export function BoardView({
           ))}
 
           {/* Done — narrow single column; drop zone for Test Done cards */}
-          <div className="flex flex-col w-[150px] shrink-0">
-            <div className="rounded-t-lg px-2 py-2 border border-b-0 bg-muted border-border">
-              <h3 className="font-semibold text-sm">Done</h3>
-            </div>
-            <div
-              ref={doneZone.setNodeRef}
-              className={cn(
-                'flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 space-y-1.5 min-h-[200px] overflow-y-auto',
-                doneZone.isOver && 'ring-2 ring-primary ring-inset bg-primary/5',
-              )}
-            >
-              {doneItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
-              {doneItems.map((item) => (
-                <WorkItemCard key={item.id} item={item} assignments={round.assignments} isSelected={false} onClick={() => {}} />
-              ))}
-            </div>
-          </div>
+          <DoneColumn items={doneItems} assignments={round.assignments} canInteract={canInteract} />
         </div>
       </DndContext>
 
