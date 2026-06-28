@@ -48,6 +48,12 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      # Hard gate: fails the build if any sitemap URL renders the Not Found page
+      # (an orphan URL with no real route, e.g. the /courses soft-404). Runs after
+      # Build (needs dist + sitemap) and Playwright install (needs chromium).
+      - name: Route guard (soft-404 check)
+        run: npm run check:routes
+
       # continue-on-error: E2E tests check for content (e.g. testimonials)
       # that only renders when Supabase returns data. CI has no live DB
       # connection, so these will fail until we add seed data or mocks.
