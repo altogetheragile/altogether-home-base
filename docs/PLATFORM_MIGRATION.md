@@ -335,6 +335,9 @@ the default, so the open questions below are resolved to the recommended option)
   pending; it is idempotent, so a future `db push` re-applies it harmlessly.
   Sensitive tables (contacts, profiles, user_roles, auth_logs, admin_*, etc.)
   were already correctly protected.
+- 4a.3 Write-side RLS fixes applied and verified: `admin_audit_log` INSERT and
+  `knowledge_item_relationships` writes are now admins-only (anon write attempts
+  confirmed BLOCKED). RLS hardening for Phase 0 is complete.
 
 **Next step:** the remaining Phase 0 items. Code-only items I can take directly:
 CSP and security headers (`vercel.json`), and a read-only RLS audit of the
