@@ -15,6 +15,8 @@
   "redirects": [
     { "source": "/agile-training-courses/", "destination": "/events", "statusCode": 301 },
     { "source": "/agile-training-courses", "destination": "/events", "statusCode": 301 },
+    { "source": "/courses", "destination": "/events", "statusCode": 301 },
+    { "source": "/courses/", "destination": "/events", "statusCode": 301 },
     { "source": "/schedule", "destination": "/events", "statusCode": 301 },
     { "source": "/schedule/", "destination": "/events", "statusCode": 301 },
     { "source": "/schedule/event/", "destination": "/events", "statusCode": 301 },
