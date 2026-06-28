@@ -16,6 +16,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import { marked } from 'marked';
 import { Resvg } from '@resvg/resvg-js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -137,9 +138,11 @@ function injectMeta(baseHtml, metaTags) {
 function injectBody(html, innerHtml) {
   // The built shell puts the bundle <script> in <head>, so #root closes just
   // before </body>. Anchor on that to swap the whole #root shell for our content.
+  // Use a function replacer so '$' sequences in innerHtml (e.g. "$1", "$&" in
+  // post prose or code) are inserted literally, not treated as replace patterns.
   return html.replace(
-    /(<div id="root">)[\s\S]*?(<\/div>\s*<\/body>)/,
-    `$1${innerHtml}</div>\n  </body>`,
+    /(<div id="root">)[\s\S]*?<\/div>\s*<\/body>/,
+    (_match, open) => `${open}${innerHtml}</div>\n  </body>`,
   );
 }
 
@@ -245,6 +248,64 @@ function coursesListingBodyHtml(courses) {
     `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Self-paced Agile Courses</h1>` +
     `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 28px">Browse self-paced agile courses from Altogether Agile. Learn AgilePM, Scrum and more at your own pace, with practical, framework-based material drawn from 25 years of hands-on experience.</p>` +
     `<ul style="list-style:none;padding:0;margin:0">${items}</ul>` +
+    '</main>'
+  );
+}
+
+/** Render a post's stored content (HTML or markdown) to HTML, scripts stripped. */
+function renderPostContent(content) {
+  if (!content) return '';
+  const isHtml = /<[a-z][\s\S]*>/i.test(content);
+  const html = isHtml ? content : String(marked.parse(content, { async: false }));
+  return html.replace(/<script[\s\S]*?<\/script>/gi, '');
+}
+
+/** Per-post body: title, featured image and the full article (the SEO payload). */
+function blogBodyHtml(post) {
+  const img = post.featured_image_url
+    ? `<img src="${escapeHtml(post.featured_image_url)}" alt="${escapeHtml(post.title || '')}" style="width:100%;height:auto;border-radius:12px;margin:0 0 24px">`
+    : '';
+  return (
+    prerenderHeader() +
+    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif"><article>' +
+    `<nav style="font-size:13px;color:#6B7280;margin:0 0 16px"><a href="/" style="color:#6B7280">Home</a> / <a href="/blog" style="color:#6B7280">Blog</a> / ${escapeHtml(post.title || '')}</nav>` +
+    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 20px">${escapeHtml(post.title || '')}</h1>` +
+    img +
+    `<div style="font-size:16px;line-height:1.7;color:#374151">${renderPostContent(post.content)}</div>` +
+    '</article></main>'
+  );
+}
+
+/** /blog hub body: intro and a linked list of posts (title + date). */
+function blogListingBodyHtml(posts) {
+  const items = posts
+    .map((post) => {
+      const date = fmtDate(post.published_at || post.updated_at);
+      return (
+        `<li style="margin:0 0 14px"><a href="/blog/${escapeHtml(post.slug)}" style="font-size:18px;color:#004D4D;font-weight:600;text-decoration:none">${escapeHtml(post.title || '')}</a>` +
+        (date ? `<span style="color:#6B7280;font-size:14px"> — ${escapeHtml(date)}</span>` : '') +
+        '</li>'
+      );
+    })
+    .join('');
+  return (
+    prerenderHeader() +
+    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
+    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Blog</h1>` +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 28px">Practical insights on agile delivery, coaching, AI and ways of working, drawn from 25 years of hands-on experience.</p>` +
+    `<ul style="list-style:none;padding:0;margin:0">${items}</ul>` +
+    '</main>'
+  );
+}
+
+/** /events body: evergreen description of the training offering with internal links. */
+function eventsBodyHtml() {
+  return (
+    prerenderHeader() +
+    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
+    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Agile Training Courses</h1>` +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 16px">Framework-based agile training from Altogether Agile, delivered in person across London at your site, or live online across the UK. Courses include AgilePM Foundation and Practitioner, Scrum Master, Product Owner and tailored team workshops, all grounded in 25 years of hands-on experience.</p>` +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 24px">Every course is practical and framework-based, with real techniques your team can apply straight away. Browse <a href="/courses" style="color:#004D4D;font-weight:600">self-paced courses</a>, explore one-to-one and team <a href="/coaching" style="color:#004D4D;font-weight:600">coaching</a>, or prepare with our free <a href="/exams" style="color:#004D4D;font-weight:600">practice exams</a>.</p>` +
     '</main>'
   );
 }
@@ -630,7 +691,7 @@ async function main() {
   const [postsRes, examsRes, templatesRes] = await Promise.all([
     supabase
       .from('blog_posts')
-      .select('slug, title, seo_title, seo_description, featured_image_url, published_at, updated_at')
+      .select('slug, title, seo_title, seo_description, featured_image_url, published_at, updated_at, content')
       .eq('is_published', true),
     supabase
       .from('exams')
@@ -692,6 +753,8 @@ async function main() {
     let html = injectMeta(baseHtml, tags);
     if (route === '/exams') html = injectBody(html, examsListingBodyHtml(exams));
     else if (route === '/courses') html = injectBody(html, coursesListingBodyHtml(templates));
+    else if (route === '/blog') html = injectBody(html, blogListingBodyHtml(posts));
+    else if (route === '/events') html = injectBody(html, eventsBodyHtml());
     writeHtml(route, html);
     console.log(`  ok   ${route}`);
     succeeded++;
@@ -710,7 +773,7 @@ async function main() {
       ogImage: post.featured_image_url,
       jsonLd: blogPostJsonLd(post),
     });
-    writeHtml(route, injectMeta(baseHtml, tags));
+    writeHtml(route, injectBody(injectMeta(baseHtml, tags), blogBodyHtml(post)));
     console.log(`  ok   ${route}`);
     succeeded++;
   }
