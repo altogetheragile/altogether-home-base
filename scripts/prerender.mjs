@@ -239,7 +239,13 @@ function renderPostContent(content) {
   if (!content) return '';
   const isHtml = /<[a-z][\s\S]*>/i.test(content);
   const html = isHtml ? content : String(marked.parse(content, { async: false }));
-  return html.replace(/<script[\s\S]*?<\/script>/gi, '');
+  // Match the client's DOMPurify pass: drop scripts, inline on* event handlers and
+  // javascript: URLs. Keeps the prerendered HTML free of executable content (CSP
+  // script-src-attr clean) and closes a stored-XSS gap in injected content.
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1=$2#$2');
 }
 
 /** Per-post body: title, featured image and the full article (the SEO payload). */
