@@ -206,14 +206,17 @@ Suggested order (lowest risk and clearest win first):
   timer, flag, navigation, scored review, save-attempt). Verified deployed: SSR
   shell correct and questions load client-side with no errors.
 
-**Before the exams cutover (still to do):**
-1. Port the shared chrome (Navigation + Footer) into the Next app's layout - the
-   Next pages are currently bare, so they need the site nav/footer to match.
+**Before the exams cutover:**
+1. DONE - Shared chrome ported: layout fetches `site_settings` once and renders a
+   client `Navigation` (logo, feature-flag-gated links, Resources dropdown, mobile
+   menu, Sign In) and server `Footer` (quick links, contact, social, legal). The
+   Next exam pages now match the live site visually.
 2. Optional fidelity: Practitioner matching-grid / scenario-tab UI and rich
    markdown scenario (sequential rendering already scores every type correctly).
-3. Cutover: edge-route the live `/exams` and `/exams/[slug]` to the Next app
-   (rewrite in the root project), drop them from `prerender.mjs` + the sitemap,
-   and verify on the live domain. This is the step that actually moves the SEO.
+3. Cutover (needs explicit go-ahead): edge-route the live `/exams` and
+   `/exams/[slug]` to the Next app (rewrite in the root project), drop them from
+   `prerender.mjs` + the sitemap, and verify on the live domain. This is the step
+   that actually moves the SEO.
 
 For each section:
 
