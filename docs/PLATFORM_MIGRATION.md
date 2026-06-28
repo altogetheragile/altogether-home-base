@@ -17,7 +17,7 @@ things the architecture guarantees, without ever taking the live site down.
 | Phase | What it delivers | State |
 |---|---|---|
 | 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
-| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | Not started |
+| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (exams listing built on preview) |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
 
@@ -195,6 +195,15 @@ Suggested order (lowest risk and clearest win first):
    pages, with the `/courses` redirect preserved.
 4. **Home and remaining marketing pages** (`/about`, `/coaching`,
    `/testimonials`, `/contact`).
+
+**Progress:** `/exams` listing is built and live on the preview app (server
+component, ported shadcn primitives `cn`/`Button`/`Card`, `buildMetadata`,
+FAQPage + BreadcrumbList + ItemList JSON-LD, FAQ from a single source). Remaining
+for the exams section before cutover: the `/exams/[slug]` detail route - a
+server-rendered SEO shell (title, description, facts, Quiz JSON-LD, OG image) plus
+the interactive ExamPlayer ported as a client component. Cutover (edge-route the
+live `/exams*` paths to the Next app and drop them from `prerender.mjs` + sitemap)
+happens only once both routes are done and verified.
 
 For each section:
 
