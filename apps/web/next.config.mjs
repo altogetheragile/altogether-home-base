@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Blog/course featured images and external badge images come from various hosts;
-  // allow remote images over https (tighten to specific hosts as they are known).
+  // Scope next/image remote hosts (a wildcard '**' is the Image Optimizer DoS
+  // advisory). Add specific hosts here as real image sources are introduced.
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+    remotePatterns: [{ protocol: 'https', hostname: 'wqaplkypnetifpqrungv.supabase.co' }],
   },
 };
 

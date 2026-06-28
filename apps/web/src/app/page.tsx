@@ -9,7 +9,7 @@ export default async function Home() {
   let exams: { slug: string; title: string }[] = [];
   let dataPath = 'no Supabase env set yet';
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('exams')
       .select('slug, title')

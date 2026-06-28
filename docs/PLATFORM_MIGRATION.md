@@ -16,7 +16,7 @@ things the architecture guarantees, without ever taking the live site down.
 
 | Phase | What it delivers | State |
 |---|---|---|
-| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built; deploy pending Vercel project) |
+| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
 | 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | Not started |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
@@ -356,8 +356,13 @@ the default, so the open questions below are resolved to the recommended option)
   file-based `sitemap.ts` + `robots.ts`), and a proof page that server-renders live
   exam data. `next build` passes; verified at runtime it SSRs real Supabase data,
   generates the sitemap from the DB, and serves robots. Isolated from the root Vite
-  app (own package.json/node_modules; root build and CI untouched). **Deploy still
-  needs a separate Vercel project (Root Directory `apps/web`) - see apps/web/README.md.**
+  app (own package.json/node_modules; root build and CI untouched). Deployed to its
+  own Vercel project (Root Directory `apps/web`, `apps/web/vercel.json` pins
+  framework to nextjs) at `altogether-home-base-web-next.vercel.app` - smoke-tested
+  live (SSR exam data, sitemap from the DB, robots). On **Next 15.5.19 + React 18**
+  (the high-severity Next CVEs from 14.x are patched; the 2 remaining moderate
+  audit notes are a non-exploitable build-time PostCSS transitive with no fix path).
+  `next/image` remote hosts scoped to the Supabase host (no wildcard).
 
 **Next step:** the remaining Phase 0 items. Code-only items I can take directly:
 CSP and security headers (`vercel.json`), and a read-only RLS audit of the

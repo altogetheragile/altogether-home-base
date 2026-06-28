@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const [{ data: exams }, { data: posts }] = await Promise.all([
       supabase.from('exams').select('slug, updated_at').eq('status', 'published'),
       supabase.from('blog_posts').select('slug, updated_at').eq('is_published', true),

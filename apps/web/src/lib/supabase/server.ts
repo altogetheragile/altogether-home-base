@@ -8,8 +8,8 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
  * Actions. Uses the anon key with the user's session from httpOnly cookies, so
  * RLS applies exactly as for the browser. Never import the service-role key here.
  */
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
