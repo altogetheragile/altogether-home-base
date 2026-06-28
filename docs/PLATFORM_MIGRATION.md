@@ -16,7 +16,7 @@ things the architecture guarantees, without ever taking the live site down.
 
 | Phase | What it delivers | State |
 |---|---|---|
-| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | Not started |
+| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress |
 | 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | Not started |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
@@ -318,8 +318,22 @@ the default, so the open questions below are resolved to the recommended option)
 
 ---
 
-## 11. Next Session Starts Here
+## 11. Progress Log and Next Step
 
-Phase 0, item 4a.1: build the route and sitemap guard (the `/courses` class of
-bug), since it is cheap, high value, and useful to the current app immediately
-regardless of the wider migration. Then proceed through the rest of Phase 0.
+**Done (Phase 0):**
+
+- 4a.1 Route and sitemap guard: `scripts/check-sitemap-routes.mjs`
+  (`npm run check:routes`) loads every built-sitemap URL and fails on a soft 404.
+  Wired into CI (`.github/workflows/ci.yml`) as a hard gate, so an orphan URL can
+  no longer be merged. Verified: passes on the live sitemap, fails on an orphan.
+
+**Next step:** the remaining Phase 0 items. Code-only items I can take directly:
+CSP and security headers (`vercel.json`), and a read-only RLS audit of the
+Supabase tables (reported from the migration history; fixes applied as
+migrations). Items that need the founder's accounts first: rate limiting
+(Upstash), error tracking (Sentry), uptime monitoring, and the Renovate GitHub
+app. The Next.js skeleton (4b) comes after the current app is hardened.
+
+**CI note:** the workflow relies on `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` being set as GitHub repository secrets (the Build step
+already required these, so they should already be configured).
