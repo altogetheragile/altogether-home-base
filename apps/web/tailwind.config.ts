@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import animate from 'tailwindcss-animate';
 
 // Mirrors the design tokens from the existing app (src/index.css), so components
 // port across with the same brand colours (orange primary) and radius.
@@ -28,7 +29,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [animate],
 };
 
 export default config;
