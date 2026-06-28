@@ -131,6 +131,92 @@ function injectMeta(baseHtml, metaTags) {
   return html;
 }
 
+/** Replace the static homepage shell inside #root with page-specific content so
+ *  crawlers see real, unique content (React still replaces #root on hydration).
+ *  No-op if the shell markup is not found, leaving the page unchanged. */
+function injectBody(html, innerHtml) {
+  // The built shell puts the bundle <script> in <head>, so #root closes just
+  // before </body>. Anchor on that to swap the whole #root shell for our content.
+  return html.replace(
+    /(<div id="root">)[\s\S]*?(<\/div>\s*<\/body>)/,
+    `$1${innerHtml}</div>\n  </body>`,
+  );
+}
+
+/** Minimal branded header for the prerendered body (matches the shell nav). */
+function prerenderHeader() {
+  return (
+    '<header style="background:#fff;border-bottom:1px solid #E5E7EB;height:64px;display:flex;align-items:center;padding:0 24px">' +
+    '<a href="/" style="display:block"><img src="/brand/lockup-horizontal-tight.svg" alt="Altogether Agile" width="326" height="38" style="height:38px;width:auto;display:block"></a>' +
+    '</header>'
+  );
+}
+
+/** Visible FAQ block whose questions/answers mirror the FAQPage JSON-LD. */
+function faqBodyHtml(faqs) {
+  const items = faqs
+    .map(
+      (f) =>
+        `<div style="margin:0 0 16px"><h3 style="font-size:17px;color:#004D4D;margin:0 0 4px">${escapeHtml(f.q)}</h3>` +
+        `<p style="font-size:15px;line-height:1.6;color:#374151;margin:0">${escapeHtml(f.a)}</p></div>`,
+    )
+    .join('');
+  return `<section style="margin:40px 0 0"><h2 style="font-size:24px;color:#004D4D;margin:0 0 20px">Frequently Asked Questions</h2>${items}</section>`;
+}
+
+/** Per-exam body content: title, description, facts, and a clear call to action. */
+function examBodyHtml(exam) {
+  const subject = examSubject(exam.title);
+  const desc = exam.description || `A free practice exam for ${subject}, with answers and explanations.`;
+  const facts = [
+    exam.total_questions ? `${exam.total_questions} questions` : null,
+    exam.duration_minutes ? `${exam.duration_minutes} minutes` : null,
+    exam.pass_mark && exam.total_questions ? `pass mark ${exam.pass_mark} out of ${exam.total_questions}` : null,
+  ].filter(Boolean);
+  const factsHtml = facts.length
+    ? `<ul style="display:flex;flex-wrap:wrap;gap:8px 24px;list-style:none;padding:0;margin:0 0 24px;color:#374151;font-size:15px">${facts
+        .map((f) => `<li style="font-weight:600">${escapeHtml(f)}</li>`)
+        .join('')}</ul>`
+    : '';
+  return (
+    prerenderHeader() +
+    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
+    `<nav style="font-size:13px;color:#6B7280;margin:0 0 16px"><a href="/" style="color:#6B7280">Home</a> / <a href="/exams" style="color:#6B7280">Practice Exams</a> / ${escapeHtml(exam.title)}</nav>` +
+    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">${escapeHtml(exam.title)}</h1>` +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 20px">${escapeHtml(desc)}</p>` +
+    factsHtml +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 24px">This free practice exam helps you prepare for ${escapeHtml(subject)}. Sit it as a timed mock exam, or switch to revision mode to work through the questions at your own pace, with answers and explanations for each one.</p>` +
+    `<a href="/exams/${escapeHtml(exam.slug)}" style="display:inline-block;background:#004D4D;color:#fff;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none">Start the practice exam</a>` +
+    '</main>'
+  );
+}
+
+/** /exams hub body: intro, a linked list of every exam, and the FAQ. */
+function examsListingBodyHtml(exams) {
+  const items = exams
+    .map((exam) => {
+      const facts = [
+        exam.total_questions ? `${exam.total_questions} questions` : null,
+        exam.duration_minutes ? `${exam.duration_minutes} min` : null,
+      ].filter(Boolean).join(' · ');
+      return (
+        `<li style="margin:0 0 12px"><a href="/exams/${escapeHtml(exam.slug)}" style="font-size:18px;color:#004D4D;font-weight:600;text-decoration:none">${escapeHtml(exam.title)}</a>` +
+        (facts ? `<span style="color:#6B7280;font-size:14px"> — ${escapeHtml(facts)}</span>` : '') +
+        '</li>'
+      );
+    })
+    .join('');
+  return (
+    prerenderHeader() +
+    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
+    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Free Agile Practice Exams</h1>` +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 28px">Free practice papers for AgilePM Foundation, AgilePM Practitioner and Professional Scrum Master. Sit a timed mock exam or revise at your own pace, with answers and explanations for every question.</p>` +
+    `<ul style="list-style:none;padding:0;margin:0 0 8px">${items}</ul>` +
+    faqBodyHtml(EXAM_FAQS) +
+    '</main>'
+  );
+}
+
 /** Write HTML to dist/<route>/index.html. */
 function writeHtml(route, html) {
   if (route === '/') {
@@ -571,7 +657,9 @@ async function main() {
       ogType: meta.ogType,
       jsonLd: dynamicJsonLd[route] || meta.jsonLd,
     });
-    writeHtml(route, injectMeta(baseHtml, tags));
+    let html = injectMeta(baseHtml, tags);
+    if (route === '/exams') html = injectBody(html, examsListingBodyHtml(exams));
+    writeHtml(route, html);
     console.log(`  ok   ${route}`);
     succeeded++;
   }
@@ -614,7 +702,7 @@ async function main() {
         ]),
       ],
     });
-    writeHtml(route, injectMeta(baseHtml, tags));
+    writeHtml(route, injectBody(injectMeta(baseHtml, tags), examBodyHtml(exam)));
     console.log(`  ok   ${route}`);
     succeeded++;
   }
