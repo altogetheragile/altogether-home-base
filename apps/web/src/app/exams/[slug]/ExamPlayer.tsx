@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef, type CSSProperties } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import {
   Clock, Timer, BookOpen, Flag, ChevronLeft, ChevronRight, SkipForward,
-  CheckCircle2, XCircle, RotateCcw,
+  CheckCircle2, XCircle, RotateCcw, ArrowLeft,
 } from 'lucide-react';
 
 // Brand teal palette (mirrors src/theme/colors.ts in the Vite app).
@@ -196,37 +197,49 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
 
   const card: CSSProperties = { background: c.white, borderRadius: 14, border: '1px solid #E5E7EB' };
 
-  // ── Choose ──
+  // ── Choose (the start card; server-rendered, so the h1/description/stats are
+  //    the page's indexable content - no separate plain shell needed) ──
   if (phase === 'choose') {
     return (
-      <div style={{ ...card, padding: 28, maxWidth: 560 }}>
-        <h2 style={{ color: c.deepTeal, fontSize: 20, fontWeight: 800, margin: 0 }}>Ready to start?</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, margin: '20px 0 24px' }}>
-          {[
-            { icon: <BookOpen size={18} />, label: 'Questions', value: exam.total_questions },
-            { icon: <Clock size={18} />, label: 'Duration', value: `${exam.duration_minutes} min` },
-            { icon: <CheckCircle2 size={18} />, label: 'Pass mark', value: `${exam.pass_mark}/${exam.total_questions}` },
-          ].map((s) => (
-            <div key={s.label} style={{ background: c.skyTeal, borderRadius: 10, padding: '14px 12px', textAlign: 'center' }}>
-              <div style={{ color: c.midTeal, marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: c.deepTeal }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: c.muted, marginTop: 2 }}>{s.label}</div>
-            </div>
-          ))}
+      <div style={{ maxWidth: 560, margin: '0 auto', background: c.white, borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+        <div style={{ height: 6, background: `linear-gradient(90deg, ${c.deepTeal}, ${c.midTeal})` }} />
+        <div style={{ padding: 32 }}>
+          <Link href="/exams" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: c.muted, textDecoration: 'none', marginBottom: 16 }}>
+            <ArrowLeft size={14} /> All exams
+          </Link>
+          <h1 style={{ color: c.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 8px', lineHeight: 1.2 }}>{exam.title}</h1>
+          {exam.description && (
+            <p style={{ color: c.body, fontSize: 15, lineHeight: 1.6, margin: '0 0 24px' }}>{exam.description}</p>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 28 }}>
+            {[
+              { icon: <BookOpen size={18} />, label: 'Questions', value: exam.total_questions },
+              { icon: <Clock size={18} />, label: 'Duration', value: `${exam.duration_minutes} min` },
+              { icon: <CheckCircle2 size={18} />, label: 'Pass mark', value: `${exam.pass_mark}/${exam.total_questions}` },
+            ].map((s) => (
+              <div key={s.label} style={{ background: c.skyTeal, borderRadius: 10, padding: '14px 12px', textAlign: 'center' }}>
+                <div style={{ color: c.midTeal, marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: c.deepTeal }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: c.muted, marginTop: 2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={() => start('exam')} disabled={loading}
+              style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+              <Timer size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Exam Mode
+            </button>
+            <button onClick={() => start('practice')} disabled={loading}
+              style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: `2px solid ${c.deepTeal}`, background: c.white, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+              <BookOpen size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Practice Mode
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: c.muted, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
+            Exam mode is timed with answers at the end. Practice mode is untimed and reveals answers as you go.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={() => start('exam')} disabled={loading}
-            style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
-            <Timer size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Exam Mode
-          </button>
-          <button onClick={() => start('practice')} disabled={loading}
-            style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: `2px solid ${c.deepTeal}`, background: c.white, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
-            <BookOpen size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Practice Mode
-          </button>
-        </div>
-        <p style={{ fontSize: 12, color: c.muted, textAlign: 'center', marginTop: 14 }}>
-          Exam mode is timed with answers at the end. Practice mode is untimed and reveals answers as you go.
-        </p>
       </div>
     );
   }

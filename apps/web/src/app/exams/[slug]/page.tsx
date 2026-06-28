@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
@@ -76,15 +75,10 @@ export default async function ExamDetailPage({
   const exam = await getExam(slug);
   if (!exam) notFound();
 
-  const subject = examSubject(exam.title);
-  const facts = [
-    exam.total_questions ? `${exam.total_questions} questions` : null,
-    exam.duration_minutes ? `${exam.duration_minutes} minutes` : null,
-    exam.pass_mark && exam.total_questions ? `pass mark ${exam.pass_mark} of ${exam.total_questions}` : null,
-  ].filter(Boolean);
-
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="mx-auto max-w-5xl px-6 py-10">
+      {/* SEO structured data; the visible h1/description/stats are server-rendered
+          by the player's start card (a client component, SSR'd by Next). */}
       <JsonLd data={quizJsonLd(exam, slug)} />
       <JsonLd
         data={breadcrumbJsonLd([
@@ -93,37 +87,7 @@ export default async function ExamDetailPage({
           { name: exam.title, path: `/exams/${slug}` },
         ])}
       />
-
-      {/* Server-rendered SEO content shell */}
-      <nav className="mb-4 text-sm text-muted-foreground">
-        <Link href="/" className="hover:underline">Home</Link>
-        {' / '}
-        <Link href="/exams" className="hover:underline">Practice Exams</Link>
-        {' / '}
-        {exam.title}
-      </nav>
-
-      <h1 className="text-4xl font-bold tracking-tight text-foreground">{exam.title}</h1>
-      {exam.description && (
-        <p className="mt-4 text-base leading-7 text-muted-foreground">{exam.description}</p>
-      )}
-      {facts.length > 0 && (
-        <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm font-medium text-muted-foreground">
-          {facts.map((f) => (
-            <li key={f as string}>{f}</li>
-          ))}
-        </ul>
-      )}
-      <p className="mt-5 text-base leading-7 text-muted-foreground">
-        This free practice exam helps you prepare for {subject}. Sit it as a timed mock exam, or
-        switch to revision mode to work through the questions at your own pace, with answers and
-        explanations for each one.
-      </p>
-
-      {/* Interactive widget (client) */}
-      <div className="mt-8">
-        <ExamPlayer exam={exam} />
-      </div>
+      <ExamPlayer exam={exam} />
     </main>
   );
 }
