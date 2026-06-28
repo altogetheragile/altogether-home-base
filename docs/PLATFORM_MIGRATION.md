@@ -196,14 +196,24 @@ Suggested order (lowest risk and clearest win first):
 4. **Home and remaining marketing pages** (`/about`, `/coaching`,
    `/testimonials`, `/contact`).
 
-**Progress:** `/exams` listing is built and live on the preview app (server
-component, ported shadcn primitives `cn`/`Button`/`Card`, `buildMetadata`,
-FAQPage + BreadcrumbList + ItemList JSON-LD, FAQ from a single source). Remaining
-for the exams section before cutover: the `/exams/[slug]` detail route - a
-server-rendered SEO shell (title, description, facts, Quiz JSON-LD, OG image) plus
-the interactive ExamPlayer ported as a client component. Cutover (edge-route the
-live `/exams*` paths to the Next app and drop them from `prerender.mjs` + sitemap)
-happens only once both routes are done and verified.
+**Progress:** both exam routes are built and live on the preview app.
+- `/exams` listing: server component, ported shadcn primitives (`cn`/`Button`/
+  `Card`), `buildMetadata`, FAQPage + BreadcrumbList + ItemList JSON-LD, FAQ from a
+  single source.
+- `/exams/[slug]` detail: server component owns SEO (generateMetadata, content
+  shell, Quiz + BreadcrumbList JSON-LD; no answers server-rendered). Client
+  `ExamPlayer` ports the core flow (timed/revision mode, single+multi answers,
+  timer, flag, navigation, scored review, save-attempt). Verified deployed: SSR
+  shell correct and questions load client-side with no errors.
+
+**Before the exams cutover (still to do):**
+1. Port the shared chrome (Navigation + Footer) into the Next app's layout - the
+   Next pages are currently bare, so they need the site nav/footer to match.
+2. Optional fidelity: Practitioner matching-grid / scenario-tab UI and rich
+   markdown scenario (sequential rendering already scores every type correctly).
+3. Cutover: edge-route the live `/exams` and `/exams/[slug]` to the Next app
+   (rewrite in the root project), drop them from `prerender.mjs` + the sitemap,
+   and verify on the live domain. This is the step that actually moves the SEO.
 
 For each section:
 
