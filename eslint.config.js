@@ -5,7 +5,9 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // apps/web is the Next.js app; it has its own ESLint config (eslint-config-next)
+  // and is linted by `next build`. The root linter must not reach into it.
+  { ignores: ["dist", "apps/web/**", ".design-sync/**", "ds-bundle/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
