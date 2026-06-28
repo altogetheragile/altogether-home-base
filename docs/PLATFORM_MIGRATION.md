@@ -326,6 +326,15 @@ the default, so the open questions below are resolved to the recommended option)
   (`npm run check:routes`) loads every built-sitemap URL and fails on a soft 404.
   Wired into CI (`.github/workflows/ci.yml`) as a hard gate, so an orphan URL can
   no longer be merged. Verified: passes on the live sitemap, fails on an orphan.
+- 4a.2 RLS audit and fix: probed the live DB with the anon key and found three
+  confirmed anon-readable leaks (`course_feedback`, `ai_rate_limits`, `epics` /
+  `user_stories`) plus a cross-user read/write IDOR on `backlog_items` /
+  `features`. Fixed in `20260628120000_harden_rls_audit_fixes.sql` (owner/role
+  scoped). Applied to prod via the SQL Editor and verified the leaks are closed.
+  Note: applied by SQL Editor, so Supabase migration tracking still lists it as
+  pending; it is idempotent, so a future `db push` re-applies it harmlessly.
+  Sensitive tables (contacts, profiles, user_roles, auth_logs, admin_*, etc.)
+  were already correctly protected.
 
 **Next step:** the remaining Phase 0 items. Code-only items I can take directly:
 CSP and security headers (`vercel.json`), and a read-only RLS audit of the
