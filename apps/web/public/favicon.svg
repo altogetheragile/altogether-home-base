@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img">
+  <title>Altogether Agile favicon - regular weight</title>
+  <desc>Deep Teal ground with the kanji 皆 in Orange at regular weight 400. Lighter alternative to the bold default.</desc>
+  <rect width="32" height="32" fill="#004D4D"/>
+  <text x="16" y="24.5"
+        text-anchor="middle"
+        font-family="'Hiragino Sans', 'Yu Gothic', 'Noto Sans CJK JP', sans-serif"
+        font-weight="400"
+        font-size="22"
+        fill="#FF9715">皆</text>
+</svg>
