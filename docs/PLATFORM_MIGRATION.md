@@ -16,7 +16,7 @@ things the architecture guarantees, without ever taking the live site down.
 
 | Phase | What it delivers | State |
 |---|---|---|
-| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress |
+| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built; deploy pending Vercel project) |
 | 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | Not started |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
@@ -349,6 +349,15 @@ the default, so the open questions below are resolved to the recommended option)
   migration (nonces + dep audit). Also stripped inline on*/javascript: from
   prerendered post content. NOTE: authed/admin flows were not exhaustively crawled;
   spot-check admin + a logged-in tool session and allowlist anything blocked.
+
+- 4b Next.js skeleton built in `apps/web/` (Next 14 App Router, TS, Tailwind with
+  ported tokens). Server-side Supabase via `@supabase/ssr` (anon, RLS-scoped),
+  SEO primitives that replace `prerender.mjs` (`lib/seo.tsx` buildMetadata + JsonLd,
+  file-based `sitemap.ts` + `robots.ts`), and a proof page that server-renders live
+  exam data. `next build` passes; verified at runtime it SSRs real Supabase data,
+  generates the sitemap from the DB, and serves robots. Isolated from the root Vite
+  app (own package.json/node_modules; root build and CI untouched). **Deploy still
+  needs a separate Vercel project (Root Directory `apps/web`) - see apps/web/README.md.**
 
 **Next step:** the remaining Phase 0 items. Code-only items I can take directly:
 CSP and security headers (`vercel.json`), and a read-only RLS audit of the
