@@ -338,6 +338,17 @@ the default, so the open questions below are resolved to the recommended option)
 - 4a.3 Write-side RLS fixes applied and verified: `admin_audit_log` INSERT and
   `knowledge_item_relationships` writes are now admins-only (anon write attempts
   confirmed BLOCKED). RLS hardening for Phase 0 is complete.
+- 4a.4 Security headers in `vercel.json`: HSTS, Permissions-Policy
+  (camera/mic/geolocation/payment/usb off), and an enforcing Content-Security-Policy.
+  Rolled out via Report-Only first, crawled prod (17 routes incl. all tools) to a
+  clean result, then switched to enforcing (verified 0 blocks live). `default-src
+  'self'` with scoped allowances (Supabase REST/realtime, fonts, https images,
+  ipify fetch, YouTube/Calendly/Credly embeds). Documented Vite-era exceptions:
+  `script-src 'unsafe-eval'` (jspdf/html2canvas/page-editor) and `script-src-attr
+  'unsafe-inline'` (deferred-CSS `<link onload>`); both go away with the Next.js
+  migration (nonces + dep audit). Also stripped inline on*/javascript: from
+  prerendered post content. NOTE: authed/admin flows were not exhaustively crawled;
+  spot-check admin + a logged-in tool session and allowlist anything blocked.
 
 **Next step:** the remaining Phase 0 items. Code-only items I can take directly:
 CSP and security headers (`vercel.json`), and a read-only RLS audit of the
