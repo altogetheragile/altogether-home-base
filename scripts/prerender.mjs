@@ -217,6 +217,38 @@ function examsListingBodyHtml(exams) {
   );
 }
 
+/** Per-course body content: title, description, and a clear call to action. */
+function courseBodyHtml(course) {
+  const desc = course.description || `A practical, framework-based agile course from Altogether Agile.`;
+  return (
+    prerenderHeader() +
+    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
+    `<nav style="font-size:13px;color:#6B7280;margin:0 0 16px"><a href="/" style="color:#6B7280">Home</a> / <a href="/courses" style="color:#6B7280">Courses</a> / ${escapeHtml(course.title)}</nav>` +
+    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">${escapeHtml(course.title)}</h1>` +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 24px">${escapeHtml(truncate(desc, 600))}</p>` +
+    `<a href="/courses/${escapeHtml(course.id)}" style="display:inline-block;background:#004D4D;color:#fff;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none">View course details</a>` +
+    '</main>'
+  );
+}
+
+/** /courses hub body: intro and a linked list of every course (aids discovery). */
+function coursesListingBodyHtml(courses) {
+  const items = courses
+    .map(
+      (course) =>
+        `<li style="margin:0 0 12px"><a href="/courses/${escapeHtml(course.id)}" style="font-size:18px;color:#004D4D;font-weight:600;text-decoration:none">${escapeHtml(course.title)}</a></li>`,
+    )
+    .join('');
+  return (
+    prerenderHeader() +
+    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
+    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Self-paced Agile Courses</h1>` +
+    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 28px">Browse self-paced agile courses from Altogether Agile. Learn AgilePM, Scrum and more at your own pace, with practical, framework-based material drawn from 25 years of hands-on experience.</p>` +
+    `<ul style="list-style:none;padding:0;margin:0">${items}</ul>` +
+    '</main>'
+  );
+}
+
 /** Write HTML to dist/<route>/index.html. */
 function writeHtml(route, html) {
   if (route === '/') {
@@ -659,6 +691,7 @@ async function main() {
     });
     let html = injectMeta(baseHtml, tags);
     if (route === '/exams') html = injectBody(html, examsListingBodyHtml(exams));
+    else if (route === '/courses') html = injectBody(html, coursesListingBodyHtml(templates));
     writeHtml(route, html);
     console.log(`  ok   ${route}`);
     succeeded++;
@@ -719,7 +752,7 @@ async function main() {
       ogType: 'event',
       jsonLd: courseJsonLd(course),
     });
-    writeHtml(route, injectMeta(baseHtml, tags));
+    writeHtml(route, injectBody(injectMeta(baseHtml, tags), courseBodyHtml(course)));
     console.log(`  ok   ${route}`);
     succeeded++;
   }
