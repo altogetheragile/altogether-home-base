@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectArtifactMutations, useProjectArtifacts } from '@/hooks/useProjectArtifacts';
+import { validateArtifactData } from '@/types/artifacts/schemas';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -410,6 +411,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     }
     const newStories: CanvasElement[] = [];
     impactMaps.forEach((art) => {
+      // Handoff contract: surface drift in the source Impact Map before importing its
+      // deliverables, without dropping the import (graceful).
+      const contract = validateArtifactData('impact-map', art.data);
+      if (!contract.valid) {
+        console.warn(`[artifact-contract] importing from impact-map ${art.id} that does not match its schema:`, contract.issues);
+      }
       const data = (art.data || {}) as { goal?: string; actors?: { label?: string; impacts?: { label?: string; deliverables?: { id: string; label?: string }[] }[] }[] };
       const goal = data.goal || '';
       (data.actors || []).forEach((a) =>

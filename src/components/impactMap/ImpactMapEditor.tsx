@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CoachChat } from '@/components/coaching/CoachChat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSendToBacklog } from '@/hooks/useSendToBacklog';
+import { validateArtifactData } from '@/types/artifacts/schemas';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
@@ -92,6 +93,9 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   };
 
   const sendToChosenBacklog = (backlogArtifactId: string) => {
+    // Handoff contract: surface drift in this map before it feeds the backlog (graceful).
+    const contract = validateArtifactData('impact-map', map);
+    if (!contract.valid) console.warn('[artifact-contract] impact-map -> backlog handoff, map does not match schema:', contract.issues);
     sendToBacklog.mutate({
       projectId: projectId!,
       fromArtifactId: artifactId!,

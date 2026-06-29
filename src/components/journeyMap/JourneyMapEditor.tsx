@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
+import { validateArtifactData } from '@/types/artifacts/schemas';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
@@ -135,6 +136,9 @@ export function JourneyMapEditor({ initialData, artifactId, projectId }: Journey
     }
     const text = stage[rowKey].trim();
     if (!text) { toast.info('Nothing to promote in this cell yet.'); return; }
+    // Handoff contract: surface drift in this journey before it feeds the backlog (graceful).
+    const contract = validateArtifactData('journey-map', journey);
+    if (!contract.valid) console.warn('[artifact-contract] journey-map -> backlog handoff, journey does not match schema:', contract.issues);
     try {
       const { data: maxPos } = await supabase
         .from('backlog_items')

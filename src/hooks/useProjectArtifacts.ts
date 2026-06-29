@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { validateArtifactData } from "@/types/artifacts/schemas";
 
 export interface ProjectArtifact {
   id: string;
@@ -77,6 +78,13 @@ export const useProjectArtifactMutations = () => {
     mutationFn: async (artifact: ProjectArtifactCreate) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
+
+      // Contract check at the write chokepoint: surface payload drift before it's
+      // persisted, without blocking the save (graceful by design).
+      const contract = validateArtifactData(artifact.artifact_type, artifact.data);
+      if (!contract.valid) {
+        console.warn(`[artifact-contract] writing ${artifact.artifact_type} that does not match its schema:`, contract.issues);
+      }
 
       // Get the max display_order for this type in the project
       const { data: existingArtifacts } = await supabase
