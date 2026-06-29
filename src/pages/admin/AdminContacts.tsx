@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Download, Eye, Mail } from "lucide-react";
+import { Download, Eye, Mail, Trash2 } from "lucide-react";
 
 type Lead = {
   id: string;
@@ -82,6 +82,35 @@ const AdminContacts = () => {
   const setStatus = (id: string, status: string) => {
     updateStatusMutation.mutate({ id, status });
     setSelected((s) => (s && s.id === id ? { ...s, status } : s));
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // .select() returns the deleted rows; an empty result with no error means RLS
+      // silently blocked the delete (no admin DELETE policy) rather than a real success.
+      const { data, error } = await supabase.from("contacts").delete().eq("id", id).select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("blocked");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-unread-leads"] });
+      setSelected(null);
+      toast.success("Lead deleted");
+    },
+    onError: (e: Error) => {
+      toast.error(
+        e.message === "blocked"
+          ? "Delete blocked - the admin delete policy is missing. Apply the contacts delete migration."
+          : "Failed to delete lead",
+      );
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (window.confirm("Delete this lead permanently? This cannot be undone.")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const unreadCount = contacts?.filter((c) => (c.status ?? "unread") === "unread").length ?? 0;
@@ -158,7 +187,10 @@ const AdminContacts = () => {
 
       {/* Full lead reader */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent
+          className="overflow-auto"
+          style={{ width: "min(42rem, 95vw)", maxWidth: "95vw", minWidth: "20rem", height: "auto", maxHeight: "90vh", minHeight: "18rem", resize: "both" }}
+        >
           {selected && (
             <>
               <DialogHeader>
@@ -203,13 +235,18 @@ const AdminContacts = () => {
                 </Button>
               )}
 
-              <DialogFooter className="gap-2 sm:justify-between">
-                <StatusSelect contact={selected} className="w-40" />
-                <Button asChild>
-                  <a href={`mailto:${selected.email}?subject=${encodeURIComponent("Re: " + (selected.subject || ""))}`}>
-                    <Mail className="h-4 w-4 mr-1" />Reply by email
-                  </a>
+              <DialogFooter className="gap-2 sm:justify-between sm:items-center">
+                <Button variant="destructive" size="sm" onClick={() => handleDelete(selected.id)} disabled={deleteMutation.isPending}>
+                  <Trash2 className="h-4 w-4 mr-1" />Delete
                 </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusSelect contact={selected} className="w-40" />
+                  <Button asChild>
+                    <a href={`mailto:${selected.email}?subject=${encodeURIComponent("Re: " + (selected.subject || ""))}`}>
+                      <Mail className="h-4 w-4 mr-1" />Reply by email
+                    </a>
+                  </Button>
+                </div>
               </DialogFooter>
             </>
           )}
