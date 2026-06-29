@@ -741,11 +741,11 @@ async function main() {
 
   // 1. Static pages
   for (const [route, meta] of Object.entries(STATIC_PAGES)) {
-    // CUTOVER: /exams and /blog are served by the Next.js app via rewrites in
-    // vercel.json. Do NOT write a static file here, or the filesystem match would
+    // CUTOVER: /exams, /blog and /events are served by the Next.js app via rewrites
+    // in vercel.json. Do NOT write a static file here, or the filesystem match would
     // shadow the rewrite. The routes stay in STATIC_PAGES so they remain in the
     // sitemap.
-    if (route === '/exams' || route === '/blog') continue;
+    if (route === '/exams' || route === '/blog' || route === '/events') continue;
     const tags = buildMetaTags({
       title: meta.title,
       description: meta.description,
@@ -776,22 +776,10 @@ async function main() {
     console.log(`  og   /exams/${exam.slug}`);
   }
 
-  // 5. Course templates
-  for (const course of templates) {
-    const route = `/courses/${course.id}`;
-    const title = `${course.seo_title || course.title} - Altogether Agile`;
-    const description = truncate(course.seo_description || course.description || `Agile course: ${course.title}`);
-    const tags = buildMetaTags({
-      title,
-      description,
-      canonical: `${SITE_URL}${route}`,
-      ogType: 'event',
-      jsonLd: courseJsonLd(course),
-    });
-    writeHtml(route, injectBody(injectMeta(baseHtml, tags), courseBodyHtml(course)));
-    console.log(`  ok   ${route}`);
-    succeeded++;
-  }
+  // 5. Course templates - CUTOVER: /courses/<id> pages are served by the Next.js app
+  //    via a rewrite in vercel.json. We no longer write their static HTML (a
+  //    filesystem match would shadow the rewrite); the Next route owns title/meta/
+  //    JSON-LD. Templates still feed the sitemap below.
 
   // 6. Sitemap — generated from the same data so new exams/courses/posts auto-appear
   const sitemapEntries = [
