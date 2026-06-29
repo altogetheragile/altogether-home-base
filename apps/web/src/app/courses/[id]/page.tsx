@@ -5,6 +5,7 @@ import { marked } from 'marked';
 import { getCourse } from '@/lib/events';
 import { durationLong, formatPrice, formatDateRange, type EventTemplate, type ScheduledEvent } from '@/lib/events-types';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText } from '@/lib/seo';
+import { InterestForm } from './InterestForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -229,7 +230,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                     <span style={{ color: p.muted, fontSize: 13, marginLeft: 4 }}>{difficultyLabel}</span>
                   </div>
                 )}
-                <a href="/contact" style={{ display: 'block', background: p.orange, color: p.white, padding: '14px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none', textAlign: 'center', marginTop: 16 }}>Enquire About This Course</a>
+                <InterestForm courseTitle={course.title} />
               </div>
             </div>
           )}
