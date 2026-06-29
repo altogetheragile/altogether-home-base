@@ -3,8 +3,10 @@ import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
   FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, LayoutDashboard,
   Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList,
-  ChevronRight, Search,
+  ChevronRight, Search, Inbox,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import AccessDenied from '@/components/AccessDenied';
@@ -32,6 +34,7 @@ interface NavItem {
   href: string;
   exact?: boolean;
   children?: NavChild[];
+  badge?: number;
 }
 
 interface NavGroup {
@@ -89,6 +92,7 @@ const navigation: NavGroup[] = [
   {
     label: 'Community',
     items: [
+      { label: 'Leads', icon: Inbox, href: '/admin/contacts' },
       { label: 'Users', icon: Users, href: '/admin/users' },
       { label: 'Feedback', icon: MessageSquare, href: '/admin/feedback' },
     ],
@@ -129,6 +133,11 @@ const SidebarNavItem = ({ item, pathname }: { item: NavItem; pathname: string })
           <Link to={item.href}>
             <item.icon />
             <span>{item.label}</span>
+            {item.badge ? (
+              <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E8702A] px-1.5 text-xs font-semibold text-white">
+                {item.badge}
+              </span>
+            ) : null}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -170,6 +179,28 @@ const AdminLayout = () => {
   const { user } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
 
+  // Live count of leads still awaiting first action, shown as a sidebar badge so new
+  // contact submissions are never missed. 'unread' is the status every form inserts.
+  const { data: unreadLeads = 0 } = useQuery({
+    queryKey: ['admin-unread-leads'],
+    enabled: userRole === 'admin',
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('contacts')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'unread');
+      return count ?? 0;
+    },
+  });
+
+  const nav = navigation.map((group) => ({
+    ...group,
+    items: group.items.map((item) =>
+      item.href === '/admin/contacts' ? { ...item, badge: unreadLeads } : item,
+    ),
+  }));
+
   if (roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -200,7 +231,7 @@ const AdminLayout = () => {
 
         {/* Navigation */}
         <SidebarContent>
-          {navigation.map((group, gi) => (
+          {nav.map((group, gi) => (
             <SidebarGroup key={gi}>
               {group.label && (
                 <SidebarGroupLabel>{group.label}</SidebarGroupLabel>

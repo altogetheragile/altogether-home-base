@@ -9,6 +9,15 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Download } from "lucide-react";
 
+// Lead lifecycle. 'unread' is the status every contact/enquiry/interest form inserts,
+// so it must be a first-class, selectable state (previously the dropdown only offered
+// new/in_progress/resolved, leaving every real lead's control blank and un-actionable).
+const STATUSES = [
+  { value: 'unread', label: 'Unread' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'resolved', label: 'Resolved' },
+];
+
 const AdminContacts = () => {
   const queryClient = useQueryClient();
 
@@ -36,6 +45,7 @@ const AdminContacts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-unread-leads"] });
       toast.success("Status updated successfully");
     },
     onError: () => {
@@ -43,8 +53,11 @@ const AdminContacts = () => {
     },
   });
 
+  const unreadCount = contacts?.filter((c) => (c.status ?? "unread") === "unread").length ?? 0;
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      unread: "default",
       new: "default",
       in_progress: "secondary",
       resolved: "outline",
@@ -66,7 +79,13 @@ const AdminContacts = () => {
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader>
-          <CardTitle>Contact Form Submissions</CardTitle>
+          <CardTitle className="flex flex-wrap items-center gap-3">
+            <span>Leads</span>
+            <span className="text-sm font-normal text-muted-foreground">Contact, coaching and course-interest submissions</span>
+            {unreadCount > 0 && (
+              <Badge variant="default" className="ml-auto">{unreadCount} unread</Badge>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -125,18 +144,22 @@ const AdminContacts = () => {
                       <TableCell>{getStatusBadge(contact.status ?? 'new')}</TableCell>
                       <TableCell>
                         <Select
-                          value={contact.status ?? undefined}
+                          value={contact.status ?? "unread"}
                           onValueChange={(value) =>
                             updateStatusMutation.mutate({ id: contact.id, status: value })
                           }
                         >
-                          <SelectTrigger className="w-32">
+                          <SelectTrigger className="w-36">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="new">New</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="resolved">Resolved</SelectItem>
+                            {STATUSES.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                            ))}
+                            {/* Keep any legacy value (e.g. 'new') selectable so the control is never blank */}
+                            {contact.status && !STATUSES.some((s) => s.value === contact.status) && (
+                              <SelectItem value={contact.status}>{contact.status.replace("_", " ")}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </TableCell>
