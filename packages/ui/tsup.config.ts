@@ -6,6 +6,15 @@ export default defineConfig({
   dts: true,
   clean: true,
   treeshake: true,
-  // The consuming apps own React; never bundle it into the design system.
-  external: ['react', 'react-dom', 'react/jsx-runtime'],
+  // The consuming apps own React and the component runtime deps (Radix, cva, clsx,
+  // tailwind-merge) — never bundle them into the design system.
+  external: [
+    'react',
+    'react-dom',
+    'react/jsx-runtime',
+    '@radix-ui/react-slot',
+    'class-variance-authority',
+    'clsx',
+    'tailwind-merge',
+  ],
 });

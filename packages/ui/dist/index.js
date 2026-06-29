@@ -1,78 +1,44 @@
-import { fonts, radii, colors } from './chunk-63HQX2YB.js';
 export { colors, fontWeights, fonts, radii, space, tokens } from './chunk-63HQX2YB.js';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva } from 'class-variance-authority';
 import { jsx } from 'react/jsx-runtime';
 
-var base = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-  border: "none",
-  borderRadius: radii.md,
-  fontWeight: 700,
-  fontFamily: fonts.sans,
-  cursor: "pointer",
-  textDecoration: "none",
-  lineHeight: 1,
-  transition: "background 0.2s ease, transform 0.2s ease"
-};
-var sizes = {
-  sm: { padding: "10px 18px", fontSize: 14 },
-  md: { padding: "13px 26px", fontSize: 15 }
-};
-var variants = {
-  primary: { background: colors.orange, color: colors.deepTeal },
-  deep: { background: colors.deepTeal, color: colors.white },
-  ghost: { background: "transparent", color: colors.deepTeal, padding: 0 },
-  outline: { background: "transparent", color: colors.deepTeal, border: `1px solid ${colors.paleTeal}` }
-};
+function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
+var buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline"
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        xl: "h-12 rounded-md px-10",
+        "2xl": "h-14 rounded-md px-12 text-lg",
+        icon: "h-10 w-10"
+      }
+    },
+    defaultVariants: { variant: "default", size: "default" }
+  }
+);
 var Button = React.forwardRef(
-  ({ variant = "primary", size = "md", style, ...props }, ref) => /* @__PURE__ */ jsx("button", { ref, style: { ...base, ...sizes[size], ...variants[variant], ...style }, ...props })
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return /* @__PURE__ */ jsx(Comp, { className: cn(buttonVariants({ variant, size, className })), ref, ...props });
+  }
 );
 Button.displayName = "Button";
-var tones = {
-  teal: { background: colors.paleTeal, color: colors.midTeal },
-  orange: { background: colors.orange, color: colors.white },
-  neutral: { background: colors.skyTeal, color: colors.deepTeal }
-};
-var Badge = React.forwardRef(
-  ({ tone = "teal", style, ...props }, ref) => /* @__PURE__ */ jsx(
-    "span",
-    {
-      ref,
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        fontSize: 11,
-        fontWeight: 700,
-        padding: "3px 10px",
-        borderRadius: radii.pill,
-        ...tones[tone],
-        ...style
-      },
-      ...props
-    }
-  )
-);
-Badge.displayName = "Badge";
-var Card = React.forwardRef(
-  ({ raised = false, style, ...props }, ref) => /* @__PURE__ */ jsx(
-    "div",
-    {
-      ref,
-      style: {
-        background: colors.white,
-        border: `1px solid ${colors.paleTeal}`,
-        borderRadius: radii.xl,
-        boxShadow: raised ? "0 2px 12px rgba(0,77,77,0.07)" : void 0,
-        ...style
-      },
-      ...props
-    }
-  )
-);
-Card.displayName = "Card";
 
-export { Badge, Button, Card };
+export { Button, buttonVariants, cn };

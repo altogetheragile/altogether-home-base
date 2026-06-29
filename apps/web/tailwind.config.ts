@@ -5,7 +5,11 @@ import animate from 'tailwindcss-animate';
 // port across with the same brand colours (orange primary) and radius.
 const config: Config = {
   darkMode: ['class'],
-  content: ['./src/**/*.{ts,tsx}'],
+  content: [
+    './src/**/*.{ts,tsx}',
+    // Scan the shared design system so its component classes aren't purged.
+    './node_modules/@altogether/ui/dist/**/*.js',
+  ],
   theme: {
     extend: {
       colors: {

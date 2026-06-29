@@ -7,6 +7,8 @@ export default {
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
+		// Scan the shared design system so its component classes aren't purged.
+		"./node_modules/@altogether/ui/dist/**/*.js",
 	],
 	prefix: "",
 	theme: {
