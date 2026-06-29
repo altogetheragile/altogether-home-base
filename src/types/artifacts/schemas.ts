@@ -65,6 +65,25 @@ const cellRecord = z.record(z.string(), z.union([z.string(), z.array(z.string())
 // ── BMC (string | string[] per block) ───────────────────────────────────────
 export const bmcSchema = z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({});
 
+// ── Canvas-element artifacts (user_story / project-model store { elements: [] }) ─
+export const canvasElementsSchema = z.object({
+  elements: z.array(z.object({ id: z.string() }).passthrough()).default([]),
+}).passthrough();
+
+// ── Pattern Builder result (SavedPattern) ────────────────────────────────────
+const patternStep = z.object({
+  artifactId: str, techniqueIds: z.array(z.string()).default([]), rationale: str,
+}).passthrough();
+const patternResult = z.object({
+  diagnosis: str, primaryHorizon: z.string().nullable().optional(),
+  steps: z.array(patternStep).default([]), cautions: z.array(z.string()).default([]),
+}).passthrough();
+export const patternSchema = z.object({
+  scenario: str,
+  answers: z.array(z.object({ question: str, answer: str }).passthrough()).optional(),
+  result: patternResult,
+}).passthrough();
+
 /** Registry: artifact_type -> schema. Unknown types pass through unvalidated. */
 export const ARTIFACT_SCHEMAS: Record<string, z.ZodTypeAny> = {
   'impact-map': impactMapSchema,
@@ -78,7 +97,9 @@ export const ARTIFACT_SCHEMAS: Record<string, z.ZodTypeAny> = {
   'business-case': cellRecord,
   'product-vision': cellRecord,
   canvas: cellRecord,
-  // user_story / project-model are intentionally loose (generic canvas state).
+  user_story: canvasElementsSchema,
+  'project-model': canvasElementsSchema,
+  pattern: patternSchema,
 };
 
 export type ArtifactValidation = { valid: boolean; data: unknown; issues: string[] };
