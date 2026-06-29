@@ -17,7 +17,7 @@ things the architecture guarantees, without ever taking the live site down.
 | Phase | What it delivers | State |
 |---|---|---|
 | 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
-| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (exams listing built on preview) |
+| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (EXAMS CUT OVER and live; blog/courses/events/home remain) |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
 
@@ -213,10 +213,21 @@ Suggested order (lowest risk and clearest win first):
    Next exam pages now match the live site visually.
 2. Optional fidelity: Practitioner matching-grid / scenario-tab UI and rich
    markdown scenario (sequential rendering already scores every type correctly).
-3. Cutover (needs explicit go-ahead): edge-route the live `/exams` and
-   `/exams/[slug]` to the Next app (rewrite in the root project), drop them from
-   `prerender.mjs` + the sitemap, and verify on the live domain. This is the step
-   that actually moves the SEO.
+3. DONE - Cutover (2026-06-29): the live `/exams` and `/exams/:slug*` are rewritten
+   to the Next app in the root `vercel.json` (before the SPA catch-all), with
+   `/_next/:path*` also rewritten so assets stay same-origin. `/exams*` gets a
+   Next-compatible CSP (inline hydration scripts allowed); every other path keeps
+   the strict CSP. `prerender.mjs` no longer writes the exam HTML (it would shadow
+   the rewrite) but still generates the OG images. Verified live: Next-served,
+   hydrates, player works, 0 CSP violations, non-exam pages unaffected.
+
+**The cutover mechanism, reusable for the next vines (blog/courses/events/home):**
+rewrite `/<section>*` + `/_next/*` to the Next app before the SPA catch-all; give
+that section a Next-compatible CSP via a path-scoped header rule and exclude it
+from the strict-CSP source with a negative lookahead (`/((?!exams).*)`); stop
+prerendering that section's HTML so the rewrite is reached; keep its sitemap
+entries (the sitemap is the `api/sitemap.xml.ts` function). Reversible by removing
+the rewrites.
 
 For each section:
 
