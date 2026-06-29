@@ -222,11 +222,12 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
     const pct = questions.length ? Math.round((results.correct / questions.length) * 100) : 0;
     return (
       <div>
-        <div style={{ borderRadius: 16, padding: 28, textAlign: 'center', marginBottom: 24, background: results.passed ? 'linear-gradient(135deg,#ECFDF5,#D1FAE5)' : 'linear-gradient(135deg,#FEF2F2,#FECACA)' }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: c.muted }}>{results.passed ? 'Passed' : 'Not passed'}</p>
-          <p style={{ margin: '6px 0 0', fontSize: 40, fontWeight: 800, color: c.deepTeal }}>{results.correct} / {questions.length}</p>
+        <div style={{ background: c.skyTeal, border: `1px solid ${c.lightTeal}`, borderRadius: 16, padding: 28, textAlign: 'center', marginBottom: 24, overflow: 'hidden', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: results.passed ? `linear-gradient(90deg, ${c.deepTeal}, ${c.midTeal})` : `linear-gradient(90deg, ${c.orange}, #E07B00)` }} />
+          <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', background: results.passed ? c.midTeal : c.orange, color: results.passed ? c.white : c.deepTeal }}>{results.passed ? 'Passed' : 'Not passed'}</span>
+          <p style={{ margin: '12px 0 0', fontSize: 44, fontWeight: 800, color: c.deepTeal }}>{results.correct} <span style={{ color: c.muted, fontWeight: 700 }}>/ {questions.length}</span></p>
           <p style={{ margin: '4px 0 0', fontSize: 14, color: c.body }}>{pct}% · pass mark {exam.pass_mark} · {results.unanswered} unanswered</p>
-          <button onClick={retake} style={{ marginTop: 16, padding: '8px 18px', borderRadius: 8, border: `1px solid ${c.lightTeal}`, background: c.white, color: c.deepTeal, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}><RotateCcw size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} /> Retake</button>
+          <button onClick={retake} style={{ marginTop: 18, padding: '10px 22px', borderRadius: 8, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}><RotateCcw size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} /> Retake</button>
         </div>
         <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {questions.map((qq, i) => {
