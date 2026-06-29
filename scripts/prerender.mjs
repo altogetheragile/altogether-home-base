@@ -741,11 +741,12 @@ async function main() {
 
   // 1. Static pages
   for (const [route, meta] of Object.entries(STATIC_PAGES)) {
-    // CUTOVER: /exams, /blog and /events are served by the Next.js app via rewrites
-    // in vercel.json. Do NOT write a static file here, or the filesystem match would
+    // CUTOVER: these routes are served by the Next.js app via rewrites in
+    // vercel.json. Do NOT write a static file here, or the filesystem match would
     // shadow the rewrite. The routes stay in STATIC_PAGES so they remain in the
     // sitemap.
-    if (route === '/exams' || route === '/blog' || route === '/events') continue;
+    const CUT_OVER = ['/exams', '/blog', '/events', '/about', '/coaching', '/testimonials', '/contact'];
+    if (CUT_OVER.includes(route)) continue;
     const tags = buildMetaTags({
       title: meta.title,
       description: meta.description,
