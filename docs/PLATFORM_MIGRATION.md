@@ -17,7 +17,7 @@ things the architecture guarantees, without ever taking the live site down.
 | Phase | What it delivers | State |
 |---|---|---|
 | 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
-| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (EXAMS, BLOG and COURSES/EVENTS CUT OVER and live; home + marketing remain) |
+| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | EXAMS, BLOG, COURSES/EVENTS and HOME (/) CUT OVER and live. Remaining SPA marketing pages (/about, /coaching, /testimonials, /contact) still on the Vite trunk. |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
 
@@ -244,7 +244,21 @@ they need no Calendly/Credly/ipify/iframe sources, so the Next CSP covers them s
 Verified live: Next-served, filter hydrates, course pages render, 0 CSP violations,
 home keeps the strict CSP, `/courses` and `/schedule` 301s preserved.
 
-**The cutover mechanism, reusable for the last vine (home + marketing):**
+**Home cutover (2026-06-29):** the root is special - Vite emits `dist/index.html`
+which the filesystem serves for `/`, shadowing any rewrite. So `prerender.mjs` now
+moves the SPA shell to `dist/_spa.html` and removes `dist/index.html`; `vercel.json`
+retargets the SPA catch-all to `/_spa.html` (byte-identical), rewrites `/` to the Next
+app, gives `/` the Next CSP, and switches the strict-CSP negative-lookahead source
+from `.*` to `.+` so it no longer matches the bare root. The Next home page reads site
+settings, course cards and testimonials server-side and matches the live design (DM
+Serif hero, personas, testimonials strip, courses carousel, About Alun, Knowledge
+Base, CTA); the DM fonts are self-hosted in the Next app so they render under the Next
+CSP. Verified live: `/` Next-served and hydrating, 0 CSP violations, and the entire
+remaining SPA still resolves through the retargeted catch-all (about/coaching/contact/
+testimonials/knowledge/auth all 200). The soft-404 guard (`check:routes`) was updated
+to fall back to `_spa.html`.
+
+**The cutover mechanism, reusable for the remaining marketing pages:**
 rewrite `/<section>*` + `/_next/*` to the Next app before the SPA catch-all; give
 that section a Next-compatible CSP via a path-scoped header rule and add it to the
 strict-CSP negative lookahead (now `/((?!exams|blog).*)`); stop prerendering that
