@@ -15,9 +15,11 @@ proceeds. Grouped by priority. Last updated after the **blog** cutover
    Google recrawl the new server-rendered HTML sooner:
    - `https://altogetheragile.com/exams`
    - `https://altogetheragile.com/blog`
-   - The 2-3 highest-value exam and blog posts (e.g. the AgilePM Foundation exam,
-     your best-performing articles from the Top Queries report).
-   You do not need to do all of them; the sitemap covers the long tail.
+   - `https://altogetheragile.com/events` (now Next-served)
+   - The 2-3 highest-value exam/blog posts and a top `/courses/<id>` page.
+   You do not need to do all of them; the sitemap covers the long tail. Note: GSC
+   caps "Request Indexing" at roughly 10-12 URLs per day - if you hit the daily
+   quota, that is normal; just do a few more tomorrow, or rely on the sitemap.
 3. **Use the URL Inspection "Test Live URL" / "View Crawled Page"** on one exam and
    one blog URL to confirm Google sees real rendered HTML with the title, meta and
    JSON-LD (not the old empty SPA shell). This is the direct check that the SEO fix

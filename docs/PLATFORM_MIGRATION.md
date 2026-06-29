@@ -17,7 +17,7 @@ things the architecture guarantees, without ever taking the live site down.
 | Phase | What it delivers | State |
 |---|---|---|
 | 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
-| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (EXAMS and BLOG CUT OVER and live; courses/events/home remain) |
+| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (EXAMS, BLOG and COURSES/EVENTS CUT OVER and live; home + marketing remain) |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
 
@@ -231,7 +231,20 @@ inline handlers stripped) with ported prose styling. Verified live: Next-served,
 listing filter hydrates, articles render full content, 0 CSP violations, all the
 legacy `/blog/*` 301 redirects still resolve, non-blog pages unaffected.
 
-**The cutover mechanism, reusable for the next vines (courses/events/home):**
+**Courses/events cutover (2026-06-29):** `/events` (exact) and `/courses/:path*`
+rewritten to the Next app; both added to the Next-CSP source and excluded from the
+strict CSP; `prerender.mjs` no longer writes `/events` or `/courses/<id>` HTML.
+`/events` is a server listing (teal hero + client filter, Course ItemList JSON-LD,
+top approved testimonial per card); `/courses/[id]` is a server course page
+(`generateMetadata`, Course + BreadcrumbList JSON-LD, About/outcomes/benefits/
+audience/prerequisites, sidebar listing upcoming scheduled dates that link to the SPA
+`/events/:id` to register, or an enquire CTA). Scope split: `/events/:id` (auth-gated
+registration) and `/events/learn/:slug` (self-paced player) STAY on the SPA - verified
+they need no Calendly/Credly/ipify/iframe sources, so the Next CSP covers them safely.
+Verified live: Next-served, filter hydrates, course pages render, 0 CSP violations,
+home keeps the strict CSP, `/courses` and `/schedule` 301s preserved.
+
+**The cutover mechanism, reusable for the last vine (home + marketing):**
 rewrite `/<section>*` + `/_next/*` to the Next app before the SPA catch-all; give
 that section a Next-compatible CSP via a path-scoped header rule and add it to the
 strict-CSP negative lookahead (now `/((?!exams|blog).*)`); stop prerendering that
