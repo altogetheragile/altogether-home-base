@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState } from '@/utils/authCleanup';
+import { setAuthPresence } from '@/utils/authPresence';
 
 interface AuthContextType {
   user: User | null;
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setAuthPresence(!!session);
       setLoading(false);
     }).catch((error) => {
       console.error('Auth session retrieval failed:', error);
@@ -44,6 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        setAuthPresence(!!session);
         setLoading(false);
 
         // When user clicks a password reset link, Supabase fires PASSWORD_RECOVERY.
@@ -101,6 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       // Proactively clear local state/storage
       cleanupAuthState();
+      setAuthPresence(false);
       setSession(null);
       setUser(null);
       setLoading(false);
