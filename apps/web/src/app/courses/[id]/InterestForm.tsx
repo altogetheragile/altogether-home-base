@@ -45,7 +45,7 @@ export function InterestForm({ courseTitle }: { courseTitle: string }) {
         email: email.trim(),
         subject,
         message,
-        enquiry_type: 'course_interest',
+        enquiry_type: 'general',
         status: 'unread',
       });
       if (insertError) throw insertError;
@@ -53,7 +53,7 @@ export function InterestForm({ courseTitle }: { courseTitle: string }) {
       // Notify (best-effort; the lead is already saved).
       await supabase.functions
         .invoke('send-contact-email', {
-          body: { name: name.trim(), email: email.trim(), subject, message, enquiry_type: 'course_interest' },
+          body: { name: name.trim(), email: email.trim(), subject, message, enquiry_type: 'general' },
         })
         .catch(() => {});
 
