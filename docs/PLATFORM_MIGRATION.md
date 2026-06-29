@@ -18,7 +18,7 @@ things the architecture guarantees, without ever taking the live site down.
 |---|---|---|
 | 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
 | 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | COMPLETE. exams, blog, courses/events, home (/), and the marketing pages (/about, /coaching, /testimonials, /contact) are all CUT OVER and live on Next.js. The Vite trunk now serves only the interactive tools, auth, the self-paced course player (/events/learn), and the knowledge base. |
-| 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
+| 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Largely complete via a deliberate TWO-SURFACE architecture: a public Site (Next) + a product App (the SPA). All interactive tools stay ROUTED on the App (not migrated - high effort, no SEO benefit, and fragmenting the integrated tool pipeline across stacks would break it). Shared design system (`packages/ui` @altogether/ui) consumed by both surfaces and live; Claude Design already has the full library synced ("Altogether Agile UI"). Auth seam unified via a non-sensitive presence signal (the App publishes `aa-auth`, the Site reflects it). Remaining: grow `@altogether/ui` by migrating SPA components into it over time. |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
 
 Each phase is shippable on its own. We can pause after any phase with a live,
@@ -315,6 +315,30 @@ is planned explicitly here.
 
 **Exit criteria:** every tool is reachable, auth aware and on brand, whether
 migrated or routed, with a documented decision per tool.
+
+**Decisions taken (2026-06-29).** The architecture is **two deliberate surfaces** — a
+public *Site* (Next.js: content + marketing, Phase 1) and a product *App* (the Vite
+SPA: the authenticated, integrated tool pipeline + admin). This is a standard, legitimate
+world-class split (marketing site + product app), not an interim compromise.
+
+- **Per-tool decision: ALL interactive tools stay ROUTED on the App.** Not migrated to
+  Next. Rationale: they are large (≈40k lines incl. Fabric.js canvases), stable, working,
+  need no SEO, and — critically — they form one integrated pipeline (outputs feed inputs
+  via `project_artifacts` provenance + the Pipeline Registry, see VISION_TO_VALUE.md).
+  Fragmenting that pipeline across two stacks/sessions would break its seamless handoffs.
+  Keeping the App internally one stack is the point.
+- **Shared design system** (`packages/ui`, `@altogether/ui`): tsup-built tokens + typed
+  components + Storybook, consumed by the App (workspace symlink) and the Site (`file:`
+  dep, committed `dist`). One brand source of truth across both surfaces; it is also the
+  artifact Claude Design's design-sync consumes. The full SPA shadcn library is already
+  synced to the "Altogether Agile UI" Claude Design project — do NOT overwrite it with the
+  smaller `@altogether/ui` (see `.design-sync/NOTES.md`); grow `@altogether/ui` first.
+- **Auth seam:** because the Site never server-gates (all gated features live on the App),
+  migrating the live session into cookies was deliberately NOT done — it would risk live
+  login/logout/MFA for a server-auth capability the architecture doesn't use. Instead the
+  App publishes a non-sensitive presence cookie (`aa-auth`, display only) and the Site
+  reflects it (Dashboard vs Sign In). The full session-in-cookies migration is the right
+  move only if a gated feature ever moves to the Site.
 
 ---
 
