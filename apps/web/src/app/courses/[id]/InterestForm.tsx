@@ -50,14 +50,15 @@ export function InterestForm({ courseTitle }: { courseTitle: string }) {
       });
       if (insertError) throw insertError;
 
-      // Notify (best-effort; the lead is already saved).
-      await supabase.functions
+      // Lead is saved - show success immediately; don't make the user wait on email.
+      setState('done');
+
+      // Notify (best-effort, fire-and-forget; the lead is already persisted).
+      void supabase.functions
         .invoke('send-contact-email', {
           body: { name: name.trim(), email: email.trim(), subject, message, enquiry_type: 'general' },
         })
         .catch(() => {});
-
-      setState('done');
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       setError(msg.includes('Rate limit') ? 'Please wait a few minutes before submitting again.' : 'Something went wrong. Please try again, or email us.');
