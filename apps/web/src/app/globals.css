@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Self-hosted brand fonts (same-origin, CSP font-src 'self'). Real family names so
+   the inline `font-family: 'DM Serif Display'` / 'DM Sans' references across the app
+   resolve correctly. */
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(/fonts/dm-sans-latin.woff2) format('woff2'); }
+@font-face { font-family: 'DM Serif Display'; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/dm-serif-display-latin.woff2) format('woff2'); }
+@font-face { font-family: 'DM Serif Display'; font-style: italic; font-weight: 400; font-display: swap; src: url(/fonts/dm-serif-display-italic-latin.woff2) format('woff2'); }
+
 /* Design tokens ported from the existing app (src/index.css). Orange primary brand. */
 @layer base {
   :root {
