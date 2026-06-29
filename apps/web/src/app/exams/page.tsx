@@ -55,7 +55,7 @@ export default async function ExamsPage() {
       {/* Teal gradient hero */}
       <div style={{ background: `linear-gradient(135deg, ${c.deepTeal} 0%, #006666 100%)`, padding: '48px 24px', textAlign: 'center' }}>
         <h1 style={{ color: c.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
-          Free Agile Practice Exams
+          AgilePM &amp; Scrum Practice Exam Questions
         </h1>
         <p style={{ color: c.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginInline: 'auto' }}>
           Prepare for your agile certification with timed mock exams or work through questions at your
@@ -89,10 +89,35 @@ export default async function ExamsPage() {
         </div>
       </div>
 
-      {/* FAQ */}
+      {/* About + How to prepare + FAQ (content parity with the live page) */}
       <div style={{ background: c.white, borderTop: '1px solid #E5E7EB' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px' }}>
-          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '0 0 20px', lineHeight: 1.25 }}>Frequently Asked Questions</h2>
+        <div style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px' }}>
+          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.25 }}>About the AgilePM Foundation Exam</h2>
+          <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
+            The AgilePM Foundation exam tests your understanding of the AgilePM framework: its eight
+            principles, the team roles, the products produced through a project, and the agile project
+            lifecycle. It is a closed-book, multiple-choice paper based on the AgilePM Handbook, and it
+            is the entry-level AgilePM qualification. Passing Foundation is the prerequisite for the
+            AgilePM Practitioner exam, which tests how well you can apply the framework to a real project
+            scenario.
+          </p>
+          <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
+            Our free AgilePM3 Foundation practice papers follow the Foundation format: 50 questions to
+            complete in 40 minutes, with a pass mark of 25 out of 50 (50%). They are based on the latest
+            version of the AgilePM Handbook. Sit a paper as a timed mock exam to rehearse the real thing,
+            or switch to revision mode and work through the questions at your own pace with answers and
+            explanations.
+          </p>
+
+          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '40px 0 16px', lineHeight: 1.25 }}>How to Prepare</h2>
+          <ul style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: 0, paddingLeft: 22 }}>
+            <li>Read the AgilePM Handbook and learn the eight principles, the roles, and the products.</li>
+            <li>Understand the agile project lifecycle and how the phases fit together.</li>
+            <li>Practise under timed conditions so the 40-minute limit feels comfortable.</li>
+            <li>Use revision mode to focus on the topics you find hardest, then re-sit a full paper.</li>
+          </ul>
+
+          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>Frequently Asked Questions</h2>
           {EXAM_FAQS.map((f) => (
             <div key={f.q} style={{ marginBottom: 20 }}>
               <h3 style={{ color: c.deepTeal, fontSize: 17, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.4 }}>{f.q}</h3>
