@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import LogoFull from '@/components/LogoFull';
 import { canvasByKey } from '@/config/canvases';
+import { validateArtifactData } from '@/types/artifacts/schemas';
 import { useProjectArtifact, useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
 import { useProject } from '@/hooks/useProjects';
 import { useBacklogItems } from '@/hooks/useBacklogItems';
@@ -182,6 +183,16 @@ export default function ArtifactViewer() {
   }
 
   const renderArtifactContent = () => {
+    // Contract check at the read chokepoint: surface payload drift for this
+    // artifact_type without ever breaking the render (graceful by design).
+    const contract = validateArtifactData(artifact.artifact_type, artifact.data);
+    if (!contract.valid) {
+      console.warn(
+        `[artifact-contract] ${artifact.artifact_type} (${artifact.id}) does not match its schema:`,
+        contract.issues,
+      );
+    }
+
     switch (artifact.artifact_type) {
       case 'bmc':
         const originalBmcData = artifact.data?.bmcData || artifact.data;
