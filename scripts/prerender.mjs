@@ -741,10 +741,11 @@ async function main() {
 
   // 1. Static pages
   for (const [route, meta] of Object.entries(STATIC_PAGES)) {
-    // CUTOVER: /exams is served by the Next.js app via a rewrite in vercel.json.
-    // Do NOT write a static file here, or the filesystem match would shadow the
-    // rewrite. The route stays in STATIC_PAGES so it remains in the sitemap.
-    if (route === '/exams') continue;
+    // CUTOVER: /exams and /blog are served by the Next.js app via rewrites in
+    // vercel.json. Do NOT write a static file here, or the filesystem match would
+    // shadow the rewrite. The routes stay in STATIC_PAGES so they remain in the
+    // sitemap.
+    if (route === '/exams' || route === '/blog') continue;
     const tags = buildMetaTags({
       title: meta.title,
       description: meta.description,
@@ -761,23 +762,10 @@ async function main() {
     succeeded++;
   }
 
-  // 2. Blog posts
-  for (const post of posts) {
-    const route = `/blog/${post.slug}`;
-    const title = `${post.seo_title || post.title || 'Blog'} - Altogether Agile`;
-    const description = post.seo_description || truncate(post.title || '', 160);
-    const tags = buildMetaTags({
-      title,
-      description,
-      canonical: `${SITE_URL}${route}`,
-      ogType: 'article',
-      ogImage: post.featured_image_url,
-      jsonLd: blogPostJsonLd(post),
-    });
-    writeHtml(route, injectBody(injectMeta(baseHtml, tags), blogBodyHtml(post)));
-    console.log(`  ok   ${route}`);
-    succeeded++;
-  }
+  // 2. Blog posts - CUTOVER: /blog/<slug> pages are served by the Next.js app via
+  //    a rewrite in vercel.json. We no longer write their static HTML (a filesystem
+  //    match would shadow the rewrite); the Next route owns title/meta/JSON-LD.
+  //    Posts still feed the sitemap below.
 
   // 3. Exams - CUTOVER: /exams/<slug> pages are served by the Next.js app via a
   //    rewrite. We no longer write their static HTML (a filesystem match would
