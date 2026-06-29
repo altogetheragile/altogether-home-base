@@ -10,8 +10,19 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()" }
+      ]
+    },
+    {
+      "source": "/((?!exams).*)",
+      "headers": [
         { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://assets.calendly.com https://cdn.credly.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org; frame-src https://www.youtube.com https://youtube.com https://calendly.com https://*.calendly.com https://credly.com https://*.credly.com; worker-src 'self' blob:; upgrade-insecure-requests" }
+      ]
+    },
+    {
+      "source": "/exams(/.*)?",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co; upgrade-insecure-requests" }
       ]
     }
   ],
@@ -119,6 +130,9 @@
     { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" },
     { "source": "/va/script.js", "destination": "https://va.vercel-scripts.com/v1/script.js" },
     { "source": "/va/:path*", "destination": "https://va.vercel-scripts.com/:path*" },
+    { "source": "/exams", "destination": "https://altogether-home-base-web-next.vercel.app/exams" },
+    { "source": "/exams/:path*", "destination": "https://altogether-home-base-web-next.vercel.app/exams/:path*" },
+    { "source": "/_next/:path*", "destination": "https://altogether-home-base-web-next.vercel.app/_next/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

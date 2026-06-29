@@ -48,6 +48,7 @@ export async function generateMetadata({
       exam.description ||
       `Free ${examSubject(exam.title)} practice exam with answers and explanations.`,
     path: `/exams/${slug}`,
+    ogImage: `${SITE_URL}/og/exams/${slug}.png`,
   });
 }
 

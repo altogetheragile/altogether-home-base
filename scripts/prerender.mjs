@@ -741,6 +741,10 @@ async function main() {
 
   // 1. Static pages
   for (const [route, meta] of Object.entries(STATIC_PAGES)) {
+    // CUTOVER: /exams is served by the Next.js app via a rewrite in vercel.json.
+    // Do NOT write a static file here, or the filesystem match would shadow the
+    // rewrite. The route stays in STATIC_PAGES so it remains in the sitemap.
+    if (route === '/exams') continue;
     const tags = buildMetaTags({
       title: meta.title,
       description: meta.description,
@@ -775,29 +779,13 @@ async function main() {
     succeeded++;
   }
 
-  // 3. Exams
+  // 3. Exams - CUTOVER: /exams/<slug> pages are served by the Next.js app via a
+  //    rewrite. We no longer write their static HTML (a filesystem match would
+  //    shadow the rewrite), but we still generate the per-exam OG images, which
+  //    the Next pages reference at /og/exams/<slug>.png.
   for (const exam of exams) {
-    const route = `/exams/${exam.slug}`;
-    const title = `${exam.seo_title || exam.title} - Altogether Agile`;
-    const description = truncate(exam.seo_description || exam.description || `Practice exam: ${exam.title}. Free mock exam questions with answers.`);
-    const ogImage = writeExamOgImage(exam);
-    const tags = buildMetaTags({
-      title,
-      description,
-      canonical: `${SITE_URL}${route}`,
-      ogImage,
-      jsonLd: [
-        examJsonLd(exam),
-        breadcrumbJsonLd([
-          { name: 'Home', url: `${SITE_URL}/` },
-          { name: 'Practice Exams', url: `${SITE_URL}/exams` },
-          { name: exam.title, url: `${SITE_URL}${route}` },
-        ]),
-      ],
-    });
-    writeHtml(route, injectBody(injectMeta(baseHtml, tags), examBodyHtml(exam)));
-    console.log(`  ok   ${route}`);
-    succeeded++;
+    writeExamOgImage(exam);
+    console.log(`  og   /exams/${exam.slug}`);
   }
 
   // 5. Course templates
