@@ -3,6 +3,11 @@ import type { Metadata } from 'next';
 export const SITE_URL = 'https://altogetheragile.com';
 export const SITE_NAME = 'Altogether Agile';
 
+export function truncateText(str: string, len = 160): string {
+  if (!str) return '';
+  return str.length > len ? str.slice(0, len - 1).trimEnd() + '…' : str;
+}
+
 /**
  * Build per-page metadata. This replaces scripts/prerender.mjs: each route owns
  * its own title/description/canonical/OG, generated from data, with no separate
@@ -81,6 +86,29 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
       name: it.name,
       item: `${SITE_URL}${it.path === '/' ? '' : it.path}`,
     })),
+  };
+}
+
+export function blogPostingJsonLd(opts: {
+  title: string;
+  description: string;
+  path: string;
+  image?: string | null;
+  datePublished?: string | null;
+  dateModified?: string | null;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: opts.title,
+    description: opts.description,
+    url: `${SITE_URL}${opts.path}`,
+    mainEntityOfPage: `${SITE_URL}${opts.path}`,
+    image: opts.image || undefined,
+    datePublished: opts.datePublished || undefined,
+    dateModified: opts.dateModified || opts.datePublished || undefined,
+    author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+    publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
   };
 }
 
