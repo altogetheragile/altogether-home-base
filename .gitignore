@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# The shared design-system build output IS tracked: both Vercel projects consume it
+# without a build step (apps/web via a file: dep), so it must be committed.
+!packages/ui/dist
+!packages/ui/dist/**
+
 # Environment files
 .env
 .env.*

@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "export:kb": "node scripts/export-kb-json.mjs",
-    "prebuild": "npm run build --workspace @altogether/ui && node scripts/export-kb-json.mjs",
+    "prebuild": "node scripts/export-kb-json.mjs",
     "build": "tsc -b && vite build && node scripts/prerender.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
