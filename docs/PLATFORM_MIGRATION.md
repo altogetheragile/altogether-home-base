@@ -17,7 +17,7 @@ things the architecture guarantees, without ever taking the live site down.
 | Phase | What it delivers | State |
 |---|---|---|
 | 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
-| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | EXAMS, BLOG, COURSES/EVENTS and HOME (/) CUT OVER and live. Remaining SPA marketing pages (/about, /coaching, /testimonials, /contact) still on the Vite trunk. |
+| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | COMPLETE. exams, blog, courses/events, home (/), and the marketing pages (/about, /coaching, /testimonials, /contact) are all CUT OVER and live on Next.js. The Vite trunk now serves only the interactive tools, auth, the self-paced course player (/events/learn), and the knowledge base. |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
 
@@ -258,7 +258,20 @@ remaining SPA still resolves through the retargeted catch-all (about/coaching/co
 testimonials/knowledge/auth all 200). The soft-404 guard (`check:routes`) was updated
 to fall back to `_spa.html`.
 
-**The cutover mechanism, reusable for the remaining marketing pages:**
+**Marketing pages cutover (2026-06-29):** `/about`, `/coaching`, `/testimonials`,
+`/contact` rewritten to the Next app; added to the Next-CSP source and excluded from
+the strict CSP; `prerender.mjs` no longer writes their HTML. `/about` and `/coaching`
+are server-rendered marketing pages (with a client coaching-enquiry form); `/testimonials`
+is a server hero + client filter grid over `course_feedback`; `/contact` is a server
+shell + the full client contact form (honeypot, timing gate, ipify IP, contacts insert
++ send-contact-email). `https://api.ipify.org` was added to the Next CSP connect-src for
+the contact form. Verified live: all four Next-served with correct titles/JSON-LD,
+forms and filters hydrate, 0 CSP violations, the SPA (knowledge/auth/tools) still
+resolves through the catch-all, and the `/appointments`->`/contact` and `/author`->
+`/about` redirects still chain correctly. **Phase 1 is complete - the whole content
+surface is on Next.js.**
+
+**The cutover mechanism, reusable for any future page:**
 rewrite `/<section>*` + `/_next/*` to the Next app before the SPA catch-all; give
 that section a Next-compatible CSP via a path-scoped header rule and add it to the
 strict-CSP negative lookahead (now `/((?!exams|blog).*)`); stop prerendering that
