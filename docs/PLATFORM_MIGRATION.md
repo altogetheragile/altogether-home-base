@@ -17,7 +17,7 @@ things the architecture guarantees, without ever taking the live site down.
 | Phase | What it delivers | State |
 |---|---|---|
 | 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
-| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (EXAMS CUT OVER and live; blog/courses/events/home remain) |
+| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | In progress (EXAMS and BLOG CUT OVER and live; courses/events/home remain) |
 | 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Not started |
 | 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
 
@@ -221,13 +221,22 @@ Suggested order (lowest risk and clearest win first):
    the rewrite) but still generates the OG images. Verified live: Next-served,
    hydrates, player works, 0 CSP violations, non-exam pages unaffected.
 
-**The cutover mechanism, reusable for the next vines (blog/courses/events/home):**
+**Blog cutover (2026-06-29):** `/blog` and `/blog/:path*` rewritten to the Next
+app; `/blog` added to the Next-CSP source (`/(exams|blog)(/.*)?`) and excluded from
+the strict CSP (`/((?!exams|blog).*)`); `prerender.mjs` no longer writes blog HTML.
+`/blog` listing is a server component with a client category filter; `/blog/[slug]`
+is server-rendered with `generateMetadata` (og:article + featured image), BlogPosting
++ BreadcrumbList JSON-LD, and content rendered from stored HTML or markdown (scripts/
+inline handlers stripped) with ported prose styling. Verified live: Next-served,
+listing filter hydrates, articles render full content, 0 CSP violations, all the
+legacy `/blog/*` 301 redirects still resolve, non-blog pages unaffected.
+
+**The cutover mechanism, reusable for the next vines (courses/events/home):**
 rewrite `/<section>*` + `/_next/*` to the Next app before the SPA catch-all; give
-that section a Next-compatible CSP via a path-scoped header rule and exclude it
-from the strict-CSP source with a negative lookahead (`/((?!exams).*)`); stop
-prerendering that section's HTML so the rewrite is reached; keep its sitemap
-entries (the sitemap is the `api/sitemap.xml.ts` function). Reversible by removing
-the rewrites.
+that section a Next-compatible CSP via a path-scoped header rule and add it to the
+strict-CSP negative lookahead (now `/((?!exams|blog).*)`); stop prerendering that
+section's HTML so the rewrite is reached; keep its sitemap entries (the sitemap is
+the `api/sitemap.xml.ts` function). Reversible by removing the rewrites.
 
 For each section:
 
