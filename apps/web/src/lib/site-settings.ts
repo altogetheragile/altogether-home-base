@@ -23,6 +23,7 @@ export type SiteSettings = {
   show_exams?: boolean | null;
   show_ai_tools?: boolean | null;
   show_flow_game?: boolean | null;
+  show_testimonial_first_name_only?: boolean | null;
 };
 
 /** Single-row site settings (feature flags, contact, social). Anon-readable. */

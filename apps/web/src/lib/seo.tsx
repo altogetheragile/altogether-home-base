@@ -112,6 +112,49 @@ export function blogPostingJsonLd(opts: {
   };
 }
 
+const COURSE_PROVIDER = {
+  '@type': 'Organization',
+  name: SITE_NAME,
+  url: SITE_URL,
+  areaServed: ['London', 'United Kingdom'],
+};
+
+/** A single training course (provider = Altogether Agile). */
+export function courseJsonLd(opts: {
+  name: string;
+  description: string;
+  path: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: opts.name,
+    description: opts.description,
+    url: `${SITE_URL}${opts.path}`,
+    provider: COURSE_PROVIDER,
+  };
+}
+
+/** ItemList of Course entries for the catalogue page. */
+export function courseListJsonLd(name: string, items: { name: string; description: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name,
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Course',
+        name: it.name,
+        description: it.description,
+        url: `${SITE_URL}${it.path}`,
+        provider: COURSE_PROVIDER,
+      },
+    })),
+  };
+}
+
 export function itemListJsonLd(items: { name: string; path: string }[]) {
   return {
     '@context': 'https://schema.org',
