@@ -23,10 +23,14 @@ const RESOURCE_LINKS = [
   { label: 'Flow Game', href: '/flow-game', flag: 'show_flow_game', def: true },
 ] as const;
 
-export function Navigation({ settings }: { settings: SiteSettings }) {
+export function Navigation({ settings, signedIn = false }: { settings: SiteSettings; signedIn?: boolean }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
+
+  // The App (the SPA) publishes a non-sensitive presence cookie; if it's set we point
+  // people at their dashboard (still auth-gated on the App) instead of "Sign In".
+  const authCta = signedIn ? { href: '/dashboard', label: 'Dashboard' } : { href: '/auth', label: 'Sign In' };
 
   const flag = (key: string, def: boolean) => {
     const v = settings[key as keyof SiteSettings];
@@ -87,10 +91,10 @@ export function Navigation({ settings }: { settings: SiteSettings }) {
           )}
 
           <Link
-            href="/auth"
+            href={authCta.href}
             className="ml-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Sign In
+            {authCta.label}
           </Link>
         </div>
 
@@ -119,8 +123,8 @@ export function Navigation({ settings }: { settings: SiteSettings }) {
                 ))}
               </>
             )}
-            <Link href="/auth" className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground" onClick={() => setMobileOpen(false)}>
-              Sign In
+            <Link href={authCta.href} className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground" onClick={() => setMobileOpen(false)}>
+              {authCta.label}
             </Link>
           </div>
         </div>
