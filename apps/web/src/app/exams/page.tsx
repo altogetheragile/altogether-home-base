@@ -14,7 +14,7 @@ const c = {
 };
 
 export const metadata: Metadata = buildMetadata({
-  title: 'AgilePM & Scrum Practice Exams',
+  title: 'AgilePM & Scrum Practice Exam Questions',
   description:
     'Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification.',
   path: '/exams',
