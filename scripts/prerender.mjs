@@ -12,7 +12,7 @@
  * Usage:  node scripts/prerender.mjs
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, rmSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
@@ -804,6 +804,20 @@ async function main() {
   ];
   writeFileSync(resolve(DIST, 'sitemap.xml'), buildSitemap(sitemapEntries), 'utf-8');
   console.log(`  ok   /sitemap.xml (${sitemapEntries.length} urls)`);
+
+  // HOME CUTOVER: '/' is served by the Next.js app via a rewrite in vercel.json.
+  // Vite emits dist/index.html, which the filesystem serves for '/' (shadowing the
+  // rewrite). Move the SPA shell to dist/_spa.html - the catch-all fallback target in
+  // vercel.json - and remove dist/index.html so the '/' rewrite is reached. Every
+  // other SPA route still resolves: prerendered routes from their own dist/<route>/
+  // index.html, the rest via the catch-all rewrite to /_spa.html (byte-identical to
+  // the old index.html).
+  const indexHtmlPath = resolve(DIST, 'index.html');
+  if (existsSync(indexHtmlPath)) {
+    copyFileSync(indexHtmlPath, resolve(DIST, '_spa.html'));
+    rmSync(indexHtmlPath);
+    console.log('  ok   home cutover: dist/index.html -> dist/_spa.html (/ served by Next)');
+  }
 
   console.log(`\nPrerendered meta tags for ${succeeded} pages\n`);
 }

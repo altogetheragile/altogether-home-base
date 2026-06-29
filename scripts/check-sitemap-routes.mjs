@@ -46,7 +46,9 @@ function startServer() {
       join(DIST, pathname, 'index.html'),
     ];
     let file = candidates.find((f) => existsSync(f) && statSync(f).isFile());
-    if (!file) file = join(DIST, 'index.html'); // SPA fallback
+    // SPA fallback: the prerender renames the shell to _spa.html (so / is served by
+    // the Next app via a rewrite); fall back to index.html if a build predates that.
+    if (!file) file = existsSync(join(DIST, '_spa.html')) ? join(DIST, '_spa.html') : join(DIST, 'index.html');
     try {
       const body = readFileSync(file);
       res.setHeader('Content-Type', MIME[extname(file)] || 'application/octet-stream');
