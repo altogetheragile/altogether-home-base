@@ -124,6 +124,12 @@ jobs:
         run: npm run lint
         working-directory: apps/web
 
+      # Smoke tests for the lead-gen forms (contact + coaching): render, validation
+      # gate, and the exact insert shape (enquiry_type/status) a DB constraint once rejected.
+      - name: Unit tests (Vitest)
+        run: npm test
+        working-directory: apps/web
+
       # next build gates on TypeScript + ESLint errors and compiles every route.
       - name: Build (type-check + build)
         run: npm run build
