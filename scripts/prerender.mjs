@@ -16,13 +16,17 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, rmSyn
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
-import { marked } from 'marked';
 import { Resvg } from '@resvg/resvg-js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const DIST = resolve(ROOT, 'dist');
 const SITE_URL = 'https://altogetheragile.com';
+
+// Routes the Next.js app serves via vercel.json rewrites. Skipped in the static-page loop
+// below (writing a static file would shadow the rewrite) but kept in STATIC_PAGES so they
+// stay in the sitemap. Per-slug blog/exam/course pages are likewise Next-owned.
+const CUT_OVER = ['/exams', '/blog', '/events', '/about', '/coaching', '/testimonials', '/contact'];
 
 // Brand TTFs embedded into generated OG images (resvg cannot read the woff2 the site ships).
 const OG_FONTS = [
@@ -130,183 +134,6 @@ function injectMeta(baseHtml, metaTags) {
   );
 
   return html;
-}
-
-/** Replace the static homepage shell inside #root with page-specific content so
- *  crawlers see real, unique content (React still replaces #root on hydration).
- *  No-op if the shell markup is not found, leaving the page unchanged. */
-function injectBody(html, innerHtml) {
-  // The built shell puts the bundle <script> in <head>, so #root closes just
-  // before </body>. Anchor on that to swap the whole #root shell for our content.
-  // Use a function replacer so '$' sequences in innerHtml (e.g. "$1", "$&" in
-  // post prose or code) are inserted literally, not treated as replace patterns.
-  return html.replace(
-    /(<div id="root">)[\s\S]*?<\/div>\s*<\/body>/,
-    (_match, open) => `${open}${innerHtml}</div>\n  </body>`,
-  );
-}
-
-/** Minimal branded header for the prerendered body (matches the shell nav). */
-function prerenderHeader() {
-  return (
-    '<header style="background:#fff;border-bottom:1px solid #E5E7EB;height:64px;display:flex;align-items:center;padding:0 24px">' +
-    '<a href="/" style="display:block"><img src="/brand/lockup-horizontal-tight.svg" alt="Altogether Agile" width="326" height="38" style="height:38px;width:auto;display:block"></a>' +
-    '</header>'
-  );
-}
-
-/** Visible FAQ block whose questions/answers mirror the FAQPage JSON-LD. */
-function faqBodyHtml(faqs) {
-  const items = faqs
-    .map(
-      (f) =>
-        `<div style="margin:0 0 16px"><h3 style="font-size:17px;color:#004D4D;margin:0 0 4px">${escapeHtml(f.q)}</h3>` +
-        `<p style="font-size:15px;line-height:1.6;color:#374151;margin:0">${escapeHtml(f.a)}</p></div>`,
-    )
-    .join('');
-  return `<section style="margin:40px 0 0"><h2 style="font-size:24px;color:#004D4D;margin:0 0 20px">Frequently Asked Questions</h2>${items}</section>`;
-}
-
-/** Per-exam body content: title, description, facts, and a clear call to action. */
-function examBodyHtml(exam) {
-  const subject = examSubject(exam.title);
-  const desc = exam.description || `A free practice exam for ${subject}, with answers and explanations.`;
-  const facts = [
-    exam.total_questions ? `${exam.total_questions} questions` : null,
-    exam.duration_minutes ? `${exam.duration_minutes} minutes` : null,
-    exam.pass_mark && exam.total_questions ? `pass mark ${exam.pass_mark} out of ${exam.total_questions}` : null,
-  ].filter(Boolean);
-  const factsHtml = facts.length
-    ? `<ul style="display:flex;flex-wrap:wrap;gap:8px 24px;list-style:none;padding:0;margin:0 0 24px;color:#374151;font-size:15px">${facts
-        .map((f) => `<li style="font-weight:600">${escapeHtml(f)}</li>`)
-        .join('')}</ul>`
-    : '';
-  return (
-    prerenderHeader() +
-    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
-    `<nav style="font-size:13px;color:#6B7280;margin:0 0 16px"><a href="/" style="color:#6B7280">Home</a> / <a href="/exams" style="color:#6B7280">Practice Exams</a> / ${escapeHtml(exam.title)}</nav>` +
-    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">${escapeHtml(exam.title)}</h1>` +
-    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 20px">${escapeHtml(desc)}</p>` +
-    factsHtml +
-    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 24px">This free practice exam helps you prepare for ${escapeHtml(subject)}. Sit it as a timed mock exam, or switch to revision mode to work through the questions at your own pace, with answers and explanations for each one.</p>` +
-    `<a href="/exams/${escapeHtml(exam.slug)}" style="display:inline-block;background:#004D4D;color:#fff;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none">Start the practice exam</a>` +
-    '</main>'
-  );
-}
-
-/** /exams hub body: intro, a linked list of every exam, and the FAQ. */
-function examsListingBodyHtml(exams) {
-  const items = exams
-    .map((exam) => {
-      const facts = [
-        exam.total_questions ? `${exam.total_questions} questions` : null,
-        exam.duration_minutes ? `${exam.duration_minutes} min` : null,
-      ].filter(Boolean).join(' · ');
-      return (
-        `<li style="margin:0 0 12px"><a href="/exams/${escapeHtml(exam.slug)}" style="font-size:18px;color:#004D4D;font-weight:600;text-decoration:none">${escapeHtml(exam.title)}</a>` +
-        (facts ? `<span style="color:#6B7280;font-size:14px"> — ${escapeHtml(facts)}</span>` : '') +
-        '</li>'
-      );
-    })
-    .join('');
-  return (
-    prerenderHeader() +
-    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
-    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Free Agile Practice Exams</h1>` +
-    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 28px">Free practice papers for AgilePM Foundation, AgilePM Practitioner and Professional Scrum Master. Sit a timed mock exam or revise at your own pace, with answers and explanations for every question.</p>` +
-    `<ul style="list-style:none;padding:0;margin:0 0 8px">${items}</ul>` +
-    faqBodyHtml(EXAM_FAQS) +
-    '</main>'
-  );
-}
-
-/** Per-course body content: title, description, and a clear call to action. */
-function courseBodyHtml(course) {
-  const desc = course.description || `A practical, framework-based agile course from Altogether Agile.`;
-  return (
-    prerenderHeader() +
-    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
-    `<nav style="font-size:13px;color:#6B7280;margin:0 0 16px"><a href="/" style="color:#6B7280">Home</a> / <a href="/events" style="color:#6B7280">Courses</a> / ${escapeHtml(course.title)}</nav>` +
-    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">${escapeHtml(course.title)}</h1>` +
-    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 24px">${escapeHtml(truncate(desc, 600))}</p>` +
-    `<a href="/courses/${escapeHtml(course.id)}" style="display:inline-block;background:#004D4D;color:#fff;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none">View course details</a>` +
-    '</main>'
-  );
-}
-
-/** Render a post's stored content (HTML or markdown) to HTML, scripts stripped. */
-function renderPostContent(content) {
-  if (!content) return '';
-  const isHtml = /<[a-z][\s\S]*>/i.test(content);
-  const html = isHtml ? content : String(marked.parse(content, { async: false }));
-  // Match the client's DOMPurify pass: drop scripts, inline on* event handlers and
-  // javascript: URLs. Keeps the prerendered HTML free of executable content (CSP
-  // script-src-attr clean) and closes a stored-XSS gap in injected content.
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1=$2#$2');
-}
-
-/** Per-post body: title, featured image and the full article (the SEO payload). */
-function blogBodyHtml(post) {
-  const img = post.featured_image_url
-    ? `<img src="${escapeHtml(post.featured_image_url)}" alt="${escapeHtml(post.title || '')}" style="width:100%;height:auto;border-radius:12px;margin:0 0 24px">`
-    : '';
-  return (
-    prerenderHeader() +
-    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif"><article>' +
-    `<nav style="font-size:13px;color:#6B7280;margin:0 0 16px"><a href="/" style="color:#6B7280">Home</a> / <a href="/blog" style="color:#6B7280">Blog</a> / ${escapeHtml(post.title || '')}</nav>` +
-    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 20px">${escapeHtml(post.title || '')}</h1>` +
-    img +
-    `<div style="font-size:16px;line-height:1.7;color:#374151">${renderPostContent(post.content)}</div>` +
-    '</article></main>'
-  );
-}
-
-/** /blog hub body: intro and a linked list of posts (title + date). */
-function blogListingBodyHtml(posts) {
-  const items = posts
-    .map((post) => {
-      const date = fmtDate(post.published_at || post.updated_at);
-      return (
-        `<li style="margin:0 0 14px"><a href="/blog/${escapeHtml(post.slug)}" style="font-size:18px;color:#004D4D;font-weight:600;text-decoration:none">${escapeHtml(post.title || '')}</a>` +
-        (date ? `<span style="color:#6B7280;font-size:14px"> — ${escapeHtml(date)}</span>` : '') +
-        '</li>'
-      );
-    })
-    .join('');
-  return (
-    prerenderHeader() +
-    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
-    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Blog</h1>` +
-    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 28px">Practical insights on agile delivery, coaching, AI and ways of working, drawn from 25 years of hands-on experience.</p>` +
-    `<ul style="list-style:none;padding:0;margin:0">${items}</ul>` +
-    '</main>'
-  );
-}
-
-/** /events body: the real course catalogue — description, a linked list of every
- *  course (the crawl path to each /courses/:id), and internal links. */
-function eventsBodyHtml(courses) {
-  const items = courses
-    .map(
-      (course) =>
-        `<li style="margin:0 0 12px"><a href="/courses/${escapeHtml(course.id)}" style="font-size:18px;color:#004D4D;font-weight:600;text-decoration:none">${escapeHtml(course.title)}</a></li>`,
-    )
-    .join('');
-  const list = items
-    ? `<h2 style="font-size:24px;color:#004D4D;margin:8px 0 16px">Courses</h2><ul style="list-style:none;padding:0;margin:0 0 24px">${items}</ul>`
-    : '';
-  return (
-    prerenderHeader() +
-    '<main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:\'DM Sans\',system-ui,sans-serif">' +
-    `<h1 style="color:#004D4D;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:40px;line-height:1.2;margin:0 0 16px">Agile Training Courses</h1>` +
-    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 16px">Framework-based agile training from Altogether Agile, delivered in person across London at your site, or live online across the UK. Courses include AgilePM Foundation and Practitioner, Scrum Master, Product Owner and tailored team workshops, all grounded in 25 years of hands-on experience.</p>` +
-    `<p style="font-size:16px;line-height:1.7;color:#374151;margin:0 0 24px">Every course is practical and framework-based, with real techniques your team can apply straight away. Explore one-to-one and team <a href="/coaching" style="color:#004D4D;font-weight:600">coaching</a>, or prepare with our free <a href="/exams" style="color:#004D4D;font-weight:600">practice exams</a>.</p>` +
-    list +
-    '</main>'
-  );
 }
 
 /** Write HTML to dist/<route>/index.html. */
@@ -741,12 +568,7 @@ async function main() {
 
   // 1. Static pages
   for (const [route, meta] of Object.entries(STATIC_PAGES)) {
-    // CUTOVER: these routes are served by the Next.js app via rewrites in
-    // vercel.json. Do NOT write a static file here, or the filesystem match would
-    // shadow the rewrite. The routes stay in STATIC_PAGES so they remain in the
-    // sitemap.
-    const CUT_OVER = ['/exams', '/blog', '/events', '/about', '/coaching', '/testimonials', '/contact'];
-    if (CUT_OVER.includes(route)) continue;
+    if (CUT_OVER.includes(route)) continue; // Next-owned route — skip so it does not shadow the rewrite
     const tags = buildMetaTags({
       title: meta.title,
       description: meta.description,
@@ -755,34 +577,21 @@ async function main() {
       jsonLd: dynamicJsonLd[route] || meta.jsonLd,
     });
     let html = injectMeta(baseHtml, tags);
-    if (route === '/exams') html = injectBody(html, examsListingBodyHtml(exams));
-    else if (route === '/blog') html = injectBody(html, blogListingBodyHtml(posts));
-    else if (route === '/events') html = injectBody(html, eventsBodyHtml(templates));
     writeHtml(route, html);
     console.log(`  ok   ${route}`);
     succeeded++;
   }
 
-  // 2. Blog posts - CUTOVER: /blog/<slug> pages are served by the Next.js app via
-  //    a rewrite in vercel.json. We no longer write their static HTML (a filesystem
-  //    match would shadow the rewrite); the Next route owns title/meta/JSON-LD.
-  //    Posts still feed the sitemap below.
-
-  // 3. Exams - CUTOVER: /exams/<slug> pages are served by the Next.js app via a
-  //    rewrite. We no longer write their static HTML (a filesystem match would
-  //    shadow the rewrite), but we still generate the per-exam OG images, which
-  //    the Next pages reference at /og/exams/<slug>.png.
+  // Per-slug pages — blog posts (/blog/<slug>), exams (/exams/<slug>) and courses
+  // (/courses/<id>) — are Next-owned via rewrites, so their HTML is no longer prerendered
+  // here; they still feed the sitemap below. The SPA build does still own the per-exam OG
+  // image, which the Next exam pages reference at /og/exams/<slug>.png.
   for (const exam of exams) {
     writeExamOgImage(exam);
     console.log(`  og   /exams/${exam.slug}`);
   }
 
-  // 5. Course templates - CUTOVER: /courses/<id> pages are served by the Next.js app
-  //    via a rewrite in vercel.json. We no longer write their static HTML (a
-  //    filesystem match would shadow the rewrite); the Next route owns title/meta/
-  //    JSON-LD. Templates still feed the sitemap below.
-
-  // 6. Sitemap — generated from the same data so new exams/courses/posts auto-appear
+  // Sitemap — generated from the same data so new exams/courses/posts auto-appear.
   const sitemapEntries = [
     ...Object.keys(STATIC_PAGES)
       .filter((route) => !SITEMAP_EXCLUDE.has(route))
