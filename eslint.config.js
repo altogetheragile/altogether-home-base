@@ -7,7 +7,10 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   // apps/web is the Next.js app; it has its own ESLint config (eslint-config-next)
   // and is linted by `next build`. The root linter must not reach into it.
-  { ignores: ["dist", "apps/web/**", ".design-sync/**", "ds-bundle/**"] },
+  // storybook-static is generated Storybook build output (committed for previews); like
+  // dist it must not be linted — its bundled code carries eslint-disable directives for
+  // rules this config does not load, which otherwise error as "rule definition not found".
+  { ignores: ["dist", "apps/web/**", ".design-sync/**", "ds-bundle/**", "**/storybook-static/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
