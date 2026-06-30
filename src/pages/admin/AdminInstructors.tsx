@@ -64,6 +64,7 @@ const AdminInstructors = () => {
           .eq('instructor_id', instructor.id);
 
         if (countError) {
+          // Ignored: a failed count falls back to 0 below; not worth failing the list.
         }
 
         instructorsWithCounts.push({

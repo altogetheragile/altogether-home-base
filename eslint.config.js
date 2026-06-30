@@ -30,7 +30,9 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "no-empty": "warn",
+      // Empty catch blocks are deliberate best-effort swallows here (and Sentry's global
+      // handler still captures anything genuinely unhandled). Non-catch empty blocks still warn.
+      "no-empty": ["warn", { "allowEmptyCatch": true }],
       "no-case-declarations": "warn",
       // React Compiler rules from react-hooks v7 — downgrade to warnings
       // These flag real patterns but need gradual migration, not blocking CI

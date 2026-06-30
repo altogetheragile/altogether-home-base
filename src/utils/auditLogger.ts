@@ -22,7 +22,7 @@ export const logAdminAudit = async (
     });
     
     if (error) {
-
+      // Ignored: audit logging is best-effort and must never block the operation.
     }
   } catch (error) {
 

@@ -136,7 +136,7 @@ serve(async (req) => {
     let filename = '';
 
     switch (type) {
-      case 'techniques':
+      case 'techniques': {
         const { data: techniques } = await supabase
           .from('knowledge_items')
           .select(`
@@ -167,8 +167,9 @@ serve(async (req) => {
         })) || [];
         filename = 'knowledge_items';
         break;
+      }
 
-      case 'events':
+      case 'events': {
         const { data: events } = await supabase
           .from('events')
           .select(`
@@ -201,8 +202,9 @@ serve(async (req) => {
         })) || [];
         filename = 'events';
         break;
+      }
 
-      case 'analytics':
+      case 'analytics': {
         const { data: analytics } = await supabase
           .from('search_analytics')
           .select('*')
@@ -212,6 +214,7 @@ serve(async (req) => {
         data = analytics || [];
         filename = 'search_analytics';
         break;
+      }
 
       case 'knowledge-base': {
         // Always JSON: a structured master document, not a flat table.

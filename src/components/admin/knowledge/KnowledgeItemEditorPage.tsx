@@ -327,7 +327,6 @@ export function KnowledgeItemEditorPage({ knowledgeItem, isEditing = false }: Kn
       // Only navigate away if explicitly requested
       if (shouldNavigateAway) {
         navigate(getReturnUrl());
-      } else {
       }
     } catch (error) {
       // Error handling is now done in the mutation hooks with better messages

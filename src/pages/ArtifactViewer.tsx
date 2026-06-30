@@ -194,7 +194,7 @@ export default function ArtifactViewer() {
     }
 
     switch (artifact.artifact_type) {
-      case 'bmc':
+      case 'bmc': {
         const originalBmcData = artifact.data?.bmcData || artifact.data;
         const bmcData = editedBMCData || originalBmcData;
         return (
@@ -209,7 +209,8 @@ export default function ArtifactViewer() {
             />
           </div>
         );
-      case 'project-model':
+      }
+      case 'project-model': {
         const ProjectModellingCanvas = React.lazy(() => 
           import('@/components/canvas/ProjectModellingCanvas').then(m => ({ default: m.ProjectModellingCanvas }))
         );
@@ -223,7 +224,8 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
-      case 'product-backlog':
+      }
+      case 'product-backlog': {
         if (isEditingBacklog) {
           return (
             <SchemeProvider scheme={backlogScheme}>
@@ -274,8 +276,9 @@ export default function ArtifactViewer() {
             </div>
           </SchemeProvider>
         );
+      }
       case 'canvas':
-      case 'user_story':
+      case 'user_story': {
         const AIToolsCanvas = React.lazy(() => 
           import('@/components/canvas/AIToolsCanvas').then(m => ({ default: m.default }))
         );
@@ -289,7 +292,8 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
-      case 'impact-map':
+      }
+      case 'impact-map': {
         const ImpactMapEditor = React.lazy(() =>
           import('@/components/impactMap/ImpactMapEditor').then(m => ({ default: m.ImpactMapEditor }))
         );
@@ -303,7 +307,8 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
-      case 'persona':
+      }
+      case 'persona': {
         const PersonaEditor = React.lazy(() =>
           import('@/components/persona/PersonaEditor').then(m => ({ default: m.PersonaEditor }))
         );
@@ -317,7 +322,8 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
-      case 'journey-map':
+      }
+      case 'journey-map': {
         const JourneyMapEditor = React.lazy(() =>
           import('@/components/journeyMap/JourneyMapEditor').then(m => ({ default: m.JourneyMapEditor }))
         );
@@ -331,6 +337,7 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      }
       case 'pattern': {
         const PatternResultView = React.lazy(() =>
           import('@/components/patternBuilder/PatternResultView').then(m => ({ default: m.PatternResultView }))
@@ -342,7 +349,7 @@ export default function ArtifactViewer() {
           </React.Suspense>
         );
       }
-      case 'ways-of-working':
+      case 'ways-of-working': {
         const WaysOfWorkingEditor = React.lazy(() =>
           import('@/components/waysOfWorking/WaysOfWorkingEditor').then(m => ({ default: m.WaysOfWorkingEditor }))
         );
@@ -356,7 +363,8 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
-      case 'probe-tracker':
+      }
+      case 'probe-tracker': {
         const ProbeTrackerEditor = React.lazy(() =>
           import('@/components/probeTracker/ProbeTrackerEditor').then(m => ({ default: m.ProbeTrackerEditor }))
         );
@@ -370,7 +378,8 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
-      case 'benefits-scorecard':
+      }
+      case 'benefits-scorecard': {
         const BenefitsScorecardEditor = React.lazy(() =>
           import('@/components/benefitsScorecard/BenefitsScorecardEditor').then(m => ({ default: m.BenefitsScorecardEditor }))
         );
@@ -384,7 +393,8 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
-      case 'coaching-session':
+      }
+      case 'coaching-session': {
         const CoachingStudioEditor = React.lazy(() =>
           import('@/components/coachingStudio/CoachingStudioEditor').then(m => ({ default: m.CoachingStudioEditor }))
         );
@@ -398,6 +408,7 @@ export default function ArtifactViewer() {
             />
           </React.Suspense>
         );
+      }
       case 'business-case':
       case 'product-vision': {
         const CoachedCanvasEditor = React.lazy(() =>
