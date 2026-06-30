@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { callClaudeJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rateLimit.ts";
 
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com';
 const corsHeaders = {
@@ -88,6 +89,15 @@ serve(async (req: Request) => {
         status: 401, headers,
       });
     }
+
+    // Resolve the caller and enforce a per-user AI rate limit.
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (!user) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401, headers });
+    }
+    const limited = await enforceAiRateLimit(supabase, user.id, 'generate-business-model-canvas', corsHeaders);
+    if (limited) return limited;
 
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!anthropicKey) {

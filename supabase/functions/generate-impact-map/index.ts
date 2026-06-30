@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.5';
 import { callClaudeJSON } from '../_shared/anthropic.ts';
+import { enforceAiRateLimit } from '../_shared/rateLimit.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -51,6 +52,9 @@ serve(async (req) => {
   const token = req.headers.get('Authorization')?.replace('Bearer ', '');
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) return json({ error: 'Unauthorized' }, 401);
+
+  const limited = await enforceAiRateLimit(supabase, user.id, 'generate-impact-map', corsHeaders);
+  if (limited) return limited;
 
   let body: SuggestRequest;
   try {

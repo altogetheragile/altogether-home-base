@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.5";
 import { callClaudeJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rateLimit.ts";
 
 const openAIApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
@@ -322,6 +324,17 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Resolve the caller and enforce a per-user AI rate limit.
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (!user) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const limited = await enforceAiRateLimit(supabase, user.id, 'generate-canvas', corsHeaders);
+    if (limited) return limited;
 
     const { canvasType, analysisType, type, ...inputData } = await req.json();
     
