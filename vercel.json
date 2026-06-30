@@ -16,19 +16,19 @@
     {
       "source": "/((?!exams|blog|events|courses|about|coaching|testimonials|contact).+)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://assets.calendly.com https://cdn.credly.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org; frame-src https://www.youtube.com https://youtube.com https://calendly.com https://*.calendly.com https://credly.com https://*.credly.com; worker-src 'self' blob:; upgrade-insecure-requests" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://assets.calendly.com https://cdn.credly.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; frame-src https://www.youtube.com https://youtube.com https://calendly.com https://*.calendly.com https://credly.com https://*.credly.com; worker-src 'self' blob:; upgrade-insecure-requests" }
       ]
     },
     {
       "source": "/(exams|blog|events|courses|about|coaching|testimonials|contact)(/.*)?",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org; upgrade-insecure-requests" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; upgrade-insecure-requests" }
       ]
     },
     {
       "source": "/",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org; upgrade-insecure-requests" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; upgrade-insecure-requests" }
       ]
     }
   ],
