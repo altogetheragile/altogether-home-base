@@ -10,6 +10,9 @@ if (sentryDsn) {
     dsn: sentryDsn,
     environment: import.meta.env.MODE,
     enabled: import.meta.env.PROD,
+    // Browser performance tracing (pageload/navigation). Not auto-added in the
+    // v8+ npm SDK, so it must be listed explicitly for the Tracing feature to work.
+    integrations: [Sentry.browserTracingIntegration()],
     tracesSampleRate: 0.1,
   });
 }
