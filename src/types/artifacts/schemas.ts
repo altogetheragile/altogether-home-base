@@ -40,7 +40,9 @@ export const coachingSessionSchema = z.object({
 // ── Persona ──────────────────────────────────────────────────────────────────
 export const personaSchema = z.object({
   name: str, role: str.optional(), context: str.optional(), quote: str.optional(), image: str.optional(),
-  goals: z.array(z.string()).optional(), pains: z.array(z.string()).optional(), behaviours: z.array(z.string()).optional(),
+  // goals/pains/behaviours are coached FREE-TEXT strings in the Persona tool (see
+  // src/types/persona.ts), not arrays. The contract must match the tool, not the reverse.
+  goals: str.optional(), pains: str.optional(), behaviours: str.optional(),
 }).passthrough();
 
 // ── Probe Tracker ────────────────────────────────────────────────────────────
