@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { Settings, Navigation, Route, Globe } from 'lucide-react';
+import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
 
 export default function AdminSettings() {
   const { settings, isLoading, updateSettings } = useSiteSettings();
@@ -332,6 +333,9 @@ export default function AdminSettings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Testimonial display settings save immediately (not staged behind the button below). */}
+      <TestimonialDisplaySettings />
 
       <div className="flex justify-end">
         <Button onClick={handleSave} size="lg">
