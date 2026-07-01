@@ -280,20 +280,6 @@ export default function AdminSettings() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="show_admin_routes" className="text-base font-medium">Admin Routes</Label>
-              <p className="text-sm text-muted-foreground">Enable admin dashboard and management pages</p>
-            </div>
-            <Switch
-              id="show_admin_routes"
-              checked={localSettings.show_admin_routes}
-              onCheckedChange={() => handleToggle('show_admin_routes')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
               <Label htmlFor="show_protected_projects" className="text-base font-medium">Protected Projects</Label>
               <p className="text-sm text-muted-foreground">Enable project canvas and BMC features</p>
             </div>
