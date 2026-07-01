@@ -76,65 +76,17 @@ export const useSiteSettings = () => {
 
       if (settingsError) throw settingsError;
 
-      // 2. Update pages.is_published and show_in_main_menu for special pages
-      const pageUpdates = [];
-      
-      if ('show_blog' in updates) {
-        pageUpdates.push(
-          supabase
-            .from('pages')
-            .update({ 
-              is_published: updates.show_blog ?? false,
-              show_in_main_menu: updates.show_blog ?? false
-            })
-            .eq('slug', 'blog')
-        );
-      }
-      
-      if ('show_events' in updates) {
-        pageUpdates.push(
-          supabase
-            .from('pages')
-            .update({ 
-              is_published: updates.show_events ?? false,
-              show_in_main_menu: updates.show_events ?? false
-            })
-            .eq('slug', 'events')
-        );
-      }
-      
-      if ('show_knowledge' in updates) {
-        pageUpdates.push(
-          supabase
-            .from('pages')
-            .update({ 
-              is_published: updates.show_knowledge ?? false,
-              show_in_main_menu: updates.show_knowledge ?? false
-            })
-            .eq('slug', 'knowledge')
-        );
-      }
-
-      // Execute all page updates in parallel
-      if (pageUpdates.length > 0) {
-        const results = await Promise.all(pageUpdates);
-        const pageError = results.find(r => r.error);
-        if (pageError) throw pageError.error;
-      }
-
+      // Feature visibility is read directly from site_settings by SiteSettingsRouteGuard;
+      // the former write-through to the pages table is removed (those rows were
+      // Next-shadowed or redirect targets that nothing live reads).
       return settingsData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings'] });
-      queryClient.invalidateQueries({ queryKey: ['pages'] });
-      // Also invalidate specific page queries
-      queryClient.invalidateQueries({ queryKey: ['page', 'blog'] });
-      queryClient.invalidateQueries({ queryKey: ['page', 'events'] });
-      queryClient.invalidateQueries({ queryKey: ['page', 'knowledge'] });
-      
+
       toast({
         title: 'Settings updated',
-        description: 'Site settings and page visibility have been saved successfully.',
+        description: 'Site settings have been saved successfully.',
       });
     },
     onError: (_error: Error) => {
