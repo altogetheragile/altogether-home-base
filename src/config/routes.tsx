@@ -99,7 +99,6 @@ const AdminKnowledgeItems = lazy(() => import('@/pages/admin/AdminKnowledgeItems
 const PreviewPage = lazy(() => import('@/components/admin/knowledge/PreviewPage').then(m => ({ default: m.PreviewPage })));
 
 // Admin Pages - Content & Media
-const AdminMedia = lazy(() => import('@/pages/admin/AdminMedia'));
 const AdminAssets = lazy(() => import('@/pages/admin/AdminAssets'));
 
 // Admin Pages - Configuration
@@ -523,11 +522,6 @@ export const AdminRoutes = () => {
             <CreateKnowledgeUseCase />
           </Suspense>
         } />
-        <Route path="knowledge/templates" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminAssets />
-          </Suspense>
-        } />
         <Route path="knowledge/templates/new" element={
           <Suspense fallback={<LoadingFallback />}>
             <CreateKnowledgeTemplate />
@@ -548,11 +542,6 @@ export const AdminRoutes = () => {
             <AdminTaxonomy />
           </Suspense>
         } />
-        <Route path="knowledge/import" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminKnowledgeImport />
-          </Suspense>
-        } />
         <Route path="knowledge/pattern-feedback" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminPatternBuilderFeedback />
@@ -565,11 +554,6 @@ export const AdminRoutes = () => {
         } />
         
         {/* Content & Media */}
-        <Route path="media" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminMedia />
-          </Suspense>
-        } />
         <Route path="assets" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminAssets />
