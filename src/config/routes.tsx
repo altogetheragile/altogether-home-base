@@ -76,7 +76,6 @@ const AdminEvents = lazy(() => import('@/pages/admin/AdminEvents'));
 const CreateEvent = lazy(() => import('@/pages/admin/CreateEvent'));
 const EditEvent = lazy(() => import('@/pages/admin/EditEvent'));
 const AdminCourses = lazy(() => import('@/pages/admin/AdminCourses'));
-const AdminEventBlueprints = lazy(() => import('@/pages/admin/AdminEventBlueprints'));
 const AdminEventTypes = lazy(() => import('@/pages/admin/AdminEventTypes'));
 const AdminEventCategories = lazy(() => import('@/pages/admin/AdminEventCategories'));
 
@@ -100,8 +99,6 @@ const AdminKnowledgeItems = lazy(() => import('@/pages/admin/AdminKnowledgeItems
 const PreviewPage = lazy(() => import('@/components/admin/knowledge/PreviewPage').then(m => ({ default: m.PreviewPage })));
 
 // Admin Pages - Content & Media
-const AdminPages = lazy(() => import('@/pages/admin/AdminPages'));
-const PageEditor = lazy(() => import('@/components/pageEditor/PageEditor').then(m => ({ default: m.PageEditor })));
 const AdminMedia = lazy(() => import('@/pages/admin/AdminMedia'));
 const AdminAssets = lazy(() => import('@/pages/admin/AdminAssets'));
 
@@ -118,8 +115,6 @@ const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminLogs = lazy(() => import('@/pages/admin/AdminLogs'));
 const AdminLogsApplicationRoute = lazy(() => import('@/pages/admin/AdminLogsApplicationRoute'));
-const AdminLogsDatabaseRoute = lazy(() => import('@/pages/admin/AdminLogsDatabaseRoute'));
-const AdminLogsAuthRoute = lazy(() => import('@/pages/admin/AdminLogsAuthRoute'));
 const AdminAuditLogs = lazy(() => import('@/pages/admin/AdminAuditLogs'));
 
 // Admin Pages - Blog Management
@@ -460,11 +455,6 @@ export const AdminRoutes = () => {
             <AdminCourses />
           </Suspense>
         } />
-        <Route path="event-blueprints" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminEventBlueprints />
-          </Suspense>
-        } />
         <Route path="event-types" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminEventTypes />
@@ -578,16 +568,6 @@ export const AdminRoutes = () => {
         } />
         
         {/* Content & Media */}
-        <Route path="pages" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminPages />
-          </Suspense>
-        } />
-        <Route path="pages/:id/edit" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <PageEditor />
-          </Suspense>
-        } />
         <Route path="media" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminMedia />
@@ -671,16 +651,6 @@ export const AdminRoutes = () => {
         <Route path="logs/application" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminLogsApplicationRoute />
-          </Suspense>
-        } />
-        <Route path="logs/database" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminLogsDatabaseRoute />
-          </Suspense>
-        } />
-        <Route path="logs/auth" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminLogsAuthRoute />
           </Suspense>
         } />
         <Route path="logs/audit" element={

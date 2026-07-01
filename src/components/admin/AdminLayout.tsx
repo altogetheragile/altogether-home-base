@@ -1,7 +1,7 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
-  FolderOpen, BarChart3, Layout, Terminal, Upload, Layers, LayoutDashboard,
+  FolderOpen, BarChart3, Terminal, Upload, Layers, LayoutDashboard,
   Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList,
   ChevronRight, Search, Inbox,
 } from 'lucide-react';
@@ -52,7 +52,6 @@ const navigation: NavGroup[] = [
     label: 'Content',
     items: [
       { label: 'Blog', icon: FileText, href: '/admin/blog' },
-      { label: 'Pages', icon: Layout, href: '/admin/pages' },
       {
         label: 'Knowledge Base', icon: BookOpen, href: '/admin/knowledge',
         children: [
@@ -75,7 +74,6 @@ const navigation: NavGroup[] = [
         children: [
           { label: 'Courses', href: '/admin/courses', icon: BookOpen },
           { label: 'Events', href: '/admin/events', icon: Calendar },
-          { label: 'Blueprints', href: '/admin/event-blueprints', icon: Layout },
           { label: 'Instructors', href: '/admin/instructors', icon: Users },
           { label: 'Locations', href: '/admin/locations', icon: MapPin },
           { label: 'Categories', href: '/admin/event-categories', icon: FolderOpen },
@@ -104,8 +102,6 @@ const navigation: NavGroup[] = [
         label: 'System Logs', icon: Terminal, href: '/admin/logs/application',
         children: [
           { label: 'Application', href: '/admin/logs/application', icon: Terminal },
-          { label: 'Database', href: '/admin/logs/database', icon: Settings },
-          { label: 'Authentication', href: '/admin/logs/auth', icon: Shield },
           { label: 'Audit Logs', href: '/admin/logs/audit', icon: Shield },
         ],
       },
