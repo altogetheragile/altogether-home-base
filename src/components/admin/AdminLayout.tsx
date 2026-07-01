@@ -1,7 +1,7 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
-  FolderOpen, BarChart3, Terminal, Upload, Layers, LayoutDashboard,
+  FolderOpen, BarChart3, Upload, Layers, LayoutDashboard,
   Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList,
   ChevronRight, Search, Inbox,
 } from 'lucide-react';
@@ -98,13 +98,7 @@ const navigation: NavGroup[] = [
   {
     label: 'Operations',
     items: [
-      {
-        label: 'System Logs', icon: Terminal, href: '/admin/logs/application',
-        children: [
-          { label: 'Application', href: '/admin/logs/application', icon: Terminal },
-          { label: 'Audit Logs', href: '/admin/logs/audit', icon: Shield },
-        ],
-      },
+      { label: 'Audit Log', icon: Shield, href: '/admin/logs/audit' },
       { label: 'Backlog', icon: Database, href: '/admin/populate-backlog' },
       { label: 'Footer', icon: Footprints, href: '/admin/footer' },
       { label: 'Site Settings', icon: Settings, href: '/admin/settings' },
