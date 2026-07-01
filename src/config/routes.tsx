@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { featureFlags } from './featureFlags';
 import { SiteSettingsRouteGuard } from '@/components/SiteSettingsRouteGuard';
+import { TAXONOMY_CONFIGS } from '@/config/taxonomyRegistry';
 
 // ============= Loading Fallback Components =============
 const LoadingFallback = () => (
@@ -76,14 +77,13 @@ const AdminEvents = lazy(() => import('@/pages/admin/AdminEvents'));
 const CreateEvent = lazy(() => import('@/pages/admin/CreateEvent'));
 const EditEvent = lazy(() => import('@/pages/admin/EditEvent'));
 const AdminCourses = lazy(() => import('@/pages/admin/AdminCourses'));
-const AdminEventTypes = lazy(() => import('@/pages/admin/AdminEventTypes'));
-const AdminEventCategories = lazy(() => import('@/pages/admin/AdminEventCategories'));
+// The six simple taxonomy editors are unified in one generic component (taxonomyRegistry).
+const TaxonomyManager = lazy(() => import('@/components/admin/TaxonomyManager').then(m => ({ default: m.TaxonomyManager })));
 
 // Admin Pages - Instructors & Locations
 const AdminInstructors = lazy(() => import('@/pages/admin/AdminInstructors'));
 const CreateInstructor = lazy(() => import('@/pages/admin/CreateInstructor'));
 const EditInstructor = lazy(() => import('@/pages/admin/EditInstructor'));
-const AdminLocations = lazy(() => import('@/pages/admin/AdminLocations'));
 
 // Admin Pages - Knowledge Management
 
@@ -103,10 +103,7 @@ const AdminMedia = lazy(() => import('@/pages/admin/AdminMedia'));
 const AdminAssets = lazy(() => import('@/pages/admin/AdminAssets'));
 
 // Admin Pages - Configuration
-const AdminLevels = lazy(() => import('@/pages/admin/AdminLevels'));
-const AdminCertificationBodies = lazy(() => import('@/pages/admin/AdminCertificationBodies'));
 const AdminSelfPacedCourses = lazy(() => import('@/pages/admin/AdminSelfPacedCourses'));
-const AdminFormats = lazy(() => import('@/pages/admin/AdminFormats'));
 const AdminActivityDomains = lazy(() => import('@/pages/admin/AdminActivityDomains'));
 const AdminFooter = lazy(() => import('@/pages/admin/AdminFooter'));
 const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'));
@@ -457,12 +454,12 @@ export const AdminRoutes = () => {
         } />
         <Route path="event-types" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminEventTypes />
+            <TaxonomyManager config={TAXONOMY_CONFIGS['event-types']} />
           </Suspense>
         } />
         <Route path="event-categories" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminEventCategories />
+            <TaxonomyManager config={TAXONOMY_CONFIGS['event-categories']} />
           </Suspense>
         } />
         
@@ -501,7 +498,7 @@ export const AdminRoutes = () => {
         } />
         <Route path="locations" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminLocations />
+            <TaxonomyManager config={TAXONOMY_CONFIGS['locations']} />
           </Suspense>
         } />
         
@@ -582,17 +579,17 @@ export const AdminRoutes = () => {
         {/* Configuration */}
         <Route path="levels" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminLevels />
+            <TaxonomyManager config={TAXONOMY_CONFIGS['levels']} />
           </Suspense>
         } />
         <Route path="formats" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminFormats />
+            <TaxonomyManager config={TAXONOMY_CONFIGS['formats']} />
           </Suspense>
         } />
         <Route path="certification-bodies" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminCertificationBodies />
+            <TaxonomyManager config={TAXONOMY_CONFIGS['certification-bodies']} />
           </Suspense>
         } />
         <Route path="self-paced-courses" element={
