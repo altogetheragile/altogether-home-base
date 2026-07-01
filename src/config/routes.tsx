@@ -109,8 +109,6 @@ const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'));
 
 // Admin Pages - Users & Logs
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
-const AdminLogs = lazy(() => import('@/pages/admin/AdminLogs'));
-const AdminLogsApplicationRoute = lazy(() => import('@/pages/admin/AdminLogsApplicationRoute'));
 const AdminAuditLogs = lazy(() => import('@/pages/admin/AdminAuditLogs'));
 
 // Admin Pages - Blog Management
@@ -623,17 +621,9 @@ export const AdminRoutes = () => {
           </Suspense>
         } />
         
-        {/* Logs & Audit */}
-        <Route path="logs" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminLogs />
-          </Suspense>
-        } />
-        <Route path="logs/application" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminLogsApplicationRoute />
-          </Suspense>
-        } />
+        {/* Logs & Audit — the single audit log (admin_audit_log). Legacy log paths redirect. */}
+        <Route path="logs" element={<Navigate to="/admin/logs/audit" replace />} />
+        <Route path="logs/application" element={<Navigate to="/admin/logs/audit" replace />} />
         <Route path="logs/audit" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminAuditLogs />
