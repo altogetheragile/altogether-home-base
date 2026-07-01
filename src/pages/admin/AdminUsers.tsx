@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toCsv } from '@/utils/csv';
 import { useUsers, UserProfile } from '@/hooks/useUsers';
 import { useUpdateUserRole } from '@/hooks/useUserRoleManagement';
 import { Input } from '@/components/ui/input';
@@ -90,7 +91,7 @@ export default function AdminUsers() {
       user.created_at ? format(new Date(user.created_at), 'yyyy-MM-dd') : '',
     ]);
 
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const csv = toCsv(headers, rows);
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
