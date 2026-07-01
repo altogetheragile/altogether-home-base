@@ -98,7 +98,7 @@ export const TemplateManager = ({ knowledgeItemId }: TemplateManagerProps) => {
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-lg truncate">{template.title}</CardTitle>
                       <div className="flex items-center gap-2 mt-2">
-                        <Badge className="bg-red-100 text-red-800">
+                        <Badge className="bg-destructive/10 text-destructive">
                           {template.template_type?.toUpperCase()}
                         </Badge>
                         {template.category && (

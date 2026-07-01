@@ -611,7 +611,7 @@ const AdminExamQuestions = () => {
   }
 
   if (!exam) {
-    return <div className="text-center py-8 text-red-600">Exam not found</div>;
+    return <div className="text-center py-8 text-destructive">Exam not found</div>;
   }
 
   return (
@@ -622,8 +622,8 @@ const AdminExamQuestions = () => {
           <Link to="/admin/exams" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-2">
             <ArrowLeft className="h-3 w-3" /> Back to exams
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">{exam.title}</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground">{exam.title}</h1>
+          <p className="text-muted-foreground">
             {questions?.length ?? 0} questions &middot; Pass mark: {exam.pass_mark} &middot; {exam.duration_minutes} min
           </p>
         </div>
@@ -724,7 +724,7 @@ const AdminExamQuestions = () => {
             </TableBody>
           </Table>
           {questions?.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               No questions yet. Add questions individually or use bulk import.
             </div>
           )}

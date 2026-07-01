@@ -319,7 +319,7 @@ export const ImportMarkdownDialog = () => {
         </DialogHeader>
 
         {state.error && (
-          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded">
+          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             {state.error}
           </div>

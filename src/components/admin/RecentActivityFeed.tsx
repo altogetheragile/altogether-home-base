@@ -62,9 +62,9 @@ const RecentActivityFeed = () => {
       case 'UPDATE':
         return 'bg-yellow-100 text-yellow-700';
       case 'DELETE':
-        return 'bg-red-100 text-red-700';
+        return 'bg-destructive/10 text-destructive';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-muted text-foreground';
     }
   };
 

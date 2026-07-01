@@ -96,8 +96,8 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-600 mb-4">{template.description}</p>
-        <div className="space-y-2 text-sm text-gray-500">
+        <p className="text-muted-foreground mb-4">{template.description}</p>
+        <div className="space-y-2 text-sm text-muted-foreground">
           <p>Duration: {template.duration_days} day(s)</p>
           {template.default_location_id && (
             <p>Default Location: {locations.find(l => l.id === template.default_location_id)?.name}</p>

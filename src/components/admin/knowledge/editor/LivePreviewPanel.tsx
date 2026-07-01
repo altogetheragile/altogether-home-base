@@ -213,7 +213,7 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({
                     ✓ Valid
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs">
+                  <Badge variant="secondary" className="bg-destructive/10 text-destructive text-xs">
                     ! Errors
                   </Badge>
                 )}

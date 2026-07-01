@@ -44,7 +44,7 @@ const sortGscIndex = (rows: GscIndexRow[], sort: { key: string; dir: 'asc' | 'de
 const toneClass: Record<'good' | 'warn' | 'bad', string> = {
   good: 'bg-green-100 text-green-800 hover:bg-green-100',
   warn: 'bg-amber-100 text-amber-800 hover:bg-amber-100',
-  bad: 'bg-red-100 text-red-800 hover:bg-red-100',
+  bad: 'bg-destructive/10 text-destructive hover:bg-destructive/10',
 };
 
 type SortState = { key: string; dir: 'asc' | 'desc' };
@@ -147,7 +147,7 @@ const AdminSEO = () => {
     return <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   }
   if (error) {
-    return <div className="rounded-md bg-red-50 text-red-700 p-4">Failed to load SEO content: {error instanceof Error ? error.message : String(error)}</div>;
+    return <div className="rounded-md bg-destructive/10 text-destructive p-4">Failed to load SEO content: {error instanceof Error ? error.message : String(error)}</div>;
   }
 
   const editable = items.filter((i) => i.editableHere);
@@ -177,8 +177,8 @@ const AdminSEO = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">SEO</h1>
-        <p className="text-gray-500 mt-1">Review and tune the search/social metadata for your content pages.</p>
+        <h1 className="text-3xl font-bold text-foreground">SEO</h1>
+        <p className="text-muted-foreground mt-1">Review and tune the search/social metadata for your content pages.</p>
       </div>
 
       <Tabs defaultValue="health" className="w-full">
@@ -221,7 +221,7 @@ const AdminSEO = () => {
                     <SelectItem value="bad">Missing</SelectItem>
                   </SelectContent>
                 </Select>
-                <span className="ml-auto text-xs text-gray-400">{healthRows.length} shown</span>
+                <span className="ml-auto text-xs text-muted-foreground">{healthRows.length} shown</span>
               </div>
               <Table>
                 <TableHeader>
@@ -244,21 +244,21 @@ const AdminSEO = () => {
                           <a href={it.url} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
                             {it.label} <ExternalLink className="h-3 w-3" />
                           </a>
-                          {!it.published && <span className="ml-2 text-xs text-gray-400">(draft)</span>}
+                          {!it.published && <span className="ml-2 text-xs text-muted-foreground">(draft)</span>}
                           {dup && <span className="ml-2 text-xs text-amber-600">duplicate title</span>}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums text-sm text-gray-600">{st.length}</TableCell>
+                        <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{st.length}</TableCell>
                         <TableCell><Badge className={toneClass[st.tone]}>{st.label}</Badge></TableCell>
                         <TableCell>
                           {it.seoTitle || it.seoDescription
                             ? <span className="text-xs text-green-700">custom</span>
-                            : <span className="text-xs text-gray-400">default</span>}
+                            : <span className="text-xs text-muted-foreground">default</span>}
                         </TableCell>
                       </TableRow>
                     );
                   })}
                   {healthRows.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center text-gray-400 py-6">No pages match your filters.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No pages match your filters.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -268,7 +268,7 @@ const AdminSEO = () => {
 
         {/* ── Meta editor ── */}
         <TabsContent value="meta" className="space-y-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Override the search title and meta description per page. Leave blank to use the default (the page title and description).
             Blog posts are edited in the Blog section.
           </p>
@@ -285,7 +285,7 @@ const AdminSEO = () => {
                     <SelectItem value="course">Courses</SelectItem>
                   </SelectContent>
                 </Select>
-                <span className="ml-auto text-xs text-gray-400">{metaRows.length} shown</span>
+                <span className="ml-auto text-xs text-muted-foreground">{metaRows.length} shown</span>
               </div>
               <Table>
                 <TableHeader>
@@ -302,15 +302,15 @@ const AdminSEO = () => {
                     <TableRow key={`${it.table}-${it.id}`}>
                       <TableCell><Badge variant="outline">{KIND_LABEL[it.kind]}</Badge></TableCell>
                       <TableCell>{it.label}</TableCell>
-                      <TableCell className="text-xs">{it.seoTitle ? '✓ set' : <span className="text-gray-400">default</span>}</TableCell>
-                      <TableCell className="text-xs">{it.seoDescription ? '✓ set' : <span className="text-gray-400">default</span>}</TableCell>
+                      <TableCell className="text-xs">{it.seoTitle ? '✓ set' : <span className="text-muted-foreground">default</span>}</TableCell>
+                      <TableCell className="text-xs">{it.seoDescription ? '✓ set' : <span className="text-muted-foreground">default</span>}</TableCell>
                       <TableCell className="text-right">
                         <Button size="sm" variant="outline" onClick={() => openEditor(it)}><Pencil className="h-3.5 w-3.5" /></Button>
                       </TableCell>
                     </TableRow>
                   ))}
                   {metaRows.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center text-gray-400 py-6">No pages match your filters.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No pages match your filters.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -330,15 +330,15 @@ const AdminSEO = () => {
             </Button>
           </div>
 
-          {gscError && <div className="rounded-md bg-red-50 text-red-700 p-3 text-sm">{gscError}</div>}
-          {!gsc && !gscError && <p className="text-sm text-gray-500">Live data from Google Search Console — index status, sitemap, and top queries for the last 28 days.</p>}
+          {gscError && <div className="rounded-md bg-destructive/10 text-destructive p-3 text-sm">{gscError}</div>}
+          {!gsc && !gscError && <p className="text-sm text-muted-foreground">Live data from Google Search Console — index status, sitemap, and top queries for the last 28 days.</p>}
 
           {gsc && (
             <>
               {gsc.sitemap && (
                 <Card>
                   <CardHeader><CardTitle>Sitemap</CardTitle></CardHeader>
-                  <CardContent className="text-sm text-gray-700 space-y-1">
+                  <CardContent className="text-sm text-foreground space-y-1">
                     <div>Last submitted: <span className="tabular-nums">{fmtDate(gsc.sitemap.lastSubmitted)}</span> · Last downloaded: <span className="tabular-nums">{fmtDate(gsc.sitemap.lastDownloaded)}</span></div>
                     <div>Errors: {gsc.sitemap.errors ?? 0} · Warnings: {gsc.sitemap.warnings ?? 0}</div>
                     {gsc.sitemap.contents?.map((c) => <div key={c.type}>{c.type}: {c.submitted} submitted, {c.indexed} indexed</div>)}
@@ -363,7 +363,7 @@ const AdminSEO = () => {
                         <TableRow key={r.url}>
                           <TableCell className="font-mono text-xs">{shortPath(r.url)}</TableCell>
                           <TableCell><Badge className={verdictClass(r.verdict)}>{r.verdict}</Badge></TableCell>
-                          <TableCell className="text-sm text-gray-600">{r.coverage}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{r.coverage}</TableCell>
                           <TableCell className="text-sm tabular-nums">{fmtDate(r.lastCrawl)}</TableCell>
                         </TableRow>
                       ))}
@@ -376,7 +376,7 @@ const AdminSEO = () => {
                 <Card>
                   <CardHeader><CardTitle>Top queries (28d)</CardTitle></CardHeader>
                   <CardContent>
-                    {gsc.queries.length === 0 ? <p className="text-sm text-gray-400">No data</p> : (
+                    {gsc.queries.length === 0 ? <p className="text-sm text-muted-foreground">No data</p> : (
                       <Table>
                         <TableHeader><TableRow><TableHead>Query</TableHead><TableHead className="w-16 text-right">Clicks</TableHead><TableHead className="w-16 text-right">Impr</TableHead><TableHead className="w-16 text-right">Pos</TableHead></TableRow></TableHeader>
                         <TableBody>
@@ -391,7 +391,7 @@ const AdminSEO = () => {
                 <Card>
                   <CardHeader><CardTitle>Top pages (28d)</CardTitle></CardHeader>
                   <CardContent>
-                    {gsc.pages.length === 0 ? <p className="text-sm text-gray-400">No data</p> : (
+                    {gsc.pages.length === 0 ? <p className="text-sm text-muted-foreground">No data</p> : (
                       <Table>
                         <TableHeader><TableRow><TableHead>Page</TableHead><TableHead className="w-16 text-right">Clicks</TableHead><TableHead className="w-16 text-right">Impr</TableHead><TableHead className="w-16 text-right">Pos</TableHead></TableRow></TableHeader>
                         <TableBody>
@@ -425,7 +425,7 @@ const AdminSEO = () => {
                 return (
                   <div className="mt-0.5 flex items-center justify-between gap-2">
                     <span className="text-[10px] text-muted-foreground truncate" title={rendered}>Renders as: {rendered}</span>
-                    <span className={`text-[10px] shrink-0 ${over ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>{rendered.length} / 60</span>
+                    <span className={`text-[10px] shrink-0 ${over ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>{rendered.length} / 60</span>
                   </div>
                 );
               })()}

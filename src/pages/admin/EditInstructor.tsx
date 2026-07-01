@@ -113,7 +113,7 @@ const EditInstructor = () => {
   if (!instructor) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Instructor not found</p>
+        <p className="text-muted-foreground">Instructor not found</p>
         <Button onClick={() => navigate('/admin/instructors')} className="mt-4">
           Back to Instructors
         </Button>
@@ -133,8 +133,8 @@ const EditInstructor = () => {
           Back to Instructors
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Instructor</h1>
-          <p className="text-gray-600">Update instructor information</p>
+          <h1 className="text-3xl font-bold text-foreground">Edit Instructor</h1>
+          <p className="text-muted-foreground">Update instructor information</p>
         </div>
       </div>
 

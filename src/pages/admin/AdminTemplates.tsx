@@ -71,7 +71,7 @@ const AdminTemplates = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">PDF Templates</h1>
         </div>
-        <div className="text-center py-8 text-red-500">
+        <div className="text-center py-8 text-destructive">
           Error loading templates. Please try again.
         </div>
       </div>

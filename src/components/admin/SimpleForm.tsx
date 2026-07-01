@@ -110,7 +110,7 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions: _show
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg border">
+    <div className="bg-card p-6 rounded-lg border">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center space-x-2">
           {editingItem ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
@@ -126,7 +126,7 @@ const SimpleForm = ({ title, onSubmit, editingItem, onCancel, showActions: _show
           <div key={field.key}>
             <Label htmlFor={field.key}>
               {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+              {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             {field.type === 'textarea' ? (
               <Textarea

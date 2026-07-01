@@ -92,15 +92,15 @@ const AdminExams = () => {
   }
 
   if (error) {
-    return <div className="text-center py-8 text-red-600">Error loading exams: {error.message}</div>;
+    return <div className="text-center py-8 text-destructive">Error loading exams: {error.message}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Question Bank</h1>
-          <p className="text-gray-600">Manage exams and their question banks</p>
+          <h1 className="text-3xl font-bold text-foreground">Question Bank</h1>
+          <p className="text-muted-foreground">Manage exams and their question banks</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
@@ -206,7 +206,7 @@ const AdminExams = () => {
             </TableBody>
           </Table>
           {exams?.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               No exams yet. Create your first exam above.
             </div>
           )}

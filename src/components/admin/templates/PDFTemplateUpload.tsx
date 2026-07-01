@@ -285,7 +285,7 @@ const handleSubmit = async (event: React.FormEvent) => {
               {file ? (
                 <div className="flex items-center justify-between bg-muted p-3 rounded">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-8 w-8 text-red-500" />
+                    <FileText className="h-8 w-8 text-destructive" />
                     <div className="text-left">
                       <p className="font-medium">{file.name}</p>
                       <p className="text-sm text-muted-foreground">

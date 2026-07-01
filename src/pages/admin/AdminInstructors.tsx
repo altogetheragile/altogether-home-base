@@ -122,8 +122,8 @@ const AdminInstructors = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Instructors</h1>
-            <p className="text-gray-600">Manage instructors and their details</p>
+            <h1 className="text-3xl font-bold text-foreground">Instructors</h1>
+            <p className="text-muted-foreground">Manage instructors and their details</p>
           </div>
           <Link to="/admin/instructors/new">
             <Button className="flex items-center space-x-2">
@@ -133,7 +133,7 @@ const AdminInstructors = () => {
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-card rounded-lg shadow overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -149,7 +149,7 @@ const AdminInstructors = () => {
                 <TableRow key={instructor.id}>
                   <TableCell className="font-medium">{instructor.name}</TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {instructor.bio || 'No bio provided'}
                     </p>
                   </TableCell>
@@ -161,8 +161,8 @@ const AdminInstructors = () => {
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-500 text-xs">No Image</span>
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <span className="text-muted-foreground text-xs">No Image</span>
                       </div>
                     )}
                   </TableCell>
@@ -192,7 +192,7 @@ const AdminInstructors = () => {
                       </Link>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -215,14 +215,14 @@ const AdminInstructors = () => {
                                   </p>
                                 </div>
                               )}
-                              <p className="text-sm text-gray-600">This action cannot be undone.</p>
+                              <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => deleteInstructorMutation.mutate(instructor.id)}
-                              className="bg-red-600 hover:bg-red-700"
+                              className="bg-destructive hover:bg-destructive"
                               disabled={deleteInstructorMutation.isPending}
                             >
                               {deleteInstructorMutation.isPending ? 'Deleting...' : 'Delete Instructor'}
@@ -236,7 +236,7 @@ const AdminInstructors = () => {
               ))}
               {!instructors?.length && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No instructors found. <Link to="/admin/instructors/new" className="text-primary hover:underline">Add your first instructor</Link>
                   </TableCell>
                 </TableRow>
