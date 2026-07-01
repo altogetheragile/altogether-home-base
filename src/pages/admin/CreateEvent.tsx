@@ -29,10 +29,10 @@ const CreateEvent = () => {
           Back to Events
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             {selectedTemplate ? `Create Event from "${selectedTemplate.title}"` : 'Create New Event'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {selectedTemplate ? 'Event details have been pre-filled from the template' : 'Add a new event to your catalog'}
           </p>
         </div>

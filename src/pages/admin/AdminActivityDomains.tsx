@@ -141,7 +141,7 @@ const AdminActivityDomains = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-card rounded-lg shadow overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -205,7 +205,7 @@ const AdminActivityDomains = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-red-600 hover:text-red-700"
+                      className="text-destructive hover:text-destructive"
                       onClick={() => handleDelete(domain.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -216,7 +216,7 @@ const AdminActivityDomains = () => {
             ))}
             {!domains?.length && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No domains of interest found. Create your first domain of interest to get started.
                 </TableCell>
               </TableRow>

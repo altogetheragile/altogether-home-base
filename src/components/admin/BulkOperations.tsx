@@ -57,15 +57,15 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
   if (allItems.length === 0) return null;
 
   return (
-    <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+    <div className="flex items-center justify-between bg-muted p-4 rounded-lg">
       <div className="flex items-center space-x-4">
         <input
           ref={checkboxRef}
           type="checkbox"
           onChange={(e) => onSelectAll(e.target.checked)}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-border rounded"
         />
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-foreground">
           {selectedItems.length > 0 
             ? `${selectedItems.length} selected` 
             : `Select all ${allItems.length} ${type}`}

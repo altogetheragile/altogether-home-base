@@ -76,8 +76,8 @@ const AdminSelfPacedCourses = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Self-paced Courses</h1>
-        <p className="text-gray-600">Manage self-paced course content</p>
+        <h1 className="text-3xl font-bold text-foreground">Self-paced Courses</h1>
+        <p className="text-muted-foreground">Manage self-paced course content</p>
       </div>
 
       <Card>
@@ -108,7 +108,7 @@ const AdminSelfPacedCourses = () => {
             </TableBody>
           </Table>
           {courses.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               No self-paced courses found.
             </div>
           )}

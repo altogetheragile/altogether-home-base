@@ -183,7 +183,7 @@ const EditEvent = () => {
   if (!event) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">Event not found</p>
+        <p className="text-muted-foreground">Event not found</p>
         <Button onClick={() => navigate('/admin/events')} className="mt-4">
           Back to Events
         </Button>
@@ -199,8 +199,8 @@ const EditEvent = () => {
           Back to Events
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Event</h1>
-          <p className="text-gray-600">Update event details</p>
+          <h1 className="text-3xl font-bold text-foreground">Edit Event</h1>
+          <p className="text-muted-foreground">Update event details</p>
         </div>
       </div>
 

@@ -82,7 +82,7 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
         );
       case 'error':
         return (
-          <div className="flex items-center gap-1 text-red-600">
+          <div className="flex items-center gap-1 text-destructive">
             <AlertCircle className="h-3 w-3" />
             <span className="text-xs">Save failed</span>
           </div>

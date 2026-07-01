@@ -21,7 +21,7 @@ const TemplatesList: React.FC<TemplatesListProps> = ({
   if (templates.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No templates found matching your search.</p>
+        <p className="text-muted-foreground">No templates found matching your search.</p>
       </div>
     );
   }

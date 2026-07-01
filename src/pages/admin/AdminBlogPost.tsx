@@ -427,7 +427,7 @@ const AdminBlogPost = () => {
               <div className="mt-auto border-t p-4">
                 <button
                   onClick={() => setShowDeleteDialog(true)}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-md border border-red-300 px-3 py-2 text-xs text-red-700 hover:bg-red-50 transition-colors"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md border border-red-300 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Delete post

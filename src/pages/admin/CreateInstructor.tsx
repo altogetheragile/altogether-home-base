@@ -79,8 +79,8 @@ const CreateInstructor = () => {
           Back to Instructors
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Create Instructor</h1>
-          <p className="text-gray-600">Add a new instructor to your platform</p>
+          <h1 className="text-3xl font-bold text-foreground">Create Instructor</h1>
+          <p className="text-muted-foreground">Add a new instructor to your platform</p>
         </div>
       </div>
 

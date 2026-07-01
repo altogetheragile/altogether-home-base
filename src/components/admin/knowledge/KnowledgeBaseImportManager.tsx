@@ -212,7 +212,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
                   className={`p-4 border rounded-lg ${
                     step.completed ? 'bg-green-50 border-green-200' : 
                     currentStep === step.step ? 'bg-blue-50 border-blue-200' : 
-                    'bg-gray-50 border-gray-200'
+                    'bg-muted border-border'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -221,7 +221,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
                     ) : currentStep === step.step ? (
                       <AlertCircle className="h-5 w-5 text-blue-600" />
                     ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
+                      <div className="h-5 w-5 rounded-full border-2 border-border" />
                     )}
                     <span className="font-medium text-sm">{step.title}</span>
                   </div>
@@ -306,7 +306,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
       <Collapsible>
         <Card>
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+            <CardHeader className="cursor-pointer hover:bg-muted transition-colors">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Column Mapping Reference</CardTitle>
@@ -322,7 +322,7 @@ const KnowledgeBaseImportManager: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 {Object.entries(KB_COLUMN_MAPPING).map(([excel, db]) => (
-                  <div key={excel} className="flex justify-between p-2 bg-gray-50 rounded">
+                  <div key={excel} className="flex justify-between p-2 bg-muted rounded">
                     <span className="font-mono text-blue-600">{excel}</span>
                     <span className="text-muted-foreground">→ {db}</span>
                   </div>
