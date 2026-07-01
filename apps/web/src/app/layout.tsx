@@ -15,6 +15,13 @@ export const metadata: Metadata = {
   },
   description:
     'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
+  // Declare the brand favicon on every Next page. Without this, the migrated pages
+  // (home, /exams, etc.) carried no <link rel="icon">, so Google showed the generic
+  // globe in search results. Matches the SPA's /favicon.svg.
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
