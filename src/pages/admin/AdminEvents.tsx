@@ -5,7 +5,7 @@ import LegacyBanner from '@/components/admin/courses/LegacyBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useEventMutations } from '@/hooks/useEventMutations';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -19,24 +19,19 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import EventRegistrationsDialog from '@/components/admin/events/EventRegistrationsDialog';
 
 import { format } from 'date-fns';
 import { formatPrice } from '@/utils/currency';
 
+type EventRow = Record<string, any>;
+
 const AdminEvents = () => {
   // Use exact route matching instead of startsWith to prevent rendering on other routes
   const match = useMatch('/admin/events');
   const shouldRender = !!match;
-  
+
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['admin-events', shouldRender],
     queryFn: async () => {
@@ -67,11 +62,6 @@ const AdminEvents = () => {
   const [registrationsEvent, setRegistrationsEvent] = useState<{ id: string; title: string } | null>(null);
   const { deleteEvent } = useEventMutations();
 
-  // Early return if not on exact /admin/events route
-  if (!shouldRender) {
-    return null;
-  }
-
   const handleDelete = async () => {
     if (!deleteEventId) return;
 
@@ -93,14 +83,14 @@ const AdminEvents = () => {
 
   const getRegistrationBadge = (registrations: any[]) => {
     if (!Array.isArray(registrations)) return null;
-    
+
     const paidCount = registrations.filter(r => r.payment_status === 'paid').length;
     const totalCount = registrations.length;
-    
+
     if (totalCount === 0) {
       return <Badge variant="secondary">No registrations</Badge>;
     }
-    
+
     return (
       <Badge variant={paidCount > 0 ? 'default' : 'secondary'}>
         {paidCount}/{totalCount} paid
@@ -108,12 +98,151 @@ const AdminEvents = () => {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading events...</div>
-      </div>
-    );
+  const columns: DataTableColumn<EventRow>[] = useMemo(() => [
+    {
+      id: 'title',
+      header: 'Title',
+      sortable: true,
+      sortValue: (event) => String(event.title || 'Untitled'),
+      cellClassName: 'font-medium max-w-[300px]',
+      cell: (event) => {
+        const title = String(event.title || 'Untitled');
+        return <span className="block truncate" title={title}>{title}</span>;
+      },
+    },
+    {
+      id: 'date',
+      header: 'Date',
+      sortable: true,
+      sortValue: (event) => event.start_date ?? null,
+      cellClassName: 'whitespace-nowrap',
+      cell: (event) => {
+        let formattedDate = '—';
+        if (event.start_date) {
+          try {
+            const date = new Date(event.start_date);
+            if (!isNaN(date.getTime())) {
+              formattedDate = format(date, 'MMM dd, yyyy');
+            }
+          } catch (e) {
+            // Keep default '—'
+          }
+        }
+        return formattedDate;
+      },
+    },
+    {
+      id: 'instructor',
+      header: 'Instructor',
+      sortable: true,
+      sortValue: (event) => String(event.instructor?.name || 'TBA'),
+      cell: (event) => String(event.instructor?.name || 'TBA'),
+    },
+    {
+      id: 'location',
+      header: 'Location',
+      sortable: true,
+      sortValue: (event) => String(event.location?.name || 'TBA'),
+      cell: (event) => String(event.location?.name || 'TBA'),
+    },
+    {
+      id: 'price',
+      header: 'Price',
+      sortable: true,
+      sortValue: (event) => Number(event.price_cents) || 0,
+      cell: (event) => {
+        const priceCents = Number(event.price_cents) || 0;
+        const currency = String(event.currency || 'usd');
+        return priceCents > 0 ? formatPrice(priceCents, currency) : 'Free';
+      },
+    },
+    {
+      id: 'registrations',
+      header: 'Registrations',
+      sortable: true,
+      sortValue: (event) =>
+        Array.isArray(event.event_registrations) ? event.event_registrations.length : 0,
+      cell: (event) => {
+        const registrations = Array.isArray(event.event_registrations) ? event.event_registrations : [];
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  {getRegistrationBadge(registrations)}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {registrations.length > 0
+                    ? 'Cannot delete events with registrations'
+                    : 'No registrations - safe to delete'
+                  }
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      sortable: true,
+      sortValue: (event) => (event.is_published ? 'Published' : 'Draft'),
+      cell: (event) => {
+        const isPublished = Boolean(event.is_published);
+        return (
+          <Badge variant={isPublished ? 'default' : 'secondary'}>
+            {isPublished ? (
+              <><Eye className="h-3 w-3 mr-1" />Published</>
+            ) : (
+              <><EyeOff className="h-3 w-3 mr-1" />Draft</>
+            )}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: (event) => {
+        const eventId = String(event.id || '');
+        const title = String(event.title || 'Untitled');
+        const registrations = Array.isArray(event.event_registrations) ? event.event_registrations : [];
+        return (
+          <div className="flex items-center space-x-2">
+            <Link to={`/admin/events/${eventId}/edit`}>
+              <Button variant="outline" size="sm">
+                <Edit className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRegistrationsEvent({ id: eventId, title })}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteEventId(eventId)}
+              disabled={registrations.length > 0}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+    // Cells only reference stable handlers/state setters, so no reactive deps are needed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
+
+  // Early return if not on exact /admin/events route
+  if (!shouldRender) {
+    return null;
   }
 
   if (error) {
@@ -137,112 +266,24 @@ const AdminEvents = () => {
         </Link>
       </div>
 
-      <div className="rounded-md border overflow-x-auto">
-        <Table className="min-w-[800px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Instructor</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Registrations</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.isArray(events) ? events.map((event) => {
-              const eventId = String(event.id || '');
-              const title = String(event.title || 'Untitled');
-              const instructorName = String(event.instructor?.name || 'TBA');
-              const locationName = String(event.location?.name || 'TBA');
-              const priceCents = Number(event.price_cents) || 0;
-              const currency = String(event.currency || 'usd');
-              const registrations = Array.isArray(event.event_registrations) ? event.event_registrations : [];
-              const isPublished = Boolean(event.is_published);
-              
-              let formattedDate = '—';
-              if (event.start_date) {
-                try {
-                  const date = new Date(event.start_date);
-                  if (!isNaN(date.getTime())) {
-                    formattedDate = format(date, 'MMM dd, yyyy');
-                  }
-                } catch (e) {
-                  // Keep default '—'
-                }
-              }
-
-              return (
-                <TableRow key={eventId}>
-                  <TableCell className="font-medium max-w-[300px]">
-                    <span className="block truncate" title={title}>{title}</span>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">{formattedDate}</TableCell>
-                  <TableCell>{instructorName}</TableCell>
-                  <TableCell>{locationName}</TableCell>
-                  <TableCell>
-                    {priceCents > 0 ? formatPrice(priceCents, currency) : 'Free'}
-                  </TableCell>
-                  <TableCell>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            {getRegistrationBadge(registrations)}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            {registrations.length > 0 
-                              ? 'Cannot delete events with registrations'
-                              : 'No registrations - safe to delete'
-                            }
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={isPublished ? 'default' : 'secondary'}>
-                      {isPublished ? (
-                        <><Eye className="h-3 w-3 mr-1" />Published</>
-                      ) : (
-                        <><EyeOff className="h-3 w-3 mr-1" />Draft</>
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Link to={`/admin/events/${eventId}/edit`}>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRegistrationsEvent({ id: eventId, title })}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeleteEventId(eventId)}
-                        disabled={registrations.length > 0}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            }) : null}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        data={Array.isArray(events) ? events : []}
+        columns={columns}
+        rowKey={(event) => String(event.id || '')}
+        isLoading={isLoading}
+        searchable
+        searchPlaceholder="Search events..."
+        getSearchText={(event) =>
+          [
+            String(event.title || ''),
+            String(event.instructor?.name || ''),
+            String(event.location?.name || ''),
+          ].join(' ')
+        }
+        emptyMessage="No events yet. Create your first event above."
+        defaultSort={{ columnId: 'date', direction: 'desc' }}
+        className="rounded-md"
+      />
 
       <AlertDialog open={!!deleteEventId} onOpenChange={(open) => {
         if (!open) setDeleteEventId(null);

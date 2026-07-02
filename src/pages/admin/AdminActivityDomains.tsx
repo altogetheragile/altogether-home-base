@@ -1,26 +1,27 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import { useToast } from '@/hooks/use-toast';
 import SimpleForm from '@/components/admin/SimpleForm';
+
+interface ActivityDomain {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  full_description: string | null;
+  color: string | null;
+}
 
 const AdminActivityDomains = () => {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingDomain, setEditingDomain] = useState<any>(null);
-  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+  const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
 
   const { data: domains, isLoading, refetch } = useQuery({
     queryKey: ['admin-activity-domains'],
@@ -107,6 +108,63 @@ const AdminActivityDomains = () => {
     { key: 'color', label: 'Color', type: 'text' as const, placeholder: '#3B82F6' },
   ];
 
+  const columns: DataTableColumn<ActivityDomain>[] = useMemo(() => [
+    {
+      id: 'name',
+      header: 'Name',
+      sortable: true,
+      sortValue: (d) => d.name,
+      cellClassName: 'font-medium',
+      cell: (d) => d.name,
+    },
+    {
+      id: 'slug',
+      header: 'Slug',
+      sortable: true,
+      sortValue: (d) => d.slug,
+      cellClassName: 'font-mono text-sm',
+      cell: (d) => d.slug,
+    },
+    {
+      id: 'color',
+      header: 'Color',
+      cell: (d) => (
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: d.color ?? undefined }} />
+          <Badge style={{ backgroundColor: (d.color ?? '') + '20', color: d.color ?? undefined }}>
+            {d.color}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      cellClassName: 'max-w-xs truncate',
+      cell: (d) => d.description || '-',
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: (domain) => (
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={() => handleEdit(domain)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => handleDelete(domain.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -141,89 +199,16 @@ const AdminActivityDomains = () => {
         </Button>
       </div>
 
-      <div className="bg-card rounded-lg shadow overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectedDomains.length === domains?.length && domains.length > 0}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedDomains(domains?.map(d => d.id) || []);
-                    } else {
-                      setSelectedDomains([]);
-                    }
-                  }}
-                />
-              </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Color</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {domains?.map((domain) => (
-              <TableRow key={domain.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedDomains.includes(domain.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedDomains([...selectedDomains, domain.id]);
-                      } else {
-                        setSelectedDomains(selectedDomains.filter(id => id !== domain.id));
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{domain.name}</TableCell>
-                <TableCell className="font-mono text-sm">{domain.slug}</TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-4 h-4 rounded-full border" 
-                      style={{ backgroundColor: domain.color ?? undefined }}
-                    />
-                    <Badge style={{ backgroundColor: (domain.color ?? '') + '20', color: domain.color ?? undefined }}>
-                      {domain.color}
-                    </Badge>
-                  </div>
-                </TableCell>
-                <TableCell className="max-w-xs truncate">{domain.description || '-'}</TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(domain)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(domain.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!domains?.length && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  No domains of interest found. Create your first domain of interest to get started.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        data={domains as ActivityDomain[] | undefined}
+        columns={columns}
+        rowKey={(d) => d.id}
+        searchable
+        searchPlaceholder="Search domains..."
+        getSearchText={(d) => `${d.name} ${d.slug} ${d.description ?? ''}`}
+        selection={{ selectedIds: selectedDomains, onChange: setSelectedDomains }}
+        emptyMessage="No domains of interest found. Create your first domain of interest to get started."
+      />
     </div>
   );
 };

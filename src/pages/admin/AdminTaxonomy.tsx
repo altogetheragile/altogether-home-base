@@ -5,14 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -175,8 +168,7 @@ const AdminTaxonomy = () => {
     }
   };
 
-  const handleEdit = (item: TaxonomyItem, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleEdit = (item: TaxonomyItem) => {
     setEditingItem(item);
     setFormData({
       name: item.name || '',
@@ -189,8 +181,7 @@ const AdminTaxonomy = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (item: TaxonomyItem, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = (item: TaxonomyItem) => {
     if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
       deleteMutation.mutate(item.id);
     }
@@ -200,6 +191,88 @@ const AdminTaxonomy = () => {
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.slug?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Columns are built per tab because the visible columns vary (order / color / usage).
+  // Only the active tab's TabsContent mounts, so a plain builder is fine here.
+  const columnsFor = (type: TaxonomyType): DataTableColumn<TaxonomyItem>[] => {
+    const config = getTabConfig(type);
+    const cols: DataTableColumn<TaxonomyItem>[] = [];
+    if (config.hasOrder) {
+      cols.push({
+        id: 'display_order',
+        header: 'Order',
+        sortable: true,
+        sortValue: (i) => i.display_order ?? 0,
+        cellClassName: 'font-medium',
+        cell: (i) => i.display_order,
+      });
+    }
+    cols.push(
+      {
+        id: 'name',
+        header: 'Name',
+        sortable: true,
+        sortValue: (i) => i.name,
+        cellClassName: 'font-medium',
+        cell: (i) => i.name,
+      },
+      {
+        id: 'slug',
+        header: 'Slug',
+        sortable: true,
+        sortValue: (i) => i.slug ?? '',
+        cellClassName: 'text-muted-foreground',
+        cell: (i) => i.slug,
+      },
+    );
+    if (config.hasColor) {
+      cols.push({
+        id: 'color',
+        header: 'Color',
+        cell: (i) => (
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: i.color }} />
+            <Badge style={{ backgroundColor: (i.color || '#3B82F6') + '20', color: i.color }}>
+              {i.color}
+            </Badge>
+          </div>
+        ),
+      });
+    }
+    if (type === 'tags') {
+      cols.push({
+        id: 'usage',
+        header: 'Usage',
+        sortable: true,
+        sortValue: (i) => i.usage_count || 0,
+        cell: (i) => i.usage_count || 0,
+      });
+    }
+    cols.push(
+      {
+        id: 'description',
+        header: 'Description',
+        cellClassName: 'max-w-xs truncate',
+        cell: (i) => i.description || '-',
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        headClassName: 'w-[100px]',
+        cell: (item) => (
+          <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      },
+    );
+    return cols;
+  };
 
   const getTabConfig = (type: TaxonomyType): TabConfig => {
     switch (type) {
@@ -308,81 +381,17 @@ const AdminTaxonomy = () => {
                   </div>
                 </div>
 
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {getTabConfig(type).hasOrder && <TableHead>Order</TableHead>}
-                        <TableHead>Name</TableHead>
-                        <TableHead>Slug</TableHead>
-                        {getTabConfig(type).hasColor && <TableHead>Color</TableHead>}
-                        {type === 'tags' && <TableHead>Usage</TableHead>}
-                        <TableHead>Description</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredItems?.map((item) => (
-                        <TableRow
-                          key={item.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleView(item)}
-                        >
-                          {getTabConfig(type).hasOrder && (
-                            <TableCell className="font-medium">{item.display_order}</TableCell>
-                          )}
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{item.slug}</TableCell>
-                          {getTabConfig(type).hasColor && (
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <div
-                                  className="w-4 h-4 rounded"
-                                  style={{ backgroundColor: item.color }}
-                                />
-                                <Badge style={{ backgroundColor: (item.color || '#3B82F6') + '20', color: item.color }}>
-                                  {item.color}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                          )}
-                          {type === 'tags' && (
-                            <TableCell>{item.usage_count || 0}</TableCell>
-                          )}
-                          <TableCell className="max-w-xs truncate">{item.description || '-'}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleEdit(item, e)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleDelete(item, e)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {filteredItems?.length === 0 && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={getTabConfig(type).hasOrder ? (getTabConfig(type).hasColor ? 7 : 6) : (type === 'tags' ? 6 : 5)}
-                            className="text-center py-8 text-muted-foreground"
-                          >
-                            {searchTerm ? `No ${getTabConfig(type).label.toLowerCase()} found matching your search.` : `No ${getTabConfig(type).label.toLowerCase()} created yet.`}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                <DataTable
+                  data={filteredItems}
+                  columns={columnsFor(type)}
+                  rowKey={(item) => item.id}
+                  onRowClick={(item) => handleView(item)}
+                  emptyMessage={
+                    searchTerm
+                      ? `No ${getTabConfig(type).label.toLowerCase()} found matching your search.`
+                      : `No ${getTabConfig(type).label.toLowerCase()} created yet.`
+                  }
+                />
               </TabsContent>
             ))}
           </Tabs>

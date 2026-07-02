@@ -1,17 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -27,7 +20,6 @@ const AdminKnowledgeCategories = () => {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -134,14 +126,77 @@ const AdminKnowledgeCategories = () => {
     }
   };
 
-  const filteredCategories = categories?.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.slug?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (isLoading) {
-    return <div className="p-8">Loading...</div>;
-  }
+  const columns: DataTableColumn<any>[] = useMemo(() => [
+    {
+      id: 'display_order',
+      header: 'Order',
+      sortable: true,
+      sortValue: (category) => category.display_order ?? 0,
+      cellClassName: 'font-medium',
+      cell: (category) => category.display_order,
+    },
+    {
+      id: 'name',
+      header: 'Name',
+      sortable: true,
+      sortValue: (category) => category.name,
+      cellClassName: 'font-medium',
+      cell: (category) => category.name,
+    },
+    {
+      id: 'slug',
+      header: 'Slug',
+      sortable: true,
+      sortValue: (category) => category.slug,
+      cellClassName: 'text-muted-foreground',
+      cell: (category) => category.slug,
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      cellClassName: 'max-w-xs truncate',
+      cell: (category) => category.description,
+    },
+    {
+      id: 'color',
+      header: 'Color',
+      cell: (category) => (
+        <div className="flex items-center space-x-2">
+          <div
+            className="w-4 h-4 rounded"
+            style={{ backgroundColor: category.color ?? undefined }}
+          />
+          <span className="text-sm">{category.color}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      headClassName: 'w-[100px]',
+      cell: (category) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(category)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(category)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+    // handleEdit/handleDelete are stable enough for this admin view; columns are
+    // presentation-only so no changing values need to be dependencies here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
 
   return (
     <div className="p-8">
@@ -153,76 +208,18 @@ const AdminKnowledgeCategories = () => {
         </Button>
       </div>
 
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search categories..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Color</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCategories?.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell className="font-medium">{category.display_order}</TableCell>
-                <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell className="text-muted-foreground">{category.slug}</TableCell>
-                <TableCell className="max-w-xs truncate">{category.description}</TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-4 h-4 rounded" 
-                      style={{ backgroundColor: category.color ?? undefined }}
-                    />
-                    <span className="text-sm">{category.color}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(category)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(category)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredCategories?.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {searchTerm ? 'No categories found matching your search.' : 'No categories created yet.'}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        data={categories ?? undefined}
+        columns={columns}
+        rowKey={(category) => category.id}
+        isLoading={isLoading}
+        searchable
+        searchPlaceholder="Search categories..."
+        getSearchText={(category) =>
+          `${category.name ?? ''} ${category.slug ?? ''} ${category.description ?? ''}`
+        }
+        emptyMessage="No categories created yet."
+      />
 
       {/* Form Dialog */}
       <Dialog open={showForm} onOpenChange={handleCloseForm}>

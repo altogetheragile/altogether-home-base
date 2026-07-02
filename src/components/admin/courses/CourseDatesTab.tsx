@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -15,6 +15,8 @@ import AddDateSheet from './AddDateSheet';
 interface CourseDatesTabProps {
   course: CourseAdminItem;
 }
+
+type CourseEvent = CourseAdminItem['events'][number];
 
 const CourseDatesTab = ({ course }: CourseDatesTabProps) => {
   const [addDateOpen, setAddDateOpen] = useState(false);
@@ -42,6 +44,58 @@ const CourseDatesTab = ({ course }: CourseDatesTabProps) => {
     }
   };
 
+  const columns: DataTableColumn<CourseEvent>[] = useMemo(() => [
+    {
+      id: 'start_date',
+      header: 'Date',
+      sortable: true,
+      sortValue: (event) => event.start_date ?? '',
+      cellClassName: 'whitespace-nowrap',
+      cell: (event) => formatDate(event.start_date),
+    },
+    {
+      id: 'end_date',
+      header: 'End Date',
+      sortable: true,
+      sortValue: (event) => event.end_date ?? '',
+      cellClassName: 'whitespace-nowrap',
+      cell: (event) => formatDate(event.end_date),
+    },
+    {
+      id: 'location',
+      header: 'Location',
+      cell: (event) => event.locations?.name || '—',
+    },
+    {
+      id: 'price',
+      header: 'Price',
+      cell: (event) =>
+        event.price_cents && event.price_cents > 0
+          ? formatPrice(event.price_cents, event.currency || 'gbp')
+          : 'Free',
+    },
+    {
+      id: 'published',
+      header: 'Published',
+      cell: (event) => (
+        <Switch
+          checked={event.is_published}
+          onCheckedChange={(checked) => handleTogglePublished(event.id, checked)}
+        />
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: (event) => (
+        <Button variant="ghost" size="sm" onClick={() => setDeleteId(event.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ),
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
+
   return (
     <div className="py-4 space-y-4">
       <div className="flex justify-between items-center">
@@ -53,52 +107,17 @@ const CourseDatesTab = ({ course }: CourseDatesTabProps) => {
         </Button>
       </div>
 
-      {course.events.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          <CalendarDays className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p>No dates scheduled yet.</p>
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>End Date</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Published</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {course.events.map((event) => (
-                <TableRow key={event.id}>
-                  <TableCell className="whitespace-nowrap">{formatDate(event.start_date)}</TableCell>
-                  <TableCell className="whitespace-nowrap">{formatDate(event.end_date)}</TableCell>
-                  <TableCell>{event.locations?.name || '—'}</TableCell>
-                  <TableCell>
-                    {event.price_cents && event.price_cents > 0
-                      ? formatPrice(event.price_cents, event.currency || 'gbp')
-                      : 'Free'}
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={event.is_published}
-                      onCheckedChange={(checked) => handleTogglePublished(event.id, checked)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteId(event.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        data={course.events}
+        columns={columns}
+        rowKey={(event) => event.id}
+        emptyMessage={
+          <div className="flex flex-col items-center text-muted-foreground">
+            <CalendarDays className="h-8 w-8 mb-2 opacity-50" />
+            <p>No dates scheduled yet.</p>
+          </div>
+        }
+      />
 
       <AddDateSheet
         open={addDateOpen}
