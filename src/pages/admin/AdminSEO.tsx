@@ -1,7 +1,8 @@
-import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink, Pencil, RefreshCw, UploadCloud, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { ExternalLink, Pencil, RefreshCw, UploadCloud } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSeoContent, useUpdateSeo, metaDescriptionStatus, type SeoItem, type SeoTable } from '@/hooks/useSeoContent';
@@ -28,42 +29,12 @@ const verdictClass = (v: string) => (v === 'PASS' ? 'bg-green-100 text-green-800
 const shortPath = (u: string) => u.replace(ORIGIN, '') || '/';
 const fmtDate = (s: string | null | undefined) => (s ? s.slice(0, 10) : '—');
 
-const sortGscIndex = (rows: GscIndexRow[], sort: { key: string; dir: 'asc' | 'desc' }) => {
-  const dir = sort.dir === 'asc' ? 1 : -1;
-  return [...rows].sort((a, b) => {
-    let c = 0;
-    if (sort.key === 'page') c = shortPath(a.url).localeCompare(shortPath(b.url));
-    else if (sort.key === 'verdict') c = a.verdict.localeCompare(b.verdict);
-    else if (sort.key === 'coverage') c = a.coverage.localeCompare(b.coverage);
-    else if (sort.key === 'crawl') c = (a.lastCrawl || '').localeCompare(b.lastCrawl || '');
-    if (c === 0) c = shortPath(a.url).localeCompare(shortPath(b.url));
-    return c * dir;
-  });
-};
-
 const toneClass: Record<'good' | 'warn' | 'bad', string> = {
   good: 'bg-green-100 text-green-800 hover:bg-green-100',
   warn: 'bg-amber-100 text-amber-800 hover:bg-amber-100',
   bad: 'bg-destructive/10 text-destructive hover:bg-destructive/10',
 };
-
-type SortState = { key: string; dir: 'asc' | 'desc' };
-
-const SortHeader = ({ sort, setSort, sortKey, children, className }: {
-  sort: SortState; setSort: Dispatch<SetStateAction<SortState>>; sortKey: string; children: ReactNode; className?: string;
-}) => (
-  <TableHead
-    className={`cursor-pointer select-none ${className || ''}`}
-    onClick={() => setSort((s) => ({ key: sortKey, dir: s.key === sortKey && s.dir === 'asc' ? 'desc' : 'asc' }))}
-  >
-    <span className="inline-flex items-center gap-1">
-      {children}
-      {sort.key === sortKey
-        ? (sort.dir === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />)
-        : <ArrowUpDown className="h-3.5 w-3.5 opacity-30" />}
-    </span>
-  </TableHead>
-);
+const toneRank: Record<'good' | 'warn' | 'bad', number> = { good: 0, warn: 1, bad: 2 };
 
 const AdminSEO = () => {
   const { data: items = [], isLoading, error } = useSeoContent();
@@ -73,13 +44,10 @@ const AdminSEO = () => {
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
 
-  // Filtering + sorting
+  // Filtering (shared across the Health and Meta editor tabs)
   const [q, setQ] = useState('');
   const [typeF, setTypeF] = useState('all');
   const [statusF, setStatusF] = useState('all');
-  const [healthSort, setHealthSort] = useState<SortState>({ key: 'type', dir: 'asc' });
-  const [metaSort, setMetaSort] = useState<SortState>({ key: 'type', dir: 'asc' });
-  const [indexSort, setIndexSort] = useState<SortState>({ key: 'verdict', dir: 'asc' });
 
   // Search Console (via the seo-search-console edge function)
   const [gsc, setGsc] = useState<GscReport | null>(null);
@@ -143,6 +111,143 @@ const AdminSEO = () => {
     );
   };
 
+  const healthColumns: DataTableColumn<SeoItem>[] = useMemo(() => [
+    {
+      id: 'type',
+      header: 'Type',
+      sortable: true,
+      sortValue: (it) => it.kind,
+      headClassName: 'w-20',
+      cell: (it) => <Badge variant="outline">{KIND_LABEL[it.kind]}</Badge>,
+    },
+    {
+      id: 'page',
+      header: 'Page',
+      sortable: true,
+      sortValue: (it) => it.label.toLowerCase(),
+      cell: (it) => {
+        const dup = duplicateTitles.has((it.seoTitle || it.label).trim().toLowerCase());
+        return (
+          <>
+            <a href={it.url} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+              {it.label} <ExternalLink className="h-3 w-3" />
+            </a>
+            {!it.published && <span className="ml-2 text-xs text-muted-foreground">(draft)</span>}
+            {dup && <span className="ml-2 text-xs text-amber-600">duplicate title</span>}
+          </>
+        );
+      },
+    },
+    {
+      id: 'chars',
+      header: 'Chars',
+      sortable: true,
+      sortValue: (it) => metaDescriptionStatus(it).length,
+      align: 'right',
+      headClassName: 'w-24',
+      cellClassName: 'text-right tabular-nums text-sm text-muted-foreground',
+      cell: (it) => metaDescriptionStatus(it).length,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      sortable: true,
+      sortValue: (it) => toneRank[metaDescriptionStatus(it).tone],
+      headClassName: 'w-32',
+      cell: (it) => {
+        const st = metaDescriptionStatus(it);
+        return <Badge className={toneClass[st.tone]}>{st.label}</Badge>;
+      },
+    },
+    {
+      id: 'override',
+      header: 'Override?',
+      headClassName: 'w-28',
+      cell: (it) =>
+        it.seoTitle || it.seoDescription
+          ? <span className="text-xs text-green-700">custom</span>
+          : <span className="text-xs text-muted-foreground">default</span>,
+    },
+  ], [duplicateTitles]);
+
+  const metaColumns: DataTableColumn<SeoItem>[] = useMemo(() => [
+    {
+      id: 'type',
+      header: 'Type',
+      sortable: true,
+      sortValue: (it) => it.kind,
+      headClassName: 'w-20',
+      cell: (it) => <Badge variant="outline">{KIND_LABEL[it.kind]}</Badge>,
+    },
+    {
+      id: 'page',
+      header: 'Page',
+      sortable: true,
+      sortValue: (it) => it.label.toLowerCase(),
+      cell: (it) => it.label,
+    },
+    {
+      id: 'seoTitle',
+      header: 'SEO title',
+      headClassName: 'w-28',
+      cellClassName: 'text-xs',
+      cell: (it) => (it.seoTitle ? '✓ set' : <span className="text-muted-foreground">default</span>),
+    },
+    {
+      id: 'seoDescription',
+      header: 'SEO description',
+      headClassName: 'w-32',
+      cellClassName: 'text-xs',
+      cell: (it) => (it.seoDescription ? '✓ set' : <span className="text-muted-foreground">default</span>),
+    },
+    {
+      id: 'edit',
+      header: 'Edit',
+      align: 'right',
+      headClassName: 'w-20 text-right',
+      cell: (it) => (
+        <Button size="sm" variant="outline" onClick={() => openEditor(it)}><Pencil className="h-3.5 w-3.5" /></Button>
+      ),
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
+
+  const indexColumns: DataTableColumn<GscIndexRow>[] = useMemo(() => [
+    {
+      id: 'page',
+      header: 'Page',
+      sortable: true,
+      sortValue: (r) => shortPath(r.url),
+      cellClassName: 'font-mono text-xs',
+      cell: (r) => shortPath(r.url),
+    },
+    {
+      id: 'verdict',
+      header: 'Verdict',
+      sortable: true,
+      sortValue: (r) => r.verdict,
+      headClassName: 'w-28',
+      cell: (r) => <Badge className={verdictClass(r.verdict)}>{r.verdict}</Badge>,
+    },
+    {
+      id: 'coverage',
+      header: 'Coverage',
+      sortable: true,
+      sortValue: (r) => r.coverage,
+      cellClassName: 'text-sm text-muted-foreground',
+      cell: (r) => r.coverage,
+    },
+    {
+      id: 'crawl',
+      header: 'Last crawl',
+      sortable: true,
+      sortValue: (r) => r.lastCrawl || '',
+      headClassName: 'w-28',
+      cellClassName: 'text-sm tabular-nums',
+      cell: (r) => fmtDate(r.lastCrawl),
+    },
+  ], []);
+
   if (isLoading) {
     return <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   }
@@ -158,21 +263,8 @@ const AdminSEO = () => {
     if (useStatus && statusF !== 'all' && metaDescriptionStatus(it).tone !== statusF) return false;
     return true;
   };
-  const sortItems = (arr: SeoItem[], sort: SortState) => {
-    const dir = sort.dir === 'asc' ? 1 : -1;
-    const tone = (i: SeoItem) => ({ good: 0, warn: 1, bad: 2 })[metaDescriptionStatus(i).tone];
-    return [...arr].sort((a, b) => {
-      let c = 0;
-      if (sort.key === 'type') c = a.kind.localeCompare(b.kind);
-      else if (sort.key === 'chars') c = metaDescriptionStatus(a).length - metaDescriptionStatus(b).length;
-      else if (sort.key === 'status') c = tone(a) - tone(b);
-      else c = a.label.localeCompare(b.label);
-      if (c === 0) c = a.label.localeCompare(b.label);
-      return c * dir;
-    });
-  };
-  const healthRows = sortItems(items.filter((i) => filterItem(i, true)), healthSort);
-  const metaRows = sortItems(editable.filter((i) => filterItem(i, false)), metaSort);
+  const healthRows = items.filter((i) => filterItem(i, true));
+  const metaRows = editable.filter((i) => filterItem(i, false));
 
   return (
     <div className="space-y-6">
@@ -223,45 +315,13 @@ const AdminSEO = () => {
                 </Select>
                 <span className="ml-auto text-xs text-muted-foreground">{healthRows.length} shown</span>
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="type" className="w-20">Type</SortHeader>
-                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="page">Page</SortHeader>
-                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="chars" className="w-24">Chars</SortHeader>
-                    <SortHeader sort={healthSort} setSort={setHealthSort} sortKey="status" className="w-32">Status</SortHeader>
-                    <TableHead className="w-28">Override?</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {healthRows.map((it) => {
-                    const st = metaDescriptionStatus(it);
-                    const dup = duplicateTitles.has((it.seoTitle || it.label).trim().toLowerCase());
-                    return (
-                      <TableRow key={`${it.table}-${it.id}`}>
-                        <TableCell><Badge variant="outline">{KIND_LABEL[it.kind]}</Badge></TableCell>
-                        <TableCell>
-                          <a href={it.url} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
-                            {it.label} <ExternalLink className="h-3 w-3" />
-                          </a>
-                          {!it.published && <span className="ml-2 text-xs text-muted-foreground">(draft)</span>}
-                          {dup && <span className="ml-2 text-xs text-amber-600">duplicate title</span>}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{st.length}</TableCell>
-                        <TableCell><Badge className={toneClass[st.tone]}>{st.label}</Badge></TableCell>
-                        <TableCell>
-                          {it.seoTitle || it.seoDescription
-                            ? <span className="text-xs text-green-700">custom</span>
-                            : <span className="text-xs text-muted-foreground">default</span>}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {healthRows.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No pages match your filters.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <DataTable
+                data={healthRows}
+                columns={healthColumns}
+                rowKey={(it) => `${it.table}-${it.id}`}
+                defaultSort={{ columnId: 'type', direction: 'asc' }}
+                emptyMessage="No pages match your filters."
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -287,33 +347,13 @@ const AdminSEO = () => {
                 </Select>
                 <span className="ml-auto text-xs text-muted-foreground">{metaRows.length} shown</span>
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <SortHeader sort={metaSort} setSort={setMetaSort} sortKey="type" className="w-20">Type</SortHeader>
-                    <SortHeader sort={metaSort} setSort={setMetaSort} sortKey="page">Page</SortHeader>
-                    <TableHead className="w-28">SEO title</TableHead>
-                    <TableHead className="w-32">SEO description</TableHead>
-                    <TableHead className="w-20 text-right">Edit</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {metaRows.map((it) => (
-                    <TableRow key={`${it.table}-${it.id}`}>
-                      <TableCell><Badge variant="outline">{KIND_LABEL[it.kind]}</Badge></TableCell>
-                      <TableCell>{it.label}</TableCell>
-                      <TableCell className="text-xs">{it.seoTitle ? '✓ set' : <span className="text-muted-foreground">default</span>}</TableCell>
-                      <TableCell className="text-xs">{it.seoDescription ? '✓ set' : <span className="text-muted-foreground">default</span>}</TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => openEditor(it)}><Pencil className="h-3.5 w-3.5" /></Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {metaRows.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No pages match your filters.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <DataTable
+                data={metaRows}
+                columns={metaColumns}
+                rowKey={(it) => `${it.table}-${it.id}`}
+                defaultSort={{ columnId: 'type', direction: 'asc' }}
+                emptyMessage="No pages match your filters."
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -349,26 +389,13 @@ const AdminSEO = () => {
               <Card>
                 <CardHeader><CardTitle>Index status</CardTitle></CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="page">Page</SortHeader>
-                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="verdict" className="w-28">Verdict</SortHeader>
-                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="coverage">Coverage</SortHeader>
-                        <SortHeader sort={indexSort} setSort={setIndexSort} sortKey="crawl" className="w-28">Last crawl</SortHeader>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortGscIndex(gsc.index, indexSort).map((r) => (
-                        <TableRow key={r.url}>
-                          <TableCell className="font-mono text-xs">{shortPath(r.url)}</TableCell>
-                          <TableCell><Badge className={verdictClass(r.verdict)}>{r.verdict}</Badge></TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{r.coverage}</TableCell>
-                          <TableCell className="text-sm tabular-nums">{fmtDate(r.lastCrawl)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <DataTable
+                    data={gsc.index}
+                    columns={indexColumns}
+                    rowKey={(r) => r.url}
+                    defaultSort={{ columnId: 'verdict', direction: 'asc' }}
+                    emptyMessage="No index data."
+                  />
                 </CardContent>
               </Card>
 
