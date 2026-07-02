@@ -1,21 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { 
+import {
   Eye, EyeOff, Edit, Trash2, MoreHorizontal,
   Copy, Archive, Star, StarOff, Share, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -160,22 +152,6 @@ export const KnowledgeItemsTable = ({
   const createKnowledgeItem = useCreateKnowledgeItem();
   const { toast } = useToast();
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      onSelectionChange(items?.map(item => item.id) || []);
-    } else {
-      onSelectionChange([]);
-    }
-  };
-
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      onSelectionChange([...selectedItems, itemId]);
-    } else {
-      onSelectionChange(selectedItems.filter(id => id !== itemId));
-    }
-  };
-
   const toggleFeatured = async (item: any) => {
     await updateKnowledgeItem.mutateAsync({
       id: item.id,
@@ -287,171 +263,144 @@ export const KnowledgeItemsTable = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  const allSelected = (items?.length ?? 0) > 0 && selectedItems.length === (items?.length ?? 0);
+  const columns: DataTableColumn<any>[] = useMemo(() => [
+    {
+      id: 'title',
+      header: 'Title',
+      cellClassName: 'py-2',
+      headClassName: 'py-2',
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm">{item.name}</span>
+          {item.is_featured && <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />}
+        </div>
+      ),
+    },
+    {
+      id: 'cases',
+      header: 'Cases',
+      align: 'right',
+      cellClassName: 'py-2',
+      headClassName: 'py-2',
+      cell: (item) => (
+        <span className="text-xs text-muted-foreground">
+          {item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'generic').length || 0}/
+          {item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'example').length || 0}
+        </span>
+      ),
+    },
+    {
+      id: 'views',
+      header: 'Views',
+      align: 'right',
+      cellClassName: 'py-2',
+      headClassName: 'py-2',
+      cell: (item) => <span className="text-xs text-muted-foreground">{item.view_count || 0}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cellClassName: 'py-2',
+      headClassName: 'py-2',
+      cell: (item) => (
+        <Badge variant={item.is_published ? 'default' : 'secondary'} className="text-[10px] h-5 px-1.5">
+          {item.is_published ? 'Published' : 'Draft'}
+        </Badge>
+      ),
+    },
+    {
+      id: 'updated',
+      header: 'Updated',
+      cellClassName: 'py-2',
+      headClassName: 'py-2',
+      cell: (item) => (
+        <span className="text-xs text-muted-foreground">
+          {formatDistanceToNow(new Date(item.updated_at), { addSuffix: false }).replace('about ', '')}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      headClassName: 'w-16 py-2',
+      cellClassName: 'py-2',
+      cell: (item) => (
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit(item)}>
+            <Edit className="h-3.5 w-3.5" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => onEdit(item)}>
+                <Edit className="h-3.5 w-3.5 mr-1.5" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePreview(item)}>
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                Preview
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleDuplicate(item)}>
+                <Copy className="h-3.5 w-3.5 mr-1.5" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShare(item)}>
+                <Share className="h-3.5 w-3.5 mr-1.5" />
+                Share
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toggleFeatured(item)}>
+                {item.is_featured ? (
+                  <><StarOff className="h-3.5 w-3.5 mr-1.5" />Unfeature</>
+                ) : (
+                  <><Star className="h-3.5 w-3.5 mr-1.5" />Feature</>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => togglePublished(item)}>
+                {item.is_published ? (
+                  <><EyeOff className="h-3.5 w-3.5 mr-1.5" />Unpublish</>
+                ) : (
+                  <><Eye className="h-3.5 w-3.5 mr-1.5" />Publish</>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleArchive(item)}>
+                <Archive className="h-3.5 w-3.5 mr-1.5" />
+                Archive
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setItemToDelete(item)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
 
   return (
-    <div className="bg-card rounded border">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-8 py-2">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={handleSelectAll}
-                aria-label="Select all"
-              />
-            </TableHead>
-            <TableHead className="py-2">Title</TableHead>
-            <TableHead className="py-2 text-right">Cases</TableHead>
-            <TableHead className="py-2 text-right">Views</TableHead>
-            <TableHead className="py-2">Status</TableHead>
-            <TableHead className="py-2">Updated</TableHead>
-            <TableHead className="w-16 py-2"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items?.map((item) => (
-            <TableRow key={item.id} className="group">
-              <TableCell className="py-2">
-                <Checkbox
-                  checked={selectedItems.includes(item.id)}
-                  onCheckedChange={(checked) => handleSelectItem(item.id, !!checked)}
-                  aria-label={`Select ${item.name}`}
-                />
-              </TableCell>
-              
-              <TableCell className="py-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{item.name}</span>
-                  {item.is_featured && (
-                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                  )}
-                </div>
-              </TableCell>
-
-              <TableCell className="py-2 text-right">
-                <span className="text-xs text-muted-foreground">
-                  {item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'generic').length || 0}/
-                  {item.knowledge_use_cases?.filter((uc: any) => uc.case_type === 'example').length || 0}
-                </span>
-              </TableCell>
-
-              <TableCell className="py-2 text-right">
-                <span className="text-xs text-muted-foreground">{item.view_count || 0}</span>
-              </TableCell>
-
-              <TableCell className="py-2">
-                <Badge 
-                  variant={item.is_published ? 'default' : 'secondary'}
-                  className="text-[10px] h-5 px-1.5"
-                >
-                  {item.is_published ? 'Published' : 'Draft'}
-                </Badge>
-              </TableCell>
-
-              <TableCell className="py-2">
-                <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(item.updated_at), { addSuffix: false }).replace('about ', '')}
-                </span>
-              </TableCell>
-
-              <TableCell className="py-2">
-                <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 w-7 p-0"
-                    onClick={() => onEdit(item)}
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                        <MoreHorizontal className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => onEdit(item)}>
-                      <Edit className="h-3.5 w-3.5 mr-1.5" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handlePreview(item)}>
-                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                      Preview
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleDuplicate(item)}>
-                      <Copy className="h-3.5 w-3.5 mr-1.5" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleShare(item)}>
-                      <Share className="h-3.5 w-3.5 mr-1.5" />
-                      Share
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => toggleFeatured(item)}>
-                      {item.is_featured ? (
-                        <>
-                          <StarOff className="h-3.5 w-3.5 mr-1.5" />
-                          Unfeature
-                        </>
-                      ) : (
-                        <>
-                          <Star className="h-3.5 w-3.5 mr-1.5" />
-                          Feature
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => togglePublished(item)}>
-                      {item.is_published ? (
-                        <>
-                          <EyeOff className="h-3.5 w-3.5 mr-1.5" />
-                          Unpublish
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-3.5 w-3.5 mr-1.5" />
-                          Publish
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleArchive(item)}>
-                      <Archive className="h-3.5 w-3.5 mr-1.5" />
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => setItemToDelete(item)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              </TableCell>
-            </TableRow>
-          ))}
-          
-          {!items?.length && (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center py-8">
-                <p className="text-sm text-muted-foreground">No items found</p>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+    <>
+      <DataTable
+        data={items}
+        columns={columns}
+        rowKey={(item) => item.id}
+        isLoading={isLoading}
+        selection={{
+          selectedIds: new Set(selectedItems),
+          onChange: (next) => onSelectionChange([...next]),
+        }}
+        emptyMessage="No items found"
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
@@ -474,6 +423,6 @@ export const KnowledgeItemsTable = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 };
