@@ -127,8 +127,6 @@ const AdminFeedback = lazy(() => import('@/pages/admin/AdminFeedback'));
 const PopulateBacklog = lazy(() => import('@/pages/admin/PopulateBacklog'));
 const AdminImports = lazy(() => import('@/pages/admin/AdminImports'));
 
-// Dynamic Pages
-const DynamicPageRenderer = lazy(() => import('@/components/DynamicPageRenderer').then(m => ({ default: m.DynamicPageRenderer })));
 const Home = lazy(() => import('@/pages/Home'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -804,18 +802,8 @@ export const DynamicRoutes = () => {
         </SiteSettingsRouteGuard>
       } />
       
-      {/* Dynamic Catch-All for CMS Pages - MUST be last */}
-      <Route path="/:slug" element={
-        <ErrorBoundary fallback={
-          <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-destructive">Failed to load page</div>
-          </div>
-        }>
-          <Suspense fallback={<LoadingFallback />}>
-            <DynamicPageRenderer />
-          </Suspense>
-        </ErrorBoundary>
-      } />
+      {/* CMS pages subsystem retired: unknown paths fall through to the "*" NotFound
+          route in FallbackRoutes below. */}
     </>
   );
 };

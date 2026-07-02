@@ -22,15 +22,6 @@ export type {
 // Core domain types
 export type { UserStory, Epic, Feature } from '@/hooks/useUserStories';
 
-// Re-export existing types for convenience
-export type { 
-  Page, 
-  ContentBlock, 
-  PageWithBlocks,
-  ContentBlockCreate,
-  ContentBlockUpdate 
-} from './page';
-
 export type { 
   EventTemplate,
   LearningResource,
