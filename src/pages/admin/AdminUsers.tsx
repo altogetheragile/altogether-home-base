@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toCsv } from '@/utils/csv';
 import { useUsers, UserProfile } from '@/hooks/useUsers';
 import { useUpdateUserRole } from '@/hooks/useUserRoleManagement';
@@ -6,14 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Search, MoreVertical, Eye, Shield, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { UserDetailsDialog } from '@/components/admin/UserDetailsDialog';
@@ -78,6 +70,78 @@ export default function AdminUsers() {
         return 'secondary';
     }
   };
+
+  const columns: DataTableColumn<UserProfile>[] = useMemo(() => [
+    {
+      id: 'avatar',
+      header: '',
+      headClassName: 'w-[50px]',
+      cell: (user) => {
+        const initials = user.full_name
+          ? user.full_name.split(' ').map((n) => n[0]).join('').toUpperCase()
+          : user.email?.[0].toUpperCase() || '?';
+        return (
+          <Avatar>
+            <AvatarImage src={user.profile_image_url || undefined} />
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+        );
+      },
+    },
+    {
+      id: 'name',
+      header: 'Name',
+      cellClassName: 'font-medium',
+      cell: (user) =>
+        user.full_name || <span className="text-muted-foreground">No name</span>,
+    },
+    { id: 'email', header: 'Email', cell: (user) => user.email },
+    {
+      id: 'username',
+      header: 'Username',
+      cell: (user) =>
+        user.username ? `@${user.username}` : <span className="text-muted-foreground">—</span>,
+    },
+    {
+      id: 'role',
+      header: 'Role',
+      cell: (user) => (
+        <Badge variant={getRoleBadgeVariant(user.role)}>{user.role || 'user'}</Badge>
+      ),
+    },
+    {
+      id: 'registered',
+      header: 'Registered',
+      cellClassName: 'text-muted-foreground',
+      cell: (user) =>
+        user.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : '-',
+    },
+    {
+      id: 'actions',
+      header: '',
+      headClassName: 'w-[80px]',
+      cell: (user) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleEditRole(user)}>
+              <Shield className="mr-2 h-4 w-4" />
+              Edit Role
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
 
   const exportToCSV = () => {
     if (!data?.users) return;
@@ -140,94 +204,14 @@ export default function AdminUsers() {
         </Select>
       </div>
 
-      {/* Users Table */}
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]"></TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Registered</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-[80px]" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                </TableRow>
-              ))
-            ) : data?.users && data.users.length > 0 ? (
-              data.users.map((user) => {
-                const initials = user.full_name
-                  ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
-                  : user.email?.[0].toUpperCase() || '?';
-
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <Avatar>
-                        <AvatarImage src={user.profile_image_url || undefined} />
-                        <AvatarFallback>{initials}</AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {user.full_name || <span className="text-muted-foreground">No name</span>}
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {user.username ? `@${user.username}` : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getRoleBadgeVariant(user.role)}>
-                        {user.role || 'user'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {user.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewDetails(user)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditRole(user)}>
-                            <Shield className="mr-2 h-4 w-4" />
-                            Edit Role
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No users found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Users Table (search/filter/pagination are server-side, handled above/below) */}
+      <DataTable
+        data={data?.users}
+        columns={columns}
+        rowKey={(user) => user.id}
+        isLoading={isLoading}
+        emptyMessage="No users found"
+      />
 
       {/* Pagination */}
       {data && data.totalPages > 1 && (

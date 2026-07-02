@@ -12,7 +12,7 @@
     "prebuild": "node scripts/export-kb-json.mjs",
     "build": "tsc -b && vite build && node scripts/prerender.mjs",
     "build:dev": "vite build --mode development",
-    "lint": "eslint . --max-warnings 141",
+    "lint": "eslint . --max-warnings 134",
     "preview": "vite preview",
     "test": "vitest run",
     "test:unit": "vitest",
