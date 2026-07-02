@@ -68,7 +68,8 @@ export function useCommentReports(status?: string) {
             content,
             created_at,
             user_id,
-            knowledge_item_id
+            knowledge_item_id,
+            knowledge_items(item_type)
           )
         `)
         .order("created_at", { ascending: false });
@@ -87,6 +88,7 @@ export function useCommentReports(status?: string) {
           created_at: string;
           user_id: string;
           knowledge_item_id: string;
+          knowledge_items: { item_type: string | null } | null;
         };
       })[];
     },
