@@ -1,10 +1,18 @@
 import { useRecentAdminActions } from '@/hooks/useAdminAudit';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DataTable, type DataTableColumn } from '@/components/admin/DataTable';
 import { format } from 'date-fns';
 import { Shield, Eye, Edit, Trash2, Plus } from 'lucide-react';
+
+interface AuditLog {
+  id: string;
+  created_at: string;
+  action: string;
+  target_table: string;
+  target_id: string | null;
+  metadata: Record<string, unknown> | null;
+}
 
 const getActionIcon = (action: string) => {
   switch (action) {
@@ -24,17 +32,71 @@ const getActionIcon = (action: string) => {
 const getActionBadgeVariant = (action: string) => {
   switch (action) {
     case 'VIEW_PROFILE':
-      return 'default';
+      return 'default' as const;
     case 'UPDATE':
-      return 'secondary';
+      return 'secondary' as const;
     case 'DELETE':
-      return 'destructive';
+      return 'destructive' as const;
     case 'INSERT':
-      return 'outline';
+      return 'outline' as const;
     default:
-      return 'default';
+      return 'default' as const;
   }
 };
+
+const columns: DataTableColumn<AuditLog>[] = [
+  {
+    id: 'created_at',
+    header: 'Timestamp',
+    sortable: true,
+    sortValue: (log) => log.created_at,
+    cellClassName: 'font-mono text-sm',
+    cell: (log) => format(new Date(log.created_at), 'MMM dd, yyyy HH:mm:ss'),
+  },
+  {
+    id: 'action',
+    header: 'Action',
+    sortable: true,
+    sortValue: (log) => log.action,
+    cell: (log) => (
+      <Badge variant={getActionBadgeVariant(log.action)} className="gap-1">
+        {getActionIcon(log.action)}
+        {log.action}
+      </Badge>
+    ),
+  },
+  {
+    id: 'target_table',
+    header: 'Table',
+    sortable: true,
+    sortValue: (log) => log.target_table,
+    cellClassName: 'font-mono text-sm',
+    cell: (log) => log.target_table,
+  },
+  {
+    id: 'target_id',
+    header: 'Target ID',
+    cellClassName: 'font-mono text-xs text-muted-foreground',
+    cell: (log) => (log.target_id ? log.target_id.substring(0, 8) + '...' : '-'),
+  },
+  {
+    id: 'metadata',
+    header: 'Details',
+    cell: (log) =>
+      log.metadata && Object.keys(log.metadata).length > 0 ? (
+        <details className="cursor-pointer">
+          <summary className="text-sm text-muted-foreground hover:text-foreground">
+            View metadata
+          </summary>
+          <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto">
+            {JSON.stringify(log.metadata, null, 2)}
+          </pre>
+        </details>
+      ) : (
+        <span className="text-sm text-muted-foreground">-</span>
+      ),
+  },
+];
 
 const AdminAuditLogs = () => {
   const { data: auditLogs, isLoading } = useRecentAdminActions(100);
@@ -59,68 +121,18 @@ const AdminAuditLogs = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : !auditLogs || auditLogs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No audit logs found
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Timestamp</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Table</TableHead>
-                      <TableHead>Target ID</TableHead>
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {auditLogs.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="font-mono text-sm">
-                          {format(new Date(log.created_at), 'MMM dd, yyyy HH:mm:ss')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getActionBadgeVariant(log.action)} className="gap-1">
-                            {getActionIcon(log.action)}
-                            {log.action}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {log.target_table}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {log.target_id ? log.target_id.substring(0, 8) + '...' : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {log.metadata && Object.keys(log.metadata).length > 0 ? (
-                            <details className="cursor-pointer">
-                              <summary className="text-sm text-muted-foreground hover:text-foreground">
-                                View metadata
-                              </summary>
-                              <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto">
-                                {JSON.stringify(log.metadata, null, 2)}
-                              </pre>
-                            </details>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <DataTable
+            data={auditLogs as AuditLog[] | undefined}
+            columns={columns}
+            rowKey={(log) => log.id}
+            isLoading={isLoading}
+            searchable
+            searchPlaceholder="Search actions, tables..."
+            pageSize={25}
+            emptyMessage="No audit logs found"
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
