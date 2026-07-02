@@ -3,7 +3,7 @@ import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
   FolderOpen, BarChart3, Upload, Layers, LayoutDashboard,
   Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList,
-  ChevronRight, Search, Inbox,
+  ChevronRight, Search, Inbox, Flag,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,6 +93,7 @@ const navigation: NavGroup[] = [
       { label: 'Leads', icon: Inbox, href: '/admin/contacts' },
       { label: 'Users', icon: Users, href: '/admin/users' },
       { label: 'Feedback', icon: MessageSquare, href: '/admin/feedback' },
+      { label: 'Moderation', icon: Flag, href: '/admin/moderation' },
     ],
   },
   {

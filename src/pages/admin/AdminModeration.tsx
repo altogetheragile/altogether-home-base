@@ -203,7 +203,11 @@ export default function AdminModeration() {
 
                     <div className="flex items-center justify-between pt-2 border-t">
                       <Link
-                        to={`/knowledge/${report.knowledge_item_comments.knowledge_item_id}`}
+                        to={`/knowledge-base/${
+                          report.knowledge_item_comments.knowledge_items?.item_type === "technique"
+                            ? "techniques"
+                            : "artifacts"
+                        }/${report.knowledge_item_comments.knowledge_item_id}`}
                         className="text-sm text-primary hover:underline"
                       >
                         View in context →
