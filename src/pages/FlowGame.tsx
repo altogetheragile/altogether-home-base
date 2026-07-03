@@ -88,7 +88,7 @@ export default function FlowGame() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <Navigation />
       <main className="flex-1">{renderPhase()}</main>
       <Footer />
