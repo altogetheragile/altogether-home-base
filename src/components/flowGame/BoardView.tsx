@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import {
   DndContext,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   useDroppable,
@@ -71,8 +72,15 @@ export function BoardView({
 }: BoardViewProps) {
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const canInteract = round.dayPhase === 'assign';
-  // A small drag threshold so a plain click still assigns workers.
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  // Cross-device drag. Mouse: a 6px threshold so a plain click still assigns
+  // workers (drag only kicks in past 6px). Touch: press-and-hold ~200ms to start
+  // a drag, so a quick swipe scrolls the board/columns and a tap still assigns.
+  // This is what makes the board usable on iPad — a bare PointerSensor treats
+  // every touch as a scroll and never starts the drag.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  );
 
   const handleAssignCard = (cardId: string) => {
     if (!canInteract || !selectedWorkerId) return;
@@ -130,7 +138,7 @@ export function BoardView({
   const bottleneck = bottleneckStage(items, round.wipLimits);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] p-4 gap-3">
+    <div className="flex flex-col h-[calc(100dvh-4rem)] p-4 gap-3">
       {/* DndContext spans the worker pool AND the board so pawns can be dragged onto cards */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       {/* Top bar */}
