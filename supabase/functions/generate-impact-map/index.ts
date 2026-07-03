@@ -26,7 +26,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
 const SYSTEM_PROMPT = `You are an expert agile coach facilitating an Impact Mapping session (the technique by Gojko Adzic).
-An impact map is a four-level hierarchy: GOAL (a measurable business objective) -> ACTORS (people or roles who can help or hinder the goal) -> IMPACTS (the behaviour changes we want from an actor, including behaviours that hinder the goal) -> DELIVERABLES (features or activities that might cause an impact; these are options to test, not commitments).
+An impact map is a four-level hierarchy: GOAL (a measurable business objective) -> ACTORS (people or roles who can help or hinder the goal) -> IMPACTS (the behaviour changes we want from an actor, including behaviours that hinder the goal) -> DELIVERABLES (features or activities that might cause an impact; these are options to test, not commitments - each should be small enough to build and then measure whether the behaviour changed, and deliverables under the same impact should sit at a comparable size).
 Always reply with strict JSON of the form {"suggestions": ["...", "..."]}. Each suggestion is a short, concrete phrase (no numbering, no trailing punctuation). Do not repeat any items the user already has.`;
 
 function buildUserPrompt(req: SuggestRequest): string {
@@ -38,7 +38,7 @@ function buildUserPrompt(req: SuggestRequest): string {
     case 'impacts':
       return `Goal: "${req.goal}".\nActor: "${req.actor}".\nSuggest 3 to 5 IMPACTS: behaviour changes we want from this actor (or behaviours that could hinder the goal), each as a short phrase such as "Sign up faster" or "Recommend us to others".${avoid}`;
     case 'deliverables':
-      return `Goal: "${req.goal}".\nActor: "${req.actor}".\nImpact: "${req.impact}".\nSuggest 3 to 5 DELIVERABLES: features, changes, or activities that could cause this impact. Keep each concise.${avoid}`;
+      return `Goal: "${req.goal}".\nActor: "${req.actor}".\nImpact: "${req.impact}".\nSuggest 3 to 5 DELIVERABLES: the smallest features or activities that could plausibly cause this impact. Keep them at a comparable altitude (roughly feature-sized), each small enough to ship and then measure. If an idea is really a large programme or a whole new mode, name its smallest useful first step instead of the whole thing. Concise means short wording, not large scope.${avoid}`;
   }
 }
 
