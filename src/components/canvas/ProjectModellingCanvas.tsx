@@ -517,7 +517,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
     const el = selectedSingle;
     const text = promoteText(el);
     if (!el || !text) { toast.error('Add some text to this element first.'); return; }
-    if (!targetProjectId) { toast.info('Save this canvas to a project first, then you can promote elements.'); return; }
+    if (!targetProjectId) { toast.info('Save this canvas to an initiative first, then you can promote elements.'); return; }
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: maxPos } = await supabase
@@ -594,7 +594,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleSaveToProject}>
-                  Save to Project
+                  Save to Initiative
                 </Button>
                 <Button variant="outline" onClick={handleExport}>
                   <Download className="h-4 w-4 mr-2" />
@@ -650,7 +650,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
             {!targetProjectId && (
-              <span className="text-xs text-muted-foreground">Save to a project to enable.</span>
+              <span className="text-xs text-muted-foreground">Save to an initiative to enable.</span>
             )}
           </div>
         </div>

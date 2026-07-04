@@ -297,7 +297,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     if (!targetProjectId) {
       toast({
         title: "Cannot Add to Backlog",
-        description: "This canvas is not associated with a project. Save it to a project first.",
+        description: "This canvas is not associated with an initiative. Save it to an initiative first.",
         variant: "destructive",
       });
       return;
@@ -401,12 +401,12 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   // traceable to the originating deliverable (spec 6.3).
   const handleImportDeliverables = useCallback(() => {
     if (!targetProjectId) {
-      toast({ title: 'No project', description: 'Save this canvas to a project, then import its Impact Map deliverables.', variant: 'destructive' });
+      toast({ title: 'No project', description: 'Save this canvas to an initiative, then import its Impact Map deliverables.', variant: 'destructive' });
       return;
     }
     const impactMaps = (projectArtifacts || []).filter((a) => a.artifact_type === 'impact-map');
     if (impactMaps.length === 0) {
-      toast({ title: 'No Impact Map found', description: 'Add an Impact Map to this project first.' });
+      toast({ title: 'No Impact Map found', description: 'Add an Impact Map to this initiative first.' });
       return;
     }
     const newStories: CanvasElement[] = [];
@@ -961,7 +961,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   };
 
   const handleSaveComplete = (projId: string) => {
-    toast({ title: "Canvas Saved!", description: "Your canvas has been saved to the project" });
+    toast({ title: "Canvas Saved!", description: "Your canvas has been saved to the initiative" });
     navigate(`/projects/${projId}`);
   };
 
@@ -1088,7 +1088,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
             {user && (
               <Button onClick={handleSaveToProject}>
                 <Save className="h-4 w-4 mr-2" />
-                Save to Project
+                Save to Initiative
               </Button>
             )}
             {!user && (

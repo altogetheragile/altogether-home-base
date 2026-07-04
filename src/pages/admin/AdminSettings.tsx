@@ -281,8 +281,8 @@ export default function AdminSettings() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="show_protected_projects" className="text-base font-medium">Protected Projects</Label>
-              <p className="text-sm text-muted-foreground">Enable project canvas and BMC features</p>
+              <Label htmlFor="show_protected_projects" className="text-base font-medium">Protected Initiatives</Label>
+              <p className="text-sm text-muted-foreground">Enable initiative canvas and BMC features</p>
             </div>
             <Switch
               id="show_protected_projects"

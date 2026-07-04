@@ -361,7 +361,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to save your BMC as a project",
+        description: "Please sign in to save your BMC as an initiative",
         variant: "destructive"
       });
       return;
@@ -370,7 +370,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
     if (!generatedBMC) {
       toast({
         title: "No BMC Generated",
-        description: "Please generate a BMC first before saving as project",
+        description: "Please generate a BMC first before saving as an initiative",
         variant: "destructive"
       });
       return;
@@ -410,18 +410,18 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
       });
 
       toast({
-        title: "🎉 Project Created!",
-        description: `${companyName} BMC has been saved as a project and you can now collaborate on it.`
+        title: "🎉 Initiative Created!",
+        description: `${companyName} BMC has been saved as an initiative and you can now collaborate on it.`
       });
 
-      // Navigate to the project canvas
+      // Navigate to the initiative canvas
       navigate(`/projects/${projectResult.id}/canvas`);
       setIsOpen(false);
       
     } catch (error) {
       toast({
         title: "Save Failed",
-        description: "Unable to save BMC as project. Please try again.",
+        description: "Unable to save BMC as an initiative. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -746,7 +746,7 @@ const BMCGeneratorDialog: React.FC<BMCGeneratorDialogProps> = ({
                     onClick={() => {
                       toast({
                         title: "Sign In Required",
-                        description: "Please sign in to save BMC as a project"
+                        description: "Please sign in to save BMC as an initiative"
                       });
                     }}
                     variant="outline"

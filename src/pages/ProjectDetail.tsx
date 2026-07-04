@@ -59,7 +59,7 @@ export default function ProjectDetail() {
                 onClick={() => navigate('/dashboard?tab=projects')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Projects
+                Back to Initiatives
               </Button>
               <div className="flex items-center gap-3">
                 <div 
@@ -80,7 +80,7 @@ export default function ProjectDetail() {
               <DropdownMenuTrigger asChild>
                 <Button>
                   <Wrench className="h-4 w-4 mr-2" />
-                  Project Tools
+                  Initiative Tools
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

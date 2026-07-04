@@ -133,20 +133,20 @@ export function StoryAdvancedOptions({
               className="rounded"
             />
             <Label htmlFor="saveToCanvas" className="text-sm font-medium">
-              Save to Project Canvas
+              Save to Initiative Canvas
             </Label>
           </div>
 
           {saveToCanvas && (
             <div className="space-y-2">
-              <Label htmlFor="projectSelect">Select Project</Label>
+              <Label htmlFor="projectSelect">Select Initiative</Label>
               <Select
                 value={selectedProjectId}
                 onValueChange={onSelectedProjectIdChange}
                 disabled={projectIdLocked}
               >
                 <SelectTrigger id="projectSelect">
-                  <SelectValue placeholder="Choose a project..." />
+                  <SelectValue placeholder="Choose an initiative..." />
                 </SelectTrigger>
                 <SelectContent>
                   {projects?.map((project) => (

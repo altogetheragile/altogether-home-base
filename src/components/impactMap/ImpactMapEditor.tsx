@@ -81,7 +81,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
   const handleSendToBacklog = (deliverables: { nodeId: string; title: string; description?: string }[]) => {
     const items = deliverables.filter((d) => d.title.trim().length > 0);
     if (!canSendToBacklog) {
-      toast.error('Save this map to a project first, then send deliverables to its backlog.');
+      toast.error('Save this map to an initiative first, then send deliverables to its backlog.');
       return;
     }
     if (items.length === 0) {
@@ -137,7 +137,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
     }
   }, 1500);
 
-  // Autosave: to the project artifact when opened from a project, otherwise to localStorage.
+  // Autosave: to the initiative artifact when opened from a project, otherwise to localStorage.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -156,14 +156,14 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
 
   const handleSaveToProject = () => {
     if (!user) {
-      toast.error('Please sign in to save to a project');
+      toast.error('Please sign in to save to an initiative');
       navigate('/auth');
       return;
     }
     setSaveDialogOpen(true);
   };
   const handleSaveComplete = (projId: string) => {
-    toast.success('Impact map saved to project');
+    toast.success('Impact map saved to initiative');
     navigate(`/projects/${projId}`);
   };
 
@@ -379,7 +379,7 @@ export function ImpactMapEditor({ initialData, artifactId, projectId }: ImpactMa
       <div className="flex flex-wrap items-center gap-2">
         {!isArtifact && (
           <Button size="sm" onClick={handleSaveToProject}>
-            <Save className="mr-1.5 h-4 w-4" /> Save to Project
+            <Save className="mr-1.5 h-4 w-4" /> Save to Initiative
           </Button>
         )}
         {isArtifact && saveStatus !== 'idle' && (

@@ -146,7 +146,7 @@ const BMCGenerator = () => {
 
   const handleSaveToProject = () => {
     if (!user) {
-      toast.error('Please sign in to save to a project');
+      toast.error('Please sign in to save to an initiative');
       navigate('/auth');
       return;
     }
@@ -154,9 +154,9 @@ const BMCGenerator = () => {
   };
 
   const handleSaveComplete = (projectId: string, _artifactId: string) => {
-    toast.success('BMC saved to project successfully!', {
+    toast.success('BMC saved to initiative successfully!', {
       action: {
-        label: 'View Project',
+        label: 'View Initiative',
         onClick: () => navigate(`/projects/${projectId}`),
       },
     });
@@ -353,7 +353,7 @@ const BMCGenerator = () => {
                       <div className="flex gap-2">
                         <Button variant="outline" onClick={handleSaveToProject}>
                           <Save className="h-4 w-4 mr-2" />
-                          Save to Project
+                          Save to Initiative
                         </Button>
                         <Button variant="outline" onClick={resetForm}>
                           Generate New BMC

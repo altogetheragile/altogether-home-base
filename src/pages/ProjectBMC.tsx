@@ -83,7 +83,7 @@ const ProjectBMC = () => {
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <div className="text-muted-foreground">Project not found</div>
+        <div className="text-muted-foreground">Initiative not found</div>
         <Button onClick={() => navigate('/dashboard')}>
           Back to Dashboard
         </Button>
@@ -142,7 +142,7 @@ const ProjectBMC = () => {
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <div className="text-muted-foreground">No BMC data found for this project</div>
+            <div className="text-muted-foreground">No BMC data found for this initiative</div>
             <Button onClick={() => navigate('/bmc-generator')}>
               Create New BMC
             </Button>

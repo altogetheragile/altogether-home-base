@@ -46,7 +46,7 @@ const PatternBuilder = () => {
           setResult(parsed.result);
           if (parsed.scenario) setScenario(parsed.scenario);
           if (Array.isArray(parsed.answers)) setQa(parsed.answers);
-          toast.success('Your pattern is back. You can save it to a project now.');
+          toast.success('Your pattern is back. You can save it to an initiative now.');
         }
         sessionStorage.removeItem(RESUME_KEY);
       }
@@ -235,7 +235,7 @@ const PatternBuilder = () => {
                     className="rounded-lg px-4 py-2 text-sm font-bold"
                     style={{ background: p.orange, color: p.deepTeal }}
                   >
-                    Save to Project
+                    Save to Initiative
                   </button>
                 ) : (
                   <button
@@ -321,7 +321,7 @@ const PatternBuilder = () => {
           artifactDescription={result.diagnosis?.slice(0, 200) || undefined}
           artifactData={{ scenario, answers: qa, result }}
           onSaveComplete={(projectId, artifactId) => {
-            toast.success('Pattern saved to project');
+            toast.success('Pattern saved to initiative');
             navigate(`/projects/${projectId}/artifacts/${artifactId}`);
           }}
         />

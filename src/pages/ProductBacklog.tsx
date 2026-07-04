@@ -45,7 +45,7 @@ const ProductBacklog: React.FC = () => {
   const [includeWont, setIncludeWont] = useState(false);
 
   // In project mode the relational backlog_items table is the single source and
-  // every change auto-persists. Standalone mode keeps a local draft + Save to Project.
+  // every change auto-persists. Standalone mode keeps a local draft + Save to Initiative.
   const local = useLocalBacklogItems();
   const project = useProjectBacklog(projectId || undefined, backlogId || undefined);
   const inProject = !!projectId;
@@ -92,7 +92,7 @@ const ProductBacklog: React.FC = () => {
   const handleSaveComplete = (savedProjectId: string) => {
     clearItems();
     setSaveDialogOpen(false);
-    toast.success('Backlog saved to project');
+    toast.success('Backlog saved to initiative');
     // Land on the project-scoped (relational) backlog so the saved items are shown.
     navigate(`/backlog?projectId=${savedProjectId}`);
   };
@@ -198,7 +198,7 @@ const ProductBacklog: React.FC = () => {
                 disabled={!hasItems}
               >
                 <Save className="h-4 w-4 mr-2" />
-                Save to Project
+                Save to Initiative
               </Button>
             )}
             <DropdownMenu>
@@ -239,8 +239,8 @@ const ProductBacklog: React.FC = () => {
           <Alert className="mb-6">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              This backlog is not linked to a project, so it will not capture your project's intent or item provenance.
-              Open a project and choose <strong>Project Tools &gt; Product Backlog</strong>, or use <strong>Save to Project</strong> above to link it.
+              This backlog is not linked to an initiative, so it will not capture your project's intent or item provenance.
+              Open an initiative and choose <strong>Initiative Tools &gt; Product Backlog</strong>, or use <strong>Save to Initiative</strong> above to link it.
             </AlertDescription>
           </Alert>
         )}
@@ -251,7 +251,7 @@ const ProductBacklog: React.FC = () => {
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <AlertDescription className="text-amber-700 dark:text-amber-300">
               You have {items.length} unsaved backlog item{items.length !== 1 ? 's' : ''}. 
-              Click "Save to Project" to persist your work.
+              Click "Save to Initiative" to persist your work.
             </AlertDescription>
           </Alert>
         )}

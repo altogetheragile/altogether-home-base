@@ -157,14 +157,14 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
 
   const handleSaveToProject = () => {
     if (!user) {
-      toast.error('Please sign in to save to a project');
+      toast.error('Please sign in to save to an initiative');
       navigate('/auth');
       return;
     }
     setSaveDialogOpen(true);
   };
   const handleSaveComplete = (projId: string) => {
-    toast.success('Benefits scorecard saved to project');
+    toast.success('Benefits scorecard saved to initiative');
     navigate(`/projects/${projId}`);
   };
 
@@ -208,7 +208,7 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
 
       <div className="flex flex-wrap items-center gap-2">
         {!isArtifact && (
-          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Project</Button>
+          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Initiative</Button>
         )}
         {isArtifact && saveStatus !== 'idle' && (
           <span className="text-xs text-muted-foreground">

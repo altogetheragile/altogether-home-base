@@ -265,7 +265,7 @@ export function UserStoryClarifierDialog({ isOpen, onClose, projectId, onStoryGe
 
       toast({
         title: "Story added to canvas",
-        description: "Your story has been added to the project canvas.",
+        description: "Your story has been added to the initiative canvas.",
       });
     } catch (error) {
       toast({

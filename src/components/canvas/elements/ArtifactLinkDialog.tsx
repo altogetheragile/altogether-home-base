@@ -191,7 +191,7 @@ export const ArtifactLinkDialog: React.FC<ArtifactLinkDialogProps> = ({
           <TabsContent value="artifact" className="flex-1 mt-4">
             {!projectId ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p>Save this canvas to a project to link artifacts.</p>
+                <p>Save this canvas to an initiative to link artifacts.</p>
               </div>
             ) : artifactsLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -234,7 +234,7 @@ export const ArtifactLinkDialog: React.FC<ArtifactLinkDialogProps> = ({
               </ScrollArea>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <p>No artifacts found in this project.</p>
+                <p>No artifacts found in this initiative.</p>
                 <p className="text-sm mt-1">Create artifacts first, then link them here.</p>
               </div>
             )}
