@@ -61,7 +61,7 @@ test('screens adapt to a phone width without horizontal overflow', async ({ page
 
   // Screens known to overflow, being fixed in batches. Remove a route once fixed;
   // the test then guards it against regressing. A NEW overflow (not listed) fails.
-  const KNOWN_OFFENDERS = new Set(['/backlog', '/user-story-canvas', '/', '/benefits']);
+  const KNOWN_OFFENDERS = new Set([]);
 
   const offenders = results.filter((r) => r.overflow > TOLERANCE).sort((a, b) => b.overflow - a.overflow);
   const clean = results.filter((r) => r.overflow <= TOLERANCE);

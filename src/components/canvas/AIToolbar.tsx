@@ -72,7 +72,7 @@ export const AIToolbar: React.FC<AIToolbarProps> = ({
   onImportDeliverables,
 }) => {
   return (
-    <div className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
+    <div className="flex flex-wrap items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
       {/* Undo/Redo */}
       {onUndo && onRedo && (
         <>

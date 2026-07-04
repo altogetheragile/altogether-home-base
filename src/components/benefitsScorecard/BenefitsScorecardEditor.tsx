@@ -284,7 +284,7 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
                   <div className="space-y-1.5">
                     {b.readings.map((r) => (
                       <div key={r.id}>
-                        <div className="benefit-edit flex items-center gap-2">
+                        <div className="benefit-edit flex flex-wrap items-center gap-2">
                           <input type="date" value={r.date} onChange={(e) => updateReading(b.id, r.id, { date: e.target.value })} className="rounded-md border border-border bg-background p-1 text-xs" />
                           <input type="number" value={r.value} onChange={(e) => updateReading(b.id, r.id, { value: Number(e.target.value) })} className="w-20 rounded-md border border-border bg-background p-1 text-xs" />
                           <input value={r.note} onChange={(e) => updateReading(b.id, r.id, { note: e.target.value })} placeholder="note" className="flex-1 rounded-md border border-border bg-background p-1 text-xs" />
