@@ -148,7 +148,7 @@ export const ProjectsList: React.FC = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>Delete Initiative</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{projectToDelete?.name}"? This will also delete all associated user stories, epics, and features. This action cannot be undone.
             </AlertDialogDescription>
@@ -159,7 +159,7 @@ export const ProjectsList: React.FC = () => {
               onClick={confirmDeleteProject}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Project
+              Delete Initiative
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
