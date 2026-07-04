@@ -492,4 +492,89 @@ One optional extra remains:
 
 1. **RICE** as a fourth prioritisation scheme (a `prioritisationSchemes.ts` entry).
 
-*End of specification, version 1.4.*
+---
+
+## Appendix C: Courses on the Pipeline (AgilePM Foundation worked template)
+
+The pipeline doubles as the practice lab for training courses. Three things line
+up: the six ISA-O3 stages read as a course curriculum, the framework pathways
+(Kanban / Scrum / AgilePM v3 / DSDM Classic) map to the course catalogue, and the
+tools are where course concepts get applied. This appendix is the first worked
+template: **AgilePM Foundation**, run on the **AgilePM (v3) framework pathway**,
+keyed to the existing Practitioner exam case study so learn, practice, and assess
+share one story.
+
+Grounded in the AgilePM v3 (edition 2) Reference Book: phases Pre-Project,
+Feasibility, Foundations, Delivery, Deployment, Realization; a Delivery Timebox is
+a Sprint; artifacts per that book's Appendix A; MoSCoW (Must / Should / Could /
+Won't Have This Time).
+
+### C.1 Pathway: ISA-O3 stage to AgilePM phase to tool
+
+| ISA-O3 stage | AgilePM phase | AgilePM artifact(s) | Tool |
+|---|---|---|---|
+| Intent | Pre-Project / early Feasibility | Terms of Reference, outline Business Case | Product Vision Canvas, Business Case Canvas |
+| Scope | Feasibility | Feasibility Assessment, outline Solution Architecture, Business Case | Impact Map, Persona Studio, BMC (optional) |
+| Approach | Foundations | Business Case (refined), Product Backlog (MoSCoW), Delivery Plan, Management Approach Definition, Foundations Summary, PAQ | Product Backlog (MoSCoW scheme), Story Map / User Story Canvas, Journey Map |
+| Operate | Delivery | Sprint Backlog, Sprint Review Record, Solution Increment, Delivery Timebox | Simulator (Timebox / Sprint mode), Retro Coach and Ways of Working |
+| Outputs | Deployment | Product Increment, deployed solution | Product Increment (Backlog), Probe Tracker |
+| Outcomes | Realization | Benefits Assessment, Project Review Report | Benefits Scorecard |
+
+Cross-stage: MoSCoW is the prioritisation scheme from Foundations through Delivery;
+estimating (Planning Poker, story points, Velocity) feeds the simulator's velocity
+and say/do figures.
+
+### C.2 Foundation calibration (learn, feel, assess)
+
+Foundation is knowledge and assessment, so the tools make the concepts land rather
+than run a full delivery:
+
+- **Learn** (lessons + Knowledge Base): the eight principles, the lifecycle,
+  artifacts, roles, MoSCoW, timeboxing.
+- **Feel** (tools): the Simulator's Timebox mode is the centrepiece (protect the
+  fixed date, flex scope, watch Musts ship and Coulds drop); a short Impact Map to
+  Product Backlog to MoSCoW pass shows where the backlog "comes from" (Feasibility
+  and Foundations).
+- **Assess** (exam player): the AgilePM Foundation practice exams.
+
+The fuller applied build below is Practitioner-level, positioned as the bridge from
+Foundation into Practitioner.
+
+### C.3 Capstone: Quayside Futures, Project Increment 4
+
+Keyed to exam slug `agilepm-practitioner-paper-1` (case study stored on
+`exams.scenario`, rendered for Practitioner papers only). Quayside Futures is a
+dockside-regeneration social enterprise; Project Increment 4 is the Makers' Wing,
+which must open for the autumn arts festival (a fixed date), delivered by two
+Delivery Teams (Estate and Programme). The learner builds one Initiative end to end:
+
+1. **Intent:** a Product Vision Canvas (the Quarter's heritage-led regeneration
+   vision) and an outline Business Case for the Makers' Wing (Marcus Hale, Business
+   Sponsor).
+2. **Scope:** Personas (resident makers, festival visitors, members) and an Impact
+   Map whose goal is a successful festival opening that lifts memberships and income.
+3. **Foundations (Approach):** a Product Backlog from the deliverables (studio
+   fit-out, accessible facilities, booking platform, opening programme, compliance),
+   prioritised with MoSCoW (Musts = festival-critical and compliance; Coulds = softer
+   programme items), plus a light Delivery Plan.
+4. **Delivery (Operate):** the Simulator in Timebox mode for Increment 4 against the
+   fixed festival date. Commit the batch, hold the date, flex scope by MoSCoW; the
+   result reads date hit, Musts in, a Could or two dropped. The two Delivery Teams
+   give the multi-team framing.
+5. **Realization (Outcomes):** a Benefits Scorecard (memberships, income, reputation)
+   and a Project Review Report.
+
+Assessment artifact: the completed Initiative plus the simulator's hit-the-date and
+MoSCoW breakdown, which hands the learner into Paper 1 on the same case.
+
+### C.4 What this needs (build status)
+
+Already exist: the Product Vision and Business Case canvases, Impact Map, Persona
+Studio, Product Backlog with the MoSCoW scheme, Benefits Scorecard, the exam player,
+and the Practitioner Paper 1 scenario.
+
+To build: the Simulator (Flow / Sprint / Timebox modes), a true Story Map (today's
+User Story Canvas is single-story), persona auto-seeding from a BMC / Product Vision
+/ Impact Map, and course-to-tool lesson linking.
+
+*End of specification, version 1.5.*
