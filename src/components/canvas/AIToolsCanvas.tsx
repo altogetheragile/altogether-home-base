@@ -1062,23 +1062,24 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
     <div className="h-screen flex flex-col bg-background">
       {/* Header - only show in standalone mode */}
       {!artifactId && (
-        <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
-          <div className="flex items-center gap-3">
+        <div className="border-b px-4 py-3 flex flex-wrap items-center justify-between gap-2 bg-card">
+          <div className="flex min-w-0 items-center gap-3">
             <Link to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
               <LogoFull height={32} />
             </Link>
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 hidden sm:block" />
             <Button
               variant="ghost"
               size="sm"
+              className="flex-shrink-0"
               onClick={() => navigate(preselectedProjectId ? `/projects/${preselectedProjectId}` : '/ai-tools')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
             </Button>
-            <div>
-              <h1 className="text-xl font-semibold">User Story Canvas</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold">User Story Canvas</h1>
+              <p className="truncate text-sm text-muted-foreground">
                 Create and organize user stories with drag-and-drop
               </p>
             </div>
