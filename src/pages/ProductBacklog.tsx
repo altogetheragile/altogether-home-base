@@ -172,7 +172,7 @@ const ProductBacklog: React.FC = () => {
               Capture and prioritize your product enhancements
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Select value={scheme} onValueChange={(v) => setScheme(v as SchemeId)}>
               <SelectTrigger className="h-9 w-[170px]" title="How this backlog is prioritised">
                 <SelectValue />

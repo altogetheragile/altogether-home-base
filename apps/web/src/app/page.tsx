@@ -151,7 +151,7 @@ export default async function HomePage() {
                 <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="aa-btn aa-btn--ghost-light"><Icons.Chat />Book a Chemistry Session</a>
               </div>
             </div>
-            <div className="aa-hide-mobile" style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className="aa-hide-mobile">
               <AlunTabletPortrait />
             </div>
           </div>

@@ -475,7 +475,7 @@
 .aa-hero-grid { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; }
 .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .aa-section-pad { padding: 64px 48px; }
-.aa-hide-mobile { display: block; }
+.aa-hide-mobile { display: flex; justify-content: center; }
 
 @media (max-width: 767px) {
   .aa-hero-grid { grid-template-columns: 1fr; }
