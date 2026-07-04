@@ -61,6 +61,7 @@ const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ProductBacklog = lazy(() => import('@/pages/ProductBacklog'));
 const FlowGame = lazy(() => import('@/pages/FlowGame'));
 const PathwaysPicker = lazy(() => import('@/components/pipeline/PathwaysPicker'));
+const ProjectJourneyPreview = lazy(() => import('@/components/pipeline/ProjectJourneyPreview'));
 const ExamsListing = lazy(() => import('@/pages/Exams'));
 const ExamPlayer = lazy(() => import('@/pages/ExamPlayer'));
 
@@ -324,6 +325,13 @@ export const PublicRoutes = () => {
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
           <PathwaysPicker />
+        </Suspense>
+      </ErrorBoundary>
+    } />
+    <Route path="/journey-preview" element={
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <ProjectJourneyPreview />
         </Suspense>
       </ErrorBoundary>
     } />
