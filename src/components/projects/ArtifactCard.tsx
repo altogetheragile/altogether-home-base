@@ -172,7 +172,7 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({
                   }}
                 >
                   <FolderInput className="h-4 w-4 mr-2" />
-                  Move to Project
+                  Move to Initiative
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />

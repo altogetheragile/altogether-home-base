@@ -103,7 +103,7 @@ export const ProjectsList: React.FC = () => {
         <div className="flex items-center justify-between">
           <Button onClick={handleCreateProject}>
             <Plus className="h-4 w-4 mr-2" />
-            New Project
+            New Initiative
           </Button>
         </div>
 
@@ -124,9 +124,9 @@ export const ProjectsList: React.FC = () => {
           <Card>
             <CardContent className="py-12 text-center">
               <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="font-medium mb-2">No projects yet</h3>
+              <h3 className="font-medium mb-2">No initiatives yet</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Create your first project to start organizing your user stories, epics, and business model canvases.
+                Create your first initiative to start organizing your user stories, epics, and business model canvases.
               </p>
               <Button onClick={handleCreateProject}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -148,7 +148,7 @@ export const ProjectsList: React.FC = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>Delete Initiative</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{projectToDelete?.name}"? This will also delete all associated user stories, epics, and features. This action cannot be undone.
             </AlertDialogDescription>
@@ -159,7 +159,7 @@ export const ProjectsList: React.FC = () => {
               onClick={confirmDeleteProject}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Project
+              Delete Initiative
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

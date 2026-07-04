@@ -57,9 +57,9 @@ export const MoveToProjectDialog: React.FC<MoveToProjectDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Move to Project</DialogTitle>
+          <DialogTitle>Move to Initiative</DialogTitle>
           <DialogDescription>
-            Select a project to move "{artifact.name}" to
+            Select an initiative to move "{artifact.name}" to
           </DialogDescription>
         </DialogHeader>
 
@@ -76,7 +76,7 @@ export const MoveToProjectDialog: React.FC<MoveToProjectDialogProps> = ({
               </p>
               <Button onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create New Project
+                Create New Initiative
               </Button>
             </div>
           ) : (

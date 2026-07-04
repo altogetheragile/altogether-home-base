@@ -74,7 +74,7 @@ export const ProjectDialog: React.FC<ProjectDialogProps> = ({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Edit Project' : 'Create New Project'}
+            {isEditing ? 'Edit Initiative' : 'Create New Initiative'}
           </DialogTitle>
           <DialogDescription>
             {isEditing 
@@ -86,12 +86,12 @@ export const ProjectDialog: React.FC<ProjectDialogProps> = ({
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Project Name</Label>
+            <Label htmlFor="name">Initiative Name</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="My Awesome Project"
+              placeholder="My Awesome Initiative"
               required
             />
           </div>
@@ -102,7 +102,7 @@ export const ProjectDialog: React.FC<ProjectDialogProps> = ({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Brief description of your project..."
+              placeholder="Brief description of your initiative..."
               rows={3}
             />
           </div>
@@ -132,7 +132,7 @@ export const ProjectDialog: React.FC<ProjectDialogProps> = ({
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading || !formData.name.trim()}>
-              {isLoading ? 'Saving...' : (isEditing ? 'Update Project' : 'Create Project')}
+              {isLoading ? 'Saving...' : (isEditing ? 'Update Initiative' : 'Create Initiative')}
             </Button>
           </DialogFooter>
         </form>

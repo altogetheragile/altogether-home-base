@@ -102,14 +102,14 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
 
   const handleSaveToProject = () => {
     if (!user) {
-      toast.error('Please sign in to save to a project');
+      toast.error('Please sign in to save to an initiative');
       navigate('/auth');
       return;
     }
     setSaveDialogOpen(true);
   };
   const handleSaveComplete = (projId: string) => {
-    toast.success(`${def.name} saved to project`);
+    toast.success(`${def.name} saved to initiative`);
     navigate(`/projects/${projId}`);
   };
 
@@ -147,7 +147,7 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
       <div className="flex flex-wrap items-center gap-2">
         {!isArtifact && (
           <Button size="sm" onClick={handleSaveToProject}>
-            <Save className="mr-1.5 h-4 w-4" /> Save to Project
+            <Save className="mr-1.5 h-4 w-4" /> Save to Initiative
           </Button>
         )}
         {isArtifact && saveStatus !== 'idle' && (

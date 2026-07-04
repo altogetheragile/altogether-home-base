@@ -58,7 +58,7 @@ export const SaveToProjectDialog = ({
       // Create new project if needed
       if (mode === "new") {
         if (!newProjectName.trim()) {
-          toast.error("Please enter a project name");
+          toast.error("Please enter an initiative name");
           return;
         }
 
@@ -71,7 +71,7 @@ export const SaveToProjectDialog = ({
       }
 
       if (!projectId) {
-        toast.error("Please select a project");
+        toast.error("Please select an initiative");
         return;
       }
 
@@ -130,7 +130,7 @@ export const SaveToProjectDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Save to Project</DialogTitle>
+          <DialogTitle>Save to Initiative</DialogTitle>
           <DialogDescription>
             Choose an existing project or create a new one to save your {artifactType}.
           </DialogDescription>
@@ -156,7 +156,7 @@ export const SaveToProjectDialog = ({
 
           {mode === "existing" && (
             <div className="space-y-2">
-              <Label>Select Project</Label>
+              <Label>Select Initiative</Label>
               {projectsLoading ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -194,7 +194,7 @@ export const SaveToProjectDialog = ({
                 </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground text-center p-4">
-                  No projects found. Create a new one instead.
+                  No initiatives found. Create a new one instead.
                 </p>
               )}
             </div>
@@ -203,10 +203,10 @@ export const SaveToProjectDialog = ({
           {mode === "new" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="project-name">Project Name *</Label>
+                <Label htmlFor="project-name">Initiative Name *</Label>
                 <Input
                   id="project-name"
-                  placeholder="My Project"
+                  placeholder="My Initiative"
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
                 />
@@ -247,7 +247,7 @@ export const SaveToProjectDialog = ({
           </Button>
           <Button onClick={handleSave} disabled={!canSave || isLoading}>
             {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Save to Project
+            Save to Initiative
           </Button>
         </DialogFooter>
       </DialogContent>

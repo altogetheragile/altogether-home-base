@@ -170,7 +170,7 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
     }
     if (item.destination === 'backlog') {
       if (!preselectedProjectId) {
-        toast.info('Save this session to a project first, then items can be sent to its backlog.');
+        toast.info('Save this session to an initiative first, then items can be sent to its backlog.');
         return;
       }
       try {
@@ -191,7 +191,7 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
         });
         if (error) throw error;
         markSent(item.id);
-        toast.success('Sent to the project backlog');
+        toast.success('Sent to the initiative backlog');
       } catch (e) {
         toast.error(`Could not send to backlog: ${e instanceof Error ? e.message : 'try again'}`);
       }
@@ -268,14 +268,14 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
 
   const handleSaveToProject = () => {
     if (!user) {
-      toast.error('Please sign in to save to a project');
+      toast.error('Please sign in to save to an initiative');
       navigate('/auth');
       return;
     }
     setSaveDialogOpen(true);
   };
   const handleSaveComplete = (projId: string) => {
-    toast.success('Coaching session saved to project');
+    toast.success('Coaching session saved to initiative');
     navigate(`/projects/${projId}`);
   };
 
@@ -306,7 +306,7 @@ export function CoachingStudioEditor({ initialData, artifactId, projectId }: Coa
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         {!isArtifact && (
-          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Project</Button>
+          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Initiative</Button>
         )}
         {isArtifact && saveStatus !== 'idle' && (
           <span className="text-xs text-muted-foreground">

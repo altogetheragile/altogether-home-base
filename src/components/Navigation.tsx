@@ -362,7 +362,7 @@ const Navigation = () => {
                         onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
                         onClick={() => setIsDashOpen(false)}
                       >
-                        My Projects
+                        My Initiatives
                       </Link>
                       {showAdminLinks && (
                         <Link
@@ -535,7 +535,7 @@ const Navigation = () => {
                     onClick={() => setIsMenuOpen(false)}
                     style={{ display: 'block', padding: '12px 24px', color: p.deepTeal, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
                   >
-                    My Projects
+                    My Initiatives
                   </Link>
                   {showAdminLinks && (
                     <Link

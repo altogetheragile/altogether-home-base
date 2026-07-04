@@ -273,7 +273,7 @@ export function PathwaysPicker({ onStart, onSkip }: PathwaysPickerProps) {
             )}
             <div className="flex flex-wrap gap-3">
               <Button variant="ghost" onClick={skip}>Skip, I'll pick tools as I go</Button>
-              <Button size="lg" disabled={!bothChosen} onClick={start}>Start project</Button>
+              <Button size="lg" disabled={!bothChosen} onClick={start}>Start initiative</Button>
             </div>
           </div>
         </section>

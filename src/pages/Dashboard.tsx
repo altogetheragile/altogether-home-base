@@ -47,7 +47,7 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="projects" className="flex items-center space-x-2">
               <FolderKanban className="h-4 w-4" />
-              <span>My Projects</span>
+              <span>My Initiatives</span>
             </TabsTrigger>
             <TabsTrigger value="activity" className="flex items-center space-x-2">
               <Activity className="h-4 w-4" />
@@ -94,7 +94,7 @@ const Dashboard = () => {
           <TabsContent value="projects" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>My Projects</CardTitle>
+                <CardTitle>My Initiatives</CardTitle>
                 <CardDescription>
                   Manage your saved work and artifacts
                 </CardDescription>
@@ -111,7 +111,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>
-                  Your recent actions across events and projects
+                  Your recent actions across events and initiatives
                 </CardDescription>
               </CardHeader>
               <CardContent>

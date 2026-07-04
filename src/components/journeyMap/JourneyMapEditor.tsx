@@ -103,14 +103,14 @@ export function JourneyMapEditor({ initialData, artifactId, projectId }: Journey
 
   const handleSaveToProject = () => {
     if (!user) {
-      toast.error('Please sign in to save to a project');
+      toast.error('Please sign in to save to an initiative');
       navigate('/auth');
       return;
     }
     setSaveDialogOpen(true);
   };
   const handleSaveComplete = (projId: string) => {
-    toast.success('Journey map saved to project');
+    toast.success('Journey map saved to initiative');
     navigate(`/projects/${projId}`);
   };
 
@@ -131,7 +131,7 @@ export function JourneyMapEditor({ initialData, artifactId, projectId }: Journey
   // Promote a pain or opportunity to the backlog as a candidate, with provenance.
   const promoteCell = async (stage: JourneyStage, rowKey: JourneyRowKey) => {
     if (!isArtifact || !projectId || !artifactId) {
-      toast.info('Save this journey map to a project first, then you can send pains and opportunities to the backlog.');
+      toast.info('Save this journey map to an initiative first, then you can send pains and opportunities to the backlog.');
       return;
     }
     const text = stage[rowKey].trim();
@@ -191,7 +191,7 @@ export function JourneyMapEditor({ initialData, artifactId, projectId }: Journey
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {!isArtifact && (
-          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Project</Button>
+          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Initiative</Button>
         )}
         {isArtifact && saveStatus !== 'idle' && (
           <span className="text-xs text-muted-foreground">

@@ -78,14 +78,14 @@ export function CoachedBMCEditor({ initialData, initialCompanyName, preselectedP
 
   const handleSaveToProject = () => {
     if (!user) {
-      toast.error('Please sign in to save to a project');
+      toast.error('Please sign in to save to an initiative');
       navigate('/auth');
       return;
     }
     setSaveDialogOpen(true);
   };
   const handleSaveComplete = (projectId: string) => {
-    toast.success('Business Model Canvas saved to project');
+    toast.success('Business Model Canvas saved to initiative');
     navigate(`/projects/${projectId}`);
   };
 
@@ -97,7 +97,7 @@ export function CoachedBMCEditor({ initialData, initialCompanyName, preselectedP
         )}
         <div className="flex flex-wrap items-center gap-2">
           <BMCExportDialog companyName={companyName || 'Business Model Canvas'} canvasRef={bmcRef} bmcData={bmc} />
-          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Project</Button>
+          <Button size="sm" onClick={handleSaveToProject}><Save className="mr-1.5 h-4 w-4" /> Save to Initiative</Button>
         </div>
       </div>
 

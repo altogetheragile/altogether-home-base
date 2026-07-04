@@ -41,7 +41,7 @@ export const useRecentUserActivity = (limit: number = 20) => {
           activities.push({
             id: `project-${project.id}-${isNew ? 'created' : 'updated'}`,
             type: isNew ? 'project_created' : 'project_updated',
-            title: isNew ? `Created project "${project.name}"` : `Updated project "${project.name}"`,
+            title: isNew ? `Created initiative "${project.name}"` : `Updated initiative "${project.name}"`,
             timestamp: isNew ? project.created_at : project.updated_at,
             metadata: {
               projectId: project.id,

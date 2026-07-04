@@ -39,10 +39,10 @@ const DashboardStats = () => {
       loading: registrationsLoading,
     },
     {
-      title: "My Projects",
+      title: "My Initiatives",
       value: projects.length,
       icon: FolderKanban,
-      description: "Active projects",
+      description: "Active initiatives",
       loading: projectsLoading,
     },
   ];

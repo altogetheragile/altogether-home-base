@@ -136,7 +136,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
             </Badge>
             <Button size="sm" variant="outline" onClick={handleOpenProject}>
-              View Project
+              View Initiative
             </Button>
           </div>
         </div>

@@ -160,7 +160,7 @@ const BMCGenerator: React.FC = () => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to save your BMC as a project",
+        description: "Please sign in to save your BMC as an initiative",
         variant: "destructive"
       });
       return;
@@ -169,7 +169,7 @@ const BMCGenerator: React.FC = () => {
     if (!generatedBMC) {
       toast({
         title: "No BMC Generated",
-        description: "Please generate a BMC first before saving as project",
+        description: "Please generate a BMC first before saving as an initiative",
         variant: "destructive"
       });
       return;
@@ -208,7 +208,7 @@ const BMCGenerator: React.FC = () => {
 
       toast({
         title: "🎉 BMC Saved Successfully!",
-        description: `${companyName} is now in your projects.`,
+        description: `${companyName} is now in your initiatives.`,
       });
       
       navigate(`/projects/${projectResult.id}/bmc`);
@@ -216,7 +216,7 @@ const BMCGenerator: React.FC = () => {
     } catch (error) {
       toast({
         title: "Save Failed",
-        description: "Unable to save BMC as project. Please try again.",
+        description: "Unable to save BMC as an initiative. Please try again.",
         variant: "destructive"
       });
     } finally {
