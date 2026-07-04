@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Sprout, Package, TrendingUp, ListChecks,
-  Kanban, RotateCw, CalendarClock, SlidersHorizontal,
+  Kanban, RotateCw, CalendarClock, Timer, SlidersHorizontal,
   Activity, Info, ChevronRight, Check, CheckCircle2,
   type LucideIcon,
 } from 'lucide-react';
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 // Implemented from the Claude Design mockup "Pathways Picker.dc.html".
 
 type ContextKey = 'new_business' | 'new_product' | 'improve' | 'backlog';
-type MethodKey = 'kanban' | 'scrum' | 'agilepm' | 'none';
+type MethodKey = 'kanban' | 'scrum' | 'agilepm' | 'dsdm' | 'none';
 
 export interface PathwayStep {
   name: string;
@@ -39,12 +39,14 @@ const CONTEXTS: { key: ContextKey; title: string; desc: string; Icon: LucideIcon
   { key: 'backlog', title: 'Just Manage a Backlog', desc: 'Organise and prioritise existing work.', Icon: ListChecks },
 ];
 
-// cadence is the delivery rhythm; the tag is the prioritisation scheme. AgilePM
-// (DSDM) uses Timeboxes, not Sprints (a Scrum term) - the mockup had that wrong.
+// cadence is the delivery rhythm; the tag is the prioritisation scheme.
+// AgilePM v3 (latest) renamed the delivery timebox to "Sprint"; classic DSDM
+// (AgilePM v2) uses "Timebox". Both use MoSCoW. Offer both.
 const METHODS: { key: MethodKey; title: string; cadence: string; tags: string[]; Icon: LucideIcon }[] = [
   { key: 'kanban', title: 'Kanban', cadence: 'Continuous flow', tags: ['WSJF'], Icon: Kanban },
   { key: 'scrum', title: 'Scrum', cadence: 'Sprints', tags: ['Ordered backlog'], Icon: RotateCw },
-  { key: 'agilepm', title: 'AgilePM', cadence: 'Timeboxes', tags: ['MoSCoW'], Icon: CalendarClock },
+  { key: 'agilepm', title: 'AgilePM v3', cadence: 'Sprints', tags: ['MoSCoW'], Icon: CalendarClock },
+  { key: 'dsdm', title: 'DSDM Classic', cadence: 'Timeboxes', tags: ['MoSCoW'], Icon: Timer },
   { key: 'none', title: 'No framework', cadence: 'Ad hoc', tags: ['Simple priority'], Icon: SlidersHorizontal },
 ];
 
@@ -65,7 +67,8 @@ const CONTEXT_BASES: Record<ContextKey, string[]> = {
 const METHOD_PRIO: Record<MethodKey, string> = {
   kanban: 'Prioritise · WSJF',
   scrum: 'Sprint Backlog',
-  agilepm: 'Timebox · MoSCoW',
+  agilepm: 'Sprint · MoSCoW',
+  dsdm: 'Timebox · MoSCoW',
   none: 'Prioritise',
 };
 
