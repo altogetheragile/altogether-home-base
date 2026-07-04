@@ -47,29 +47,30 @@ export default function ProjectDetail() {
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-4">
               <Link to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
                 <LogoFull height={32} />
               </Link>
-              <Separator orientation="vertical" className="h-6" />
+              <Separator orientation="vertical" className="h-6 hidden sm:block" />
               <Button
                 variant="ghost"
                 size="sm"
+                className="flex-shrink-0"
                 onClick={() => navigate('/dashboard?tab=projects')}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Initiatives
               </Button>
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-4 h-4 rounded-full"
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className="w-4 h-4 flex-shrink-0 rounded-full"
                   style={{ backgroundColor: project.color_theme }}
                 />
-                <div>
-                  <h1 className="text-2xl font-bold">{project.name}</h1>
+                <div className="min-w-0">
+                  <h1 className="truncate text-2xl font-bold">{project.name}</h1>
                   {project.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="truncate text-sm text-muted-foreground mt-1">
                       {project.description}
                     </p>
                   )}
