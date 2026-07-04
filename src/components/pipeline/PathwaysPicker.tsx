@@ -39,11 +39,13 @@ const CONTEXTS: { key: ContextKey; title: string; desc: string; Icon: LucideIcon
   { key: 'backlog', title: 'Just Manage a Backlog', desc: 'Organise and prioritise existing work.', Icon: ListChecks },
 ];
 
+// cadence is the delivery rhythm; the tag is the prioritisation scheme. AgilePM
+// (DSDM) uses Timeboxes, not Sprints (a Scrum term) - the mockup had that wrong.
 const METHODS: { key: MethodKey; title: string; cadence: string; tags: string[]; Icon: LucideIcon }[] = [
-  { key: 'kanban', title: 'Kanban', cadence: 'Continuous flow', tags: ['Continuous flow', 'WSJF'], Icon: Kanban },
-  { key: 'scrum', title: 'Scrum', cadence: 'Sprints', tags: ['Sprints', 'Ordered backlog'], Icon: RotateCw },
-  { key: 'agilepm', title: 'AgilePM', cadence: 'Sprints', tags: ['Sprints', 'MoSCoW'], Icon: CalendarClock },
-  { key: 'none', title: 'No framework', cadence: 'Ad hoc', tags: ['Flexible', 'Simple priority'], Icon: SlidersHorizontal },
+  { key: 'kanban', title: 'Kanban', cadence: 'Continuous flow', tags: ['WSJF'], Icon: Kanban },
+  { key: 'scrum', title: 'Scrum', cadence: 'Sprints', tags: ['Ordered backlog'], Icon: RotateCw },
+  { key: 'agilepm', title: 'AgilePM', cadence: 'Timeboxes', tags: ['MoSCoW'], Icon: CalendarClock },
+  { key: 'none', title: 'No framework', cadence: 'Ad hoc', tags: ['Simple priority'], Icon: SlidersHorizontal },
 ];
 
 const CONTEXT_TITLES: Record<ContextKey, string> = Object.fromEntries(
@@ -63,7 +65,7 @@ const CONTEXT_BASES: Record<ContextKey, string[]> = {
 const METHOD_PRIO: Record<MethodKey, string> = {
   kanban: 'Prioritise · WSJF',
   scrum: 'Sprint Backlog',
-  agilepm: 'Sprint · MoSCoW',
+  agilepm: 'Timebox · MoSCoW',
   none: 'Prioritise',
 };
 
@@ -74,7 +76,7 @@ function buildPathway(context: ContextKey | null, method: MethodKey | null): Pat
     method ? { name: METHOD_PRIO[method], recommended: true } : { name: 'Prioritise', recommended: false },
   );
   steps.push({ name: 'Simulate', recommended: true });
-  steps.push({ name: 'Metrics', recommended: false });
+  steps.push({ name: 'Flow metrics', recommended: false });
   steps.push({ name: 'Outcomes review', recommended: false });
   return steps;
 }
@@ -152,7 +154,7 @@ export function PathwaysPicker({ onStart, onSkip }: PathwaysPickerProps) {
             </div>
             <h1 className="text-[34px] font-bold leading-[1.1] tracking-tight">Choose your pathway</h1>
             <p className="mt-2.5 max-w-[560px] text-[15px] leading-relaxed text-muted-foreground">
-              We'll recommend the tools you need and the order to use them. Nothing is locked, every step can be changed later.
+              We'll recommend the tools you need and the order to use them. Nothing is locked in; every step can be changed later.
             </p>
           </div>
           {bothChosen && (
