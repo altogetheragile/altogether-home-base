@@ -49,7 +49,7 @@ export default function ProjectDetail() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-4">
-              <Link to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
+              <Link to="/" aria-label="Altogether Agile home" className="hidden flex-shrink-0 sm:block">
                 <LogoFull height={32} />
               </Link>
               <Separator orientation="vertical" className="h-6 hidden sm:block" />
