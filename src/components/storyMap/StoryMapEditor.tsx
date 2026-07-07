@@ -150,7 +150,8 @@ export function StoryMapEditor({ initialData, artifactId, projectId }: StoryMapE
         /* ignore */
       }
     }
-  }, [map]);
+    // Intentionally runs on map changes only; isArtifact/performArtifactSave are stable.
+  }, [map]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveToProject = () => {
     if (!user) {
