@@ -571,10 +571,15 @@ MoSCoW breakdown, which hands the learner into Paper 1 on the same case.
 
 Already exist: the Product Vision and Business Case canvases, Impact Map, Persona
 Studio, Product Backlog with the MoSCoW scheme, Benefits Scorecard, the exam player,
-and the Practitioner Paper 1 scenario.
+the Practitioner Paper 1 scenario, and the **User Story Map** (`/story-map`,
+`artifact_type story-map`): a Patton backbone of activities, story cards beneath
+each, release slices (the first is the walking skeleton), coached per card toward
+the smallest useful slice, with a one-way Push to Backlog that seeds epics
+(activities) and stories (cards, carrying `target_release`) so the backlog's Story
+Map view (6.13) renders the same shape. Distinct from the single-story User Story
+Canvas.
 
-To build: the Simulator (Flow / Sprint / Timebox modes), a true Story Map (today's
-User Story Canvas is single-story), persona auto-seeding from a BMC / Product Vision
-/ Impact Map, and course-to-tool lesson linking.
+To build: the Simulator (Flow / Sprint / Timebox modes), persona auto-seeding from a
+BMC / Product Vision / Impact Map, and course-to-tool lesson linking.
 
-*End of specification, version 1.5.*
+*End of specification, version 1.6.*

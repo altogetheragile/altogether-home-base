@@ -93,9 +93,7 @@ export const PATHWAY_CONTEXTS: PathwayContext[] = [
     base: [
       { name: 'Product Vision', toolKey: 'product-vision' },
       { name: 'Personas', toolKey: 'persona' },
-      // Story Map is planned (VISION_TO_VALUE.md Appendix C, C.4); today's User
-      // Story Canvas is single-story, so no toolKey yet.
-      { name: 'Story Map' },
+      { name: 'Story Map', toolKey: 'story-map' },
       { name: 'Backlog', toolKey: 'product-backlog' },
     ],
   },

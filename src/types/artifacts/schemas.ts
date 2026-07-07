@@ -27,6 +27,18 @@ export const journeyMapSchema = z.object({
   personaName: str, personaRef: z.string().optional(), stages: z.array(journeyStage).default([]),
 }).passthrough();
 
+// ── User Story Map (backbone activities -> story cards -> release slices) ──────
+const storyCard = z.object({
+  id: z.string(), title: str, releaseId: z.string().nullable().default(null),
+}).passthrough();
+const storyActivity = z.object({
+  id: z.string(), name: str, cards: z.array(storyCard).default([]),
+}).passthrough();
+const storyRelease = z.object({ id: z.string(), name: str }).passthrough();
+export const storyMapSchema = z.object({
+  productGoal: str, activities: z.array(storyActivity).default([]), releases: z.array(storyRelease).default([]),
+}).passthrough();
+
 // ── Coaching Session ─────────────────────────────────────────────────────────
 const harvestDestination = z.enum(['goal', 'backlog', 'probe', 'benefit', 'persona', 'agreement', 'note']);
 const harvestedItem = z.object({
@@ -90,6 +102,7 @@ export const patternSchema = z.object({
 export const ARTIFACT_SCHEMAS: Record<string, z.ZodTypeAny> = {
   'impact-map': impactMapSchema,
   'journey-map': journeyMapSchema,
+  'story-map': storyMapSchema,
   'coaching-session': coachingSessionSchema,
   persona: personaSchema,
   'probe-tracker': probeTrackerSchema,

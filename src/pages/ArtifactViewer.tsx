@@ -338,6 +338,21 @@ export default function ArtifactViewer() {
           </React.Suspense>
         );
       }
+      case 'story-map': {
+        const StoryMapEditor = React.lazy(() =>
+          import('@/components/storyMap/StoryMapEditor').then(m => ({ default: m.StoryMapEditor }))
+        );
+        return (
+          <React.Suspense fallback={<div className="flex justify-center p-8">Loading story map...</div>}>
+            <StoryMapEditor
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              initialData={artifact.data as any}
+              artifactId={artifact.id}
+              projectId={projectId}
+            />
+          </React.Suspense>
+        );
+      }
       case 'pattern': {
         const PatternResultView = React.lazy(() =>
           import('@/components/patternBuilder/PatternResultView').then(m => ({ default: m.PatternResultView }))
