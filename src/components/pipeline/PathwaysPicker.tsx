@@ -1,87 +1,28 @@
 import { useMemo, useState } from 'react';
 import {
-  Sprout, Package, TrendingUp, ListChecks,
-  Kanban, RotateCw, CalendarClock, Timer, SlidersHorizontal,
   Activity, Info, ChevronRight, Check, CheckCircle2,
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  PATHWAY_CONTEXTS, PATHWAY_METHODS, buildPathway, contextByKey, methodByKey,
+  type PathwayContextKey, type PathwayMethodKey,
+} from '@/config/pathways';
+
+export type { PathwayStep, PathwaySelection } from '@/config/pathways';
+import type { PathwaySelection } from '@/config/pathways';
 
 // "Choose your pathway" - new-project setup. Two axes (context + delivery
 // method) curate the recommended tools and their order. Recommend, do not gate:
-// every step is changeable later, and Skip is always available.
+// every step is changeable later, and Skip is always available. The matrix that
+// drives this lives in the declarative Pathways Registry (src/config/pathways.ts);
+// this component only renders it.
 // Implemented from the Claude Design mockup "Pathways Picker.dc.html".
-
-type ContextKey = 'new_business' | 'new_product' | 'improve' | 'backlog';
-type MethodKey = 'kanban' | 'scrum' | 'agilepm' | 'dsdm' | 'none';
-
-export interface PathwayStep {
-  name: string;
-  recommended: boolean;
-}
-
-export interface PathwaySelection {
-  context: ContextKey;
-  method: MethodKey;
-  steps: PathwayStep[];
-}
 
 interface PathwaysPickerProps {
   onStart?: (selection: PathwaySelection) => void;
   onSkip?: () => void;
-}
-
-const CONTEXTS: { key: ContextKey; title: string; desc: string; Icon: LucideIcon }[] = [
-  { key: 'new_business', title: 'New Business', desc: 'Validate a brand-new venture or offering.', Icon: Sprout },
-  { key: 'new_product', title: 'New Product', desc: 'Build a new product for an existing business.', Icon: Package },
-  { key: 'improve', title: 'Improve an Existing Product', desc: 'Enhance something already in market.', Icon: TrendingUp },
-  { key: 'backlog', title: 'Just Manage a Backlog', desc: 'Organise and prioritise existing work.', Icon: ListChecks },
-];
-
-// cadence is the delivery rhythm; the tag is the prioritisation scheme.
-// AgilePM v3 (latest) renamed the delivery timebox to "Sprint"; classic DSDM
-// (AgilePM v2) uses "Timebox". Both use MoSCoW. Offer both.
-const METHODS: { key: MethodKey; title: string; cadence: string; tags: string[]; Icon: LucideIcon }[] = [
-  { key: 'kanban', title: 'Kanban', cadence: 'Continuous flow', tags: ['WSJF'], Icon: Kanban },
-  { key: 'scrum', title: 'Scrum', cadence: 'Sprints', tags: ['Ordered backlog'], Icon: RotateCw },
-  { key: 'agilepm', title: 'AgilePM v3', cadence: 'Sprints', tags: ['MoSCoW'], Icon: CalendarClock },
-  { key: 'dsdm', title: 'DSDM Classic', cadence: 'Timeboxes', tags: ['MoSCoW'], Icon: Timer },
-  { key: 'none', title: 'No framework', cadence: 'Ad hoc', tags: ['Simple priority'], Icon: SlidersHorizontal },
-];
-
-const CONTEXT_TITLES: Record<ContextKey, string> = Object.fromEntries(
-  CONTEXTS.map((c) => [c.key, c.title]),
-) as Record<ContextKey, string>;
-const METHOD_TITLES: Record<MethodKey, string> = Object.fromEntries(
-  METHODS.map((m) => [m.key, m.title]),
-) as Record<MethodKey, string>;
-
-const CONTEXT_BASES: Record<ContextKey, string[]> = {
-  new_business: ['Product Vision', 'Personas', 'Impact Map', 'Backlog'],
-  new_product: ['Product Vision', 'Personas', 'Story Map', 'Backlog'],
-  improve: ['Personas', 'Impact Map', 'Backlog'],
-  backlog: ['Backlog'],
-};
-
-const METHOD_PRIO: Record<MethodKey, string> = {
-  kanban: 'Prioritise · WSJF',
-  scrum: 'Sprint Backlog',
-  agilepm: 'Sprint · MoSCoW',
-  dsdm: 'Timebox · MoSCoW',
-  none: 'Prioritise',
-};
-
-function buildPathway(context: ContextKey | null, method: MethodKey | null): PathwayStep[] {
-  if (!context) return [];
-  const steps: PathwayStep[] = CONTEXT_BASES[context].map((name) => ({ name, recommended: true }));
-  steps.push(
-    method ? { name: METHOD_PRIO[method], recommended: true } : { name: 'Prioritise', recommended: false },
-  );
-  steps.push({ name: 'Simulate', recommended: true });
-  steps.push({ name: 'Flow metrics', recommended: false });
-  steps.push({ name: 'Outcomes review', recommended: false });
-  return steps;
 }
 
 /** A selectable option card shared by both axes. */
@@ -120,15 +61,15 @@ function OptionCard({
 }
 
 export function PathwaysPicker({ onStart, onSkip }: PathwaysPickerProps) {
-  const [context, setContext] = useState<ContextKey | null>(null);
-  const [method, setMethod] = useState<MethodKey | null>(null);
+  const [context, setContext] = useState<PathwayContextKey | null>(null);
+  const [method, setMethod] = useState<PathwayMethodKey | null>(null);
   const [started, setStarted] = useState(false);
 
   const bothChosen = !!context && !!method;
   const steps = useMemo(() => buildPathway(context, method), [context, method]);
 
-  const pickContext = (k: ContextKey) => { setContext(k); setStarted(false); };
-  const pickMethod = (k: MethodKey) => { setMethod(k); setStarted(false); };
+  const pickContext = (k: PathwayContextKey) => { setContext(k); setStarted(false); };
+  const pickMethod = (k: PathwayMethodKey) => { setMethod(k); setStarted(false); };
   const start = () => {
     if (context && method) {
       setStarted(true);
@@ -164,7 +105,7 @@ export function PathwaysPicker({ onStart, onSkip }: PathwaysPickerProps) {
             <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-[7px] shadow-sm">
               <span className="h-2 w-2 rounded-full bg-primary" />
               <span className="text-sm font-semibold">
-                {CONTEXT_TITLES[context!]} · {METHOD_TITLES[method!]}
+                {contextByKey(context!)?.title} · {methodByKey(method!)?.title}
               </span>
             </div>
           )}
@@ -178,7 +119,7 @@ export function PathwaysPicker({ onStart, onSkip }: PathwaysPickerProps) {
             <span className="text-sm text-muted-foreground">Pick one</span>
           </div>
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(215px,1fr))]">
-            {CONTEXTS.map((c) => (
+            {PATHWAY_CONTEXTS.map((c) => (
               <OptionCard key={c.key} selected={context === c.key} onClick={() => pickContext(c.key)} Icon={c.Icon} title={c.title}>
                 <span className="mt-1 text-sm leading-snug text-muted-foreground">{c.desc}</span>
               </OptionCard>
@@ -194,7 +135,7 @@ export function PathwaysPicker({ onStart, onSkip }: PathwaysPickerProps) {
             <span className="text-sm text-muted-foreground">Pick one</span>
           </div>
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(215px,1fr))]">
-            {METHODS.map((m) => (
+            {PATHWAY_METHODS.map((m) => (
               <OptionCard key={m.key} selected={method === m.key} onClick={() => pickMethod(m.key)} Icon={m.Icon} title={m.title}>
                 <span className="mb-3 mt-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                   {m.cadence}
