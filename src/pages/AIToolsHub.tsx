@@ -76,6 +76,14 @@ const AIToolsHub = () => {
       badge: "Coached",
     },
     {
+      id: "story-map",
+      name: "User Story Map",
+      description: "Lay out the user's flow as a backbone of activities, stack the stories beneath each, and slice them into releases so the first release is the thinnest thing that still works. Coach each card toward the smallest useful slice, then push the whole map to your backlog.",
+      typeKey: "story-map",
+      route: "/story-map",
+      badge: "Coached",
+    },
+    {
       id: "canvas-catalogue",
       name: "Canvas Catalogue",
       description: "Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. A picker recommends one, then you fill it through conversation and export.",

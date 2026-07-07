@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Map as MapIcon,
   Route,
+  LayoutGrid,
 } from 'lucide-react';
 
 export interface ToolVisual {
@@ -40,6 +41,7 @@ export const TOOL_VISUALS: Record<string, ToolVisual> = {
   'benefits-scorecard': { icon: LineChart, color: '#FF9715' },
   'ways-of-working': { icon: RefreshCw, color: '#1A9090' },
   'journey-map': { icon: MapIcon, color: '#3F8080' },
+  'story-map': { icon: LayoutGrid, color: '#1A9090' },
   pattern: { icon: Route, color: '#6B5FCC' },
 };
 

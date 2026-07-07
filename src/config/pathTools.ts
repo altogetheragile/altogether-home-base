@@ -15,7 +15,7 @@ const BY_TECHNIQUE: Record<string, PathTool> = {
   'business-case': { route: '/canvases/business-case', name: 'Business Case Canvas' },
   'impact-mapping': { route: '/impact-map', name: 'Impact Map Builder' },
   'journey-mapping': { route: '/journey-map', name: 'Journey Map Studio' },
-  'story-mapping': { route: '/backlog', name: 'Story Map' },
+  'story-mapping': { route: '/story-map', name: 'User Story Map' },
   'user-stories': { route: '/user-story-canvas', name: 'User Story Canvas' },
   personas: { route: '/personas', name: 'Persona Studio' },
   'jobs-to-be-done': { route: '/personas', name: 'Persona Studio' },

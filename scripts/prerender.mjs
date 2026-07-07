@@ -69,7 +69,7 @@ function fmtDate(d) {
 // tool/app pages and boilerplate legal pages have no search value and would only
 // dilute crawl focus. They remain reachable via internal links.
 const SITEMAP_EXCLUDE = new Set([
-  '/impact-map', '/personas', '/coach', '/journey-map', '/benefits', '/probes',
+  '/impact-map', '/personas', '/coach', '/journey-map', '/story-map', '/benefits', '/probes',
   '/ways-of-working', '/bmc-generator', '/canvases', '/canvases/business-case',
   '/canvases/product-vision', '/privacy', '/terms', '/cookies',
 ]);
@@ -450,6 +450,10 @@ const STATIC_PAGES = {
   '/journey-map': {
     title: 'Journey Map Studio - Altogether Agile',
     description: 'Map a persona journey stage by stage: doing, thinking, feeling, pains and opportunities. Coached throughout, sending opportunities to your backlog.',
+  },
+  '/story-map': {
+    title: 'User Story Map - Altogether Agile',
+    description: 'Build a Jeff Patton user story map: a backbone of activities, story cards beneath each, and release slices that right-size your backlog, then push the whole map across.',
   },
   '/benefits': {
     title: 'Benefits Scorecard - Altogether Agile',

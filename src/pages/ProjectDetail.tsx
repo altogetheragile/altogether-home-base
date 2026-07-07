@@ -93,6 +93,7 @@ export default function ProjectDetail() {
                   { label: 'Impact Map', route: '/impact-map', typeKey: 'impact-map' },
                   { label: 'Persona', route: '/personas', typeKey: 'persona' },
                   { label: 'Journey Map', route: '/journey-map', typeKey: 'journey-map' },
+                  { label: 'User Story Map', route: '/story-map', typeKey: 'story-map' },
                   { label: 'Canvas', route: '/canvases', typeKey: 'canvas' },
                   { label: 'Probe Tracker', route: '/probes', typeKey: 'probe-tracker' },
                   { label: 'Benefits Scorecard', route: '/benefits', typeKey: 'benefits-scorecard' },
