@@ -19,6 +19,9 @@ try {
 export default defineConfig({
   testDir: '.',
   testMatch: '**/*.deployed.spec.ts',
+  // After the run, delete any throwaway E2E test initiatives the write-specs
+  // created on the live database (resolved relative to this config file).
+  globalTeardown: '../scripts/.e2e-cleanup.mjs',
   fullyParallel: false,
   workers: 1,
   retries: 0,

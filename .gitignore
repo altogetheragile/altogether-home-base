@@ -27,6 +27,8 @@ coverage
 playwright-report
 test-results
 cucumber-reports
+e2e/.last-run.json
+.playwright-mcp/
 
 # Editor directories and files
 .vscode/*
