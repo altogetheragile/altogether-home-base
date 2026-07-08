@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import type { RoundState, Specialism } from './types';
-import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf, underfilledStage, bottleneckStage } from './config';
+import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf, stageOf, underfilledStage, bottleneckStage } from './config';
 import { StageColumn } from './StageColumn';
 import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
@@ -131,6 +131,13 @@ export function BoardView({
   const items = round.items;
   const backlogItems = items.filter((i) => i.column === 'backlog');
   const doneItems = items.filter((i) => i.column === 'done');
+  // Is there any active work a worker could actually progress today? When there
+  // isn't (everything's in Done, or only sitting in Done-lanes waiting to be
+  // pulled), we must still let the day run — otherwise a player who clears the
+  // board before day 20 is soft-locked, unable to reach the end-of-round metrics.
+  const hasAssignableWork = items.some(
+    (i) => laneOf(i.column) === 'active' && (i.blocked || i.effortRemaining[stageOf(i.column)!] > 0),
+  );
   // Maximize WIP: block Run Day while a stage is below its limit with work waiting.
   const blockedStage = round.maximizeWip ? underfilledStage(items, round.wipLimits) : null;
   const stageLabel = blockedStage ? STAGES.find((s) => s.stage === blockedStage)?.label : null;
@@ -178,12 +185,18 @@ export function BoardView({
           )}
           {canInteract && (
             <div className="flex flex-col items-end gap-0.5">
-              <Button onClick={onRunDay} size="lg" disabled={round.assignments.length === 0 || !!blockedStage}>
+              <Button
+                onClick={onRunDay}
+                size="lg"
+                disabled={(round.assignments.length === 0 && hasAssignableWork) || !!blockedStage}
+              >
                 Run Day
               </Button>
-              {blockedStage && (
+              {blockedStage ? (
                 <span className="text-[10px] text-amber-700 leading-tight">Fill {stageLabel} to its WIP limit first</span>
-              )}
+              ) : round.assignments.length === 0 && hasAssignableWork ? (
+                <span className="text-[10px] text-muted-foreground leading-tight">Assign a worker to run the day</span>
+              ) : null}
             </div>
           )}
         </div>

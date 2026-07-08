@@ -135,6 +135,27 @@ function LittlesLawCalculator({ defaultWip, defaultThroughput }: { defaultWip: n
   );
 }
 
+/** One round's measured flow figures, side by side (no false equation). */
+function LittlesLawRow({ label, color, metrics }: { label: string; color: string; metrics: RoundMetrics }) {
+  const none = metrics.totalCompleted === 0;
+  const stat = (value: string, unit: string) => (
+    <span className="inline-flex items-baseline gap-1">
+      <span className="font-mono font-semibold">{value}</span>
+      <span className="text-xs text-muted-foreground">{unit}</span>
+    </span>
+  );
+  return (
+    <div className="flex items-center justify-center gap-x-5 gap-y-1 flex-wrap text-sm">
+      <span className={cn('font-bold w-20 text-right', color)}>{label}</span>
+      {stat(metrics.averageWip.toFixed(1), 'avg WIP')}
+      <span className="text-muted-foreground/40">·</span>
+      {none ? stat('—', 'throughput') : stat(`${metrics.throughputRate.toFixed(2)}`, 'items/day')}
+      <span className="text-muted-foreground/40">·</span>
+      {none ? stat('—', 'cycle time') : stat(metrics.averageCycleTime.toFixed(1), 'day cycle time')}
+    </div>
+  );
+}
+
 function MetricsPanel({ metrics, label, color }: { metrics: RoundMetrics; label: string; color: string }) {
   return (
     <div className="space-y-6 flex-1 min-w-[320px]">
@@ -212,50 +233,35 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, prediction,
         )}
       </div>
 
-      {/* Little's Law panel */}
+      {/* Little's Law panel. We show each round's MEASURED figures rather than
+          asserting the textbook equation with them: because a round ends with
+          work still in flight (the system never settles), WIP / throughput only
+          approximates the finished items' cycle time. The honest lesson is the
+          co-movement - lower WIP, shorter cycle time - and the exact identity
+          lives in the interactive calculator below. */}
       <div className="bg-muted/50 border rounded-lg p-6 space-y-4 max-w-2xl mx-auto">
-        <h3 className="text-xl font-bold text-center">Little's Law</h3>
+        <h3 className="text-xl font-bold text-center">Little's Law: WIP drives cycle time</h3>
         <p className="text-center text-muted-foreground">
-          Average Cycle Time = Average WIP / Throughput Rate
+          For a given throughput, the more work in progress, the longer each item takes. Watch
+          average WIP and cycle time move together:
         </p>
 
-        <div className="space-y-2 font-mono text-sm">
-          <div className="flex items-center gap-2 justify-center flex-wrap">
-            <span className="font-bold text-destructive">Round 1:</span>
-            <span>{round1Metrics.averageCycleTime.toFixed(1)} days</span>
-            <span>=</span>
-            <span>{round1Metrics.averageWip.toFixed(1)} items</span>
-            <span>/</span>
-            <span>{round1Metrics.throughputRate.toFixed(2)} items/day</span>
-          </div>
-          {round2Metrics && (
-            <div className="flex items-center gap-2 justify-center flex-wrap">
-              <span className="font-bold text-blue-500">Round 2:</span>
-              <span>{round2Metrics.averageCycleTime.toFixed(1)} days</span>
-              <span>=</span>
-              <span>{round2Metrics.averageWip.toFixed(1)} items</span>
-              <span>/</span>
-              <span>{round2Metrics.throughputRate.toFixed(2)} items/day</span>
-            </div>
-          )}
+        <div className="space-y-2">
+          <LittlesLawRow label="Round 1" color="text-destructive" metrics={round1Metrics} />
+          {round2Metrics && <LittlesLawRow label="Round 2" color="text-blue-500" metrics={round2Metrics} />}
         </div>
 
         <p className="text-sm text-muted-foreground text-center">
           {isFinal
-            ? 'Lower WIP means shorter cycle times - even if throughput stays similar, items flow through faster when you limit work in progress.'
+            ? 'Lower WIP means shorter cycle times - even when throughput stays similar, items flow through faster when you limit work in progress.'
             : 'The more items in flight at once, the longer each one takes. Can you improve this in Round 2?'}
         </p>
 
-        {isFinal && round2Metrics && (
-          <div className="text-center space-y-1 pt-2 border-t">
-            <p className="text-sm">
-              <strong>Items completed:</strong> Round 1: {round1Metrics.totalCompleted} → Round 2: {round2Metrics.totalCompleted}
-            </p>
-            <p className="text-sm">
-              <strong>Avg cycle time:</strong> Round 1: {round1Metrics.averageCycleTime.toFixed(1)}d → Round 2: {round2Metrics.averageCycleTime.toFixed(1)}d
-            </p>
-          </div>
-        )}
+        <p className="text-xs text-muted-foreground/80 text-center border-t pt-3">
+          These are each round's own figures, so the relationship is approximate: work is still in
+          flight when the round ends, so the board never reaches a steady state. The direction is the
+          lesson - the exact law is below, try it yourself.
+        </p>
       </div>
 
       {/* Interactive Little's Law (P5) - seeded from the latest round's numbers */}

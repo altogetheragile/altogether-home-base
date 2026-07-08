@@ -36,20 +36,12 @@ export function DaySummary({ summary, isLastDay, onNextDay }: DaySummaryProps) {
         <p className="text-sm text-muted-foreground">No workers were assigned this day.</p>
       )}
 
-      {/* Events */}
-      {summary.blockersApplied.length > 0 && (
-        <p className="text-sm text-destructive">
-          Blockers appeared on {summary.blockersApplied.length} item(s)
-        </p>
-      )}
+      {/* Events. Blockers are surfaced on the board at the start of each day and
+          completion happens as the player pulls to Done, so the only day-run
+          event worth calling out here is a blocker a worker cleared. */}
       {summary.blockersCleared.length > 0 && (
         <p className="text-sm text-emerald-600">
           Blockers cleared on {summary.blockersCleared.length} item(s)
-        </p>
-      )}
-      {summary.itemsCompleted.length > 0 && (
-        <p className="text-sm text-primary font-medium">
-          {summary.itemsCompleted.length} item(s) completed!
         </p>
       )}
 
