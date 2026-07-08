@@ -18,7 +18,7 @@ export function GameIntro({ onStart }: GameIntroProps) {
         </p>
       </div>
 
-      <div className="grid w-full gap-4 text-left sm:grid-cols-2">
+      <div className="grid w-full items-start gap-4 text-left sm:grid-cols-[3fr_2fr]">
         <div className="rounded-lg bg-muted/50 p-5 space-y-2">
           <h2 className="text-lg font-semibold">How it works</h2>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
