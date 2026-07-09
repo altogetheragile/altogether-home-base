@@ -20,6 +20,23 @@ interface WorkItemCardProps {
   /** When true the card can be dragged (to pull/reorder) and is a drop target
    *  (for reordering and for assigning a dragged worker). */
   draggable?: boolean;
+  /** Slim rendering for the backlog: title + one-line effort totals, no pip rows,
+   *  so many items fit without a tall, scroll-heavy column. */
+  compact?: boolean;
+}
+
+/** One-line effort totals (A/D/T) for compact cards. */
+function EffortTotals({ item }: { item: WorkItem }) {
+  return (
+    <div className="mt-1 flex items-center gap-1.5">
+      {ACTIVE_COLUMNS.map((s) => (
+        <span key={s} className="inline-flex items-center gap-0.5" title={`${s}: ${item.effortRemaining[s]}/${item.effortTotal[s]} effort left`}>
+          <span className={cn('h-2 w-2 rounded-[2px]', SPECIALISM_COLORS[s])} />
+          <span className="text-[10px] font-medium text-muted-foreground">{item.effortRemaining[s]}</span>
+        </span>
+      ))}
+    </div>
+  );
 }
 
 /** Remaining effort per stage as compact, wrapping pip rows (one row per discipline). */
@@ -47,7 +64,7 @@ function EffortPips({ item }: { item: WorkItem }) {
   );
 }
 
-export function WorkItemCard({ item, assignments, isSelected, onClick, currentDay, draggable }: WorkItemCardProps) {
+export function WorkItemCard({ item, assignments, isSelected, onClick, currentDay, draggable, compact }: WorkItemCardProps) {
   const drag = useDraggable({ id: `card:${item.id}`, disabled: !draggable });
   const drop = useDroppable({ id: `card:${item.id}`, disabled: !draggable });
   const { attributes, listeners, isDragging } = drag;
@@ -90,7 +107,7 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, currentDa
         </span>
       </div>
 
-      {item.column !== 'done' && <EffortPips item={item} />}
+      {item.column !== 'done' && (compact ? <EffortTotals item={item} /> : <EffortPips item={item} />)}
 
       {isActive && item.blocked && (
         <div className="mt-1 text-[10px] text-destructive leading-tight">{item.blockerEffort} to unblock</div>

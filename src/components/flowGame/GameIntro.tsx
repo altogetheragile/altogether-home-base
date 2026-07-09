@@ -1,10 +1,13 @@
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 interface GameIntroProps {
-  onStart: () => void;
+  onStart: (warmStart: boolean) => void;
 }
 
 export function GameIntro({ onStart }: GameIntroProps) {
+  const [warmStart, setWarmStart] = useState(false);
   return (
     // Fill the viewport below the 4rem nav and centre the card, so the whole
     // brief - heading through the Start button - sits above the fold with no
@@ -39,9 +42,40 @@ export function GameIntro({ onStart }: GameIntroProps) {
         </div>
       </div>
 
-      <Button size="lg" onClick={onStart} className="px-8 py-6 text-lg">
-        Start Round 1
-      </Button>
+      <div className="flex flex-col items-center gap-3">
+        {/* Start mode: an empty backlog, or a board already mid-flow. */}
+        <div className="inline-flex rounded-lg border border-border bg-card p-1 text-sm">
+          <button
+            type="button"
+            onClick={() => setWarmStart(false)}
+            className={cn(
+              'rounded-md px-3 py-1.5 font-medium transition-colors',
+              !warmStart ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            Empty board
+          </button>
+          <button
+            type="button"
+            onClick={() => setWarmStart(true)}
+            className={cn(
+              'rounded-md px-3 py-1.5 font-medium transition-colors',
+              warmStart ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            Start mid-flow
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {warmStart
+            ? 'Some work is already in progress across the board - jump straight in.'
+            : 'Everything starts in the backlog - you pull the first work in.'}
+        </p>
+
+        <Button size="lg" onClick={() => onStart(warmStart)} className="px-8 py-6 text-lg">
+          Start Round 1
+        </Button>
+      </div>
     </div>
   );
 }

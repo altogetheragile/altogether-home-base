@@ -21,6 +21,9 @@ interface WorkerPoolProps {
   onSelectWorker: (workerId: string) => void;
   onUnassign: (workerId: string) => void;
   disabled?: boolean;
+  /** Whether any active card has work a worker could progress today. Drives the
+   *  idle nudge: idle workers only "waste" capacity when there is work to do. */
+  workAvailable?: boolean;
 }
 
 function WorkerPawn({
@@ -75,20 +78,25 @@ function WorkerPawn({
   );
 }
 
-export function WorkerPool({ assignments, selectedWorkerId, onSelectWorker, onUnassign, disabled }: WorkerPoolProps) {
+export function WorkerPool({ assignments, selectedWorkerId, onSelectWorker, onUnassign, disabled, workAvailable }: WorkerPoolProps) {
   const assignedIds = new Set(assignments.map((a) => a.workerId));
   const idle = WORKERS.length - assignedIds.size;
+  // Idle workers only waste capacity when there's work to do — flag amber then,
+  // neutral when there's nothing they could pick up, emerald when all assigned.
+  const wasting = idle > 0 && !!workAvailable;
   return (
     <div className="flex items-center gap-3">
       {!disabled && (
         <span
           className={cn(
             'text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap shrink-0',
-            idle > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800',
+            idle === 0 ? 'bg-emerald-100 text-emerald-800'
+              : wasting ? 'bg-amber-100 text-amber-800'
+              : 'bg-muted text-muted-foreground',
           )}
           title="Workers not assigned to a card today sit idle and do no work."
         >
-          {idle > 0 ? `${idle} idle` : 'All working'}
+          {idle === 0 ? 'All working' : wasting ? `${idle} idle - work is waiting` : `${idle} idle`}
         </span>
       )}
       <div className="flex gap-2 flex-wrap justify-center">

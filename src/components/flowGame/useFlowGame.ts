@@ -3,11 +3,11 @@ import type { GameState, GameAction, RoundState, Specialism, Prediction } from '
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
 import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, FLOW_SEED, pullTarget, stageOf, stageCount } from './config';
 
-function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>): RoundState {
+function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>, warmStart = false): RoundState {
   return {
     roundNumber,
     day: 1,
-    items: createItems(),
+    items: createItems(warmStart),
     assignments: [],
     dayHistory: [],
     // Limits are always editable; round 1 starts with them OFF (the chaos baseline),
@@ -17,6 +17,7 @@ function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>)
     maximizeWip: false,
     seed: FLOW_SEED,
     dayPhase: 'assign',
+    newBlockers: [],
   };
 }
 
@@ -26,15 +27,18 @@ const initialState: GameState = {
   round1Metrics: null,
   round2Metrics: null,
   prediction: null,
+  warmStart: false,
 };
 
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'START_ROUND': {
-      // Everything starts in the backlog — the PLAYER pulls work in (no auto-pull).
-      const round = createRound(action.roundNumber, action.wipLimits);
+      // Round 1 sets the warm-start choice; Round 2 reuses it so both rounds
+      // start from the same board and the comparison stays fair.
+      const warmStart = action.roundNumber === 1 ? !!action.warmStart : state.warmStart;
+      const round = createRound(action.roundNumber, action.wipLimits, warmStart);
       const phase = action.roundNumber === 1 ? 'playing-round-1' : 'playing-round-2';
-      return { ...state, phase, round };
+      return { ...state, phase, round, warmStart };
     }
 
     case 'PULL_ITEM': {
@@ -126,6 +130,7 @@ function reducer(state: GameState, action: GameAction): GameState {
           items,
           dayHistory: [...state.round.dayHistory, summary],
           dayPhase: 'results',
+          newBlockers: [], // consumed — the day has been run
         },
       };
     }
@@ -147,7 +152,7 @@ function reducer(state: GameState, action: GameAction): GameState {
       // Just roll the day forward and surface new blockers on active work.
       const items = state.round.items.map((item) => ({ ...item }));
       const roundForBlockers: RoundState = { ...state.round, day: nextDay, items };
-      const { items: blockedItems } = applyDayBlockers(roundForBlockers);
+      const { items: blockedItems, blockedIds } = applyDayBlockers(roundForBlockers);
 
       return {
         ...state,
@@ -157,6 +162,7 @@ function reducer(state: GameState, action: GameAction): GameState {
           items: blockedItems,
           assignments: [],
           dayPhase: 'assign',
+          newBlockers: blockedIds, // surfaced as a start-of-day alert
         },
       };
     }
@@ -205,8 +211,8 @@ export function useFlowGame() {
   const nextDay = useCallback(() => dispatch({ type: 'NEXT_DAY' }), []);
 
   const startRound = useCallback(
-    (roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>) =>
-      dispatch({ type: 'START_ROUND', roundNumber, wipLimits }),
+    (roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>, warmStart?: boolean) =>
+      dispatch({ type: 'START_ROUND', roundNumber, wipLimits, warmStart }),
     []
   );
 

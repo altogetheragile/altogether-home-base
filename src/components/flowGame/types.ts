@@ -81,6 +81,8 @@ export interface DaySummaryData {
   day: number;
   rolls: DayRollResult[];
   itemsCompleted: string[];
+  /** Items that finished their current stage this day (moved to a Done lane). */
+  advanced: string[];
   blockersApplied: string[];
   blockersCleared: string[];
   columnSnapshot: ColumnSnapshot;
@@ -125,6 +127,9 @@ export interface RoundState {
    *  variability (dice, blockers) is held fixed and only WIP decisions differ. */
   seed: number;
   dayPhase: 'assign' | 'results';
+  /** Items that had a blocker land on them entering the current day (surfaced as
+   *  a start-of-day alert; cleared once the day is run). */
+  newBlockers: string[];
 }
 
 /** Player's pre-reveal guess for how Round 2's avg cycle time compares to Round 1. */
@@ -137,12 +142,16 @@ export interface GameState {
   round2Metrics: RoundMetrics | null;
   /** Captured on the WIP-setup screen before Round 2; revealed against the result. */
   prediction: Prediction | null;
+  /** Chosen at the intro: start with work already spread across the board
+   *  (a warm start) rather than an empty day-1 backlog. Reused for Round 2 so
+   *  both rounds start from the same board and stay comparable. */
+  warmStart: boolean;
 }
 
 // ============= Actions =============
 
 export type GameAction =
-  | { type: 'START_ROUND'; roundNumber: 1 | 2; wipLimits?: Record<Specialism, number> }
+  | { type: 'START_ROUND'; roundNumber: 1 | 2; wipLimits?: Record<Specialism, number>; warmStart?: boolean }
   | { type: 'PULL_ITEM'; cardId: string }
   | { type: 'REORDER_ITEM'; activeId: string; overId: string }
   | { type: 'SET_WIP'; stage: Specialism; value: number }

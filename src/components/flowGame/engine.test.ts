@@ -25,6 +25,7 @@ function round(items: WorkItem[], over: Partial<RoundState> = {}): RoundState {
     maximizeWip: false,
     seed: 1,
     dayPhase: 'assign',
+    newBlockers: [],
     ...over,
   };
 }
@@ -108,6 +109,26 @@ describe('createItems', () => {
       expect(it.effortRemaining).toEqual(it.effortTotal);
     }
   });
+
+  it('warm start seeds work across the pipeline (upstream done, started day 1, rest in backlog)', () => {
+    const items = createItems(true);
+    const inFlow = items.filter((i) => i.column !== 'backlog');
+    expect(inFlow.length).toBeGreaterThan(0);
+    // Seeded items are mid-flow: entered on day 1, not yet finished.
+    for (const it of inFlow) {
+      expect(it.startDay).toBe(1);
+      expect(it.endDay).toBeNull();
+    }
+    // Work sits in every active stage, and the rest stays in the backlog.
+    const cols = new Set(inFlow.map((i) => i.column));
+    expect(cols.has('analysis-active')).toBe(true);
+    expect(cols.has('development-active')).toBe(true);
+    expect(cols.has('test-active')).toBe(true);
+    expect(items.some((i) => i.column === 'backlog')).toBe(true);
+    // A development item has its upstream (analysis) stage complete.
+    const devItem = inFlow.find((i) => i.column === 'development-active')!;
+    expect(devItem.effortRemaining.analysis).toBe(0);
+  });
 });
 
 describe('simulateDay — worker effort', () => {
@@ -149,6 +170,18 @@ describe('simulateDay — worker effort', () => {
     expect(out[0].effortRemaining.development).toBe(0);
     expect(out[0].column).toBe('development-done'); // waits to be pulled, does NOT jump to test
     expect(out[0].endDay).toBeNull(); // completion only happens on pull to Done
+  });
+
+  it('reports items that finished a stage this day in summary.advanced', () => {
+    const items = createItems();
+    const item = items[0];
+    item.column = 'development-active';
+    item.effortRemaining = { analysis: 0, development: 3, test: 6 };
+    const { summary } = simulateDay(
+      round([item], { assignments: [{ workerId: 'w3', cardId: item.id }] }),
+      fixedRoll(6), // finishes development this day
+    );
+    expect(summary.advanced).toEqual([item.id]);
   });
 
   it('does not work items sitting in a Done lane or backlog', () => {

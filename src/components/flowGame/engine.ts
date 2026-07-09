@@ -6,6 +6,7 @@ import type {
   RoundState,
   ColumnId,
   ColumnSnapshot,
+  Specialism,
 } from './types';
 import {
   WORKERS,
@@ -20,8 +21,8 @@ import {
 
 // ============= Item Factory =============
 
-export function createItems(): WorkItem[] {
-  return WORK_ITEMS.map((def) => ({
+export function createItems(warmStart = false): WorkItem[] {
+  const items: WorkItem[] = WORK_ITEMS.map((def) => ({
     id: def.id,
     title: def.title,
     column: 'backlog' as ColumnId,
@@ -32,6 +33,35 @@ export function createItems(): WorkItem[] {
     startDay: null,
     endDay: null,
   }));
+  if (warmStart) seedWarmStart(items);
+  return items;
+}
+
+// A "warm start" board: a handful of items already spread across the pipeline so
+// the player continues mid-flow instead of pulling everything from an empty
+// backlog. Deterministic (a fixed layout, not RNG) so BOTH rounds start from the
+// same board and stay comparable. Upstream stages are marked done (0 remaining),
+// the current stage is part-worked, and each in-flow item started on day 1. Kept
+// under the default 3/3/3 WIP limits, and includes a Done-lane item to pull.
+function seedWarmStart(items: WorkItem[]): void {
+  const place = (index: number, column: ColumnId, doneStages: Specialism[], partial: Partial<Record<Specialism, number>>) => {
+    const item = items[index];
+    if (!item) return;
+    item.column = column;
+    item.startDay = 1;
+    for (const s of doneStages) item.effortRemaining[s] = 0;
+    for (const s of Object.keys(partial) as Specialism[]) {
+      item.effortRemaining[s] = Math.max(0, Math.min(item.effortTotal[s], partial[s]!));
+    }
+  };
+  // item-1: in Analysis, part-way through analysis.
+  place(0, 'analysis-active', [], { analysis: 2 });
+  // item-2: analysis done, part-way through development.
+  place(1, 'development-active', ['analysis'], { development: 3 });
+  // item-3: analysis + development done, waiting in Development's Done lane to be pulled.
+  place(2, 'development-done', ['analysis', 'development'], {});
+  // item-4: analysis + development done, part-way through test.
+  place(3, 'test-active', ['analysis', 'development'], { test: 2 });
 }
 
 // ============= Snapshot =============
@@ -135,11 +165,13 @@ export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.se
   }
 
   // Finished-this-stage → move to the stage's Done lane (intra-stage only).
+  const advanced: string[] = [];
   for (const item of workingItems) {
     if (laneOf(item.column) !== 'active' || item.blocked) continue;
     const stage = stageOf(item.column)!;
     if (item.effortRemaining[stage] <= 0) {
       item.column = colId(stage, 'done');
+      advanced.push(item.id);
     }
   }
 
@@ -149,6 +181,7 @@ export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.se
       day,
       rolls,
       itemsCompleted: [], // completion now happens via the player's PULL to Done
+      advanced,
       blockersApplied: [],
       blockersCleared,
       columnSnapshot: snapshotColumns(workingItems),

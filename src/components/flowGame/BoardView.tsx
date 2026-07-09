@@ -166,6 +166,7 @@ export function BoardView({
             onSelectWorker={handleSelectWorker}
             onUnassign={onUnassignWorker}
             disabled={!canInteract}
+            workAvailable={hasAssignableWork}
           />
         </div>
 
@@ -173,11 +174,17 @@ export function BoardView({
           <RoundReport round={round} />
           {round.wipLimits && (
             <div className="flex flex-col gap-0.5">
-              <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none">
+              <label
+                className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
+                title="Enforce WIP: pulling a card into a stage that is already at its limit is blocked - finish something first."
+              >
                 <input type="checkbox" checked={round.enforceWip} onChange={(e) => onSetEnforceWip(e.target.checked)} className="accent-primary" />
                 Enforce WIP
               </label>
-              <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none">
+              <label
+                className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
+                title="Maximize WIP: you cannot run the day while a stage sits below its limit with work waiting upstream - don't leave capacity idle."
+              >
                 <input type="checkbox" checked={round.maximizeWip} onChange={(e) => onSetMaximizeWip(e.target.checked)} className="accent-primary" />
                 Maximize WIP
               </label>
@@ -202,17 +209,25 @@ export function BoardView({
         </div>
       </div>
 
+      {/* New-blocker alert: blockers land silently on active cards as a day
+          begins, so call them out until the day is run. */}
+      {canInteract && round.newBlockers.length > 0 && (
+        <div className="shrink-0 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive">
+          {round.newBlockers.length} new blocker{round.newBlockers.length > 1 ? 's' : ''} appeared overnight - assign a worker to clear{round.newBlockers.length > 1 ? ' each one' : ' it'} before that work resumes.
+        </div>
+      )}
+
       {/* Board */}
         <div className="flex gap-2 overflow-x-auto flex-1 min-h-0 pb-2">
-          {/* Backlog — narrow single column; cards drag into Analysis */}
+          {/* Backlog — narrow single column; compact cards drag into Analysis */}
           <div className="flex flex-col w-[150px] shrink-0">
             <div className="rounded-t-lg px-2 py-2 border border-b-0 bg-muted border-border">
-              <h3 className="font-semibold text-sm">Backlog</h3>
+              <h3 className="font-semibold text-sm">Backlog <span className="text-muted-foreground font-normal">({backlogItems.length})</span></h3>
             </div>
-            <div className="flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 space-y-1.5 min-h-[200px] overflow-y-auto">
+            <div className="flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 space-y-1 min-h-[200px] overflow-y-auto">
               {backlogItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
               {backlogItems.map((item) => (
-                <WorkItemCard key={item.id} item={item} assignments={round.assignments} isSelected={false} onClick={() => {}} draggable={canInteract} />
+                <WorkItemCard key={item.id} item={item} assignments={round.assignments} isSelected={false} onClick={() => {}} draggable={canInteract} compact />
               ))}
             </div>
           </div>
