@@ -255,6 +255,7 @@ export function BoardView({
               canInteract={canInteract}
               currentDay={round.day}
               selectedWorkerId={selectedWorkerId}
+              hasDoneLane={s.stage !== 'test'}
               onAssignCard={handleAssignCard}
               onSetWip={onSetWip}
             />

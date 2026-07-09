@@ -59,7 +59,7 @@ export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED
         items = items.map((i) => (i.id === it.id ? move(i, dest, day) : i));
       }
     };
-    pull((i) => i.column === 'test-done');
+    // Test finishes straight to Done in simulateDay, so there is no test-done to pull.
     pull((i) => i.column === 'development-done');
     pull((i) => i.column === 'analysis-done');
     pull((i) => i.column === 'backlog');

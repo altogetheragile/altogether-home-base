@@ -164,14 +164,24 @@ export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.se
     }
   }
 
-  // Finished-this-stage → move to the stage's Done lane (intra-stage only).
+  // Finished-this-stage → the item moves on. Analysis/Development drop into their
+  // Done lane to wait for the player's pull. Test is the last stage, so a finished
+  // test item goes straight to the Done column (no redundant Test-Done lane) and
+  // its cycle time is recorded there.
   const advanced: string[] = [];
+  const itemsCompleted: string[] = [];
   for (const item of workingItems) {
     if (laneOf(item.column) !== 'active' || item.blocked) continue;
     const stage = stageOf(item.column)!;
     if (item.effortRemaining[stage] <= 0) {
-      item.column = colId(stage, 'done');
-      advanced.push(item.id);
+      if (stage === 'test') {
+        item.column = 'done';
+        item.endDay = day;
+        itemsCompleted.push(item.id);
+      } else {
+        item.column = colId(stage, 'done');
+        advanced.push(item.id);
+      }
     }
   }
 
@@ -180,7 +190,7 @@ export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.se
     summary: {
       day,
       rolls,
-      itemsCompleted: [], // completion now happens via the player's PULL to Done
+      itemsCompleted, // test items that finished and reached Done this day
       advanced,
       blockersApplied: [],
       blockersCleared,

@@ -1,7 +1,18 @@
 import { useReducer, useCallback } from 'react';
-import type { GameState, GameAction, RoundState, Specialism, Prediction } from './types';
+import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, FLOW_SEED, pullTarget, stageOf, stageCount } from './config';
+import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
+
+/** Which worker assignments carry over to the next day: only those whose card is
+ *  still being worked (in an Active lane). A worker is freed when their card
+ *  finishes its stage (moves to a Done lane) or reaches Done - never just because
+ *  a new day began. */
+export function keepActiveAssignments(assignments: WorkerAssignment[], items: WorkItem[]): WorkerAssignment[] {
+  return assignments.filter((a) => {
+    const it = items.find((i) => i.id === a.cardId);
+    return !!it && laneOf(it.column) === 'active';
+  });
+}
 
 function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>, warmStart = false): RoundState {
   return {
@@ -154,13 +165,16 @@ function reducer(state: GameState, action: GameAction): GameState {
       const roundForBlockers: RoundState = { ...state.round, day: nextDay, items };
       const { items: blockedItems, blockedIds } = applyDayBlockers(roundForBlockers);
 
+      // Workers stay on their card across days — no need to reallocate every day.
+      const keptAssignments = keepActiveAssignments(state.round.assignments, blockedItems);
+
       return {
         ...state,
         round: {
           ...state.round,
           day: nextDay,
           items: blockedItems,
-          assignments: [],
+          assignments: keptAssignments,
           dayPhase: 'assign',
           newBlockers: blockedIds, // surfaced as a start-of-day alert
         },
