@@ -28,7 +28,7 @@ export default function FlowGame() {
   const renderPhase = () => {
     switch (state.phase) {
       case 'intro':
-        return <GameIntro onStart={() => startRound(1)} />;
+        return <GameIntro onStart={(warmStart) => startRound(1, undefined, warmStart)} />;
 
       case 'playing-round-1':
       case 'playing-round-2':

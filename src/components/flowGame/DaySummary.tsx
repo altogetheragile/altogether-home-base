@@ -37,13 +37,27 @@ export function DaySummary({ summary, isLastDay, onNextDay }: DaySummaryProps) {
       )}
 
       {/* Events. Blockers are surfaced on the board at the start of each day and
-          completion happens as the player pulls to Done, so the only day-run
-          event worth calling out here is a blocker a worker cleared. */}
+          completion happens as the player pulls to Done, so the day-run events
+          worth calling out are work that finished a stage and cleared blockers. */}
+      {summary.advanced.length > 0 && (
+        <p className="text-sm text-primary font-medium">
+          {summary.advanced.length} item(s) finished a stage - pull them onward
+        </p>
+      )}
       {summary.blockersCleared.length > 0 && (
         <p className="text-sm text-emerald-600">
           Blockers cleared on {summary.blockersCleared.length} item(s)
         </p>
       )}
+
+      {/* Where the work sits now, per active stage. */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground border-t pt-2">
+        <span className="font-medium">WIP now:</span>
+        <span>Analysis {summary.columnSnapshot.analysis}</span>
+        <span>Development {summary.columnSnapshot.development}</span>
+        <span>Test {summary.columnSnapshot.test}</span>
+        <span>Done {summary.columnSnapshot.done}</span>
+      </div>
 
       <Button onClick={onNextDay} className="w-full">
         {isLastDay ? 'See Results' : 'Next Day →'}
