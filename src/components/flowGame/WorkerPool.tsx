@@ -105,14 +105,15 @@ export function WorkerPool({ assignments, selectedWorkerId, onSelectWorker, onUn
             key={worker.id}
             worker={worker}
             isAssigned={assignedIds.has(worker.id)}
-            isSelected={selectedWorkerId === worker.id}
+            // A worker who is already assigned is never "awaiting placement".
+            isSelected={selectedWorkerId === worker.id && !assignedIds.has(worker.id)}
             disabled={disabled}
             onSelectWorker={onSelectWorker}
             onUnassign={onUnassign}
           />
         ))}
       </div>
-      {selectedWorkerId && (
+      {selectedWorkerId && !assignedIds.has(selectedWorkerId) && (
         <p className="text-sm text-primary font-medium whitespace-nowrap">
           Drag onto a card, or click a card to assign {WORKERS.find((w) => w.id === selectedWorkerId)?.name}
         </p>
