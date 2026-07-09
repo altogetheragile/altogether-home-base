@@ -271,3 +271,34 @@ describe('calculateMetrics', () => {
     expect(m.wipPerDay[2]).toBe(3);
   });
 });
+
+import { autoPlayRound, sweepWipLimit, findSweetSpot } from './experiment';
+
+describe('WIP sweep experiment', () => {
+  it('auto-play is deterministic for a given WIP limit + seed', () => {
+    const a = autoPlayRound(3);
+    const b = autoPlayRound(3);
+    expect(a.totalCompleted).toBe(b.totalCompleted);
+    expect(a.averageCycleTime).toBe(b.averageCycleTime);
+    expect(a.throughputRate).toBe(b.throughputRate);
+  });
+
+  it('a too-low WIP limit starves throughput vs a healthy one', () => {
+    const starved = autoPlayRound(1);
+    const healthy = autoPlayRound(4);
+    expect(healthy.throughputRate).toBeGreaterThan(starved.throughputRate);
+  });
+
+  it('sweep covers the range and finds a sweet spot at near-max throughput', () => {
+    const sweep = sweepWipLimit(1, 8);
+    expect(sweep.map((p) => p.wipLimit)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    const maxThr = Math.max(...sweep.map((p) => p.throughputRate));
+    const sweet = findSweetSpot(sweep)!;
+    expect(sweet).not.toBeNull();
+    // The sweet spot delivers near-max throughput...
+    expect(sweet.throughputRate).toBeGreaterThanOrEqual(maxThr * 0.95);
+    // ...at the LEAST WIP that does so (no earlier point qualifies).
+    const earlier = sweep.filter((p) => p.wipLimit < sweet.wipLimit);
+    for (const p of earlier) expect(p.throughputRate).toBeLessThan(maxThr * 0.95);
+  });
+});
