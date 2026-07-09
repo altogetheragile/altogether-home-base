@@ -1,9 +1,16 @@
-import type { Specialism } from '@/components/flowGame/types';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import type { GameState, Specialism } from '@/components/flowGame/types';
 import { useFlowGame } from '@/components/flowGame/useFlowGame';
+import { useFlowGameSaves } from '@/components/flowGame/useFlowGameSaves';
 import { GameIntro } from '@/components/flowGame/GameIntro';
 import { BoardView } from '@/components/flowGame/BoardView';
 import { WipLimitSetup } from '@/components/flowGame/WipLimitSetup';
 import { MetricsScreen } from '@/components/flowGame/MetricsScreen';
+import { SavedGamesDialog } from '@/components/flowGame/SavedGamesDialog';
+import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
+import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -22,13 +29,56 @@ export default function FlowGame() {
     startRound,
     setPhase,
     setPrediction,
+    loadGame,
     reset,
   } = useFlowGame();
+
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { saveGame, isSaving } = useFlowGameSaves();
+
+  // Save/resume orchestration. saveId tracks the row this game maps to, so a
+  // second save updates rather than duplicates; saveName seeds the name field.
+  const [saveId, setSaveId] = useState<string | null>(null);
+  const [saveName, setSaveName] = useState('');
+  const [savesOpen, setSavesOpen] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+
+  const requestSave = () => {
+    if (!user) {
+      toast.info('Sign in to save your game');
+      navigate('/auth');
+      return;
+    }
+    setSaveDialogOpen(true);
+  };
+  const handleSave = async (name: string) => {
+    try {
+      const id = await saveGame({ id: saveId, name, state });
+      setSaveId(id);
+      setSaveName(name);
+      setSaveDialogOpen(false);
+      toast.success('Game saved');
+    } catch {
+      toast.error('Could not save the game. Please try again.');
+    }
+  };
+  const handleResume = (id: string, loaded: GameState, name: string) => {
+    loadGame(loaded);
+    setSaveId(id);
+    setSaveName(name);
+  };
 
   const renderPhase = () => {
     switch (state.phase) {
       case 'intro':
-        return <GameIntro onStart={(warmStart) => startRound(1, undefined, warmStart)} />;
+        return (
+          <GameIntro
+            onStart={(warmStart) => startRound(1, undefined, warmStart)}
+            canResume={!!user}
+            onOpenSaves={() => setSavesOpen(true)}
+          />
+        );
 
       case 'playing-round-1':
       case 'playing-round-2':
@@ -45,6 +95,7 @@ export default function FlowGame() {
             onSetMaximizeWip={setMaximizeWip}
             onRunDay={runDay}
             onNextDay={nextDay}
+            onSaveGame={requestSave}
           />
         );
 
@@ -92,6 +143,15 @@ export default function FlowGame() {
       <Navigation />
       <main className="flex-1">{renderPhase()}</main>
       <Footer />
+      <SavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
+      <SaveGameDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        defaultName={saveName}
+        isUpdate={!!saveId}
+        saving={isSaving}
+        onSave={handleSave}
+      />
     </div>
   );
 }

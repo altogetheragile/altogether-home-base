@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 
 interface GameIntroProps {
   onStart: (warmStart: boolean) => void;
+  /** Signed in, so saved games can be resumed. */
+  canResume?: boolean;
+  onOpenSaves?: () => void;
 }
 
-export function GameIntro({ onStart }: GameIntroProps) {
+export function GameIntro({ onStart, canResume, onOpenSaves }: GameIntroProps) {
   const [warmStart, setWarmStart] = useState(false);
   return (
     // Fill the viewport below the 4rem nav and centre the card, so the whole
@@ -75,6 +78,12 @@ export function GameIntro({ onStart }: GameIntroProps) {
         <Button size="lg" onClick={() => onStart(warmStart)} className="px-8 py-6 text-lg">
           Start Round 1
         </Button>
+
+        {canResume && (
+          <button type="button" onClick={onOpenSaves} className="text-sm font-medium text-primary hover:underline">
+            Resume a saved game
+          </button>
+        )}
       </div>
     </div>
   );

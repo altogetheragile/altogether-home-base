@@ -164,4 +164,5 @@ export type GameAction =
   | { type: 'END_ROUND'; metrics: RoundMetrics }
   | { type: 'SET_PREDICTION'; prediction: Prediction }
   | { type: 'SET_PHASE'; phase: GamePhase }
+  | { type: 'LOAD_GAME'; state: GameState }
   | { type: 'RESET' };

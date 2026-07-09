@@ -181,6 +181,11 @@ function reducer(state: GameState, action: GameAction): GameState {
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
 
+    case 'LOAD_GAME':
+      // Replace the whole game with a loaded save. The state is a single
+      // serialisable object, so this restores the board, day, metrics and seed.
+      return action.state;
+
     case 'RESET':
       return initialState;
 
@@ -226,6 +231,8 @@ export function useFlowGame() {
     []
   );
 
+  const loadGame = useCallback((s: GameState) => dispatch({ type: 'LOAD_GAME', state: s }), []);
+
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   const getUnassignedWorkers = useCallback(() => {
@@ -248,6 +255,7 @@ export function useFlowGame() {
     startRound,
     setPhase,
     setPrediction,
+    loadGame,
     reset,
     getUnassignedWorkers,
   };
