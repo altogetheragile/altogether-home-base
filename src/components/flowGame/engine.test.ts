@@ -87,6 +87,17 @@ describe('flow game config helpers', () => {
     expect(bottleneckStage(items, null)).toBeNull();
   });
 
+  it('a full first stage with only the backlog behind it is NOT a bottleneck', () => {
+    // Analysis at its WIP limit (3/3) with a full backlog is the pull system
+    // working, not a constraint - the backlog is raw demand, not stuck work.
+    const items = createItems();
+    const limits = { analysis: 3, development: 3, test: 3 };
+    items[0].column = 'analysis-active';
+    items[1].column = 'analysis-active';
+    items[2].column = 'analysis-active'; // Analysis full; items[3..] stay in backlog
+    expect(bottleneckStage(items, limits)).toBeNull();
+  });
+
   it('stageCount counts both lanes of a stage (what WIP caps)', () => {
     const items = createItems();
     items[0].column = 'analysis-active';

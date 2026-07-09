@@ -70,9 +70,19 @@ export function underfilledStage(
   return null;
 }
 
-/** The bottleneck stage: one that's at/over its WIP limit while work is queued
- *  directly in front of it (it can't accept more, so flow stalls there). Returns
- *  the most-starved such stage, or null. Needs limits to define "full". */
+/** The queue that signals a bottleneck is FINISHED upstream work waiting in the
+ *  previous stage's Done lane, not raw demand. So the backlog does NOT count:
+ *  Analysis sitting at its WIP limit with a full backlog is the pull system
+ *  working, not a bottleneck. Only stages fed by a Done lane are eligible. */
+const BOTTLENECK_FEED: Partial<Record<Specialism, ColumnId>> = {
+  development: 'analysis-done',
+  test: 'development-done',
+};
+
+/** The bottleneck stage: one that's at/over its WIP limit while FINISHED upstream
+ *  work is piling up in the Done lane in front of it (it can't pull more, so flow
+ *  stalls there). Returns the stage with the largest such queue, or null. Being
+ *  at the WIP limit alone is not a bottleneck - a queue of stuck work is. */
 export function bottleneckStage(
   items: { column: ColumnId }[],
   wipLimits: Record<Specialism, number> | null,
@@ -81,8 +91,10 @@ export function bottleneckStage(
   let best: Specialism | null = null;
   let bestQueue = 0;
   for (const stage of ACTIVE_COLUMNS) {
+    const feed = BOTTLENECK_FEED[stage];
+    if (!feed) continue; // first stage is fed by the backlog (demand), never a bottleneck signal
     const full = stageCount(items, stage) >= wipLimits[stage];
-    const queue = items.filter((i) => i.column === UPSTREAM[stage]).length;
+    const queue = items.filter((i) => i.column === feed).length;
     if (full && queue > bestQueue) {
       best = stage;
       bestQueue = queue;
