@@ -15,6 +15,7 @@ import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
 import { DaySummary } from './DaySummary';
 import { RoundReport } from './RoundReport';
+import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { WorkItem, WorkerAssignment } from './types';
@@ -56,6 +57,7 @@ interface BoardViewProps {
   onSetMaximizeWip: (maximize: boolean) => void;
   onRunDay: () => void;
   onNextDay: () => void;
+  onSaveGame?: () => void;
 }
 
 export function BoardView({
@@ -69,6 +71,7 @@ export function BoardView({
   onSetMaximizeWip,
   onRunDay,
   onNextDay,
+  onSaveGame,
 }: BoardViewProps) {
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const canInteract = round.dayPhase === 'assign';
@@ -171,6 +174,11 @@ export function BoardView({
         </div>
 
         <div className="shrink-0 flex items-center gap-3">
+          {onSaveGame && (
+            <Button variant="outline" size="sm" onClick={onSaveGame}>
+              <Save className="mr-1.5 h-4 w-4" /> Save
+            </Button>
+          )}
           <RoundReport round={round} />
           {round.wipLimits && (
             <div className="flex flex-col gap-0.5">
