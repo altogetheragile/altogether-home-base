@@ -107,7 +107,12 @@ export function BoardView({
         const workerId = active.slice('worker:'.length);
         const cardId = over.slice('card:'.length);
         const item = round.items.find((i) => i.id === cardId);
-        if (item && laneOf(item.column) === 'active') onAssignWorker(workerId, cardId);
+        if (item && laneOf(item.column) === 'active') {
+          onAssignWorker(workerId, cardId);
+          // Clear the pending selection when we place that worker, so the
+          // "click a card to assign X" prompt doesn't linger once X is assigned.
+          if (workerId === selectedWorkerId) setSelectedWorkerId(null);
+        }
       }
       return;
     }
