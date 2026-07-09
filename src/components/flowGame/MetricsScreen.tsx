@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import type { RoundMetrics, GamePhase, Prediction } from './types';
 import { CumulativeFlowDiagram } from './CumulativeFlowDiagram';
+import { ExperimentPanel } from './ExperimentPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -208,6 +209,7 @@ function MetricsPanel({ metrics, label, color }: { metrics: RoundMetrics; label:
 
 export function MetricsScreen({ round1Metrics, round2Metrics, phase, prediction, onContinue, onPlayAgain }: MetricsScreenProps) {
   const [showCfd, setShowCfd] = useState(false);
+  const [showExperiment, setShowExperiment] = useState(false);
   const isFinal = phase === 'metrics-final';
 
   return (
@@ -289,6 +291,19 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, prediction,
 
       {/* Debrief (P6) - plain-language takeaways from the fair comparison */}
       {isFinal && round2Metrics && <Debrief r1={round1Metrics} r2={round2Metrics} />}
+
+      {/* WIP sweep experiment - reveal the sweet-spot curve on demand. */}
+      {isFinal && (
+        <div className="text-center space-y-4">
+          {!showExperiment ? (
+            <Button variant="outline" size="lg" onClick={() => setShowExperiment(true)}>
+              Run the WIP experiment - where's the sweet spot?
+            </Button>
+          ) : (
+            <ExperimentPanel />
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex justify-center gap-4">
