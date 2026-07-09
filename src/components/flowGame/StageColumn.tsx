@@ -86,7 +86,7 @@ export function StageColumn({
   const isAt = wipLimit != null && total === wipLimit;
 
   return (
-    <div className="flex flex-col min-w-[300px] flex-1">
+    <div className="flex flex-col min-w-[240px] flex-1">
       {/* Stage header: label, WIP count, and inline −/+ editor (TWiG-style) */}
       <div
         className={cn(

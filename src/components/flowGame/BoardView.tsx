@@ -219,13 +219,14 @@ export function BoardView({
 
       {/* Board */}
         <div className="flex gap-2 overflow-x-auto flex-1 min-h-0 pb-2">
-          {/* Backlog — narrow single column; compact cards drag into Analysis */}
-          <div className="flex flex-col w-[150px] shrink-0">
+          {/* Backlog — two compact cards wide so more of the queue is visible;
+              cards drag into Analysis. */}
+          <div className="flex flex-col w-[292px] shrink-0">
             <div className="rounded-t-lg px-2 py-2 border border-b-0 bg-muted border-border">
               <h3 className="font-semibold text-sm">Backlog <span className="text-muted-foreground font-normal">({backlogItems.length})</span></h3>
             </div>
-            <div className="flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 space-y-1 min-h-[200px] overflow-y-auto">
-              {backlogItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
+            <div className="flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 grid grid-cols-2 gap-1 content-start min-h-[200px] overflow-y-auto">
+              {backlogItems.length === 0 && <div className="col-span-2 text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
               {backlogItems.map((item) => (
                 <WorkItemCard key={item.id} item={item} assignments={round.assignments} isSelected={false} onClick={() => {}} draggable={canInteract} compact />
               ))}
