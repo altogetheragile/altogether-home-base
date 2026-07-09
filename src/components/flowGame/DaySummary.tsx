@@ -36,9 +36,14 @@ export function DaySummary({ summary, isLastDay, onNextDay }: DaySummaryProps) {
         <p className="text-sm text-muted-foreground">No workers were assigned this day.</p>
       )}
 
-      {/* Events. Blockers are surfaced on the board at the start of each day and
-          completion happens as the player pulls to Done, so the day-run events
-          worth calling out are work that finished a stage and cleared blockers. */}
+      {/* Events. Blockers are surfaced on the board at the start of each day, so
+          the day-run events worth calling out are work that reached Done, work
+          that finished a (non-final) stage, and cleared blockers. */}
+      {summary.itemsCompleted.length > 0 && (
+        <p className="text-sm font-semibold text-emerald-700">
+          {summary.itemsCompleted.length} item(s) reached Done
+        </p>
+      )}
       {summary.advanced.length > 0 && (
         <p className="text-sm text-primary font-medium">
           {summary.advanced.length} item(s) finished a stage - pull them onward

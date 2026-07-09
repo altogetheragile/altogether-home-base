@@ -195,6 +195,22 @@ describe('simulateDay — worker effort', () => {
     expect(summary.advanced).toEqual([item.id]);
   });
 
+  it('a finished TEST item goes straight to Done (no Test-Done lane) and is recorded complete', () => {
+    const items = createItems();
+    const item = items[0];
+    item.column = 'test-active';
+    item.startDay = 1;
+    item.effortRemaining = { analysis: 0, development: 0, test: 3 };
+    const { items: out, summary } = simulateDay(
+      round([item], { day: 5, assignments: [{ workerId: 'w5', cardId: item.id }] }), // w5 = test specialist
+      fixedRoll(6), // finishes test this day
+    );
+    expect(out[0].column).toBe('done');       // completed, not 'test-done'
+    expect(out[0].endDay).toBe(5);            // cycle time recorded here
+    expect(summary.itemsCompleted).toEqual([item.id]);
+    expect(summary.advanced).not.toContain(item.id);
+  });
+
   it('does not work items sitting in a Done lane or backlog', () => {
     const items = createItems();
     const a = items[0];
@@ -311,5 +327,30 @@ describe('WIP sweep experiment', () => {
     // ...at the LEAST WIP that does so (no earlier point qualifies).
     const earlier = sweep.filter((p) => p.wipLimit < sweet.wipLimit);
     for (const p of earlier) expect(p.throughputRate).toBeLessThan(maxThr * 0.95);
+  });
+});
+
+import { keepActiveAssignments } from './useFlowGame';
+
+describe('keepActiveAssignments (workers stay on unfinished work)', () => {
+  it('keeps a worker whose card is still in an active lane, drops one whose card finished', () => {
+    const items = createItems();
+    items[0].column = 'analysis-active';    // still being worked
+    items[1].column = 'development-done';   // finished its stage this day
+    items[2].column = 'done';               // completed
+    const assignments = [
+      { workerId: 'w1', cardId: items[0].id },
+      { workerId: 'w3', cardId: items[1].id },
+      { workerId: 'w5', cardId: items[2].id },
+    ];
+    const kept = keepActiveAssignments(assignments, items);
+    expect(kept).toEqual([{ workerId: 'w1', cardId: items[0].id }]);
+  });
+
+  it('drops an assignment whose card no longer exists', () => {
+    const items = createItems();
+    items[0].column = 'analysis-active';
+    const kept = keepActiveAssignments([{ workerId: 'w1', cardId: 'ghost' }], items);
+    expect(kept).toEqual([]);
   });
 });

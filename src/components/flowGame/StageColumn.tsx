@@ -15,6 +15,9 @@ interface StageColumnProps {
   canInteract: boolean;
   currentDay: number;
   selectedWorkerId: string | null;
+  /** The last stage (Test) has no Done lane - finished work goes straight to the
+   *  Done column beside it - so it renders a single Active lane. */
+  hasDoneLane?: boolean;
   onAssignCard: (cardId: string) => void;
   onSetWip: (stage: Specialism, value: number) => void;
 }
@@ -75,6 +78,7 @@ export function StageColumn({
   canInteract,
   currentDay,
   selectedWorkerId,
+  hasDoneLane = true,
   onAssignCard,
   onSetWip,
 }: StageColumnProps) {
@@ -159,8 +163,8 @@ export function StageColumn({
         </div>
       )}
 
-      {/* Active | Done lanes */}
-      <div className={cn('grid grid-cols-2 gap-px flex-1 border rounded-b-lg overflow-hidden', isOver && enforceWip ? 'border-destructive' : 'border-border')}>
+      {/* Active | Done lanes (Test has no Done lane - it completes to the Done column) */}
+      <div className={cn('grid gap-px flex-1 border rounded-b-lg overflow-hidden', hasDoneLane ? 'grid-cols-2' : 'grid-cols-1', isOver && enforceWip ? 'border-destructive' : 'border-border')}>
         <Lane id={`lane:${colId(stage, 'active')}`} title="Active" active>
           {activeItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-3">—</div>}
           {activeItems.map((item) => (
@@ -176,20 +180,22 @@ export function StageColumn({
           ))}
         </Lane>
 
-        <Lane id={`lane:${colId(stage, 'done')}`} title="Done ✓">
-          {doneItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-3">—</div>}
-          {doneItems.map((item) => (
-            <WorkItemCard
-              key={item.id}
-              item={item}
-              assignments={assignments}
-              currentDay={currentDay}
-              isSelected={false}
-              onClick={() => {}}
-              draggable={canInteract}
-            />
-          ))}
-        </Lane>
+        {hasDoneLane && (
+          <Lane id={`lane:${colId(stage, 'done')}`} title="Done ✓">
+            {doneItems.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-3">—</div>}
+            {doneItems.map((item) => (
+              <WorkItemCard
+                key={item.id}
+                item={item}
+                assignments={assignments}
+                currentDay={currentDay}
+                isSelected={false}
+                onClick={() => {}}
+                draggable={canInteract}
+              />
+            ))}
+          </Lane>
+        )}
       </div>
     </div>
   );
