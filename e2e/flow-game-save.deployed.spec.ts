@@ -42,6 +42,9 @@ test('Flow Game: save, resume after reload, then delete', async ({ page }) => {
 
   // --- Reload (loses the in-memory game), then resume from the saved list ---
   await page.goto('/flow-game');
+  // Auto-save (browser draft) shows a resume prompt on reload; start fresh to
+  // reach the intro, then resume the named server save from the list.
+  await page.getByRole('button', { name: /Start a new game/i }).click({ timeout: 15_000 }).catch(() => {});
   await expect(page.getByRole('heading', { name: /Kanban Flow Simulation/ })).toBeVisible();
   await page.getByRole('button', { name: /Resume a saved game/i }).click();
   const savesDialog = page.getByRole('dialog');
@@ -52,6 +55,7 @@ test('Flow Game: save, resume after reload, then delete', async ({ page }) => {
 
   // --- Delete the save (last assertion + cleanup) ---
   await page.goto('/flow-game');
+  await page.getByRole('button', { name: /Start a new game/i }).click({ timeout: 15_000 }).catch(() => {});
   await page.getByRole('button', { name: /Resume a saved game/i }).click();
   const d2 = page.getByRole('dialog');
   await expect(d2.getByText(NAME)).toBeVisible({ timeout: 20_000 });
