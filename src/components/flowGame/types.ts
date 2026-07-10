@@ -36,6 +36,21 @@ export interface WorkerAssignment {
   cardId: string;
 }
 
+// ============= Workflow (configurable board) =============
+
+export interface StageDef {
+  id: Specialism;
+  name: string;
+}
+
+/** The configurable board: which stages exist and who is on the team. Phase 1a
+ *  makes the workers config-driven; stages become editable in a later phase.
+ *  Carried in game state so it is saved and shared across both rounds. */
+export interface Workflow {
+  stages: StageDef[];
+  workers: WorkerDef[];
+}
+
 // ============= Work Items =============
 
 export interface WorkItemDef {
@@ -130,6 +145,9 @@ export interface RoundState {
   /** Items that had a blocker land on them entering the current day (surfaced as
    *  a start-of-day alert; cleared once the day is run). */
   newBlockers: string[];
+  /** The team for this round (config-driven). The engine reads this rather than
+   *  a global const, so the roster can be edited or swept. */
+  workers: WorkerDef[];
 }
 
 /** Player's pre-reveal guess for how Round 2's avg cycle time compares to Round 1. */
@@ -146,6 +164,8 @@ export interface GameState {
    *  (a warm start) rather than an empty day-1 backlog. Reused for Round 2 so
    *  both rounds start from the same board and stay comparable. */
   warmStart: boolean;
+  /** The configurable board (stages + team). Defaults to the standard setup. */
+  workflow: Workflow;
 }
 
 // ============= Actions =============

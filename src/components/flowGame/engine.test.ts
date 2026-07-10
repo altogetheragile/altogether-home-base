@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData } from './types';
 
 /** A stub RNG that makes every d6 roll a known value (rollDie = floor(rng*6)+1). */
@@ -26,6 +26,7 @@ function round(items: WorkItem[], over: Partial<RoundState> = {}): RoundState {
     seed: 1,
     dayPhase: 'assign',
     newBlockers: [],
+    workers: WORKERS,
     ...over,
   };
 }

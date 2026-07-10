@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
-import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem } from './types';
+import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, WORKERS, DEFAULT_WIP_LIMITS, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
+import { DAYS_PER_ROUND, DEFAULT_WIP_LIMITS, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
 
 /** Which worker assignments carry over to the next day: only those whose card is
  *  still being worked (in an Active lane). A worker is freed when their card
@@ -14,7 +14,12 @@ export function keepActiveAssignments(assignments: WorkerAssignment[], items: Wo
   });
 }
 
-function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>, warmStart = false): RoundState {
+function createRound(
+  roundNumber: 1 | 2,
+  wipLimits?: Record<Specialism, number>,
+  warmStart = false,
+  workers: WorkerDef[] = DEFAULT_WORKFLOW.workers,
+): RoundState {
   return {
     roundNumber,
     day: 1,
@@ -29,6 +34,7 @@ function createRound(roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>,
     seed: FLOW_SEED,
     dayPhase: 'assign',
     newBlockers: [],
+    workers,
   };
 }
 
@@ -39,6 +45,7 @@ const initialState: GameState = {
   round2Metrics: null,
   prediction: null,
   warmStart: false,
+  workflow: DEFAULT_WORKFLOW,
 };
 
 function reducer(state: GameState, action: GameAction): GameState {
@@ -47,7 +54,7 @@ function reducer(state: GameState, action: GameAction): GameState {
       // Round 1 sets the warm-start choice; Round 2 reuses it so both rounds
       // start from the same board and the comparison stays fair.
       const warmStart = action.roundNumber === 1 ? !!action.warmStart : state.warmStart;
-      const round = createRound(action.roundNumber, action.wipLimits, warmStart);
+      const round = createRound(action.roundNumber, action.wipLimits, warmStart, state.workflow.workers);
       const phase = action.roundNumber === 1 ? 'playing-round-1' : 'playing-round-2';
       return { ...state, phase, round, warmStart };
     }
@@ -250,10 +257,11 @@ export function useFlowGame() {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   const getUnassignedWorkers = useCallback(() => {
-    if (!state.round) return WORKERS;
+    const roster = state.round?.workers ?? state.workflow.workers;
+    if (!state.round) return roster;
     const assignedIds = new Set(state.round.assignments.map((a) => a.workerId));
-    return WORKERS.filter((w) => !assignedIds.has(w.id));
-  }, [state.round]);
+    return roster.filter((w) => !assignedIds.has(w.id));
+  }, [state.round, state.workflow.workers]);
 
   return {
     state,

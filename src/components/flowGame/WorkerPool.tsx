@@ -1,6 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
 import type { WorkerAssignment, Specialism, WorkerDef } from './types';
-import { WORKERS } from './config';
 import { cn } from '@/lib/utils';
 
 const SPECIALISM_COLORS: Record<Specialism, string> = {
@@ -16,6 +15,7 @@ const SPECIALISM_LABELS: Record<Specialism, string> = {
 };
 
 interface WorkerPoolProps {
+  workers: WorkerDef[];
   assignments: WorkerAssignment[];
   selectedWorkerId: string | null;
   onSelectWorker: (workerId: string) => void;
@@ -78,9 +78,9 @@ function WorkerPawn({
   );
 }
 
-export function WorkerPool({ assignments, selectedWorkerId, onSelectWorker, onUnassign, disabled, workAvailable }: WorkerPoolProps) {
+export function WorkerPool({ workers, assignments, selectedWorkerId, onSelectWorker, onUnassign, disabled, workAvailable }: WorkerPoolProps) {
   const assignedIds = new Set(assignments.map((a) => a.workerId));
-  const idle = WORKERS.length - assignedIds.size;
+  const idle = workers.length - assignedIds.size;
   // Idle workers only waste capacity when there's work to do — flag amber then,
   // neutral when there's nothing they could pick up, emerald when all assigned.
   const wasting = idle > 0 && !!workAvailable;
@@ -100,7 +100,7 @@ export function WorkerPool({ assignments, selectedWorkerId, onSelectWorker, onUn
         </span>
       )}
       <div className="flex gap-2 flex-wrap justify-center">
-        {WORKERS.map((worker) => (
+        {workers.map((worker) => (
           <WorkerPawn
             key={worker.id}
             worker={worker}
@@ -115,7 +115,7 @@ export function WorkerPool({ assignments, selectedWorkerId, onSelectWorker, onUn
       </div>
       {selectedWorkerId && !assignedIds.has(selectedWorkerId) && (
         <p className="text-sm text-primary font-medium whitespace-nowrap">
-          Drag onto a card, or click a card to assign {WORKERS.find((w) => w.id === selectedWorkerId)?.name}
+          Drag onto a card, or click a card to assign {workers.find((w) => w.id === selectedWorkerId)?.name}
         </p>
       )}
     </div>

@@ -1,14 +1,14 @@
-import type { DaySummaryData } from './types';
-import { WORKERS } from './config';
+import type { DaySummaryData, WorkerDef } from './types';
 import { Button } from '@/components/ui/button';
 
 interface DaySummaryProps {
   summary: DaySummaryData;
+  workers: WorkerDef[];
   isLastDay: boolean;
   onNextDay: () => void;
 }
 
-export function DaySummary({ summary, isLastDay, onNextDay }: DaySummaryProps) {
+export function DaySummary({ summary, workers, isLastDay, onNextDay }: DaySummaryProps) {
   return (
     <div className="bg-muted/50 border rounded-lg p-4 space-y-3">
       <h3 className="font-semibold">Day {summary.day} Results</h3>
@@ -17,7 +17,7 @@ export function DaySummary({ summary, isLastDay, onNextDay }: DaySummaryProps) {
       {summary.rolls.length > 0 && (
         <div className="space-y-1">
           {summary.rolls.map((roll, i) => {
-            const worker = WORKERS.find((w) => w.id === roll.workerId);
+            const worker = workers.find((w) => w.id === roll.workerId);
             return (
               <div key={i} className="text-sm flex items-center gap-2">
                 <span className="font-medium w-16">{worker?.name}</span>

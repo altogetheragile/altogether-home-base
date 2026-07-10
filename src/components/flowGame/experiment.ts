@@ -46,6 +46,7 @@ export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED
     seed,
     dayPhase: 'assign',
     newBlockers: [],
+    workers: WORKERS,
   });
 
   for (let day = 1; day <= DAYS_PER_ROUND; day++) {

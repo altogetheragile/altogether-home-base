@@ -18,12 +18,12 @@ import { RoundReport } from './RoundReport';
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { WorkItem, WorkerAssignment } from './types';
+import type { WorkItem, WorkerAssignment, WorkerDef } from './types';
 
 /** Done is a drop target for Test-Done cards. Must live INSIDE <DndContext>, so
  *  it's a child component (a useDroppable hook in BoardView's body would sit
  *  outside the context it renders and never register). */
-function DoneColumn({ items, assignments, canInteract }: { items: WorkItem[]; assignments: WorkerAssignment[]; canInteract: boolean }) {
+function DoneColumn({ items, assignments, workers, canInteract }: { items: WorkItem[]; assignments: WorkerAssignment[]; workers: WorkerDef[]; canInteract: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'lane:done', disabled: !canInteract });
   return (
     <div className="flex flex-col w-[150px] shrink-0">
@@ -39,7 +39,7 @@ function DoneColumn({ items, assignments, canInteract }: { items: WorkItem[]; as
       >
         {items.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
         {items.map((item) => (
-          <WorkItemCard key={item.id} item={item} assignments={assignments} isSelected={false} onClick={() => {}} />
+          <WorkItemCard key={item.id} item={item} assignments={assignments} workers={workers} isSelected={false} onClick={() => {}} />
         ))}
       </div>
     </div>
@@ -169,6 +169,7 @@ export function BoardView({
 
         <div className="flex-1 flex justify-center">
           <WorkerPool
+            workers={round.workers}
             assignments={round.assignments}
             selectedWorkerId={selectedWorkerId}
             onSelectWorker={handleSelectWorker}
@@ -241,7 +242,7 @@ export function BoardView({
             <div className="flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 grid grid-cols-2 gap-1 content-start min-h-[200px] overflow-y-auto">
               {backlogItems.length === 0 && <div className="col-span-2 text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
               {backlogItems.map((item) => (
-                <WorkItemCard key={item.id} item={item} assignments={round.assignments} isSelected={false} onClick={() => {}} draggable={canInteract} compact />
+                <WorkItemCard key={item.id} item={item} assignments={round.assignments} workers={round.workers} isSelected={false} onClick={() => {}} draggable={canInteract} compact />
               ))}
             </div>
           </div>
@@ -254,6 +255,7 @@ export function BoardView({
               label={s.label}
               items={items}
               assignments={round.assignments}
+              workers={round.workers}
               wipLimits={round.wipLimits}
               enforceWip={round.enforceWip}
               isBottleneck={bottleneck === s.stage}
@@ -267,14 +269,14 @@ export function BoardView({
           ))}
 
           {/* Done — narrow single column; drop zone for Test Done cards */}
-          <DoneColumn items={doneItems} assignments={round.assignments} canInteract={canInteract} />
+          <DoneColumn items={doneItems} assignments={round.assignments} workers={round.workers} canInteract={canInteract} />
         </div>
       </DndContext>
 
       {/* Day results */}
       {round.dayPhase === 'results' && lastSummary && (
         <div className="shrink-0">
-          <DaySummary summary={lastSummary} isLastDay={isLastDay} onNextDay={onNextDay} />
+          <DaySummary summary={lastSummary} workers={round.workers} isLastDay={isLastDay} onNextDay={onNextDay} />
         </div>
       )}
     </div>

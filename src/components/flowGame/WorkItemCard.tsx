@@ -1,6 +1,6 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import type { WorkItem, WorkerAssignment, Specialism } from './types';
-import { WORKERS, ACTIVE_COLUMNS, stageOf, laneOf } from './config';
+import type { WorkItem, WorkerAssignment, Specialism, WorkerDef } from './types';
+import { ACTIVE_COLUMNS, stageOf, laneOf } from './config';
 import { cn } from '@/lib/utils';
 
 const SPECIALISM_COLORS: Record<Specialism, string> = {
@@ -23,6 +23,8 @@ interface WorkItemCardProps {
   /** Slim rendering for the backlog: title + one-line effort totals, no pip rows,
    *  so many items fit without a tall, scroll-heavy column. */
   compact?: boolean;
+  /** Team roster, for rendering assignment pips (worker initials/specialism). */
+  workers?: WorkerDef[];
 }
 
 /** One-line effort totals (A/D/T) for compact cards. */
@@ -64,7 +66,7 @@ function EffortPips({ item }: { item: WorkItem }) {
   );
 }
 
-export function WorkItemCard({ item, assignments, isSelected, onClick, currentDay, draggable, compact }: WorkItemCardProps) {
+export function WorkItemCard({ item, assignments, isSelected, onClick, currentDay, draggable, compact, workers = [] }: WorkItemCardProps) {
   const drag = useDraggable({ id: `card:${item.id}`, disabled: !draggable });
   const drop = useDroppable({ id: `card:${item.id}`, disabled: !draggable });
   const { attributes, listeners, isDragging } = drag;
@@ -120,7 +122,7 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, currentDa
       {cardAssignments.length > 0 && (
         <div className="flex gap-0.5 mt-1 flex-wrap">
           {cardAssignments.map((a) => {
-            const worker = WORKERS.find((w) => w.id === a.workerId);
+            const worker = workers.find((w) => w.id === a.workerId);
             if (!worker) return null;
             const isSpec = worker.specialism === stage;
             return (
