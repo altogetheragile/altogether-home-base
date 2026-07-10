@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       activity_domains: {
@@ -333,6 +308,7 @@ export type Database = {
       backlog_items: {
         Row: {
           acceptance_criteria: string[] | null
+          backlog_artifact_id: string | null
           backlog_position: number | null
           created_at: string | null
           created_by: string | null
@@ -344,6 +320,7 @@ export type Database = {
           item_type: string | null
           parent_item_id: string | null
           priority: string | null
+          priority_data: Json
           product_id: string | null
           project_id: string | null
           source: string | null
@@ -357,6 +334,7 @@ export type Database = {
         }
         Insert: {
           acceptance_criteria?: string[] | null
+          backlog_artifact_id?: string | null
           backlog_position?: number | null
           created_at?: string | null
           created_by?: string | null
@@ -368,6 +346,7 @@ export type Database = {
           item_type?: string | null
           parent_item_id?: string | null
           priority?: string | null
+          priority_data?: Json
           product_id?: string | null
           project_id?: string | null
           source?: string | null
@@ -381,6 +360,7 @@ export type Database = {
         }
         Update: {
           acceptance_criteria?: string[] | null
+          backlog_artifact_id?: string | null
           backlog_position?: number | null
           created_at?: string | null
           created_by?: string | null
@@ -392,6 +372,7 @@ export type Database = {
           item_type?: string | null
           parent_item_id?: string | null
           priority?: string | null
+          priority_data?: Json
           product_id?: string | null
           project_id?: string | null
           source?: string | null
@@ -404,6 +385,13 @@ export type Database = {
           user_story_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "backlog_items_backlog_artifact_id_fkey"
+            columns: ["backlog_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "project_artifacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "backlog_items_parent_item_id_fkey"
             columns: ["parent_item_id"]
@@ -1654,6 +1642,42 @@ export type Database = {
           },
         ]
       }
+      flow_game_saves: {
+        Row: {
+          created_at: string
+          day: number | null
+          id: string
+          name: string
+          phase: string | null
+          round_number: number | null
+          state: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day?: number | null
+          id?: string
+          name: string
+          phase?: string | null
+          round_number?: number | null
+          state: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: number | null
+          id?: string
+          name?: string
+          phase?: string | null
+          round_number?: number | null
+          state?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       formats: {
         Row: {
           id: string
@@ -2350,6 +2374,8 @@ export type Database = {
           avoid_when: string[] | null
           background: string | null
           category_id: string | null
+          cell_key: string | null
+          coaches_slug: string | null
           common_pitfalls: string[] | null
           components: Json
           counterparts: string[]
@@ -2376,6 +2402,7 @@ export type Database = {
           item_type: string | null
           key_terminology: Json | null
           kind: string | null
+          ladder_order: number | null
           layer: string | null
           learning_value_summary: string | null
           level: string | null
@@ -2387,6 +2414,7 @@ export type Database = {
           publication_year: number | null
           reference_url: string | null
           related_techniques: string[] | null
+          rung: string | null
           shape: string | null
           slug: string
           source: string | null
@@ -2404,6 +2432,8 @@ export type Database = {
           avoid_when?: string[] | null
           background?: string | null
           category_id?: string | null
+          cell_key?: string | null
+          coaches_slug?: string | null
           common_pitfalls?: string[] | null
           components?: Json
           counterparts?: string[]
@@ -2430,6 +2460,7 @@ export type Database = {
           item_type?: string | null
           key_terminology?: Json | null
           kind?: string | null
+          ladder_order?: number | null
           layer?: string | null
           learning_value_summary?: string | null
           level?: string | null
@@ -2441,6 +2472,7 @@ export type Database = {
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
+          rung?: string | null
           shape?: string | null
           slug: string
           source?: string | null
@@ -2458,6 +2490,8 @@ export type Database = {
           avoid_when?: string[] | null
           background?: string | null
           category_id?: string | null
+          cell_key?: string | null
+          coaches_slug?: string | null
           common_pitfalls?: string[] | null
           components?: Json
           counterparts?: string[]
@@ -2484,6 +2518,7 @@ export type Database = {
           item_type?: string | null
           key_terminology?: Json | null
           kind?: string | null
+          ladder_order?: number | null
           layer?: string | null
           learning_value_summary?: string | null
           level?: string | null
@@ -2495,6 +2530,7 @@ export type Database = {
           publication_year?: number | null
           reference_url?: string | null
           related_techniques?: string[] | null
+          rung?: string | null
           shape?: string | null
           slug?: string
           source?: string | null
@@ -3334,6 +3370,7 @@ export type Database = {
           is_archived: boolean | null
           kind: string
           name: string
+          prioritisation_scheme: string | null
           updated_at: string
         }
         Insert: {
@@ -3346,6 +3383,7 @@ export type Database = {
           is_archived?: boolean | null
           kind?: string
           name: string
+          prioritisation_scheme?: string | null
           updated_at?: string
         }
         Update: {
@@ -3358,6 +3396,7 @@ export type Database = {
           is_archived?: boolean | null
           kind?: string
           name?: string
+          prioritisation_scheme?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -3468,6 +3507,7 @@ export type Database = {
           created_at: string | null
           exam_id: string
           id: string
+          item_type: string | null
           option_a: string
           option_b: string
           option_c: string
@@ -3478,7 +3518,6 @@ export type Database = {
           option_h: string
           part: string | null
           part_instruction: string | null
-          item_type: string | null
           question_number: number | null
           question_text: string
           reference: string | null
@@ -3492,6 +3531,7 @@ export type Database = {
           created_at?: string | null
           exam_id: string
           id?: string
+          item_type?: string | null
           option_a: string
           option_b: string
           option_c: string
@@ -3502,7 +3542,6 @@ export type Database = {
           option_h?: string
           part?: string | null
           part_instruction?: string | null
-          item_type?: string | null
           question_number?: number | null
           question_text: string
           reference?: string | null
@@ -3516,6 +3555,7 @@ export type Database = {
           created_at?: string | null
           exam_id?: string
           id?: string
+          item_type?: string | null
           option_a?: string
           option_b?: string
           option_c?: string
@@ -3526,7 +3566,6 @@ export type Database = {
           option_h?: string
           part?: string | null
           part_instruction?: string | null
-          item_type?: string | null
           question_number?: number | null
           question_text?: string
           reference?: string | null
@@ -4578,9 +4617,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
