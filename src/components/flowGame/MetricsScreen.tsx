@@ -6,6 +6,7 @@ import {
 import type { RoundMetrics, GamePhase, Prediction, StageDef } from './types';
 import { CumulativeFlowDiagram } from './CumulativeFlowDiagram';
 import { ExperimentPanel } from './ExperimentPanel';
+import { TeamSizePanel } from './TeamSizePanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -299,10 +300,13 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, stages, pre
         <div className="text-center space-y-4">
           {!showExperiment ? (
             <Button variant="outline" size="lg" onClick={() => setShowExperiment(true)}>
-              Run the WIP experiment - where's the sweet spot?
+              Run the flow experiments - WIP and team size
             </Button>
           ) : (
-            <ExperimentPanel />
+            <div className="space-y-6">
+              <ExperimentPanel />
+              <TeamSizePanel />
+            </div>
           )}
         </div>
       )}

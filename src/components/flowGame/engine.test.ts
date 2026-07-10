@@ -348,7 +348,7 @@ describe('configurable workflow', () => {
   });
 });
 
-import { autoPlayRound, sweepWipLimit, findSweetSpot } from './experiment';
+import { autoPlayRound, sweepWipLimit, findSweetSpot, sweepTeamSize, findTeamSweetSpot, makeBalancedTeam } from './experiment';
 
 describe('WIP sweep experiment', () => {
   it('auto-play is deterministic for a given WIP limit + seed', () => {
@@ -376,6 +376,35 @@ describe('WIP sweep experiment', () => {
     // ...at the LEAST WIP that does so (no earlier point qualifies).
     const earlier = sweep.filter((p) => p.wipLimit < sweet.wipLimit);
     for (const p of earlier) expect(p.throughputRate).toBeLessThan(maxThr * 0.95);
+  });
+});
+
+describe('team-size sweep experiment', () => {
+  it('builds a balanced team spread round-robin across the stages', () => {
+    const team = makeBalancedTeam(6);
+    expect(team).toHaveLength(6);
+    expect(team.map((w) => w.specialism)).toEqual(
+      ['analysis', 'development', 'test', 'analysis', 'development', 'test'],
+    );
+    expect(new Set(team.map((w) => w.id)).size).toBe(6); // ids unique
+  });
+
+  it('a bigger team lifts throughput up to a point, then plateaus', () => {
+    const tiny = autoPlayRound(3, true, undefined, makeBalancedTeam(1));
+    const healthy = autoPlayRound(3, true, undefined, makeBalancedTeam(6));
+    expect(healthy.throughputRate).toBeGreaterThan(tiny.throughputRate);
+  });
+
+  it('sweep covers the range and the sweet spot is the smallest near-max team', () => {
+    const sweep = sweepTeamSize(1, 9);
+    expect(sweep.map((p) => p.teamSize)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    const maxThr = Math.max(...sweep.map((p) => p.throughputRate));
+    const sweet = findTeamSweetSpot(sweep)!;
+    expect(sweet).not.toBeNull();
+    expect(sweet.throughputRate).toBeGreaterThanOrEqual(maxThr * 0.95);
+    // No smaller team reaches near-max throughput.
+    const smaller = sweep.filter((p) => p.teamSize < sweet.teamSize);
+    for (const p of smaller) expect(p.throughputRate).toBeLessThan(maxThr * 0.95);
   });
 });
 
