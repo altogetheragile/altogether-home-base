@@ -8,7 +8,9 @@
 
 import type { RoundMetrics, RoundState, WorkItem, Specialism, ColumnId, WorkerAssignment } from './types';
 import { createItems, simulateDay, applyDayBlockers, calculateMetrics } from './engine';
-import { WORKERS, DAYS_PER_ROUND, FLOW_SEED, stageOf, laneOf, pullTarget, stageCount } from './config';
+import { WORKERS, DAYS_PER_ROUND, FLOW_SEED, stageOf, laneOf, pullTarget, stageCount, DEFAULT_WORKFLOW } from './config';
+
+const STAGES = DEFAULT_WORKFLOW.stages;
 
 export interface SweepPoint {
   wipLimit: number;
@@ -31,7 +33,7 @@ const move = (item: WorkItem, dest: ColumnId, day: number): WorkItem => ({
  *  otherwise to any active card with work. Deterministic for a given seed. */
 export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED): RoundMetrics {
   const limits: Record<Specialism, number> = { analysis: wipLimit, development: wipLimit, test: wipLimit };
-  let items = createItems(false);
+  let items = createItems(false, STAGES);
   const dayHistory = [];
 
   const roundShape = (day: number, assignments: WorkerAssignment[]): RoundState => ({
@@ -47,13 +49,14 @@ export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED
     dayPhase: 'assign',
     newBlockers: [],
     workers: WORKERS,
+    stages: STAGES,
   });
 
   for (let day = 1; day <= DAYS_PER_ROUND; day++) {
     // Pull downstream-first, mirroring the reducer's pull rules.
     const pull = (fromCol: (i: WorkItem) => boolean) => {
       for (const it of items.filter(fromCol)) {
-        const dest = pullTarget(it.column);
+        const dest = pullTarget(it.column, STAGES);
         if (!dest) continue;
         const ds = stageOf(dest);
         if (enforce && ds && stageCount(items, ds) >= limits[ds]) continue;
@@ -85,7 +88,7 @@ export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED
     }
   }
 
-  return calculateMetrics(dayHistory, items, DAYS_PER_ROUND);
+  return calculateMetrics(dayHistory, items, DAYS_PER_ROUND, STAGES);
 }
 
 /** Sweep the WIP limit across [min, max] (inclusive), auto-playing each. */

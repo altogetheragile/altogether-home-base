@@ -1,5 +1,5 @@
 import { useReducer, useCallback } from 'react';
-import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef } from './types';
+import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
 import { DAYS_PER_ROUND, DEFAULT_WIP_LIMITS, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
 
@@ -19,11 +19,12 @@ function createRound(
   wipLimits?: Record<Specialism, number>,
   warmStart = false,
   workers: WorkerDef[] = DEFAULT_WORKFLOW.workers,
+  stages: StageDef[] = DEFAULT_WORKFLOW.stages,
 ): RoundState {
   return {
     roundNumber,
     day: 1,
-    items: createItems(warmStart),
+    items: createItems(warmStart, stages),
     assignments: [],
     dayHistory: [],
     // Limits are always editable; round 1 starts with them OFF (the chaos baseline),
@@ -35,6 +36,7 @@ function createRound(
     dayPhase: 'assign',
     newBlockers: [],
     workers,
+    stages,
   };
 }
 
@@ -54,7 +56,7 @@ function reducer(state: GameState, action: GameAction): GameState {
       // Round 1 sets the warm-start choice; Round 2 reuses it so both rounds
       // start from the same board and the comparison stays fair.
       const warmStart = action.roundNumber === 1 ? !!action.warmStart : state.warmStart;
-      const round = createRound(action.roundNumber, action.wipLimits, warmStart, state.workflow.workers);
+      const round = createRound(action.roundNumber, action.wipLimits, warmStart, state.workflow.workers, state.workflow.stages);
       const phase = action.roundNumber === 1 ? 'playing-round-1' : 'playing-round-2';
       return { ...state, phase, round, warmStart };
     }
@@ -63,7 +65,7 @@ function reducer(state: GameState, action: GameAction): GameState {
       if (!state.round || state.round.dayPhase !== 'assign') return state;
       const item = state.round.items.find((i) => i.id === action.cardId);
       if (!item) return state;
-      const dest = pullTarget(item.column);
+      const dest = pullTarget(item.column, state.round.stages);
       if (!dest) return state; // not a pullable position
       // WIP limit: a stage's Active+Done together can't exceed its limit — but only
       // when enforcement is on (the player can toggle it, TWiG-style).
@@ -159,7 +161,7 @@ function reducer(state: GameState, action: GameAction): GameState {
 
       // Round over?
       if (state.round.day >= DAYS_PER_ROUND) {
-        const metrics = calculateMetrics(state.round.dayHistory, state.round.items, DAYS_PER_ROUND);
+        const metrics = calculateMetrics(state.round.dayHistory, state.round.items, DAYS_PER_ROUND, state.round.stages);
         if (state.round.roundNumber === 1) {
           return { ...state, phase: 'metrics-round-1', round1Metrics: metrics };
         }

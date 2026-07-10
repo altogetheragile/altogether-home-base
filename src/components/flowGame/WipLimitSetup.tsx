@@ -1,14 +1,8 @@
 import { useState } from 'react';
-import type { Specialism, Prediction } from './types';
-import { DEFAULT_WIP_LIMITS, ACTIVE_COLUMNS } from './config';
+import type { Specialism, Prediction, StageDef } from './types';
+import { DEFAULT_WIP_LIMITS } from './config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-const COLUMN_LABELS: Record<Specialism, string> = {
-  analysis: 'Analysis',
-  development: 'Development',
-  test: 'Test',
-};
 
 const PREDICTIONS: { value: Prediction; label: string }[] = [
   { value: 'lower', label: 'Lower' },
@@ -18,12 +12,16 @@ const PREDICTIONS: { value: Prediction; label: string }[] = [
 
 interface WipLimitSetupProps {
   round1CycleTime: number;
+  /** The configured stages — one WIP row each. */
+  stages: StageDef[];
   onStart: (limits: Record<Specialism, number>) => void;
   onPredict: (prediction: Prediction) => void;
 }
 
-export function WipLimitSetup({ round1CycleTime, onStart, onPredict }: WipLimitSetupProps) {
-  const [limits, setLimits] = useState<Record<Specialism, number>>({ ...DEFAULT_WIP_LIMITS });
+export function WipLimitSetup({ round1CycleTime, stages, onStart, onPredict }: WipLimitSetupProps) {
+  const [limits, setLimits] = useState<Record<Specialism, number>>(() =>
+    Object.fromEntries(stages.map((s) => [s.id, DEFAULT_WIP_LIMITS[s.id] ?? 3])),
+  );
   const [prediction, setPrediction] = useState<Prediction | null>(null);
 
   const updateLimit = (col: Specialism, delta: number) => {
@@ -47,20 +45,20 @@ export function WipLimitSetup({ round1CycleTime, onStart, onPredict }: WipLimitS
       </p>
 
       <div className="space-y-4">
-        {ACTIVE_COLUMNS.map((col) => (
-          <div key={col} className="flex items-center justify-center gap-4">
-            <span className="w-28 text-right font-medium">{COLUMN_LABELS[col]}</span>
+        {stages.map((s) => (
+          <div key={s.id} className="flex items-center justify-center gap-4">
+            <span className="w-28 text-right font-medium">{s.name}</span>
             <button
               type="button"
-              onClick={() => updateLimit(col, -1)}
+              onClick={() => updateLimit(s.id, -1)}
               className="w-9 h-9 rounded-md bg-muted hover:bg-muted/80 flex items-center justify-center text-lg font-bold"
             >
               −
             </button>
-            <span className="w-10 text-center text-2xl font-bold font-mono">{limits[col]}</span>
+            <span className="w-10 text-center text-2xl font-bold font-mono">{limits[s.id]}</span>
             <button
               type="button"
-              onClick={() => updateLimit(col, 1)}
+              onClick={() => updateLimit(s.id, 1)}
               className="w-9 h-9 rounded-md bg-muted hover:bg-muted/80 flex items-center justify-center text-lg font-bold"
             >
               +

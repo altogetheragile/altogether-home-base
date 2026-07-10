@@ -2,15 +2,9 @@
 
 // Each active stage is split into an Active lane (being worked) and a Done lane
 // (finished this stage, waiting to be PULLED to the next stage by the player).
-export type ColumnId =
-  | 'backlog'
-  | 'analysis-active'
-  | 'analysis-done'
-  | 'development-active'
-  | 'development-done'
-  | 'test-active'
-  | 'test-done'
-  | 'done';
+// Columns are dynamic: 'backlog', 'done', and per-stage `${stageId}-active` /
+// `${stageId}-done`, so the board can have any number of stages.
+export type ColumnId = 'backlog' | 'done' | `${string}-active` | `${string}-done`;
 
 export type Lane = 'active' | 'done';
 
@@ -22,7 +16,9 @@ export interface ColumnDef {
 
 // ============= Workers =============
 
-export type Specialism = 'analysis' | 'development' | 'test';
+/** A stage id. Stages are configurable, so this is an open string rather than a
+ *  fixed union. The default board uses 'analysis' | 'development' | 'test'. */
+export type Specialism = string;
 
 export interface WorkerDef {
   id: string;
@@ -84,13 +80,9 @@ export interface DayRollResult {
   isSpecialist: boolean;
 }
 
-export interface ColumnSnapshot {
-  backlog: number;
-  analysis: number;
-  development: number;
-  test: number;
-  done: number;
-}
+/** Item counts keyed by 'backlog', each stage id, and 'done'. Dynamic so the CFD
+ *  can show a band per configured stage. */
+export type ColumnSnapshot = Record<string, number>;
 
 export interface DaySummaryData {
   day: number;
@@ -109,7 +101,7 @@ export interface RoundMetrics {
   throughputPerDay: number[];
   cycleTimePerItem: { itemId: string; completionDay: number; cycleTime: number }[];
   wipPerDay: number[];
-  cfdPerDay: { day: number; backlog: number; analysis: number; development: number; test: number; done: number }[];
+  cfdPerDay: Array<{ day: number } & ColumnSnapshot>;
   averageCycleTime: number;
   averageWip: number;
   throughputRate: number;
@@ -148,6 +140,9 @@ export interface RoundState {
   /** The team for this round (config-driven). The engine reads this rather than
    *  a global const, so the roster can be edited or swept. */
   workers: WorkerDef[];
+  /** The ordered stages for this round (config-driven). Drives pull order,
+   *  which stage is last (completes to Done), and the board columns. */
+  stages: StageDef[];
 }
 
 /** Player's pre-reveal guess for how Round 2's avg cycle time compares to Round 1. */

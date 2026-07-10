@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import type { WorkItem, WorkerAssignment, Specialism, WorkerDef } from './types';
+import type { WorkItem, WorkerAssignment, Specialism, WorkerDef, StageDef } from './types';
 import { colId, stageCount } from './config';
 import { WorkItemCard } from './WorkItemCard';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,8 @@ interface StageColumnProps {
   currentDay: number;
   selectedWorkerId: string | null;
   workers: WorkerDef[];
+  /** All configured stages, for effort-pip colours on the cards. */
+  stages: StageDef[];
   /** The last stage (Test) has no Done lane - finished work goes straight to the
    *  Done column beside it - so it renders a single Active lane. */
   hasDoneLane?: boolean;
@@ -80,6 +82,7 @@ export function StageColumn({
   currentDay,
   selectedWorkerId,
   workers,
+  stages,
   hasDoneLane = true,
   onAssignCard,
   onSetWip,
@@ -176,6 +179,7 @@ export function StageColumn({
               item={item}
               assignments={assignments}
               workers={workers}
+              stages={stages}
               currentDay={currentDay}
               isSelected={!!selectedWorkerId && canInteract}
               onClick={() => canInteract && onAssignCard(item.id)}
@@ -193,6 +197,7 @@ export function StageColumn({
                 item={item}
                 assignments={assignments}
                 workers={workers}
+                stages={stages}
                 currentDay={currentDay}
                 isSelected={false}
                 onClick={() => {}}

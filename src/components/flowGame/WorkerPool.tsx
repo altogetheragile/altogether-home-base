@@ -1,22 +1,13 @@
 import { useDraggable } from '@dnd-kit/core';
-import type { WorkerAssignment, Specialism, WorkerDef } from './types';
+import type { WorkerAssignment, WorkerDef, StageDef } from './types';
+import { stageColor } from './config';
 import { cn } from '@/lib/utils';
-
-const SPECIALISM_COLORS: Record<Specialism, string> = {
-  analysis: 'bg-blue-500',
-  development: 'bg-emerald-500',
-  test: 'bg-amber-500',
-};
-
-const SPECIALISM_LABELS: Record<Specialism, string> = {
-  analysis: 'Analysis',
-  development: 'Dev',
-  test: 'Test',
-};
 
 interface WorkerPoolProps {
   workers: WorkerDef[];
   assignments: WorkerAssignment[];
+  /** The configured stages, for a worker's colour and specialism label. */
+  stages: StageDef[];
   selectedWorkerId: string | null;
   onSelectWorker: (workerId: string) => void;
   onUnassign: (workerId: string) => void;
@@ -28,6 +19,7 @@ interface WorkerPoolProps {
 
 function WorkerPawn({
   worker,
+  stages,
   isAssigned,
   isSelected,
   disabled,
@@ -35,12 +27,14 @@ function WorkerPawn({
   onUnassign,
 }: {
   worker: WorkerDef;
+  stages: StageDef[];
   isAssigned: boolean;
   isSelected: boolean;
   disabled?: boolean;
   onSelectWorker: (id: string) => void;
   onUnassign: (id: string) => void;
 }) {
+  const specialismLabel = stages.find((s) => s.id === worker.specialism)?.name ?? worker.specialism;
   // Drag a pawn onto a work item to assign it; a plain click still selects (6px threshold).
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `worker:${worker.id}`, disabled });
   return (
@@ -60,25 +54,25 @@ function WorkerPawn({
         disabled && 'cursor-not-allowed opacity-30',
         !isSelected && !isAssigned && 'border-border bg-card',
       )}
-      title={`${worker.name} - ${SPECIALISM_LABELS[worker.specialism]} specialist — drag onto a card, or click then click a card`}
+      title={`${worker.name} - ${specialismLabel} specialist — drag onto a card, or click then click a card`}
     >
       <span
         className={cn(
           'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0',
-          SPECIALISM_COLORS[worker.specialism],
+          stageColor(worker.specialism, stages),
         )}
       >
         {worker.initials}
       </span>
       <span className="flex flex-col items-start leading-none">
         <span className="text-xs font-medium">{worker.name}</span>
-        <span className="text-[10px] text-muted-foreground">{SPECIALISM_LABELS[worker.specialism]}</span>
+        <span className="text-[10px] text-muted-foreground">{specialismLabel}</span>
       </span>
     </button>
   );
 }
 
-export function WorkerPool({ workers, assignments, selectedWorkerId, onSelectWorker, onUnassign, disabled, workAvailable }: WorkerPoolProps) {
+export function WorkerPool({ workers, assignments, stages, selectedWorkerId, onSelectWorker, onUnassign, disabled, workAvailable }: WorkerPoolProps) {
   const assignedIds = new Set(assignments.map((a) => a.workerId));
   const idle = workers.length - assignedIds.size;
   // Idle workers only waste capacity when there's work to do — flag amber then,
@@ -104,6 +98,7 @@ export function WorkerPool({ workers, assignments, selectedWorkerId, onSelectWor
           <WorkerPawn
             key={worker.id}
             worker={worker}
+            stages={stages}
             isAssigned={assignedIds.has(worker.id)}
             // A worker who is already assigned is never "awaiting placement".
             isSelected={selectedWorkerId === worker.id && !assignedIds.has(worker.id)}

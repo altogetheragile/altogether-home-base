@@ -185,6 +185,7 @@ export default function FlowGame() {
             round1Metrics={state.round1Metrics}
             round2Metrics={null}
             phase={state.phase}
+            stages={state.workflow.stages}
             onContinue={() => setPhase('wip-setup')}
             onPlayAgain={handleReset}
           />
@@ -194,6 +195,7 @@ export default function FlowGame() {
         return (
           <WipLimitSetup
             round1CycleTime={state.round1Metrics?.averageCycleTime ?? 0}
+            stages={state.workflow.stages}
             onPredict={setPrediction}
             onStart={(limits: Record<Specialism, number>) => startRound(2, limits)}
           />
@@ -206,6 +208,7 @@ export default function FlowGame() {
             round1Metrics={state.round1Metrics}
             round2Metrics={state.round2Metrics}
             phase={state.phase}
+            stages={state.workflow.stages}
             prediction={state.prediction}
             onContinue={() => {}}
             onPlayAgain={handleReset}

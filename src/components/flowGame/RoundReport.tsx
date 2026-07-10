@@ -6,7 +6,8 @@ import {
 import type { RoundState } from './types';
 import { calculateMetrics } from './engine';
 import { CumulativeFlowDiagram } from './CumulativeFlowDiagram';
-import { STAGES, stageOf, laneOf } from './config';
+import { stageOf, laneOf } from './config';
+import type { StageDef } from './types';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger,
 } from '@/components/ui/sheet';
@@ -16,12 +17,12 @@ import { cn } from '@/lib/utils';
 const COLOR = '#3b82f6';
 
 /** Human label for an in-flight item's current position. */
-function positionLabel(column: RoundState['items'][number]['column']): string {
+function positionLabel(column: RoundState['items'][number]['column'], stages: StageDef[]): string {
   if (column === 'backlog') return 'Backlog';
   if (column === 'done') return 'Done';
-  const stage = STAGES.find((s) => s.stage === stageOf(column));
+  const stage = stages.find((s) => s.id === stageOf(column));
   const lane = laneOf(column) === 'done' ? 'Done' : 'Active';
-  return `${stage?.label ?? ''} ${lane}`;
+  return `${stage?.name ?? ''} ${lane}`;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -37,8 +38,8 @@ export function RoundReport({ round }: { round: RoundState }) {
   // Live metrics from the days played so far (dayHistory has one entry per run day).
   const daysPlayed = round.dayHistory.length;
   const metrics = useMemo(
-    () => calculateMetrics(round.dayHistory, round.items, Math.max(1, daysPlayed)),
-    [round.dayHistory, round.items, daysPlayed],
+    () => calculateMetrics(round.dayHistory, round.items, Math.max(1, daysPlayed), round.stages),
+    [round.dayHistory, round.items, daysPlayed, round.stages],
   );
 
   // In-flight items (left backlog, not yet done), oldest first — the aging report.
@@ -89,7 +90,7 @@ export function RoundReport({ round }: { round: RoundState }) {
                     {item.blocked && (
                       <span className="text-[10px] font-semibold text-destructive uppercase">Blocked</span>
                     )}
-                    <span className="text-xs text-muted-foreground w-28 shrink-0">{positionLabel(item.column)}</span>
+                    <span className="text-xs text-muted-foreground w-28 shrink-0">{positionLabel(item.column, round.stages)}</span>
                     <span
                       className={cn(
                         'font-mono font-semibold w-10 text-right shrink-0',
@@ -151,7 +152,7 @@ export function RoundReport({ round }: { round: RoundState }) {
                 </div>
               )}
 
-              <CumulativeFlowDiagram metrics={metrics} title="Cumulative Flow" />
+              <CumulativeFlowDiagram metrics={metrics} stages={round.stages} title="Cumulative Flow" />
             </>
           )}
         </div>

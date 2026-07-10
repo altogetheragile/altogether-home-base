@@ -1,20 +1,26 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { RoundMetrics } from './types';
+import type { RoundMetrics, StageDef } from './types';
 
 interface CumulativeFlowDiagramProps {
   metrics: RoundMetrics;
+  /** The configured stages, in pipeline order — one band each. */
+  stages: StageDef[];
   title?: string;
 }
 
-export function CumulativeFlowDiagram({ metrics, title }: CumulativeFlowDiagramProps) {
-  const data = metrics.cfdPerDay.map((d) => ({
-    day: d.day,
-    Done: d.done,
-    Test: d.test,
-    Development: d.development,
-    Analysis: d.analysis,
-    Backlog: d.backlog,
-  }));
+// Hex equivalents of the STAGE_PALETTE tailwind classes (config.ts), so the CFD
+// bands match each stage's colour on the board. The default three stages stay
+// blue / emerald / amber.
+const STAGE_HEX = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4', '#84cc16', '#f97316'];
+
+export function CumulativeFlowDiagram({ metrics, stages, title }: CumulativeFlowDiagramProps) {
+  // Bottom-to-top stack: Backlog, then each stage in order, then Done. Each row
+  // pulls a stage's count from its id key in the snapshot.
+  const data = metrics.cfdPerDay.map((d) => {
+    const row: Record<string, number> = { day: d.day, Backlog: d.backlog, Done: d.done };
+    for (const s of stages) row[s.id] = d[s.id] ?? 0;
+    return row;
+  });
 
   return (
     <div className="space-y-2">
@@ -26,9 +32,17 @@ export function CumulativeFlowDiagram({ metrics, title }: CumulativeFlowDiagramP
           <YAxis label={{ value: 'Items', angle: -90, position: 'insideLeft' }} />
           <Tooltip />
           <Area type="monotone" dataKey="Backlog" stackId="1" stroke="#94a3b8" fill="#94a3b8" />
-          <Area type="monotone" dataKey="Analysis" stackId="1" stroke="#3b82f6" fill="#3b82f6" />
-          <Area type="monotone" dataKey="Development" stackId="1" stroke="#10b981" fill="#10b981" />
-          <Area type="monotone" dataKey="Test" stackId="1" stroke="#f59e0b" fill="#f59e0b" />
+          {stages.map((s, i) => (
+            <Area
+              key={s.id}
+              type="monotone"
+              dataKey={s.id}
+              name={s.name}
+              stackId="1"
+              stroke={STAGE_HEX[i % STAGE_HEX.length]}
+              fill={STAGE_HEX[i % STAGE_HEX.length]}
+            />
+          ))}
           <Area type="monotone" dataKey="Done" stackId="1" stroke="#6366f1" fill="#6366f1" />
         </AreaChart>
       </ResponsiveContainer>

@@ -7,6 +7,7 @@ import type {
   ColumnId,
   ColumnSnapshot,
   Specialism,
+  StageDef,
 } from './types';
 import {
   WORK_ITEMS,
@@ -16,11 +17,12 @@ import {
   stageOf,
   laneOf,
   colId,
+  isLastStage,
 } from './config';
 
 // ============= Item Factory =============
 
-export function createItems(warmStart = false): WorkItem[] {
+export function createItems(warmStart = false, stages: StageDef[] = []): WorkItem[] {
   const items: WorkItem[] = WORK_ITEMS.map((def) => ({
     id: def.id,
     title: def.title,
@@ -32,7 +34,7 @@ export function createItems(warmStart = false): WorkItem[] {
     startDay: null,
     endDay: null,
   }));
-  if (warmStart) seedWarmStart(items);
+  if (warmStart) seedWarmStart(items, stages);
   return items;
 }
 
@@ -42,36 +44,53 @@ export function createItems(warmStart = false): WorkItem[] {
 // same board and stay comparable. Upstream stages are marked done (0 remaining),
 // the current stage is part-worked, and each in-flow item started on day 1. Kept
 // under the default 3/3/3 WIP limits, and includes a Done-lane item to pull.
-function seedWarmStart(items: WorkItem[]): void {
-  const place = (index: number, column: ColumnId, doneStages: Specialism[], partial: Partial<Record<Specialism, number>>) => {
+function seedWarmStart(items: WorkItem[], stages: StageDef[]): void {
+  // Placement is by pipeline position so it holds for any stage set: the first
+  // few items sit part-worked across the opening stages, one waits in a Done lane
+  // to pull. Needs at least two stages; degrades to fewer placements otherwise.
+  const stageId = (idx: number): Specialism | null => stages[idx]?.id ?? null;
+  const place = (
+    index: number,
+    stageIdx: number,
+    lane: 'active' | 'done',
+    partialRemaining?: number,
+  ) => {
     const item = items[index];
-    if (!item) return;
-    item.column = column;
+    const sId = stageId(stageIdx);
+    if (!item || !sId) return;
+    item.column = colId(sId, lane);
     item.startDay = 1;
-    for (const s of doneStages) item.effortRemaining[s] = 0;
-    for (const s of Object.keys(partial) as Specialism[]) {
-      item.effortRemaining[s] = Math.max(0, Math.min(item.effortTotal[s], partial[s]!));
+    // Every earlier stage is finished (0 remaining).
+    for (let i = 0; i < stageIdx; i++) {
+      const prev = stageId(i);
+      if (prev) item.effortRemaining[prev] = 0;
+    }
+    if (lane === 'done') {
+      item.effortRemaining[sId] = 0;
+    } else if (partialRemaining !== undefined) {
+      item.effortRemaining[sId] = Math.max(0, Math.min(item.effortTotal[sId] ?? 0, partialRemaining));
     }
   };
-  // item-1: in Analysis, part-way through analysis.
-  place(0, 'analysis-active', [], { analysis: 2 });
-  // item-2: analysis done, part-way through development.
-  place(1, 'development-active', ['analysis'], { development: 3 });
-  // item-3: analysis + development done, waiting in Development's Done lane to be pulled.
-  place(2, 'development-done', ['analysis', 'development'], {});
-  // item-4: analysis + development done, part-way through test.
-  place(3, 'test-active', ['analysis', 'development'], { test: 2 });
+  // item-1: in the first stage, part-way through it.
+  place(0, 0, 'active', 2);
+  // item-2: first stage done, part-way through the second.
+  place(1, 1, 'active', 3);
+  // item-3: through the second stage, waiting in its Done lane to be pulled.
+  place(2, 1, 'done');
+  // item-4: part-way through the third stage (if one exists).
+  place(3, 2, 'active', 2);
 }
 
 // ============= Snapshot =============
 
-export function snapshotColumns(items: WorkItem[]): ColumnSnapshot {
+export function snapshotColumns(items: WorkItem[], stages: StageDef[]): ColumnSnapshot {
   // Aggregate the split lanes back to one band per stage so the CFD stays readable.
-  const snap: ColumnSnapshot = { backlog: 0, analysis: 0, development: 0, test: 0, done: 0 };
+  const snap: ColumnSnapshot = { backlog: 0, done: 0 };
+  for (const s of stages) snap[s.id] = 0;
   for (const item of items) {
     if (item.column === 'backlog') snap.backlog++;
     else if (item.column === 'done') snap.done++;
-    else snap[stageOf(item.column)!]++;
+    else snap[stageOf(item.column)!] = (snap[stageOf(item.column)!] ?? 0) + 1;
   }
   return snap;
 }
@@ -111,7 +130,7 @@ export function applyBlockers(items: WorkItem[], day: number, rng: Rng): { items
     if (rng(day, item.id, 'blocker') < BLOCKER_CHANCE) {
       const stage = stageOf(item.column)!;
       blockedIds.push(item.id);
-      return { ...item, blocked: true, blockerEffort: BLOCKER_EFFORT[stage] };
+      return { ...item, blocked: true, blockerEffort: BLOCKER_EFFORT[stage] ?? 3 };
     }
     return item;
   });
@@ -173,7 +192,7 @@ export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.se
     if (laneOf(item.column) !== 'active' || item.blocked) continue;
     const stage = stageOf(item.column)!;
     if (item.effortRemaining[stage] <= 0) {
-      if (stage === 'test') {
+      if (isLastStage(stage, state.stages)) {
         item.column = 'done';
         item.endDay = day;
         itemsCompleted.push(item.id);
@@ -193,14 +212,14 @@ export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.se
       advanced,
       blockersApplied: [],
       blockersCleared,
-      columnSnapshot: snapshotColumns(workingItems),
+      columnSnapshot: snapshotColumns(workingItems, state.stages),
     },
   };
 }
 
 // ============= Metrics Calculation =============
 
-export function calculateMetrics(dayHistory: DaySummaryData[], items: WorkItem[], totalDays: number): RoundMetrics {
+export function calculateMetrics(dayHistory: DaySummaryData[], items: WorkItem[], totalDays: number, stages: StageDef[]): RoundMetrics {
   // Throughput per day — items now reach Done via the player's PULL, so count by
   // each item's endDay rather than the (now empty) per-day itemsCompleted list.
   const throughputPerDay = Array.from({ length: totalDays }, (_, i) =>
@@ -234,7 +253,9 @@ export function calculateMetrics(dayHistory: DaySummaryData[], items: WorkItem[]
       return { day, ...daySummary.columnSnapshot };
     }
     // Fallback for days without a summary (shouldn't happen)
-    return { day, backlog: items.length, analysis: 0, development: 0, test: 0, done: 0 };
+    const empty: ColumnSnapshot = { backlog: items.length, done: 0 };
+    for (const s of stages) empty[s.id] = 0;
+    return { day, ...empty };
   });
 
   // Averages
