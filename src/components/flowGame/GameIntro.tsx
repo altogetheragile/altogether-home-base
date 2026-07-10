@@ -1,16 +1,30 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { WorkflowEditor } from './WorkflowEditor';
+import type { Workflow } from './types';
 
 interface GameIntroProps {
   onStart: (warmStart: boolean) => void;
+  /** The configurable board, shown in the brief and editable before starting. */
+  workflow: Workflow;
+  onSetWorkflow: (workflow: Workflow) => void;
   /** Signed in, so saved games can be resumed. */
   canResume?: boolean;
   onOpenSaves?: () => void;
 }
 
-export function GameIntro({ onStart, canResume, onOpenSaves }: GameIntroProps) {
+/** Join stage names into readable prose: "A, B, and C". */
+function stageList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+}
+
+export function GameIntro({ onStart, workflow, onSetWorkflow, canResume, onOpenSaves }: GameIntroProps) {
   const [warmStart, setWarmStart] = useState(false);
+  const stageNames = workflow.stages.map((s) => s.name);
+  const teamSize = workflow.workers.length;
   return (
     // Fill the viewport below the 4rem nav and centre the card, so the whole
     // brief - heading through the Start button - sits above the fold with no
@@ -28,8 +42,8 @@ export function GameIntro({ onStart, canResume, onOpenSaves }: GameIntroProps) {
         <div className="rounded-lg bg-muted/50 p-5 space-y-2">
           <h2 className="text-lg font-semibold">How it works</h2>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li><strong>20 work items</strong> flow through Analysis, Development, and Test.</li>
-            <li><strong>6 workers</strong> - each specialises in one column (full effectiveness) but can work anywhere (at 60%).</li>
+            <li><strong>20 work items</strong> flow through {stageList(stageNames)}.</li>
+            <li><strong>{teamSize} {teamSize === 1 ? 'worker' : 'workers'}</strong> - each specialises in one column (full effectiveness) but can work anywhere (at 60%).</li>
             <li>Each day: assign workers to cards, then click <strong>Run Day</strong>. Dice determine progress.</li>
             <li><strong>Blockers</strong> appear randomly - a worker must clear them before work resumes.</li>
             <li>After 20 days you'll see your metrics, then set WIP limits and try again.</li>
@@ -75,9 +89,12 @@ export function GameIntro({ onStart, canResume, onOpenSaves }: GameIntroProps) {
             : 'Everything starts in the backlog - you pull the first work in.'}
         </p>
 
-        <Button size="lg" onClick={() => onStart(warmStart)} className="px-8 py-6 text-lg">
-          Start Round 1
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <WorkflowEditor workflow={workflow} onSave={onSetWorkflow} />
+          <Button size="lg" onClick={() => onStart(warmStart)} className="px-8 py-6 text-lg">
+            Start Round 1
+          </Button>
+        </div>
 
         {canResume && (
           <button type="button" onClick={onOpenSaves} className="text-sm font-medium text-primary hover:underline">

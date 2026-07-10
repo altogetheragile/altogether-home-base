@@ -1,5 +1,5 @@
 import { useReducer, useCallback } from 'react';
-import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef } from './types';
+import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef, Workflow } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
 import { DAYS_PER_ROUND, DEFAULT_WIP_LIMITS, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
 
@@ -49,6 +49,20 @@ const initialState: GameState = {
   warmStart: false,
   workflow: DEFAULT_WORKFLOW,
 };
+
+/** Backfill config fields that pre-configurable-board saves lack, so an older
+ *  saved game (no workflow, or a round without stages/workers) still loads. */
+function withWorkflowDefaults(state: GameState): GameState {
+  const workflow = state.workflow ?? DEFAULT_WORKFLOW;
+  const round = state.round
+    ? {
+        ...state.round,
+        stages: state.round.stages ?? workflow.stages,
+        workers: state.round.workers ?? workflow.workers,
+      }
+    : state.round;
+  return { ...state, workflow, round };
+}
 
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -204,10 +218,17 @@ function reducer(state: GameState, action: GameAction): GameState {
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
 
+    case 'SET_WORKFLOW':
+      // Only meaningful before a round starts (edited on the intro screen); the
+      // running round already carries its own copy of the stages and workers.
+      return { ...state, workflow: action.workflow };
+
     case 'LOAD_GAME':
       // Replace the whole game with a loaded save. The state is a single
       // serialisable object, so this restores the board, day, metrics and seed.
-      return action.state;
+      // Backfill config that older saves predate (workflow / round stages+workers)
+      // so a game saved before the board became configurable still resumes.
+      return withWorkflowDefaults(action.state);
 
     case 'RESET':
       return initialState;
@@ -254,6 +275,8 @@ export function useFlowGame() {
     []
   );
 
+  const setWorkflow = useCallback((workflow: Workflow) => dispatch({ type: 'SET_WORKFLOW', workflow }), []);
+
   const loadGame = useCallback((s: GameState) => dispatch({ type: 'LOAD_GAME', state: s }), []);
 
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
@@ -279,6 +302,7 @@ export function useFlowGame() {
     startRound,
     setPhase,
     setPrediction,
+    setWorkflow,
     loadGame,
     reset,
     getUnassignedWorkers,

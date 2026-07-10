@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
-import type { RoundState, WorkItem, DaySummaryData } from './types';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
 const S = DEFAULT_WORKFLOW.stages;
@@ -301,6 +301,50 @@ describe('calculateMetrics', () => {
     expect(m.throughputPerDay).toEqual([0, 0, 0, 0, 2]);
     // WIP per day counts items in flow (started, not yet done) — day 3: items 1,2,3 all active
     expect(m.wipPerDay[2]).toBe(3);
+  });
+});
+
+describe('configurable workflow', () => {
+  const CUSTOM: StageDef[] = [
+    { id: 'design', name: 'Design' },
+    { id: 'build', name: 'Build' },
+    { id: 'qa', name: 'QA' },
+    { id: 'release', name: 'Release' },
+  ];
+
+  it('itemEffort reproduces the default triple for the default three stages', () => {
+    // pattern[0] = [4, 8, 4] keyed by analysis/development/test.
+    expect(itemEffort(0, S)).toEqual({ analysis: 4, development: 8, test: 4 });
+  });
+
+  it('a custom pipeline gets real per-stage effort (added stages are not free)', () => {
+    const items = createItems(false, CUSTOM);
+    expect(Object.keys(items[0].effortTotal).sort()).toEqual(['build', 'design', 'qa', 'release']);
+    // Every stage carries positive effort, so nothing passes straight through.
+    for (const s of CUSTOM) expect(items[0].effortTotal[s.id]).toBeGreaterThan(0);
+    expect(items[0].effortRemaining).toEqual(items[0].effortTotal);
+  });
+
+  it('maps the pull path across an arbitrary number of stages', () => {
+    expect(pullTarget('backlog', CUSTOM)).toBe('design-active');
+    expect(pullTarget('design-done', CUSTOM)).toBe('build-active');
+    expect(pullTarget('qa-done', CUSTOM)).toBe('release-active');
+    // The last stage completes straight to Done.
+    expect(pullTarget('release-done', CUSTOM)).toBe('done');
+  });
+
+  it('the configured last stage completes to Done (not a hardcoded "test")', () => {
+    const item = createItems(false, CUSTOM)[0];
+    item.column = 'release-active';
+    item.startDay = 1;
+    item.effortRemaining = { design: 0, build: 0, qa: 0, release: 3 };
+    const { items: out, summary } = simulateDay(
+      round([item], { stages: CUSTOM, day: 4, assignments: [{ workerId: 'w1', cardId: item.id }] }),
+      fixedRoll(6), // off-spec 60% of 6 = round(3.6) = 4 >= 3 -> finishes
+    );
+    expect(out[0].column).toBe('done');
+    expect(out[0].endDay).toBe(4);
+    expect(summary.itemsCompleted).toEqual([item.id]);
   });
 });
 

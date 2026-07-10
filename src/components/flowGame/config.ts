@@ -159,25 +159,36 @@ export const FLOW_SEED = 0x9e3779b1;
 
 // ============= Work Items =============
 
+// Effort profiles that give items realistic variability. Each triple is read
+// against the pipeline position (stage 0, 1, 2); boards with more than three
+// stages cycle back through the triple, fewer stages take the leading entries.
+const EFFORT_PATTERNS: [number, number, number][] = [
+  [4, 8, 4],   // dev-heavy
+  [6, 6, 6],   // balanced
+  [8, 4, 6],   // analysis-heavy
+  [4, 6, 8],   // test-heavy
+  [5, 10, 5],  // big dev
+  [3, 5, 3],   // small
+  [6, 8, 4],   // analysis+dev
+  [4, 4, 8],   // test-heavy
+  [7, 7, 7],   // large balanced
+  [3, 3, 3],   // quick
+];
+
+/** Deterministic per-stage effort for a work item, keyed by the configured
+ *  stage ids. With the default three stages this reproduces the original
+ *  analysis/development/test effort exactly; extra stages get real work so a
+ *  custom pipeline is not a free pass-through. */
+export function itemEffort(index: number, stages: StageDef[]): Record<Specialism, number> {
+  const pattern = EFFORT_PATTERNS[index % EFFORT_PATTERNS.length];
+  return Object.fromEntries(stages.map((s, si) => [s.id, pattern[si % pattern.length]]));
+}
+
 function makeItem(index: number): WorkItemDef {
-  // Vary effort to create realistic variability
-  const patterns: [number, number, number][] = [
-    [4, 8, 4],   // dev-heavy
-    [6, 6, 6],   // balanced
-    [8, 4, 6],   // analysis-heavy
-    [4, 6, 8],   // test-heavy
-    [5, 10, 5],  // big dev
-    [3, 5, 3],   // small
-    [6, 8, 4],   // analysis+dev
-    [4, 4, 8],   // test-heavy
-    [7, 7, 7],   // large balanced
-    [3, 3, 3],   // quick
-  ];
-  const [a, d, t] = patterns[index % patterns.length];
   return {
     id: `item-${index + 1}`,
     title: `Work Item ${index + 1}`,
-    effort: { analysis: a, development: d, test: t },
+    effort: itemEffort(index, STAGES.map((s) => ({ id: s.stage, name: s.label }))),
   };
 }
 
