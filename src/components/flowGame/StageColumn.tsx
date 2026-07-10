@@ -90,7 +90,8 @@ export function StageColumn({
   const isAt = wipLimit != null && total === wipLimit;
 
   return (
-    <div className="flex flex-col min-w-[240px] flex-1">
+    // A single-lane stage (Test) needs about half the width of a two-lane one.
+    <div className={cn('flex flex-col', hasDoneLane ? 'min-w-[240px] flex-1' : 'w-[200px] shrink-0')}>
       {/* Stage header: label, WIP count, and inline −/+ editor (TWiG-style) */}
       <div
         className={cn(
