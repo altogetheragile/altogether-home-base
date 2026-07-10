@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef, Workflow } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, DEFAULT_WIP_LIMITS, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
+import { DAYS_PER_ROUND, defaultWipLimits, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
 
 /** Which worker assignments carry over to the next day: only those whose card is
  *  still being worked (in an Active lane). A worker is freed when their card
@@ -29,7 +29,9 @@ function createRound(
     dayHistory: [],
     // Limits are always editable; round 1 starts with them OFF (the chaos baseline),
     // round 2 enforces the limits the player set. Either can be toggled in play.
-    wipLimits: wipLimits ?? { ...DEFAULT_WIP_LIMITS },
+    // Built from the round's stages so a custom stage gets a limit (and its −/+
+    // editor) too, not just the three built-in ones.
+    wipLimits: wipLimits ?? defaultWipLimits(stages),
     enforceWip: roundNumber === 2,
     maximizeWip: false,
     seed: FLOW_SEED,
@@ -54,13 +56,18 @@ const initialState: GameState = {
  *  saved game (no workflow, or a round without stages/workers) still loads. */
 function withWorkflowDefaults(state: GameState): GameState {
   const workflow = state.workflow ?? DEFAULT_WORKFLOW;
-  const round = state.round
-    ? {
-        ...state.round,
-        stages: state.round.stages ?? workflow.stages,
-        workers: state.round.workers ?? workflow.workers,
-      }
-    : state.round;
+  let round = state.round;
+  if (round) {
+    const stages = round.stages ?? workflow.stages;
+    round = {
+      ...round,
+      stages,
+      workers: round.workers ?? workflow.workers,
+      // Ensure every stage has a WIP limit — a custom stage saved before this fix
+      // (or added to an in-flight round) would otherwise show no limit or editor.
+      wipLimits: round.wipLimits ? { ...defaultWipLimits(stages), ...round.wipLimits } : round.wipLimits,
+    };
+  }
   return { ...state, workflow, round };
 }
 
