@@ -6,7 +6,7 @@
 // the team and throughput collapses. The sweet spot is the lowest WIP that still
 // keeps throughput near its max.
 
-import type { RoundMetrics, RoundState, WorkItem, Specialism, ColumnId, WorkerAssignment } from './types';
+import type { RoundMetrics, RoundState, WorkItem, Specialism, ColumnId, WorkerAssignment, WorkerDef } from './types';
 import { createItems, simulateDay, applyDayBlockers, calculateMetrics } from './engine';
 import { WORKERS, DAYS_PER_ROUND, FLOW_SEED, stageOf, laneOf, pullTarget, stageCount, DEFAULT_WORKFLOW } from './config';
 
@@ -14,6 +14,14 @@ const STAGES = DEFAULT_WORKFLOW.stages;
 
 export interface SweepPoint {
   wipLimit: number;
+  averageCycleTime: number;
+  throughputRate: number;
+  averageWip: number;
+  totalCompleted: number;
+}
+
+export interface TeamPoint {
+  teamSize: number;
   averageCycleTime: number;
   throughputRate: number;
   averageWip: number;
@@ -31,7 +39,7 @@ const move = (item: WorkItem, dest: ColumnId, day: number): WorkItem => ({
  *  metrics. Greedy policy: pull downstream-first (so capacity frees before it's
  *  refilled), then assign each worker to work in their own specialism first,
  *  otherwise to any active card with work. Deterministic for a given seed. */
-export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED): RoundMetrics {
+export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED, workers: WorkerDef[] = WORKERS): RoundMetrics {
   const limits: Record<Specialism, number> = { analysis: wipLimit, development: wipLimit, test: wipLimit };
   let items = createItems(false, STAGES);
   const dayHistory = [];
@@ -48,7 +56,7 @@ export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED
     seed,
     dayPhase: 'assign',
     newBlockers: [],
-    workers: WORKERS,
+    workers,
     stages: STAGES,
   });
 
@@ -72,7 +80,7 @@ export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED
     const assignments: WorkerAssignment[] = [];
     const taken = new Set<string>();
     const workable = (i: WorkItem, s: Specialism) => i.blocked || i.effortRemaining[s] > 0;
-    for (const w of WORKERS) {
+    for (const w of workers) {
       const own = items.find((i) => laneOf(i.column) === 'active' && stageOf(i.column) === w.specialism && !taken.has(i.id) && workable(i, w.specialism));
       const any = own ?? items.find((i) => laneOf(i.column) === 'active' && !taken.has(i.id) && workable(i, stageOf(i.column)!));
       if (any) { assignments.push({ workerId: w.id, cardId: any.id }); taken.add(any.id); }
@@ -117,4 +125,45 @@ export function findSweetSpot(sweep: SweepPoint[], tolerance = 0.05): SweepPoint
   const threshold = maxThroughput * (1 - tolerance);
   const byWip = [...sweep].sort((a, b) => a.wipLimit - b.wipLimit);
   return byWip.find((p) => p.throughputRate >= threshold) ?? null;
+}
+
+// ============= Team-size sweep =============
+
+/** A balanced team of `size` people spread round-robin across the default stages,
+ *  so each stage has near-equal cover and the only variable is head count. */
+export function makeBalancedTeam(size: number): WorkerDef[] {
+  return Array.from({ length: size }, (_, i) => {
+    const stage = STAGES[i % STAGES.length];
+    return { id: `w${i + 1}`, name: `Person ${i + 1}`, initials: `P${i + 1}`, specialism: stage.id };
+  });
+}
+
+/** Sweep team size across [min, max] (inclusive) at a fixed WIP limit, so the
+ *  only thing changing is how many people are on the board. Same seeded scenario
+ *  and luck throughout, so the curve isolates the effect of adding people. */
+export function sweepTeamSize(min = 1, max = 9, wipLimit = 3): TeamPoint[] {
+  const points: TeamPoint[] = [];
+  for (let k = min; k <= max; k++) {
+    const m = autoPlayRound(wipLimit, true, FLOW_SEED, makeBalancedTeam(k));
+    points.push({
+      teamSize: k,
+      averageCycleTime: m.averageCycleTime,
+      throughputRate: m.throughputRate,
+      averageWip: m.averageWip,
+      totalCompleted: m.totalCompleted,
+    });
+  }
+  return points;
+}
+
+/** The team sweet spot: the SMALLEST team that still reaches throughput within
+ *  `tolerance` of the sweep's best. Beyond it, extra people can't raise throughput
+ *  (the WIP limits cap flow) and only add cost - diminishing returns made visible. */
+export function findTeamSweetSpot(sweep: TeamPoint[], tolerance = 0.05): TeamPoint | null {
+  if (sweep.length === 0) return null;
+  const maxThroughput = Math.max(...sweep.map((p) => p.throughputRate));
+  if (maxThroughput <= 0) return null;
+  const threshold = maxThroughput * (1 - tolerance);
+  const bySize = [...sweep].sort((a, b) => a.teamSize - b.teamSize);
+  return bySize.find((p) => p.throughputRate >= threshold) ?? null;
 }

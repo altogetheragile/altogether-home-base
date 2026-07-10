@@ -56,6 +56,7 @@ export default function FlowGame() {
     startRound,
     setPhase,
     setPrediction,
+    setWorkflow,
     loadGame,
     reset,
   } = useFlowGame();
@@ -153,6 +154,8 @@ export default function FlowGame() {
       case 'intro':
         return (
           <GameIntro
+            workflow={state.workflow}
+            onSetWorkflow={setWorkflow}
             onStart={(warmStart) => startRound(1, undefined, warmStart)}
             canResume={!!user}
             onOpenSaves={() => setSavesOpen(true)}

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
-import type { RoundState, WorkItem, DaySummaryData } from './types';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
 const S = DEFAULT_WORKFLOW.stages;
@@ -304,7 +304,51 @@ describe('calculateMetrics', () => {
   });
 });
 
-import { autoPlayRound, sweepWipLimit, findSweetSpot } from './experiment';
+describe('configurable workflow', () => {
+  const CUSTOM: StageDef[] = [
+    { id: 'design', name: 'Design' },
+    { id: 'build', name: 'Build' },
+    { id: 'qa', name: 'QA' },
+    { id: 'release', name: 'Release' },
+  ];
+
+  it('itemEffort reproduces the default triple for the default three stages', () => {
+    // pattern[0] = [4, 8, 4] keyed by analysis/development/test.
+    expect(itemEffort(0, S)).toEqual({ analysis: 4, development: 8, test: 4 });
+  });
+
+  it('a custom pipeline gets real per-stage effort (added stages are not free)', () => {
+    const items = createItems(false, CUSTOM);
+    expect(Object.keys(items[0].effortTotal).sort()).toEqual(['build', 'design', 'qa', 'release']);
+    // Every stage carries positive effort, so nothing passes straight through.
+    for (const s of CUSTOM) expect(items[0].effortTotal[s.id]).toBeGreaterThan(0);
+    expect(items[0].effortRemaining).toEqual(items[0].effortTotal);
+  });
+
+  it('maps the pull path across an arbitrary number of stages', () => {
+    expect(pullTarget('backlog', CUSTOM)).toBe('design-active');
+    expect(pullTarget('design-done', CUSTOM)).toBe('build-active');
+    expect(pullTarget('qa-done', CUSTOM)).toBe('release-active');
+    // The last stage completes straight to Done.
+    expect(pullTarget('release-done', CUSTOM)).toBe('done');
+  });
+
+  it('the configured last stage completes to Done (not a hardcoded "test")', () => {
+    const item = createItems(false, CUSTOM)[0];
+    item.column = 'release-active';
+    item.startDay = 1;
+    item.effortRemaining = { design: 0, build: 0, qa: 0, release: 3 };
+    const { items: out, summary } = simulateDay(
+      round([item], { stages: CUSTOM, day: 4, assignments: [{ workerId: 'w1', cardId: item.id }] }),
+      fixedRoll(6), // off-spec 60% of 6 = round(3.6) = 4 >= 3 -> finishes
+    );
+    expect(out[0].column).toBe('done');
+    expect(out[0].endDay).toBe(4);
+    expect(summary.itemsCompleted).toEqual([item.id]);
+  });
+});
+
+import { autoPlayRound, sweepWipLimit, findSweetSpot, sweepTeamSize, findTeamSweetSpot, makeBalancedTeam } from './experiment';
 
 describe('WIP sweep experiment', () => {
   it('auto-play is deterministic for a given WIP limit + seed', () => {
@@ -332,6 +376,35 @@ describe('WIP sweep experiment', () => {
     // ...at the LEAST WIP that does so (no earlier point qualifies).
     const earlier = sweep.filter((p) => p.wipLimit < sweet.wipLimit);
     for (const p of earlier) expect(p.throughputRate).toBeLessThan(maxThr * 0.95);
+  });
+});
+
+describe('team-size sweep experiment', () => {
+  it('builds a balanced team spread round-robin across the stages', () => {
+    const team = makeBalancedTeam(6);
+    expect(team).toHaveLength(6);
+    expect(team.map((w) => w.specialism)).toEqual(
+      ['analysis', 'development', 'test', 'analysis', 'development', 'test'],
+    );
+    expect(new Set(team.map((w) => w.id)).size).toBe(6); // ids unique
+  });
+
+  it('a bigger team lifts throughput up to a point, then plateaus', () => {
+    const tiny = autoPlayRound(3, true, undefined, makeBalancedTeam(1));
+    const healthy = autoPlayRound(3, true, undefined, makeBalancedTeam(6));
+    expect(healthy.throughputRate).toBeGreaterThan(tiny.throughputRate);
+  });
+
+  it('sweep covers the range and the sweet spot is the smallest near-max team', () => {
+    const sweep = sweepTeamSize(1, 9);
+    expect(sweep.map((p) => p.teamSize)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    const maxThr = Math.max(...sweep.map((p) => p.throughputRate));
+    const sweet = findTeamSweetSpot(sweep)!;
+    expect(sweet).not.toBeNull();
+    expect(sweet.throughputRate).toBeGreaterThanOrEqual(maxThr * 0.95);
+    // No smaller team reaches near-max throughput.
+    const smaller = sweep.filter((p) => p.teamSize < sweet.teamSize);
+    for (const p of smaller) expect(p.throughputRate).toBeLessThan(maxThr * 0.95);
   });
 });
 

@@ -11,6 +11,8 @@ import type {
 } from './types';
 import {
   WORK_ITEMS,
+  DEFAULT_WORKFLOW,
+  itemEffort,
   OFF_SPEC_MULTIPLIER,
   BLOCKER_CHANCE,
   BLOCKER_EFFORT,
@@ -22,18 +24,23 @@ import {
 
 // ============= Item Factory =============
 
-export function createItems(warmStart = false, stages: StageDef[] = []): WorkItem[] {
-  const items: WorkItem[] = WORK_ITEMS.map((def) => ({
-    id: def.id,
-    title: def.title,
-    column: 'backlog' as ColumnId,
-    effortRemaining: { ...def.effort },
-    effortTotal: { ...def.effort },
-    blocked: false,
-    blockerEffort: 0,
-    startDay: null,
-    endDay: null,
-  }));
+export function createItems(warmStart = false, stages: StageDef[] = DEFAULT_WORKFLOW.stages): WorkItem[] {
+  const items: WorkItem[] = WORK_ITEMS.map((def, i) => {
+    // Effort is generated for the CURRENT stages so a custom pipeline gets real
+    // work per stage rather than the fixed analysis/development/test triple.
+    const effort = itemEffort(i, stages);
+    return {
+      id: def.id,
+      title: def.title,
+      column: 'backlog' as ColumnId,
+      effortRemaining: { ...effort },
+      effortTotal: { ...effort },
+      blocked: false,
+      blockerEffort: 0,
+      startDay: null,
+      endDay: null,
+    };
+  });
   if (warmStart) seedWarmStart(items, stages);
   return items;
 }
