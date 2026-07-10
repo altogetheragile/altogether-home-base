@@ -1,20 +1,15 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import type { WorkItem, WorkerAssignment, Specialism, WorkerDef } from './types';
-import { ACTIVE_COLUMNS, stageOf, laneOf } from './config';
+import type { WorkItem, WorkerAssignment, WorkerDef, StageDef } from './types';
+import { stageOf, laneOf, stageColor, stageShort } from './config';
 import { cn } from '@/lib/utils';
-
-const SPECIALISM_COLORS: Record<Specialism, string> = {
-  analysis: 'bg-blue-500',
-  development: 'bg-emerald-500',
-  test: 'bg-amber-500',
-};
-const SPECIALISM_SHORT: Record<Specialism, string> = { analysis: 'A', development: 'D', test: 'T' };
 
 interface WorkItemCardProps {
   item: WorkItem;
   assignments: WorkerAssignment[];
   isSelected: boolean;
   onClick: () => void;
+  /** The configured stages, driving the effort rows and their colours. */
+  stages?: StageDef[];
   /** Current day, used to show the item's age while it's in flow. */
   currentDay?: number;
   /** When true the card can be dragged (to pull/reorder) and is a drop target
@@ -27,35 +22,35 @@ interface WorkItemCardProps {
   workers?: WorkerDef[];
 }
 
-/** One-line effort totals (A/D/T) for compact cards. */
-function EffortTotals({ item }: { item: WorkItem }) {
+/** One-line effort totals (one dot per stage) for compact cards. */
+function EffortTotals({ item, stages }: { item: WorkItem; stages: StageDef[] }) {
   return (
     <div className="mt-1 flex items-center gap-1.5">
-      {ACTIVE_COLUMNS.map((s) => (
-        <span key={s} className="inline-flex items-center gap-0.5" title={`${s}: ${item.effortRemaining[s]}/${item.effortTotal[s]} effort left`}>
-          <span className={cn('h-2 w-2 rounded-[2px]', SPECIALISM_COLORS[s])} />
-          <span className="text-[10px] font-medium text-muted-foreground">{item.effortRemaining[s]}</span>
+      {stages.map((s) => (
+        <span key={s.id} className="inline-flex items-center gap-0.5" title={`${s.name}: ${item.effortRemaining[s.id] ?? 0}/${item.effortTotal[s.id] ?? 0} effort left`}>
+          <span className={cn('h-2 w-2 rounded-[2px]', stageColor(s.id, stages))} />
+          <span className="text-[10px] font-medium text-muted-foreground">{item.effortRemaining[s.id] ?? 0}</span>
         </span>
       ))}
     </div>
   );
 }
 
-/** Remaining effort per stage as compact, wrapping pip rows (one row per discipline). */
-function EffortPips({ item }: { item: WorkItem }) {
+/** Remaining effort per stage as compact, wrapping pip rows (one row per stage). */
+function EffortPips({ item, stages }: { item: WorkItem; stages: StageDef[] }) {
   return (
     <div className="flex flex-col gap-0.5 mt-1.5">
-      {ACTIVE_COLUMNS.map((s) => {
-        const total = item.effortTotal[s];
-        const remaining = item.effortRemaining[s];
+      {stages.map((s) => {
+        const total = item.effortTotal[s.id] ?? 0;
+        const remaining = item.effortRemaining[s.id] ?? 0;
         return (
-          <div key={s} className="flex items-center gap-1" title={`${s}: ${remaining}/${total} effort left`}>
-            <span className="text-[9px] font-bold text-muted-foreground w-2 shrink-0">{SPECIALISM_SHORT[s]}</span>
+          <div key={s.id} className="flex items-center gap-1" title={`${s.name}: ${remaining}/${total} effort left`}>
+            <span className="text-[9px] font-bold text-muted-foreground w-2 shrink-0">{stageShort(s)}</span>
             <div className="flex gap-px flex-wrap">
               {Array.from({ length: total }, (_, i) => (
                 <span
                   key={i}
-                  className={cn('w-1.5 h-2 rounded-[1px]', i < total - remaining ? 'bg-muted-foreground/20' : SPECIALISM_COLORS[s])}
+                  className={cn('w-1.5 h-2 rounded-[1px]', i < total - remaining ? 'bg-muted-foreground/20' : stageColor(s.id, stages))}
                 />
               ))}
             </div>
@@ -66,7 +61,7 @@ function EffortPips({ item }: { item: WorkItem }) {
   );
 }
 
-export function WorkItemCard({ item, assignments, isSelected, onClick, currentDay, draggable, compact, workers = [] }: WorkItemCardProps) {
+export function WorkItemCard({ item, assignments, isSelected, onClick, stages = [], currentDay, draggable, compact, workers = [] }: WorkItemCardProps) {
   const drag = useDraggable({ id: `card:${item.id}`, disabled: !draggable });
   const drop = useDroppable({ id: `card:${item.id}`, disabled: !draggable });
   const { attributes, listeners, isDragging } = drag;
@@ -109,7 +104,7 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, currentDa
         </span>
       </div>
 
-      {item.column !== 'done' && (compact ? <EffortTotals item={item} /> : <EffortPips item={item} />)}
+      {item.column !== 'done' && (compact ? <EffortTotals item={item} stages={stages} /> : <EffortPips item={item} stages={stages} />)}
 
       {isActive && item.blocked && (
         <div className="mt-1 text-[10px] text-destructive leading-tight">{item.blockerEffort} to unblock</div>
@@ -130,7 +125,7 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, currentDa
                 key={a.workerId}
                 className={cn(
                   'inline-flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold text-white',
-                  SPECIALISM_COLORS[worker.specialism],
+                  stageColor(worker.specialism, stages),
                   !isSpec && 'opacity-60',
                 )}
                 title={`${worker.name} (${worker.specialism}${isSpec ? ' - specialist' : ' - 60% effective'})`}

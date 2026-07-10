@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import type { RoundState, Specialism } from './types';
-import { DAYS_PER_ROUND, STAGES, pullTarget, laneOf, stageOf, underfilledStage, bottleneckStage } from './config';
+import { DAYS_PER_ROUND, pullTarget, laneOf, stageOf, underfilledStage, bottleneckStage, isLastStage } from './config';
 import { StageColumn } from './StageColumn';
 import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
@@ -18,12 +18,12 @@ import { RoundReport } from './RoundReport';
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { WorkItem, WorkerAssignment, WorkerDef } from './types';
+import type { WorkItem, WorkerAssignment, WorkerDef, StageDef } from './types';
 
 /** Done is a drop target for Test-Done cards. Must live INSIDE <DndContext>, so
  *  it's a child component (a useDroppable hook in BoardView's body would sit
  *  outside the context it renders and never register). */
-function DoneColumn({ items, assignments, workers, canInteract }: { items: WorkItem[]; assignments: WorkerAssignment[]; workers: WorkerDef[]; canInteract: boolean }) {
+function DoneColumn({ items, assignments, workers, stages, canInteract }: { items: WorkItem[]; assignments: WorkerAssignment[]; workers: WorkerDef[]; stages: StageDef[]; canInteract: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'lane:done', disabled: !canInteract });
   return (
     <div className="flex flex-col w-[150px] shrink-0">
@@ -39,7 +39,7 @@ function DoneColumn({ items, assignments, workers, canInteract }: { items: WorkI
       >
         {items.length === 0 && <div className="text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
         {items.map((item) => (
-          <WorkItemCard key={item.id} item={item} assignments={assignments} workers={workers} isSelected={false} onClick={() => {}} />
+          <WorkItemCard key={item.id} item={item} assignments={assignments} workers={workers} stages={stages} isSelected={false} onClick={() => {}} />
         ))}
       </div>
     </div>
@@ -122,14 +122,14 @@ export function BoardView({
       const item = round.items.find((i) => i.id === cardId);
       if (!item) return;
       if (over.startsWith('lane:')) {
-        if (pullTarget(item.column) === over.slice('lane:'.length)) onPullItem(cardId);
+        if (pullTarget(item.column, round.stages) === over.slice('lane:'.length)) onPullItem(cardId);
       } else if (over.startsWith('card:')) {
         const overId = over.slice('card:'.length);
         if (overId === cardId) return;
         const overItem = round.items.find((i) => i.id === overId);
         if (!overItem) return;
         if (overItem.column === item.column) onReorderItem(cardId, overId); // same lane → reorder
-        else if (pullTarget(item.column) === overItem.column) onPullItem(cardId); // dropped onto a card in the target lane → pull
+        else if (pullTarget(item.column, round.stages) === overItem.column) onPullItem(cardId); // dropped onto a card in the target lane → pull
       }
     }
   };
@@ -147,10 +147,10 @@ export function BoardView({
     (i) => laneOf(i.column) === 'active' && (i.blocked || i.effortRemaining[stageOf(i.column)!] > 0),
   );
   // Maximize WIP: block Run Day while a stage is below its limit with work waiting.
-  const blockedStage = round.maximizeWip ? underfilledStage(items, round.wipLimits) : null;
-  const stageLabel = blockedStage ? STAGES.find((s) => s.stage === blockedStage)?.label : null;
+  const blockedStage = round.maximizeWip ? underfilledStage(items, round.wipLimits, round.stages) : null;
+  const stageLabel = blockedStage ? round.stages.find((s) => s.id === blockedStage)?.name : null;
   // Bottleneck: a full stage with work queued in front of it (P4: see where flow stalls).
-  const bottleneck = bottleneckStage(items, round.wipLimits);
+  const bottleneck = bottleneckStage(items, round.wipLimits, round.stages);
 
   return (
     <div className="flex flex-col h-[calc(100dvh-4rem)] p-4 gap-3">
@@ -171,6 +171,7 @@ export function BoardView({
           <WorkerPool
             workers={round.workers}
             assignments={round.assignments}
+            stages={round.stages}
             selectedWorkerId={selectedWorkerId}
             onSelectWorker={handleSelectWorker}
             onUnassign={onUnassignWorker}
@@ -242,34 +243,35 @@ export function BoardView({
             <div className="flex-1 border border-border rounded-b-lg bg-card/50 p-1.5 grid grid-cols-2 gap-1 content-start min-h-[200px] overflow-y-auto">
               {backlogItems.length === 0 && <div className="col-span-2 text-xs text-muted-foreground/40 text-center py-4">Empty</div>}
               {backlogItems.map((item) => (
-                <WorkItemCard key={item.id} item={item} assignments={round.assignments} workers={round.workers} isSelected={false} onClick={() => {}} draggable={canInteract} compact />
+                <WorkItemCard key={item.id} item={item} assignments={round.assignments} workers={round.workers} stages={round.stages} isSelected={false} onClick={() => {}} draggable={canInteract} compact />
               ))}
             </div>
           </div>
 
           {/* Stages */}
-          {STAGES.map((s) => (
+          {round.stages.map((s) => (
             <StageColumn
-              key={s.stage}
-              stage={s.stage}
-              label={s.label}
+              key={s.id}
+              stage={s.id}
+              label={s.name}
               items={items}
               assignments={round.assignments}
               workers={round.workers}
               wipLimits={round.wipLimits}
               enforceWip={round.enforceWip}
-              isBottleneck={bottleneck === s.stage}
+              stages={round.stages}
+              isBottleneck={bottleneck === s.id}
               canInteract={canInteract}
               currentDay={round.day}
               selectedWorkerId={selectedWorkerId}
-              hasDoneLane={s.stage !== 'test'}
+              hasDoneLane={!isLastStage(s.id, round.stages)}
               onAssignCard={handleAssignCard}
               onSetWip={onSetWip}
             />
           ))}
 
           {/* Done — narrow single column; drop zone for Test Done cards */}
-          <DoneColumn items={doneItems} assignments={round.assignments} workers={round.workers} canInteract={canInteract} />
+          <DoneColumn items={doneItems} assignments={round.assignments} workers={round.workers} stages={round.stages} canInteract={canInteract} />
         </div>
       </DndContext>
 

@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, DEFAULT_WORKFLOW, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData } from './types';
+
+/** The default three stages, passed to the stage-aware helpers under test. */
+const S = DEFAULT_WORKFLOW.stages;
 
 /** A stub RNG that makes every d6 roll a known value (rollDie = floor(rng*6)+1). */
 function fixedRoll(value: number): Rng {
@@ -27,6 +30,7 @@ function round(items: WorkItem[], over: Partial<RoundState> = {}): RoundState {
     dayPhase: 'assign',
     newBlockers: [],
     workers: WORKERS,
+    stages: DEFAULT_WORKFLOW.stages,
     ...over,
   };
 }
@@ -44,31 +48,31 @@ describe('flow game config helpers', () => {
   });
 
   it('maps the player pull path Backlog -> stages -> Done', () => {
-    expect(pullTarget('backlog')).toBe('analysis-active');
-    expect(pullTarget('analysis-done')).toBe('development-active');
-    expect(pullTarget('development-done')).toBe('test-active');
-    expect(pullTarget('test-done')).toBe('done');
+    expect(pullTarget('backlog', S)).toBe('analysis-active');
+    expect(pullTarget('analysis-done', S)).toBe('development-active');
+    expect(pullTarget('development-done', S)).toBe('test-active');
+    expect(pullTarget('test-done', S)).toBe('done');
     // Active lanes and Done are not player-pullable.
-    expect(pullTarget('analysis-active')).toBeNull();
-    expect(pullTarget('done')).toBeNull();
+    expect(pullTarget('analysis-active', S)).toBeNull();
+    expect(pullTarget('done', S)).toBeNull();
   });
 
   it('underfilledStage flags a stage below its limit with upstream work (Maximize WIP)', () => {
     const items = createItems(); // all 20 in backlog
     const limits = { analysis: 3, development: 3, test: 3 };
     // Analysis is empty (0/3) with a full backlog upstream -> underfilled.
-    expect(underfilledStage(items, limits)).toBe('analysis');
+    expect(underfilledStage(items, limits, S)).toBe('analysis');
     // Fill analysis to its limit (all Active, nothing handed to analysis-done yet);
     // now no stage is underfilled — dev/test have no upstream work waiting.
     items[0].column = 'analysis-active';
     items[1].column = 'analysis-active';
     items[2].column = 'analysis-active';
-    expect(underfilledStage(items, limits)).toBeNull();
+    expect(underfilledStage(items, limits, S)).toBeNull();
     // Hand one analysis item to its Done lane -> development is now underfilled (fed).
     items[2].column = 'analysis-done';
-    expect(underfilledStage(items, limits)).toBe('development');
+    expect(underfilledStage(items, limits, S)).toBe('development');
     // No limits -> never underfilled.
-    expect(underfilledStage(items, null)).toBeNull();
+    expect(underfilledStage(items, null, S)).toBeNull();
   });
 
   it('bottleneckStage flags a full stage with work queued in front of it', () => {
@@ -79,13 +83,13 @@ describe('flow game config helpers', () => {
     items[1].column = 'development-active';
     items[2].column = 'analysis-done';
     items[3].column = 'analysis-done';
-    expect(bottleneckStage(items, limits)).toBe('development');
+    expect(bottleneckStage(items, limits, S)).toBe('development');
     // Drain development below its limit -> no longer the constraint.
     items[1].column = 'development-done'; // still counts toward dev stage... keep it full
     // Move one dev item onward to test so development stageCount drops to 1 (< 2).
     items[1].column = 'test-active';
-    expect(bottleneckStage(items, limits)).toBeNull();
-    expect(bottleneckStage(items, null)).toBeNull();
+    expect(bottleneckStage(items, limits, S)).toBeNull();
+    expect(bottleneckStage(items, null, S)).toBeNull();
   });
 
   it('a full first stage with only the backlog behind it is NOT a bottleneck', () => {
@@ -96,7 +100,7 @@ describe('flow game config helpers', () => {
     items[0].column = 'analysis-active';
     items[1].column = 'analysis-active';
     items[2].column = 'analysis-active'; // Analysis full; items[3..] stay in backlog
-    expect(bottleneckStage(items, limits)).toBeNull();
+    expect(bottleneckStage(items, limits, S)).toBeNull();
   });
 
   it('stageCount counts both lanes of a stage (what WIP caps)', () => {
@@ -123,7 +127,7 @@ describe('createItems', () => {
   });
 
   it('warm start seeds work across the pipeline (upstream done, started day 1, rest in backlog)', () => {
-    const items = createItems(true);
+    const items = createItems(true, S);
     const inFlow = items.filter((i) => i.column !== 'backlog');
     expect(inFlow.length).toBeGreaterThan(0);
     // Seeded items are mid-flow: entered on day 1, not yet finished.
@@ -287,7 +291,7 @@ describe('calculateMetrics', () => {
     items[2].column = 'development-active'; items[2].startDay = 3; items[2].endDay = null;
 
     const dayHistory: DaySummaryData[] = [];
-    const m = calculateMetrics(dayHistory, items, 5);
+    const m = calculateMetrics(dayHistory, items, 5, S);
 
     expect(m.totalCompleted).toBe(2);
     expect(m.cycleTimePerItem.map((c) => c.cycleTime).sort()).toEqual([4, 5]);

@@ -1,4 +1,4 @@
-import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism, Workflow } from './types';
+import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism, Workflow, StageDef } from './types';
 
 // ============= Columns =============
 
@@ -33,75 +33,91 @@ export function laneOf(col: ColumnId): Lane | null {
 }
 export const colId = (stage: Specialism, lane: Lane): ColumnId => `${stage}-${lane}` as ColumnId;
 
-/** Where a PULLABLE item goes next (player-driven). null = not pullable. */
-export function pullTarget(col: ColumnId): ColumnId | null {
-  switch (col) {
-    case 'backlog': return 'analysis-active';
-    case 'analysis-done': return 'development-active';
-    case 'development-done': return 'test-active';
-    case 'test-done': return 'done';
-    default: return null; // active lanes & done are not pullable
-  }
+/** Index of a stage in the ordered pipeline (-1 if unknown). */
+export const stageIndex = (stageId: Specialism, stages: StageDef[]): number =>
+  stages.findIndex((s) => s.id === stageId);
+
+/** The last stage completes straight to Done (no Done lane). */
+export const isLastStage = (stageId: Specialism, stages: StageDef[]): boolean =>
+  stages.length > 0 && stages[stages.length - 1].id === stageId;
+
+/** The column an item is pulled FROM to fill a stage's Active lane: the backlog
+ *  for the first stage, otherwise the previous stage's Done lane. */
+export function upstreamOf(stageId: Specialism, stages: StageDef[]): ColumnId {
+  const idx = stageIndex(stageId, stages);
+  if (idx <= 0) return 'backlog';
+  return colId(stages[idx - 1].id, 'done');
+}
+
+/** Where a PULLABLE item goes next (player-driven). null = not pullable.
+ *  backlog -> first stage's Active; a stage's Done -> next stage's Active, or
+ *  Done for the last stage. Active lanes and Done are not pullable. */
+export function pullTarget(col: ColumnId, stages: StageDef[]): ColumnId | null {
+  if (col === 'backlog') return stages.length ? colId(stages[0].id, 'active') : null;
+  if (col === 'done' || laneOf(col) !== 'done') return null;
+  const idx = stageIndex(stageOf(col)!, stages);
+  if (idx < 0) return null;
+  return idx === stages.length - 1 ? 'done' : colId(stages[idx + 1].id, 'active');
 }
 /** Count of items in a stage (both lanes) — what the WIP limit caps. */
 export function stageCount(items: { column: ColumnId }[], stage: Specialism): number {
   return items.filter((i) => stageOf(i.column) === stage).length;
 }
 
-/** The column an item must be pulled FROM to fill a given stage's Active lane. */
-const UPSTREAM: Record<Specialism, ColumnId> = {
-  analysis: 'backlog',
-  development: 'analysis-done',
-  test: 'development-done',
-};
-
 /** TWiG "Maximize WIP": a stage that's below its limit while upstream work is
  *  waiting — i.e. capacity left idle. Returns the first such stage, or null. */
 export function underfilledStage(
   items: { column: ColumnId }[],
   wipLimits: Record<Specialism, number> | null,
+  stages: StageDef[],
 ): Specialism | null {
   if (!wipLimits) return null;
-  for (const stage of ACTIVE_COLUMNS) {
-    const below = stageCount(items, stage) < wipLimits[stage];
-    const upstreamHasWork = items.some((i) => i.column === UPSTREAM[stage]);
-    if (below && upstreamHasWork) return stage;
+  for (const s of stages) {
+    const below = stageCount(items, s.id) < wipLimits[s.id];
+    const upstreamHasWork = items.some((i) => i.column === upstreamOf(s.id, stages));
+    if (below && upstreamHasWork) return s.id;
   }
   return null;
 }
 
-/** The queue that signals a bottleneck is FINISHED upstream work waiting in the
- *  previous stage's Done lane, not raw demand. So the backlog does NOT count:
- *  Analysis sitting at its WIP limit with a full backlog is the pull system
- *  working, not a bottleneck. Only stages fed by a Done lane are eligible. */
-const BOTTLENECK_FEED: Partial<Record<Specialism, ColumnId>> = {
-  development: 'analysis-done',
-  test: 'development-done',
-};
-
 /** The bottleneck stage: one that's at/over its WIP limit while FINISHED upstream
  *  work is piling up in the Done lane in front of it (it can't pull more, so flow
- *  stalls there). Returns the stage with the largest such queue, or null. Being
- *  at the WIP limit alone is not a bottleneck - a queue of stuck work is. */
+ *  stalls there). Returns the stage with the largest such queue, or null. The
+ *  first stage is fed by the backlog (raw demand), so it is never a bottleneck. */
 export function bottleneckStage(
   items: { column: ColumnId }[],
   wipLimits: Record<Specialism, number> | null,
+  stages: StageDef[],
 ): Specialism | null {
   if (!wipLimits) return null;
   let best: Specialism | null = null;
   let bestQueue = 0;
-  for (const stage of ACTIVE_COLUMNS) {
-    const feed = BOTTLENECK_FEED[stage];
-    if (!feed) continue; // first stage is fed by the backlog (demand), never a bottleneck signal
-    const full = stageCount(items, stage) >= wipLimits[stage];
+  for (let idx = 1; idx < stages.length; idx++) {
+    const s = stages[idx];
+    const feed = colId(stages[idx - 1].id, 'done');
+    const full = stageCount(items, s.id) >= wipLimits[s.id];
     const queue = items.filter((i) => i.column === feed).length;
     if (full && queue > bestQueue) {
-      best = stage;
+      best = s.id;
       bestQueue = queue;
     }
   }
   return best;
 }
+
+// ── Stage visuals (dynamic palette) ──
+const STAGE_PALETTE = [
+  'bg-blue-500', 'bg-emerald-500', 'bg-amber-500',
+  'bg-violet-500', 'bg-rose-500', 'bg-cyan-500', 'bg-lime-500', 'bg-orange-500',
+];
+/** A stable colour class for a stage, by its position in the pipeline. The
+ *  default three stages keep blue / emerald / amber. */
+export function stageColor(stageId: Specialism, stages: StageDef[]): string {
+  const idx = stageIndex(stageId, stages);
+  return STAGE_PALETTE[(idx >= 0 ? idx : 0) % STAGE_PALETTE.length];
+}
+/** Short label for effort pips - first letter of the stage name (A/D/T default). */
+export const stageShort = (stage: StageDef): string => (stage.name[0] ?? '?').toUpperCase();
 
 // ============= Workers =============
 

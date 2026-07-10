@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ScatterChart, Scatter, LineChart, Line,
 } from 'recharts';
-import type { RoundMetrics, GamePhase, Prediction } from './types';
+import type { RoundMetrics, GamePhase, Prediction, StageDef } from './types';
 import { CumulativeFlowDiagram } from './CumulativeFlowDiagram';
 import { ExperimentPanel } from './ExperimentPanel';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ interface MetricsScreenProps {
   round1Metrics: RoundMetrics;
   round2Metrics: RoundMetrics | null;
   phase: GamePhase;
+  /** The configured stages, for the cumulative-flow bands. */
+  stages: StageDef[];
   prediction?: Prediction | null;
   onContinue: () => void;
   onPlayAgain: () => void;
@@ -207,7 +209,7 @@ function MetricsPanel({ metrics, label, color }: { metrics: RoundMetrics; label:
   );
 }
 
-export function MetricsScreen({ round1Metrics, round2Metrics, phase, prediction, onContinue, onPlayAgain }: MetricsScreenProps) {
+export function MetricsScreen({ round1Metrics, round2Metrics, phase, stages, prediction, onContinue, onPlayAgain }: MetricsScreenProps) {
   const [showCfd, setShowCfd] = useState(false);
   const [showExperiment, setShowExperiment] = useState(false);
   const isFinal = phase === 'metrics-final';
@@ -283,8 +285,8 @@ export function MetricsScreen({ round1Metrics, round2Metrics, phase, prediction,
         </button>
         {showCfd && (
           <div className="mt-4 space-y-6">
-            <CumulativeFlowDiagram metrics={round1Metrics} title="Round 1" />
-            {round2Metrics && <CumulativeFlowDiagram metrics={round2Metrics} title="Round 2" />}
+            <CumulativeFlowDiagram metrics={round1Metrics} stages={stages} title="Round 1" />
+            {round2Metrics && <CumulativeFlowDiagram metrics={round2Metrics} stages={stages} title="Round 2" />}
           </div>
         )}
       </div>
