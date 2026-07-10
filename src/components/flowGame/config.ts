@@ -1,4 +1,4 @@
-import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism } from './types';
+import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism, Workflow } from './types';
 
 // ============= Columns =============
 
@@ -113,6 +113,13 @@ export const WORKERS: WorkerDef[] = [
   { id: 'w5', name: 'Taylor', initials: 'TA', specialism: 'test' },
   { id: 'w6', name: 'Morgan', initials: 'MO', specialism: 'test' },
 ];
+
+/** The default board: the standard three stages and six-person team. A game
+ *  starts from this and (later) the player can edit it. */
+export const DEFAULT_WORKFLOW: Workflow = {
+  stages: STAGES.map((s) => ({ id: s.stage, name: s.label })),
+  workers: WORKERS,
+};
 
 /** Effectiveness multiplier when working outside specialism */
 export const OFF_SPEC_MULTIPLIER = 0.6;

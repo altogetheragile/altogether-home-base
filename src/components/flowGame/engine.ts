@@ -9,7 +9,6 @@ import type {
   Specialism,
 } from './types';
 import {
-  WORKERS,
   WORK_ITEMS,
   OFF_SPEC_MULTIPLIER,
   BLOCKER_CHANCE,
@@ -137,7 +136,7 @@ export function simulateDay(state: RoundState, rng: Rng = makeSeededRng(state.se
   const blockersCleared: string[] = [];
 
   for (const assignment of state.assignments) {
-    const worker = WORKERS.find((w) => w.id === assignment.workerId);
+    const worker = state.workers.find((w) => w.id === assignment.workerId);
     if (!worker) continue;
 
     const item = workingItems.find((i) => i.id === assignment.cardId);
