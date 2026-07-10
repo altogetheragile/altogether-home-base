@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, itemEffort, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
@@ -331,6 +331,16 @@ describe('configurable workflow', () => {
     expect(pullTarget('qa-done', CUSTOM)).toBe('release-active');
     // The last stage completes straight to Done.
     expect(pullTarget('release-done', CUSTOM)).toBe('done');
+  });
+
+  it('every stage - built-in or custom - gets a starting WIP limit (and thus a −/+ editor)', () => {
+    const wip = defaultWipLimits(CUSTOM);
+    // Every custom stage gets the sensible default of 3 (none left uncapped,
+    // which is what hid the −/+ editor before).
+    expect(wip).toEqual({ design: 3, build: 3, qa: 3, release: 3 });
+    for (const s of CUSTOM) expect(wip[s.id]).toBeGreaterThan(0);
+    // A renamed built-in stage keeps its own default via its stable id.
+    expect(defaultWipLimits([{ id: 'analysis', name: 'Research' }])).toEqual({ analysis: 3 });
   });
 
   it('the configured last stage completes to Done (not a hardcoded "test")', () => {

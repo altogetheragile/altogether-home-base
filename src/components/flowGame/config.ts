@@ -199,3 +199,11 @@ export const DEFAULT_WIP_LIMITS: Record<Specialism, number> = {
   development: 3,
   test: 3,
 };
+
+/** Starting WIP limit for every configured stage: the known default for the
+ *  built-in stages, and a sensible 3 for any custom stage the player adds. Keyed
+ *  by stage id so a renamed or added stage still gets a limit (and its inline
+ *  −/+ editor) rather than being left uncapped. */
+export function defaultWipLimits(stages: StageDef[]): Record<Specialism, number> {
+  return Object.fromEntries(stages.map((s) => [s.id, DEFAULT_WIP_LIMITS[s.id] ?? 3]));
+}

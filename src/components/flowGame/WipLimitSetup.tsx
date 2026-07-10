@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Specialism, Prediction, StageDef } from './types';
-import { DEFAULT_WIP_LIMITS } from './config';
+import { defaultWipLimits } from './config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -19,9 +19,7 @@ interface WipLimitSetupProps {
 }
 
 export function WipLimitSetup({ round1CycleTime, stages, onStart, onPredict }: WipLimitSetupProps) {
-  const [limits, setLimits] = useState<Record<Specialism, number>>(() =>
-    Object.fromEntries(stages.map((s) => [s.id, DEFAULT_WIP_LIMITS[s.id] ?? 3])),
-  );
+  const [limits, setLimits] = useState<Record<Specialism, number>>(() => defaultWipLimits(stages));
   const [prediction, setPrediction] = useState<Prediction | null>(null);
 
   const updateLimit = (col: Specialism, delta: number) => {
