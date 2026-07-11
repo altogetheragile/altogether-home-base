@@ -157,7 +157,7 @@ export default function FlowGame() {
           <GameIntro
             workflow={state.workflow}
             onSetWorkflow={setWorkflow}
-            onStart={(warmStart) => startRound(1, undefined, warmStart)}
+            onStart={(scenario) => startRound(1, undefined, scenario)}
             canResume={!!user}
             onOpenSaves={() => setSavesOpen(true)}
           />

@@ -1,5 +1,5 @@
 import { useReducer, useCallback } from 'react';
-import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef, Workflow } from './types';
+import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef, Workflow, StartScenario } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
 import { DAYS_PER_ROUND, defaultWipLimits, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
 
@@ -17,14 +17,14 @@ export function keepActiveAssignments(assignments: WorkerAssignment[], items: Wo
 function createRound(
   roundNumber: 1 | 2,
   wipLimits?: Record<Specialism, number>,
-  warmStart = false,
+  scenario: StartScenario = 'empty',
   workers: WorkerDef[] = DEFAULT_WORKFLOW.workers,
   stages: StageDef[] = DEFAULT_WORKFLOW.stages,
 ): RoundState {
   return {
     roundNumber,
     day: 1,
-    items: createItems(warmStart, stages),
+    items: createItems(scenario, stages),
     assignments: [],
     dayHistory: [],
     // Limits are always editable; round 1 starts with them OFF (the chaos baseline),
@@ -48,7 +48,7 @@ const initialState: GameState = {
   round1Metrics: null,
   round2Metrics: null,
   prediction: null,
-  warmStart: false,
+  startScenario: 'empty',
   workflow: DEFAULT_WORKFLOW,
 };
 
@@ -56,6 +56,9 @@ const initialState: GameState = {
  *  saved game (no workflow, or a round without stages/workers) still loads. */
 function withWorkflowDefaults(state: GameState): GameState {
   const workflow = state.workflow ?? DEFAULT_WORKFLOW;
+  // Map pre-scenario saves (which had a boolean `warmStart`) onto the scenario.
+  const legacyWarmStart = (state as unknown as { warmStart?: boolean }).warmStart;
+  const startScenario: StartScenario = state.startScenario ?? (legacyWarmStart ? 'healthy' : 'empty');
   let round = state.round;
   if (round) {
     const stages = round.stages ?? workflow.stages;
@@ -68,18 +71,18 @@ function withWorkflowDefaults(state: GameState): GameState {
       wipLimits: round.wipLimits ? { ...defaultWipLimits(stages), ...round.wipLimits } : round.wipLimits,
     };
   }
-  return { ...state, workflow, round };
+  return { ...state, workflow, round, startScenario };
 }
 
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'START_ROUND': {
-      // Round 1 sets the warm-start choice; Round 2 reuses it so both rounds
-      // start from the same board and the comparison stays fair.
-      const warmStart = action.roundNumber === 1 ? !!action.warmStart : state.warmStart;
-      const round = createRound(action.roundNumber, action.wipLimits, warmStart, state.workflow.workers, state.workflow.stages);
+      // Round 1 sets the start scenario; Round 2 reuses it so both rounds start
+      // from the same board and the comparison stays fair.
+      const startScenario = action.roundNumber === 1 ? action.scenario ?? 'empty' : state.startScenario;
+      const round = createRound(action.roundNumber, action.wipLimits, startScenario, state.workflow.workers, state.workflow.stages);
       const phase = action.roundNumber === 1 ? 'playing-round-1' : 'playing-round-2';
-      return { ...state, phase, round, warmStart };
+      return { ...state, phase, round, startScenario };
     }
 
     case 'PULL_ITEM': {
@@ -282,8 +285,8 @@ export function useFlowGame() {
   const nextDay = useCallback(() => dispatch({ type: 'NEXT_DAY' }), []);
 
   const startRound = useCallback(
-    (roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>, warmStart?: boolean) =>
-      dispatch({ type: 'START_ROUND', roundNumber, wipLimits, warmStart }),
+    (roundNumber: 1 | 2, wipLimits?: Record<Specialism, number>, scenario?: StartScenario) =>
+      dispatch({ type: 'START_ROUND', roundNumber, wipLimits, scenario }),
     []
   );
 
