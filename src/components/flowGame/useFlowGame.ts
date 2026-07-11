@@ -230,6 +230,21 @@ function reducer(state: GameState, action: GameAction): GameState {
       // running round already carries its own copy of the stages and workers.
       return { ...state, workflow: action.workflow };
 
+    case 'SET_ROSTER': {
+      // In-game team edit: update the live round's roster and the workflow (so the
+      // change carries to Round 2), and free any card held by a removed worker.
+      const roster = action.workers;
+      const ids = new Set(roster.map((w) => w.id));
+      const workflow = { ...state.workflow, workers: roster };
+      if (!state.round) return { ...state, workflow };
+      const round = {
+        ...state.round,
+        workers: roster,
+        assignments: state.round.assignments.filter((a) => ids.has(a.workerId)),
+      };
+      return { ...state, workflow, round };
+    }
+
     case 'LOAD_GAME':
       // Replace the whole game with a loaded save. The state is a single
       // serialisable object, so this restores the board, day, metrics and seed.
@@ -284,6 +299,8 @@ export function useFlowGame() {
 
   const setWorkflow = useCallback((workflow: Workflow) => dispatch({ type: 'SET_WORKFLOW', workflow }), []);
 
+  const setRoster = useCallback((workers: WorkerDef[]) => dispatch({ type: 'SET_ROSTER', workers }), []);
+
   const loadGame = useCallback((s: GameState) => dispatch({ type: 'LOAD_GAME', state: s }), []);
 
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
@@ -310,6 +327,7 @@ export function useFlowGame() {
     setPhase,
     setPrediction,
     setWorkflow,
+    setRoster,
     loadGame,
     reset,
     getUnassignedWorkers,
