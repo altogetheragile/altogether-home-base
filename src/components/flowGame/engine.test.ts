@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, nextWorkerName, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
@@ -341,6 +341,16 @@ describe('configurable workflow', () => {
     for (const s of CUSTOM) expect(wip[s.id]).toBeGreaterThan(0);
     // A renamed built-in stage keeps its own default via its stable id.
     expect(defaultWipLimits([{ id: 'analysis', name: 'Research' }])).toEqual({ analysis: 3 });
+  });
+
+  it('a fresh teammate gets the next unused real name, not "Teammate N"', () => {
+    // The default six are taken, so the next add is the first pool name after them.
+    expect(nextWorkerName(DEFAULT_WORKFLOW.workers)).toBe('Robin');
+    // Skips names already in use (case-insensitive) rather than duplicating.
+    const withRobin = [...DEFAULT_WORKFLOW.workers, { id: 'w7', name: 'robin', initials: 'RO', specialism: 'test' }];
+    expect(nextWorkerName(withRobin)).toBe('Riley');
+    // An empty team starts at the very first pool name.
+    expect(nextWorkerName([])).toBe('Alex');
   });
 
   it('the configured last stage completes to Done (not a hardcoded "test")', () => {

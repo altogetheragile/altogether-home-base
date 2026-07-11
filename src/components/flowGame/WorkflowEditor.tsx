@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Workflow, StageDef, WorkerDef, Specialism } from './types';
-import { DEFAULT_WORKFLOW, stageColor } from './config';
+import { DEFAULT_WORKFLOW, stageColor, nextWorkerName } from './config';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -14,10 +14,14 @@ interface WorkflowEditorProps {
   onSave: (workflow: Workflow) => void;
 }
 
-/** First two letters of a name, for the worker pawn badge. */
+/** Two-character badge for a worker: first letters of the first and last words
+ *  for a multi-word name (so "Teammate 7" -> "T7", "Mary Jane" -> "MJ"), or the
+ *  first two letters of a single word ("Alex" -> "AL"). Keeps badges distinct. */
 const toInitials = (name: string): string => {
-  const clean = name.trim();
-  return (clean.slice(0, 2) || '??').toUpperCase();
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '??';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
 /** A hyphen-free unique stage id — column ids are `${stageId}-active`, and
@@ -74,10 +78,13 @@ export function WorkflowEditor({ workflow, onSave }: WorkflowEditorProps) {
     setWorkers((prev) => prev.map((w) => (w.id === id ? { ...w, specialism } : w)));
   const removeWorker = (id: string) => setWorkers((prev) => (prev.length > 1 ? prev.filter((w) => w.id !== id) : prev));
   const addWorker = () =>
-    setWorkers((prev) => [
-      ...prev,
-      { id: nextWorkerId(prev), name: `Teammate ${prev.length + 1}`, initials: '??', specialism: stages[0]?.id ?? 'stage1' },
-    ]);
+    setWorkers((prev) => {
+      const name = nextWorkerName(prev);
+      return [
+        ...prev,
+        { id: nextWorkerId(prev), name, initials: toInitials(name), specialism: stages[0]?.id ?? 'stage1' },
+      ];
+    });
 
   const resetToDefault = () => {
     const def = cloneWorkflow(DEFAULT_WORKFLOW);
