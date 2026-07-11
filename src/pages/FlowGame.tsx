@@ -57,6 +57,7 @@ export default function FlowGame() {
     setPhase,
     setPrediction,
     setWorkflow,
+    setRoster,
     loadGame,
     reset,
   } = useFlowGame();
@@ -178,6 +179,7 @@ export default function FlowGame() {
             onRunDay={runDay}
             onNextDay={nextDay}
             onSaveGame={requestSave}
+            onEditTeam={setRoster}
           />
         );
 

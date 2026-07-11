@@ -15,6 +15,7 @@ import { WorkItemCard } from './WorkItemCard';
 import { WorkerPool } from './WorkerPool';
 import { DaySummary } from './DaySummary';
 import { RoundReport } from './RoundReport';
+import { TeamEditor } from './TeamEditor';
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,7 @@ interface BoardViewProps {
   onRunDay: () => void;
   onNextDay: () => void;
   onSaveGame?: () => void;
+  onEditTeam: (workers: WorkerDef[]) => void;
 }
 
 export function BoardView({
@@ -72,6 +74,7 @@ export function BoardView({
   onRunDay,
   onNextDay,
   onSaveGame,
+  onEditTeam,
 }: BoardViewProps) {
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const canInteract = round.dayPhase === 'assign';
@@ -170,6 +173,7 @@ export function BoardView({
         </div>
 
         <div className="shrink-0 flex items-center gap-3">
+          <TeamEditor workers={round.workers} stages={round.stages} onSave={onEditTeam} />
           {onSaveGame && (
             <Button variant="outline" size="sm" onClick={onSaveGame}>
               <Save className="mr-1.5 h-4 w-4" /> Save

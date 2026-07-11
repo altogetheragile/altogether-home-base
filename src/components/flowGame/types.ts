@@ -180,5 +180,6 @@ export type GameAction =
   | { type: 'SET_PREDICTION'; prediction: Prediction }
   | { type: 'SET_PHASE'; phase: GamePhase }
   | { type: 'SET_WORKFLOW'; workflow: Workflow }
+  | { type: 'SET_ROSTER'; workers: WorkerDef[] }
   | { type: 'LOAD_GAME'; state: GameState }
   | { type: 'RESET' };

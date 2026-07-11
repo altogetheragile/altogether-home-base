@@ -150,6 +150,41 @@ export function nextWorkerName(existing: WorkerDef[]): string {
   return free ?? `Teammate ${existing.length + 1}`;
 }
 
+/** A hyphen-free unique worker id (`w1`, `w2`, ...). */
+export function nextWorkerId(existing: WorkerDef[]): string {
+  const ids = new Set(existing.map((w) => w.id));
+  let n = existing.length + 1;
+  while (ids.has(`w${n}`)) n++;
+  return `w${n}`;
+}
+
+/** Two-character badge for a worker: first letters of the first and last words
+ *  for a multi-word name ("Mary Jane" -> MJ, "Teammate 7" -> T7), or the first
+ *  two letters of a single word ("Alex" -> AL). Keeps badges distinct. */
+export function toInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '??';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/** A fresh teammate with a real name, matching badge, and a valid specialism. */
+export function makeWorker(existing: WorkerDef[], stages: StageDef[]): WorkerDef {
+  const name = nextWorkerName(existing);
+  return { id: nextWorkerId(existing), name, initials: toInitials(name), specialism: stages[0]?.id ?? 'stage1' };
+}
+
+/** Normalise an edited roster: non-empty names, fresh initials, and every worker
+ *  pinned to a stage that still exists (its stage may have been deleted). */
+export function normalizeWorkers(workers: WorkerDef[], stages: StageDef[]): WorkerDef[] {
+  const stageIds = new Set(stages.map((s) => s.id));
+  const fallback = stages[0]?.id ?? 'stage1';
+  return workers.map((w, i) => {
+    const name = w.name.trim() || `Teammate ${i + 1}`;
+    return { id: w.id, name, initials: toInitials(name), specialism: stageIds.has(w.specialism) ? w.specialism : fallback };
+  });
+}
+
 /** The default board: the standard three stages and six-person team. A game
  *  starts from this and (later) the player can edit it. */
 export const DEFAULT_WORKFLOW: Workflow = {

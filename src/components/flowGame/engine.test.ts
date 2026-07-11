@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, nextWorkerName, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, nextWorkerName, makeWorker, normalizeWorkers, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
@@ -351,6 +351,25 @@ describe('configurable workflow', () => {
     expect(nextWorkerName(withRobin)).toBe('Riley');
     // An empty team starts at the very first pool name.
     expect(nextWorkerName([])).toBe('Alex');
+  });
+
+  it('makeWorker gives a fresh id, real name, matching badge and a valid stage', () => {
+    const w = makeWorker(DEFAULT_WORKFLOW.workers, S);
+    expect(w.id).toBe('w7');
+    expect(w.name).toBe('Robin');
+    expect(w.initials).toBe('RO');
+    expect(S.some((s) => s.id === w.specialism)).toBe(true);
+  });
+
+  it('normalizeWorkers refreshes badges, fills blank names and repins orphaned stages', () => {
+    const dirty = [
+      { id: 'w1', name: '  ', initials: 'XX', specialism: 'analysis' },      // blank name
+      { id: 'w2', name: 'Mary Jane', initials: 'zz', specialism: 'gone' },   // deleted stage
+    ];
+    const clean = normalizeWorkers(dirty, S);
+    expect(clean[0].name).toBe('Teammate 1');          // blank -> placeholder
+    expect(clean[1].initials).toBe('MJ');              // badge recomputed
+    expect(clean[1].specialism).toBe('analysis');      // orphaned stage -> first stage
   });
 
   it('the configured last stage completes to Done (not a hardcoded "test")', () => {
