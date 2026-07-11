@@ -126,24 +126,45 @@ describe('createItems', () => {
     }
   });
 
-  it('warm start seeds work across the pipeline (upstream done, started day 1, rest in backlog)', () => {
-    const items = createItems(true, S);
-    const inFlow = items.filter((i) => i.column !== 'backlog');
-    expect(inFlow.length).toBeGreaterThan(0);
-    // Seeded items are mid-flow: entered on day 1, not yet finished.
-    for (const it of inFlow) {
-      expect(it.startDay).toBe(1);
-      expect(it.endDay).toBeNull();
-    }
-    // Work sits in every active stage, and the rest stays in the backlog.
+  it('the "healthy" scenario seeds a busy-but-balanced board with shipped history', () => {
+    const items = createItems('healthy', S);
+    const shipped = items.filter((i) => i.column === 'done');
+    const inFlow = items.filter((i) => i.column !== 'backlog' && i.column !== 'done');
+    // Some work already delivered (backstory: shipped before day 1).
+    expect(shipped.length).toBeGreaterThan(0);
+    for (const it of shipped) expect(it.endDay).toBeLessThanOrEqual(0);
+    // Every stage is busy, upstream stages of an in-flight item are finished.
     const cols = new Set(inFlow.map((i) => i.column));
-    expect(cols.has('analysis-active')).toBe(true);
     expect(cols.has('development-active')).toBe(true);
-    expect(cols.has('test-active')).toBe(true);
+    const dev = inFlow.find((i) => i.column === 'development-active')!;
+    expect(dev.effortRemaining.analysis).toBe(0);
+    // Within a 3-WIP rhythm: no stage is jammed far over the limit.
+    for (const s of S) expect(stageCount(items, s.id)).toBeLessThanOrEqual(3);
     expect(items.some((i) => i.column === 'backlog')).toBe(true);
-    // A development item has its upstream (analysis) stage complete.
-    const devItem = inFlow.find((i) => i.column === 'development-active')!;
-    expect(devItem.effortRemaining.analysis).toBe(0);
+  });
+
+  it('the "struggling" scenario over-fills upstream, starves the last stage, and barely ships', () => {
+    const items = createItems('struggling', S);
+    const shipped = items.filter((i) => i.column === 'done');
+    // Barely anything delivered, and old.
+    expect(shipped.length).toBeLessThanOrEqual(2);
+    // The first stage is jammed over a 3 WIP limit; the last stage is starved.
+    expect(stageCount(items, 'analysis')).toBeGreaterThan(3);
+    expect(stageCount(items, 'test')).toBe(0);
+    // In-flight work starts aging from day 1 (so the clock and card ages agree);
+    // it then grows old as the jam persists during play.
+    const inFlow = items.filter((i) => i.column !== 'backlog' && i.column !== 'done');
+    expect(inFlow.every((i) => i.startDay === 1)).toBe(true);
+    // And at least one blocker in the jam.
+    expect(items.some((i) => i.blocked)).toBe(true);
+  });
+
+  it('pre-shipped backstory does not count toward the round cycle-time metric', () => {
+    const items = createItems('healthy', S);
+    const m = calculateMetrics([], items, 20, S);
+    // Nothing was completed during the round (day >= 1), so no cycle-time entries.
+    expect(m.totalCompleted).toBe(0);
+    expect(m.cycleTimePerItem).toEqual([]);
   });
 });
 
@@ -318,7 +339,7 @@ describe('configurable workflow', () => {
   });
 
   it('a custom pipeline gets real per-stage effort (added stages are not free)', () => {
-    const items = createItems(false, CUSTOM);
+    const items = createItems('empty', CUSTOM);
     expect(Object.keys(items[0].effortTotal).sort()).toEqual(['build', 'design', 'qa', 'release']);
     // Every stage carries positive effort, so nothing passes straight through.
     for (const s of CUSTOM) expect(items[0].effortTotal[s.id]).toBeGreaterThan(0);
@@ -373,7 +394,7 @@ describe('configurable workflow', () => {
   });
 
   it('the configured last stage completes to Done (not a hardcoded "test")', () => {
-    const item = createItems(false, CUSTOM)[0];
+    const item = createItems('empty', CUSTOM)[0];
     item.column = 'release-active';
     item.startDay = 1;
     item.effortRemaining = { design: 0, build: 0, qa: 0, release: 3 };

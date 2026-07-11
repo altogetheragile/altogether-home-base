@@ -148,6 +148,11 @@ export interface RoundState {
 /** Player's pre-reveal guess for how Round 2's avg cycle time compares to Round 1. */
 export type Prediction = 'lower' | 'same' | 'higher';
 
+/** How the board is seeded at the start. 'empty' pulls from an empty backlog;
+ *  the others drop you into an established team's flow - 'healthy' delivering
+ *  steadily, 'struggling' jammed with too much WIP and little shipping. */
+export type StartScenario = 'empty' | 'healthy' | 'struggling';
+
 export interface GameState {
   phase: GamePhase;
   round: RoundState | null;
@@ -155,10 +160,10 @@ export interface GameState {
   round2Metrics: RoundMetrics | null;
   /** Captured on the WIP-setup screen before Round 2; revealed against the result. */
   prediction: Prediction | null;
-  /** Chosen at the intro: start with work already spread across the board
-   *  (a warm start) rather than an empty day-1 backlog. Reused for Round 2 so
-   *  both rounds start from the same board and stay comparable. */
-  warmStart: boolean;
+  /** Chosen at the intro: how the board starts (empty, or mid-flow as a healthy
+   *  or struggling team). Reused for Round 2 so both rounds start from the same
+   *  board and stay comparable. */
+  startScenario: StartScenario;
   /** The configurable board (stages + team). Defaults to the standard setup. */
   workflow: Workflow;
 }
@@ -166,7 +171,7 @@ export interface GameState {
 // ============= Actions =============
 
 export type GameAction =
-  | { type: 'START_ROUND'; roundNumber: 1 | 2; wipLimits?: Record<Specialism, number>; warmStart?: boolean }
+  | { type: 'START_ROUND'; roundNumber: 1 | 2; wipLimits?: Record<Specialism, number>; scenario?: StartScenario }
   | { type: 'PULL_ITEM'; cardId: string }
   | { type: 'REORDER_ITEM'; activeId: string; overId: string }
   | { type: 'SET_WIP'; stage: Specialism; value: number }

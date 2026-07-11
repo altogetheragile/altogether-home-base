@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { WorkflowEditor } from './WorkflowEditor';
-import type { Workflow } from './types';
+import type { Workflow, StartScenario } from './types';
 
 interface GameIntroProps {
-  onStart: (warmStart: boolean) => void;
+  onStart: (scenario: StartScenario) => void;
   /** The configurable board, shown in the brief and editable before starting. */
   workflow: Workflow;
   onSetWorkflow: (workflow: Workflow) => void;
@@ -13,6 +13,13 @@ interface GameIntroProps {
   canResume?: boolean;
   onOpenSaves?: () => void;
 }
+
+/** The start-state choices offered on the intro, each with a one-line pitch. */
+const SCENARIOS: { id: StartScenario; label: string; blurb: string }[] = [
+  { id: 'empty', label: 'Empty board', blurb: 'Everything starts in the backlog - you pull the first work in.' },
+  { id: 'healthy', label: 'Doing OK', blurb: 'Drop into a team already delivering steadily - every stage busy, work shipped, flow under control.' },
+  { id: 'struggling', label: 'In trouble', blurb: 'Inherit an overloaded board - too much WIP, a jammed stage, old stuck work barely shipping. Can you rescue the flow?' },
+];
 
 /** Join stage names into readable prose: "A, B, and C". */
 function stageList(names: string[]): string {
@@ -22,9 +29,10 @@ function stageList(names: string[]): string {
 }
 
 export function GameIntro({ onStart, workflow, onSetWorkflow, canResume, onOpenSaves }: GameIntroProps) {
-  const [warmStart, setWarmStart] = useState(false);
+  const [scenario, setScenario] = useState<StartScenario>('empty');
   const stageNames = workflow.stages.map((s) => s.name);
   const teamSize = workflow.workers.length;
+  const activeBlurb = SCENARIOS.find((s) => s.id === scenario)?.blurb ?? '';
   return (
     // Fill the viewport below the 4rem nav and centre the card, so the whole
     // brief - heading through the Start button - sits above the fold with no
@@ -60,38 +68,27 @@ export function GameIntro({ onStart, workflow, onSetWorkflow, canResume, onOpenS
       </div>
 
       <div className="flex flex-col items-center gap-3">
-        {/* Start mode: an empty backlog, or a board already mid-flow. */}
+        {/* Start state: an empty backlog, or drop into an established team's flow. */}
         <div className="inline-flex rounded-lg border border-border bg-card p-1 text-sm">
-          <button
-            type="button"
-            onClick={() => setWarmStart(false)}
-            className={cn(
-              'rounded-md px-3 py-1.5 font-medium transition-colors',
-              !warmStart ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            Empty board
-          </button>
-          <button
-            type="button"
-            onClick={() => setWarmStart(true)}
-            className={cn(
-              'rounded-md px-3 py-1.5 font-medium transition-colors',
-              warmStart ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            Start mid-flow
-          </button>
+          {SCENARIOS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setScenario(s.id)}
+              className={cn(
+                'rounded-md px-3 py-1.5 font-medium transition-colors',
+                scenario === s.id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
-        <p className="text-xs text-muted-foreground">
-          {warmStart
-            ? 'Some work is already in progress across the board - jump straight in.'
-            : 'Everything starts in the backlog - you pull the first work in.'}
-        </p>
+        <p className="max-w-md text-xs text-muted-foreground">{activeBlurb}</p>
 
         <div className="flex flex-wrap items-center justify-center gap-3">
           <WorkflowEditor workflow={workflow} onSave={onSetWorkflow} />
-          <Button size="lg" onClick={() => onStart(warmStart)} className="px-8 py-6 text-lg">
+          <Button size="lg" onClick={() => onStart(scenario)} className="px-8 py-6 text-lg">
             Start Round 1
           </Button>
         </div>

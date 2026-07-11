@@ -6,8 +6,8 @@ import type {
   RoundState,
   ColumnId,
   ColumnSnapshot,
-  Specialism,
   StageDef,
+  StartScenario,
 } from './types';
 import {
   WORK_ITEMS,
@@ -24,7 +24,7 @@ import {
 
 // ============= Item Factory =============
 
-export function createItems(warmStart = false, stages: StageDef[] = DEFAULT_WORKFLOW.stages): WorkItem[] {
+export function createItems(scenario: StartScenario = 'empty', stages: StageDef[] = DEFAULT_WORKFLOW.stages): WorkItem[] {
   const items: WorkItem[] = WORK_ITEMS.map((def, i) => {
     // Effort is generated for the CURRENT stages so a custom pipeline gets real
     // work per stage rather than the fixed analysis/development/test triple.
@@ -41,51 +41,79 @@ export function createItems(warmStart = false, stages: StageDef[] = DEFAULT_WORK
       endDay: null,
     };
   });
-  if (warmStart) seedWarmStart(items, stages);
+  seedScenario(items, stages, scenario);
   return items;
 }
 
-// A "warm start" board: a handful of items already spread across the pipeline so
-// the player continues mid-flow instead of pulling everything from an empty
-// backlog. Deterministic (a fixed layout, not RNG) so BOTH rounds start from the
-// same board and stay comparable. Upstream stages are marked done (0 remaining),
-// the current stage is part-worked, and each in-flow item started on day 1. Kept
-// under the default 3/3/3 WIP limits, and includes a Done-lane item to pull.
-function seedWarmStart(items: WorkItem[], stages: StageDef[]): void {
-  // Placement is by pipeline position so it holds for any stage set: the first
-  // few items sit part-worked across the opening stages, one waits in a Done lane
-  // to pull. Needs at least two stages; degrades to fewer placements otherwise.
-  const stageId = (idx: number): Specialism | null => stages[idx]?.id ?? null;
-  const place = (
-    index: number,
-    stageIdx: number,
-    lane: 'active' | 'done',
-    partialRemaining?: number,
-  ) => {
-    const item = items[index];
-    const sId = stageId(stageIdx);
-    if (!item || !sId) return;
-    item.column = colId(sId, lane);
-    item.startDay = 1;
-    // Every earlier stage is finished (0 remaining).
-    for (let i = 0; i < stageIdx; i++) {
-      const prev = stageId(i);
-      if (prev) item.effortRemaining[prev] = 0;
-    }
-    if (lane === 'done') {
-      item.effortRemaining[sId] = 0;
-    } else if (partialRemaining !== undefined) {
-      item.effortRemaining[sId] = Math.max(0, Math.min(item.effortTotal[sId] ?? 0, partialRemaining));
+// Seed the board to mimic an established team already mid-flow. Deterministic (a
+// fixed layout, not RNG) so BOTH rounds start from the same board and stay
+// comparable. Placement is by pipeline position so it holds for any stage set.
+//
+// In-flight work starts aging from day 1 (startDay = 1), so the board's day
+// counter and each card's age always agree — stuck items visibly grow older as
+// play goes on. Already-shipped items sit in Done as backstory, dated before the
+// round (endDay <= 0); calculateMetrics only counts completions from day 1 on, so
+// that history does not distort the round's throughput / cycle-time comparison.
+function seedScenario(items: WorkItem[], stages: StageDef[], scenario: StartScenario): void {
+  if (scenario === 'empty' || stages.length === 0) return;
+  const lastIdx = stages.length - 1;
+  let cursor = 0;
+  const next = (): WorkItem | null => (cursor < items.length ? items[cursor++] : null);
+
+  // Already delivered before the round (backstory: endDay <= 0 so it is not
+  // counted in the round's metrics). `cycle` is the historical cycle time shown
+  // on the Done card.
+  const ship = (cycle: number) => {
+    const it = next();
+    if (!it) return;
+    it.column = 'done';
+    it.startDay = 1 - cycle;
+    it.endDay = 0;
+    for (const s of stages) it.effortRemaining[s.id] = 0;
+  };
+
+  // In flow at a stage from day 1: earlier stages finished, this stage part-worked
+  // (active) or finished and waiting to be pulled (done lane).
+  const inFlow = (stageIdx: number, lane: 'active' | 'done', remaining: number, blocked = false) => {
+    const it = next();
+    const sId = stages[stageIdx]?.id;
+    if (!it || !sId) return;
+    it.column = colId(sId, lane);
+    it.startDay = 1;
+    for (let i = 0; i < stageIdx; i++) it.effortRemaining[stages[i].id] = 0;
+    it.effortRemaining[sId] = lane === 'done' ? 0 : Math.max(1, Math.min(it.effortTotal[sId] ?? 1, remaining));
+    if (blocked) {
+      it.blocked = true;
+      it.blockerEffort = BLOCKER_EFFORT[sId] ?? 3;
     }
   };
-  // item-1: in the first stage, part-way through it.
-  place(0, 0, 'active', 2);
-  // item-2: first stage done, part-way through the second.
-  place(1, 1, 'active', 3);
-  // item-3: through the second stage, waiting in its Done lane to be pulled.
-  place(2, 1, 'done');
-  // item-4: part-way through the third stage (if one exists).
-  place(3, 2, 'active', 2);
+
+  if (scenario === 'healthy') {
+    // Steady delivery: a handful shipped, every stage busy but within a ~3 WIP
+    // rhythm, plenty still to come in the backlog.
+    for (let s = 0; s < 5; s++) ship(4 + s);
+    stages.forEach((_, i) => {
+      inFlow(i, 'active', 3);
+      inFlow(i, 'active', 2);
+      if (i !== lastIdx) inFlow(i, 'done', 0);
+    });
+  } else if (scenario === 'struggling') {
+    // Too much WIP: barely anything shipped, the upstream/middle stages jammed
+    // well over a 3 WIP limit with a couple of blockers, the last stage starved
+    // because nothing reaches it. The stuck work then ages as the round plays out.
+    ship(9);
+    ship(12);
+    const mid = Math.floor(lastIdx / 2);
+    stages.forEach((_, i) => {
+      if (i === lastIdx && stages.length > 1) return; // downstream starved
+      const count = i <= mid ? 5 : 3;                 // WIP breached upstream/mid
+      for (let k = 0; k < count; k++) {
+        const lane: 'active' | 'done' = k % 2 === 0 ? 'active' : 'done';
+        const blocked = lane === 'active' && i === mid && k < 4; // a couple stuck
+        inFlow(i, lane, 5, blocked);
+      }
+    });
+  }
 }
 
 // ============= Snapshot =============
@@ -233,8 +261,11 @@ export function calculateMetrics(dayHistory: DaySummaryData[], items: WorkItem[]
     items.filter((it) => it.endDay === i + 1).length,
   );
 
-  // Cycle time per completed item
-  const completedItems = items.filter((i) => i.endDay !== null && i.startDay !== null);
+  // Cycle time per completed item — only items delivered DURING the round
+  // (endDay >= 1). Items shipped as pre-seeded backstory (endDay <= 0) are
+  // excluded so a mid-flow start does not distort the round's numbers; in-flight
+  // items that started before day 1 still count their full age when they finish.
+  const completedItems = items.filter((i) => i.endDay !== null && i.endDay >= 1 && i.startDay !== null);
   const cycleTimePerItem = completedItems.map((item) => ({
     itemId: item.id,
     completionDay: item.endDay!,

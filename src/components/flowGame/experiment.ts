@@ -41,7 +41,7 @@ const move = (item: WorkItem, dest: ColumnId, day: number): WorkItem => ({
  *  otherwise to any active card with work. Deterministic for a given seed. */
 export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED, workers: WorkerDef[] = WORKERS): RoundMetrics {
   const limits: Record<Specialism, number> = { analysis: wipLimit, development: wipLimit, test: wipLimit };
-  let items = createItems(false, STAGES);
+  let items = createItems('empty', STAGES);
   const dayHistory = [];
 
   const roundShape = (day: number, assignments: WorkerAssignment[]): RoundState => ({
