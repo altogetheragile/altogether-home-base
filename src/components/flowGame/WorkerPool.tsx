@@ -46,7 +46,7 @@ function WorkerPawn({
       {...attributes}
       onClick={() => (isAssigned ? onUnassign(worker.id) : onSelectWorker(worker.id))}
       className={cn(
-        'flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1 transition-all border select-none',
+        'flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1 transition-all border select-none shrink-0',
         !disabled && 'hover:shadow-sm cursor-grab active:cursor-grabbing',
         isSelected && 'ring-2 ring-primary ring-offset-1 scale-105',
         isAssigned && 'opacity-40',
@@ -79,7 +79,7 @@ export function WorkerPool({ workers, assignments, stages, selectedWorkerId, onS
   // neutral when there's nothing they could pick up, emerald when all assigned.
   const wasting = idle > 0 && !!workAvailable;
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 w-full">
       {!disabled && (
         <span
           className={cn(
@@ -93,7 +93,8 @@ export function WorkerPool({ workers, assignments, stages, selectedWorkerId, onS
           {idle === 0 ? 'All working' : wasting ? `${idle} idle - work is waiting` : `${idle} idle`}
         </span>
       )}
-      <div className="flex gap-2 flex-wrap justify-center">
+      {/* One horizontal row; scrolls when the roster is wide rather than wrapping. */}
+      <div className="flex gap-2 flex-nowrap overflow-x-auto flex-1 min-w-0 py-0.5">
         {workers.map((worker) => (
           <WorkerPawn
             key={worker.id}
@@ -109,7 +110,7 @@ export function WorkerPool({ workers, assignments, stages, selectedWorkerId, onS
         ))}
       </div>
       {selectedWorkerId && !assignedIds.has(selectedWorkerId) && (
-        <p className="text-sm text-primary font-medium whitespace-nowrap">
+        <p className="text-sm text-primary font-medium whitespace-nowrap shrink-0">
           Drag onto a card, or click a card to assign {workers.find((w) => w.id === selectedWorkerId)?.name}
         </p>
       )}

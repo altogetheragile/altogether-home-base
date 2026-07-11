@@ -156,8 +156,10 @@ export function BoardView({
     <div className="flex flex-col h-[calc(100dvh-4rem)] p-4 gap-3">
       {/* DndContext spans the worker pool AND the board so pawns can be dragged onto cards */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      {/* Top bar */}
-      <div className="flex items-center gap-4 flex-wrap shrink-0">
+      {/* Top bar — row 1: title on the left, actions on the right. The team gets
+          its own full-width strip below (row 2) so a large roster never squeezes
+          these controls or wraps into a tall block. */}
+      <div className="flex items-center justify-between gap-4 shrink-0">
         <div className="shrink-0">
           <h2 className="text-lg font-bold leading-tight">
             Round {round.roundNumber} - Day {round.day}/{DAYS_PER_ROUND}
@@ -165,19 +167,6 @@ export function BoardView({
           <p className="text-xs text-muted-foreground">
             {doneItems.length} done · drag cards across to pull work, then assign your people
           </p>
-        </div>
-
-        <div className="flex-1 flex justify-center">
-          <WorkerPool
-            workers={round.workers}
-            assignments={round.assignments}
-            stages={round.stages}
-            selectedWorkerId={selectedWorkerId}
-            onSelectWorker={handleSelectWorker}
-            onUnassign={onUnassignWorker}
-            disabled={!canInteract}
-            workAvailable={hasAssignableWork}
-          />
         </div>
 
         <div className="shrink-0 flex items-center gap-3">
@@ -222,6 +211,21 @@ export function BoardView({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Top bar — row 2: the team, as a single horizontal strip that scrolls
+          when the roster is large rather than wrapping into several rows. */}
+      <div className="shrink-0">
+        <WorkerPool
+          workers={round.workers}
+          assignments={round.assignments}
+          stages={round.stages}
+          selectedWorkerId={selectedWorkerId}
+          onSelectWorker={handleSelectWorker}
+          onUnassign={onUnassignWorker}
+          disabled={!canInteract}
+          workAvailable={hasAssignableWork}
+        />
       </div>
 
       {/* New-blocker alert: blockers land silently on active cards as a day
