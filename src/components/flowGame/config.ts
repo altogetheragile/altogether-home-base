@@ -130,6 +130,26 @@ export const WORKERS: WorkerDef[] = [
   { id: 'w6', name: 'Morgan', initials: 'MO', specialism: 'test' },
 ];
 
+/** First names offered, in order, when adding a teammate in the editor - real
+ *  names (starting with the default six) so a new person reads as "Robin", not
+ *  "Teammate 7", and gets a distinct badge. Gender-neutral and distinct-initial
+ *  where possible. */
+export const WORKER_NAME_POOL = [
+  'Alex', 'Sam', 'Jordan', 'Casey', 'Taylor', 'Morgan',
+  'Robin', 'Riley', 'Jamie', 'Quinn', 'Avery', 'Drew',
+  'Reese', 'Emerson', 'Finley', 'Harper', 'Rowan', 'Parker',
+  'Charlie', 'Frankie', 'Kai', 'Sage', 'Blake', 'Devon',
+];
+
+/** The next unused first name from the pool for a fresh teammate, or a plain
+ *  "Teammate N" once the pool is exhausted. Compared case-insensitively so a
+ *  renamed clash is still skipped. */
+export function nextWorkerName(existing: WorkerDef[]): string {
+  const taken = new Set(existing.map((w) => w.name.trim().toLowerCase()));
+  const free = WORKER_NAME_POOL.find((n) => !taken.has(n.toLowerCase()));
+  return free ?? `Teammate ${existing.length + 1}`;
+}
+
 /** The default board: the standard three stages and six-person team. A game
  *  starts from this and (later) the player can edit it. */
 export const DEFAULT_WORKFLOW: Workflow = {
