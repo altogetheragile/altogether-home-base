@@ -54,6 +54,7 @@ interface BoardViewProps {
   onAssignWorker: (workerId: string, cardId: string) => void;
   onUnassignWorker: (workerId: string) => void;
   onSetWip: (stage: Specialism, value: number) => void;
+  onSetUseWip: (use: boolean) => void;
   onSetEnforceWip: (enforce: boolean) => void;
   onSetMaximizeWip: (maximize: boolean) => void;
   onRunDay: () => void;
@@ -69,6 +70,7 @@ export function BoardView({
   onAssignWorker,
   onUnassignWorker,
   onSetWip,
+  onSetUseWip,
   onSetEnforceWip,
   onSetMaximizeWip,
   onRunDay,
@@ -180,24 +182,33 @@ export function BoardView({
             </Button>
           )}
           <RoundReport round={round} />
-          {round.wipLimits && (
-            <div className="flex flex-col gap-0.5">
-              <label
-                className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
-                title="Enforce WIP: pulling a card into a stage that is already at its limit is blocked - finish something first."
-              >
-                <input type="checkbox" checked={round.enforceWip} onChange={(e) => onSetEnforceWip(e.target.checked)} className="accent-primary" />
-                Enforce WIP
-              </label>
-              <label
-                className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
-                title="Maximize WIP: you cannot run the day while a stage sits below its limit with work waiting upstream - don't leave capacity idle."
-              >
-                <input type="checkbox" checked={round.maximizeWip} onChange={(e) => onSetMaximizeWip(e.target.checked)} className="accent-primary" />
-                Maximize WIP
-              </label>
-            </div>
-          )}
+          <div className="flex flex-col gap-0.5">
+            <label
+              className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
+              title="Use WIP limits: off means the columns are uncapped (an undisciplined team). Turn on to cap each stage and reveal its -/+ editor."
+            >
+              <input type="checkbox" checked={!!round.wipLimits} onChange={(e) => onSetUseWip(e.target.checked)} className="accent-primary" />
+              Use WIP limits
+            </label>
+            {round.wipLimits && (
+              <>
+                <label
+                  className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
+                  title="Enforce WIP: pulling a card into a stage that is already at its limit is blocked - finish something first."
+                >
+                  <input type="checkbox" checked={round.enforceWip} onChange={(e) => onSetEnforceWip(e.target.checked)} className="accent-primary" />
+                  Enforce WIP
+                </label>
+                <label
+                  className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
+                  title="Maximize WIP: you cannot run the day while a stage sits below its limit with work waiting upstream - don't leave capacity idle."
+                >
+                  <input type="checkbox" checked={round.maximizeWip} onChange={(e) => onSetMaximizeWip(e.target.checked)} className="accent-primary" />
+                  Maximize WIP
+                </label>
+              </>
+            )}
+          </div>
           {canInteract && (
             <div className="flex flex-col items-end gap-0.5">
               <Button

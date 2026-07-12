@@ -115,18 +115,20 @@ export function StageColumn({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              'text-xs font-mono px-1.5 py-0.5 rounded',
-              isOver && enforceWip && 'bg-destructive text-destructive-foreground',
-              isAt && !isOver && 'bg-amber-100 text-amber-800',
-              !isOver && !isAt && 'bg-muted-foreground/10 text-muted-foreground',
-            )}
-          >
-            WIP {total}{wipLimit != null ? ` / ${wipLimit}` : ''}
-          </span>
-          {wipLimit != null && (
+        {/* WIP badge + editor only when limits are on; hidden entirely otherwise so
+            an uncapped column doesn't look like it has a limit. */}
+        {wipLimit != null && (
+          <div className="flex items-center gap-1.5">
+            <span
+              className={cn(
+                'text-xs font-mono px-1.5 py-0.5 rounded',
+                isOver && enforceWip && 'bg-destructive text-destructive-foreground',
+                isAt && !isOver && 'bg-amber-100 text-amber-800',
+                !isOver && !isAt && 'bg-muted-foreground/10 text-muted-foreground',
+              )}
+            >
+              WIP {total} / {wipLimit}
+            </span>
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
@@ -146,8 +148,8 @@ export function StageColumn({
                 +
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Capacity bar — the WIP limit made physical (P3: feel the limit) */}
