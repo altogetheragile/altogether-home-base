@@ -1,14 +1,14 @@
 import { useScrumGame } from '@/components/scrumGame/useScrumGame';
 import { ScrumIntro } from '@/components/scrumGame/ScrumIntro';
 import { SprintPlanning } from '@/components/scrumGame/SprintPlanning';
-import { SprintView } from '@/components/scrumGame/SprintView';
+import { SprintBoard } from '@/components/scrumGame/SprintBoard';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
-/** The Scrum Simulation. intro -> Sprint Planning -> Sprint (execution scaffold).
- *  Review and Retrospective are built out in later slices. */
+/** The Scrum Simulation. intro -> Sprint Planning -> Sprint execution (board +
+ *  daily Run + burndown). Review and Retrospective are built out in later slices. */
 export default function ScrumGame() {
-  const { state, start, setPhase, planSprint } = useScrumGame();
+  const { state, start, setPhase, planSprint, startStory, runDay, completeSprint } = useScrumGame();
 
   const renderPhase = () => {
     switch (state.phase) {
@@ -17,7 +17,7 @@ export default function ScrumGame() {
       case 'planning':
         return <SprintPlanning state={state} onCommit={planSprint} onBack={() => setPhase('intro')} />;
       case 'sprint':
-        return <SprintView state={state} onBack={() => setPhase('planning')} />;
+        return <SprintBoard state={state} onStartStory={startStory} onRunDay={runDay} onCompleteSprint={completeSprint} />;
       default:
         return <SprintPlanning state={state} onCommit={planSprint} onBack={() => setPhase('intro')} />;
     }
