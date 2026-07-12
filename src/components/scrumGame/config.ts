@@ -4,6 +4,19 @@ import type { Criterion, Story, ScrumState } from './types';
  *  click fatigue; the first Sprint is felt day by day, later ones zoom out. */
 export const SPRINT_LENGTH = 5;
 
+/** The team's assumed capacity (story points) for the FIRST Sprint, before there
+ *  is any velocity to go on. After that, velocity replaces the guess. */
+export const SUGGESTED_CAPACITY = 13;
+
+/** Average of past Sprint velocities (0 if none yet). */
+export const averageVelocity = (velocity: number[]): number =>
+  velocity.length ? Math.round(velocity.reduce((n, v) => n + v, 0) / velocity.length) : 0;
+
+/** How many points the team can realistically take on: past velocity once it
+ *  exists, otherwise the first-Sprint capacity guess. */
+export const sprintCapacity = (velocity: number[]): number =>
+  velocity.length ? averageVelocity(velocity) : SUGGESTED_CAPACITY;
+
 /** The Product Goal - the north star the Product Backlog is ordered toward. */
 export const PRODUCT_GOAL = 'Launch a booking experience customers love and trust.';
 
