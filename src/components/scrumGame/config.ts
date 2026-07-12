@@ -32,7 +32,7 @@ export function defaultDefinitionOfDone(): Criterion[] {
 
 /** A starting Product Backlog, ordered by value. Story points vary so planning
  *  is a real forecasting decision. Deterministic (fixed list, not RNG). */
-export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber'>[] = [
+export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining'>[] = [
   { id: 's1', title: 'Browse available slots', points: 5, value: 8 },
   { id: 's2', title: 'Book a slot', points: 8, value: 10 },
   { id: 's3', title: 'Confirmation email', points: 3, value: 6 },
@@ -53,7 +53,7 @@ export function initialScrumState(): ScrumState {
     phase: 'intro',
     productGoal: PRODUCT_GOAL,
     definitionOfDone: defaultDefinitionOfDone(),
-    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null })),
+    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.points })),
     sprints: [],
     currentSprint: null,
     velocity: [],
@@ -64,3 +64,11 @@ export function initialScrumState(): ScrumState {
 /** Total points and value remaining in the backlog - a quick read on scope. */
 export const totalPoints = (stories: Story[]): number => stories.reduce((n, s) => n + s.points, 0);
 export const totalValue = (stories: Story[]): number => stories.reduce((n, s) => n + s.value, 0);
+
+/** The Developers on the team. Cross-functional, so any of them can work any
+ *  story. More people is more daily capacity - but spread across too much
+ *  in-progress work at once, little finishes (the WIP lesson, inside a Sprint). */
+export const SPRINT_TEAM = ['Robin', 'Riley', 'Jamie'];
+
+/** Seed for the Sprint's deterministic dice, so a Sprint plays out reproducibly. */
+export const SPRINT_SEED = 0x5bd1e995;

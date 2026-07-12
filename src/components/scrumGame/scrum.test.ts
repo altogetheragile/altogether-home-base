@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue, sprintCapacity, averageVelocity, SUGGESTED_CAPACITY } from './config';
-import { planSprint, availableStories, sprintStories } from './engine';
+import { planSprint, availableStories, sprintStories, startStory, runSprintDay, completeSprint, teamCapacity, isSprintOver, deliveredPoints } from './engine';
 
 describe('scrum game scaffold', () => {
   it('initial state starts at intro with the full backlog and the three artifacts', () => {
@@ -49,5 +49,60 @@ describe('sprint planning', () => {
     expect(onBoard.every((x) => x.status === 'todo' && x.sprintNumber === 1)).toBe(true);
     expect(availableStories(s1).some((x) => chosen.includes(x.id))).toBe(false);
     expect(availableStories(s1).length).toBe(PRODUCT_BACKLOG.length - 2);
+  });
+});
+
+describe('sprint execution', () => {
+  // Plan a small sprint (2 stories, 13 pts) and start both.
+  const planned = () => {
+    let s = planSprint(initialScrumState(), 'Book and pay', ['s1', 's2']); // 5 + 8 = 13
+    s = startStory(s, 's1');
+    s = startStory(s, 's2');
+    return s;
+  };
+
+  it('teamCapacity is deterministic and positive', () => {
+    expect(teamCapacity(1, 1)).toBe(teamCapacity(1, 1));
+    expect(teamCapacity(1, 1)).toBeGreaterThan(0);
+  });
+
+  it('startStory moves a story from To Do into Doing', () => {
+    const s = startStory(planSprint(initialScrumState(), 'g', ['s1']), 's1');
+    expect(s.productBacklog.find((x) => x.id === 's1')?.status).toBe('doing');
+  });
+
+  it('runSprintDay burns effort, completes stories, advances the day and records burndown', () => {
+    let s = planned();
+    expect(s.currentSprint?.burndown).toEqual([13]); // day 0 = full commitment
+    const before = s.currentSprint!.day;
+    s = runSprintDay(s);
+    expect(s.currentSprint!.day).toBe(before + 1);
+    expect(s.currentSprint!.burndown.length).toBe(2);
+    // Some effort was applied across the two Doing stories.
+    const remaining = sprintStories(s, 1).reduce((n, x) => n + x.effortRemaining, 0);
+    expect(remaining).toBeLessThan(13);
+  });
+
+  it('a story reaching zero effort becomes Done', () => {
+    let s = startStory(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 3 pts, tiny
+    for (let i = 0; i < 6 && s.currentSprint && !isSprintOver(s.currentSprint); i++) s = runSprintDay(s);
+    expect(sprintStories(s, 1).find((x) => x.id === 's3')?.status).toBe('done');
+  });
+
+  it('completeSprint records velocity, returns unfinished work, and goes back to planning', () => {
+    // Over-commit big stories so some won't finish in the timebox.
+    let s = planSprint(initialScrumState(), 'too much', ['s2', 's7', 's9']); // 8+8+8 = 24
+    for (const id of ['s2', 's7', 's9']) s = startStory(s, id);
+    while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    const delivered = deliveredPoints(s, 1);
+    s = completeSprint(s);
+    expect(s.phase).toBe('planning');
+    expect(s.currentSprint).toBeNull();
+    expect(s.velocity).toEqual([delivered]);
+    expect(s.sprints).toHaveLength(1);
+    // Unfinished stories are back in the Product Backlog, available to re-plan.
+    const backlogIds = availableStories(s).map((x) => x.id);
+    const undone = ['s2', 's7', 's9'].filter((id) => !s.productBacklog.find((x) => x.id === id && x.status === 'done'));
+    for (const id of undone) expect(backlogIds).toContain(id);
   });
 });

@@ -24,10 +24,13 @@ export interface Story {
   /** Business value delivered when this reaches Done (drives Product Goal progress). */
   value: number;
   /** Where the story is: the ordered backlog, or, once pulled into a Sprint, its
-   *  board column. */
+   *  board column (todo -> doing -> done). */
   status: 'backlog' | 'todo' | 'doing' | 'done';
   /** The sprint this story was committed to (null while in the Product Backlog). */
   sprintNumber: number | null;
+  /** Work left to reach Done (starts equal to points; reduced each day it's in
+   *  Doing and the team applies capacity to it). */
+  effortRemaining: number;
 }
 
 /** One Sprint: a fixed timebox with a single Sprint Goal and a committed set of
@@ -43,6 +46,9 @@ export interface Sprint {
   /** Ids of the stories forecast into this Sprint at planning. */
   committedStoryIds: string[];
   status: 'planning' | 'active' | 'review' | 'done';
+  /** Points remaining at the end of each day played (for the burndown chart).
+   *  burndown[0] is the start of the Sprint (full commitment). */
+  burndown: number[];
 }
 
 export type ScrumPhase =
@@ -76,4 +82,7 @@ export type ScrumAction =
   | { type: 'START' }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[] }
+  | { type: 'START_STORY'; storyId: string }
+  | { type: 'RUN_SPRINT_DAY' }
+  | { type: 'COMPLETE_SPRINT' }
   | { type: 'RESET' };
