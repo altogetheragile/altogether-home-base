@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef, Workflow, StartScenario } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, defaultWipLimits, initialWipLimits, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
+import { DAYS_PER_ROUND, defaultWipLimits, initialWipLimits, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount, exitCriteriaMet } from './config';
 
 /** Which worker assignments carry over to the next day: only those whose card is
  *  still being worked (in an Active lane). A worker is freed when their card
@@ -33,6 +33,9 @@ function createRound(
     wipLimits: initialWipLimits(roundNumber, scenario, stages, wipLimits),
     enforceWip: roundNumber === 2,
     maximizeWip: false,
+    // Exit-criteria gate starts off (like WIP): the player turns it on to make
+    // the quality bar bite, which is the teaching moment.
+    enforceExitCriteria: false,
     seed: FLOW_SEED,
     dayPhase: 'assign',
     newBlockers: [],
@@ -60,7 +63,8 @@ function withWorkflowDefaults(state: GameState): GameState {
   const startScenario: StartScenario = state.startScenario ?? (legacyWarmStart ? 'healthy' : 'empty');
   let round = state.round;
   if (round) {
-    const stages = round.stages ?? workflow.stages;
+    // Stages saved before exit criteria existed have no `exitCriteria` array.
+    const stages = (round.stages ?? workflow.stages).map((s) => ({ ...s, exitCriteria: s.exitCriteria ?? [] }));
     round = {
       ...round,
       stages,
@@ -68,9 +72,13 @@ function withWorkflowDefaults(state: GameState): GameState {
       // Ensure every stage has a WIP limit — a custom stage saved before this fix
       // (or added to an in-flight round) would otherwise show no limit or editor.
       wipLimits: round.wipLimits ? { ...defaultWipLimits(stages), ...round.wipLimits } : round.wipLimits,
+      enforceExitCriteria: round.enforceExitCriteria ?? false,
+      // Items saved before exit criteria lack `metCriteria`.
+      items: round.items.map((i) => ({ ...i, metCriteria: i.metCriteria ?? [] })),
     };
   }
-  return { ...state, workflow, round, startScenario };
+  const wfStages = workflow.stages.map((s) => ({ ...s, exitCriteria: s.exitCriteria ?? [] }));
+  return { ...state, workflow: { ...workflow, stages: wfStages }, round, startScenario };
 }
 
 function reducer(state: GameState, action: GameAction): GameState {
@@ -90,6 +98,12 @@ function reducer(state: GameState, action: GameAction): GameState {
       if (!item) return state;
       const dest = pullTarget(item.column, state.round.stages);
       if (!dest) return state; // not a pullable position
+      // Exit-criteria gate: an item can't leave a stage until that stage's quality
+      // criteria are all ticked — when the gate is enforced.
+      const sourceStage = state.round.stages.find((s) => s.id === stageOf(item.column));
+      if (state.round.enforceExitCriteria && !exitCriteriaMet(item, sourceStage)) {
+        return state; // meet the exit criteria before moving this on
+      }
       // WIP limit: a stage's Active+Done together can't exceed its limit — but only
       // when enforcement is on (the player can toggle it, TWiG-style).
       const destStage = stageOf(dest);
@@ -103,7 +117,8 @@ function reducer(state: GameState, action: GameAction): GameState {
       const day = state.round.day;
       const items = state.round.items.map((i) => {
         if (i.id !== action.cardId) return i;
-        const next = { ...i, column: dest };
+        // New stage, fresh gate: clear the ticked criteria from the stage it leaves.
+        const next = { ...i, column: dest, metCriteria: [] };
         if (i.column === 'backlog') next.startDay = day; // first time it enters flow
         if (dest === 'done') next.endDay = day;
         return next;
@@ -150,6 +165,23 @@ function reducer(state: GameState, action: GameAction): GameState {
     case 'SET_ENFORCE_WIP': {
       if (!state.round) return state;
       return { ...state, round: { ...state.round, enforceWip: action.enforce } };
+    }
+
+    case 'SET_ENFORCE_EXIT_CRITERIA': {
+      if (!state.round) return state;
+      return { ...state, round: { ...state.round, enforceExitCriteria: action.enforce } };
+    }
+
+    case 'TOGGLE_CRITERION': {
+      if (!state.round) return state;
+      const items = state.round.items.map((i) => {
+        if (i.id !== action.cardId) return i;
+        const met = i.metCriteria.includes(action.criterionId)
+          ? i.metCriteria.filter((c) => c !== action.criterionId)
+          : [...i.metCriteria, action.criterionId];
+        return { ...i, metCriteria: met };
+      });
+      return { ...state, round: { ...state.round, items } };
     }
 
     case 'SET_MAXIMIZE_WIP': {
@@ -297,6 +329,8 @@ export function useFlowGame() {
   const setUseWip = useCallback((use: boolean) => dispatch({ type: 'SET_USE_WIP', use }), []);
   const setEnforceWip = useCallback((enforce: boolean) => dispatch({ type: 'SET_ENFORCE_WIP', enforce }), []);
   const setMaximizeWip = useCallback((maximize: boolean) => dispatch({ type: 'SET_MAXIMIZE_WIP', maximize }), []);
+  const setEnforceExitCriteria = useCallback((enforce: boolean) => dispatch({ type: 'SET_ENFORCE_EXIT_CRITERIA', enforce }), []);
+  const toggleCriterion = useCallback((cardId: string, criterionId: string) => dispatch({ type: 'TOGGLE_CRITERION', cardId, criterionId }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_DAY' }), []);
   const nextDay = useCallback(() => dispatch({ type: 'NEXT_DAY' }), []);
 
@@ -339,6 +373,8 @@ export function useFlowGame() {
     setUseWip,
     setEnforceWip,
     setMaximizeWip,
+    setEnforceExitCriteria,
+    toggleCriterion,
     assignWorker,
     unassignWorker,
     runDay,

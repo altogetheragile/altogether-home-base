@@ -53,6 +53,7 @@ export function autoPlayRound(wipLimit: number, enforce = true, seed = FLOW_SEED
     wipLimits: limits,
     enforceWip: enforce,
     maximizeWip: false,
+    enforceExitCriteria: false,
     seed,
     dayPhase: 'assign',
     newBlockers: [],

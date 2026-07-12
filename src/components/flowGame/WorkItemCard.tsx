@@ -1,5 +1,5 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import type { WorkItem, WorkerAssignment, WorkerDef, StageDef } from './types';
+import type { WorkItem, WorkerAssignment, WorkerDef, StageDef, Criterion } from './types';
 import { stageOf, laneOf, stageColor, stageShort } from './config';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,10 @@ interface WorkItemCardProps {
   onClick: () => void;
   /** The configured stages, driving the effort rows and their colours. */
   stages?: StageDef[];
+  /** This stage's exit criteria, shown as a tickable checklist (done-lane cards
+   *  ready to be pulled onward). Omit to hide the checklist. */
+  criteria?: Criterion[];
+  onToggleCriterion?: (criterionId: string) => void;
   /** Current day, used to show the item's age while it's in flow. */
   currentDay?: number;
   /** When true the card can be dragged (to pull/reorder) and is a drop target
@@ -61,7 +65,7 @@ function EffortPips({ item, stages }: { item: WorkItem; stages: StageDef[] }) {
   );
 }
 
-export function WorkItemCard({ item, assignments, isSelected, onClick, stages = [], currentDay, draggable, compact, workers = [] }: WorkItemCardProps) {
+export function WorkItemCard({ item, assignments, isSelected, onClick, stages = [], criteria, onToggleCriterion, currentDay, draggable, compact, workers = [] }: WorkItemCardProps) {
   const drag = useDraggable({ id: `card:${item.id}`, disabled: !draggable });
   const drop = useDroppable({ id: `card:${item.id}`, disabled: !draggable });
   const { attributes, listeners, isDragging } = drag;
@@ -108,6 +112,30 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, stages = 
 
       {isActive && item.blocked && (
         <div className="mt-1 text-[10px] text-destructive leading-tight">{item.blockerEffort} to unblock</div>
+      )}
+
+      {/* Exit-criteria checklist: tick each before this item can be pulled onward. */}
+      {criteria && criteria.length > 0 && (
+        <div className="mt-1.5 space-y-0.5 border-t border-border/60 pt-1">
+          {criteria.map((c) => {
+            const met = item.metCriteria.includes(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onToggleCriterion?.(c.id); }}
+                className="flex w-full items-start gap-1 text-left"
+                aria-pressed={met}
+              >
+                <span className={cn(
+                  'mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-[3px] border text-[8px] leading-none',
+                  met ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-muted-foreground/40 text-transparent',
+                )}>✓</span>
+                <span className={cn('text-[10px] leading-tight', met ? 'text-muted-foreground line-through' : 'text-foreground')}>{c.label}</span>
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {item.column === 'done' && item.startDay != null && item.endDay != null && (

@@ -34,9 +34,19 @@ export interface WorkerAssignment {
 
 // ============= Workflow (configurable board) =============
 
+/** A quality gate item - a column's exit criterion (Kanban) or, reused in the
+ *  Scrum game, a Definition of Done line. Deliberately domain-neutral wording;
+ *  fully editable by the player. */
+export interface Criterion {
+  id: string;
+  label: string;
+}
+
 export interface StageDef {
   id: Specialism;
   name: string;
+  /** The quality bar an item must meet to leave this stage. Empty = no gate. */
+  exitCriteria: Criterion[];
 }
 
 /** The configurable board: which stages exist and who is on the team. Phase 1a
@@ -68,6 +78,9 @@ export interface WorkItem {
   startDay: number | null;
   /** Day the item entered done */
   endDay: number | null;
+  /** Ids of the current stage's exit criteria the player has ticked as met.
+   *  Cleared when the item is pulled into a new stage (fresh gate). */
+  metCriteria: string[];
 }
 
 // ============= Day Results =============
@@ -130,6 +143,9 @@ export interface RoundState {
   /** TWiG "Maximize WIP": the day can't run while a stage is below its limit and
    *  upstream work is available to pull in — don't leave capacity idle. */
   maximizeWip: boolean;
+  /** When true, an item can't be pulled out of a stage until that stage's exit
+   *  criteria are all ticked (the quality gate is enforced). */
+  enforceExitCriteria: boolean;
   /** Seed for the round's deterministic RNG. Both rounds share a seed so the
    *  variability (dice, blockers) is held fixed and only WIP decisions differ. */
   seed: number;
@@ -178,6 +194,8 @@ export type GameAction =
   | { type: 'SET_USE_WIP'; use: boolean }
   | { type: 'SET_ENFORCE_WIP'; enforce: boolean }
   | { type: 'SET_MAXIMIZE_WIP'; maximize: boolean }
+  | { type: 'SET_ENFORCE_EXIT_CRITERIA'; enforce: boolean }
+  | { type: 'TOGGLE_CRITERION'; cardId: string; criterionId: string }
   | { type: 'ASSIGN_WORKER'; workerId: string; cardId: string }
   | { type: 'UNASSIGN_WORKER'; workerId: string }
   | { type: 'RUN_DAY' }

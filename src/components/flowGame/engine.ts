@@ -39,6 +39,7 @@ export function createItems(scenario: StartScenario = 'empty', stages: StageDef[
       blockerEffort: 0,
       startDay: null,
       endDay: null,
+      metCriteria: [],
     };
   });
   seedScenario(items, stages, scenario);
