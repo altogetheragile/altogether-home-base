@@ -23,6 +23,7 @@ interface StageColumnProps {
   hasDoneLane?: boolean;
   onAssignCard: (cardId: string) => void;
   onSetWip: (stage: Specialism, value: number) => void;
+  onToggleCriterion: (cardId: string, criterionId: string) => void;
 }
 
 /** Segmented capacity bar — limit slots that fill as work enters the stage, with
@@ -86,8 +87,10 @@ export function StageColumn({
   hasDoneLane = true,
   onAssignCard,
   onSetWip,
+  onToggleCriterion,
 }: StageColumnProps) {
   const wipLimit = wipLimits ? wipLimits[stage] : null;
+  const exitCriteria = stages.find((s) => s.id === stage)?.exitCriteria ?? [];
   const activeItems = items.filter((i) => i.column === colId(stage, 'active'));
   const doneItems = items.filter((i) => i.column === colId(stage, 'done'));
   const total = stageCount(items, stage);
@@ -200,6 +203,8 @@ export function StageColumn({
                 assignments={assignments}
                 workers={workers}
                 stages={stages}
+                criteria={exitCriteria}
+                onToggleCriterion={(cid) => onToggleCriterion(item.id, cid)}
                 currentDay={currentDay}
                 isSelected={false}
                 onClick={() => {}}

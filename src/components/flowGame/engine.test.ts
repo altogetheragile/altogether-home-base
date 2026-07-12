@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, initialWipLimits, nextWorkerName, makeWorker, normalizeWorkers, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, initialWipLimits, nextWorkerName, makeWorker, normalizeWorkers, defaultExitCriteria, exitCriteriaMet, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
@@ -26,6 +26,7 @@ function round(items: WorkItem[], over: Partial<RoundState> = {}): RoundState {
     wipLimits: null,
     enforceWip: false,
     maximizeWip: false,
+    enforceExitCriteria: false,
     seed: 1,
     dayPhase: 'assign',
     newBlockers: [],
@@ -336,12 +337,38 @@ describe('calculateMetrics', () => {
   });
 });
 
+describe('exit criteria (column quality gates / reusable DoD)', () => {
+  const stage = { id: 'analysis', name: 'Analysis', exitCriteria: defaultExitCriteria('analysis') };
+
+  it('default exit criteria are generic and unique per stage', () => {
+    const a = defaultExitCriteria('analysis');
+    const d = defaultExitCriteria('development');
+    expect(a.length).toBeGreaterThan(0);
+    expect(a[0].label).not.toMatch(/code|unit test|deploy/i); // domain-neutral, not software-only
+    expect(a.every((c) => c.id.startsWith('analysis-'))).toBe(true);
+    expect(d.every((c) => c.id.startsWith('development-'))).toBe(true);
+  });
+
+  it('exitCriteriaMet is true only when every criterion is ticked', () => {
+    const base = createItems('empty', S)[0];
+    expect(exitCriteriaMet({ ...base, metCriteria: [] }, stage)).toBe(false);
+    expect(exitCriteriaMet({ ...base, metCriteria: [stage.exitCriteria[0].id] }, stage)).toBe(false);
+    expect(exitCriteriaMet({ ...base, metCriteria: stage.exitCriteria.map((c) => c.id) }, stage)).toBe(true);
+  });
+
+  it('a stage with no criteria has no gate (always met)', () => {
+    const base = createItems('empty', S)[0];
+    expect(exitCriteriaMet({ ...base, metCriteria: [] }, { id: 'x', name: 'X', exitCriteria: [] })).toBe(true);
+    expect(exitCriteriaMet({ ...base, metCriteria: [] }, undefined)).toBe(true);
+  });
+});
+
 describe('configurable workflow', () => {
   const CUSTOM: StageDef[] = [
-    { id: 'design', name: 'Design' },
-    { id: 'build', name: 'Build' },
-    { id: 'qa', name: 'QA' },
-    { id: 'release', name: 'Release' },
+    { id: 'design', name: 'Design', exitCriteria: [] },
+    { id: 'build', name: 'Build', exitCriteria: [] },
+    { id: 'qa', name: 'QA', exitCriteria: [] },
+    { id: 'release', name: 'Release', exitCriteria: [] },
   ];
 
   it('itemEffort reproduces the default triple for the default three stages', () => {
@@ -372,7 +399,7 @@ describe('configurable workflow', () => {
     expect(wip).toEqual({ design: 3, build: 3, qa: 3, release: 3 });
     for (const s of CUSTOM) expect(wip[s.id]).toBeGreaterThan(0);
     // A renamed built-in stage keeps its own default via its stable id.
-    expect(defaultWipLimits([{ id: 'analysis', name: 'Research' }])).toEqual({ analysis: 3 });
+    expect(defaultWipLimits([{ id: 'analysis', name: 'Research', exitCriteria: [] }])).toEqual({ analysis: 3 });
   });
 
   it('a fresh teammate gets the next unused real name, not "Teammate N"', () => {

@@ -49,6 +49,8 @@ export default function FlowGame() {
     setWip,
     setUseWip,
     setEnforceWip,
+    setEnforceExitCriteria,
+    toggleCriterion,
     setMaximizeWip,
     assignWorker,
     unassignWorker,
@@ -177,6 +179,8 @@ export default function FlowGame() {
             onSetWip={setWip}
             onSetUseWip={setUseWip}
             onSetEnforceWip={setEnforceWip}
+            onSetEnforceExitCriteria={setEnforceExitCriteria}
+            onToggleCriterion={toggleCriterion}
             onSetMaximizeWip={setMaximizeWip}
             onRunDay={runDay}
             onNextDay={nextDay}

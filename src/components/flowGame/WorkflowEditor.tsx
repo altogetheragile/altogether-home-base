@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Workflow, StageDef, WorkerDef, Specialism } from './types';
-import { DEFAULT_WORKFLOW, stageColor, normalizeWorkers } from './config';
+import { DEFAULT_WORKFLOW, stageColor, normalizeWorkers, defaultExitCriteria, nextCriterionId } from './config';
 import { TeamMemberList } from './TeamMemberList';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger,
@@ -24,21 +24,22 @@ function nextStageId(existing: StageDef[]): Specialism {
   return `stage${n}`;
 }
 
+const cloneStage = (s: StageDef): StageDef => ({ ...s, exitCriteria: s.exitCriteria.map((c) => ({ ...c })) });
 const cloneWorkflow = (wf: Workflow): Workflow => ({
-  stages: wf.stages.map((s) => ({ ...s })),
+  stages: wf.stages.map(cloneStage),
   workers: wf.workers.map((w) => ({ ...w })),
 });
 
 export function WorkflowEditor({ workflow, onSave }: WorkflowEditorProps) {
   const [open, setOpen] = useState(false);
-  const [stages, setStages] = useState<StageDef[]>(() => workflow.stages.map((s) => ({ ...s })));
+  const [stages, setStages] = useState<StageDef[]>(() => workflow.stages.map(cloneStage));
   const [workers, setWorkers] = useState<WorkerDef[]>(() => workflow.workers.map((w) => ({ ...w })));
 
   // Re-seed the draft from the current workflow each time the dialog opens, so a
   // cancelled edit is discarded and a re-open starts from what is actually in play.
   const handleOpenChange = (next: boolean) => {
     if (next) {
-      setStages(workflow.stages.map((s) => ({ ...s })));
+      setStages(workflow.stages.map(cloneStage));
       setWorkers(workflow.workers.map((w) => ({ ...w })));
     }
     setOpen(next);
@@ -47,7 +48,25 @@ export function WorkflowEditor({ workflow, onSave }: WorkflowEditorProps) {
   const renameStage = (id: string, name: string) =>
     setStages((prev) => prev.map((s) => (s.id === id ? { ...s, name } : s)));
   const removeStage = (id: string) => setStages((prev) => (prev.length > 1 ? prev.filter((s) => s.id !== id) : prev));
-  const addStage = () => setStages((prev) => [...prev, { id: nextStageId(prev), name: `Stage ${prev.length + 1}` }]);
+  const addStage = () =>
+    setStages((prev) => {
+      const id = nextStageId(prev);
+      return [...prev, { id, name: `Stage ${prev.length + 1}`, exitCriteria: defaultExitCriteria(id) }];
+    });
+
+  // Exit-criteria editing (the "write your own" exercise).
+  const addCriterion = (stageId: string) =>
+    setStages((prev) => prev.map((s) => (s.id === stageId
+      ? { ...s, exitCriteria: [...s.exitCriteria, { id: nextCriterionId(stageId, s.exitCriteria), label: '' }] }
+      : s)));
+  const renameCriterion = (stageId: string, cid: string, label: string) =>
+    setStages((prev) => prev.map((s) => (s.id === stageId
+      ? { ...s, exitCriteria: s.exitCriteria.map((c) => (c.id === cid ? { ...c, label } : c)) }
+      : s)));
+  const removeCriterion = (stageId: string, cid: string) =>
+    setStages((prev) => prev.map((s) => (s.id === stageId
+      ? { ...s, exitCriteria: s.exitCriteria.filter((c) => c.id !== cid) }
+      : s)));
   const moveStage = (index: number, dir: -1 | 1) =>
     setStages((prev) => {
       const to = index + dir;
@@ -66,7 +85,11 @@ export function WorkflowEditor({ workflow, onSave }: WorkflowEditorProps) {
   const handleSave = () => {
     // Normalise: non-empty names, fresh initials, and every worker pinned to a
     // stage that still exists (its stage may have been deleted mid-edit).
-    const cleanStages: StageDef[] = stages.map((s, i) => ({ id: s.id, name: s.name.trim() || `Stage ${i + 1}` }));
+    const cleanStages: StageDef[] = stages.map((s, i) => ({
+      id: s.id,
+      name: s.name.trim() || `Stage ${i + 1}`,
+      exitCriteria: s.exitCriteria.map((c) => ({ id: c.id, label: c.label.trim() })).filter((c) => c.label),
+    }));
     const cleanWorkers = normalizeWorkers(workers, cleanStages);
     onSave({ stages: cleanStages, workers: cleanWorkers });
     setOpen(false);
@@ -100,30 +123,62 @@ export function WorkflowEditor({ workflow, onSave }: WorkflowEditorProps) {
               <Plus className="mr-1 h-4 w-4" /> Add stage
             </Button>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {stages.map((s, i) => (
-              <div key={s.id} className="flex items-center gap-2">
-                <span className={cn('h-3 w-3 shrink-0 rounded-sm', stageColor(s.id, stages))} aria-hidden />
-                <Input
-                  value={s.name}
-                  onChange={(e) => renameStage(s.id, e.target.value)}
-                  placeholder={`Stage ${i + 1}`}
-                  className="h-8"
-                  aria-label={`Stage ${i + 1} name`}
-                />
-                <div className="flex shrink-0 items-center gap-0.5">
-                  <button type="button" onClick={() => moveStage(i, -1)} disabled={i === 0}
-                    className="rounded p-1 hover:bg-muted disabled:opacity-30" aria-label={`Move ${s.name} earlier`}>
-                    <ArrowUp className="h-4 w-4" />
-                  </button>
-                  <button type="button" onClick={() => moveStage(i, 1)} disabled={i === stages.length - 1}
-                    className="rounded p-1 hover:bg-muted disabled:opacity-30" aria-label={`Move ${s.name} later`}>
-                    <ArrowDown className="h-4 w-4" />
-                  </button>
-                  <button type="button" onClick={() => removeStage(s.id)} disabled={stages.length <= 1}
-                    className="rounded p-1 text-destructive hover:bg-destructive/10 disabled:opacity-30" aria-label={`Remove ${s.name}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+              <div key={s.id} className="rounded-md border border-border p-2 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className={cn('h-3 w-3 shrink-0 rounded-sm', stageColor(s.id, stages))} aria-hidden />
+                  <Input
+                    value={s.name}
+                    onChange={(e) => renameStage(s.id, e.target.value)}
+                    placeholder={`Stage ${i + 1}`}
+                    className="h-8"
+                    aria-label={`Stage ${i + 1} name`}
+                  />
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <button type="button" onClick={() => moveStage(i, -1)} disabled={i === 0}
+                      className="rounded p-1 hover:bg-muted disabled:opacity-30" aria-label={`Move ${s.name} earlier`}>
+                      <ArrowUp className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => moveStage(i, 1)} disabled={i === stages.length - 1}
+                      className="rounded p-1 hover:bg-muted disabled:opacity-30" aria-label={`Move ${s.name} later`}>
+                      <ArrowDown className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => removeStage(s.id)} disabled={stages.length <= 1}
+                      className="rounded p-1 text-destructive hover:bg-destructive/10 disabled:opacity-30" aria-label={`Remove ${s.name}`}>
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Exit criteria — the quality bar to leave this stage (write your own). */}
+                <div className="space-y-1 pl-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Exit criteria</span>
+                    <button type="button" onClick={() => addCriterion(s.id)}
+                      className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs text-muted-foreground hover:bg-muted">
+                      <Plus className="h-3 w-3" /> criterion
+                    </button>
+                  </div>
+                  {s.exitCriteria.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground/60">No exit criteria — work can leave this stage freely.</p>
+                  )}
+                  {s.exitCriteria.map((c, ci) => (
+                    <div key={c.id} className="flex items-center gap-1.5">
+                      <span className="text-muted-foreground/50 text-xs shrink-0">✓</span>
+                      <Input
+                        value={c.label}
+                        onChange={(e) => renameCriterion(s.id, c.id, e.target.value)}
+                        placeholder={`Criterion ${ci + 1}`}
+                        className="h-7 text-sm"
+                        aria-label={`${s.name} exit criterion ${ci + 1}`}
+                      />
+                      <button type="button" onClick={() => removeCriterion(s.id, c.id)}
+                        className="shrink-0 rounded p-1 text-destructive hover:bg-destructive/10" aria-label={`Remove criterion ${ci + 1} from ${s.name}`}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

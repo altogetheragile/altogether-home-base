@@ -1,4 +1,4 @@
-import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism, Workflow, StageDef, StartScenario } from './types';
+import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism, Workflow, StageDef, StartScenario, Criterion, WorkItem } from './types';
 
 // ============= Columns =============
 
@@ -21,6 +21,35 @@ export const STAGES: { stage: Specialism; label: string }[] = [
   { stage: 'development', label: 'Development' },
   { stage: 'test', label: 'Test' },
 ];
+
+// ── Exit criteria (column quality gates; reused as the Scrum DoD) ──
+
+/** Domain-neutral default exit criteria for a stage - the quality bar to leave
+ *  it. Deliberately generic so any team (not just software) sees language that
+ *  fits; the player edits them (the "write your own" exercise). Ids are prefixed
+ *  by stage so they stay unique across the board. */
+export function defaultExitCriteria(stageId: Specialism): Criterion[] {
+  return [
+    { id: `${stageId}-reviewed`, label: 'A second person has reviewed it' },
+    { id: `${stageId}-accepted`, label: 'Meets the agreed acceptance criteria' },
+  ];
+}
+
+/** A fresh unique criterion id for a stage (editor "add criterion"). */
+export function nextCriterionId(stageId: Specialism, existing: Criterion[]): string {
+  const ids = new Set(existing.map((c) => c.id));
+  let n = existing.length + 1;
+  while (ids.has(`${stageId}-c${n}`)) n++;
+  return `${stageId}-c${n}`;
+}
+
+/** Whether an item has met every exit criterion of the given stage. A stage with
+ *  no criteria is always "met" (no gate). */
+export function exitCriteriaMet(item: WorkItem, stage: StageDef | undefined): boolean {
+  if (!stage || stage.exitCriteria.length === 0) return true;
+  const met = new Set(item.metCriteria);
+  return stage.exitCriteria.every((c) => met.has(c.id));
+}
 
 // ── Column helpers (pure) ──
 export function stageOf(col: ColumnId): Specialism | null {
@@ -188,7 +217,7 @@ export function normalizeWorkers(workers: WorkerDef[], stages: StageDef[]): Work
 /** The default board: the standard three stages and six-person team. A game
  *  starts from this and (later) the player can edit it. */
 export const DEFAULT_WORKFLOW: Workflow = {
-  stages: STAGES.map((s) => ({ id: s.stage, name: s.label })),
+  stages: STAGES.map((s) => ({ id: s.stage, name: s.label, exitCriteria: defaultExitCriteria(s.stage) })),
   workers: WORKERS,
 };
 
@@ -243,7 +272,7 @@ function makeItem(index: number): WorkItemDef {
   return {
     id: `item-${index + 1}`,
     title: `Work Item ${index + 1}`,
-    effort: itemEffort(index, STAGES.map((s) => ({ id: s.stage, name: s.label }))),
+    effort: itemEffort(index, STAGES.map((s) => ({ id: s.stage, name: s.label, exitCriteria: [] }))),
   };
 }
 

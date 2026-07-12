@@ -57,6 +57,8 @@ interface BoardViewProps {
   onSetUseWip: (use: boolean) => void;
   onSetEnforceWip: (enforce: boolean) => void;
   onSetMaximizeWip: (maximize: boolean) => void;
+  onSetEnforceExitCriteria: (enforce: boolean) => void;
+  onToggleCriterion: (cardId: string, criterionId: string) => void;
   onRunDay: () => void;
   onNextDay: () => void;
   onSaveGame?: () => void;
@@ -72,6 +74,8 @@ export function BoardView({
   onSetWip,
   onSetUseWip,
   onSetEnforceWip,
+  onSetEnforceExitCriteria,
+  onToggleCriterion,
   onSetMaximizeWip,
   onRunDay,
   onNextDay,
@@ -208,6 +212,13 @@ export function BoardView({
                 </label>
               </>
             )}
+            <label
+              className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
+              title="Enforce exit criteria: an item can't be pulled out of a stage until that stage's exit criteria are all ticked - the quality gate bites."
+            >
+              <input type="checkbox" checked={round.enforceExitCriteria} onChange={(e) => onSetEnforceExitCriteria(e.target.checked)} className="accent-primary" />
+              Enforce exit criteria
+            </label>
           </div>
           {canInteract && (
             <div className="flex flex-col items-end gap-0.5">
@@ -286,6 +297,7 @@ export function BoardView({
               hasDoneLane={!isLastStage(s.id, round.stages)}
               onAssignCard={handleAssignCard}
               onSetWip={onSetWip}
+              onToggleCriterion={onToggleCriterion}
             />
           ))}
 
