@@ -75,4 +75,5 @@ export interface ScrumState {
 export type ScrumAction =
   | { type: 'START' }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
+  | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[] }
   | { type: 'RESET' };

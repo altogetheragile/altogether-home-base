@@ -1,16 +1,18 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
+import { planSprint } from './engine';
 
-// Scaffold reducer. The Sprint loop (planning -> daily execution -> review ->
-// retro) is built out in later slices; for now this drives the intro and phase
-// navigation so the shell is real and deployable.
+// The Sprint loop is built out slice by slice. Planning is live; daily execution,
+// Review and Retro follow.
 function reducer(state: ScrumState, action: ScrumAction): ScrumState {
   switch (action.type) {
     case 'START':
       return { ...state, phase: 'planning' };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
+    case 'PLAN_SPRINT':
+      return planSprint(state, action.goal, action.storyIds);
     case 'RESET':
       return initialScrumState();
     default:
@@ -23,7 +25,11 @@ export function useScrumGame() {
 
   const start = useCallback(() => dispatch({ type: 'START' }), []);
   const setPhase = useCallback((phase: ScrumState['phase']) => dispatch({ type: 'SET_PHASE', phase }), []);
+  const planSprintAction = useCallback(
+    (goal: string, storyIds: string[]) => dispatch({ type: 'PLAN_SPRINT', goal, storyIds }),
+    [],
+  );
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
-  return { state, start, setPhase, reset };
+  return { state, start, setPhase, planSprint: planSprintAction, reset };
 }
