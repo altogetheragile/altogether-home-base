@@ -57,9 +57,22 @@ export function initialScrumState(): ScrumState {
     sprints: [],
     currentSprint: null,
     velocity: [],
+    improvements: [],
     sprintLength: SPRINT_LENGTH,
   };
 }
+
+/** The improvement actions offered at a Retrospective. Picking one carries into
+ *  the next Sprint and nudges the team's effectiveness up (kaizen compounds). */
+export const RETRO_IMPROVEMENTS = [
+  'Limit work in progress - swarm on fewer stories at once',
+  'Forecast against velocity, not hope - commit to less',
+  'Tighten the Definition of Done - fewer surprises late',
+  'Pair up on the hardest work to move it faster',
+];
+
+/** Extra daily capacity from accumulated improvements, capped so it stays modest. */
+export const improvementBonus = (improvements: string[]): number => Math.min(2, improvements.length);
 
 /** Total points and value remaining in the backlog - a quick read on scope. */
 export const totalPoints = (stories: Story[]): number => stories.reduce((n, s) => n + s.points, 0);

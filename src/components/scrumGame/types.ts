@@ -74,6 +74,9 @@ export interface ScrumState {
   currentSprint: Sprint | null;
   /** Story points completed per finished Sprint - the velocity trend. */
   velocity: number[];
+  /** Improvement actions chosen at each Retrospective (kaizen). They accumulate,
+   *  making the team a little more effective over time. */
+  improvements: string[];
   /** Working days per Sprint (the timebox length). */
   sprintLength: number;
 }
@@ -84,5 +87,6 @@ export type ScrumAction =
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[] }
   | { type: 'START_STORY'; storyId: string }
   | { type: 'RUN_SPRINT_DAY' }
-  | { type: 'COMPLETE_SPRINT' }
+  | { type: 'REVIEW_SPRINT' }
+  | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'RESET' };
