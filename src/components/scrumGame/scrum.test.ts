@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue, sprintCapacity, averageVelocity, SUGGESTED_CAPACITY } from './config';
-import { planSprint, availableStories, sprintStories, startStory, runSprintDay, completeSprint, teamCapacity, isSprintOver, deliveredPoints } from './engine';
+import { initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue, sprintCapacity, averageVelocity, SUGGESTED_CAPACITY, improvementBonus, RETRO_IMPROVEMENTS } from './config';
+import { planSprint, availableStories, sprintStories, startStory, runSprintDay, reviewSprint, startNextSprint, sprintGoalMet, teamCapacity, isSprintOver, deliveredPoints } from './engine';
 
 describe('scrum game scaffold', () => {
   it('initial state starts at intro with the full backlog and the three artifacts', () => {
@@ -89,20 +89,48 @@ describe('sprint execution', () => {
     expect(sprintStories(s, 1).find((x) => x.id === 's3')?.status).toBe('done');
   });
 
-  it('completeSprint records velocity, returns unfinished work, and goes back to planning', () => {
+  it('reviewSprint records velocity, returns unfinished work, and opens the Review', () => {
     // Over-commit big stories so some won't finish in the timebox.
     let s = planSprint(initialScrumState(), 'too much', ['s2', 's7', 's9']); // 8+8+8 = 24
     for (const id of ['s2', 's7', 's9']) s = startStory(s, id);
     while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
     const delivered = deliveredPoints(s, 1);
-    s = completeSprint(s);
-    expect(s.phase).toBe('planning');
-    expect(s.currentSprint).toBeNull();
+    s = reviewSprint(s);
+    expect(s.phase).toBe('review');
+    expect(s.currentSprint?.number).toBe(1); // kept for the Review/Retro screens
     expect(s.velocity).toEqual([delivered]);
-    expect(s.sprints).toHaveLength(1);
     // Unfinished stories are back in the Product Backlog, available to re-plan.
     const backlogIds = availableStories(s).map((x) => x.id);
     const undone = ['s2', 's7', 's9'].filter((id) => !s.productBacklog.find((x) => x.id === id && x.status === 'done'));
     for (const id of undone) expect(backlogIds).toContain(id);
+  });
+});
+
+describe('review and retrospective', () => {
+  it('sprintGoalMet is true only when every committed story reached Done', () => {
+    let s = startStory(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 3 pts
+    expect(sprintGoalMet(s, 1)).toBe(false);
+    while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    expect(sprintGoalMet(s, 1)).toBe(true);
+  });
+
+  it('improvementBonus grows with retros, capped', () => {
+    expect(improvementBonus([])).toBe(0);
+    expect(improvementBonus(['a'])).toBe(1);
+    expect(improvementBonus(['a', 'b', 'c', 'd'])).toBe(2); // capped
+  });
+
+  it('startNextSprint carries the improvement, files the sprint, and returns to planning', () => {
+    let s = reviewSprint(startStory(planSprint(initialScrumState(), 'g', ['s3']), 's3'));
+    s = startNextSprint(s, RETRO_IMPROVEMENTS[0]);
+    expect(s.phase).toBe('planning');
+    expect(s.currentSprint).toBeNull();
+    expect(s.improvements).toEqual([RETRO_IMPROVEMENTS[0]]);
+    expect(s.sprints).toHaveLength(1);
+  });
+
+  it('accumulated improvements raise the team capacity', () => {
+    const base = teamCapacity(1, 1, 0);
+    expect(teamCapacity(1, 1, improvementBonus(['a', 'b']))).toBe(base + 2);
   });
 });

@@ -1,5 +1,5 @@
 import type { ScrumState, Sprint, Story } from './types';
-import { SPRINT_TEAM, SPRINT_SEED, totalPoints } from './config';
+import { SPRINT_TEAM, SPRINT_SEED, totalPoints, improvementBonus } from './config';
 
 // ============= Planning =============
 
@@ -50,9 +50,9 @@ function mulberry32(seed: number): () => number {
  *  die. Deterministic per (sprint, day). Modest, so the 5-day timebox binds: a
  *  right-sized, focused Sprint finishes; an over-committed or over-spread one
  *  does not. */
-export function teamCapacity(sprintNumber: number, day: number): number {
+export function teamCapacity(sprintNumber: number, day: number, bonus = 0): number {
   const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 977) ^ (day * 131));
-  let total = 0;
+  let total = bonus; // accumulated retro improvements make the team a little faster
   for (let i = 0; i < SPRINT_TEAM.length; i++) total += Math.floor(rng() * 2) + 1; // 1..2 each
   return total;
 }
@@ -80,7 +80,7 @@ export function runSprintDay(state: ScrumState): ScrumState {
     .map((s) => s.id);
 
   // Split the day's capacity evenly across the stories in Doing.
-  const cap = teamCapacity(sprint.number, sprint.day);
+  const cap = teamCapacity(sprint.number, sprint.day, improvementBonus(state.improvements));
   const per = new Map<string, number>();
   if (doingIds.length > 0) {
     const base = Math.floor(cap / doingIds.length);
@@ -106,10 +106,16 @@ export function runSprintDay(state: ScrumState): ScrumState {
 export const deliveredPoints = (state: ScrumState, sprintNumber: number): number =>
   totalPoints(state.productBacklog.filter((s) => s.sprintNumber === sprintNumber && s.status === 'done'));
 
-/** Close the Sprint: record velocity, return unfinished stories to the Product
- *  Backlog (Scrum: undone work goes back, not into the Increment), and go back to
- *  planning for the next Sprint. */
-export function completeSprint(state: ScrumState): ScrumState {
+/** Whether a Sprint's committed stories all reached Done (its Goal is met). */
+export const sprintGoalMet = (state: ScrumState, sprintNumber: number): boolean => {
+  const stories = state.productBacklog.filter((s) => s.sprintNumber === sprintNumber);
+  return stories.length > 0 && stories.every((s) => s.status === 'done');
+};
+
+/** End the Sprint and open the Review: record velocity, and return unfinished
+ *  stories to the Product Backlog (Scrum: undone work goes back, not into the
+ *  Increment). The Sprint stays as currentSprint so Review and Retro can show it. */
+export function reviewSprint(state: ScrumState): ScrumState {
   const sprint = state.currentSprint;
   if (!sprint) return state;
   const velocityPts = deliveredPoints(state, sprint.number);
@@ -120,10 +126,22 @@ export function completeSprint(state: ScrumState): ScrumState {
   );
   return {
     ...state,
-    phase: 'planning',
-    currentSprint: null,
-    sprints: [...state.sprints, { ...sprint, status: 'done' as const }],
+    phase: 'review',
     velocity: [...state.velocity, velocityPts],
+    currentSprint: { ...sprint, status: 'review' },
     productBacklog,
+  };
+}
+
+/** After the Retrospective: carry the chosen improvement forward, file the Sprint
+ *  in history, and open planning for the next one. */
+export function startNextSprint(state: ScrumState, improvement: string): ScrumState {
+  const sprint = state.currentSprint;
+  return {
+    ...state,
+    phase: 'planning',
+    improvements: [...state.improvements, improvement],
+    sprints: sprint ? [...state.sprints, { ...sprint, status: 'done' as const }] : state.sprints,
+    currentSprint: null,
   };
 }

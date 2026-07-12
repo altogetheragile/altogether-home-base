@@ -11,7 +11,7 @@ interface SprintBoardProps {
   state: ScrumState;
   onStartStory: (storyId: string) => void;
   onRunDay: () => void;
-  onCompleteSprint: () => void;
+  onReview: () => void;
 }
 
 function StoryCard({ s, onStart }: { s: Story; onStart?: () => void }) {
@@ -51,7 +51,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
  *  Scrum (pull work into Doing, then Run Day). A burndown tracks remaining work;
  *  when the timebox runs out, the Sprint is reviewed and velocity recorded. */
-export function SprintBoard({ state, onStartStory, onRunDay, onCompleteSprint }: SprintBoardProps) {
+export function SprintBoard({ state, onStartStory, onRunDay, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
   if (!sprint) return null;
   const stories = sprintStories(state, sprint.number);
@@ -86,7 +86,7 @@ export function SprintBoard({ state, onStartStory, onRunDay, onCompleteSprint }:
               {doing.length === 0 && <span className="text-[10px] text-muted-foreground">Start a story to run the day</span>}
             </div>
           ) : (
-            <Button size="lg" onClick={onCompleteSprint}>Review &amp; plan next Sprint</Button>
+            <Button size="lg" onClick={onReview}>Sprint Review</Button>
           )}
         </div>
       </div>
