@@ -51,6 +51,20 @@ export function exitCriteriaMet(item: WorkItem, stage: StageDef | undefined): bo
   return stage.exitCriteria.every((c) => met.has(c.id));
 }
 
+/** How many of a stage's exit criteria an item has NOT ticked - the debt it would
+ *  accrue if pulled onward now. */
+export function unmetCriteriaCount(item: WorkItem, stage: StageDef | undefined): number {
+  if (!stage) return 0;
+  const met = new Set(item.metCriteria);
+  return stage.exitCriteria.filter((c) => !met.has(c.id)).length;
+}
+
+/** The rework effort a debt of `debt` skipped criteria costs when it surfaces -
+ *  paying back the shortcut with interest, capped so it stays clearable. */
+export function reworkEffort(debt: number): number {
+  return Math.min(8, 2 * Math.max(0, debt));
+}
+
 // ── Column helpers (pure) ──
 export function stageOf(col: ColumnId): Specialism | null {
   if (col === 'backlog' || col === 'done') return null;

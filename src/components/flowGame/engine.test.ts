@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
+import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng, pullQualityOutcome } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, initialWipLimits, nextWorkerName, makeWorker, normalizeWorkers, defaultExitCriteria, exitCriteriaMet, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, initialWipLimits, nextWorkerName, makeWorker, normalizeWorkers, defaultExitCriteria, exitCriteriaMet, unmetCriteriaCount, reworkEffort, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
@@ -360,6 +360,42 @@ describe('exit criteria (column quality gates / reusable DoD)', () => {
     const base = createItems('empty', S)[0];
     expect(exitCriteriaMet({ ...base, metCriteria: [] }, { id: 'x', name: 'X', exitCriteria: [] })).toBe(true);
     expect(exitCriteriaMet({ ...base, metCriteria: [] }, undefined)).toBe(true);
+  });
+});
+
+describe('quality debt loop (skip a gate -> rework later)', () => {
+  const crit = { id: 'analysis', name: 'Analysis', exitCriteria: [{ id: 'a1', label: 'x' }, { id: 'a2', label: 'y' }] };
+  const twoStage = [crit, { id: 'test', name: 'Test', exitCriteria: [] }];
+  const threeStage = [crit, { id: 'development', name: 'Development', exitCriteria: [] }, { id: 'test', name: 'Test', exitCriteria: [] }];
+  const item = () => createItems('empty', S)[0]; // fresh: debt 0, no met criteria
+
+  it('unmetCriteriaCount and reworkEffort behave', () => {
+    expect(unmetCriteriaCount({ ...item(), metCriteria: [] }, crit)).toBe(2);
+    expect(unmetCriteriaCount({ ...item(), metCriteria: ['a1'] }, crit)).toBe(1);
+    expect(unmetCriteriaCount({ ...item(), metCriteria: ['a1', 'a2'] }, crit)).toBe(0);
+    expect(reworkEffort(0)).toBe(0);
+    expect(reworkEffort(2)).toBe(4);
+    expect(reworkEffort(10)).toBe(8); // capped
+  });
+
+  it('skipping criteria (unenforced) accrues debt but does not block mid-pipeline', () => {
+    const out = pullQualityOutcome({ ...item(), metCriteria: [] }, crit, 'development-active', threeStage, false);
+    expect(out.debt).toBe(2);
+    expect(out.blocked).toBe(false);
+  });
+
+  it('debt surfaces as a rework blocker when the item reaches the last stage', () => {
+    const out = pullQualityOutcome({ ...item(), metCriteria: [] }, crit, 'test-active', twoStage, false);
+    expect(out.blocked).toBe(true);
+    expect(out.rework).toBe(true);
+    expect(out.blockerEffort).toBe(4); // reworkEffort(2)
+    expect(out.debt).toBe(0); // consumed
+  });
+
+  it('meeting the criteria (or enforcing) accrues no debt', () => {
+    expect(pullQualityOutcome({ ...item(), metCriteria: ['a1', 'a2'] }, crit, 'test-active', twoStage, false).debt).toBe(0);
+    // Enforced: unmet is ignored here (the reducer hard-gates the pull instead).
+    expect(pullQualityOutcome({ ...item(), metCriteria: [] }, crit, 'development-active', threeStage, true).debt).toBe(0);
   });
 });
 

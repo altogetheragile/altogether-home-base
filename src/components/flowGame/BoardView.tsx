@@ -215,7 +215,7 @@ export function BoardView({
             {round.stages.some((s) => s.exitCriteria.length > 0) && (
               <label
                 className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
-                title="Enforce exit criteria: an item can't be pulled out of a stage until that stage's exit criteria are all ticked - the quality gate bites."
+                title="Enforce exit criteria: ON = an item can't leave a stage until its criteria are ticked (hard gate). OFF = you can skip them to go faster, but each skipped criterion becomes rework when the item reaches the last stage."
               >
                 <input type="checkbox" checked={round.enforceExitCriteria} onChange={(e) => onSetEnforceExitCriteria(e.target.checked)} className="accent-primary" />
                 Enforce exit criteria
