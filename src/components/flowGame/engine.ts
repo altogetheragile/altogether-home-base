@@ -20,6 +20,8 @@ import {
   laneOf,
   colId,
   isLastStage,
+  unmetCriteriaCount,
+  reworkEffort,
 } from './config';
 
 // ============= Item Factory =============
@@ -40,6 +42,8 @@ export function createItems(scenario: StartScenario = 'empty', stages: StageDef[
       startDay: null,
       endDay: null,
       metCriteria: [],
+      debt: 0,
+      rework: false,
     };
   });
   seedScenario(items, stages, scenario);
@@ -115,6 +119,32 @@ function seedScenario(items: WorkItem[], stages: StageDef[], scenario: StartScen
       }
     });
   }
+}
+
+/** The quality outcome of pulling `item` from `sourceStage` to `dest` when the
+ *  exit-criteria gate is (un)enforced. When not enforced, any skipped criteria add
+ *  to the item's debt; that debt surfaces as a rework blocker the moment the item
+ *  is pulled into the last stage - defects found late cost the most. */
+export function pullQualityOutcome(
+  item: WorkItem,
+  sourceStage: StageDef | undefined,
+  dest: ColumnId,
+  stages: StageDef[],
+  enforce: boolean,
+): { debt: number; blocked: boolean; rework: boolean; blockerEffort: number } {
+  const unmet = enforce ? 0 : unmetCriteriaCount(item, sourceStage);
+  let debt = item.debt + unmet;
+  let blocked = item.blocked;
+  let rework = item.rework;
+  let blockerEffort = item.blockerEffort;
+  const destStage = stageOf(dest);
+  if (destStage && isLastStage(destStage, stages) && laneOf(dest) === 'active' && debt > 0) {
+    blocked = true;
+    rework = true;
+    blockerEffort = reworkEffort(debt);
+    debt = 0;
+  }
+  return { debt, blocked, rework, blockerEffort };
 }
 
 // ============= Snapshot =============

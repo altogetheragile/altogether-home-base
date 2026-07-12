@@ -81,6 +81,12 @@ export interface WorkItem {
   /** Ids of the current stage's exit criteria the player has ticked as met.
    *  Cleared when the item is pulled into a new stage (fresh gate). */
   metCriteria: string[];
+  /** Quality debt carried from skipping exit criteria on earlier pulls (count of
+   *  skipped criteria). Surfaces as rework when the item reaches the last stage. */
+  debt: number;
+  /** True when this item's current blocker is rework from skipped criteria (vs a
+   *  random overnight blocker), so it can be labelled distinctly. */
+  rework: boolean;
 }
 
 // ============= Day Results =============

@@ -1,6 +1,6 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef, Workflow, StartScenario } from './types';
-import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
+import { createItems, simulateDay, calculateMetrics, applyDayBlockers, pullQualityOutcome } from './engine';
 import { DAYS_PER_ROUND, defaultWipLimits, initialWipLimits, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount, exitCriteriaMet } from './config';
 
 /** Which worker assignments carry over to the next day: only those whose card is
@@ -73,8 +73,8 @@ function withWorkflowDefaults(state: GameState): GameState {
       // (or added to an in-flight round) would otherwise show no limit or editor.
       wipLimits: round.wipLimits ? { ...defaultWipLimits(stages), ...round.wipLimits } : round.wipLimits,
       enforceExitCriteria: round.enforceExitCriteria ?? false,
-      // Items saved before exit criteria lack `metCriteria`.
-      items: round.items.map((i) => ({ ...i, metCriteria: i.metCriteria ?? [] })),
+      // Items saved before exit criteria / the debt loop lack these fields.
+      items: round.items.map((i) => ({ ...i, metCriteria: i.metCriteria ?? [], debt: i.debt ?? 0, rework: i.rework ?? false })),
     };
   }
   const wfStages = workflow.stages.map((s) => ({ ...s, exitCriteria: s.exitCriteria ?? [] }));
@@ -98,8 +98,9 @@ function reducer(state: GameState, action: GameAction): GameState {
       if (!item) return state;
       const dest = pullTarget(item.column, state.round.stages);
       if (!dest) return state; // not a pullable position
-      // Exit-criteria gate: an item can't leave a stage until that stage's quality
-      // criteria are all ticked — when the gate is enforced.
+      // Exit-criteria gate: when enforced, an item can't leave a stage until that
+      // stage's criteria are all ticked. When NOT enforced, it can leave with
+      // criteria unmet, but each skipped one accrues quality debt (Phase 2).
       const sourceStage = state.round.stages.find((s) => s.id === stageOf(item.column));
       if (state.round.enforceExitCriteria && !exitCriteriaMet(item, sourceStage)) {
         return state; // meet the exit criteria before moving this on
@@ -115,10 +116,14 @@ function reducer(state: GameState, action: GameAction): GameState {
         return state; // stage full — finish something before starting more
       }
       const day = state.round.day;
+      const stages = state.round.stages;
+      const enforce = state.round.enforceExitCriteria;
       const items = state.round.items.map((i) => {
         if (i.id !== action.cardId) return i;
+        // Skipped criteria accrue debt; debt surfaces as rework at the last stage.
+        const quality = pullQualityOutcome(i, sourceStage, dest, stages, enforce);
         // New stage, fresh gate: clear the ticked criteria from the stage it leaves.
-        const next = { ...i, column: dest, metCriteria: [] };
+        const next = { ...i, column: dest, metCriteria: [], ...quality };
         if (i.column === 'backlog') next.startDay = day; // first time it enters flow
         if (dest === 'done') next.endDay = day;
         return next;

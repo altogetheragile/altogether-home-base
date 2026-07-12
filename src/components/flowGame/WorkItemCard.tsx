@@ -98,7 +98,17 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, stages = 
         <span className="font-medium truncate text-xs">{item.title}</span>
         <span className="shrink-0 flex items-center gap-1">
           {item.blocked && (
-            <span className="text-[9px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded">BLOCKED</span>
+            <span className="text-[9px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded">
+              {item.rework ? 'REWORK' : 'BLOCKED'}
+            </span>
+          )}
+          {!item.blocked && item.debt > 0 && (
+            <span
+              className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 py-0.5 rounded"
+              title="Shortcut taken: exit criteria were skipped. This surfaces as rework when the item reaches the last stage."
+            >
+              SHORTCUT
+            </span>
           )}
           {age != null && (
             <span className={cn('text-[9px] font-medium', age >= 8 ? 'text-destructive' : 'text-muted-foreground')}>
@@ -111,7 +121,9 @@ export function WorkItemCard({ item, assignments, isSelected, onClick, stages = 
       {item.column !== 'done' && (compact ? <EffortTotals item={item} stages={stages} /> : <EffortPips item={item} stages={stages} />)}
 
       {isActive && item.blocked && (
-        <div className="mt-1 text-[10px] text-destructive leading-tight">{item.blockerEffort} to unblock</div>
+        <div className="mt-1 text-[10px] text-destructive leading-tight">
+          {item.rework ? 'Rework: ' : ''}{item.blockerEffort} to unblock
+        </div>
       )}
 
       {/* Exit-criteria checklist: tick each before this item can be pulled onward. */}
