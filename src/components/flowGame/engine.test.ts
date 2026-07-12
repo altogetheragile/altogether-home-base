@@ -143,12 +143,12 @@ describe('createItems', () => {
     expect(items.some((i) => i.column === 'backlog')).toBe(true);
   });
 
-  it('a struggling Round 1 starts with NO WIP limits; other starts get defaults', () => {
-    // The undisciplined team begins uncapped.
+  it('Round 1 starts uncapped for a blank or struggling board; healthy keeps limits', () => {
+    // "Without constraints": a blank board and an undisciplined team begin uncapped.
+    expect(initialWipLimits(1, 'empty', S)).toBeNull();
     expect(initialWipLimits(1, 'struggling', S)).toBeNull();
-    // Healthy / empty Round 1 still get the default limit per stage.
+    // A healthy team is doing OK because it IS disciplined - it keeps its limits.
     expect(initialWipLimits(1, 'healthy', S)).toEqual({ analysis: 3, development: 3, test: 3 });
-    expect(initialWipLimits(1, 'empty', S)).toEqual({ analysis: 3, development: 3, test: 3 });
     // A player-chosen set (Round 2) always wins, even for a struggling board.
     const chosen = { analysis: 2, development: 4, test: 1 };
     expect(initialWipLimits(2, 'struggling', S, chosen)).toBe(chosen);
