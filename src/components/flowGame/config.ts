@@ -217,7 +217,9 @@ export function normalizeWorkers(workers: WorkerDef[], stages: StageDef[]): Work
 /** The default board: the standard three stages and six-person team. A game
  *  starts from this and (later) the player can edit it. */
 export const DEFAULT_WORKFLOW: Workflow = {
-  stages: STAGES.map((s) => ({ id: s.stage, name: s.label, exitCriteria: defaultExitCriteria(s.stage) })),
+  // No exit criteria by default: a basic game is uncluttered. A player adds them
+  // (per stage, or via "Use suggested") in the editor to bring in that realism.
+  stages: STAGES.map((s) => ({ id: s.stage, name: s.label, exitCriteria: [] })),
   workers: WORKERS,
 };
 
