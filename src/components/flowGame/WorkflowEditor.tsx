@@ -51,14 +51,17 @@ export function WorkflowEditor({ workflow, onSave }: WorkflowEditorProps) {
   const addStage = () =>
     setStages((prev) => {
       const id = nextStageId(prev);
-      return [...prev, { id, name: `Stage ${prev.length + 1}`, exitCriteria: defaultExitCriteria(id) }];
+      return [...prev, { id, name: `Stage ${prev.length + 1}`, exitCriteria: [] }];
     });
 
-  // Exit-criteria editing (the "write your own" exercise).
+  // Exit-criteria editing (the "write your own" exercise). Off by default; the
+  // player adds criteria per stage, or pulls in a generic starting set.
   const addCriterion = (stageId: string) =>
     setStages((prev) => prev.map((s) => (s.id === stageId
       ? { ...s, exitCriteria: [...s.exitCriteria, { id: nextCriterionId(stageId, s.exitCriteria), label: '' }] }
       : s)));
+  const applySuggestedCriteria = (stageId: string) =>
+    setStages((prev) => prev.map((s) => (s.id === stageId ? { ...s, exitCriteria: defaultExitCriteria(stageId) } : s)));
   const renameCriterion = (stageId: string, cid: string, label: string) =>
     setStages((prev) => prev.map((s) => (s.id === stageId
       ? { ...s, exitCriteria: s.exitCriteria.map((c) => (c.id === cid ? { ...c, label } : c)) }
@@ -161,7 +164,12 @@ export function WorkflowEditor({ workflow, onSave }: WorkflowEditorProps) {
                     </button>
                   </div>
                   {s.exitCriteria.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground/60">No exit criteria — work can leave this stage freely.</p>
+                    <p className="text-[11px] text-muted-foreground/60">
+                      No exit criteria — work leaves this stage freely.{' '}
+                      <button type="button" onClick={() => applySuggestedCriteria(s.id)} className="text-primary hover:underline">
+                        Use suggested
+                      </button>
+                    </p>
                   )}
                   {s.exitCriteria.map((c, ci) => (
                     <div key={c.id} className="flex items-center gap-1.5">

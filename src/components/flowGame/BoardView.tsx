@@ -212,13 +212,15 @@ export function BoardView({
                 </label>
               </>
             )}
-            <label
-              className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
-              title="Enforce exit criteria: an item can't be pulled out of a stage until that stage's exit criteria are all ticked - the quality gate bites."
-            >
-              <input type="checkbox" checked={round.enforceExitCriteria} onChange={(e) => onSetEnforceExitCriteria(e.target.checked)} className="accent-primary" />
-              Enforce exit criteria
-            </label>
+            {round.stages.some((s) => s.exitCriteria.length > 0) && (
+              <label
+                className="flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none"
+                title="Enforce exit criteria: an item can't be pulled out of a stage until that stage's exit criteria are all ticked - the quality gate bites."
+              >
+                <input type="checkbox" checked={round.enforceExitCriteria} onChange={(e) => onSetEnforceExitCriteria(e.target.checked)} className="accent-primary" />
+                Enforce exit criteria
+              </label>
+            )}
           </div>
           {canInteract && (
             <div className="flex flex-col items-end gap-0.5">
