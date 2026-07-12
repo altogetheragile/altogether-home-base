@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createItems, simulateDay, applyBlockers, calculateMetrics, makeSeededRng } from './engine';
 import type { Rng } from './engine';
-import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, nextWorkerName, makeWorker, normalizeWorkers, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
+import { WORKERS, DEFAULT_WORKFLOW, itemEffort, defaultWipLimits, initialWipLimits, nextWorkerName, makeWorker, normalizeWorkers, stageOf, laneOf, colId, pullTarget, stageCount, underfilledStage, bottleneckStage } from './config';
 import type { RoundState, WorkItem, DaySummaryData, StageDef } from './types';
 
 /** The default three stages, passed to the stage-aware helpers under test. */
@@ -141,6 +141,17 @@ describe('createItems', () => {
     // Within a 3-WIP rhythm: no stage is jammed far over the limit.
     for (const s of S) expect(stageCount(items, s.id)).toBeLessThanOrEqual(3);
     expect(items.some((i) => i.column === 'backlog')).toBe(true);
+  });
+
+  it('a struggling Round 1 starts with NO WIP limits; other starts get defaults', () => {
+    // The undisciplined team begins uncapped.
+    expect(initialWipLimits(1, 'struggling', S)).toBeNull();
+    // Healthy / empty Round 1 still get the default limit per stage.
+    expect(initialWipLimits(1, 'healthy', S)).toEqual({ analysis: 3, development: 3, test: 3 });
+    expect(initialWipLimits(1, 'empty', S)).toEqual({ analysis: 3, development: 3, test: 3 });
+    // A player-chosen set (Round 2) always wins, even for a struggling board.
+    const chosen = { analysis: 2, development: 4, test: 1 };
+    expect(initialWipLimits(2, 'struggling', S, chosen)).toBe(chosen);
   });
 
   it('the "struggling" scenario over-fills upstream, starves the last stage, and barely ships', () => {

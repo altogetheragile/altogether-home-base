@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, RoundState, Specialism, Prediction, WorkerAssignment, WorkItem, WorkerDef, StageDef, Workflow, StartScenario } from './types';
 import { createItems, simulateDay, calculateMetrics, applyDayBlockers } from './engine';
-import { DAYS_PER_ROUND, defaultWipLimits, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
+import { DAYS_PER_ROUND, defaultWipLimits, initialWipLimits, DEFAULT_WORKFLOW, FLOW_SEED, pullTarget, stageOf, laneOf, stageCount } from './config';
 
 /** Which worker assignments carry over to the next day: only those whose card is
  *  still being worked (in an Active lane). A worker is freed when their card
@@ -27,11 +27,10 @@ function createRound(
     items: createItems(scenario, stages),
     assignments: [],
     dayHistory: [],
-    // Limits are always editable; round 1 starts with them OFF (the chaos baseline),
-    // round 2 enforces the limits the player set. Either can be toggled in play.
-    // Built from the round's stages so a custom stage gets a limit (and its −/+
-    // editor) too, not just the three built-in ones.
-    wipLimits: wipLimits ?? defaultWipLimits(stages),
+    // Limits are always editable; round 1 starts with them unenforced (the chaos
+    // baseline) or, for a struggling team, absent entirely; round 2 enforces the
+    // limits the player set. Either can be toggled in play.
+    wipLimits: initialWipLimits(roundNumber, scenario, stages, wipLimits),
     enforceWip: roundNumber === 2,
     maximizeWip: false,
     seed: FLOW_SEED,
@@ -130,6 +129,22 @@ function reducer(state: GameState, action: GameAction): GameState {
       const base = state.round.wipLimits ?? { analysis: 3, development: 3, test: 3 };
       const value = Math.max(1, Math.min(20, action.value));
       return { ...state, round: { ...state.round, wipLimits: { ...base, [action.stage]: value } } };
+    }
+
+    case 'SET_USE_WIP': {
+      // Turn WIP limits on (restore the default per stage) or off entirely (null -
+      // uncapped columns, no editors). With no limits, enforce/maximize are moot.
+      if (!state.round) return state;
+      const wipLimits = action.use ? defaultWipLimits(state.round.stages) : null;
+      return {
+        ...state,
+        round: {
+          ...state.round,
+          wipLimits,
+          enforceWip: action.use && state.round.enforceWip,
+          maximizeWip: action.use && state.round.maximizeWip,
+        },
+      };
     }
 
     case 'SET_ENFORCE_WIP': {
@@ -279,6 +294,7 @@ export function useFlowGame() {
   const pullItem = useCallback((cardId: string) => dispatch({ type: 'PULL_ITEM', cardId }), []);
   const reorderItem = useCallback((activeId: string, overId: string) => dispatch({ type: 'REORDER_ITEM', activeId, overId }), []);
   const setWip = useCallback((stage: Specialism, value: number) => dispatch({ type: 'SET_WIP', stage, value }), []);
+  const setUseWip = useCallback((use: boolean) => dispatch({ type: 'SET_USE_WIP', use }), []);
   const setEnforceWip = useCallback((enforce: boolean) => dispatch({ type: 'SET_ENFORCE_WIP', enforce }), []);
   const setMaximizeWip = useCallback((maximize: boolean) => dispatch({ type: 'SET_MAXIMIZE_WIP', maximize }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_DAY' }), []);
@@ -320,6 +336,7 @@ export function useFlowGame() {
     pullItem,
     reorderItem,
     setWip,
+    setUseWip,
     setEnforceWip,
     setMaximizeWip,
     assignWorker,

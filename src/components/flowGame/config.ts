@@ -1,4 +1,4 @@
-import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism, Workflow, StageDef } from './types';
+import type { ColumnDef, ColumnId, Lane, WorkerDef, WorkItemDef, Specialism, Workflow, StageDef, StartScenario } from './types';
 
 // ============= Columns =============
 
@@ -261,4 +261,19 @@ export const DEFAULT_WIP_LIMITS: Record<Specialism, number> = {
  *  −/+ editor) rather than being left uncapped. */
 export function defaultWipLimits(stages: StageDef[]): Record<Specialism, number> {
   return Object.fromEntries(stages.map((s) => [s.id, DEFAULT_WIP_LIMITS[s.id] ?? 3]));
+}
+
+/** The WIP limits a round starts with. A player-chosen set (Round 2) wins; a
+ *  fresh 'struggling' Round 1 starts with NONE (null) - an undisciplined team is
+ *  in trouble precisely because it never limited WIP; otherwise every stage gets
+ *  its default limit. */
+export function initialWipLimits(
+  roundNumber: 1 | 2,
+  scenario: StartScenario,
+  stages: StageDef[],
+  provided?: Record<Specialism, number>,
+): Record<Specialism, number> | null {
+  if (provided) return provided;
+  if (roundNumber === 1 && scenario === 'struggling') return null;
+  return defaultWipLimits(stages);
 }

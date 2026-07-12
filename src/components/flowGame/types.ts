@@ -175,6 +175,7 @@ export type GameAction =
   | { type: 'PULL_ITEM'; cardId: string }
   | { type: 'REORDER_ITEM'; activeId: string; overId: string }
   | { type: 'SET_WIP'; stage: Specialism; value: number }
+  | { type: 'SET_USE_WIP'; use: boolean }
   | { type: 'SET_ENFORCE_WIP'; enforce: boolean }
   | { type: 'SET_MAXIMIZE_WIP'; maximize: boolean }
   | { type: 'ASSIGN_WORKER'; workerId: string; cardId: string }

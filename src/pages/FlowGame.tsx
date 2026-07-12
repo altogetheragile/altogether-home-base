@@ -47,6 +47,7 @@ export default function FlowGame() {
     pullItem,
     reorderItem,
     setWip,
+    setUseWip,
     setEnforceWip,
     setMaximizeWip,
     assignWorker,
@@ -174,6 +175,7 @@ export default function FlowGame() {
             onAssignWorker={assignWorker}
             onUnassignWorker={unassignWorker}
             onSetWip={setWip}
+            onSetUseWip={setUseWip}
             onSetEnforceWip={setEnforceWip}
             onSetMaximizeWip={setMaximizeWip}
             onRunDay={runDay}
