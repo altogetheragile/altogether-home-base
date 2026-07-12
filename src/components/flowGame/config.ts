@@ -263,10 +263,11 @@ export function defaultWipLimits(stages: StageDef[]): Record<Specialism, number>
   return Object.fromEntries(stages.map((s) => [s.id, DEFAULT_WIP_LIMITS[s.id] ?? 3]));
 }
 
-/** The WIP limits a round starts with. A player-chosen set (Round 2) wins; a
- *  fresh 'struggling' Round 1 starts with NONE (null) - an undisciplined team is
- *  in trouble precisely because it never limited WIP; otherwise every stage gets
- *  its default limit. */
+/** The WIP limits a round starts with. A player-chosen set (Round 2) always wins.
+ *  Round 1 begins "without constraints" - no WIP limits (null) - for a blank board
+ *  (start fresh, no discipline yet) or a struggling team (in trouble precisely
+ *  because it never limited WIP). Only a healthy team, which is doing OK because it
+ *  IS disciplined, starts with its per-stage limits. */
 export function initialWipLimits(
   roundNumber: 1 | 2,
   scenario: StartScenario,
@@ -274,6 +275,6 @@ export function initialWipLimits(
   provided?: Record<Specialism, number>,
 ): Record<Specialism, number> | null {
   if (provided) return provided;
-  if (roundNumber === 1 && scenario === 'struggling') return null;
+  if (roundNumber === 1 && scenario !== 'healthy') return null;
   return defaultWipLimits(stages);
 }
