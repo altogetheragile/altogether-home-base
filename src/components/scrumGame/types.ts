@@ -25,6 +25,20 @@ export interface Developer {
   initials: string;
 }
 
+/** Something getting in the team's way on a given day. The Scrum Master's job is
+ *  to remove it; left in place, it costs the team capacity (a distraction) or
+ *  stops progress entirely (a blocker) for that day. */
+export interface Impediment {
+  /** Unique per (sprint, day). */
+  id: string;
+  /** distraction = half the day lost; blocker = the whole day lost until cleared. */
+  kind: 'distraction' | 'blocker';
+  title: string;
+  detail: string;
+  /** Set once the Scrum Master has removed it, so it no longer bites. */
+  cleared: boolean;
+}
+
 /** A Product Backlog Item (user story). Ordered in the Product Backlog toward the
  *  Product Goal; estimated in story points; carries business value. */
 export interface Story {
@@ -60,6 +74,9 @@ export interface Sprint {
   /** Points remaining at the end of each day played (for the burndown chart).
    *  burndown[0] is the start of the Sprint (full commitment). */
   burndown: number[];
+  /** Days on which an impediment was left unaddressed and cost the team - a
+   *  measure of how well the Scrum Master kept the way clear. */
+  impedimentsHit: number;
 }
 
 export type ScrumPhase =
@@ -81,9 +98,15 @@ export interface ScrumState {
   productBacklog: Story[];
   /** The Developers on the Scrum Team (configurable roster). */
   team: Developer[];
+  /** The Scrum Master - not a Developer (does no story work), but clears the
+   *  team's impediments so the Developers can focus. */
+  scrumMaster: string;
   /** Who is working on what right now: Developer id -> story id. A Developer not
    *  present here is on the bench (idle, doing no work today). Reset each Sprint. */
   assignments: Record<string, string>;
+  /** Today's impediment, if any - shown at the Daily Scrum for the Scrum Master
+   *  to clear before the day is run. */
+  currentImpediment: Impediment | null;
   /** Completed and in-flight Sprints. */
   sprints: Sprint[];
   /** The Sprint currently being planned or played. */
@@ -101,12 +124,14 @@ export type ScrumAction =
   | { type: 'START' }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
   | { type: 'SET_TEAM'; team: Developer[] }
-  | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[] }
+  | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[]; length: number }
   | { type: 'START_STORY'; storyId: string }
   | { type: 'ADD_TO_SPRINT'; storyId: string }
   | { type: 'ASSIGN_DEV'; devId: string; storyId: string }
   | { type: 'UNASSIGN_DEV'; devId: string }
+  | { type: 'CLEAR_IMPEDIMENT' }
   | { type: 'RUN_SPRINT_DAY' }
+  | { type: 'RUN_TO_END' }
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'RESET' };

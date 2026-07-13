@@ -1,12 +1,15 @@
-import type { ScrumState, Sprint, Story, Developer } from './types';
-import { SPRINT_SEED, totalPoints, improvementBonus } from './config';
+import type { ScrumState, Sprint, Story, Developer, Impediment } from './types';
+import {
+  SPRINT_SEED, totalPoints, improvementBonus,
+  IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT,
+} from './config';
 
 // ============= Planning =============
 
 /** Commit the planned stories into a new Sprint and open it for play. The chosen
  *  stories move from the Product Backlog onto the Sprint board (status 'todo',
  *  tagged with the Sprint number); the Sprint Goal is set. Pure and deterministic. */
-export function planSprint(state: ScrumState, goal: string, storyIds: string[]): ScrumState {
+export function planSprint(state: ScrumState, goal: string, storyIds: string[], length = state.sprintLength): ScrumState {
   const number = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const committed = new Set(storyIds);
   const productBacklog: Story[] = state.productBacklog.map((s) =>
@@ -16,14 +19,24 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[]):
   const sprint: Sprint = {
     number,
     goal: goal.trim(),
-    length: state.sprintLength,
+    length,
     day: 1,
     committedStoryIds: storyIds,
     status: 'active',
     burndown: [startPoints], // day 0: the full commitment
+    impedimentsHit: 0,
   };
-  // A new Sprint starts with everyone on the bench (no work assigned yet).
-  return { ...state, phase: 'sprint', currentSprint: sprint, productBacklog, assignments: {} };
+  // A new Sprint starts with everyone on the bench and day 1's impediment (if any)
+  // waiting at the Daily Scrum. Remember the chosen length for the next Sprint.
+  return {
+    ...state,
+    phase: 'sprint',
+    currentSprint: sprint,
+    productBacklog,
+    assignments: {},
+    sprintLength: length,
+    currentImpediment: generateImpediment(number, 1),
+  };
 }
 
 /** The stories committed to a given Sprint (the Sprint Backlog). */
@@ -57,6 +70,23 @@ export function devRoll(sprintNumber: number, day: number, devIndex: number): nu
 
 /** Whether a Sprint has run out of days. */
 export const isSprintOver = (sprint: Sprint): boolean => sprint.day > sprint.length;
+
+// ============= Impediments (the Scrum Master's work) =============
+
+/** Deterministically decide the impediment (if any) for a given Sprint day. */
+export function generateImpediment(sprintNumber: number, day: number): Impediment | null {
+  const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 4099) ^ (day * 263) ^ 0x9e3779b9);
+  if (rng() >= IMPEDIMENT_CHANCE) return null;
+  const def = IMPEDIMENTS[Math.floor(rng() * IMPEDIMENTS.length)];
+  return { id: `imp-${sprintNumber}-${day}`, kind: def.kind, title: def.title, detail: def.detail, cleared: false };
+}
+
+/** The Scrum Master removes today's impediment, so it no longer costs the team. */
+export function clearImpediment(state: ScrumState): ScrumState {
+  const imp = state.currentImpediment;
+  if (!imp || imp.cleared) return state;
+  return { ...state, currentImpediment: { ...imp, cleared: true } };
+}
 
 /** Move a story from To Do into Doing (the team starts it). */
 export function startStory(state: ScrumState, storyId: string): ScrumState {
@@ -149,6 +179,17 @@ export function runSprintDay(state: ScrumState): ScrumState {
     effortByStory.set(swarmLead, (effortByStory.get(swarmLead) ?? 0) + bonus);
   }
 
+  // A live impediment the Scrum Master hasn't cleared scales down today's effort -
+  // a distraction loses half the day, a blocker loses all of it. It only "bites"
+  // if the team was actually trying to work.
+  const imp = state.currentImpediment;
+  let hit = 0;
+  if (imp && !imp.cleared && effortByStory.size > 0) {
+    const factor = IMPEDIMENT_EFFECT[imp.kind];
+    for (const [id, e] of effortByStory) effortByStory.set(id, Math.floor(e * factor));
+    hit = 1;
+  }
+
   const finished: string[] = [];
   const productBacklog = state.productBacklog.map((s) => {
     const work = effortByStory.get(s.id);
@@ -170,8 +211,29 @@ export function runSprintDay(state: ScrumState): ScrumState {
   const remaining = totalPoints(
     productBacklog.filter((s) => s.sprintNumber === sprint.number && s.status !== 'done'),
   );
-  const next: Sprint = { ...sprint, day: sprint.day + 1, burndown: [...sprint.burndown, remaining] };
-  return { ...state, currentSprint: next, productBacklog, assignments };
+  const nextDay = sprint.day + 1;
+  const next: Sprint = {
+    ...sprint,
+    day: nextDay,
+    burndown: [...sprint.burndown, remaining],
+    impedimentsHit: sprint.impedimentsHit + hit,
+  };
+  // Surface tomorrow's impediment (only while the timebox is still open).
+  const currentImpediment = nextDay <= sprint.length ? generateImpediment(sprint.number, nextDay) : null;
+  return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment };
+}
+
+/** Fast-forward the rest of the Sprint. The Scrum Master keeps the way clear as
+ *  they go (each day's impediment is removed), so this is a safe way to skip the
+ *  clicking once the plan is set - not a shortcut that ignores the team's blockers. */
+export function runRemainingDays(state: ScrumState): ScrumState {
+  let s = state;
+  let guard = 0;
+  while (s.currentSprint && !isSprintOver(s.currentSprint) && guard++ < 200) {
+    if (s.currentImpediment && !s.currentImpediment.cleared) s = clearImpediment(s);
+    s = runSprintDay(s);
+  }
+  return s;
 }
 
 /** Points delivered (stories that reached Done) in a Sprint. */
@@ -219,6 +281,7 @@ export function reviewSprint(state: ScrumState): ScrumState {
     currentSprint: { ...sprint, status: 'review' },
     productBacklog,
     assignments: {},
+    currentImpediment: null,
   };
 }
 

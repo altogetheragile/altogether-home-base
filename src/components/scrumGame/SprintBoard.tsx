@@ -7,16 +7,19 @@ import { sprintStories, availableStories, isSprintOver, deliveredPoints, forecas
 import { devColor } from './config';
 import { DevBadge } from './DevBadge';
 import { TeamBench } from './TeamBench';
+import { ScrumMasterPanel } from './ScrumMasterPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
+import { Plus, FastForward } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ScrumState;
   onAssignDev: (devId: string, storyId: string) => void;
   onUnassignDev: (devId: string) => void;
   onAddToSprint: (storyId: string) => void;
+  onClearImpediment: () => void;
   onRunDay: () => void;
+  onRunToEnd: () => void;
   onReview: () => void;
 }
 
@@ -94,7 +97,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
  *  Scrum - assign Developers to the stories they'll swarm, then Run Day. A burndown
  *  tracks remaining work; when the timebox runs out, the Sprint is reviewed. */
-export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onRunDay, onReview }: SprintBoardProps) {
+export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onClearImpediment, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
   const [selectedDevId, setSelectedDevId] = useState<string | null>(null);
   if (!sprint) return null;
@@ -151,9 +154,16 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Sprint {sprint.number} · Day {Math.min(sprint.day, sprint.length)}/{sprint.length}</h1>
         {!canReview ? (
-          <div className="flex flex-col items-end gap-0.5">
-            <Button size="lg" onClick={onRunDay} disabled={working === 0}>Run Day</Button>
-            {working === 0 && <span className="text-[10px] text-muted-foreground">Assign a Developer to a story to run the day</span>}
+          <div className="flex items-center gap-2">
+            {sprint.day < sprint.length && (
+              <Button variant="outline" size="lg" onClick={onRunToEnd} disabled={working === 0} title="Fast-forward the rest of the Sprint; the Scrum Master keeps the way clear">
+                <FastForward className="mr-1.5 h-4 w-4" /> Run remaining days
+              </Button>
+            )}
+            <div className="flex flex-col items-end gap-0.5">
+              <Button size="lg" onClick={onRunDay} disabled={working === 0}>Run Day</Button>
+              {working === 0 && <span className="text-[10px] text-muted-foreground">Assign a Developer to a story to run the day</span>}
+            </div>
           </div>
         ) : (
           <Button size="lg" onClick={onReview}>Sprint Review</Button>
@@ -165,7 +175,17 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
         <p className="text-sm font-medium">{sprint.goal}</p>
       </div>
 
-      {/* The team - who's working on what today */}
+      {/* The Daily Scrum starts here: the Scrum Master clears the way... */}
+      {!canReview && (
+        <ScrumMasterPanel
+          scrumMaster={state.scrumMaster}
+          impediment={state.currentImpediment}
+          onClear={onClearImpediment}
+          disabled={locked}
+        />
+      )}
+
+      {/* ...then the team decides who's working on what today */}
       <TeamBench
         state={state}
         selectedDevId={selectedDevId}
