@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, startStory, addToSprint, runSprintDay, reviewSprint, startNextSprint } from './engine';
+import { planSprint, startStory, addToSprint, assignDev, unassignDev, setTeam, runSprintDay, reviewSprint, startNextSprint } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -11,12 +11,18 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return { ...state, phase: 'planning' };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
+    case 'SET_TEAM':
+      return setTeam(state, action.team);
     case 'PLAN_SPRINT':
       return planSprint(state, action.goal, action.storyIds);
     case 'START_STORY':
       return startStory(state, action.storyId);
     case 'ADD_TO_SPRINT':
       return addToSprint(state, action.storyId);
+    case 'ASSIGN_DEV':
+      return assignDev(state, action.devId, action.storyId);
+    case 'UNASSIGN_DEV':
+      return unassignDev(state, action.devId);
     case 'RUN_SPRINT_DAY':
       return runSprintDay(state);
     case 'REVIEW_SPRINT':
@@ -41,6 +47,9 @@ export function useScrumGame() {
   );
   const startStoryAction = useCallback((storyId: string) => dispatch({ type: 'START_STORY', storyId }), []);
   const addToSprintAction = useCallback((storyId: string) => dispatch({ type: 'ADD_TO_SPRINT', storyId }), []);
+  const setTeamAction = useCallback((team: ScrumState['team']) => dispatch({ type: 'SET_TEAM', team }), []);
+  const assignDevAction = useCallback((devId: string, storyId: string) => dispatch({ type: 'ASSIGN_DEV', devId, storyId }), []);
+  const unassignDevAction = useCallback((devId: string) => dispatch({ type: 'UNASSIGN_DEV', devId }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_SPRINT_DAY' }), []);
   const reviewSprintAction = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
@@ -53,6 +62,9 @@ export function useScrumGame() {
     planSprint: planSprintAction,
     startStory: startStoryAction,
     addToSprint: addToSprintAction,
+    setTeam: setTeamAction,
+    assignDev: assignDevAction,
+    unassignDev: unassignDevAction,
     runDay,
     reviewSprint: reviewSprintAction,
     nextSprint,

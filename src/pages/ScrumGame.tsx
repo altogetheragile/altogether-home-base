@@ -10,22 +10,22 @@ import Footer from '@/components/Footer';
 /** The Scrum Simulation: intro -> Sprint Planning -> Sprint execution (board +
  *  daily Run + burndown) -> Review -> Retrospective -> next Sprint. */
 export default function ScrumGame() {
-  const { state, start, setPhase, planSprint, startStory, addToSprint, runDay, reviewSprint, nextSprint } = useScrumGame();
+  const { state, start, setPhase, setTeam, planSprint, assignDev, unassignDev, addToSprint, runDay, reviewSprint, nextSprint } = useScrumGame();
 
   const renderPhase = () => {
     switch (state.phase) {
       case 'intro':
         return <ScrumIntro productGoal={state.productGoal} sprintLength={state.sprintLength} onStart={start} />;
       case 'planning':
-        return <SprintPlanning state={state} onCommit={planSprint} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onBack={() => setPhase('intro')} />;
       case 'sprint':
-        return <SprintBoard state={state} onStartStory={startStory} onAddToSprint={addToSprint} onRunDay={runDay} onReview={reviewSprint} />;
+        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onRunDay={runDay} onReview={reviewSprint} />;
       case 'review':
         return <SprintReview state={state} onContinue={() => setPhase('retro')} />;
       case 'retro':
         return <SprintRetro state={state} onChoose={nextSprint} />;
       default:
-        return <SprintPlanning state={state} onCommit={planSprint} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onBack={() => setPhase('intro')} />;
     }
   };
 

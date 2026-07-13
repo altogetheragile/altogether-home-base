@@ -14,6 +14,17 @@ export interface Criterion {
   label: string;
 }
 
+/** A Developer on the Scrum Team. Cross-functional (any of them can work any
+ *  story), so the only decision is who works on WHAT - the swarm-vs-spread call
+ *  the player makes each day. */
+export interface Developer {
+  id: string;
+  name: string;
+  /** Short badge label (1-2 chars), derived from the name; kept distinct so a
+   *  bigger roster still reads clearly. */
+  initials: string;
+}
+
 /** A Product Backlog Item (user story). Ordered in the Product Backlog toward the
  *  Product Goal; estimated in story points; carries business value. */
 export interface Story {
@@ -68,6 +79,11 @@ export interface ScrumState {
   definitionOfDone: Criterion[];
   /** The ordered Product Backlog (highest value / priority first). */
   productBacklog: Story[];
+  /** The Developers on the Scrum Team (configurable roster). */
+  team: Developer[];
+  /** Who is working on what right now: Developer id -> story id. A Developer not
+   *  present here is on the bench (idle, doing no work today). Reset each Sprint. */
+  assignments: Record<string, string>;
   /** Completed and in-flight Sprints. */
   sprints: Sprint[];
   /** The Sprint currently being planned or played. */
@@ -84,9 +100,12 @@ export interface ScrumState {
 export type ScrumAction =
   | { type: 'START' }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
+  | { type: 'SET_TEAM'; team: Developer[] }
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[] }
   | { type: 'START_STORY'; storyId: string }
   | { type: 'ADD_TO_SPRINT'; storyId: string }
+  | { type: 'ASSIGN_DEV'; devId: string; storyId: string }
+  | { type: 'UNASSIGN_DEV'; devId: string }
   | { type: 'RUN_SPRINT_DAY' }
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }

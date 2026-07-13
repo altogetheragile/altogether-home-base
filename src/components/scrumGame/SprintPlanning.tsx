@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import type { ScrumState, Story } from './types';
+import type { ScrumState, Story, Developer } from './types';
 import { availableStories } from './engine';
-import { sprintCapacity, totalPoints } from './config';
+import { sprintCapacity, totalPoints, devColor } from './config';
+import { DevBadge } from './DevBadge';
+import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -10,13 +12,14 @@ import { Plus, X } from 'lucide-react';
 interface SprintPlanningProps {
   state: ScrumState;
   onCommit: (goal: string, storyIds: string[]) => void;
+  onSetTeam: (team: Developer[]) => void;
   onBack: () => void;
 }
 
 /** Sprint Planning: name the Sprint Goal and forecast stories from the Product
  *  Backlog into the Sprint, watching the forecast against capacity/velocity so an
  *  over-commitment is visible before you make it. */
-export function SprintPlanning({ state, onCommit, onBack }: SprintPlanningProps) {
+export function SprintPlanning({ state, onCommit, onSetTeam, onBack }: SprintPlanningProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -25,7 +28,7 @@ export function SprintPlanning({ state, onCommit, onBack }: SprintPlanningProps)
   const chosen = available.filter((s) => selected.has(s.id));
   const remaining = available.filter((s) => !selected.has(s.id));
   const committed = totalPoints(chosen);
-  const capacity = sprintCapacity(state.velocity);
+  const capacity = sprintCapacity(state.velocity, state.team.length);
   const over = committed > capacity;
   const canStart = goal.trim().length > 0 && chosen.length > 0;
 
@@ -59,6 +62,21 @@ export function SprintPlanning({ state, onCommit, onBack }: SprintPlanningProps)
       <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-3">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
         <p className="text-sm font-medium">{state.productGoal}</p>
+      </div>
+
+      {/* Scrum Team - the Developers who'll do the work. A bigger team can forecast
+          more, but only pays off if there's work to swarm on. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-semibold">Scrum Team</span>
+          <div className="flex -space-x-1.5">
+            {state.team.map((d, i) => (
+              <DevBadge key={d.id} initials={d.initials} colorClass={devColor(i)} title={d.name} className="ring-2 ring-background" />
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">{state.team.length} Developers</span>
+        </div>
+        <ScrumTeamEditor team={state.team} onSave={onSetTeam} />
       </div>
 
       {/* Sprint Goal */}
@@ -110,7 +128,7 @@ export function SprintPlanning({ state, onCommit, onBack }: SprintPlanningProps)
           <p className="text-[11px] text-muted-foreground">
             {state.velocity.length
               ? `Capacity is your average velocity over ${state.velocity.length} sprint${state.velocity.length > 1 ? 's' : ''}.`
-              : 'No velocity yet - this is a first-Sprint capacity guess. Velocity will replace it after Sprint 1.'}
+              : `No velocity yet - this is a first-Sprint guess scaled to ${state.team.length} Developers. Velocity will replace it after Sprint 1.`}
           </p>
         </section>
       </div>

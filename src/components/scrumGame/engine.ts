@@ -1,5 +1,5 @@
-import type { ScrumState, Sprint, Story } from './types';
-import { SPRINT_TEAM, SPRINT_SEED, totalPoints, improvementBonus } from './config';
+import type { ScrumState, Sprint, Story, Developer } from './types';
+import { SPRINT_SEED, totalPoints, improvementBonus } from './config';
 
 // ============= Planning =============
 
@@ -22,7 +22,8 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[]):
     status: 'active',
     burndown: [startPoints], // day 0: the full commitment
   };
-  return { ...state, phase: 'sprint', currentSprint: sprint, productBacklog };
+  // A new Sprint starts with everyone on the bench (no work assigned yet).
+  return { ...state, phase: 'sprint', currentSprint: sprint, productBacklog, assignments: {} };
 }
 
 /** The stories committed to a given Sprint (the Sprint Backlog). */
@@ -46,15 +47,12 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-/** The team's total effort for a given Sprint day - each Developer rolls a small
- *  die. Deterministic per (sprint, day). Modest, so the 5-day timebox binds: a
- *  right-sized, focused Sprint finishes; an over-committed or over-spread one
- *  does not. */
-export function teamCapacity(sprintNumber: number, day: number, bonus = 0): number {
-  const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 977) ^ (day * 131));
-  let total = bonus; // accumulated retro improvements make the team a little faster
-  for (let i = 0; i < SPRINT_TEAM.length; i++) total += Math.floor(rng() * 2) + 1; // 1..2 each
-  return total;
+/** One Developer's effort for a given Sprint day - a small die (1..2), keyed so
+ *  it's deterministic per (sprint, day, Developer). Modest, so the timebox binds:
+ *  a big story needs more than one person to finish inside a Sprint. */
+export function devRoll(sprintNumber: number, day: number, devIndex: number): number {
+  const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 977) ^ (day * 131) ^ ((devIndex + 1) * 6151));
+  return Math.floor(rng() * 2) + 1; // 1..2
 }
 
 /** Whether a Sprint has run out of days. */
@@ -66,6 +64,51 @@ export function startStory(state: ScrumState, storyId: string): ScrumState {
     s.id === storyId && s.status === 'todo' ? { ...s, status: 'doing' as const } : s,
   );
   return { ...state, productBacklog };
+}
+
+// ============= The team: who works on what =============
+
+/** Developers currently on the bench (assigned to nothing) - idle, doing no work. */
+export const benchedDevs = (state: ScrumState): Developer[] =>
+  state.team.filter((d) => !state.assignments[d.id]);
+
+/** The Developers swarming a given story right now. */
+export const devsOnStory = (state: ScrumState, storyId: string): Developer[] =>
+  state.team.filter((d) => state.assignments[d.id] === storyId);
+
+/** Assign a Developer to a story for the Sprint. Assigning to a To Do story pulls
+ *  it into Doing (the team starts it). Many Developers on one story = a swarm,
+ *  which finishes it fast; spread thin, everything crawls. */
+export function assignDev(state: ScrumState, devId: string, storyId: string): ScrumState {
+  const sprint = state.currentSprint;
+  if (!sprint || !state.team.some((d) => d.id === devId)) return state;
+  const story = state.productBacklog.find(
+    (s) => s.id === storyId && s.sprintNumber === sprint.number && (s.status === 'todo' || s.status === 'doing'),
+  );
+  if (!story) return state;
+  const productBacklog = story.status === 'todo'
+    ? state.productBacklog.map((s) => (s.id === storyId ? { ...s, status: 'doing' as const } : s))
+    : state.productBacklog;
+  return { ...state, productBacklog, assignments: { ...state.assignments, [devId]: storyId } };
+}
+
+/** Send a Developer back to the bench (frees them to be placed elsewhere). */
+export function unassignDev(state: ScrumState, devId: string): ScrumState {
+  if (!state.assignments[devId]) return state;
+  const assignments = { ...state.assignments };
+  delete assignments[devId];
+  return { ...state, assignments };
+}
+
+/** Replace the roster (team editor). Any assignments for removed Developers are
+ *  dropped so nobody works a story who is no longer on the team. */
+export function setTeam(state: ScrumState, team: Developer[]): ScrumState {
+  const ids = new Set(team.map((d) => d.id));
+  const assignments: Record<string, string> = {};
+  for (const [devId, storyId] of Object.entries(state.assignments)) {
+    if (ids.has(devId)) assignments[devId] = storyId;
+  }
+  return { ...state, team, assignments };
 }
 
 /** Pull an extra Product Backlog item into the running Sprint - the Developers
@@ -83,38 +126,52 @@ export function addToSprint(state: ScrumState, storyId: string): ScrumState {
   return { ...state, productBacklog };
 }
 
-/** Run one Sprint day (the Daily Scrum happened; now the team works). The team's
- *  capacity is spread across everything in Doing - so too much work-in-progress
- *  means little finishes. Stories whose effort reaches zero move to Done. */
+/** Run one Sprint day (the Daily Scrum happened; now the team works). Effort comes
+ *  only from Developers who are ASSIGNED to a story - each rolls their own die and
+ *  applies it to the story they're on, so a swarm finishes work fast and the idle
+ *  bench contributes nothing. Stories whose effort reaches zero move to Done, and
+ *  the Developers on them are freed back to the bench. */
 export function runSprintDay(state: ScrumState): ScrumState {
   const sprint = state.currentSprint;
   if (!sprint || isSprintOver(sprint)) return state;
 
-  const doingIds = state.productBacklog
-    .filter((s) => s.sprintNumber === sprint.number && s.status === 'doing')
-    .map((s) => s.id);
-
-  // Split the day's capacity evenly across the stories in Doing.
-  const cap = teamCapacity(sprint.number, sprint.day, improvementBonus(state.improvements));
-  const per = new Map<string, number>();
-  if (doingIds.length > 0) {
-    const base = Math.floor(cap / doingIds.length);
-    const extra = cap % doingIds.length;
-    doingIds.forEach((id, i) => per.set(id, base + (i < extra ? 1 : 0)));
+  // Sum each assigned Developer's roll onto their story. Kaizen (accumulated retro
+  // improvements) rewards focus: the extra effort goes to the most-swarmed story.
+  const effortByStory = new Map<string, number>();
+  state.team.forEach((dev, i) => {
+    const storyId = state.assignments[dev.id];
+    if (!storyId) return; // benched today
+    effortByStory.set(storyId, (effortByStory.get(storyId) ?? 0) + devRoll(sprint.number, sprint.day, i));
+  });
+  const bonus = improvementBonus(state.improvements);
+  if (bonus > 0 && effortByStory.size > 0) {
+    const swarmLead = [...effortByStory.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    effortByStory.set(swarmLead, (effortByStory.get(swarmLead) ?? 0) + bonus);
   }
 
+  const finished: string[] = [];
   const productBacklog = state.productBacklog.map((s) => {
-    const work = per.get(s.id);
-    if (!work) return s;
+    const work = effortByStory.get(s.id);
+    if (!work || s.status !== 'doing') return s;
     const effortRemaining = Math.max(0, s.effortRemaining - work);
+    if (effortRemaining === 0) finished.push(s.id);
     return { ...s, effortRemaining, status: effortRemaining === 0 ? ('done' as const) : s.status };
   });
+
+  // Developers on a story that just reached Done return to the bench.
+  const assignments = { ...state.assignments };
+  if (finished.length > 0) {
+    const done = new Set(finished);
+    for (const devId of Object.keys(assignments)) {
+      if (done.has(assignments[devId])) delete assignments[devId];
+    }
+  }
 
   const remaining = totalPoints(
     productBacklog.filter((s) => s.sprintNumber === sprint.number && s.status !== 'done'),
   );
   const next: Sprint = { ...sprint, day: sprint.day + 1, burndown: [...sprint.burndown, remaining] };
-  return { ...state, currentSprint: next, productBacklog };
+  return { ...state, currentSprint: next, productBacklog, assignments };
 }
 
 /** Points delivered (stories that reached Done) in a Sprint. */
@@ -161,6 +218,7 @@ export function reviewSprint(state: ScrumState): ScrumState {
     velocity: [...state.velocity, velocityPts],
     currentSprint: { ...sprint, status: 'review' },
     productBacklog,
+    assignments: {},
   };
 }
 

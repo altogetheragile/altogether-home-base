@@ -1,21 +1,24 @@
-import type { Criterion, Story, ScrumState } from './types';
+import type { Criterion, Story, ScrumState, Developer } from './types';
 
 /** Working days in a sim Sprint. Short so several Sprints stay playable without
  *  click fatigue; the first Sprint is felt day by day, later ones zoom out. */
 export const SPRINT_LENGTH = 5;
 
-/** The team's assumed capacity (story points) for the FIRST Sprint, before there
- *  is any velocity to go on. After that, velocity replaces the guess. */
-export const SUGGESTED_CAPACITY = 13;
+/** Rough points one Developer is worth over a Sprint - used only for the FIRST
+ *  Sprint's capacity guess (before there's velocity). Deliberately a little
+ *  optimistic: a focused team can beat it, a scattered one won't, and velocity
+ *  soon replaces the guess. */
+export const CAPACITY_PER_DEV = 4;
 
 /** Average of past Sprint velocities (0 if none yet). */
 export const averageVelocity = (velocity: number[]): number =>
   velocity.length ? Math.round(velocity.reduce((n, v) => n + v, 0) / velocity.length) : 0;
 
 /** How many points the team can realistically take on: past velocity once it
- *  exists, otherwise the first-Sprint capacity guess. */
-export const sprintCapacity = (velocity: number[]): number =>
-  velocity.length ? averageVelocity(velocity) : SUGGESTED_CAPACITY;
+ *  exists, otherwise a first-Sprint guess scaled to how many Developers there
+ *  are (a bigger team can forecast more). */
+export const sprintCapacity = (velocity: number[], teamSize: number): number =>
+  velocity.length ? averageVelocity(velocity) : teamSize * CAPACITY_PER_DEV;
 
 /** The Product Goal - the north star the Product Backlog is ordered toward. */
 export const PRODUCT_GOAL = 'Launch a booking experience customers love and trust.';
@@ -47,6 +50,24 @@ export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRem
   { id: 's12', title: 'Analytics dashboard', points: 8, value: 3 },
 ];
 
+/** Build a Developer, deriving a short, readable badge from the name. Two-letter
+ *  initials keep a bigger roster distinct (Robin vs Riley), unlike single letters. */
+export function makeDeveloper(id: string, name: string): Developer {
+  const clean = name.trim() || 'Dev';
+  const initials = clean.slice(0, 2).toUpperCase();
+  return { id, name: clean, initials };
+}
+
+/** The default Scrum Team - five cross-functional Developers. Big enough that
+ *  swarming vs spreading is a real choice, small enough to stay legible. */
+export const DEFAULT_TEAM: Developer[] = ['Robin', 'Riley', 'Jamie', 'Sam', 'Alex'].map((n, i) =>
+  makeDeveloper(`d${i + 1}`, n),
+);
+
+/** Roster bounds - a Scrum Team of Developers is typically small. */
+export const MIN_TEAM = 3;
+export const MAX_TEAM = 7;
+
 /** The starting game state: all stories in the Product Backlog, no Sprints yet. */
 export function initialScrumState(): ScrumState {
   return {
@@ -54,6 +75,8 @@ export function initialScrumState(): ScrumState {
     productGoal: PRODUCT_GOAL,
     definitionOfDone: defaultDefinitionOfDone(),
     productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.points })),
+    team: DEFAULT_TEAM.map((d) => ({ ...d })),
+    assignments: {},
     sprints: [],
     currentSprint: null,
     velocity: [],
@@ -78,10 +101,13 @@ export const improvementBonus = (improvements: string[]): number => Math.min(2, 
 export const totalPoints = (stories: Story[]): number => stories.reduce((n, s) => n + s.points, 0);
 export const totalValue = (stories: Story[]): number => stories.reduce((n, s) => n + s.value, 0);
 
-/** The Developers on the team. Cross-functional, so any of them can work any
- *  story. More people is more daily capacity - but spread across too much
- *  in-progress work at once, little finishes (the WIP lesson, inside a Sprint). */
-export const SPRINT_TEAM = ['Robin', 'Riley', 'Jamie'];
-
 /** Seed for the Sprint's deterministic dice, so a Sprint plays out reproducibly. */
 export const SPRINT_SEED = 0x5bd1e995;
+
+/** A stable badge colour per roster position, so each Developer reads distinctly
+ *  on the bench and on the cards (mirrors the Flow game's coloured pawns). */
+const DEV_COLORS = [
+  'bg-sky-500', 'bg-violet-500', 'bg-emerald-500', 'bg-amber-500',
+  'bg-rose-500', 'bg-cyan-500', 'bg-fuchsia-500',
+];
+export const devColor = (index: number): string => DEV_COLORS[index % DEV_COLORS.length];
