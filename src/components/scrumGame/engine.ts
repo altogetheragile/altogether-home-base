@@ -1,7 +1,8 @@
-import type { ScrumState, Sprint, Story, Developer, Impediment } from './types';
+import type { ScrumState, Sprint, Story, Developer, Impediment, ChangeRequest } from './types';
 import {
   SPRINT_SEED, totalPoints, improvementBonus,
   IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT,
+  CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS,
 } from './config';
 
 // ============= Planning =============
@@ -36,6 +37,7 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     assignments: {},
     sprintLength: length,
     currentImpediment: generateImpediment(number, 1),
+    changeRequest: generateChangeRequest(number, length),
   };
 }
 
@@ -46,6 +48,22 @@ export const sprintStories = (state: ScrumState, sprintNumber: number): Story[] 
 /** The stories still available to plan (not yet pulled into any Sprint). */
 export const availableStories = (state: ScrumState): Story[] =>
   state.productBacklog.filter((s) => s.status === 'backlog');
+
+/** Reorder the Product Backlog - the Product Owner's job. Moves a still-unplanned
+ *  story one place up or down among the other unplanned items (stories already in
+ *  a Sprint keep their place), so ordering by value/priority is a real choice that
+ *  drives what planning pulls first. */
+export function moveBacklogStory(state: ScrumState, storyId: string, dir: 'up' | 'down'): ScrumState {
+  const arr = [...state.productBacklog];
+  const i = arr.findIndex((s) => s.id === storyId);
+  if (i < 0 || arr[i].status !== 'backlog') return state;
+  const step = dir === 'up' ? -1 : 1;
+  let j = i + step;
+  while (j >= 0 && j < arr.length && arr[j].status !== 'backlog') j += step; // skip non-backlog neighbours
+  if (j < 0 || j >= arr.length) return state;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  return { ...state, productBacklog: arr };
+}
 
 // ============= Execution =============
 
@@ -86,6 +104,41 @@ export function clearImpediment(state: ScrumState): ScrumState {
   const imp = state.currentImpediment;
   if (!imp || imp.cleared) return state;
   return { ...state, currentImpediment: { ...imp, cleared: true } };
+}
+
+// ============= Change requests (the Product Owner adapting) =============
+
+/** Deterministically decide the Product Owner's change request (if any) for a
+ *  Sprint, and which day it surfaces on. */
+export function generateChangeRequest(sprintNumber: number, length: number): ChangeRequest | null {
+  const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 7919) ^ 0x51ed2701);
+  if (rng() >= CHANGE_REQUEST_CHANCE) return null;
+  const def = CHANGE_REQUESTS[Math.floor(rng() * CHANGE_REQUESTS.length)];
+  const day = 2 + Math.floor(rng() * Math.max(1, length - 2)); // surfaces between day 2 and length-1
+  return { id: `cr-${sprintNumber}`, title: def.title, detail: def.detail, points: def.points, value: def.value, day };
+}
+
+/** Whether a change request is live and has reached its day (so the team must decide). */
+export const changeRequestDue = (state: ScrumState): boolean =>
+  !!state.changeRequest && !!state.currentSprint && state.currentSprint.day >= state.changeRequest.day;
+
+/** The team adapts: pull the Product Owner's change into the Sprint. Like other
+ *  mid-Sprint work it joins the board (To Do) but NOT the original commitment, so
+ *  the Sprint Goal and the forecast stay honest. */
+export function acceptChange(state: ScrumState): ScrumState {
+  const cr = state.changeRequest;
+  const sprint = state.currentSprint;
+  if (!cr || !sprint) return state;
+  const story: Story = {
+    id: cr.id, title: cr.title, points: cr.points, value: cr.value,
+    status: 'todo', sprintNumber: sprint.number, effortRemaining: cr.points, accepted: false,
+  };
+  return { ...state, productBacklog: [...state.productBacklog, story], changeRequest: null };
+}
+
+/** The team protects the Sprint Goal: the change waits for a future Sprint. */
+export function declineChange(state: ScrumState): ScrumState {
+  return { ...state, changeRequest: null };
 }
 
 /** Move a story from To Do into Doing (the team starts it). */
@@ -236,9 +289,18 @@ export function runRemainingDays(state: ScrumState): ScrumState {
   return s;
 }
 
-/** Points delivered (stories that reached Done) in a Sprint. */
+/** Points delivered (stories that reached Done) in a Sprint - regardless of
+ *  whether the Product Owner has accepted them yet. */
 export const deliveredPoints = (state: ScrumState, sprintNumber: number): number =>
   totalPoints(state.productBacklog.filter((s) => s.sprintNumber === sprintNumber && s.status === 'done'));
+
+/** Stories the Product Owner has accepted - the actual Increment. */
+export const acceptedStories = (state: ScrumState, sprintNumber: number): Story[] =>
+  state.productBacklog.filter((s) => s.sprintNumber === sprintNumber && s.status === 'done' && s.accepted);
+
+/** Points accepted into the Increment - what velocity is measured in. */
+export const acceptedPoints = (state: ScrumState, sprintNumber: number): number =>
+  totalPoints(acceptedStories(state, sprintNumber));
 
 const sprintByNumber = (state: ScrumState, n: number): Sprint | undefined =>
   state.currentSprint?.number === n ? state.currentSprint : state.sprints.find((s) => s.number === n);
@@ -253,36 +315,74 @@ export const forecastPoints = (state: ScrumState, sprintNumber: number): number 
 };
 
 /** Whether the Sprint Goal is met: every story the team COMMITTED to at planning
- *  reached Done. Extra work pulled in mid-Sprint is a bonus and doesn't fail the
- *  Goal if it's unfinished. */
+ *  reached Done AND was accepted by the Product Owner. Extra work pulled in
+ *  mid-Sprint is a bonus and doesn't fail the Goal if it's unfinished. */
 export const sprintGoalMet = (state: ScrumState, sprintNumber: number): boolean => {
   const sprint = sprintByNumber(state, sprintNumber);
   if (!sprint || sprint.committedStoryIds.length === 0) return false;
   const committed = new Set(sprint.committedStoryIds);
-  return state.productBacklog.filter((s) => committed.has(s.id)).every((s) => s.status === 'done');
+  return state.productBacklog.filter((s) => committed.has(s.id)).every((s) => s.status === 'done' && s.accepted);
 };
 
-/** End the Sprint and open the Review: record velocity, and return unfinished
- *  stories to the Product Backlog (Scrum: undone work goes back, not into the
- *  Increment). The Sprint stays as currentSprint so Review and Retro can show it. */
+/** End the Sprint and open the Review: return unfinished stories to the Product
+ *  Backlog (Scrum: undone work goes back). Velocity is NOT recorded yet - the
+ *  Product Owner still has to accept the finished work against the Definition of
+ *  Done. The Sprint stays as currentSprint so Review and Retro can show it. */
 export function reviewSprint(state: ScrumState): ScrumState {
   const sprint = state.currentSprint;
   if (!sprint) return state;
-  const velocityPts = deliveredPoints(state, sprint.number);
   const productBacklog = state.productBacklog.map((s) =>
     s.sprintNumber === sprint.number && s.status !== 'done'
-      ? { ...s, status: 'backlog' as const, sprintNumber: null, effortRemaining: s.points }
+      ? { ...s, status: 'backlog' as const, sprintNumber: null, effortRemaining: s.points, accepted: false }
       : s,
   );
   return {
     ...state,
     phase: 'review',
-    velocity: [...state.velocity, velocityPts],
     currentSprint: { ...sprint, status: 'review' },
     productBacklog,
     assignments: {},
     currentImpediment: null,
+    changeRequest: null,
   };
+}
+
+/** The Product Owner accepts a finished story against the Definition of Done -
+ *  only accepted work is in the Increment and counts toward velocity. */
+export function acceptStory(state: ScrumState, storyId: string): ScrumState {
+  const sprint = state.currentSprint;
+  if (!sprint) return state;
+  const productBacklog = state.productBacklog.map((s) =>
+    s.id === storyId && s.sprintNumber === sprint.number && s.status === 'done' ? { ...s, accepted: true } : s,
+  );
+  return { ...state, productBacklog };
+}
+
+/** The Product Owner sends finished-but-not-good-enough work back for rework - it
+ *  returns to the Product Backlog and does not count toward velocity or the Goal. */
+export function rejectStory(state: ScrumState, storyId: string): ScrumState {
+  const sprint = state.currentSprint;
+  if (!sprint) return state;
+  const productBacklog = state.productBacklog.map((s) =>
+    s.id === storyId && s.sprintNumber === sprint.number && s.status === 'done'
+      ? { ...s, status: 'backlog' as const, sprintNumber: null, effortRemaining: s.points, accepted: false }
+      : s,
+  );
+  return { ...state, productBacklog };
+}
+
+/** Close the Review and move to the Retrospective: record velocity as the ACCEPTED
+ *  points, and send any finished-but-unaccepted work back to the Backlog for rework. */
+export function finishReview(state: ScrumState): ScrumState {
+  const sprint = state.currentSprint;
+  if (!sprint) return state;
+  const velocityPts = acceptedPoints(state, sprint.number);
+  const productBacklog = state.productBacklog.map((s) =>
+    s.sprintNumber === sprint.number && s.status === 'done' && !s.accepted
+      ? { ...s, status: 'backlog' as const, sprintNumber: null, effortRemaining: s.points, accepted: false }
+      : s,
+  );
+  return { ...state, phase: 'retro', velocity: [...state.velocity, velocityPts], productBacklog };
 }
 
 /** After the Retrospective: carry the chosen improvement forward, file the Sprint

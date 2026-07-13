@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, startStory, addToSprint, assignDev, unassignDev, setTeam, clearImpediment, runSprintDay, runRemainingDays, reviewSprint, startNextSprint } from './engine';
+import { planSprint, moveBacklogStory, startStory, addToSprint, assignDev, unassignDev, setTeam, clearImpediment, acceptChange, declineChange, runSprintDay, runRemainingDays, reviewSprint, acceptStory, rejectStory, finishReview, startNextSprint } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -13,6 +13,8 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return { ...state, phase: action.phase };
     case 'SET_TEAM':
       return setTeam(state, action.team);
+    case 'MOVE_STORY':
+      return moveBacklogStory(state, action.storyId, action.dir);
     case 'PLAN_SPRINT':
       return planSprint(state, action.goal, action.storyIds, action.length);
     case 'START_STORY':
@@ -25,12 +27,22 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return unassignDev(state, action.devId);
     case 'CLEAR_IMPEDIMENT':
       return clearImpediment(state);
+    case 'ACCEPT_CHANGE':
+      return acceptChange(state);
+    case 'DECLINE_CHANGE':
+      return declineChange(state);
     case 'RUN_SPRINT_DAY':
       return runSprintDay(state);
     case 'RUN_TO_END':
       return runRemainingDays(state);
     case 'REVIEW_SPRINT':
       return reviewSprint(state);
+    case 'ACCEPT_STORY':
+      return acceptStory(state, action.storyId);
+    case 'REJECT_STORY':
+      return rejectStory(state, action.storyId);
+    case 'FINISH_REVIEW':
+      return finishReview(state);
     case 'NEXT_SPRINT':
       return startNextSprint(state, action.improvement);
     case 'RESET':
@@ -49,15 +61,21 @@ export function useScrumGame() {
     (goal: string, storyIds: string[], length: number) => dispatch({ type: 'PLAN_SPRINT', goal, storyIds, length }),
     [],
   );
+  const moveStoryAction = useCallback((storyId: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_STORY', storyId, dir }), []);
   const startStoryAction = useCallback((storyId: string) => dispatch({ type: 'START_STORY', storyId }), []);
   const addToSprintAction = useCallback((storyId: string) => dispatch({ type: 'ADD_TO_SPRINT', storyId }), []);
   const setTeamAction = useCallback((team: ScrumState['team']) => dispatch({ type: 'SET_TEAM', team }), []);
   const assignDevAction = useCallback((devId: string, storyId: string) => dispatch({ type: 'ASSIGN_DEV', devId, storyId }), []);
   const unassignDevAction = useCallback((devId: string) => dispatch({ type: 'UNASSIGN_DEV', devId }), []);
   const clearImpedimentAction = useCallback(() => dispatch({ type: 'CLEAR_IMPEDIMENT' }), []);
+  const acceptChangeAction = useCallback(() => dispatch({ type: 'ACCEPT_CHANGE' }), []);
+  const declineChangeAction = useCallback(() => dispatch({ type: 'DECLINE_CHANGE' }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_SPRINT_DAY' }), []);
   const runToEnd = useCallback(() => dispatch({ type: 'RUN_TO_END' }), []);
   const reviewSprintAction = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
+  const acceptStoryAction = useCallback((storyId: string) => dispatch({ type: 'ACCEPT_STORY', storyId }), []);
+  const rejectStoryAction = useCallback((storyId: string) => dispatch({ type: 'REJECT_STORY', storyId }), []);
+  const finishReviewAction = useCallback(() => dispatch({ type: 'FINISH_REVIEW' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
@@ -69,12 +87,18 @@ export function useScrumGame() {
     startStory: startStoryAction,
     addToSprint: addToSprintAction,
     setTeam: setTeamAction,
+    moveStory: moveStoryAction,
     assignDev: assignDevAction,
     unassignDev: unassignDevAction,
     clearImpediment: clearImpedimentAction,
+    acceptChange: acceptChangeAction,
+    declineChange: declineChangeAction,
     runDay,
     runToEnd,
     reviewSprint: reviewSprintAction,
+    acceptStory: acceptStoryAction,
+    rejectStory: rejectStoryAction,
+    finishReview: finishReviewAction,
     nextSprint,
     reset,
   };

@@ -7,19 +7,20 @@ import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ScrumState;
   onCommit: (goal: string, storyIds: string[], length: number) => void;
   onSetTeam: (team: Developer[]) => void;
+  onMoveStory: (storyId: string, dir: 'up' | 'down') => void;
   onBack: () => void;
 }
 
 /** Sprint Planning: name the Sprint Goal and forecast stories from the Product
  *  Backlog into the Sprint, watching the forecast against capacity/velocity so an
  *  over-commitment is visible before you make it. */
-export function SprintPlanning({ state, onCommit, onSetTeam, onBack }: SprintPlanningProps) {
+export function SprintPlanning({ state, onCommit, onSetTeam, onMoveStory, onBack }: SprintPlanningProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -82,6 +83,9 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onBack }: SprintPla
           <span className="text-xs text-muted-foreground">
             Scrum Master: <span className="font-medium text-foreground">{state.scrumMaster}</span>
           </span>
+          <span className="text-xs text-muted-foreground">
+            Product Owner: <span className="font-medium text-foreground">{state.productOwner}</span>
+          </span>
         </div>
         <ScrumTeamEditor team={state.team} onSave={onSetTeam} />
       </div>
@@ -119,12 +123,38 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onBack }: SprintPla
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Product Backlog (available to pull in) */}
+        {/* Product Backlog (available to pull in). The Product Owner orders it -
+            highest value / priority first - which drives what gets planned. */}
         <section className="space-y-2">
           <h2 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({remaining.length})</span></h2>
+          <p className="text-[11px] text-muted-foreground">Ordered by the Product Owner ({state.productOwner}). Use the arrows to re-prioritise toward the Product Goal.</p>
           <div className="space-y-1.5">
             {remaining.length === 0 && <p className="text-xs text-muted-foreground/60">Everything's been pulled into the Sprint.</p>}
-            {remaining.map((s) => <Row key={s.id} s={s} action="add" />)}
+            {remaining.map((s, idx) => (
+              <div key={s.id} className="flex items-stretch gap-1">
+                <div className="flex flex-col justify-center">
+                  <button
+                    type="button"
+                    aria-label={`Move ${s.title} up`}
+                    disabled={idx === 0}
+                    onClick={() => onMoveStory(s.id, 'up')}
+                    className="flex h-4 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Move ${s.title} down`}
+                    disabled={idx === remaining.length - 1}
+                    onClick={() => onMoveStory(s.id, 'down')}
+                    className="flex h-4 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="flex-1"><Row s={s} action="add" /></div>
+              </div>
+            ))}
           </div>
         </section>
 

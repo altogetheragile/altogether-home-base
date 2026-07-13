@@ -3,11 +3,12 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import type { ScrumState, Story, Developer } from './types';
-import { sprintStories, availableStories, isSprintOver, deliveredPoints, forecastPoints } from './engine';
+import { sprintStories, availableStories, isSprintOver, deliveredPoints, forecastPoints, changeRequestDue } from './engine';
 import { devColor } from './config';
 import { DevBadge } from './DevBadge';
 import { TeamBench } from './TeamBench';
 import { ScrumMasterPanel } from './ScrumMasterPanel';
+import { ChangeRequestPanel } from './ChangeRequestPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, FastForward } from 'lucide-react';
@@ -18,6 +19,8 @@ interface SprintBoardProps {
   onUnassignDev: (devId: string) => void;
   onAddToSprint: (storyId: string) => void;
   onClearImpediment: () => void;
+  onAcceptChange: () => void;
+  onDeclineChange: () => void;
   onRunDay: () => void;
   onRunToEnd: () => void;
   onReview: () => void;
@@ -97,7 +100,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
  *  Scrum - assign Developers to the stories they'll swarm, then Run Day. A burndown
  *  tracks remaining work; when the timebox runs out, the Sprint is reviewed. */
-export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onClearImpediment, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
+export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onClearImpediment, onAcceptChange, onDeclineChange, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
   const [selectedDevId, setSelectedDevId] = useState<string | null>(null);
   if (!sprint) return null;
@@ -181,6 +184,17 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
           scrumMaster={state.scrumMaster}
           impediment={state.currentImpediment}
           onClear={onClearImpediment}
+          disabled={locked}
+        />
+      )}
+
+      {/* ...the Product Owner may raise a change request to decide on together... */}
+      {!canReview && changeRequestDue(state) && state.changeRequest && (
+        <ChangeRequestPanel
+          productOwner={state.productOwner}
+          request={state.changeRequest}
+          onAccept={onAcceptChange}
+          onDecline={onDeclineChange}
           disabled={locked}
         />
       )}

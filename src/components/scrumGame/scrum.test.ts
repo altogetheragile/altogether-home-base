@@ -5,16 +5,23 @@ import {
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM,
 } from './config';
 import {
-  planSprint, availableStories, sprintStories, startStory, addToSprint,
+  planSprint, moveBacklogStory, availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, benchedDevs, devsOnStory,
-  clearImpediment, generateImpediment, runSprintDay, runRemainingDays,
-  reviewSprint, startNextSprint, sprintGoalMet, forecastPoints,
+  clearImpediment, generateImpediment, generateChangeRequest, acceptChange, declineChange,
+  runSprintDay, runRemainingDays,
+  reviewSprint, acceptStory, rejectStory, finishReview, acceptedPoints, startNextSprint, sprintGoalMet, forecastPoints,
   devRoll, isSprintOver, deliveredPoints,
 } from './engine';
 
 /** Put the whole team on one story (a full swarm). */
 const swarm = (s: ReturnType<typeof initialScrumState>, storyId: string) =>
   s.team.reduce((acc, d) => assignDev(acc, d.id, storyId), s);
+
+/** The Product Owner accepts every finished story in the current Sprint. */
+const acceptAllDone = (s: ReturnType<typeof initialScrumState>) =>
+  sprintStories(s, s.currentSprint!.number)
+    .filter((x) => x.status === 'done')
+    .reduce((acc, x) => acceptStory(acc, x.id), s);
 
 /** Run (clearing each day's impediment) until a story is Done or the timebox ends. */
 const runUntilDone = (s: ReturnType<typeof initialScrumState>, storyId: string) => {
@@ -35,8 +42,11 @@ describe('scrum game scaffold', () => {
     expect(s.productBacklog.every((x) => x.status === 'backlog' && x.sprintNumber === null)).toBe(true);
     expect(s.team.length).toBe(DEFAULT_TEAM.length);
     expect(s.scrumMaster.length).toBeGreaterThan(0);
+    expect(s.productOwner.length).toBeGreaterThan(0);
     expect(s.assignments).toEqual({}); // everyone on the bench
     expect(s.currentImpediment).toBeNull();
+    expect(s.changeRequest).toBeNull();
+    expect(s.productBacklog.every((x) => x.accepted === false)).toBe(true);
     expect(s.sprints).toEqual([]);
     expect(s.velocity).toEqual([]);
   });
@@ -176,20 +186,82 @@ describe('sprint execution', () => {
     expect(benchedDevs(s).length).toBe(s.team.length); // everyone freed once it's Done
   });
 
-  it('reviewSprint records velocity, returns unfinished work, clears the bench, and opens the Review', () => {
+  it('reviewSprint returns unfinished work and opens the Review without recording velocity yet', () => {
     // Commit three stories but only ever put one Developer on one of them; the rest stay unfinished.
     let s = planSprint(initialScrumState(), 'partial', ['s2', 's7', 's9']);
     s = assignDev(s, s.team[0].id, 's2');
     while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
-    const delivered = deliveredPoints(s, 1);
     s = reviewSprint(s);
     expect(s.phase).toBe('review');
-    expect(s.velocity).toEqual([delivered]);
+    expect(s.velocity).toEqual([]); // velocity waits for the Product Owner to accept
     expect(s.assignments).toEqual({});
     expect(s.currentImpediment).toBeNull();
     const backlogIds = availableStories(s).map((x) => x.id);
     expect(backlogIds).toContain('s7');
     expect(backlogIds).toContain('s9');
+  });
+});
+
+describe('the Product Owner: ordering, acceptance and change requests', () => {
+  it('moveBacklogStory re-prioritises an unplanned story', () => {
+    const before = availableStories(initialScrumState()).map((x) => x.id);
+    const s = moveBacklogStory(initialScrumState(), before[1], 'up');
+    expect(availableStories(s).slice(0, 2).map((x) => x.id)).toEqual([before[1], before[0]]);
+  });
+
+  it('only accepted work counts toward velocity; the rest goes back for rework', () => {
+    // Finish two stories, accept one, send the other back.
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3', 's5']), 's3'); // 8 + 8
+    s = runUntilDone(s, 's3');
+    s = swarm(s, 's5');
+    s = runUntilDone(s, 's5');
+    s = reviewSprint(s);
+    expect(deliveredPoints(s, 1)).toBe(16); // both finished
+    s = acceptStory(s, 's3');
+    s = rejectStory(s, 's5'); // sent back
+    expect(acceptedPoints(s, 1)).toBe(8);
+    s = finishReview(s);
+    expect(s.phase).toBe('retro');
+    expect(s.velocity).toEqual([8]); // only the accepted story
+    expect(availableStories(s).some((x) => x.id === 's5')).toBe(true); // rework returned to the Backlog
+  });
+
+  it('generateChangeRequest is deterministic and surfaces mid-Sprint when present', () => {
+    for (let n = 1; n <= 5; n++) {
+      expect(generateChangeRequest(n, 10)).toEqual(generateChangeRequest(n, 10));
+    }
+    const some = Array.from({ length: 8 }, (_, i) => generateChangeRequest(i + 1, 10));
+    const cr = some.find((x) => x !== null)!;
+    expect(cr.day).toBeGreaterThanOrEqual(2);
+    expect(cr.day).toBeLessThanOrEqual(9);
+  });
+
+  it('accepting a change request pulls it onto the board without touching the commitment', () => {
+    // Find a Sprint number whose change request exists, and plan it.
+    let n = 1;
+    while (!generateChangeRequest(n, 10) && n < 30) n++;
+    let s = initialScrumState();
+    for (let k = 1; k < n; k++) s = startNextSprint(reviewSprint(planSprint(s, 'x', [])), 'i');
+    s = planSprint(s, 'g', ['s1']);
+    expect(s.changeRequest).not.toBeNull();
+    const forecast = forecastPoints(s, s.currentSprint!.number);
+    const cr = s.changeRequest!;
+    s = acceptChange(s);
+    expect(s.changeRequest).toBeNull();
+    expect(sprintStories(s, s.currentSprint!.number).some((x) => x.id === cr.id)).toBe(true);
+    expect(forecastPoints(s, s.currentSprint!.number)).toBe(forecast); // commitment unchanged
+  });
+
+  it('declining a change request protects the Sprint Goal (nothing added)', () => {
+    let n = 1;
+    while (!generateChangeRequest(n, 10) && n < 30) n++;
+    let s = initialScrumState();
+    for (let k = 1; k < n; k++) s = startNextSprint(reviewSprint(planSprint(s, 'x', [])), 'i');
+    s = planSprint(s, 'g', ['s1']);
+    const before = sprintStories(s, s.currentSprint!.number).length;
+    s = declineChange(s);
+    expect(s.changeRequest).toBeNull();
+    expect(sprintStories(s, s.currentSprint!.number).length).toBe(before);
   });
 });
 
@@ -230,10 +302,12 @@ describe('impediments and the Scrum Master', () => {
 });
 
 describe('review and retrospective', () => {
-  it('sprintGoalMet is true only when every committed story reached Done', () => {
+  it('sprintGoalMet needs every committed story Done AND accepted by the Product Owner', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts
     expect(sprintGoalMet(s, 1)).toBe(false);
     s = runUntilDone(s, 's3');
+    expect(sprintGoalMet(s, 1)).toBe(false); // Done, but not yet accepted
+    s = acceptStory(s, 's3');
     expect(sprintGoalMet(s, 1)).toBe(true);
   });
 
@@ -269,14 +343,16 @@ describe('renegotiating scope mid-sprint (velocity can exceed the forecast)', ()
     expect(sprintStories(s, 1).find((x) => x.id === 's3')?.status).toBe('done');
     s = swarm(addToSprint(s, 's5'), 's5'); // pull in an 8-pt story and swarm the free team onto it
     s = runUntilDone(s, 's5');
+    s = acceptAllDone(s); // PO accepts the finished work
     expect(deliveredPoints(s, 1)).toBeGreaterThan(forecastPoints(s, 1));
-    expect(sprintGoalMet(s, 1)).toBe(true); // committed story still Done
+    expect(sprintGoalMet(s, 1)).toBe(true); // committed story still Done and accepted
   });
 
   it('Sprint Goal depends on the committed forecast, not on extra pulled-in work', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts committed, swarmed
     s = addToSprint(s, 's2'); // 21 pts extra, nobody assigned to it
     s = runUntilDone(s, 's3');
-    expect(sprintGoalMet(s, 1)).toBe(true); // committed story done => goal met
+    s = acceptStory(s, 's3'); // PO accepts the committed story
+    expect(sprintGoalMet(s, 1)).toBe(true); // committed story done and accepted => goal met
   });
 });

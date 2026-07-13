@@ -44,7 +44,7 @@ export function defaultDefinitionOfDone(): Criterion[] {
 
 /** A starting Product Backlog, ordered by value. Story points vary so planning
  *  is a real forecasting decision. Deterministic (fixed list, not RNG). */
-export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining'>[] = [
+export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining' | 'accepted'>[] = [
   { id: 's1', title: 'Browse available slots', points: 13, value: 8 },
   { id: 's2', title: 'Book a slot', points: 21, value: 10 },
   { id: 's3', title: 'Confirmation email', points: 8, value: 6 },
@@ -83,11 +83,13 @@ export function initialScrumState(): ScrumState {
     phase: 'intro',
     productGoal: PRODUCT_GOAL,
     definitionOfDone: defaultDefinitionOfDone(),
-    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.points })),
+    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.points, accepted: false })),
     team: DEFAULT_TEAM.map((d) => ({ ...d })),
     scrumMaster: SCRUM_MASTER,
+    productOwner: PRODUCT_OWNER,
     assignments: {},
     currentImpediment: null,
+    changeRequest: null,
     sprints: [],
     currentSprint: null,
     velocity: [],
@@ -119,6 +121,22 @@ export const SPRINT_SEED = 0x5bd1e995;
  *  story work, but each day they can clear the team's impediment so the
  *  Developers stay focused. */
 export const SCRUM_MASTER = 'Morgan';
+
+/** The Product Owner - orders the Product Backlog, accepts work against the
+ *  Definition of Done at the Review, and raises change requests mid-Sprint. */
+export const PRODUCT_OWNER = 'Priya';
+
+/** Chance the Product Owner raises a change request during a Sprint. */
+export const CHANGE_REQUEST_CHANCE = 0.5;
+
+/** Emergent needs the Product Owner might raise mid-Sprint. Higher value than
+ *  most backlog items (that's why they feel urgent), so declining to protect the
+ *  Sprint Goal is a real tradeoff. */
+export const CHANGE_REQUESTS: { title: string; detail: string; points: number; value: number }[] = [
+  { title: 'A partner wants a co-branded booking link', detail: 'A time-boxed opportunity the PO would love this Sprint.', points: 8, value: 12 },
+  { title: 'Regulator asks for a consent notice', detail: 'A compliance need that has just landed.', points: 5, value: 11 },
+  { title: 'A VIP client needs group bookings', detail: 'A high-value account is asking for it now.', points: 13, value: 13 },
+];
 
 /** Chance, per Sprint day, that an impediment shows up at the Daily Scrum. */
 export const IMPEDIMENT_CHANCE = 0.4;
