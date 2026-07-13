@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue,
-  sprintCapacity, averageVelocity, CAPACITY_PER_DEV, improvementBonus, RETRO_IMPROVEMENTS,
+  sprintCapacity, averageVelocity, CAPACITY_PER_DEV_DAY, improvementBonus, RETRO_IMPROVEMENTS,
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM,
 } from './config';
 import {
   planSprint, availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, benchedDevs, devsOnStory,
-  runSprintDay, reviewSprint, startNextSprint, sprintGoalMet, forecastPoints,
+  clearImpediment, generateImpediment, runSprintDay, runRemainingDays,
+  reviewSprint, startNextSprint, sprintGoalMet, forecastPoints,
   devRoll, isSprintOver, deliveredPoints,
 } from './engine';
 
@@ -15,8 +16,17 @@ import {
 const swarm = (s: ReturnType<typeof initialScrumState>, storyId: string) =>
   s.team.reduce((acc, d) => assignDev(acc, d.id, storyId), s);
 
+/** Run (clearing each day's impediment) until a story is Done or the timebox ends. */
+const runUntilDone = (s: ReturnType<typeof initialScrumState>, storyId: string) => {
+  for (let i = 0; i < 30 && s.currentSprint && !isSprintOver(s.currentSprint)
+    && sprintStories(s, s.currentSprint.number).find((x) => x.id === storyId)?.status !== 'done'; i++) {
+    s = runSprintDay(clearImpediment(s));
+  }
+  return s;
+};
+
 describe('scrum game scaffold', () => {
-  it('initial state starts at intro with the full backlog, the artifacts and a team on the bench', () => {
+  it('initial state starts at intro with the full backlog, the artifacts, a team and a Scrum Master', () => {
     const s = initialScrumState();
     expect(s.phase).toBe('intro');
     expect(s.productGoal.length).toBeGreaterThan(0);
@@ -24,7 +34,9 @@ describe('scrum game scaffold', () => {
     expect(s.productBacklog.length).toBe(PRODUCT_BACKLOG.length);
     expect(s.productBacklog.every((x) => x.status === 'backlog' && x.sprintNumber === null)).toBe(true);
     expect(s.team.length).toBe(DEFAULT_TEAM.length);
+    expect(s.scrumMaster.length).toBeGreaterThan(0);
     expect(s.assignments).toEqual({}); // everyone on the bench
+    expect(s.currentImpediment).toBeNull();
     expect(s.sprints).toEqual([]);
     expect(s.velocity).toEqual([]);
   });
@@ -49,11 +61,18 @@ describe('scrum game scaffold', () => {
 });
 
 describe('sprint planning', () => {
-  it('capacity scales to team size before there is velocity, then uses average velocity', () => {
-    expect(sprintCapacity([], 3)).toBe(3 * CAPACITY_PER_DEV);
-    expect(sprintCapacity([], 5)).toBe(5 * CAPACITY_PER_DEV);
+  it('capacity scales to team size and Sprint length before there is velocity, then uses average velocity', () => {
+    expect(sprintCapacity([], 5, 10)).toBe(Math.round(5 * 10 * CAPACITY_PER_DEV_DAY));
+    expect(sprintCapacity([], 3, 5)).toBe(Math.round(3 * 5 * CAPACITY_PER_DEV_DAY));
+    expect(sprintCapacity([], 5, 5)).toBeLessThan(sprintCapacity([], 5, 10)); // longer Sprint, more capacity
     expect(averageVelocity([10, 12, 14])).toBe(12);
-    expect(sprintCapacity([10, 12, 14], 5)).toBe(12); // velocity wins once it exists
+    expect(sprintCapacity([10, 12, 14], 5, 10)).toBe(12); // velocity wins once it exists
+  });
+
+  it('planSprint honours the chosen Sprint length and remembers it for next time', () => {
+    const s = planSprint(initialScrumState(), 'g', ['s1'], 20);
+    expect(s.currentSprint?.length).toBe(20);
+    expect(s.sprintLength).toBe(20);
   });
 
   it('planSprint opens Sprint 1, sets the goal, moves chosen stories to the board and clears the bench', () => {
@@ -131,39 +150,35 @@ describe('sprint execution', () => {
   });
 
   it('runSprintDay burns effort on assigned stories, advances the day and records burndown', () => {
-    let s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2'); // 8 pts, full swarm
-    expect(s.currentSprint?.burndown).toEqual([8]);
-    s = runSprintDay(s);
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2'); // 21 pts, full swarm
+    expect(s.currentSprint?.burndown).toEqual([21]);
+    s = runSprintDay(clearImpediment(s));
     expect(s.currentSprint!.day).toBe(2);
     expect(s.currentSprint!.burndown.length).toBe(2);
-    expect(sprintStories(s, 1).find((x) => x.id === 's2')!.effortRemaining).toBeLessThan(8);
+    expect(sprintStories(s, 1).find((x) => x.id === 's2')!.effortRemaining).toBeLessThan(21);
   });
 
   it('swarming finishes work faster than a single Developer', () => {
-    const oneDev = (() => {
+    const rem = (assignAll: boolean) => {
       let s = planSprint(initialScrumState(), 'g', ['s2']);
-      s = assignDev(s, s.team[0].id, 's2');
-      s = runSprintDay(runSprintDay(s));
+      s = assignAll ? swarm(s, 's2') : assignDev(s, s.team[0].id, 's2');
+      s = runSprintDay(clearImpediment(s));
+      s = runSprintDay(clearImpediment(s));
       return sprintStories(s, 1).find((x) => x.id === 's2')!.effortRemaining;
-    })();
-    const swarmed = (() => {
-      let s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2');
-      s = runSprintDay(runSprintDay(s));
-      return sprintStories(s, 1).find((x) => x.id === 's2')!.effortRemaining;
-    })();
-    expect(swarmed).toBeLessThan(oneDev);
+    };
+    expect(rem(true)).toBeLessThan(rem(false));
   });
 
   it('a story reaching zero effort becomes Done and frees its Developers to the bench', () => {
-    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 3 pts, whole team on it
-    for (let i = 0; i < 6 && s.currentSprint && !isSprintOver(s.currentSprint); i++) s = runSprintDay(s);
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts, whole team on it
+    s = runUntilDone(s, 's3');
     expect(sprintStories(s, 1).find((x) => x.id === 's3')?.status).toBe('done');
     expect(benchedDevs(s).length).toBe(s.team.length); // everyone freed once it's Done
   });
 
   it('reviewSprint records velocity, returns unfinished work, clears the bench, and opens the Review', () => {
-    // Commit three stories but only ever work one; the other two stay unfinished.
-    let s = planSprint(initialScrumState(), 'partial', ['s2', 's7', 's9']); // 8+8+8
+    // Commit three stories but only ever put one Developer on one of them; the rest stay unfinished.
+    let s = planSprint(initialScrumState(), 'partial', ['s2', 's7', 's9']);
     s = assignDev(s, s.team[0].id, 's2');
     while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
     const delivered = deliveredPoints(s, 1);
@@ -171,17 +186,54 @@ describe('sprint execution', () => {
     expect(s.phase).toBe('review');
     expect(s.velocity).toEqual([delivered]);
     expect(s.assignments).toEqual({});
+    expect(s.currentImpediment).toBeNull();
     const backlogIds = availableStories(s).map((x) => x.id);
     expect(backlogIds).toContain('s7');
     expect(backlogIds).toContain('s9');
   });
 });
 
+describe('impediments and the Scrum Master', () => {
+  it('generateImpediment is deterministic per (sprint, day)', () => {
+    for (let d = 1; d <= 10; d++) {
+      expect(generateImpediment(1, d)).toEqual(generateImpediment(1, d));
+    }
+    // Over a Sprint some days have impediments and some do not.
+    const days = Array.from({ length: 20 }, (_, i) => generateImpediment(1, i + 1));
+    expect(days.some((x) => x !== null)).toBe(true);
+    expect(days.some((x) => x === null)).toBe(true);
+  });
+
+  it('an uncleared distraction loses half the day; clearing it restores full effort', () => {
+    const s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2'); // 21 pts, full swarm
+    const distraction = { id: 'imp-x', kind: 'distraction' as const, title: 't', detail: 'd', cleared: false };
+    const withImp = { ...s, currentImpediment: distraction };
+    const remIgnored = sprintStories(runSprintDay(withImp), 1).find((x) => x.id === 's2')!.effortRemaining;
+    const remCleared = sprintStories(runSprintDay(clearImpediment(withImp)), 1).find((x) => x.id === 's2')!.effortRemaining;
+    expect(remCleared).toBeLessThan(remIgnored); // clearing burns more work
+  });
+
+  it('an uncleared blocker loses the whole day and counts against the Sprint', () => {
+    const s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2');
+    const blocker = { id: 'imp-y', kind: 'blocker' as const, title: 't', detail: 'd', cleared: false };
+    const after = runSprintDay({ ...s, currentImpediment: blocker });
+    expect(sprintStories(after, 1).find((x) => x.id === 's2')!.effortRemaining).toBe(21); // no progress
+    expect(after.currentSprint!.impedimentsHit).toBe(1);
+  });
+
+  it('runRemainingDays plays to the timebox with the Scrum Master keeping the way clear', () => {
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
+    s = runRemainingDays(s);
+    expect(isSprintOver(s.currentSprint!)).toBe(true);
+    expect(s.currentSprint!.impedimentsHit).toBe(0); // auto-cleared, so nothing bit the team
+  });
+});
+
 describe('review and retrospective', () => {
   it('sprintGoalMet is true only when every committed story reached Done', () => {
-    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 3 pts
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts
     expect(sprintGoalMet(s, 1)).toBe(false);
-    while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    s = runUntilDone(s, 's3');
     expect(sprintGoalMet(s, 1)).toBe(true);
   });
 
@@ -203,28 +255,28 @@ describe('review and retrospective', () => {
 
 describe('renegotiating scope mid-sprint (velocity can exceed the forecast)', () => {
   it('addToSprint pulls a backlog item onto the board without changing the forecast', () => {
-    let s = planSprint(initialScrumState(), 'g', ['s3']); // forecast 3 pts
-    expect(forecastPoints(s, 1)).toBe(3);
-    s = addToSprint(s, 's1'); // pull in a 5-pt story mid-sprint
-    expect(forecastPoints(s, 1)).toBe(3); // commitment unchanged
+    let s = planSprint(initialScrumState(), 'g', ['s3']); // forecast 8 pts
+    expect(forecastPoints(s, 1)).toBe(8);
+    s = addToSprint(s, 's1'); // pull a 13-pt story in mid-sprint
+    expect(forecastPoints(s, 1)).toBe(8); // commitment unchanged
     expect(sprintStories(s, 1).map((x) => x.id).sort()).toEqual(['s1', 's3']);
     expect(sprintStories(s, 1).find((x) => x.id === 's1')?.status).toBe('todo');
   });
 
   it('finishing the forecast then pulling more lets delivery exceed the forecast', () => {
-    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // forecast 3 pts, swarmed
-    s = runSprintDay(s); // a full 5-dev swarm burns >=5/day, so the 3-pt story is Done and the team is freed
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // forecast 8 pts, swarmed
+    s = runUntilDone(s, 's3'); // finish the committed story; the team frees up
     expect(sprintStories(s, 1).find((x) => x.id === 's3')?.status).toBe('done');
-    s = swarm(addToSprint(s, 's5'), 's5'); // pull in another 3-pt story and swarm the now-free team onto it
-    while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    s = swarm(addToSprint(s, 's5'), 's5'); // pull in an 8-pt story and swarm the free team onto it
+    s = runUntilDone(s, 's5');
     expect(deliveredPoints(s, 1)).toBeGreaterThan(forecastPoints(s, 1));
     expect(sprintGoalMet(s, 1)).toBe(true); // committed story still Done
   });
 
   it('Sprint Goal depends on the committed forecast, not on extra pulled-in work', () => {
-    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 3 pts committed, swarmed
-    s = addToSprint(s, 's2'); // 8 pts extra, nobody assigned to it
-    while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts committed, swarmed
+    s = addToSprint(s, 's2'); // 21 pts extra, nobody assigned to it
+    s = runUntilDone(s, 's3');
     expect(sprintGoalMet(s, 1)).toBe(true); // committed story done => goal met
   });
 });

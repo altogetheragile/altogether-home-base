@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ScrumState, Story, Developer } from './types';
 import { availableStories } from './engine';
-import { sprintCapacity, totalPoints, devColor } from './config';
+import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS } from './config';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Plus, X } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ScrumState;
-  onCommit: (goal: string, storyIds: string[]) => void;
+  onCommit: (goal: string, storyIds: string[], length: number) => void;
   onSetTeam: (team: Developer[]) => void;
   onBack: () => void;
 }
@@ -23,12 +23,13 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onBack }: SprintPla
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [length, setLength] = useState(state.sprintLength);
 
   const available = availableStories(state);
   const chosen = available.filter((s) => selected.has(s.id));
   const remaining = available.filter((s) => !selected.has(s.id));
   const committed = totalPoints(chosen);
-  const capacity = sprintCapacity(state.velocity, state.team.length);
+  const capacity = sprintCapacity(state.velocity, state.team.length, length);
   const over = committed > capacity;
   const canStart = goal.trim().length > 0 && chosen.length > 0;
 
@@ -64,19 +65,46 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onBack }: SprintPla
         <p className="text-sm font-medium">{state.productGoal}</p>
       </div>
 
-      {/* Scrum Team - the Developers who'll do the work. A bigger team can forecast
-          more, but only pays off if there's work to swarm on. */}
+      {/* Scrum Team - the Developers who'll do the work, plus the Scrum Master who
+          keeps their way clear. A bigger team can forecast more, but only pays off
+          if there's work to swarm on. */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold">Scrum Team</span>
-          <div className="flex -space-x-1.5">
-            {state.team.map((d, i) => (
-              <DevBadge key={d.id} initials={d.initials} colorClass={devColor(i)} title={d.name} className="ring-2 ring-background" />
-            ))}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold">Scrum Team</span>
+            <div className="flex -space-x-1.5">
+              {state.team.map((d, i) => (
+                <DevBadge key={d.id} initials={d.initials} colorClass={devColor(i)} title={d.name} className="ring-2 ring-background" />
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">{state.team.length} Developers</span>
           </div>
-          <span className="text-xs text-muted-foreground">{state.team.length} Developers</span>
+          <span className="text-xs text-muted-foreground">
+            Scrum Master: <span className="font-medium text-foreground">{state.scrumMaster}</span>
+          </span>
         </div>
         <ScrumTeamEditor team={state.team} onSave={onSetTeam} />
+      </div>
+
+      {/* Sprint length - a real cadence choice. Two weeks is the common default. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-sm font-semibold">Sprint length</span>
+        <div className="flex gap-1.5">
+          {SPRINT_LENGTH_OPTIONS.map((opt) => (
+            <button
+              key={opt.days}
+              type="button"
+              onClick={() => setLength(opt.days)}
+              className={cn(
+                'rounded-md border px-3 py-1.5 text-sm transition-colors',
+                length === opt.days ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-muted',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <span className="text-xs text-muted-foreground">{length} working days</span>
       </div>
 
       {/* Sprint Goal */}
@@ -134,7 +162,7 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onBack }: SprintPla
       </div>
 
       <div className="flex justify-end">
-        <Button size="lg" disabled={!canStart} onClick={() => onCommit(goal, [...selected])}>
+        <Button size="lg" disabled={!canStart} onClick={() => onCommit(goal, [...selected], length)}>
           Start Sprint {sprintNumber}
         </Button>
       </div>

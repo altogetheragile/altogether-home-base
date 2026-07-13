@@ -74,6 +74,12 @@ export function SprintReview({ state, onContinue }: SprintReviewProps) {
             Unfinished work has gone back to the Product Backlog to be re-planned - it does not count in the Increment.
           </p>
         )}
+        {sprint.impedimentsHit > 0 && (
+          <p className="text-xs text-amber-700">
+            Impediments went unaddressed on <strong>{sprint.impedimentsHit}</strong> day{sprint.impedimentsHit > 1 ? 's' : ''} and cost the team capacity.
+            Clearing them at the Daily Scrum is the Scrum Master's job - a clear path is faster than a fast team on a blocked one.
+          </p>
+        )}
       </section>
 
       {/* Velocity trend */}
