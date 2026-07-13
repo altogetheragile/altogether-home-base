@@ -1,25 +1,52 @@
+import { useState } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import type { ScrumState, Story } from './types';
+import type { ScrumState, Story, Developer } from './types';
 import { sprintStories, availableStories, isSprintOver, deliveredPoints, forecastPoints } from './engine';
-import { SPRINT_TEAM } from './config';
+import { devColor } from './config';
+import { DevBadge } from './DevBadge';
+import { TeamBench } from './TeamBench';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ScrumState;
-  onStartStory: (storyId: string) => void;
+  onAssignDev: (devId: string, storyId: string) => void;
+  onUnassignDev: (devId: string) => void;
   onAddToSprint: (storyId: string) => void;
   onRunDay: () => void;
   onReview: () => void;
 }
 
-function StoryCard({ s, onStart }: { s: Story; onStart?: () => void }) {
+/** Devs working a story, with their roster colour, for the badges on a card. */
+function storyDevs(state: ScrumState, storyId: string): { dev: Developer; index: number }[] {
+  return state.team
+    .map((dev, index) => ({ dev, index }))
+    .filter(({ dev }) => state.assignments[dev.id] === storyId);
+}
+
+function StoryCard({
+  s, devs, assignable, onAssign, onUnassignDev,
+}: {
+  s: Story;
+  devs: { dev: Developer; index: number }[];
+  /** True when a Developer is selected and this card can take them. */
+  assignable: boolean;
+  onAssign: () => void;
+  onUnassignDev: (devId: string) => void;
+}) {
   const worked = s.points - s.effortRemaining;
   return (
-    <div className="rounded-md border border-border bg-card p-2 text-sm">
+    <div
+      role={assignable ? 'button' : undefined}
+      onClick={assignable ? onAssign : undefined}
+      className={cn(
+        'rounded-md border border-border bg-card p-2 text-sm transition-all',
+        assignable && 'cursor-pointer ring-2 ring-primary/60 hover:ring-primary hover:bg-primary/5',
+      )}
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="truncate">{s.title}</span>
         <span className="shrink-0 font-mono text-xs text-muted-foreground">{s.points} pts</span>
@@ -29,8 +56,22 @@ function StoryCard({ s, onStart }: { s: Story; onStart?: () => void }) {
           <div className="h-full rounded-full bg-primary" style={{ width: `${(worked / s.points) * 100}%` }} />
         </div>
       )}
-      {onStart && (
-        <Button variant="outline" size="sm" className="mt-1.5 h-6 w-full text-xs" onClick={onStart}>Start</Button>
+      {(devs.length > 0 || assignable) && (
+        <div className="mt-1.5 flex items-center gap-1">
+          {devs.map(({ dev, index }) => (
+            <DevBadge
+              key={dev.id}
+              initials={dev.initials}
+              colorClass={devColor(index)}
+              size="sm"
+              title={`${dev.name} - click to send to the bench`}
+              onClick={(e) => { e.stopPropagation(); onUnassignDev(dev.id); }}
+            />
+          ))}
+          {devs.length === 0 && assignable && (
+            <span className="text-[10px] text-muted-foreground">click to assign</span>
+          )}
+        </div>
       )}
     </div>
   );
@@ -43,7 +84,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
         <h3 className="text-sm font-semibold">{title} <span className="font-normal text-muted-foreground">({stories.length})</span></h3>
       </div>
       <div className="flex-1 space-y-1.5 rounded-b-lg border border-border bg-card/50 p-2 min-h-[120px]">
-        {stories.length === 0 && <div className="py-4 text-center text-xs text-muted-foreground/40">—</div>}
+        {stories.length === 0 && <div className="py-4 text-center text-xs text-muted-foreground/40">-</div>}
         {stories.map(render)}
       </div>
     </div>
@@ -51,11 +92,13 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 }
 
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
- *  Scrum (pull work into Doing, then Run Day). A burndown tracks remaining work;
- *  when the timebox runs out, the Sprint is reviewed and velocity recorded. */
-export function SprintBoard({ state, onStartStory, onAddToSprint, onRunDay, onReview }: SprintBoardProps) {
+ *  Scrum - assign Developers to the stories they'll swarm, then Run Day. A burndown
+ *  tracks remaining work; when the timebox runs out, the Sprint is reviewed. */
+export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onRunDay, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
+  const [selectedDevId, setSelectedDevId] = useState<string | null>(null);
   if (!sprint) return null;
+
   const stories = sprintStories(state, sprint.number);
   const todo = stories.filter((s) => s.status === 'todo');
   const doing = stories.filter((s) => s.status === 'doing');
@@ -64,10 +107,25 @@ export function SprintBoard({ state, onStartStory, onAddToSprint, onRunDay, onRe
   const delivered = deliveredPoints(state, sprint.number);
   const forecast = forecastPoints(state, sprint.number); // the original commitment
   const available = availableStories(state); // Product Backlog items that could be pulled in
+  const working = Object.keys(state.assignments).length; // Developers actually on stories today
+
   // The Sprint can be reviewed when the timebox is up OR all committed work is
   // already Done (finishing early is a good outcome, not a dead end).
   const workLeft = todo.length + doing.length > 0;
   const canReview = over || !workLeft;
+  // The bench and cards only take assignments while the timebox is still open.
+  const locked = over;
+
+  const storyTitleById = new Map(state.productBacklog.map((s) => [s.id, s.title]));
+  // A story a selected Developer could be placed on (not started-and-done, timebox open).
+  const assignableIds = new Set(locked ? [] : [...todo, ...doing].map((s) => s.id));
+
+  const select = (devId: string) => setSelectedDevId((cur) => (cur === devId ? null : devId));
+  const assignTo = (storyId: string) => {
+    if (!selectedDevId) return;
+    onAssignDev(selectedDevId, storyId);
+    setSelectedDevId(null);
+  };
 
   // Burndown: ideal straight line vs actual remaining points per day.
   const start = sprint.burndown[0] ?? forecast;
@@ -77,27 +135,46 @@ export function SprintBoard({ state, onStartStory, onAddToSprint, onRunDay, onRe
     remaining: i < sprint.burndown.length ? sprint.burndown[i] : null,
   }));
 
+  const card = (s: Story) => (
+    <StoryCard
+      key={s.id}
+      s={s}
+      devs={storyDevs(state, s.id)}
+      assignable={!!selectedDevId && assignableIds.has(s.id)}
+      onAssign={() => assignTo(s.id)}
+      onUnassignDev={onUnassignDev}
+    />
+  );
+
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Sprint {sprint.number} · Day {Math.min(sprint.day, sprint.length)}/{sprint.length}</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">Team: {SPRINT_TEAM.join(', ')}</span>
-          {!canReview ? (
-            <div className="flex flex-col items-end gap-0.5">
-              <Button size="lg" onClick={onRunDay} disabled={doing.length === 0}>Run Day</Button>
-              {doing.length === 0 && <span className="text-[10px] text-muted-foreground">Start a story to run the day</span>}
-            </div>
-          ) : (
-            <Button size="lg" onClick={onReview}>Sprint Review</Button>
-          )}
-        </div>
+        {!canReview ? (
+          <div className="flex flex-col items-end gap-0.5">
+            <Button size="lg" onClick={onRunDay} disabled={working === 0}>Run Day</Button>
+            {working === 0 && <span className="text-[10px] text-muted-foreground">Assign a Developer to a story to run the day</span>}
+          </div>
+        ) : (
+          <Button size="lg" onClick={onReview}>Sprint Review</Button>
+        )}
       </div>
 
       <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-5 py-3 dark:bg-emerald-950/30">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Sprint Goal</div>
         <p className="text-sm font-medium">{sprint.goal}</p>
       </div>
+
+      {/* The team - who's working on what today */}
+      <TeamBench
+        state={state}
+        selectedDevId={selectedDevId}
+        onSelect={select}
+        onUnassign={onUnassignDev}
+        storyTitleById={storyTitleById}
+        workAvailable={workLeft}
+        disabled={locked}
+      />
 
       {canReview && (
         <div className="rounded-lg border border-border bg-muted/40 px-5 py-3 text-sm">
@@ -111,11 +188,11 @@ export function SprintBoard({ state, onStartStory, onAddToSprint, onRunDay, onRe
       )}
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Column title="To Do" stories={todo} render={(s) => (
-          <StoryCard key={s.id} s={s} onStart={canReview ? undefined : () => onStartStory(s.id)} />
+        <Column title="To Do" stories={todo} render={card} />
+        <Column title="Doing" stories={doing} render={card} />
+        <Column title="Done ✓" stories={done} render={(s) => (
+          <StoryCard key={s.id} s={s} devs={[]} assignable={false} onAssign={() => {}} onUnassignDev={onUnassignDev} />
         )} />
-        <Column title="Doing" stories={doing} render={(s) => <StoryCard key={s.id} s={s} />} />
-        <Column title="Done ✓" stories={done} render={(s) => <StoryCard key={s.id} s={s} />} />
       </div>
 
       {/* Renegotiate scope: pull more Product Backlog items into the Sprint when
@@ -161,7 +238,7 @@ export function SprintBoard({ state, onStartStory, onAddToSprint, onRunDay, onRe
         </div>
         <p className={cn('text-xs', over && delivered < forecast ? 'text-amber-700' : 'text-muted-foreground')}>
           The actual line above the ideal means work is burning down too slowly - a sign of over-commitment
-          or too much started at once.
+          or too much started at once. Swarm the team on fewer stories to bring it down faster.
         </p>
       </section>
     </div>
