@@ -1,22 +1,28 @@
 import type { Criterion, Story, ScrumState, Developer, Impediment } from './types';
 
-/** Working days in a Sprint. Default is a real two-week Sprint (10 working days) -
- *  the common cadence. Configurable at planning; "Run remaining days" keeps the
- *  longer timebox from meaning more clicking. */
-export const SPRINT_LENGTH = 10;
+/** The Sprint is the container event: Sprint Planning, the Daily Scrums, the
+ *  Sprint Review and the Retrospective all happen INSIDE the timebox, so a
+ *  two-week Sprint's 10 working days are not all development. Using the Scrum
+ *  Guide timeboxes (Planning 4h, Review 2h, Retro 1.5h for two weeks, plus the
+ *  Daily Scrums) the events take about a tenth of the Sprint - so development
+ *  days come out at roughly 0.9 of the working days. */
+export const DEV_DAY_RATIO = 0.9;
 
-/** Selectable Sprint lengths (in working days). Two weeks is the norm; one and
- *  four weeks bracket the Scrum Guide's "a month or less". */
-export const SPRINT_LENGTH_OPTIONS: { label: string; days: number }[] = [
-  { label: '1 week', days: 5 },
-  { label: '2 weeks', days: 10 },
-  { label: '4 weeks', days: 20 },
+/** Selectable Sprint lengths. `workingDays` is the calendar container; `devDays`
+ *  is what's left for development once the events take their share (0.9x). */
+export const SPRINT_LENGTH_OPTIONS: { label: string; workingDays: number; devDays: number }[] = [
+  { label: '1 week', workingDays: 5, devDays: 4.5 },
+  { label: '2 weeks', workingDays: 10, devDays: 9 },
+  { label: '4 weeks', workingDays: 20, devDays: 18 },
 ];
 
-/** Rough points one Developer delivers per working day - used only for the FIRST
- *  Sprint's capacity guess (before there's velocity), scaled by team size and the
- *  Sprint length. Tuned (see scrum.balance.test.ts) so a right-sized, well-swarmed
- *  Sprint meets its Goal and an over-commitment misses. */
+/** Default development days: a two-week Sprint (10 working days, 9 for dev). */
+export const SPRINT_LENGTH = 9;
+
+/** Rough points one Developer delivers per development day - used only for the
+ *  FIRST Sprint's capacity guess (before there's velocity), scaled by team size
+ *  and the Sprint's development days. Tuned (see scrum.balance.test.ts) so a
+ *  right-sized, well-swarmed Sprint meets its Goal and an over-commitment misses. */
 export const CAPACITY_PER_DEV_DAY = 1.2;
 
 /** Average of past Sprint velocities (0 if none yet). */
@@ -24,10 +30,10 @@ export const averageVelocity = (velocity: number[]): number =>
   velocity.length ? Math.round(velocity.reduce((n, v) => n + v, 0) / velocity.length) : 0;
 
 /** How many points the team can realistically take on: past velocity once it
- *  exists, otherwise a first-Sprint guess scaled to the team size and the Sprint
- *  length (a bigger team or a longer timebox can forecast more). */
-export const sprintCapacity = (velocity: number[], teamSize: number, length: number): number =>
-  velocity.length ? averageVelocity(velocity) : Math.round(teamSize * length * CAPACITY_PER_DEV_DAY);
+ *  exists, otherwise a first-Sprint guess scaled to the team size and the Sprint's
+ *  development days (a bigger team or a longer timebox can forecast more). */
+export const sprintCapacity = (velocity: number[], teamSize: number, devDays: number): number =>
+  velocity.length ? averageVelocity(velocity) : Math.round(teamSize * devDays * CAPACITY_PER_DEV_DAY);
 
 /** The Product Goal - the north star the Product Backlog is ordered toward. */
 export const PRODUCT_GOAL = 'Launch a booking experience customers love and trust.';

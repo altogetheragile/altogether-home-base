@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue,
   sprintCapacity, averageVelocity, CAPACITY_PER_DEV_DAY, improvementBonus, RETRO_IMPROVEMENTS,
-  DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM,
+  DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM, SPRINT_LENGTH_OPTIONS, DEV_DAY_RATIO,
 } from './config';
 import {
   planSprint, moveBacklogStory, availableStories, sprintStories, startStory, addToSprint,
@@ -80,9 +80,10 @@ describe('sprint planning', () => {
   });
 
   it('planSprint honours the chosen Sprint length and remembers it for next time', () => {
-    const s = planSprint(initialScrumState(), 'g', ['s1'], 20);
-    expect(s.currentSprint?.length).toBe(20);
-    expect(s.sprintLength).toBe(20);
+    const s = planSprint(initialScrumState(), 'g', ['s1'], 18);
+    expect(s.currentSprint?.length).toBe(18);
+    expect(s.currentSprint?.devDays).toBe(18);
+    expect(s.sprintLength).toBe(18);
   });
 
   it('planSprint opens Sprint 1, sets the goal, moves chosen stories to the board and clears the bench', () => {
@@ -98,6 +99,34 @@ describe('sprint planning', () => {
     expect(onBoard.map((x) => x.id).sort()).toEqual(['s1', 's2']);
     expect(onBoard.every((x) => x.status === 'todo' && x.sprintNumber === 1)).toBe(true);
     expect(availableStories(s1).length).toBe(PRODUCT_BACKLOG.length - 2);
+  });
+});
+
+describe('Sprint length: development days vs the calendar container', () => {
+  it('every length option leaves ~0.9 of the working days for development', () => {
+    for (const o of SPRINT_LENGTH_OPTIONS) {
+      expect(o.devDays).toBeCloseTo(o.workingDays * DEV_DAY_RATIO, 5);
+    }
+    expect(SPRINT_LENGTH_OPTIONS.find((o) => o.workingDays === 10)?.devDays).toBe(9);
+    expect(SPRINT_LENGTH_OPTIONS.find((o) => o.workingDays === 5)?.devDays).toBe(4.5);
+  });
+
+  it('a fractional Sprint length rounds up to a day-slot count with a half day at the end', () => {
+    const s = planSprint(initialScrumState(), 'g', ['s1'], 4.5); // one-week Sprint
+    expect(s.currentSprint?.length).toBe(5); // five day-slots to play
+    expect(s.currentSprint?.devDays).toBe(4.5); // of which the last is a half day
+  });
+
+  it('the fractional final day applies half the effort of a full day', () => {
+    const rem = (devDays: number) => {
+      let s = swarm(planSprint(initialScrumState(), 'g', ['s2'], devDays), 's2'); // 21-pt story
+      s = runSprintDay(clearImpediment(s)); // day 1 = the only (final) day
+      return 21 - sprintStories(s, 1).find((x) => x.id === 's2')!.effortRemaining;
+    };
+    const full = rem(1); // devDays 1 -> a full final day
+    const half = rem(0.5); // devDays 0.5 -> a half final day (same dice, same day)
+    expect(half).toBe(Math.floor(full * 0.5));
+    expect(half).toBeLessThan(full);
   });
 });
 

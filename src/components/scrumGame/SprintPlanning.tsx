@@ -24,7 +24,8 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onMoveStory, onBack
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [length, setLength] = useState(state.sprintLength);
+  const [length, setLength] = useState(state.sprintLength); // development days
+  const lengthOpt = SPRINT_LENGTH_OPTIONS.find((o) => o.devDays === length);
 
   const available = availableStories(state);
   const chosen = available.filter((s) => selected.has(s.id));
@@ -90,25 +91,31 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onMoveStory, onBack
         <ScrumTeamEditor team={state.team} onSave={onSetTeam} />
       </div>
 
-      {/* Sprint length - a real cadence choice. Two weeks is the common default. */}
+      {/* Sprint length - a real cadence choice. Two weeks is the common default.
+          The Sprint is the container: Planning, the Daily Scrums, Review and Retro
+          all happen inside it, so not every working day is a development day. */}
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm font-semibold">Sprint length</span>
         <div className="flex gap-1.5">
           {SPRINT_LENGTH_OPTIONS.map((opt) => (
             <button
-              key={opt.days}
+              key={opt.devDays}
               type="button"
-              onClick={() => setLength(opt.days)}
+              onClick={() => setLength(opt.devDays)}
               className={cn(
                 'rounded-md border px-3 py-1.5 text-sm transition-colors',
-                length === opt.days ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-muted',
+                length === opt.devDays ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-muted',
               )}
             >
               {opt.label}
             </button>
           ))}
         </div>
-        <span className="text-xs text-muted-foreground">{length} working days</span>
+        {lengthOpt && (
+          <span className="text-xs text-muted-foreground">
+            {lengthOpt.workingDays} working days - <span className="font-medium text-foreground">{lengthOpt.devDays} for development</span>; the events take the rest
+          </span>
+        )}
       </div>
 
       {/* Sprint Goal */}
@@ -186,7 +193,7 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onMoveStory, onBack
           <p className="text-[11px] text-muted-foreground">
             {state.velocity.length
               ? `Capacity is your average velocity over ${state.velocity.length} sprint${state.velocity.length > 1 ? 's' : ''}.`
-              : `No velocity yet - this is a first-Sprint guess scaled to ${state.team.length} Developers. Velocity will replace it after Sprint 1.`}
+              : `No velocity yet - this is a first-Sprint guess scaled to ${state.team.length} Developers over ${length} development days. Velocity will replace it after Sprint 1.`}
           </p>
         </section>
       </div>
