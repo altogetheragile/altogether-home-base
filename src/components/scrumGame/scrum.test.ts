@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue, sprintCapacity, averageVelocity, SUGGESTED_CAPACITY, improvementBonus, RETRO_IMPROVEMENTS } from './config';
-import { planSprint, availableStories, sprintStories, startStory, runSprintDay, reviewSprint, startNextSprint, sprintGoalMet, teamCapacity, isSprintOver, deliveredPoints } from './engine';
+import { planSprint, availableStories, sprintStories, startStory, addToSprint, runSprintDay, reviewSprint, startNextSprint, sprintGoalMet, forecastPoints, teamCapacity, isSprintOver, deliveredPoints } from './engine';
 
 describe('scrum game scaffold', () => {
   it('initial state starts at intro with the full backlog and the three artifacts', () => {
@@ -132,5 +132,41 @@ describe('review and retrospective', () => {
   it('accumulated improvements raise the team capacity', () => {
     const base = teamCapacity(1, 1, 0);
     expect(teamCapacity(1, 1, improvementBonus(['a', 'b']))).toBe(base + 2);
+  });
+});
+
+describe('renegotiating scope mid-sprint (velocity can exceed the forecast)', () => {
+  it('addToSprint pulls a backlog item onto the board without changing the forecast', () => {
+    let s = planSprint(initialScrumState(), 'g', ['s3']); // forecast 3 pts
+    expect(forecastPoints(s, 1)).toBe(3);
+    s = addToSprint(s, 's1'); // pull in a 5-pt story mid-sprint
+    // Forecast (the commitment) is unchanged; the story is now on the board.
+    expect(forecastPoints(s, 1)).toBe(3);
+    expect(sprintStories(s, 1).map((x) => x.id).sort()).toEqual(['s1', 's3']);
+    expect(availableStories(s).some((x) => x.id === 's1')).toBe(false);
+    expect(sprintStories(s, 1).find((x) => x.id === 's1')?.status).toBe('todo');
+  });
+
+  it('finishing the forecast then pulling more lets delivery exceed the forecast', () => {
+    let s = planSprint(initialScrumState(), 'g', ['s3']); // forecast 3 pts
+    s = startStory(s, 's3');
+    // Pull in and start extra work too.
+    s = addToSprint(s, 's5'); // another 3-pt story
+    s = startStory(s, 's5');
+    while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    // Both delivered -> 6 delivered against a forecast of 3.
+    expect(deliveredPoints(s, 1)).toBeGreaterThan(forecastPoints(s, 1));
+    // The committed story reached Done, so the Sprint Goal is still met.
+    expect(sprintGoalMet(s, 1)).toBe(true);
+  });
+
+  it('Sprint Goal depends on the committed forecast, not on extra pulled-in work', () => {
+    // Commit a tiny story (finishes) and pull in a big one (may not finish).
+    let s = planSprint(initialScrumState(), 'g', ['s3']); // 3 pts committed
+    s = startStory(s, 's3');
+    s = addToSprint(s, 's2'); // 8 pts extra, not started
+    while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    // Committed story done => goal met even if the extra big story didn't finish.
+    expect(sprintGoalMet(s, 1)).toBe(true);
   });
 });

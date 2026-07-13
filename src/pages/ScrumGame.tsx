@@ -10,7 +10,7 @@ import Footer from '@/components/Footer';
 /** The Scrum Simulation: intro -> Sprint Planning -> Sprint execution (board +
  *  daily Run + burndown) -> Review -> Retrospective -> next Sprint. */
 export default function ScrumGame() {
-  const { state, start, setPhase, planSprint, startStory, runDay, reviewSprint, nextSprint } = useScrumGame();
+  const { state, start, setPhase, planSprint, startStory, addToSprint, runDay, reviewSprint, nextSprint } = useScrumGame();
 
   const renderPhase = () => {
     switch (state.phase) {
@@ -19,7 +19,7 @@ export default function ScrumGame() {
       case 'planning':
         return <SprintPlanning state={state} onCommit={planSprint} onBack={() => setPhase('intro')} />;
       case 'sprint':
-        return <SprintBoard state={state} onStartStory={startStory} onRunDay={runDay} onReview={reviewSprint} />;
+        return <SprintBoard state={state} onStartStory={startStory} onAddToSprint={addToSprint} onRunDay={runDay} onReview={reviewSprint} />;
       case 'review':
         return <SprintReview state={state} onContinue={() => setPhase('retro')} />;
       case 'retro':

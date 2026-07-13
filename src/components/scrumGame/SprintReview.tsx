@@ -1,6 +1,6 @@
 import type { ScrumState } from './types';
-import { sprintStories, deliveredPoints, sprintGoalMet } from './engine';
-import { totalPoints, totalValue } from './config';
+import { sprintStories, deliveredPoints, sprintGoalMet, forecastPoints } from './engine';
+import { totalValue } from './config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -16,10 +16,11 @@ export function SprintReview({ state, onContinue }: SprintReviewProps) {
   if (!sprint) return null;
   const stories = sprintStories(state, sprint.number);
   const done = stories.filter((s) => s.status === 'done');
-  const committed = totalPoints(stories);
+  const forecast = forecastPoints(state, sprint.number);
   const delivered = deliveredPoints(state, sprint.number);
   const valueDelivered = totalValue(done);
   const met = sprintGoalMet(state, sprint.number);
+  const exceeded = delivered > forecast;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 space-y-6">
@@ -37,12 +38,12 @@ export function SprintReview({ state, onContinue }: SprintReviewProps) {
 
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-lg border border-border p-3">
-          <div className="text-2xl font-bold">{delivered}<span className="text-sm font-normal text-muted-foreground"> / {committed}</span></div>
-          <div className="text-xs text-muted-foreground">points delivered (forecast)</div>
+          <div className={cn('text-2xl font-bold', exceeded && 'text-emerald-600')}>{delivered}<span className="text-sm font-normal text-muted-foreground"> / {forecast}</span></div>
+          <div className="text-xs text-muted-foreground">delivered / forecast</div>
         </div>
         <div className="rounded-lg border border-border p-3">
-          <div className="text-2xl font-bold">{done.length}<span className="text-sm font-normal text-muted-foreground"> / {stories.length}</span></div>
-          <div className="text-xs text-muted-foreground">stories Done</div>
+          <div className="text-2xl font-bold">{done.length}</div>
+          <div className="text-xs text-muted-foreground">stories reached Done</div>
         </div>
         <div className="rounded-lg border border-border p-3">
           <div className="text-2xl font-bold">{valueDelivered}</div>
@@ -62,6 +63,12 @@ export function SprintReview({ state, onContinue }: SprintReviewProps) {
             </div>
           ))}
         </div>
+        {exceeded && (
+          <p className="text-xs text-emerald-700">
+            You delivered <strong>{delivered - forecast}</strong> points beyond the forecast by pulling more work in - velocity reflects
+            what the team actually finished, not just the plan.
+          </p>
+        )}
         {!met && (
           <p className="text-xs text-amber-700">
             Unfinished work has gone back to the Product Backlog to be re-planned - it does not count in the Increment.
