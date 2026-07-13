@@ -68,6 +68,21 @@ export function startStory(state: ScrumState, storyId: string): ScrumState {
   return { ...state, productBacklog };
 }
 
+/** Pull an extra Product Backlog item into the running Sprint - the Developers
+ *  renegotiating scope with the PO when they're ahead of the forecast. The story
+ *  joins the Sprint board (To Do); it is NOT added to the original commitment, so
+ *  the forecast stays honest and actual delivery can exceed it. */
+export function addToSprint(state: ScrumState, storyId: string): ScrumState {
+  const sprint = state.currentSprint;
+  if (!sprint || isSprintOver(sprint)) return state;
+  const productBacklog = state.productBacklog.map((s) =>
+    s.id === storyId && s.status === 'backlog'
+      ? { ...s, status: 'todo' as const, sprintNumber: sprint.number, effortRemaining: s.points }
+      : s,
+  );
+  return { ...state, productBacklog };
+}
+
 /** Run one Sprint day (the Daily Scrum happened; now the team works). The team's
  *  capacity is spread across everything in Doing - so too much work-in-progress
  *  means little finishes. Stories whose effort reaches zero move to Done. */
@@ -106,10 +121,26 @@ export function runSprintDay(state: ScrumState): ScrumState {
 export const deliveredPoints = (state: ScrumState, sprintNumber: number): number =>
   totalPoints(state.productBacklog.filter((s) => s.sprintNumber === sprintNumber && s.status === 'done'));
 
-/** Whether a Sprint's committed stories all reached Done (its Goal is met). */
+const sprintByNumber = (state: ScrumState, n: number): Sprint | undefined =>
+  state.currentSprint?.number === n ? state.currentSprint : state.sprints.find((s) => s.number === n);
+
+/** Points the team originally FORECAST for a Sprint (its commitment) - distinct
+ *  from what it actually delivered, which can be more (scope pulled in) or less. */
+export const forecastPoints = (state: ScrumState, sprintNumber: number): number => {
+  const sprint = sprintByNumber(state, sprintNumber);
+  if (!sprint) return 0;
+  const committed = new Set(sprint.committedStoryIds);
+  return totalPoints(state.productBacklog.filter((s) => committed.has(s.id)));
+};
+
+/** Whether the Sprint Goal is met: every story the team COMMITTED to at planning
+ *  reached Done. Extra work pulled in mid-Sprint is a bonus and doesn't fail the
+ *  Goal if it's unfinished. */
 export const sprintGoalMet = (state: ScrumState, sprintNumber: number): boolean => {
-  const stories = state.productBacklog.filter((s) => s.sprintNumber === sprintNumber);
-  return stories.length > 0 && stories.every((s) => s.status === 'done');
+  const sprint = sprintByNumber(state, sprintNumber);
+  if (!sprint || sprint.committedStoryIds.length === 0) return false;
+  const committed = new Set(sprint.committedStoryIds);
+  return state.productBacklog.filter((s) => committed.has(s.id)).every((s) => s.status === 'done');
 };
 
 /** End the Sprint and open the Review: record velocity, and return unfinished

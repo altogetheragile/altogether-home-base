@@ -2,14 +2,16 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import type { ScrumState, Story } from './types';
-import { sprintStories, isSprintOver, deliveredPoints } from './engine';
-import { totalPoints, SPRINT_TEAM } from './config';
+import { sprintStories, availableStories, isSprintOver, deliveredPoints, forecastPoints } from './engine';
+import { SPRINT_TEAM } from './config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Plus } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ScrumState;
   onStartStory: (storyId: string) => void;
+  onAddToSprint: (storyId: string) => void;
   onRunDay: () => void;
   onReview: () => void;
 }
@@ -51,7 +53,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
  *  Scrum (pull work into Doing, then Run Day). A burndown tracks remaining work;
  *  when the timebox runs out, the Sprint is reviewed and velocity recorded. */
-export function SprintBoard({ state, onStartStory, onRunDay, onReview }: SprintBoardProps) {
+export function SprintBoard({ state, onStartStory, onAddToSprint, onRunDay, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
   if (!sprint) return null;
   const stories = sprintStories(state, sprint.number);
@@ -60,14 +62,15 @@ export function SprintBoard({ state, onStartStory, onRunDay, onReview }: SprintB
   const done = stories.filter((s) => s.status === 'done');
   const over = isSprintOver(sprint);
   const delivered = deliveredPoints(state, sprint.number);
-  const committed = totalPoints(stories);
+  const forecast = forecastPoints(state, sprint.number); // the original commitment
+  const available = availableStories(state); // Product Backlog items that could be pulled in
   // The Sprint can be reviewed when the timebox is up OR all committed work is
   // already Done (finishing early is a good outcome, not a dead end).
   const workLeft = todo.length + doing.length > 0;
   const canReview = over || !workLeft;
 
   // Burndown: ideal straight line vs actual remaining points per day.
-  const start = sprint.burndown[0] ?? committed;
+  const start = sprint.burndown[0] ?? forecast;
   const data = Array.from({ length: sprint.length + 1 }, (_, i) => ({
     day: i,
     ideal: Math.round((start * (sprint.length - i)) / sprint.length),
@@ -98,10 +101,12 @@ export function SprintBoard({ state, onStartStory, onRunDay, onReview }: SprintB
 
       {canReview && (
         <div className="rounded-lg border border-border bg-muted/40 px-5 py-3 text-sm">
-          <strong>{over ? 'Sprint over.' : 'Work finished early.'}</strong> Delivered <strong>{delivered}</strong> of {committed} committed points
-          {' '}({done.length}/{stories.length} stories). {workLeft
+          <strong>{over ? 'Sprint over.' : 'Committed work is done.'}</strong> Delivered <strong>{delivered}</strong> pts against a forecast of {forecast}
+          {' '}({done.length} stories). {workLeft
             ? 'Unfinished work returns to the Product Backlog.'
-            : 'Everything committed reached Done - the Sprint Goal is met.'}
+            : delivered > forecast
+              ? 'You pulled in extra work beyond the forecast - nicely done.'
+              : 'The Sprint Goal is met. Ahead of schedule? Pull in more below, or review.'}
         </div>
       )}
 
@@ -112,6 +117,31 @@ export function SprintBoard({ state, onStartStory, onRunDay, onReview }: SprintB
         <Column title="Doing" stories={doing} render={(s) => <StoryCard key={s.id} s={s} />} />
         <Column title="Done ✓" stories={done} render={(s) => <StoryCard key={s.id} s={s} />} />
       </div>
+
+      {/* Renegotiate scope: pull more Product Backlog items into the Sprint when
+          ahead of the forecast (Developers and PO agree, within the Sprint Goal). */}
+      {!over && available.length > 0 && (
+        <section className="space-y-2 rounded-lg border border-dashed border-border p-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-sm font-semibold">Pull more from the Product Backlog</h2>
+            <span className="text-[11px] text-muted-foreground">Ahead of the forecast? Renegotiate with the PO - add work that supports the Sprint Goal.</span>
+          </div>
+          <div className="grid gap-1.5 sm:grid-cols-2">
+            {available.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onAddToSprint(s.id)}
+                className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-left text-sm hover:border-primary hover:bg-primary/5"
+              >
+                <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate">{s.title}</span>
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">{s.points} pts</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Burndown */}
       <section className="space-y-2">
@@ -129,7 +159,7 @@ export function SprintBoard({ state, onStartStory, onRunDay, onReview }: SprintB
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <p className={cn('text-xs', over && delivered < committed ? 'text-amber-700' : 'text-muted-foreground')}>
+        <p className={cn('text-xs', over && delivered < forecast ? 'text-amber-700' : 'text-muted-foreground')}>
           The actual line above the ideal means work is burning down too slowly - a sign of over-commitment
           or too much started at once.
         </p>

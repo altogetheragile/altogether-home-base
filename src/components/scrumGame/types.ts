@@ -86,6 +86,7 @@ export type ScrumAction =
   | { type: 'SET_PHASE'; phase: ScrumPhase }
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[] }
   | { type: 'START_STORY'; storyId: string }
+  | { type: 'ADD_TO_SPRINT'; storyId: string }
   | { type: 'RUN_SPRINT_DAY' }
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }

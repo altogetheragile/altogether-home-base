@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, startStory, runSprintDay, reviewSprint, startNextSprint } from './engine';
+import { planSprint, startStory, addToSprint, runSprintDay, reviewSprint, startNextSprint } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -15,6 +15,8 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return planSprint(state, action.goal, action.storyIds);
     case 'START_STORY':
       return startStory(state, action.storyId);
+    case 'ADD_TO_SPRINT':
+      return addToSprint(state, action.storyId);
     case 'RUN_SPRINT_DAY':
       return runSprintDay(state);
     case 'REVIEW_SPRINT':
@@ -38,6 +40,7 @@ export function useScrumGame() {
     [],
   );
   const startStoryAction = useCallback((storyId: string) => dispatch({ type: 'START_STORY', storyId }), []);
+  const addToSprintAction = useCallback((storyId: string) => dispatch({ type: 'ADD_TO_SPRINT', storyId }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_SPRINT_DAY' }), []);
   const reviewSprintAction = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
@@ -49,6 +52,7 @@ export function useScrumGame() {
     setPhase,
     planSprint: planSprintAction,
     startStory: startStoryAction,
+    addToSprint: addToSprintAction,
     runDay,
     reviewSprint: reviewSprintAction,
     nextSprint,
