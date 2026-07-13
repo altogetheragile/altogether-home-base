@@ -53,7 +53,8 @@ describe('balance: the 2-week Sprint has teeth', () => {
   });
 
   it('clearing impediments (the Scrum Master) delivers more than ignoring them', () => {
-    const commit = commitUpTo(base, Math.round(cap * 1.6)); // enough work that capacity is the limit
+    // Commit the whole backlog so capacity - not the plan - is the binding limit.
+    const commit = base.productBacklog.map((x) => x.id);
     const cleared = playSprintSwarm(planSprint(base, 'cleared', commit), true);
     const ignored = playSprintSwarm(planSprint(base, 'ignored', commit), false);
     expect(cleared.delivered).toBeGreaterThan(ignored.delivered);

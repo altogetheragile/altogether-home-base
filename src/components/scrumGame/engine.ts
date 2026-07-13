@@ -10,7 +10,7 @@ import {
 /** Commit the planned stories into a new Sprint and open it for play. The chosen
  *  stories move from the Product Backlog onto the Sprint board (status 'todo',
  *  tagged with the Sprint number); the Sprint Goal is set. Pure and deterministic. */
-export function planSprint(state: ScrumState, goal: string, storyIds: string[], length = state.sprintLength): ScrumState {
+export function planSprint(state: ScrumState, goal: string, storyIds: string[], devDays = state.sprintLength): ScrumState {
   const number = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const committed = new Set(storyIds);
   const productBacklog: Story[] = state.productBacklog.map((s) =>
@@ -20,7 +20,8 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
   const sprint: Sprint = {
     number,
     goal: goal.trim(),
-    length,
+    length: Math.ceil(devDays), // the last slot is a half day when devDays is fractional
+    devDays,
     day: 1,
     committedStoryIds: storyIds,
     status: 'active',
@@ -35,9 +36,9 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     currentSprint: sprint,
     productBacklog,
     assignments: {},
-    sprintLength: length,
+    sprintLength: devDays, // remember the chosen length for the next Sprint
     currentImpediment: generateImpediment(number, 1),
-    changeRequest: generateChangeRequest(number, length),
+    changeRequest: generateChangeRequest(number, sprint.length),
   };
 }
 
@@ -232,15 +233,17 @@ export function runSprintDay(state: ScrumState): ScrumState {
     effortByStory.set(swarmLead, (effortByStory.get(swarmLead) ?? 0) + bonus);
   }
 
-  // A live impediment the Scrum Master hasn't cleared scales down today's effort -
-  // a distraction loses half the day, a blocker loses all of it. It only "bites"
+  // Two things scale today's effort: the final day of a Sprint can be a half day
+  // (when devDays is fractional, e.g. a one-week Sprint's 4.5 days), and a live
+  // impediment the Scrum Master hasn't cleared costs the team - a distraction
+  // loses half the day, a blocker loses all of it. The impediment only "bites"
   // if the team was actually trying to work.
   const imp = state.currentImpediment;
-  let hit = 0;
-  if (imp && !imp.cleared && effortByStory.size > 0) {
-    const factor = IMPEDIMENT_EFFECT[imp.kind];
-    for (const [id, e] of effortByStory) effortByStory.set(id, Math.floor(e * factor));
-    hit = 1;
+  const impFactor = imp && !imp.cleared ? IMPEDIMENT_EFFECT[imp.kind] : 1;
+  const dayWeight = sprint.day < sprint.length ? 1 : sprint.devDays - (sprint.length - 1);
+  const hit = imp && !imp.cleared && effortByStory.size > 0 ? 1 : 0;
+  if (impFactor !== 1 || dayWeight !== 1) {
+    for (const [id, e] of effortByStory) effortByStory.set(id, Math.floor(e * impFactor * dayWeight));
   }
 
   const finished: string[] = [];

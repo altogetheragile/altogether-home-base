@@ -68,8 +68,11 @@ export interface Sprint {
   number: number;
   /** The Sprint Goal - the commitment that gives the Sprint focus. */
   goal: string;
-  /** Working days in the timebox. */
+  /** Playable development-day slots (ceil of devDays) - the Run Day count. */
   length: number;
+  /** Development days available once the Sprint's events take their share; may be
+   *  fractional (e.g. 4.5 for a one-week Sprint), so the last day can be a half day. */
+  devDays: number;
   /** Current day within the Sprint (1..length). */
   day: number;
   /** Ids of the stories forecast into this Sprint at planning. */

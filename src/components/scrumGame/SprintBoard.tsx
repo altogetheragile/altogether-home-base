@@ -155,7 +155,12 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Sprint {sprint.number} · Day {Math.min(sprint.day, sprint.length)}/{sprint.length}</h1>
+        <h1 className="text-2xl font-bold">
+          Sprint {sprint.number} · Day {Math.min(sprint.day, sprint.length)}/{sprint.length}
+          {sprint.devDays !== sprint.length && sprint.day === sprint.length && (
+            <span className="ml-2 align-middle rounded bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">half day</span>
+          )}
+        </h1>
         {!canReview ? (
           <div className="flex items-center gap-2">
             {sprint.day < sprint.length && (

@@ -24,8 +24,8 @@ export function ScrumIntro({ productGoal, sprintLength, onStart }: ScrumIntroPro
         <div className="space-y-2 rounded-lg bg-muted/50 p-5">
           <h2 className="text-lg font-semibold">How it works</h2>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li><strong>Sprint Planning:</strong> forecast stories from the Product Backlog into a {sprintLength}-day Sprint.</li>
-            <li><strong>Each day is a Daily Scrum:</strong> inspect the board, re-plan, then run the day.</li>
+            <li><strong>Sprint Planning:</strong> forecast stories from the Product Backlog into a two-week Sprint (~{sprintLength} development days once its events are accounted for).</li>
+            <li><strong>Each day is a Daily Scrum:</strong> the Scrum Master clears impediments, the team decides who works on what, then run the day.</li>
             <li><strong>Sprint Review:</strong> what met the Definition of Done? Forecast vs actual.</li>
             <li><strong>Retrospective:</strong> pick one improvement to carry into the next Sprint.</li>
             <li>Repeat - and watch your <strong>velocity</strong> settle as your forecasts get honest.</li>
