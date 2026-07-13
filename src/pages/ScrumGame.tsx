@@ -10,22 +10,26 @@ import Footer from '@/components/Footer';
 /** The Scrum Simulation: intro -> Sprint Planning -> Sprint execution (board +
  *  daily Run + burndown) -> Review -> Retrospective -> next Sprint. */
 export default function ScrumGame() {
-  const { state, start, setPhase, setTeam, planSprint, assignDev, unassignDev, addToSprint, clearImpediment, runDay, runToEnd, reviewSprint, nextSprint } = useScrumGame();
+  const {
+    state, start, setPhase, setTeam, moveStory, planSprint, assignDev, unassignDev, addToSprint,
+    clearImpediment, acceptChange, declineChange, runDay, runToEnd, reviewSprint,
+    acceptStory, rejectStory, finishReview, nextSprint,
+  } = useScrumGame();
 
   const renderPhase = () => {
     switch (state.phase) {
       case 'intro':
         return <ScrumIntro productGoal={state.productGoal} sprintLength={state.sprintLength} onStart={start} />;
       case 'planning':
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
       case 'sprint':
-        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onClearImpediment={clearImpediment} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
+        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
       case 'review':
-        return <SprintReview state={state} onContinue={() => setPhase('retro')} />;
+        return <SprintReview state={state} onAccept={acceptStory} onReject={rejectStory} onFinish={finishReview} />;
       case 'retro':
         return <SprintRetro state={state} onChoose={nextSprint} />;
       default:
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
     }
   };
 

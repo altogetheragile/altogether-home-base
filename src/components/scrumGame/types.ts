@@ -56,6 +56,10 @@ export interface Story {
   /** Work left to reach Done (starts equal to points; reduced each day it's in
    *  Doing and the team applies capacity to it). */
   effortRemaining: number;
+  /** Whether the Product Owner has accepted the finished work against the
+   *  Definition of Done at the Sprint Review. Only accepted work is in the
+   *  Increment and counts toward velocity and the Product Goal. */
+  accepted: boolean;
 }
 
 /** One Sprint: a fixed timebox with a single Sprint Goal and a committed set of
@@ -77,6 +81,19 @@ export interface Sprint {
   /** Days on which an impediment was left unaddressed and cost the team - a
    *  measure of how well the Scrum Master kept the way clear. */
   impedimentsHit: number;
+}
+
+/** An emergent need the Product Owner raises mid-Sprint - the classic "something
+ *  important just came up". The team decides with the PO whether to pull it in
+ *  (adapt) or hold it for the next Sprint (protect the Sprint Goal). */
+export interface ChangeRequest {
+  id: string;
+  title: string;
+  detail: string;
+  points: number;
+  value: number;
+  /** The Sprint day it surfaces on. */
+  day: number;
 }
 
 export type ScrumPhase =
@@ -101,6 +118,11 @@ export interface ScrumState {
   /** The Scrum Master - not a Developer (does no story work), but clears the
    *  team's impediments so the Developers can focus. */
   scrumMaster: string;
+  /** The Product Owner - orders the Product Backlog, accepts work at the Review,
+   *  and raises change requests during the Sprint. */
+  productOwner: string;
+  /** A live change request from the Product Owner, awaiting the team's decision. */
+  changeRequest: ChangeRequest | null;
   /** Who is working on what right now: Developer id -> story id. A Developer not
    *  present here is on the bench (idle, doing no work today). Reset each Sprint. */
   assignments: Record<string, string>;
@@ -124,14 +146,20 @@ export type ScrumAction =
   | { type: 'START' }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
   | { type: 'SET_TEAM'; team: Developer[] }
+  | { type: 'MOVE_STORY'; storyId: string; dir: 'up' | 'down' }
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[]; length: number }
   | { type: 'START_STORY'; storyId: string }
   | { type: 'ADD_TO_SPRINT'; storyId: string }
   | { type: 'ASSIGN_DEV'; devId: string; storyId: string }
   | { type: 'UNASSIGN_DEV'; devId: string }
   | { type: 'CLEAR_IMPEDIMENT' }
+  | { type: 'ACCEPT_CHANGE' }
+  | { type: 'DECLINE_CHANGE' }
   | { type: 'RUN_SPRINT_DAY' }
   | { type: 'RUN_TO_END' }
   | { type: 'REVIEW_SPRINT' }
+  | { type: 'ACCEPT_STORY'; storyId: string }
+  | { type: 'REJECT_STORY'; storyId: string }
+  | { type: 'FINISH_REVIEW' }
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'RESET' };
