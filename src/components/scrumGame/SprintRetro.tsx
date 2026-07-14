@@ -3,6 +3,8 @@ import type { ScrumState } from './types';
 import { RETRO_IMPROVEMENTS } from './config';
 import { productGoalReachable, availableStories } from './engine';
 import { ProductGoalProgress } from './ProductGoalProgress';
+import { LearningTip } from './LearningTip';
+import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +36,8 @@ export function SprintRetro({ state, onChoose, onEnd }: SprintRetroProps) {
       </div>
 
       <ProductGoalProgress state={state} />
+
+      <LearningTip point={learningFor('retro')} />
 
       <div className="space-y-2">
         {RETRO_IMPROVEMENTS.map((imp) => (

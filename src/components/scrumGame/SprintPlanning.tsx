@@ -6,6 +6,8 @@ import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { ScrumDodEditor } from './ScrumDodEditor';
 import { ProductGoalProgress } from './ProductGoalProgress';
+import { LearningTip } from './LearningTip';
+import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -220,6 +222,8 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
           </p>
         </section>
       </div>
+
+      {over && <LearningTip point={learningFor('over-commit')} />}
 
       <div className="flex justify-end">
         <Button size="lg" disabled={!canStart} onClick={() => onCommit(goal, [...selected], length)}>

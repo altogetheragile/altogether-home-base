@@ -4,6 +4,7 @@ import {
   sprintCapacity, averageVelocity, CAPACITY_PER_DEV_DAY, improvementBonus, RETRO_IMPROVEMENTS,
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM, SPRINT_LENGTH_OPTIONS, DEV_DAY_RATIO,
 } from './config';
+import { learningFor, LEARNING } from './learning';
 import {
   planSprint, moveBacklogStory, availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
@@ -367,6 +368,18 @@ describe('review and retrospective', () => {
     expect(s.currentSprint).toBeNull();
     expect(s.improvements).toEqual([RETRO_IMPROVEMENTS[0]]);
     expect(s.sprints).toHaveLength(1);
+  });
+});
+
+describe('learning points', () => {
+  it('every learning point is well-formed and resolvable by its trigger', () => {
+    for (const [trigger, point] of Object.entries(LEARNING)) {
+      expect(learningFor(trigger)).toBe(point);
+      expect(point.title.length).toBeGreaterThan(0);
+      expect(point.body.length).toBeGreaterThan(0);
+      expect(point.area).toMatch(/Scrum/);
+    }
+    expect(learningFor('nope')).toBeUndefined();
   });
 });
 

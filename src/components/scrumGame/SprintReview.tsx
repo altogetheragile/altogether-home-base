@@ -4,6 +4,8 @@ import {
 } from './engine';
 import { totalValue } from './config';
 import { SprintScorecard } from './SprintScorecard';
+import { LearningTip } from './LearningTip';
+import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, Undo2, ClipboardCheck } from 'lucide-react';
@@ -137,6 +139,8 @@ export function SprintReview({ state, onAccept, onReject, onFinish }: SprintRevi
         </div>
         <p className="text-[11px] text-muted-foreground">Points accepted per Sprint. This Sprint (faded) is recorded when you continue. Your next forecast uses the average.</p>
       </section>
+
+      <LearningTip point={learningFor(met ? 'dod' : 'goal-missed')} />
 
       <SprintScorecard state={state} sprintNumber={sprint.number} />
 
