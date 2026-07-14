@@ -120,6 +120,7 @@ export function initialScrumState(): ScrumState {
     assignments: {},
     currentImpediment: null,
     changeRequest: null,
+    lastDay: null,
     sprints: [],
     currentSprint: null,
     velocity: [],
