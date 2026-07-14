@@ -184,6 +184,15 @@ export function unassignDev(state: ScrumState, devId: string): ScrumState {
   return { ...state, assignments };
 }
 
+/** Replace the Definition of Done (the team refining their quality bar). Empty
+ *  lines are dropped and each criterion keeps a stable id. */
+export function setDefinitionOfDone(state: ScrumState, dod: { id: string; label: string }[]): ScrumState {
+  const cleaned = dod
+    .map((c) => ({ id: c.id, label: c.label.trim() }))
+    .filter((c) => c.label.length > 0);
+  return { ...state, definitionOfDone: cleaned };
+}
+
 /** Replace the roster (team editor). Any assignments for removed Developers are
  *  dropped so nobody works a story who is no longer on the team. */
 export function setTeam(state: ScrumState, team: Developer[]): ScrumState {

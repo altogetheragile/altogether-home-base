@@ -12,7 +12,7 @@ import Footer from '@/components/Footer';
  *  daily Run + burndown) -> Review -> Retrospective -> next Sprint. */
 export default function ScrumGame() {
   const {
-    state, start, setPhase, setTeam, moveStory, planSprint, assignDev, unassignDev, addToSprint,
+    state, start, setPhase, setTeam, setDod, moveStory, planSprint, assignDev, unassignDev, addToSprint,
     clearImpediment, acceptChange, declineChange, runDay, runToEnd, reviewSprint,
     acceptStory, rejectStory, finishReview, nextSprint, endGame, reset,
   } = useScrumGame();
@@ -22,7 +22,7 @@ export default function ScrumGame() {
       case 'intro':
         return <ScrumIntro productGoal={state.productGoal} sprintLength={state.sprintLength} onStart={start} />;
       case 'planning':
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
       case 'sprint':
         return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
       case 'review':
@@ -32,7 +32,7 @@ export default function ScrumGame() {
       case 'final':
         return <ScrumFinal state={state} onReset={reset} />;
       default:
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
     }
   };
 

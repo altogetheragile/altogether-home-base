@@ -44,7 +44,7 @@ export const PRODUCT_GOAL = 'Launch a booking experience customers love and trus
 export const PRODUCT_GOAL_THRESHOLD = 0.8;
 
 /** A domain-neutral default Definition of Done (the Increment's commitment).
- *  Editable later, like the Flow game's exit criteria. */
+ *  Editable by the team, like the Flow game's exit criteria. */
 export function defaultDefinitionOfDone(): Criterion[] {
   return [
     { id: 'dod-reviewed', label: 'Reviewed by someone else' },
@@ -52,6 +52,25 @@ export function defaultDefinitionOfDone(): Criterion[] {
     { id: 'dod-releasable', label: 'Releasable - nothing left to finish' },
   ];
 }
+
+/** Build a Definition of Done criterion with a stable id. */
+export function makeCriterion(id: string, label: string): Criterion {
+  return { id, label: label.trim() };
+}
+
+/** A Definition of Done should be a short, meaningful list, not a checklist sprawl. */
+export const MIN_DOD = 1;
+export const MAX_DOD = 6;
+
+/** Domain-neutral criteria the team can quick-add when refining the Definition of
+ *  Done, kept free of software jargon so the sim stays general. */
+export const SUGGESTED_DOD: string[] = [
+  'Tested against its acceptance criteria',
+  'No known defects left open',
+  'Documented enough for others to use',
+  'Signed off by the Product Owner',
+  'Nothing left to hand off or finish later',
+];
 
 /** A starting Product Backlog, ordered by value. Story points vary so planning
  *  is a real forecasting decision. Deterministic (fixed list, not RNG). */

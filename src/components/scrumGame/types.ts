@@ -149,6 +149,7 @@ export type ScrumAction =
   | { type: 'START' }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
   | { type: 'SET_TEAM'; team: Developer[] }
+  | { type: 'SET_DOD'; dod: Criterion[] }
   | { type: 'MOVE_STORY'; storyId: string; dir: 'up' | 'down' }
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[]; length: number }
   | { type: 'START_STORY'; storyId: string }
