@@ -39,6 +39,7 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     sprintLength: devDays, // remember the chosen length for the next Sprint
     currentImpediment: generateImpediment(number, 1),
     changeRequest: generateChangeRequest(number, sprint.length),
+    lastDay: null,
   };
 }
 
@@ -231,10 +232,13 @@ export function runSprintDay(state: ScrumState): ScrumState {
   // Sum each assigned Developer's roll onto their story. Kaizen (accumulated retro
   // improvements) rewards focus: the extra effort goes to the most-swarmed story.
   const effortByStory = new Map<string, number>();
+  const rolls: { devId: string; storyId: string; roll: number }[] = [];
   state.team.forEach((dev, i) => {
     const storyId = state.assignments[dev.id];
     if (!storyId) return; // benched today
-    effortByStory.set(storyId, (effortByStory.get(storyId) ?? 0) + devRoll(sprint.number, sprint.day, i));
+    const roll = devRoll(sprint.number, sprint.day, i);
+    rolls.push({ devId: dev.id, storyId, roll });
+    effortByStory.set(storyId, (effortByStory.get(storyId) ?? 0) + roll);
   });
   const bonus = improvementBonus(state.improvements);
   if (bonus > 0 && effortByStory.size > 0) {
@@ -285,7 +289,8 @@ export function runSprintDay(state: ScrumState): ScrumState {
   };
   // Surface tomorrow's impediment (only while the timebox is still open).
   const currentImpediment = nextDay <= sprint.length ? generateImpediment(sprint.number, nextDay) : null;
-  return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment };
+  const lastDay = { day: sprint.day, dayWeight, impedimentBit: hit === 1, rolls, completed: finished };
+  return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment, lastDay };
 }
 
 /** Fast-forward the rest of the Sprint. The Scrum Master keeps the way clear as
@@ -313,6 +318,31 @@ export const acceptedStories = (state: ScrumState, sprintNumber: number): Story[
 /** Points accepted into the Increment - what velocity is measured in. */
 export const acceptedPoints = (state: ScrumState, sprintNumber: number): number =>
   totalPoints(acceptedStories(state, sprintNumber));
+
+export interface SprintScoreItem { label: string; ok: boolean; detail: string; }
+export interface SprintScore { stars: number; max: number; items: SprintScoreItem[]; }
+
+/** Rate a Sprint on a few Scrum-healthy dimensions - one star each. A snapshot the
+ *  team can read at a glance and try to beat next Sprint. */
+export function sprintScore(state: ScrumState, sprintNumber: number): SprintScore {
+  const sprint = sprintByNumber(state, sprintNumber);
+  const met = sprintGoalMet(state, sprintNumber);
+  const forecast = forecastPoints(state, sprintNumber);
+  const accepted = acceptedPoints(state, sprintNumber);
+  const done = state.productBacklog.filter((s) => s.sprintNumber === sprintNumber && s.status === 'done');
+  const acceptedCount = acceptedStories(state, sprintNumber).length;
+  const impedimentsHit = sprint?.impedimentsHit ?? 0;
+  const valueAccepted = totalValue(acceptedStories(state, sprintNumber));
+
+  const items: SprintScoreItem[] = [
+    { label: 'Sprint Goal met', ok: met, detail: met ? 'Every committed story Done and accepted' : 'Some committed work missed' },
+    { label: 'Hit the forecast', ok: forecast > 0 && accepted >= forecast, detail: `${accepted} of ${forecast} forecast points accepted` },
+    { label: 'Way kept clear', ok: impedimentsHit === 0, detail: impedimentsHit === 0 ? 'No impediment went unaddressed' : `${impedimentsHit} day(s) lost to impediments` },
+    { label: 'Work met the DoD', ok: done.length > 0 && acceptedCount === done.length, detail: `${acceptedCount} of ${done.length} finished stories accepted` },
+    { label: 'Delivered value', ok: valueAccepted > 0, detail: `${valueAccepted} value accepted into the Increment` },
+  ];
+  return { stars: items.filter((i) => i.ok).length, max: items.length, items };
+}
 
 const sprintByNumber = (state: ScrumState, n: number): Sprint | undefined =>
   state.currentSprint?.number === n ? state.currentSprint : state.sprints.find((s) => s.number === n);
@@ -356,6 +386,7 @@ export function reviewSprint(state: ScrumState): ScrumState {
     assignments: {},
     currentImpediment: null,
     changeRequest: null,
+    lastDay: null,
   };
 }
 

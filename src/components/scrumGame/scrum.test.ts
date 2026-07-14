@@ -12,6 +12,7 @@ import {
   reviewSprint, acceptStory, rejectStory, finishReview, acceptedPoints, startNextSprint, sprintGoalMet, forecastPoints,
   devRoll, isSprintOver, deliveredPoints,
   productGoalTotalValue, productGoalDeliveredValue, productGoalProgress, productGoalReachable, endGame,
+  sprintScore,
 } from './engine';
 
 /** Put the whole team on one story (a full swarm). */
@@ -366,6 +367,41 @@ describe('review and retrospective', () => {
     expect(s.currentSprint).toBeNull();
     expect(s.improvements).toEqual([RETRO_IMPROVEMENTS[0]]);
     expect(s.sprints).toHaveLength(1);
+  });
+});
+
+describe('day summary (dice reveal) and the Sprint scorecard', () => {
+  it('runSprintDay records a day summary with each Developer\'s roll and what finished', () => {
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
+    expect(s.lastDay).toBeNull(); // nothing run yet
+    s = runSprintDay(clearImpediment(s));
+    expect(s.lastDay).not.toBeNull();
+    expect(s.lastDay!.day).toBe(1);
+    expect(s.lastDay!.rolls.length).toBe(s.team.length); // whole team was assigned
+    for (const r of s.lastDay!.rolls) {
+      expect(r.storyId).toBe('s3');
+      expect(r.roll).toBeGreaterThanOrEqual(1);
+      expect(r.roll).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it('a clean Sprint lights every star; a missed one scores lower', () => {
+    // Clean: swarm a small story, clear impediments, accept it.
+    let good = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
+    good = runUntilDone(good, 's3');
+    good = acceptStory(reviewSprint(good), 's3');
+    const gScore = sprintScore(good, 1);
+    expect(gScore.max).toBe(5);
+    expect(gScore.stars).toBe(5);
+
+    // Missed: commit a big story, one Developer, ignore impediments - never finishes.
+    let bad = planSprint(initialScrumState(), 'g', ['s2']); // 21 pts
+    bad = assignDev(bad, bad.team[0].id, 's2');
+    while (bad.currentSprint && !isSprintOver(bad.currentSprint)) bad = runSprintDay(bad);
+    bad = reviewSprint(bad);
+    const bScore = sprintScore(bad, 1);
+    expect(bScore.items.find((i) => i.label === 'Sprint Goal met')!.ok).toBe(false);
+    expect(bScore.stars).toBeLessThan(gScore.stars);
   });
 });
 

@@ -3,6 +3,7 @@ import {
   sprintStories, deliveredPoints, acceptedPoints, sprintGoalMet, forecastPoints, acceptedStories,
 } from './engine';
 import { totalValue } from './config';
+import { SprintScorecard } from './SprintScorecard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, Undo2, ClipboardCheck } from 'lucide-react';
@@ -136,6 +137,8 @@ export function SprintReview({ state, onAccept, onReject, onFinish }: SprintRevi
         </div>
         <p className="text-[11px] text-muted-foreground">Points accepted per Sprint. This Sprint (faded) is recorded when you continue. Your next forecast uses the average.</p>
       </section>
+
+      <SprintScorecard state={state} sprintNumber={sprint.number} />
 
       <div className="flex items-center justify-end gap-3">
         {deliveredPts > acceptedPts && (

@@ -99,6 +99,20 @@ export interface ChangeRequest {
   day: number;
 }
 
+/** A record of the last Sprint day that was run, so the board can reveal the dice
+ *  and celebrate what got finished. */
+export interface DaySummary {
+  day: number;
+  /** The day's effort weight (1, or 0.5 for a Sprint's fractional final day). */
+  dayWeight: number;
+  /** Whether an unaddressed impediment cost the team on this day. */
+  impedimentBit: boolean;
+  /** Each assigned Developer's raw die roll and the story they worked. */
+  rolls: { devId: string; storyId: string; roll: number }[];
+  /** Story ids that reached Done on this day. */
+  completed: string[];
+}
+
 export type ScrumPhase =
   | 'intro'
   | 'planning'   // Sprint Planning: forecast stories against velocity
@@ -126,6 +140,9 @@ export interface ScrumState {
   productOwner: string;
   /** A live change request from the Product Owner, awaiting the team's decision. */
   changeRequest: ChangeRequest | null;
+  /** The last day run, for the dice reveal and Done celebration (null until a day
+   *  has been run this Sprint). */
+  lastDay: DaySummary | null;
   /** Who is working on what right now: Developer id -> story id. A Developer not
    *  present here is on the bench (idle, doing no work today). Reset each Sprint. */
   assignments: Record<string, string>;

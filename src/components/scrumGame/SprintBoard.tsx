@@ -9,6 +9,7 @@ import { DevBadge } from './DevBadge';
 import { TeamBench } from './TeamBench';
 import { ScrumMasterPanel } from './ScrumMasterPanel';
 import { ChangeRequestPanel } from './ChangeRequestPanel';
+import { DaySummary } from './DaySummary';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, FastForward } from 'lucide-react';
@@ -225,6 +226,9 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
               : 'The Sprint Goal is met. Ahead of schedule? Pull in more below, or review.'}
         </div>
       )}
+
+      {/* The dice reveal + Done celebration for the last day run. */}
+      <DaySummary state={state} />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Column title="To Do" stories={todo} render={card} />
