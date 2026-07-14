@@ -165,4 +165,5 @@ export type ScrumAction =
   | { type: 'REJECT_STORY'; storyId: string }
   | { type: 'FINISH_REVIEW' }
   | { type: 'NEXT_SPRINT'; improvement: string }
+  | { type: 'END_GAME' }
   | { type: 'RESET' };

@@ -38,6 +38,11 @@ export const sprintCapacity = (velocity: number[], teamSize: number, devDays: nu
 /** The Product Goal - the north star the Product Backlog is ordered toward. */
 export const PRODUCT_GOAL = 'Launch a booking experience customers love and trust.';
 
+/** Share of the product's value that, once delivered, lets the Product Owner call
+ *  the Product Goal achieved and wrap up - the Goal is an outcome, not "empty the
+ *  Backlog", so the last low-value items needn't ship to be done. */
+export const PRODUCT_GOAL_THRESHOLD = 0.8;
+
 /** A domain-neutral default Definition of Done (the Increment's commitment).
  *  Editable later, like the Flow game's exit criteria. */
 export function defaultDefinitionOfDone(): Criterion[] {

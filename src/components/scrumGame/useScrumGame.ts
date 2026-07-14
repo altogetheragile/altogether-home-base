@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, moveBacklogStory, startStory, addToSprint, assignDev, unassignDev, setTeam, clearImpediment, acceptChange, declineChange, runSprintDay, runRemainingDays, reviewSprint, acceptStory, rejectStory, finishReview, startNextSprint } from './engine';
+import { planSprint, moveBacklogStory, startStory, addToSprint, assignDev, unassignDev, setTeam, clearImpediment, acceptChange, declineChange, runSprintDay, runRemainingDays, reviewSprint, acceptStory, rejectStory, finishReview, startNextSprint, endGame } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -45,6 +45,8 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return finishReview(state);
     case 'NEXT_SPRINT':
       return startNextSprint(state, action.improvement);
+    case 'END_GAME':
+      return endGame(state);
     case 'RESET':
       return initialScrumState();
     default:
@@ -77,6 +79,7 @@ export function useScrumGame() {
   const rejectStoryAction = useCallback((storyId: string) => dispatch({ type: 'REJECT_STORY', storyId }), []);
   const finishReviewAction = useCallback(() => dispatch({ type: 'FINISH_REVIEW' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
+  const endGameAction = useCallback(() => dispatch({ type: 'END_GAME' }), []);
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
@@ -100,6 +103,7 @@ export function useScrumGame() {
     rejectStory: rejectStoryAction,
     finishReview: finishReviewAction,
     nextSprint,
+    endGame: endGameAction,
     reset,
   };
 }
