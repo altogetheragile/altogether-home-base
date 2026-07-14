@@ -1,8 +1,8 @@
 import type { ScrumState, Sprint, Story, Developer, Impediment, ChangeRequest } from './types';
 import {
-  SPRINT_SEED, totalPoints, improvementBonus,
+  SPRINT_SEED, totalPoints, totalValue, improvementBonus,
   IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT,
-  CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS,
+  CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS, PRODUCT_GOAL_THRESHOLD,
 } from './config';
 
 // ============= Planning =============
@@ -396,6 +396,42 @@ export function startNextSprint(state: ScrumState, improvement: string): ScrumSt
     ...state,
     phase: 'planning',
     improvements: [...state.improvements, improvement],
+    sprints: sprint ? [...state.sprints, { ...sprint, status: 'done' as const }] : state.sprints,
+    currentSprint: null,
+  };
+}
+
+// ============= The Product Goal (across Sprints) =============
+
+/** Total value identified for the product - every story in the Backlog, delivered
+ *  or not (grows if the Product Owner's change requests are pulled in). */
+export const productGoalTotalValue = (state: ScrumState): number => totalValue(state.productBacklog);
+
+/** Value accepted into the Increment so far - progress toward the Product Goal. */
+export const productGoalDeliveredValue = (state: ScrumState): number =>
+  totalValue(state.productBacklog.filter((s) => s.accepted));
+
+/** Fraction of the product's value delivered and accepted (0..1). */
+export const productGoalProgress = (state: ScrumState): number => {
+  const total = productGoalTotalValue(state);
+  return total > 0 ? productGoalDeliveredValue(state) / total : 0;
+};
+
+/** Whether enough value has been delivered to call the Product Goal achieved -
+ *  either the Backlog is fully delivered, or a high share of value is in. It's the
+ *  Product Owner's call, so this only ENABLES the wrap-up; it doesn't force it. */
+export const productGoalReachable = (state: ScrumState): boolean => {
+  const noneLeft = state.productBacklog.every((s) => s.accepted);
+  return noneLeft || productGoalProgress(state) >= PRODUCT_GOAL_THRESHOLD;
+};
+
+/** End the game: the Product Owner declares the Product Goal achieved. Files the
+ *  reviewed Sprint and moves to the wrap-up. */
+export function endGame(state: ScrumState): ScrumState {
+  const sprint = state.currentSprint;
+  return {
+    ...state,
+    phase: 'final',
     sprints: sprint ? [...state.sprints, { ...sprint, status: 'done' as const }] : state.sprints,
     currentSprint: null,
   };

@@ -4,6 +4,7 @@ import { availableStories } from './engine';
 import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS } from './config';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
+import { ProductGoalProgress } from './ProductGoalProgress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -62,10 +63,16 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onMoveStory, onBack
         <Button variant="outline" size="sm" onClick={onBack}>Back</Button>
       </div>
 
-      <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-3">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
-        <p className="text-sm font-medium">{state.productGoal}</p>
-      </div>
+      {/* Product Goal - a plain statement on Sprint 1, a progress bar once value
+          has started to land (the Product Backlog is ordered toward this Goal). */}
+      {state.velocity.length > 0 ? (
+        <ProductGoalProgress state={state} />
+      ) : (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
+          <p className="text-sm font-medium">{state.productGoal}</p>
+        </div>
+      )}
 
       {/* Scrum Team - the Developers who'll do the work, plus the Scrum Master who
           keeps their way clear. A bigger team can forecast more, but only pays off

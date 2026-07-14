@@ -1,17 +1,28 @@
+import { useState } from 'react';
 import type { ScrumState } from './types';
 import { RETRO_IMPROVEMENTS } from './config';
+import { productGoalReachable, availableStories } from './engine';
+import { ProductGoalProgress } from './ProductGoalProgress';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface SprintRetroProps {
   state: ScrumState;
   onChoose: (improvement: string) => void;
+  onEnd: () => void;
 }
 
 /** Retrospective: inspect how the Sprint went and commit to ONE improvement to
  *  carry forward. Improvements accumulate and make the team a little more
- *  effective over time - continuous improvement made tangible. */
-export function SprintRetro({ state, onChoose }: SprintRetroProps) {
+ *  effective over time. From here the team either starts the next Sprint or, if
+ *  the Product Owner judges the Product Goal achieved, wraps up. */
+export function SprintRetro({ state, onChoose, onEnd }: SprintRetroProps) {
   const sprint = state.currentSprint;
   const number = sprint?.number ?? state.sprints.length;
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const canEnd = productGoalReachable(state);
+  const backlogEmpty = availableStories(state).length === 0 && state.productBacklog.every((s) => s.accepted);
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 space-y-6">
@@ -22,13 +33,18 @@ export function SprintRetro({ state, onChoose }: SprintRetroProps) {
         </p>
       </div>
 
+      <ProductGoalProgress state={state} />
+
       <div className="space-y-2">
         {RETRO_IMPROVEMENTS.map((imp) => (
           <button
             key={imp}
             type="button"
-            onClick={() => onChoose(imp)}
-            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-left text-sm transition-colors hover:border-primary hover:bg-primary/5"
+            onClick={() => setSelected(imp)}
+            className={cn(
+              'w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+              selected === imp ? 'border-primary bg-primary/10 font-medium' : 'border-border bg-card hover:border-primary hover:bg-primary/5',
+            )}
           >
             {imp}
           </button>
@@ -43,6 +59,31 @@ export function SprintRetro({ state, onChoose }: SprintRetroProps) {
           </ul>
           <p className="mt-1.5 text-[11px] text-muted-foreground">Each one has nudged the team's pace up - kaizen compounds.</p>
         </div>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {canEnd ? (
+          <p className="text-xs text-muted-foreground">
+            {backlogEmpty
+              ? 'The Backlog is delivered - the Product Goal is complete.'
+              : 'Enough value is in that the Product Owner could call the Product Goal achieved.'}
+          </p>
+        ) : <span />}
+        <div className="flex gap-2">
+          {canEnd && (
+            <Button variant="outline" size="lg" onClick={onEnd}>
+              Product Goal achieved - wrap up
+            </Button>
+          )}
+          {!backlogEmpty && (
+            <Button size="lg" disabled={!selected} onClick={() => selected && onChoose(selected)}>
+              Start Sprint {number + 1}
+            </Button>
+          )}
+        </div>
+      </div>
+      {!selected && !backlogEmpty && (
+        <p className="text-right text-[11px] text-muted-foreground">Pick an improvement to carry into the next Sprint.</p>
       )}
     </div>
   );

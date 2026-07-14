@@ -11,6 +11,7 @@ import {
   runSprintDay, runRemainingDays,
   reviewSprint, acceptStory, rejectStory, finishReview, acceptedPoints, startNextSprint, sprintGoalMet, forecastPoints,
   devRoll, isSprintOver, deliveredPoints,
+  productGoalTotalValue, productGoalDeliveredValue, productGoalProgress, productGoalReachable, endGame,
 } from './engine';
 
 /** Put the whole team on one story (a full swarm). */
@@ -352,6 +353,36 @@ describe('review and retrospective', () => {
     expect(s.phase).toBe('planning');
     expect(s.currentSprint).toBeNull();
     expect(s.improvements).toEqual([RETRO_IMPROVEMENTS[0]]);
+    expect(s.sprints).toHaveLength(1);
+  });
+});
+
+describe('the Product Goal across Sprints', () => {
+  it('progress tracks accepted value toward the Product Goal', () => {
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // s3 value 6
+    expect(productGoalDeliveredValue(s)).toBe(0);
+    expect(productGoalProgress(s)).toBe(0);
+    s = runUntilDone(s, 's3');
+    s = reviewSprint(s);
+    s = acceptStory(s, 's3');
+    s = finishReview(s);
+    const total = productGoalTotalValue(s);
+    expect(productGoalDeliveredValue(s)).toBe(6);
+    expect(productGoalProgress(s)).toBeCloseTo(6 / total, 5);
+  });
+
+  it('the Product Goal is reachable only once enough value is accepted', () => {
+    expect(productGoalReachable(initialScrumState())).toBe(false);
+    const base = initialScrumState();
+    const allAccepted = { ...base, productBacklog: base.productBacklog.map((x) => ({ ...x, status: 'done' as const, accepted: true })) };
+    expect(productGoalReachable(allAccepted)).toBe(true);
+  });
+
+  it('endGame files the reviewed Sprint and moves to the wrap-up', () => {
+    let s = reviewSprint(swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'));
+    s = endGame(s);
+    expect(s.phase).toBe('final');
+    expect(s.currentSprint).toBeNull();
     expect(s.sprints).toHaveLength(1);
   });
 });
