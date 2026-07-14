@@ -74,7 +74,7 @@ export const SUGGESTED_DOD: string[] = [
 
 /** A starting Product Backlog, ordered by value. Story points vary so planning
  *  is a real forecasting decision. Deterministic (fixed list, not RNG). */
-export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining' | 'accepted'>[] = [
+export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining'>[] = [
   { id: 's1', title: 'Browse available slots', points: 13, value: 8 },
   { id: 's2', title: 'Book a slot', points: 21, value: 10 },
   { id: 's3', title: 'Confirmation email', points: 8, value: 6 },
@@ -113,7 +113,7 @@ export function initialScrumState(): ScrumState {
     phase: 'intro',
     productGoal: PRODUCT_GOAL,
     definitionOfDone: defaultDefinitionOfDone(),
-    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.points, accepted: false })),
+    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.points })),
     team: DEFAULT_TEAM.map((d) => ({ ...d })),
     scrumMaster: SCRUM_MASTER,
     productOwner: PRODUCT_OWNER,

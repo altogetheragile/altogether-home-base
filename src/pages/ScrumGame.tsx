@@ -14,7 +14,7 @@ export default function ScrumGame() {
   const {
     state, start, setPhase, setTeam, setDod, moveStory, planSprint, assignDev, unassignDev, addToSprint,
     clearImpediment, acceptChange, declineChange, runDay, runToEnd, reviewSprint,
-    acceptStory, rejectStory, finishReview, nextSprint, endGame, reset,
+    nextSprint, endGame, reset,
   } = useScrumGame();
 
   const renderPhase = () => {
@@ -26,9 +26,9 @@ export default function ScrumGame() {
       case 'sprint':
         return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
       case 'review':
-        return <SprintReview state={state} onAccept={acceptStory} onReject={rejectStory} onFinish={finishReview} />;
+        return <SprintReview state={state} onContinue={() => setPhase('retro')} onEnd={endGame} />;
       case 'retro':
-        return <SprintRetro state={state} onChoose={nextSprint} onEnd={endGame} />;
+        return <SprintRetro state={state} onChoose={nextSprint} onSetDod={setDod} onEnd={endGame} />;
       case 'final':
         return <ScrumFinal state={state} onReset={reset} />;
       default:

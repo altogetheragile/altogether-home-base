@@ -44,11 +44,17 @@ export const LEARNING: Record<string, LearningPoint> = {
     title: 'Welcome change, protect the Goal',
     body: 'New needs are welcome, but the Sprint Goal stays fixed for the Sprint. The team and Product Owner decide together whether to adapt scope now or order it for a later Sprint.',
   },
+  review: {
+    id: 'review',
+    area: 'Scrum Events',
+    title: 'The Review is a working session',
+    body: 'At the Sprint Review the Scrum Team and stakeholders inspect the Increment and progress toward the Product Goal, then adapt the Product Backlog together. It is a conversation about the product, not a sign-off - Done work already meets the Definition of Done.',
+  },
   dod: {
     id: 'dod',
     area: 'Scrum Artifacts',
-    title: 'Done means Done',
-    body: 'Work is only part of the Increment when it meets the Definition of Done. Anything short of it is not released and does not count toward the Goal.',
+    title: 'The team owns the quality bar',
+    body: 'The Definition of Done is the team\'s shared standard for quality - what makes work an Increment. Work is only Done when it meets it, and the team can inspect and strengthen it at the Retrospective so "Done" keeps meaning releasable.',
   },
   'goal-missed': {
     id: 'goal-missed',

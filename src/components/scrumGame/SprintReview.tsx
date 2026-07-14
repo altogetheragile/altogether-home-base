@@ -1,41 +1,44 @@
 import type { ScrumState } from './types';
 import {
-  sprintStories, deliveredPoints, acceptedPoints, sprintGoalMet, forecastPoints, acceptedStories,
+  incrementStories, deliveredPoints, sprintGoalMet, forecastPoints, productGoalReachable, availableStories,
 } from './engine';
 import { totalValue } from './config';
+import { ProductGoalProgress } from './ProductGoalProgress';
 import { SprintScorecard } from './SprintScorecard';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Check, Undo2, ClipboardCheck } from 'lucide-react';
+import { Check, Trophy } from 'lucide-react';
 
 interface SprintReviewProps {
   state: ScrumState;
-  onAccept: (storyId: string) => void;
-  onReject: (storyId: string) => void;
-  onFinish: () => void;
+  onContinue: () => void;
+  onEnd: () => void;
 }
 
-/** Sprint Review: the Product Owner inspects the finished work and accepts it
- *  against the Definition of Done. Only accepted work is in the Increment and
- *  counts toward velocity and the Product Goal; the rest goes back for rework. */
-export function SprintReview({ state, onAccept, onReject, onFinish }: SprintReviewProps) {
+/** Sprint Review: the Scrum Team and stakeholders inspect the Increment - which
+ *  already meets the Definition of Done - and the progress toward the Product Goal,
+ *  then decide what's next by adapting the Product Backlog. It is a working session
+ *  about the product, not a sign-off gate. */
+export function SprintReview({ state, onContinue, onEnd }: SprintReviewProps) {
   const sprint = state.currentSprint;
   if (!sprint) return null;
-  const done = sprintStories(state, sprint.number).filter((s) => s.status === 'done');
-  const pending = done.filter((s) => !s.accepted);
-  const accepted = acceptedStories(state, sprint.number);
+  const increment = incrementStories(state, sprint.number);
   const forecast = forecastPoints(state, sprint.number);
-  const acceptedPts = acceptedPoints(state, sprint.number);
-  const deliveredPts = deliveredPoints(state, sprint.number);
-  const valueAccepted = totalValue(accepted);
+  const delivered = deliveredPoints(state, sprint.number);
+  const valueDelivered = totalValue(increment);
   const met = sprintGoalMet(state, sprint.number);
-  const exceeded = acceptedPts > forecast;
+  const exceeded = delivered > forecast;
+  const canEnd = productGoalReachable(state);
+  const backlogEmpty = availableStories(state).length === 0 && state.productBacklog.every((s) => s.status === 'done');
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 space-y-6">
       <h1 className="text-2xl font-bold">Sprint {sprint.number} Review</h1>
+      <p className="-mt-3 text-sm text-muted-foreground">
+        {state.productOwner} and stakeholders inspect the Increment and progress toward the Product Goal.
+      </p>
 
       <div className={cn(
         'rounded-lg border px-5 py-3',
@@ -47,80 +50,50 @@ export function SprintReview({ state, onAccept, onReject, onFinish }: SprintRevi
         <p className="text-sm font-medium">{sprint.goal}</p>
       </div>
 
-      {/* Product Owner acceptance against the Definition of Done. */}
-      <section className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-            <h2 className="text-sm font-semibold">{state.productOwner} accepts against the Definition of Done</h2>
-          </div>
-          {pending.length > 0 && (
-            <Button size="sm" variant="outline" onClick={() => pending.forEach((s) => onAccept(s.id))}>
-              Accept all
-            </Button>
-          )}
-        </div>
-
-        <ul className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
-          {state.definitionOfDone.map((c) => (
-            <li key={c.id} className="rounded-full border border-border bg-background px-2 py-0.5">{c.label}</li>
-          ))}
-        </ul>
-
-        <div className="space-y-1.5">
-          {done.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing reached Done this Sprint - nothing to accept.</p>}
-          {done.map((s) => (
-            <div key={s.id} className={cn(
-              'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
-              s.accepted ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30' : 'border-border bg-card',
-            )}>
-              <span className="flex-1">{s.title}</span>
-              <span className="font-mono text-xs text-muted-foreground">{s.points} pts</span>
-              {s.accepted ? (
-                <>
-                  <span className="flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Accepted</span>
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onReject(s.id)} title="Send back for rework">
-                    <Undo2 className="h-3.5 w-3.5" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button size="sm" className="h-7 px-2.5 text-xs" onClick={() => onAccept(s.id)}>Accept</Button>
-                  <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs" onClick={() => onReject(s.id)}>Send back</Button>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-        {pending.length > 0 && (
-          <p className="text-xs text-amber-700">
-            {pending.length} finished {pending.length > 1 ? 'stories are' : 'story is'} still waiting on acceptance. Anything not accepted goes back to the Product Backlog for rework and does not count toward velocity.
-          </p>
-        )}
-      </section>
+      {/* The product perspective: progress toward the Product Goal. */}
+      <ProductGoalProgress state={state} />
 
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-lg border border-border p-3">
-          <div className={cn('text-2xl font-bold', exceeded && 'text-emerald-600')}>{acceptedPts}<span className="text-sm font-normal text-muted-foreground"> / {forecast}</span></div>
-          <div className="text-xs text-muted-foreground">accepted / forecast</div>
+          <div className={cn('text-2xl font-bold', exceeded && 'text-emerald-600')}>{delivered}<span className="text-sm font-normal text-muted-foreground"> / {forecast}</span></div>
+          <div className="text-xs text-muted-foreground">delivered / forecast</div>
         </div>
         <div className="rounded-lg border border-border p-3">
-          <div className="text-2xl font-bold">{accepted.length}<span className="text-sm font-normal text-muted-foreground"> / {done.length}</span></div>
-          <div className="text-xs text-muted-foreground">accepted / finished</div>
+          <div className="text-2xl font-bold">{increment.length}</div>
+          <div className="text-xs text-muted-foreground">stories in the Increment</div>
         </div>
         <div className="rounded-lg border border-border p-3">
-          <div className="text-2xl font-bold">{valueAccepted}</div>
+          <div className="text-2xl font-bold">{valueDelivered}</div>
           <div className="text-xs text-muted-foreground">value toward the Product Goal</div>
         </div>
       </div>
 
-      {exceeded && (
-        <p className="text-xs text-emerald-700">
-          The team delivered <strong>{acceptedPts - forecast}</strong> accepted points beyond the forecast - velocity reflects what was actually accepted, not just the plan.
-        </p>
-      )}
+      {/* The Increment - Done work, which already meets the Definition of Done. */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold">The Increment <span className="font-normal text-muted-foreground">- meets the Definition of Done</span></h2>
+        <div className="space-y-1.5">
+          {increment.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing reached Done this Sprint.</p>}
+          {increment.map((s) => (
+            <div key={s.id} className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm">
+              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+              <span className="flex-1">{s.title}</span>
+              <span className="font-mono text-xs text-muted-foreground">{s.points} pts</span>
+            </div>
+          ))}
+        </div>
+        {exceeded && (
+          <p className="text-xs text-emerald-700">
+            The team delivered <strong>{delivered - forecast}</strong> points beyond the forecast by pulling more work in - velocity reflects what was actually finished.
+          </p>
+        )}
+        {!met && (
+          <p className="text-xs text-amber-700">
+            Unfinished work has gone back to the Product Backlog to be re-planned - it is not part of the Increment.
+          </p>
+        )}
+      </section>
 
-      {/* Velocity trend - past Sprints plus a preview of this one's accepted points. */}
+      {/* Velocity trend across Sprints (this Sprint is recorded). */}
       <section className="space-y-1.5">
         <h2 className="text-sm font-semibold">Velocity</h2>
         <div className="flex items-end gap-2">
@@ -131,24 +104,22 @@ export function SprintReview({ state, onAccept, onReject, onFinish }: SprintRevi
               <span className="text-[10px] font-mono">{v}</span>
             </div>
           ))}
-          <div className="flex flex-col items-center gap-1">
-            <div className="w-8 rounded-t bg-primary/40" style={{ height: `${Math.max(4, acceptedPts * 4)}px` }} />
-            <span className="text-[10px] text-muted-foreground">S{state.velocity.length + 1}</span>
-            <span className="text-[10px] font-mono">{acceptedPts}</span>
-          </div>
         </div>
-        <p className="text-[11px] text-muted-foreground">Points accepted per Sprint. This Sprint (faded) is recorded when you continue. Your next forecast uses the average.</p>
+        <p className="text-[11px] text-muted-foreground">Points delivered per Sprint. Your next forecast uses the average.</p>
       </section>
 
-      <LearningTip point={learningFor(met ? 'dod' : 'goal-missed')} />
+      <LearningTip point={learningFor(met ? 'review' : 'goal-missed')} />
 
       <SprintScorecard state={state} sprintNumber={sprint.number} />
 
-      <div className="flex items-center justify-end gap-3">
-        {deliveredPts > acceptedPts && (
-          <span className="text-xs text-muted-foreground">{deliveredPts - acceptedPts} finished pts will go back for rework</span>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {canEnd && (
+          <Button variant="outline" size="lg" onClick={onEnd}>
+            <Trophy className="mr-1.5 h-4 w-4" />
+            {backlogEmpty ? 'Product Goal complete - wrap up' : 'Product Goal achieved - wrap up'}
+          </Button>
         )}
-        <Button size="lg" onClick={onFinish}>Continue to Retrospective</Button>
+        <Button size="lg" onClick={onContinue}>Continue to Retrospective</Button>
       </div>
     </div>
   );

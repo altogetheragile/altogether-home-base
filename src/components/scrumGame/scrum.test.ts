@@ -10,8 +10,8 @@ import {
   assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
   clearImpediment, generateImpediment, generateChangeRequest, acceptChange, declineChange,
   runSprintDay, runRemainingDays,
-  reviewSprint, acceptStory, rejectStory, finishReview, acceptedPoints, startNextSprint, sprintGoalMet, forecastPoints,
-  devRoll, isSprintOver, deliveredPoints,
+  reviewSprint, startNextSprint, sprintGoalMet, forecastPoints,
+  devRoll, isSprintOver, deliveredPoints, incrementStories,
   productGoalTotalValue, productGoalDeliveredValue, productGoalProgress, productGoalReachable, endGame,
   sprintScore,
 } from './engine';
@@ -19,12 +19,6 @@ import {
 /** Put the whole team on one story (a full swarm). */
 const swarm = (s: ReturnType<typeof initialScrumState>, storyId: string) =>
   s.team.reduce((acc, d) => assignDev(acc, d.id, storyId), s);
-
-/** The Product Owner accepts every finished story in the current Sprint. */
-const acceptAllDone = (s: ReturnType<typeof initialScrumState>) =>
-  sprintStories(s, s.currentSprint!.number)
-    .filter((x) => x.status === 'done')
-    .reduce((acc, x) => acceptStory(acc, x.id), s);
 
 /** Run (clearing each day's impediment) until a story is Done or the timebox ends. */
 const runUntilDone = (s: ReturnType<typeof initialScrumState>, storyId: string) => {
@@ -49,7 +43,6 @@ describe('scrum game scaffold', () => {
     expect(s.assignments).toEqual({}); // everyone on the bench
     expect(s.currentImpediment).toBeNull();
     expect(s.changeRequest).toBeNull();
-    expect(s.productBacklog.every((x) => x.accepted === false)).toBe(true);
     expect(s.sprints).toEqual([]);
     expect(s.velocity).toEqual([]);
   });
@@ -230,14 +223,15 @@ describe('sprint execution', () => {
     expect(benchedDevs(s).length).toBe(s.team.length); // everyone freed once it's Done
   });
 
-  it('reviewSprint returns unfinished work and opens the Review without recording velocity yet', () => {
+  it('reviewSprint records velocity as Done points, returns unfinished work, and opens the Review', () => {
     // Commit three stories but only ever put one Developer on one of them; the rest stay unfinished.
     let s = planSprint(initialScrumState(), 'partial', ['s2', 's7', 's9']);
     s = assignDev(s, s.team[0].id, 's2');
     while (s.currentSprint && !isSprintOver(s.currentSprint)) s = runSprintDay(s);
+    const delivered = deliveredPoints(s, 1);
     s = reviewSprint(s);
     expect(s.phase).toBe('review');
-    expect(s.velocity).toEqual([]); // velocity waits for the Product Owner to accept
+    expect(s.velocity).toEqual([delivered]); // velocity is the Done (DoD-meeting) work
     expect(s.assignments).toEqual({});
     expect(s.currentImpediment).toBeNull();
     const backlogIds = availableStories(s).map((x) => x.id);
@@ -246,28 +240,22 @@ describe('sprint execution', () => {
   });
 });
 
-describe('the Product Owner: ordering, acceptance and change requests', () => {
+describe('the Product Owner: ordering and change requests', () => {
   it('moveBacklogStory re-prioritises an unplanned story', () => {
     const before = availableStories(initialScrumState()).map((x) => x.id);
     const s = moveBacklogStory(initialScrumState(), before[1], 'up');
     expect(availableStories(s).slice(0, 2).map((x) => x.id)).toEqual([before[1], before[0]]);
   });
 
-  it('only accepted work counts toward velocity; the rest goes back for rework', () => {
-    // Finish two stories, accept one, send the other back.
+  it('the Increment is the Done work, and velocity counts it (no separate acceptance gate)', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3', 's5']), 's3'); // 8 + 8
     s = runUntilDone(s, 's3');
     s = swarm(s, 's5');
     s = runUntilDone(s, 's5');
     s = reviewSprint(s);
-    expect(deliveredPoints(s, 1)).toBe(16); // both finished
-    s = acceptStory(s, 's3');
-    s = rejectStory(s, 's5'); // sent back
-    expect(acceptedPoints(s, 1)).toBe(8);
-    s = finishReview(s);
-    expect(s.phase).toBe('retro');
-    expect(s.velocity).toEqual([8]); // only the accepted story
-    expect(availableStories(s).some((x) => x.id === 's5')).toBe(true); // rework returned to the Backlog
+    expect(deliveredPoints(s, 1)).toBe(16); // both finished = the Increment
+    expect(incrementStories(s, 1).map((x) => x.id).sort()).toEqual(['s3', 's5']);
+    expect(s.velocity).toEqual([16]); // recorded at the Review
   });
 
   it('generateChangeRequest is deterministic and surfaces mid-Sprint when present', () => {
@@ -346,13 +334,11 @@ describe('impediments and the Scrum Master', () => {
 });
 
 describe('review and retrospective', () => {
-  it('sprintGoalMet needs every committed story Done AND accepted by the Product Owner', () => {
+  it('sprintGoalMet is true when every committed story reached Done (meets the DoD)', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts
     expect(sprintGoalMet(s, 1)).toBe(false);
     s = runUntilDone(s, 's3');
-    expect(sprintGoalMet(s, 1)).toBe(false); // Done, but not yet accepted
-    s = acceptStory(s, 's3');
-    expect(sprintGoalMet(s, 1)).toBe(true);
+    expect(sprintGoalMet(s, 1)).toBe(true); // Done = meets the DoD, no separate acceptance
   });
 
   it('improvementBonus grows with retros, capped', () => {
@@ -399,13 +385,13 @@ describe('day summary (dice reveal) and the Sprint scorecard', () => {
   });
 
   it('a clean Sprint lights every star; a missed one scores lower', () => {
-    // Clean: swarm a small story, clear impediments, accept it.
+    // Clean: swarm a small story, clear impediments through to the Review.
     let good = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
     good = runUntilDone(good, 's3');
-    good = acceptStory(reviewSprint(good), 's3');
+    good = reviewSprint(good);
     const gScore = sprintScore(good, 1);
-    expect(gScore.max).toBe(5);
-    expect(gScore.stars).toBe(5);
+    expect(gScore.max).toBe(4);
+    expect(gScore.stars).toBe(4);
 
     // Missed: commit a big story, one Developer, ignore impediments - never finishes.
     let bad = planSprint(initialScrumState(), 'g', ['s2']); // 21 pts
@@ -419,24 +405,22 @@ describe('day summary (dice reveal) and the Sprint scorecard', () => {
 });
 
 describe('the Product Goal across Sprints', () => {
-  it('progress tracks accepted value toward the Product Goal', () => {
+  it('progress tracks delivered (Done) value toward the Product Goal', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // s3 value 6
     expect(productGoalDeliveredValue(s)).toBe(0);
     expect(productGoalProgress(s)).toBe(0);
     s = runUntilDone(s, 's3');
     s = reviewSprint(s);
-    s = acceptStory(s, 's3');
-    s = finishReview(s);
     const total = productGoalTotalValue(s);
     expect(productGoalDeliveredValue(s)).toBe(6);
     expect(productGoalProgress(s)).toBeCloseTo(6 / total, 5);
   });
 
-  it('the Product Goal is reachable only once enough value is accepted', () => {
+  it('the Product Goal is reachable only once enough value is delivered', () => {
     expect(productGoalReachable(initialScrumState())).toBe(false);
     const base = initialScrumState();
-    const allAccepted = { ...base, productBacklog: base.productBacklog.map((x) => ({ ...x, status: 'done' as const, accepted: true })) };
-    expect(productGoalReachable(allAccepted)).toBe(true);
+    const allDone = { ...base, productBacklog: base.productBacklog.map((x) => ({ ...x, status: 'done' as const })) };
+    expect(productGoalReachable(allDone)).toBe(true);
   });
 
   it('endGame files the reviewed Sprint and moves to the wrap-up', () => {
@@ -464,16 +448,14 @@ describe('renegotiating scope mid-sprint (velocity can exceed the forecast)', ()
     expect(sprintStories(s, 1).find((x) => x.id === 's3')?.status).toBe('done');
     s = swarm(addToSprint(s, 's5'), 's5'); // pull in an 8-pt story and swarm the free team onto it
     s = runUntilDone(s, 's5');
-    s = acceptAllDone(s); // PO accepts the finished work
     expect(deliveredPoints(s, 1)).toBeGreaterThan(forecastPoints(s, 1));
-    expect(sprintGoalMet(s, 1)).toBe(true); // committed story still Done and accepted
+    expect(sprintGoalMet(s, 1)).toBe(true); // committed story is Done
   });
 
   it('Sprint Goal depends on the committed forecast, not on extra pulled-in work', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts committed, swarmed
     s = addToSprint(s, 's2'); // 21 pts extra, nobody assigned to it
     s = runUntilDone(s, 's3');
-    s = acceptStory(s, 's3'); // PO accepts the committed story
-    expect(sprintGoalMet(s, 1)).toBe(true); // committed story done and accepted => goal met
+    expect(sprintGoalMet(s, 1)).toBe(true); // committed story Done => goal met
   });
 });
