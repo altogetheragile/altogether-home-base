@@ -6,7 +6,7 @@ import {
 } from './config';
 import {
   planSprint, moveBacklogStory, availableStories, sprintStories, startStory, addToSprint,
-  assignDev, unassignDev, setTeam, benchedDevs, devsOnStory,
+  assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
   clearImpediment, generateImpediment, generateChangeRequest, acceptChange, declineChange,
   runSprintDay, runRemainingDays,
   reviewSprint, acceptStory, rejectStory, finishReview, acceptedPoints, startNextSprint, sprintGoalMet, forecastPoints,
@@ -56,6 +56,18 @@ describe('scrum game scaffold', () => {
     const dod = defaultDefinitionOfDone();
     expect(dod.length).toBeGreaterThan(0);
     for (const c of dod) expect(c.label).not.toMatch(/code|unit test|deploy|merge/i);
+  });
+
+  it('setDefinitionOfDone trims labels and drops empty ones (the team owns the DoD)', () => {
+    const s = setDefinitionOfDone(initialScrumState(), [
+      { id: 'a', label: '  Tested  ' },
+      { id: 'b', label: '   ' },
+      { id: 'c', label: 'Signed off by the PO' },
+    ]);
+    expect(s.definitionOfDone).toEqual([
+      { id: 'a', label: 'Tested' },
+      { id: 'c', label: 'Signed off by the PO' },
+    ]);
   });
 
   it('backlog totals sum points and value', () => {

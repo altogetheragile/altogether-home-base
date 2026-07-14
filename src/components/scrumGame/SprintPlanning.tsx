@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { ScrumState, Story, Developer } from './types';
+import type { ScrumState, Story, Developer, Criterion } from './types';
 import { availableStories } from './engine';
 import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS } from './config';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
+import { ScrumDodEditor } from './ScrumDodEditor';
 import { ProductGoalProgress } from './ProductGoalProgress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ interface SprintPlanningProps {
   state: ScrumState;
   onCommit: (goal: string, storyIds: string[], length: number) => void;
   onSetTeam: (team: Developer[]) => void;
+  onSetDod: (dod: Criterion[]) => void;
   onMoveStory: (storyId: string, dir: 'up' | 'down') => void;
   onBack: () => void;
 }
@@ -21,7 +23,7 @@ interface SprintPlanningProps {
 /** Sprint Planning: name the Sprint Goal and forecast stories from the Product
  *  Backlog into the Sprint, watching the forecast against capacity/velocity so an
  *  over-commitment is visible before you make it. */
-export function SprintPlanning({ state, onCommit, onSetTeam, onMoveStory, onBack }: SprintPlanningProps) {
+export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveStory, onBack }: SprintPlanningProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -96,6 +98,20 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onMoveStory, onBack
           </span>
         </div>
         <ScrumTeamEditor team={state.team} onSave={onSetTeam} />
+      </div>
+
+      {/* Definition of Done - the team's quality bar for the Increment, editable.
+          Acceptance at the Review checks finished work against this. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold">Definition of Done</span>
+          <div className="flex flex-wrap gap-1.5">
+            {state.definitionOfDone.map((c) => (
+              <span key={c.id} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{c.label}</span>
+            ))}
+          </div>
+        </div>
+        <ScrumDodEditor dod={state.definitionOfDone} onSave={onSetDod} />
       </div>
 
       {/* Sprint length - a real cadence choice. Two weeks is the common default.

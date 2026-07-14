@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, moveBacklogStory, startStory, addToSprint, assignDev, unassignDev, setTeam, clearImpediment, acceptChange, declineChange, runSprintDay, runRemainingDays, reviewSprint, acceptStory, rejectStory, finishReview, startNextSprint, endGame } from './engine';
+import { planSprint, moveBacklogStory, startStory, addToSprint, assignDev, unassignDev, setTeam, setDefinitionOfDone, clearImpediment, acceptChange, declineChange, runSprintDay, runRemainingDays, reviewSprint, acceptStory, rejectStory, finishReview, startNextSprint, endGame } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -13,6 +13,8 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return { ...state, phase: action.phase };
     case 'SET_TEAM':
       return setTeam(state, action.team);
+    case 'SET_DOD':
+      return setDefinitionOfDone(state, action.dod);
     case 'MOVE_STORY':
       return moveBacklogStory(state, action.storyId, action.dir);
     case 'PLAN_SPRINT':
@@ -67,6 +69,7 @@ export function useScrumGame() {
   const startStoryAction = useCallback((storyId: string) => dispatch({ type: 'START_STORY', storyId }), []);
   const addToSprintAction = useCallback((storyId: string) => dispatch({ type: 'ADD_TO_SPRINT', storyId }), []);
   const setTeamAction = useCallback((team: ScrumState['team']) => dispatch({ type: 'SET_TEAM', team }), []);
+  const setDodAction = useCallback((dod: ScrumState['definitionOfDone']) => dispatch({ type: 'SET_DOD', dod }), []);
   const assignDevAction = useCallback((devId: string, storyId: string) => dispatch({ type: 'ASSIGN_DEV', devId, storyId }), []);
   const unassignDevAction = useCallback((devId: string) => dispatch({ type: 'UNASSIGN_DEV', devId }), []);
   const clearImpedimentAction = useCallback(() => dispatch({ type: 'CLEAR_IMPEDIMENT' }), []);
@@ -90,6 +93,7 @@ export function useScrumGame() {
     startStory: startStoryAction,
     addToSprint: addToSprintAction,
     setTeam: setTeamAction,
+    setDod: setDodAction,
     moveStory: moveStoryAction,
     assignDev: assignDevAction,
     unassignDev: unassignDevAction,
