@@ -127,7 +127,7 @@ export function generateChangeRequest(sprintNumber: number, length: number): Cha
   if (rng() >= CHANGE_REQUEST_CHANCE) return null;
   const def = CHANGE_REQUESTS[Math.floor(rng() * CHANGE_REQUESTS.length)];
   const day = 2 + Math.floor(rng() * Math.max(1, length - 2)); // surfaces between day 2 and length-1
-  return { id: `cr-${sprintNumber}`, title: def.title, detail: def.detail, points: def.points, value: def.value, day };
+  return { id: `cr-${sprintNumber}`, title: def.title, detail: def.detail, points: def.points, value: def.value, visualKey: def.visualKey, day };
 }
 
 /** Whether a change request is live and has reached its day (so the team must decide). */
@@ -142,7 +142,7 @@ export function acceptChange(state: ScrumState): ScrumState {
   const sprint = state.currentSprint;
   if (!cr || !sprint) return state;
   const story: Story = {
-    id: cr.id, title: cr.title, points: cr.points, value: cr.value,
+    id: cr.id, title: cr.title, points: cr.points, value: cr.value, visualKey: cr.visualKey,
     status: 'todo', sprintNumber: sprint.number, effortRemaining: cr.points,
   };
   return { ...state, productBacklog: [...state.productBacklog, story], changeRequest: null };

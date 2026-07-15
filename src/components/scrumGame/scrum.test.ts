@@ -5,6 +5,7 @@ import {
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM, SPRINT_LENGTH_OPTIONS, DEV_DAY_RATIO,
 } from './config';
 import { learningFor, LEARNING } from './learning';
+import { ACTIVE_THEME } from './theme';
 import {
   planSprint, moveBacklogStory, availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
@@ -75,6 +76,23 @@ describe('scrum game scaffold', () => {
     expect(makeDeveloper('x', 'Robin').initials).toBe('RO');
     expect(makeDeveloper('x', 'Riley').initials).toBe('RI');
     expect(makeDeveloper('x', '  ').name).toBe('Dev');
+  });
+});
+
+describe('theme config (one engine, many skins)', () => {
+  it('the active theme is complete and drives the initial state', () => {
+    expect(ACTIVE_THEME.items.length).toBeGreaterThan(0);
+    for (const it of ACTIVE_THEME.items) {
+      expect(it.visualKey.length).toBeGreaterThan(0);
+      expect(it.effort).toBeGreaterThan(0);
+      expect(it.value).toBeGreaterThan(0);
+    }
+    const s = initialScrumState();
+    expect(s.productGoal).toBe(ACTIVE_THEME.productGoal);
+    expect(s.productBacklog.length).toBe(ACTIVE_THEME.items.length);
+    expect(s.theme.buildMetaphor).toBe(ACTIVE_THEME.buildMetaphor);
+    // Every backlog story carries its component key so the build canvas can draw it.
+    expect(s.productBacklog.every((x) => !!x.visualKey)).toBe(true);
   });
 });
 

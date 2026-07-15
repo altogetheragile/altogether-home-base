@@ -1,4 +1,5 @@
 import type { Criterion, Story, ScrumState, Developer, Impediment } from './types';
+import { ACTIVE_THEME } from './theme';
 
 /** The Sprint is the container event: Sprint Planning, the Daily Scrums, the
  *  Sprint Review and the Retrospective all happen INSIDE the timebox, so a
@@ -35,22 +36,19 @@ export const averageVelocity = (velocity: number[]): number =>
 export const sprintCapacity = (velocity: number[], teamSize: number, devDays: number): number =>
   velocity.length ? averageVelocity(velocity) : Math.round(teamSize * devDays * CAPACITY_PER_DEV_DAY);
 
-/** The Product Goal - the north star the Product Backlog is ordered toward. */
-export const PRODUCT_GOAL = 'Launch a booking experience customers love and trust.';
+/** The Product Goal - the north star the Product Backlog is ordered toward.
+ *  Sourced from the active theme. */
+export const PRODUCT_GOAL = ACTIVE_THEME.productGoal;
 
 /** Share of the product's value that, once delivered, lets the Product Owner call
  *  the Product Goal achieved and wrap up - the Goal is an outcome, not "empty the
  *  Backlog", so the last low-value items needn't ship to be done. */
 export const PRODUCT_GOAL_THRESHOLD = 0.8;
 
-/** A domain-neutral default Definition of Done (the Increment's commitment).
+/** The active theme's default Definition of Done (the Increment's commitment).
  *  Editable by the team, like the Flow game's exit criteria. */
 export function defaultDefinitionOfDone(): Criterion[] {
-  return [
-    { id: 'dod-reviewed', label: 'Reviewed by someone else' },
-    { id: 'dod-accepted', label: 'Meets its acceptance criteria' },
-    { id: 'dod-releasable', label: 'Releasable - nothing left to finish' },
-  ];
+  return ACTIVE_THEME.definitionOfDone.map((c) => ({ ...c }));
 }
 
 /** Build a Definition of Done criterion with a stable id. */
@@ -72,22 +70,18 @@ export const SUGGESTED_DOD: string[] = [
   'Nothing left to hand off or finish later',
 ];
 
-/** A starting Product Backlog, ordered by value. Story points vary so planning
- *  is a real forecasting decision. Deterministic (fixed list, not RNG). */
-export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining'>[] = [
-  { id: 's1', title: 'Browse available slots', points: 13, value: 8 },
-  { id: 's2', title: 'Book a slot', points: 21, value: 10 },
-  { id: 's3', title: 'Confirmation email', points: 8, value: 6 },
-  { id: 's4', title: 'Reschedule a booking', points: 21, value: 7 },
-  { id: 's5', title: 'Cancel a booking', points: 8, value: 5 },
-  { id: 's6', title: 'Reminders before the slot', points: 13, value: 6 },
-  { id: 's7', title: 'Pay for a booking', points: 21, value: 9 },
-  { id: 's8', title: 'Manage my bookings', points: 21, value: 6 },
-  { id: 's9', title: 'Waitlist for a full slot', points: 13, value: 4 },
-  { id: 's10', title: 'Accessibility pass', points: 13, value: 7 },
-  { id: 's11', title: 'Admin: view all bookings', points: 21, value: 5 },
-  { id: 's12', title: 'Analytics dashboard', points: 21, value: 3 },
-];
+/** The starting Product Backlog, ordered by value - derived from the active
+ *  theme's items (effort -> story points), carrying the visualKey so the build
+ *  canvas can draw each component as it is completed. */
+export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining'>[] =
+  ACTIVE_THEME.items.map((i) => ({
+    id: i.id,
+    title: i.name,
+    points: i.effort,
+    value: i.value,
+    visualKey: i.visualKey,
+    tags: i.tags,
+  }));
 
 /** Build a Developer, deriving a short, readable badge from the name. Two-letter
  *  initials keep a bigger roster distinct (Robin vs Riley), unlike single letters. */
@@ -126,6 +120,7 @@ export function initialScrumState(): ScrumState {
     velocity: [],
     improvements: [],
     sprintLength: SPRINT_LENGTH,
+    theme: { name: ACTIVE_THEME.name, buildMetaphor: ACTIVE_THEME.buildMetaphor, valueLabel: ACTIVE_THEME.valueLabel },
   };
 }
 
@@ -163,10 +158,10 @@ export const CHANGE_REQUEST_CHANCE = 0.5;
 /** Emergent needs the Product Owner might raise mid-Sprint. Higher value than
  *  most backlog items (that's why they feel urgent), so declining to protect the
  *  Sprint Goal is a real tradeoff. */
-export const CHANGE_REQUESTS: { title: string; detail: string; points: number; value: number }[] = [
-  { title: 'A partner wants a co-branded booking link', detail: 'A time-boxed opportunity the PO would love this Sprint.', points: 8, value: 12 },
-  { title: 'Regulator asks for a consent notice', detail: 'A compliance need that has just landed.', points: 5, value: 11 },
-  { title: 'A VIP client needs group bookings', detail: 'A high-value account is asking for it now.', points: 13, value: 13 },
+export const CHANGE_REQUESTS: { title: string; detail: string; points: number; value: number; visualKey: string }[] = [
+  { title: 'A partner wants a co-branded booking link', detail: 'A time-boxed opportunity the PO would love this Sprint.', points: 8, value: 12, visualKey: 'partner' },
+  { title: 'Regulator asks for a consent notice', detail: 'A compliance need that has just landed.', points: 5, value: 11, visualKey: 'consent' },
+  { title: 'A VIP client needs group bookings', detail: 'A high-value account is asking for it now.', points: 13, value: 13, visualKey: 'group' },
 ];
 
 /** Chance, per Sprint day, that an impediment shows up at the Daily Scrum. */
