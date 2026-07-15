@@ -18,7 +18,7 @@ export function ScrumFinal({ state, onReset }: ScrumFinalProps) {
   const pct = Math.round(productGoalProgress(state) * 100);
   const sprintsRun = state.sprints.length;
   const avgVel = averageVelocity(state.velocity);
-  const storiesDone = state.productBacklog.filter((s) => s.accepted).length;
+  const storiesDone = state.productBacklog.filter((s) => s.status === 'done').length;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-10 space-y-6 text-center">

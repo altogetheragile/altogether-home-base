@@ -1,41 +1,56 @@
 import { useState } from 'react';
-import type { ScrumState } from './types';
+import type { ScrumState, Criterion } from './types';
 import { RETRO_IMPROVEMENTS } from './config';
-import { productGoalReachable, availableStories } from './engine';
-import { ProductGoalProgress } from './ProductGoalProgress';
+import { availableStories } from './engine';
+import { ScrumDodEditor } from './ScrumDodEditor';
+import { LearningTip } from './LearningTip';
+import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface SprintRetroProps {
   state: ScrumState;
   onChoose: (improvement: string) => void;
+  onSetDod: (dod: Criterion[]) => void;
   onEnd: () => void;
 }
 
-/** Retrospective: inspect how the Sprint went and commit to ONE improvement to
- *  carry forward. Improvements accumulate and make the team a little more
- *  effective over time. From here the team either starts the next Sprint or, if
- *  the Product Owner judges the Product Goal achieved, wraps up. */
-export function SprintRetro({ state, onChoose, onEnd }: SprintRetroProps) {
+/** Retrospective: the team inspects HOW it worked and its quality bar - the
+ *  Definition of Done - and commits to ONE improvement to carry forward.
+ *  Improvements accumulate and make the team a little more effective over time.
+ *  (The product and the Product Goal are inspected at the Review, not here.) */
+export function SprintRetro({ state, onChoose, onSetDod, onEnd }: SprintRetroProps) {
   const sprint = state.currentSprint;
   const number = sprint?.number ?? state.sprints.length;
   const [selected, setSelected] = useState<string | null>(null);
-
-  const canEnd = productGoalReachable(state);
-  const backlogEmpty = availableStories(state).length === 0 && state.productBacklog.every((s) => s.accepted);
+  const backlogEmpty = availableStories(state).length === 0 && state.productBacklog.every((s) => s.status === 'done');
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-bold">Sprint {number} Retrospective</h1>
         <p className="text-sm text-muted-foreground">
-          What's the one thing you'll change to make the next Sprint better? Pick it and it carries forward.
+          How did the team work, and how's the quality bar? Inspect, then pick the one change to carry forward.
         </p>
       </div>
 
-      <ProductGoalProgress state={state} />
+      {/* The team's quality bar - inspect and, if needed, strengthen it here. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold">Definition of Done</span>
+          <div className="flex flex-wrap gap-1.5">
+            {state.definitionOfDone.map((c) => (
+              <span key={c.id} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{c.label}</span>
+            ))}
+          </div>
+        </div>
+        <ScrumDodEditor dod={state.definitionOfDone} onSave={onSetDod} />
+      </div>
+
+      <LearningTip point={learningFor('dod')} />
 
       <div className="space-y-2">
+        <h2 className="text-sm font-semibold">Pick one improvement to carry forward</h2>
         {RETRO_IMPROVEMENTS.map((imp) => (
           <button
             key={imp}
@@ -61,26 +76,19 @@ export function SprintRetro({ state, onChoose, onEnd }: SprintRetroProps) {
         </div>
       )}
 
+      <LearningTip point={learningFor('retro')} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {canEnd ? (
-          <p className="text-xs text-muted-foreground">
-            {backlogEmpty
-              ? 'The Backlog is delivered - the Product Goal is complete.'
-              : 'Enough value is in that the Product Owner could call the Product Goal achieved.'}
-          </p>
-        ) : <span />}
-        <div className="flex gap-2">
-          {canEnd && (
-            <Button variant="outline" size="lg" onClick={onEnd}>
-              Product Goal achieved - wrap up
-            </Button>
-          )}
-          {!backlogEmpty && (
-            <Button size="lg" disabled={!selected} onClick={() => selected && onChoose(selected)}>
-              Start Sprint {number + 1}
-            </Button>
-          )}
-        </div>
+        {backlogEmpty
+          ? <p className="text-xs text-muted-foreground">The Product Backlog is delivered - there's nothing left to plan.</p>
+          : <span />}
+        {backlogEmpty ? (
+          <Button size="lg" onClick={onEnd}>Wrap up</Button>
+        ) : (
+          <Button size="lg" disabled={!selected} onClick={() => selected && onChoose(selected)}>
+            Start Sprint {number + 1}
+          </Button>
+        )}
       </div>
       {!selected && !backlogEmpty && (
         <p className="text-right text-[11px] text-muted-foreground">Pick an improvement to carry into the next Sprint.</p>

@@ -54,12 +54,9 @@ export interface Story {
   /** The sprint this story was committed to (null while in the Product Backlog). */
   sprintNumber: number | null;
   /** Work left to reach Done (starts equal to points; reduced each day it's in
-   *  Doing and the team applies capacity to it). */
+   *  Doing and the team applies capacity to it). A story is Done - and part of the
+   *  Increment - when this reaches zero, which in the sim means it meets the DoD. */
   effortRemaining: number;
-  /** Whether the Product Owner has accepted the finished work against the
-   *  Definition of Done at the Sprint Review. Only accepted work is in the
-   *  Increment and counts toward velocity and the Product Goal. */
-  accepted: boolean;
 }
 
 /** One Sprint: a fixed timebox with a single Sprint Goal and a committed set of
@@ -179,9 +176,6 @@ export type ScrumAction =
   | { type: 'RUN_SPRINT_DAY' }
   | { type: 'RUN_TO_END' }
   | { type: 'REVIEW_SPRINT' }
-  | { type: 'ACCEPT_STORY'; storyId: string }
-  | { type: 'REJECT_STORY'; storyId: string }
-  | { type: 'FINISH_REVIEW' }
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'END_GAME' }
   | { type: 'RESET' };

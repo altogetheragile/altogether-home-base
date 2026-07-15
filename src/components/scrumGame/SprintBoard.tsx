@@ -10,6 +10,8 @@ import { TeamBench } from './TeamBench';
 import { ScrumMasterPanel } from './ScrumMasterPanel';
 import { ChangeRequestPanel } from './ChangeRequestPanel';
 import { DaySummary } from './DaySummary';
+import { LearningTip } from './LearningTip';
+import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, FastForward } from 'lucide-react';
@@ -123,6 +125,12 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
   // The bench and cards only take assignments while the timebox is still open.
   const locked = over;
 
+  // One contextual coaching point for whatever the board is currently about.
+  const boardTrigger = changeRequestDue(state) && state.changeRequest ? 'change-request'
+    : state.currentImpediment && !state.currentImpediment.cleared ? 'impediment'
+    : !over && available.length > 0 ? 'renegotiate'
+    : null;
+
   const storyTitleById = new Map(state.productBacklog.map((s) => [s.id, s.title]));
   // A story a selected Developer could be placed on (not started-and-done, timebox open).
   const assignableIds = new Set(locked ? [] : [...todo, ...doing].map((s) => s.id));
@@ -226,6 +234,8 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
               : 'The Sprint Goal is met. Ahead of schedule? Pull in more below, or review.'}
         </div>
       )}
+
+      {!canReview && boardTrigger && <LearningTip point={learningFor(boardTrigger)} />}
 
       {/* The dice reveal + Done celebration for the last day run. */}
       <DaySummary state={state} />

@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { initialScrumState, sprintCapacity } from './config';
 import {
   planSprint, sprintStories, assignDev, clearImpediment, runSprintDay, isSprintOver,
-  deliveredPoints, reviewSprint, acceptStory, sprintGoalMet,
+  deliveredPoints, reviewSprint, sprintGoalMet,
 } from './engine';
 import type { ScrumState } from './types';
 
 /** A "good play" autopilot: each Daily Scrum optionally clears the impediment,
  *  then the whole team swarms the single nearest-to-done committed story (minimum
- *  WIP), finishing it before moving on. At the Review the Product Owner accepts
- *  every finished story. Returns delivered points and Goal status. */
+ *  WIP), finishing it before moving on. Done work meets the DoD and is the
+ *  Increment. Returns delivered points and Goal status. */
 function playSprintSwarm(state: ScrumState, clearImp: boolean): { delivered: number; met: boolean } {
   let s = state;
   const n = s.currentSprint!.number;
@@ -23,7 +23,6 @@ function playSprintSwarm(state: ScrumState, clearImp: boolean): { delivered: num
   }
   const delivered = deliveredPoints(s, n);
   s = reviewSprint(s);
-  for (const x of sprintStories(s, n).filter((y) => y.status === 'done')) s = acceptStory(s, x.id);
   return { delivered, met: sprintGoalMet(s, n) };
 }
 
