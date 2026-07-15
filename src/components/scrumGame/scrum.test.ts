@@ -319,11 +319,14 @@ describe('impediments and the Scrum Master', () => {
     expect(remAddressed).toBeGreaterThan(noImp); // ...but still costs vs no impediment at all
   });
 
-  it('an ignored blocker loses the whole day and counts as unaddressed', () => {
+  it('an ignored blocker is a heavy drag (not a total freeze) and counts as unaddressed', () => {
     const s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2');
     const blocker = { id: 'imp-y', kind: 'blocker' as const, title: 't', detail: 'd', addressed: false, daysToResolve: 2 };
+    const noImp = sprintStories(runSprintDay({ ...s, currentImpediment: null }), 1).find((x) => x.id === 's2')!.effortRemaining;
+    const remIgnored = sprintStories(runSprintDay({ ...s, currentImpediment: blocker }), 1).find((x) => x.id === 's2')!.effortRemaining;
+    expect(remIgnored).toBeLessThan(21); // some progress still (not frozen)
+    expect(remIgnored).toBeGreaterThan(noImp); // but far less than a clear day
     const after = runSprintDay({ ...s, currentImpediment: blocker });
-    expect(sprintStories(after, 1).find((x) => x.id === 's2')!.effortRemaining).toBe(21); // no progress
     expect(after.currentSprint!.impedimentsHit).toBe(1);
     expect(after.currentSprint!.impedimentsIgnored).toBe(1);
   });
@@ -342,6 +345,16 @@ describe('impediments and the Scrum Master', () => {
     expect(esc.currentImpediment?.daysToResolve).toBe(1);
     esc = runSprintDay(clearImpediment(esc)); // day 2 escalated -> resolved
     expect(esc.currentImpediment?.id).not.toBe('imp-y');
+  });
+
+  it('the burndown tracks remaining work, so it drops before any story is Done', () => {
+    // One big story (21 pts), swarmed. It will not finish on day 1, but effort is spent.
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2');
+    expect(s.currentSprint!.burndown).toEqual([21]);
+    s = runSprintDay(clearImpediment(s));
+    expect(sprintStories(s, 1).find((x) => x.id === 's2')?.status).not.toBe('done'); // still in progress
+    const bd = s.currentSprint!.burndown;
+    expect(bd[bd.length - 1]).toBeLessThan(21); // ...yet the burndown moved
   });
 
   it('runRemainingDays plays to the timebox with the Scrum Master addressing impediments', () => {

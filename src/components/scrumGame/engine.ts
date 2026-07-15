@@ -288,9 +288,12 @@ export function runSprintDay(state: ScrumState): ScrumState {
     }
   }
 
-  const remaining = totalPoints(
-    productBacklog.filter((s) => s.sprintNumber === sprint.number && s.status !== 'done'),
-  );
+  // Burndown tracks remaining WORK (effort), not just points of unfinished stories,
+  // so partial daily progress inside a story shows on the chart rather than the line
+  // staying flat until a whole story reaches Done.
+  const remaining = productBacklog
+    .filter((s) => s.sprintNumber === sprint.number)
+    .reduce((n, s) => n + s.effortRemaining, 0);
   const nextDay = sprint.day + 1;
   const next: Sprint = {
     ...sprint,
@@ -314,7 +317,14 @@ export function runSprintDay(state: ScrumState): ScrumState {
   const currentImpediment = nextDay <= sprint.length
     ? (carried ?? generateImpediment(sprint.number, nextDay))
     : null;
-  const lastDay = { day: sprint.day, dayWeight, impedimentBit: hit === 1, rolls, completed: finished };
+  const lastDay = {
+    day: sprint.day,
+    dayWeight,
+    impedimentBit: hit === 1,
+    impediment: imp && working ? { kind: imp.kind, addressed: imp.addressed } : null,
+    rolls,
+    completed: finished,
+  };
   return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment, lastDay };
 }
 

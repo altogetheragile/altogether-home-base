@@ -111,8 +111,10 @@ export interface DaySummary {
   day: number;
   /** The day's effort weight (1, or 0.5 for a Sprint's fractional final day). */
   dayWeight: number;
-  /** Whether an unaddressed impediment cost the team on this day. */
+  /** Whether an impediment cost the team on this day (addressed or not). */
   impedimentBit: boolean;
+  /** The impediment in play this day (for showing what it cost), or null. */
+  impediment: { kind: Impediment['kind']; addressed: boolean } | null;
   /** Each assigned Developer's raw die roll and the story they worked. */
   rolls: { devId: string; storyId: string; roll: number }[];
   /** Story ids that reached Done on this day. */

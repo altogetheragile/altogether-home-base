@@ -1,5 +1,5 @@
 import type { ScrumState } from './types';
-import { devColor } from './config';
+import { devColor, IMPEDIMENT_EFFECT } from './config';
 import { DevBadge } from './DevBadge';
 import { cn } from '@/lib/utils';
 import { PartyPopper, AlertTriangle } from 'lucide-react';
@@ -34,11 +34,19 @@ export function DaySummary({ state }: DaySummaryProps) {
         <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Day {last.day}{last.dayWeight < 1 ? ' (half day)' : ''} - the dice
         </span>
-        {last.impedimentBit && (
-          <span className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
-            <AlertTriangle className="h-3.5 w-3.5" /> an impediment cost the team
-          </span>
-        )}
+        {last.impediment && (() => {
+          const { kind, addressed } = last.impediment;
+          const lost = Math.round((1 - IMPEDIMENT_EFFECT[kind][addressed ? 'addressed' : 'ignored']) * 100);
+          const label = kind === 'blocker' ? 'Blocker' : 'Distraction';
+          return (
+            <span className={cn('flex items-center gap-1 text-[11px]', addressed ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-400')}>
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {label} cost ~{lost}% today{addressed
+                ? kind === 'blocker' ? ' (being escalated)' : ' (handled)'
+                : kind === 'blocker' ? ' - escalate it, or it lingers' : ' - a one-day interruption, now passed'}
+            </span>
+          );
+        })()}
       </div>
 
       <div className="flex flex-wrap gap-x-5 gap-y-2">

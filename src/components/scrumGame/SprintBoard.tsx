@@ -303,8 +303,9 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
           </ResponsiveContainer>
         </div>
         <p className={cn('text-xs', over && delivered < forecast ? 'text-amber-700' : 'text-muted-foreground')}>
-          The actual line above the ideal means work is burning down too slowly - a sign of over-commitment
-          or too much started at once. Swarm the team on fewer stories to bring it down faster.
+          Remaining work per day. The actual line above the ideal means work is burning down too slowly - a sign of
+          over-commitment, too much started at once, or impediments dragging on the team. Swarm on fewer stories and
+          keep the way clear to bring it down faster.
         </p>
       </section>
     </div>
