@@ -241,6 +241,19 @@ describe('sprint execution', () => {
     expect(benchedDevs(s).length).toBe(s.team.length); // everyone freed once it's Done
   });
 
+  it('a partially-done story returns to the Backlog re-estimated to the work remaining', () => {
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2'); // 21 pts, swarmed
+    s = runSprintDay(clearImpediment(s)); // burn some effort, not finished
+    const before = sprintStories(s, 1).find((x) => x.id === 's2')!;
+    expect(before.status).not.toBe('done');
+    expect(before.effortRemaining).toBeLessThan(21); // progress made
+    s = reviewSprint(s);
+    const returned = availableStories(s).find((x) => x.id === 's2')!;
+    expect(returned.points).toBe(before.effortRemaining); // re-estimated to the work left
+    expect(returned.points).toBeLessThan(21); // ...which is smaller than the original
+    expect(returned.value).toBe(before.value); // value is unchanged; only the size shrinks
+  });
+
   it('reviewSprint records velocity as Done points, returns unfinished work, and opens the Review', () => {
     // Commit three stories but only ever put one Developer on one of them; the rest stay unfinished.
     let s = planSprint(initialScrumState(), 'partial', ['s2', 's7', 's9']);
