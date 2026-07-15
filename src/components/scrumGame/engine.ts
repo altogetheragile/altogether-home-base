@@ -3,6 +3,7 @@ import {
   SPRINT_SEED, totalPoints, totalValue, improvementBonus,
   IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT, BLOCKER_RESOLVE_DAYS,
   CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS, PRODUCT_GOAL_THRESHOLD,
+  SPLIT_MAP, isSplittable,
 } from './config';
 
 // ============= Planning =============
@@ -66,6 +67,26 @@ export function moveBacklogStory(state: ScrumState, storyId: string, dir: 'up' |
   if (j < 0 || j >= arr.length) return state;
   [arr[i], arr[j]] = [arr[j], arr[i]];
   return { ...state, productBacklog: arr };
+}
+
+/** Product Backlog Refinement: split a too-big, still-in-the-Backlog item into two
+ *  smaller items in its place. Decomposition is the core refinement skill - small
+ *  items are Ready and flow; big ones tend not to finish. Points split per the
+ *  SPLIT_MAP; value splits proportionally so the total value is preserved. */
+export function splitStory(state: ScrumState, storyId: string): ScrumState {
+  const i = state.productBacklog.findIndex((s) => s.id === storyId);
+  if (i < 0) return state;
+  const s = state.productBacklog[i];
+  if (s.status !== 'backlog' || !isSplittable(s.points)) return state;
+  const [pa, pb] = SPLIT_MAP[s.points];
+  const va = Math.round((s.value * pa) / s.points);
+  const parts: Story[] = [
+    { ...s, id: `${s.id}a`, title: `${s.title} (1)`, points: pa, value: va, effortRemaining: pa },
+    { ...s, id: `${s.id}b`, title: `${s.title} (2)`, points: pb, value: s.value - va, effortRemaining: pb },
+  ];
+  const productBacklog = [...state.productBacklog];
+  productBacklog.splice(i, 1, ...parts);
+  return { ...state, productBacklog };
 }
 
 // ============= Execution =============

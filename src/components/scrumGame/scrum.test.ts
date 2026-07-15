@@ -7,7 +7,7 @@ import {
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME } from './theme';
 import {
-  planSprint, moveBacklogStory, availableStories, sprintStories, startStory, addToSprint,
+  planSprint, moveBacklogStory, splitStory, availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
   clearImpediment, generateImpediment, generateChangeRequest, acceptChange, declineChange,
   runSprintDay, runRemainingDays,
@@ -272,6 +272,21 @@ describe('sprint execution', () => {
 });
 
 describe('the Product Owner: ordering and change requests', () => {
+  it('splitStory refines a too-big item into two smaller, Ready items in its place', () => {
+    const base = initialScrumState();
+    const big = base.productBacklog.find((s) => s.points === 21)!; // e.g. s2
+    const s = splitStory(base, big.id);
+    const parts = s.productBacklog.filter((x) => x.id === `${big.id}a` || x.id === `${big.id}b`);
+    expect(parts.length).toBe(2);
+    // Points and value are preserved across the split, and both parts are smaller.
+    expect(parts.reduce((n, x) => n + x.points, 0)).toBe(big.points);
+    expect(parts.reduce((n, x) => n + x.value, 0)).toBe(big.value);
+    for (const p of parts) expect(p.points).toBeLessThan(big.points);
+    // The original is gone; the parts sit where it was; total backlog grows by one.
+    expect(s.productBacklog.some((x) => x.id === big.id)).toBe(false);
+    expect(s.productBacklog.length).toBe(base.productBacklog.length + 1);
+  });
+
   it('moveBacklogStory re-prioritises an unplanned story', () => {
     const before = availableStories(initialScrumState()).map((x) => x.id);
     const s = moveBacklogStory(initialScrumState(), before[1], 'up');

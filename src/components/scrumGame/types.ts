@@ -186,6 +186,7 @@ export type ScrumAction =
   | { type: 'SET_TEAM'; team: Developer[] }
   | { type: 'SET_DOD'; dod: Criterion[] }
   | { type: 'MOVE_STORY'; storyId: string; dir: 'up' | 'down' }
+  | { type: 'SPLIT_STORY'; storyId: string }
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[]; length: number }
   | { type: 'START_STORY'; storyId: string }
   | { type: 'ADD_TO_SPRINT'; storyId: string }

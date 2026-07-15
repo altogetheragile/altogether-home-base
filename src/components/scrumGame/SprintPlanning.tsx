@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ScrumState, Story, Developer, Criterion } from './types';
 import { availableStories } from './engine';
-import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS } from './config';
+import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, isReady, isSplittable, REFINE_MAX } from './config';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { ScrumDodEditor } from './ScrumDodEditor';
@@ -11,7 +11,7 @@ import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Plus, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, X, ChevronUp, ChevronDown, Scissors, AlertTriangle } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ScrumState;
@@ -19,13 +19,14 @@ interface SprintPlanningProps {
   onSetTeam: (team: Developer[]) => void;
   onSetDod: (dod: Criterion[]) => void;
   onMoveStory: (storyId: string, dir: 'up' | 'down') => void;
+  onSplitStory: (storyId: string) => void;
   onBack: () => void;
 }
 
 /** Sprint Planning: name the Sprint Goal and forecast stories from the Product
  *  Backlog into the Sprint, watching the forecast against capacity/velocity so an
  *  over-commitment is visible before you make it. */
-export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveStory, onBack }: SprintPlanningProps) {
+export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveStory, onSplitStory, onBack }: SprintPlanningProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -159,7 +160,9 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
             highest value / priority first - which drives what gets planned. */}
         <section className="space-y-2">
           <h2 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({remaining.length})</span></h2>
-          <p className="text-[11px] text-muted-foreground">Ordered by the Product Owner ({state.productOwner}). Use the arrows to re-prioritise toward the Product Goal.</p>
+          <p className="text-[11px] text-muted-foreground">
+            Ordered by the Product Owner ({state.productOwner}). Refine it: items over {REFINE_MAX} points aren't Ready - split them until they're small enough to commit.
+          </p>
           <div className="space-y-1.5">
             {remaining.length === 0 && <p className="text-xs text-muted-foreground/60">Everything's been pulled into the Sprint.</p>}
             {remaining.map((s, idx) => (
@@ -184,7 +187,26 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <div className="flex-1"><Row s={s} action="add" /></div>
+                <div className="flex-1">
+                  {isReady(s.points) ? (
+                    <Row s={s} action="add" />
+                  ) : (
+                    /* Too big to be Ready: it must be split before it can be committed. */
+                    <button
+                      type="button"
+                      onClick={() => onSplitStory(s.id)}
+                      disabled={!isSplittable(s.points)}
+                      className="flex w-full items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-left text-sm hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/50 dark:bg-amber-950/30"
+                    >
+                      <Scissors className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" />
+                      <span className="flex-1 truncate">{s.title}</span>
+                      <span className="flex items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                        <AlertTriangle className="h-3 w-3" /> too big - split
+                      </span>
+                      <span className="shrink-0 font-mono text-xs">{s.points} pts</span>
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
