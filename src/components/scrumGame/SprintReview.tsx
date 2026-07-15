@@ -4,6 +4,7 @@ import {
 } from './engine';
 import { totalValue } from './config';
 import { ProductGoalProgress } from './ProductGoalProgress';
+import { BuildCanvas } from './BuildCanvas';
 import { SprintScorecard } from './SprintScorecard';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
@@ -52,6 +53,9 @@ export function SprintReview({ state, onContinue, onEnd }: SprintReviewProps) {
 
       {/* The product perspective: progress toward the Product Goal. */}
       <ProductGoalProgress state={state} />
+
+      {/* The Increment made visible - the product assembled so far. */}
+      <BuildCanvas state={state} />
 
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-lg border border-border p-3">

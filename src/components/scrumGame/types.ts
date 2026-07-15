@@ -63,6 +63,11 @@ export interface Story {
    *  Doing and the team applies capacity to it). A story is Done - and part of the
    *  Increment - when this reaches zero, which in the sim means it meets the DoD. */
   effortRemaining: number;
+  /** Which component this story builds, so the build canvas can draw it as the
+   *  product assembles (comes from the theme). */
+  visualKey?: string;
+  /** Theme tags (which stakeholder agendas this serves) - used by later slices. */
+  tags?: string[];
 }
 
 /** One Sprint: a fixed timebox with a single Sprint Goal and a committed set of
@@ -101,6 +106,8 @@ export interface ChangeRequest {
   detail: string;
   points: number;
   value: number;
+  /** Which component it builds on the canvas. */
+  visualKey: string;
   /** The Sprint day it surfaces on. */
   day: number;
 }
@@ -168,6 +175,9 @@ export interface ScrumState {
   improvements: string[];
   /** Working days per Sprint (the timebox length). */
   sprintLength: number;
+  /** The active theme's display bits - the build metaphor the sim is skinned as
+   *  (so one engine can render Booking, Theme Park, Rocket, and so on). */
+  theme: { name: string; buildMetaphor: string; valueLabel: string };
 }
 
 export type ScrumAction =

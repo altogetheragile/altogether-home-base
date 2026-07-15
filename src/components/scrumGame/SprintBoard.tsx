@@ -10,6 +10,7 @@ import { TeamBench } from './TeamBench';
 import { ScrumMasterPanel } from './ScrumMasterPanel';
 import { ChangeRequestPanel } from './ChangeRequestPanel';
 import { DaySummary } from './DaySummary';
+import { BuildCanvas } from './BuildCanvas';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
@@ -260,6 +261,9 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
           <StoryCard key={s.id} s={s} devs={[]} assignable={false} onAssign={() => {}} onUnassignDev={onUnassignDev} />
         )} />
       </div>
+
+      {/* The product assembling: each completed story lights up its component. */}
+      <BuildCanvas state={state} compact />
 
       {/* Renegotiate scope: pull more Product Backlog items into the Sprint when
           ahead of the forecast (Developers and PO agree, within the Sprint Goal). */}
