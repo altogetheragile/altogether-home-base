@@ -10,12 +10,13 @@ import { TeamBench } from './TeamBench';
 import { ScrumMasterPanel } from './ScrumMasterPanel';
 import { ChangeRequestPanel } from './ChangeRequestPanel';
 import { DaySummary } from './DaySummary';
+import { DailyScrum } from './DailyScrum';
 import { BuildCanvas } from './BuildCanvas';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, FastForward, CalendarClock } from 'lucide-react';
+import { Plus, FastForward } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ScrumState;
@@ -193,20 +194,11 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
         <p className="text-sm font-medium">{sprint.goal}</p>
       </div>
 
-      {/* Each day is a Daily Scrum: make that explicit so the loop is obvious. */}
-      {!canReview && (
-        <div className="rounded-lg border border-primary/40 bg-primary/5 px-5 py-3">
-          <div className="flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold">Daily Scrum · Day {Math.min(sprint.day, sprint.length)} of {sprint.length}</span>
-          </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Each day opens with the Daily Scrum: inspect progress toward the Sprint Goal, let {state.scrumMaster} clear the way, decide who works on what today, then Run the day.
-          </p>
-        </div>
-      )}
+      {/* The Daily Scrum, performed: the Developers inspect toward the Sprint Goal
+          and re-plan the day. */}
+      {!canReview && <DailyScrum state={state} />}
 
-      {/* The Daily Scrum's work: the Scrum Master clears the way... */}
+      {/* Around the Daily Scrum: the Scrum Master clears the way... */}
       {!canReview && (
         <ScrumMasterPanel
           scrumMaster={state.scrumMaster}
