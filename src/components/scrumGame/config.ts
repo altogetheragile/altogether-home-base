@@ -178,7 +178,7 @@ export const IMPEDIMENT_CHANCE = 0.4;
  *  erase it. Ignoring it costs far more. */
 export const IMPEDIMENT_EFFECT: Record<Impediment['kind'], { addressed: number; ignored: number }> = {
   distraction: { addressed: 0.85, ignored: 0.5 }, // lose 15% handled, 50% ignored
-  blocker: { addressed: 0.6, ignored: 0 }, // lose 40% handled, the whole day ignored
+  blocker: { addressed: 0.6, ignored: 0.25 }, // lose 40% handled, 75% ignored (a heavy drag, not a total freeze)
 };
 
 /** How many escalated days it takes the Scrum Master to clear a blocker. It keeps

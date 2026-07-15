@@ -75,7 +75,7 @@ export function ScrumMasterPanel({ scrumMaster, impediment, onClear, disabled }:
 
       {active && (
         <Button size="sm" onClick={onClear} disabled={disabled} className="shrink-0">
-          {isBlocker ? 'Escalate blocker' : 'Clear impediment'}
+          {isBlocker ? 'Escalate blocker' : 'Address it'}
         </Button>
       )}
     </div>
