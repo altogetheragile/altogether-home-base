@@ -308,28 +308,47 @@ describe('impediments and the Scrum Master', () => {
     expect(days.some((x) => x === null)).toBe(true);
   });
 
-  it('an uncleared distraction loses half the day; clearing it restores full effort', () => {
+  it('a distraction always costs the team, and addressing it costs less than ignoring it', () => {
     const s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2'); // 21 pts, full swarm
-    const distraction = { id: 'imp-x', kind: 'distraction' as const, title: 't', detail: 'd', cleared: false };
+    const distraction = { id: 'imp-x', kind: 'distraction' as const, title: 't', detail: 'd', addressed: false };
     const withImp = { ...s, currentImpediment: distraction };
+    const noImp = sprintStories(runSprintDay({ ...s, currentImpediment: null }), 1).find((x) => x.id === 's2')!.effortRemaining;
     const remIgnored = sprintStories(runSprintDay(withImp), 1).find((x) => x.id === 's2')!.effortRemaining;
-    const remCleared = sprintStories(runSprintDay(clearImpediment(withImp)), 1).find((x) => x.id === 's2')!.effortRemaining;
-    expect(remCleared).toBeLessThan(remIgnored); // clearing burns more work
+    const remAddressed = sprintStories(runSprintDay(clearImpediment(withImp)), 1).find((x) => x.id === 's2')!.effortRemaining;
+    expect(remAddressed).toBeLessThan(remIgnored); // addressing burns more work than ignoring
+    expect(remAddressed).toBeGreaterThan(noImp); // ...but still costs vs no impediment at all
   });
 
-  it('an uncleared blocker loses the whole day and counts against the Sprint', () => {
+  it('an ignored blocker loses the whole day and counts as unaddressed', () => {
     const s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2');
-    const blocker = { id: 'imp-y', kind: 'blocker' as const, title: 't', detail: 'd', cleared: false };
+    const blocker = { id: 'imp-y', kind: 'blocker' as const, title: 't', detail: 'd', addressed: false, daysToResolve: 2 };
     const after = runSprintDay({ ...s, currentImpediment: blocker });
     expect(sprintStories(after, 1).find((x) => x.id === 's2')!.effortRemaining).toBe(21); // no progress
     expect(after.currentSprint!.impedimentsHit).toBe(1);
+    expect(after.currentSprint!.impedimentsIgnored).toBe(1);
   });
 
-  it('runRemainingDays plays to the timebox with the Scrum Master keeping the way clear', () => {
+  it('a blocker persists until escalated: it lifts after the resolve days, and lingers if ignored', () => {
+    const s = swarm(planSprint(initialScrumState(), 'g', ['s2']), 's2');
+    const blocker = { id: 'imp-y', kind: 'blocker' as const, title: 't', detail: 'd', addressed: false, daysToResolve: 2 };
+    // Ignore it: it carries over, still a blocker, still 2 days to resolve.
+    const ignored = runSprintDay({ ...s, currentImpediment: blocker });
+    expect(ignored.currentImpediment?.kind).toBe('blocker');
+    expect(ignored.currentImpediment?.daysToResolve).toBe(2);
+    // Escalate it two days running: after the second it is resolved (gone or a fresh roll).
+    let esc: ReturnType<typeof initialScrumState> = { ...s, currentImpediment: blocker };
+    esc = runSprintDay(clearImpediment(esc)); // day 1 escalated -> 1 left
+    expect(esc.currentImpediment?.kind).toBe('blocker');
+    expect(esc.currentImpediment?.daysToResolve).toBe(1);
+    esc = runSprintDay(clearImpediment(esc)); // day 2 escalated -> resolved
+    expect(esc.currentImpediment?.id).not.toBe('imp-y');
+  });
+
+  it('runRemainingDays plays to the timebox with the Scrum Master addressing impediments', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
     s = runRemainingDays(s);
     expect(isSprintOver(s.currentSprint!)).toBe(true);
-    expect(s.currentSprint!.impedimentsHit).toBe(0); // auto-cleared, so nothing bit the team
+    expect(s.currentSprint!.impedimentsIgnored).toBe(0); // the SM addressed each one
   });
 });
 
