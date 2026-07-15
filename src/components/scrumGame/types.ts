@@ -29,14 +29,20 @@ export interface Developer {
  *  to remove it; left in place, it costs the team capacity (a distraction) or
  *  stops progress entirely (a blocker) for that day. */
 export interface Impediment {
-  /** Unique per (sprint, day). */
+  /** Unique per (sprint, day) when generated. */
   id: string;
-  /** distraction = half the day lost; blocker = the whole day lost until cleared. */
+  /** distraction = a one-day interruption; blocker = a stickier stop that takes
+   *  more than one day to escalate clear. Either still costs the team even when
+   *  the Scrum Master is on it - clearing mitigates the hit, it doesn't erase it. */
   kind: 'distraction' | 'blocker';
   title: string;
   detail: string;
-  /** Set once the Scrum Master has removed it, so it no longer bites. */
-  cleared: boolean;
+  /** Whether the Scrum Master has acted on it today (reduces the day's hit; for a
+   *  blocker, also advances it toward being resolved). */
+  addressed: boolean;
+  /** Blockers only: escalated-days remaining before the blocker lifts. Ignoring it
+   *  a day does not count down; it just keeps costing the full day. */
+  daysToResolve?: number;
 }
 
 /** A Product Backlog Item (user story). Ordered in the Product Backlog toward the
@@ -78,9 +84,12 @@ export interface Sprint {
   /** Points remaining at the end of each day played (for the burndown chart).
    *  burndown[0] is the start of the Sprint (full commitment). */
   burndown: number[];
-  /** Days on which an impediment was left unaddressed and cost the team - a
-   *  measure of how well the Scrum Master kept the way clear. */
+  /** Days on which an impediment cost the team any capacity (whether or not the
+   *  Scrum Master addressed it - clearing only reduces the hit). */
   impedimentsHit: number;
+  /** Days on which an impediment went unaddressed and so cost the full amount - the
+   *  avoidable share, and a measure of how well the Scrum Master kept the way clear. */
+  impedimentsIgnored: number;
 }
 
 /** An emergent need the Product Owner raises mid-Sprint - the classic "something

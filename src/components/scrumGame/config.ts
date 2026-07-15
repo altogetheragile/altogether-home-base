@@ -23,7 +23,7 @@ export const SPRINT_LENGTH = 9;
  *  FIRST Sprint's capacity guess (before there's velocity), scaled by team size
  *  and the Sprint's development days. Tuned (see scrum.balance.test.ts) so a
  *  right-sized, well-swarmed Sprint meets its Goal and an over-commitment misses. */
-export const CAPACITY_PER_DEV_DAY = 1.2;
+export const CAPACITY_PER_DEV_DAY = 0.8;
 
 /** Average of past Sprint velocities (0 if none yet). */
 export const averageVelocity = (velocity: number[]): number =>
@@ -172,17 +172,24 @@ export const CHANGE_REQUESTS: { title: string; detail: string; points: number; v
 /** Chance, per Sprint day, that an impediment shows up at the Daily Scrum. */
 export const IMPEDIMENT_CHANCE = 0.4;
 
-/** How a live impediment scales the day's effort if the Scrum Master doesn't
- *  clear it: a distraction loses half the day, a blocker loses all of it. */
-export const IMPEDIMENT_EFFECT: Record<Impediment['kind'], number> = {
-  distraction: 0.5,
-  blocker: 0,
+/** Fraction of the day's effort the team RETAINS under a live impediment. Even
+ *  when the Scrum Master addresses it, some capacity is lost (there is always
+ *  disruption before it is resolved) - clearing mitigates the hit, it does not
+ *  erase it. Ignoring it costs far more. */
+export const IMPEDIMENT_EFFECT: Record<Impediment['kind'], { addressed: number; ignored: number }> = {
+  distraction: { addressed: 0.85, ignored: 0.5 }, // lose 15% handled, 50% ignored
+  blocker: { addressed: 0.6, ignored: 0 }, // lose 40% handled, the whole day ignored
 };
+
+/** How many escalated days it takes the Scrum Master to clear a blocker. It keeps
+ *  costing (the mitigated amount) each of those days; ignoring it does not count
+ *  down. */
+export const BLOCKER_RESOLVE_DAYS = 2;
 
 /** The pool of impediments the Daily Scrum can surface. Deliberately team-level
  *  (no single story to blame) so the lesson is about the Scrum Master clearing
  *  the way, not micromanaging a card. */
-export const IMPEDIMENTS: Omit<Impediment, 'id' | 'cleared'>[] = [
+export const IMPEDIMENTS: Pick<Impediment, 'kind' | 'title' | 'detail'>[] = [
   { kind: 'distraction', title: 'A production incident pulls people away', detail: 'Half the day goes to firefighting instead of the Sprint.' },
   { kind: 'distraction', title: 'An unplanned stakeholder demo', detail: 'A last-minute request eats a good chunk of the day.' },
   { kind: 'distraction', title: 'A Developer is off sick', detail: 'The team is short-handed and slower today.' },

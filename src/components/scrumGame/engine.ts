@@ -1,7 +1,7 @@
 import type { ScrumState, Sprint, Story, Developer, Impediment, ChangeRequest } from './types';
 import {
   SPRINT_SEED, totalPoints, totalValue, improvementBonus,
-  IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT,
+  IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT, BLOCKER_RESOLVE_DAYS,
   CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS, PRODUCT_GOAL_THRESHOLD,
 } from './config';
 
@@ -27,6 +27,7 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     status: 'active',
     burndown: [startPoints], // day 0: the full commitment
     impedimentsHit: 0,
+    impedimentsIgnored: 0,
   };
   // A new Sprint starts with everyone on the bench and day 1's impediment (if any)
   // waiting at the Daily Scrum. Remember the chosen length for the next Sprint.
@@ -98,14 +99,23 @@ export function generateImpediment(sprintNumber: number, day: number): Impedimen
   const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 4099) ^ (day * 263) ^ 0x9e3779b9);
   if (rng() >= IMPEDIMENT_CHANCE) return null;
   const def = IMPEDIMENTS[Math.floor(rng() * IMPEDIMENTS.length)];
-  return { id: `imp-${sprintNumber}-${day}`, kind: def.kind, title: def.title, detail: def.detail, cleared: false };
+  return {
+    id: `imp-${sprintNumber}-${day}`,
+    kind: def.kind,
+    title: def.title,
+    detail: def.detail,
+    addressed: false,
+    ...(def.kind === 'blocker' ? { daysToResolve: BLOCKER_RESOLVE_DAYS } : {}),
+  };
 }
 
-/** The Scrum Master removes today's impediment, so it no longer costs the team. */
+/** The Scrum Master acts on today's impediment - reducing the day's hit and, for a
+ *  blocker, advancing it toward being resolved. It still costs the mitigated
+ *  amount; clearing does not make it free. */
 export function clearImpediment(state: ScrumState): ScrumState {
   const imp = state.currentImpediment;
-  if (!imp || imp.cleared) return state;
-  return { ...state, currentImpediment: { ...imp, cleared: true } };
+  if (!imp || imp.addressed) return state;
+  return { ...state, currentImpediment: { ...imp, addressed: true } };
 }
 
 // ============= Change requests (the Product Owner adapting) =============
@@ -247,14 +257,15 @@ export function runSprintDay(state: ScrumState): ScrumState {
   }
 
   // Two things scale today's effort: the final day of a Sprint can be a half day
-  // (when devDays is fractional, e.g. a one-week Sprint's 4.5 days), and a live
-  // impediment the Scrum Master hasn't cleared costs the team - a distraction
-  // loses half the day, a blocker loses all of it. The impediment only "bites"
-  // if the team was actually trying to work.
+  // (when devDays is fractional), and a live impediment always costs the team some
+  // capacity - less if the Scrum Master addressed it, more if it was ignored. The
+  // impediment only "bites" if the team was actually trying to work.
   const imp = state.currentImpediment;
-  const impFactor = imp && !imp.cleared ? IMPEDIMENT_EFFECT[imp.kind] : 1;
+  const working = effortByStory.size > 0;
+  const impFactor = imp && working ? IMPEDIMENT_EFFECT[imp.kind][imp.addressed ? 'addressed' : 'ignored'] : 1;
   const dayWeight = sprint.day < sprint.length ? 1 : sprint.devDays - (sprint.length - 1);
-  const hit = imp && !imp.cleared && effortByStory.size > 0 ? 1 : 0;
+  const hit = imp && working && impFactor < 1 ? 1 : 0;
+  const ignored = imp && working && !imp.addressed ? 1 : 0;
   if (impFactor !== 1 || dayWeight !== 1) {
     for (const [id, e] of effortByStory) effortByStory.set(id, Math.floor(e * impFactor * dayWeight));
   }
@@ -286,9 +297,23 @@ export function runSprintDay(state: ScrumState): ScrumState {
     day: nextDay,
     burndown: [...sprint.burndown, remaining],
     impedimentsHit: sprint.impedimentsHit + hit,
+    impedimentsIgnored: sprint.impedimentsIgnored + ignored,
   };
-  // Surface tomorrow's impediment (only while the timebox is still open).
-  const currentImpediment = nextDay <= sprint.length ? generateImpediment(sprint.number, nextDay) : null;
+  // A blocker persists across days: escalating it (addressed) counts it down and it
+  // lifts once resolved; ignoring it keeps it (and its full cost) tomorrow. A
+  // distraction is a one-day event. When nothing carries over, roll a fresh one.
+  let carried: Impediment | null = null;
+  if (imp && imp.kind === 'blocker') {
+    if (imp.addressed) {
+      const left = (imp.daysToResolve ?? 1) - 1;
+      if (left > 0) carried = { ...imp, addressed: false, daysToResolve: left };
+    } else {
+      carried = { ...imp, addressed: false };
+    }
+  }
+  const currentImpediment = nextDay <= sprint.length
+    ? (carried ?? generateImpediment(sprint.number, nextDay))
+    : null;
   const lastDay = { day: sprint.day, dayWeight, impedimentBit: hit === 1, rolls, completed: finished };
   return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment, lastDay };
 }
@@ -300,7 +325,7 @@ export function runRemainingDays(state: ScrumState): ScrumState {
   let s = state;
   let guard = 0;
   while (s.currentSprint && !isSprintOver(s.currentSprint) && guard++ < 200) {
-    if (s.currentImpediment && !s.currentImpediment.cleared) s = clearImpediment(s);
+    if (s.currentImpediment && !s.currentImpediment.addressed) s = clearImpediment(s);
     s = runSprintDay(s);
   }
   return s;
@@ -327,12 +352,12 @@ export function sprintScore(state: ScrumState, sprintNumber: number): SprintScor
   const forecast = forecastPoints(state, sprintNumber);
   const delivered = deliveredPoints(state, sprintNumber);
   const valueDelivered = totalValue(incrementStories(state, sprintNumber));
-  const impedimentsHit = sprint?.impedimentsHit ?? 0;
+  const ignored = sprint?.impedimentsIgnored ?? 0;
 
   const items: SprintScoreItem[] = [
     { label: 'Sprint Goal met', ok: met, detail: met ? 'Every committed story reached Done' : 'Some committed work missed' },
     { label: 'Hit the forecast', ok: forecast > 0 && delivered >= forecast, detail: `${delivered} of ${forecast} forecast points delivered` },
-    { label: 'Way kept clear', ok: impedimentsHit === 0, detail: impedimentsHit === 0 ? 'No impediment went unaddressed' : `${impedimentsHit} day(s) lost to impediments` },
+    { label: 'Way kept clear', ok: ignored === 0, detail: ignored === 0 ? 'The Scrum Master addressed every impediment' : `${ignored} impediment day(s) went unaddressed` },
     { label: 'Delivered value', ok: valueDelivered > 0, detail: `${valueDelivered} value delivered toward the Product Goal` },
   ];
   return { stars: items.filter((i) => i.ok).length, max: items.length, items };
