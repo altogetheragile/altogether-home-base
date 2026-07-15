@@ -140,6 +140,25 @@ export const improvementBonus = (improvements: string[]): number => Math.min(2, 
 export const totalPoints = (stories: Story[]): number => stories.reduce((n, s) => n + s.points, 0);
 export const totalValue = (stories: Story[]): number => stories.reduce((n, s) => n + s.value, 0);
 
+/** Product Backlog Refinement: an item is "Ready" to be committed only once it is
+ *  this size or smaller. Bigger items must be split first - small items flow, big
+ *  ones tend not to finish. */
+export const REFINE_MAX = 13;
+
+/** How a too-big item breaks into two smaller (Fibonacci) items when split.
+ *  Anything not listed is already small enough and cannot be split further. */
+export const SPLIT_MAP: Record<number, [number, number]> = {
+  21: [13, 8],
+  13: [8, 5],
+  8: [5, 3],
+};
+
+/** Whether a story is small enough to be Ready to pull into a Sprint. */
+export const isReady = (points: number): boolean => points <= REFINE_MAX;
+
+/** Whether a story can still be split into smaller items. */
+export const isSplittable = (points: number): boolean => points in SPLIT_MAP;
+
 /** Seed for the Sprint's deterministic dice, so a Sprint plays out reproducibly. */
 export const SPRINT_SEED = 0x5bd1e995;
 
