@@ -403,9 +403,13 @@ export function reviewSprint(state: ScrumState): ScrumState {
   const sprint = state.currentSprint;
   if (!sprint) return state;
   const velocityPts = deliveredPoints(state, sprint.number);
+  // Unfinished work returns to the Product Backlog re-estimated to the work that
+  // is LEFT (the team's re-forecast), not the original whole. Partial progress
+  // still earns no velocity - only Done work does - but it isn't thrown away, so a
+  // nearly-finished story comes back small. A never-started story is unchanged.
   const productBacklog = state.productBacklog.map((s) =>
     s.sprintNumber === sprint.number && s.status !== 'done'
-      ? { ...s, status: 'backlog' as const, sprintNumber: null, effortRemaining: s.points }
+      ? { ...s, status: 'backlog' as const, sprintNumber: null, points: s.effortRemaining }
       : s,
   );
   return {

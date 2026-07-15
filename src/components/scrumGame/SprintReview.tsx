@@ -92,7 +92,7 @@ export function SprintReview({ state, onContinue, onEnd }: SprintReviewProps) {
         )}
         {!met && (
           <p className="text-xs text-amber-700">
-            Unfinished work has gone back to the Product Backlog to be re-planned - it is not part of the Increment.
+            Unfinished work has gone back to the Product Backlog, re-estimated to the work that's left - it is not part of the Increment and earned no velocity.
           </p>
         )}
       </section>
