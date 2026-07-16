@@ -4,6 +4,7 @@ import {
 } from './engine';
 import { totalValue } from './config';
 import { ProductGoalProgress } from './ProductGoalProgress';
+import { StakeholderPanel } from './StakeholderPanel';
 import { BuildCanvas } from './BuildCanvas';
 import { SprintScorecard } from './SprintScorecard';
 import { LearningTip } from './LearningTip';
@@ -54,6 +55,9 @@ export function SprintReview({ state, onContinue, onEnd }: SprintReviewProps) {
 
       {/* The product perspective: progress toward the Product Goal. */}
       <ProductGoalProgress state={state} />
+
+      {/* How the stakeholders feel after this Sprint's Increment. */}
+      <StakeholderPanel state={state} />
 
       {/* The Increment made visible - the product assembled so far. */}
       <BuildCanvas state={state} />

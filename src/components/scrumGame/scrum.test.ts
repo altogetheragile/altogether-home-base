@@ -7,6 +7,7 @@ import {
 } from './config';
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME } from './theme';
+import { nextSatisfaction } from './engine';
 import {
   planSprint, moveBacklogStory, splitStory, availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
@@ -348,6 +349,26 @@ describe('the Product Owner: ordering and change requests', () => {
     s = declineChange(s);
     expect(s.changeRequest).toBeNull();
     expect(sprintStories(s, s.currentSprint!.number).length).toBe(before);
+  });
+});
+
+describe('stakeholders and satisfaction', () => {
+  it('the theme has stakeholders with conflicting agendas, seeded neutral', () => {
+    expect(ACTIVE_THEME.stakeholders.length).toBeGreaterThanOrEqual(2);
+    const s = initialScrumState();
+    for (const sh of ACTIVE_THEME.stakeholders) expect(s.satisfaction[sh.id]).toBe(50);
+  });
+
+  it('delivering to one agenda raises that stakeholder and neglects the others', () => {
+    // Finish a revenue story (Pay, tag "revenue") - pleases The Business, neglects the rest.
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s7']), 's7'); // s7 = Pay, revenue
+    s = runUntilDone(s, 's7');
+    const before = { ...s.satisfaction };
+    const next = nextSatisfaction(s, 1);
+    expect(next.business).toBeGreaterThan(before.business); // revenue is their agenda
+    expect(next.trust).toBeLessThan(before.trust); // revenue weight 0 -> neglect decay
+    // The Business benefits far more than anyone else from a revenue Sprint.
+    expect(next.business - before.business).toBeGreaterThan(next.customers - before.customers);
   });
 });
 
