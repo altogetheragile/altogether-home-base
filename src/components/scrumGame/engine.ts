@@ -113,6 +113,41 @@ export function devRoll(sprintNumber: number, day: number, devIndex: number): nu
 /** Whether a Sprint has run out of days. */
 export const isSprintOver = (sprint: Sprint): boolean => sprint.day > sprint.length;
 
+export interface SprintOutlook {
+  /** Committed work still remaining (effort points). */
+  remaining: number;
+  /** Where an even burn-down would have it by now. */
+  ideal: number;
+  /** Days left in the timebox, including today. */
+  daysLeft: number;
+  status: 'ahead' | 'ontrack' | 'atrisk' | 'behind' | 'complete';
+}
+
+/** The Daily Scrum inspection: are the Developers on track for the Sprint Goal?
+ *  Compares the COMMITTED work left against an even burn-down of the forecast (so
+ *  extra work pulled in mid-Sprint doesn't distort the read). */
+export function sprintOutlook(state: ScrumState): SprintOutlook | null {
+  const sprint = state.currentSprint;
+  if (!sprint) return null;
+  const committed = new Set(sprint.committedStoryIds);
+  const remaining = state.productBacklog
+    .filter((s) => committed.has(s.id))
+    .reduce((n, s) => n + s.effortRemaining, 0);
+  const start = sprint.burndown[0] ?? remaining; // the forecast
+  const daysDone = sprint.day - 1;
+  const daysLeft = Math.max(0, sprint.length - daysDone);
+  const ideal = Math.round((start * (sprint.length - daysDone)) / sprint.length);
+
+  let status: SprintOutlook['status'];
+  if (remaining === 0) status = 'complete';
+  else if (daysLeft === 0) status = 'behind';
+  else {
+    const ratio = remaining / Math.max(1, ideal);
+    status = ratio <= 0.9 ? 'ahead' : ratio <= 1.05 ? 'ontrack' : ratio <= 1.3 ? 'atrisk' : 'behind';
+  }
+  return { remaining, ideal, daysLeft, status };
+}
+
 // ============= Impediments (the Scrum Master's work) =============
 
 /** Deterministically decide the impediment (if any) for a given Sprint day. */

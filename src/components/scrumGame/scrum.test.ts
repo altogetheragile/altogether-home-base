@@ -12,7 +12,7 @@ import {
   clearImpediment, generateImpediment, generateChangeRequest, acceptChange, declineChange,
   runSprintDay, runRemainingDays,
   reviewSprint, startNextSprint, sprintGoalMet, forecastPoints,
-  devRoll, isSprintOver, deliveredPoints, incrementStories,
+  devRoll, isSprintOver, deliveredPoints, incrementStories, sprintOutlook,
   productGoalTotalValue, productGoalDeliveredValue, productGoalProgress, productGoalReachable, endGame,
   sprintScore,
 } from './engine';
@@ -340,6 +340,23 @@ describe('the Product Owner: ordering and change requests', () => {
     s = declineChange(s);
     expect(s.changeRequest).toBeNull();
     expect(sprintStories(s, s.currentSprint!.number).length).toBe(before);
+  });
+});
+
+describe('the Daily Scrum inspection (sprintOutlook)', () => {
+  it('reads on-track at the start, and behind when the committed work stalls', () => {
+    // Commit a small, Ready story; at day 1 (nothing burned) it is on or near the ideal.
+    const s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'); // 8 pts committed
+    const day1 = sprintOutlook(s)!;
+    expect(day1.remaining).toBe(8);
+    expect(['ahead', 'ontrack']).toContain(day1.status);
+
+    // Commit a big story but never work it - by late in the Sprint it is well behind.
+    let stuck = planSprint(initialScrumState(), 'g', ['s2']); // 21 pts, nobody assigned
+    for (let i = 0; i < 6 && stuck.currentSprint && !isSprintOver(stuck.currentSprint); i++) stuck = runSprintDay(stuck);
+    const late = sprintOutlook(stuck)!;
+    expect(late.remaining).toBe(21); // no progress
+    expect(late.status).toBe('behind');
   });
 });
 
