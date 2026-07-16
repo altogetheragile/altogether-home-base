@@ -22,9 +22,9 @@ export default function ScrumGame() {
       case 'intro':
         return <ScrumIntro productGoal={state.productGoal} sprintLength={state.sprintLength} onStart={start} />;
       case 'planning':
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onSplitStory={splitStory} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
       case 'sprint':
-        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
+        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onSplitStory={splitStory} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
       case 'review':
         return <SprintReview state={state} onContinue={() => setPhase('retro')} onEnd={endGame} />;
       case 'retro':
@@ -32,7 +32,7 @@ export default function ScrumGame() {
       case 'final':
         return <ScrumFinal state={state} onReset={reset} />;
       default:
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onSplitStory={splitStory} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onBack={() => setPhase('intro')} />;
     }
   };
 
