@@ -12,17 +12,19 @@ import { ChangeRequestPanel } from './ChangeRequestPanel';
 import { DaySummary } from './DaySummary';
 import { DailyScrum } from './DailyScrum';
 import { BuildCanvas } from './BuildCanvas';
+import { BacklogSidebar } from './BacklogSidebar';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, FastForward } from 'lucide-react';
+import { FastForward } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ScrumState;
   onAssignDev: (devId: string, storyId: string) => void;
   onUnassignDev: (devId: string) => void;
   onAddToSprint: (storyId: string) => void;
+  onSplitStory: (storyId: string) => void;
   onClearImpediment: () => void;
   onAcceptChange: () => void;
   onDeclineChange: () => void;
@@ -105,7 +107,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
  *  Scrum - assign Developers to the stories they'll swarm, then Run Day. A burndown
  *  tracks remaining work; when the timebox runs out, the Sprint is reviewed. */
-export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onClearImpediment, onAcceptChange, onDeclineChange, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
+export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onSplitStory, onClearImpediment, onAcceptChange, onDeclineChange, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
   const [selectedDevId, setSelectedDevId] = useState<string | null>(null);
   if (!sprint) return null;
@@ -164,7 +166,7 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
   );
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 pb-28 space-y-4">
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 pb-28 space-y-4">
       {/* Compact header: title + the Sprint Goal on one line. The day controls
           live in a sticky bar (below) so they're always reachable. */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -224,74 +226,69 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
             ? 'Unfinished work returns to the Product Backlog.'
             : delivered > forecast
               ? 'You pulled in extra work beyond the forecast - nicely done.'
-              : 'The Sprint Goal is met. Ahead of schedule? Pull in more below, or review.'}
+              : 'The Sprint Goal is met. Ahead of schedule? Pull more from the Product Backlog, or review.'}
         </div>
       )}
 
       {/* The dice reveal + Done celebration for the last day run. */}
       <DaySummary state={state} />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Column title="To Do" stories={todo} render={card} />
-        <Column title="Doing" stories={doing} render={card} />
-        <Column title="Done ✓" stories={done} render={(s) => (
-          <StoryCard key={s.id} s={s} devs={[]} assignable={false} onAssign={() => {}} onUnassignDev={onUnassignDev} />
-        )} />
+      {/* The flow, left to right: Product Backlog -> Scrum board -> Product. */}
+      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)_220px]">
+        {/* Product Backlog: pull Ready items across, refine the big ones here. */}
+        <BacklogSidebar state={state} onAddToSprint={onAddToSprint} onSplitStory={onSplitStory} disabled={over} />
+
+        {/* The Scrum board */}
+        <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+          <Column title="To Do" stories={todo} render={card} />
+          <Column title="Doing" stories={doing} render={card} />
+          <Column title="Done ✓" stories={done} render={(s) => (
+            <StoryCard key={s.id} s={s} devs={[]} assignable={false} onAssign={() => {}} onUnassignDev={onUnassignDev} />
+          )} />
+        </div>
+
+        {/* The product assembling: each completed story lights up its component. */}
+        <BuildCanvas state={state} compact />
       </div>
 
-      {/* Coaching tip for what's on the board right now - below it, so it never
-          pushes the board down the page. */}
+      {/* Coaching tip for what's on the board right now. */}
       {!canReview && boardTrigger && <LearningTip point={learningFor(boardTrigger)} />}
 
-      {/* The product assembling: each completed story lights up its component. */}
-      <BuildCanvas state={state} compact />
-
-      {/* Renegotiate scope: pull more Product Backlog items into the Sprint when
-          ahead of the forecast (Developers and PO agree, within the Sprint Goal). */}
-      {!over && available.length > 0 && (
-        <section className="space-y-2 rounded-lg border border-dashed border-border p-3">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-sm font-semibold">Pull more from the Product Backlog</h2>
-            <span className="text-[11px] text-muted-foreground">Ahead of the forecast? Renegotiate with the PO - add work that supports the Sprint Goal.</span>
-          </div>
-          <div className="grid gap-1.5 sm:grid-cols-2">
-            {available.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => onAddToSprint(s.id)}
-                className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-left text-sm hover:border-primary hover:bg-primary/5"
-              >
-                <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{s.title}</span>
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">{s.points} pts</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Burndown */}
+      {/* Charts: burndown and velocity, grouped like the Flow game's metrics. */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Burndown</h2>
-        <div className="rounded-lg border border-border p-3">
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: -12 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <Legend verticalAlign="top" height={24} wrapperStyle={{ fontSize: 11 }} />
-              <XAxis dataKey="day" tick={{ fontSize: 11 }} label={{ value: 'Day', position: 'insideBottom', offset: -2, fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} label={{ value: 'pts left', angle: -90, position: 'insideLeft', fontSize: 11 }} />
-              <Tooltip />
-              <Line type="monotone" dataKey="ideal" name="Ideal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
-              <Line type="monotone" dataKey="remaining" name="Actual" stroke="#3b82f6" strokeWidth={2} connectNulls isAnimationActive={false} />
-            </LineChart>
-          </ResponsiveContainer>
+        <h2 className="text-sm font-semibold">Charts</h2>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border border-border p-3">
+            <div className="mb-1 text-xs font-medium">Burndown <span className="font-normal text-muted-foreground">- remaining work per day</span></div>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: -12 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <Legend verticalAlign="top" height={24} wrapperStyle={{ fontSize: 11 }} />
+                <XAxis dataKey="day" tick={{ fontSize: 11 }} label={{ value: 'Day', position: 'insideBottom', offset: -2, fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} label={{ value: 'pts left', angle: -90, position: 'insideLeft', fontSize: 11 }} />
+                <Tooltip />
+                <Line type="monotone" dataKey="ideal" name="Ideal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="remaining" name="Actual" stroke="#3b82f6" strokeWidth={2} connectNulls isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="rounded-lg border border-border p-3">
+            <div className="mb-1 text-xs font-medium">Velocity <span className="font-normal text-muted-foreground">- points delivered per Sprint</span></div>
+            {state.velocity.length === 0 ? (
+              <p className="flex h-[200px] items-center justify-center text-center text-xs text-muted-foreground/60">Velocity appears after your first Sprint.</p>
+            ) : (
+              <div className="flex h-[200px] items-end gap-2 pt-4">
+                {state.velocity.map((v, i) => (
+                  <div key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
+                    <span className="text-[10px] font-mono">{v}</span>
+                    <div className="w-full max-w-[2.5rem] rounded-t bg-primary" style={{ height: `${Math.max(4, v * 3)}px` }} />
+                    <span className="text-[10px] text-muted-foreground">S{i + 1}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <p className={cn('text-xs', over && delivered < forecast ? 'text-amber-700' : 'text-muted-foreground')}>
-          Remaining work per day. The actual line above the ideal means work is burning down too slowly - a sign of
-          over-commitment, too much started at once, or impediments dragging on the team. Swarm on fewer stories and
-          keep the way clear to bring it down faster.
-        </p>
       </section>
 
       {/* Sticky action bar: the day's controls stay in view so you never scroll
