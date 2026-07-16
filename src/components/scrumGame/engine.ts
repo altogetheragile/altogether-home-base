@@ -52,6 +52,7 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     impedimentsHit: 0,
     impedimentsIgnored: 0,
   };
+  const changeRequest = generateChangeRequest(number, sprint.length);
   // A new Sprint starts with everyone on the bench and day 1's impediment (if any)
   // waiting at the Daily Scrum. Remember the chosen length for the next Sprint.
   return {
@@ -62,7 +63,10 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     assignments: {},
     sprintLength: devDays, // remember the chosen length for the next Sprint
     currentImpediment: generateImpediment(number, 1),
-    changeRequest: generateChangeRequest(number, sprint.length),
+    changeRequest,
+    // At most one mid-Sprint dilemma: an event card only if there's no change request.
+    currentEvent: changeRequest ? null : generateEvent(number, sprint.length),
+    eventLesson: null,
     lastDay: null,
   };
 }
@@ -229,6 +233,45 @@ export function acceptChange(state: ScrumState): ScrumState {
 /** The team protects the Sprint Goal: the change waits for a future Sprint. */
 export function declineChange(state: ScrumState): ScrumState {
   return { ...state, changeRequest: null };
+}
+
+// ============= Event cards (mid-Sprint dilemmas) =============
+
+/** Deterministically draw a mid-Sprint event card (or none) and its day. */
+export function generateEvent(sprintNumber: number, length: number): { cardId: string; day: number } | null {
+  const events = ACTIVE_THEME.events;
+  if (events.length === 0) return null;
+  const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 6971) ^ 0x2f9b2a3d);
+  if (rng() >= 0.7) return null; // not every Sprint has one
+  const card = events[Math.floor(rng() * events.length)];
+  const day = 2 + Math.floor(rng() * Math.max(1, length - 2));
+  return { cardId: card.id, day };
+}
+
+/** The event card in play right now (resolved from the theme), or null. */
+export const currentEventCard = (state: ScrumState) =>
+  state.currentEvent ? ACTIVE_THEME.events.find((e) => e.id === state.currentEvent!.cardId) ?? null : null;
+
+/** Whether an event card is live and has reached its day. */
+export const eventDue = (state: ScrumState): boolean =>
+  !!state.currentEvent && !!state.currentSprint && state.currentSprint.day >= state.currentEvent.day;
+
+/** Resolve the team's choice on the current event card: apply its effects (a
+ *  satisfaction shift and/or a forced scope injection) and surface the lesson. */
+export function chooseEvent(state: ScrumState, index: number): ScrumState {
+  const card = currentEventCard(state);
+  const choice = card?.choices[index];
+  if (!choice) return state;
+  let next: ScrumState = state;
+  if (choice.effects.satisfaction) {
+    const satisfaction = { ...next.satisfaction };
+    for (const [id, d] of Object.entries(choice.effects.satisfaction)) {
+      satisfaction[id] = clampMeter((satisfaction[id] ?? 50) + d);
+    }
+    next = { ...next, satisfaction };
+  }
+  if (choice.effects.scopeInjection) next = addToSprint(next, choice.effects.scopeInjection);
+  return { ...next, currentEvent: null, eventLesson: choice.lesson };
 }
 
 /** Move a story from To Do into Doing (the team starts it). */
@@ -403,7 +446,8 @@ export function runSprintDay(state: ScrumState): ScrumState {
     rolls,
     completed: finished,
   };
-  return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment, lastDay };
+  // The event lesson is a one-day debrief; clear it as the next day starts.
+  return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment, lastDay, eventLesson: null };
 }
 
 /** Fast-forward the rest of the Sprint. The Scrum Master keeps the way clear as
@@ -499,6 +543,8 @@ export function reviewSprint(state: ScrumState): ScrumState {
     assignments: {},
     currentImpediment: null,
     changeRequest: null,
+    currentEvent: null,
+    eventLesson: null,
     lastDay: null,
     satisfaction: nextSatisfaction(state, sprint.number),
   };

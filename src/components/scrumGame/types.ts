@@ -155,6 +155,11 @@ export interface ScrumState {
   productOwner: string;
   /** A live change request from the Product Owner, awaiting the team's decision. */
   changeRequest: ChangeRequest | null;
+  /** A mid-Sprint event-card dilemma awaiting the team's choice (theme card id +
+   *  the day it surfaces). Mutually exclusive with a change request per Sprint. */
+  currentEvent: { cardId: string; day: number } | null;
+  /** The one-line lesson from the last event choice, shown until the next day. */
+  eventLesson: string | null;
   /** The last day run, for the dice reveal and Done celebration (null until a day
    *  has been run this Sprint). */
   lastDay: DaySummary | null;
@@ -198,6 +203,7 @@ export type ScrumAction =
   | { type: 'CLEAR_IMPEDIMENT' }
   | { type: 'ACCEPT_CHANGE' }
   | { type: 'DECLINE_CHANGE' }
+  | { type: 'CHOOSE_EVENT'; index: number }
   | { type: 'RUN_SPRINT_DAY' }
   | { type: 'RUN_TO_END' }
   | { type: 'REVIEW_SPRINT' }

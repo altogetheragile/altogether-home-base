@@ -40,6 +40,29 @@ export interface Stakeholder {
   neglectDecay: number;
 }
 
+/** Effects a choice can have with the current mechanics. Meters (morale, tech
+ *  debt, capacity) arrive in a later slice; today a choice can shift stakeholder
+ *  satisfaction and/or force a Product Backlog item into the Sprint. */
+export interface EventEffects {
+  satisfaction?: Record<string, number>;
+  /** Force this backlog item into the running Sprint (scope injection). */
+  scopeInjection?: string;
+}
+
+export interface EventChoice {
+  label: string;
+  effects: EventEffects;
+  /** One-line debrief shown after choosing. There is no right answer. */
+  lesson: string;
+}
+
+export interface EventCard {
+  id: string;
+  name: string;
+  narrative: string;
+  choices: EventChoice[];
+}
+
 export interface ThemeConfig {
   id: string;
   name: string;
@@ -55,6 +78,8 @@ export interface ThemeConfig {
   items: BacklogItem[];
   /** Stakeholders whose (conflicting) agendas the Product Owner balances. */
   stakeholders: Stakeholder[];
+  /** Mid-Sprint dilemmas - drawn occasionally, never with a right answer. */
+  events: EventCard[];
 }
 
 /** THEME 1 - the booking platform the sim shipped with, now expressed as data. */
@@ -98,6 +123,46 @@ export const bookingTheme: ThemeConfig = {
       id: 'trust', name: 'Trust & Compliance', agenda: 'Nothing ships that is not safe and accessible',
       tagWeights: { quality: 1.0, manage: 0.4, ops: 0.4, core: 0.3, revenue: 0.0, discovery: 0.0, retention: 0.0 },
       neglectDecay: 8,
+    },
+  ],
+  events: [
+    {
+      id: 'a11y-flag', name: 'Accessibility flag',
+      narrative: 'Trust & Compliance raise an accessibility gap - a regulator is starting to ask questions.',
+      choices: [
+        { label: 'Prioritise the accessibility pass now', effects: { satisfaction: { trust: 12, business: -4 }, scopeInjection: 's10' },
+          lesson: 'Sometimes a real need reorders the plan - but pulling work in mid-Sprint still costs the team focus.' },
+        { label: 'Log it for a future Sprint', effects: { satisfaction: { trust: -8 } },
+          lesson: 'Deferring is a valid call - just a bet: cheap now, expensive if it is called in.' },
+      ],
+    },
+    {
+      id: 'no-shows', name: 'A wave of no-shows',
+      narrative: 'Empty slots are piling up. Customers say a reminder before their booking would help.',
+      choices: [
+        { label: 'Add reminders this Sprint', effects: { satisfaction: { customers: 10, business: 3 }, scopeInjection: 's6' },
+          lesson: 'Responding to real user pain builds trust - within reason, and without abandoning the Sprint Goal.' },
+        { label: 'Hold the Sprint Goal, note it in the Backlog', effects: { satisfaction: { customers: -4 } },
+          lesson: 'Protecting the Sprint Goal is legitimate; capture the need and order it for later.' },
+      ],
+    },
+    {
+      id: 'business-impatient', name: 'The Business wants to see results',
+      narrative: 'The Business is frustrated that revenue is not moving and wants the roadmap reshuffled.',
+      choices: [
+        { label: 'Reassure them and hold the plan', effects: { satisfaction: { business: -6 } },
+          lesson: 'Saying no protects focus, but it has a cost - keep stakeholders informed, not just deflected.' },
+        { label: 'Promise revenue work next Sprint', effects: { satisfaction: { business: 6, customers: -3 } },
+          lesson: 'Committing the next Sprint to one stakeholder eases them now - and boxes the team in later.' },
+      ],
+    },
+    {
+      id: 'steady', name: 'A steady day',
+      narrative: 'No fires today. The team is heads-down and the board is flowing.',
+      choices: [
+        { label: 'Keep the focus', effects: {},
+          lesson: 'Not every day has drama - steady, boring delivery is exactly what good Sprints look like.' },
+      ],
     },
   ],
 };

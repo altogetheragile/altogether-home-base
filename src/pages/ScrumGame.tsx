@@ -13,7 +13,7 @@ import Footer from '@/components/Footer';
 export default function ScrumGame() {
   const {
     state, start, setPhase, setTeam, setDod, moveStory, splitStory, planSprint, assignDev, unassignDev, addToSprint,
-    clearImpediment, acceptChange, declineChange, runDay, runToEnd, reviewSprint,
+    clearImpediment, acceptChange, declineChange, chooseEvent, runDay, runToEnd, reviewSprint,
     nextSprint, endGame, reset,
   } = useScrumGame();
 
@@ -24,7 +24,7 @@ export default function ScrumGame() {
       case 'planning':
         return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onSplitStory={splitStory} onBack={() => setPhase('intro')} />;
       case 'sprint':
-        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onSplitStory={splitStory} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
+        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onSplitStory={splitStory} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onChooseEvent={chooseEvent} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
       case 'review':
         return <SprintReview state={state} onContinue={() => setPhase('retro')} onEnd={endGame} />;
       case 'retro':
