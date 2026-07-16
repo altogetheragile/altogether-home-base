@@ -15,6 +15,7 @@ import { BuildCanvas } from './BuildCanvas';
 import { BacklogSidebar } from './BacklogSidebar';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
+import { FloatingBar } from './FloatingBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { FastForward } from 'lucide-react';
@@ -96,7 +97,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
       <div className="rounded-t-lg border border-b-0 border-border bg-muted px-3 py-2">
         <h3 className="text-sm font-semibold">{title} <span className="font-normal text-muted-foreground">({stories.length})</span></h3>
       </div>
-      <div className="flex-1 space-y-1.5 rounded-b-lg border border-border bg-card/50 p-2 min-h-[120px]">
+      <div className="flex-1 space-y-1.5 rounded-b-lg border border-border bg-card/50 p-2 min-h-[64px]">
         {stories.length === 0 && <div className="py-4 text-center text-xs text-muted-foreground/40">-</div>}
         {stories.map(render)}
       </div>
@@ -182,19 +183,21 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
         </span>
       </div>
 
-      {/* The Daily Scrum, performed: the Developers inspect toward the Sprint Goal
-          and re-plan the day. */}
-      {!canReview && <DailyScrum state={state} />}
-
-      {/* Around the Daily Scrum: the Scrum Master clears the way - only shown when
-          there's actually an impediment, to keep the board uncluttered. */}
-      {!canReview && state.currentImpediment && (
-        <ScrumMasterPanel
-          scrumMaster={state.scrumMaster}
-          impediment={state.currentImpediment}
-          onClear={onClearImpediment}
-          disabled={locked}
-        />
+      {/* The Daily Scrum (Developers inspect + re-plan) and, beside it, the Scrum
+          Master's impediment when there is one - half width each so the board sits
+          higher. */}
+      {!canReview && (
+        <div className={cn('grid gap-3', state.currentImpediment && 'md:grid-cols-2')}>
+          <DailyScrum state={state} />
+          {state.currentImpediment && (
+            <ScrumMasterPanel
+              scrumMaster={state.scrumMaster}
+              impediment={state.currentImpediment}
+              onClear={onClearImpediment}
+              disabled={locked}
+            />
+          )}
+        </div>
       )}
 
       {/* ...the Product Owner may raise a change request to decide on together... */}
@@ -233,84 +236,79 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
       {/* The dice reveal + Done celebration for the last day run. */}
       <DaySummary state={state} />
 
-      {/* The flow, left to right: Product Backlog -> Scrum board -> Product. */}
+      {/* The flow, left to right: Product Backlog -> Scrum board (+ charts) -> Product. */}
       <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)_220px]">
         {/* Product Backlog: pull Ready items across, refine the big ones here. */}
         <BacklogSidebar state={state} onAddToSprint={onAddToSprint} onSplitStory={onSplitStory} disabled={over} />
 
-        {/* The Scrum board */}
-        <div className="grid min-w-0 gap-3 sm:grid-cols-3">
-          <Column title="To Do" stories={todo} render={card} />
-          <Column title="Doing" stories={doing} render={card} />
-          <Column title="Done ✓" stories={done} render={(s) => (
-            <StoryCard key={s.id} s={s} devs={[]} assignable={false} onAssign={() => {}} onUnassignDev={onUnassignDev} />
-          )} />
+        {/* The Scrum board, with the charts filling the space below the columns. */}
+        <div className="min-w-0 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Column title="To Do" stories={todo} render={card} />
+            <Column title="Doing" stories={doing} render={card} />
+            <Column title="Done ✓" stories={done} render={(s) => (
+              <StoryCard key={s.id} s={s} devs={[]} assignable={false} onAssign={() => {}} onUnassignDev={onUnassignDev} />
+            )} />
+          </div>
+
+          {!canReview && boardTrigger && <LearningTip point={learningFor(boardTrigger)} />}
+
+          {/* Charts: burndown + velocity, filling the middle column. */}
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="rounded-lg border border-border p-3">
+              <div className="mb-1 text-xs font-medium">Burndown <span className="font-normal text-muted-foreground">- work left per day</span></div>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: -12 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Legend verticalAlign="top" height={24} wrapperStyle={{ fontSize: 11 }} />
+                  <XAxis dataKey="day" tick={{ fontSize: 11 }} label={{ value: 'Day', position: 'insideBottom', offset: -2, fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="ideal" name="Ideal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="remaining" name="Actual" stroke="#3b82f6" strokeWidth={2} connectNulls isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="rounded-lg border border-border p-3">
+              <div className="mb-1 text-xs font-medium">Velocity <span className="font-normal text-muted-foreground">- delivered per Sprint</span></div>
+              {state.velocity.length === 0 ? (
+                <p className="flex h-[180px] items-center justify-center text-center text-xs text-muted-foreground/60">Velocity appears after your first Sprint.</p>
+              ) : (
+                <div className="flex h-[180px] items-end gap-2 pt-4">
+                  {state.velocity.map((v, i) => (
+                    <div key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
+                      <span className="text-[10px] font-mono">{v}</span>
+                      <div className="w-full max-w-[2.5rem] rounded-t bg-primary" style={{ height: `${Math.max(4, v * 3)}px` }} />
+                      <span className="text-[10px] text-muted-foreground">S{i + 1}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* The product assembling: each completed story lights up its component. */}
         <BuildCanvas state={state} compact />
       </div>
 
-      {/* Coaching tip for what's on the board right now. */}
-      {!canReview && boardTrigger && <LearningTip point={learningFor(boardTrigger)} />}
-
-      {/* Charts: burndown and velocity, grouped like the Flow game's metrics. */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Charts</h2>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border border-border p-3">
-            <div className="mb-1 text-xs font-medium">Burndown <span className="font-normal text-muted-foreground">- remaining work per day</span></div>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: -12 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <Legend verticalAlign="top" height={24} wrapperStyle={{ fontSize: 11 }} />
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} label={{ value: 'Day', position: 'insideBottom', offset: -2, fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} label={{ value: 'pts left', angle: -90, position: 'insideLeft', fontSize: 11 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="ideal" name="Ideal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="remaining" name="Actual" stroke="#3b82f6" strokeWidth={2} connectNulls isAnimationActive={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="rounded-lg border border-border p-3">
-            <div className="mb-1 text-xs font-medium">Velocity <span className="font-normal text-muted-foreground">- points delivered per Sprint</span></div>
-            {state.velocity.length === 0 ? (
-              <p className="flex h-[200px] items-center justify-center text-center text-xs text-muted-foreground/60">Velocity appears after your first Sprint.</p>
-            ) : (
-              <div className="flex h-[200px] items-end gap-2 pt-4">
-                {state.velocity.map((v, i) => (
-                  <div key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
-                    <span className="text-[10px] font-mono">{v}</span>
-                    <div className="w-full max-w-[2.5rem] rounded-t bg-primary" style={{ height: `${Math.max(4, v * 3)}px` }} />
-                    <span className="text-[10px] text-muted-foreground">S{i + 1}</span>
-                  </div>
-                ))}
-              </div>
+      {/* Sticky action bar so the day's controls stay in view. */}
+      <FloatingBar>
+        <span className="text-xs font-medium text-muted-foreground">Day {Math.min(sprint.day, sprint.length)}/{sprint.length}</span>
+        {!canReview ? (
+          <>
+            {sprint.day < sprint.length && (
+              <Button variant="outline" size="sm" onClick={onRunToEnd} disabled={working === 0} title="Fast-forward the rest of the Sprint; the Scrum Master keeps the way clear">
+                <FastForward className="mr-1.5 h-4 w-4" /> Run remaining
+              </Button>
             )}
-          </div>
-        </div>
-      </section>
-
-      {/* Sticky action bar: the day's controls stay in view so you never scroll
-          up and down to Run the day. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-20 flex justify-center px-4">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border bg-background/95 px-4 py-2 shadow-lg backdrop-blur">
-          <span className="text-xs font-medium text-muted-foreground">Day {Math.min(sprint.day, sprint.length)}/{sprint.length}</span>
-          {!canReview ? (
-            <>
-              {sprint.day < sprint.length && (
-                <Button variant="outline" size="sm" onClick={onRunToEnd} disabled={working === 0} title="Fast-forward the rest of the Sprint; the Scrum Master keeps the way clear">
-                  <FastForward className="mr-1.5 h-4 w-4" /> Run remaining
-                </Button>
-              )}
-              <Button size="sm" onClick={onRunDay} disabled={working === 0}>Run Day</Button>
-              {working === 0 && <span className="hidden text-[10px] text-muted-foreground sm:inline">assign a Developer first</span>}
-            </>
-          ) : (
-            <Button size="sm" onClick={onReview}>Sprint Review</Button>
-          )}
-        </div>
-      </div>
+            <Button size="sm" onClick={onRunDay} disabled={working === 0}>Run Day</Button>
+            {working === 0 && <span className="hidden text-[10px] text-muted-foreground sm:inline">assign a Developer first</span>}
+          </>
+        ) : (
+          <Button size="sm" onClick={onReview}>Sprint Review</Button>
+        )}
+      </FloatingBar>
     </div>
   );
 }

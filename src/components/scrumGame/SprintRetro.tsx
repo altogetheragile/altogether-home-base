@@ -5,6 +5,7 @@ import { availableStories } from './engine';
 import { ScrumDodEditor } from './ScrumDodEditor';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
+import { FloatingBar } from './FloatingBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +27,7 @@ export function SprintRetro({ state, onChoose, onSetDod, onEnd }: SprintRetroPro
   const backlogEmpty = availableStories(state).length === 0 && state.productBacklog.every((s) => s.status === 'done');
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 space-y-6">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 pb-28 space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-bold">Sprint {number} Retrospective</h1>
         <p className="text-sm text-muted-foreground">
@@ -78,21 +79,22 @@ export function SprintRetro({ state, onChoose, onSetDod, onEnd }: SprintRetroPro
 
       <LearningTip point={learningFor('retro')} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {backlogEmpty
-          ? <p className="text-xs text-muted-foreground">The Product Backlog is delivered - there's nothing left to plan.</p>
-          : <span />}
+      {!selected && !backlogEmpty && (
+        <p className="text-[11px] text-muted-foreground">Pick an improvement to carry into the next Sprint.</p>
+      )}
+      {backlogEmpty && (
+        <p className="text-xs text-muted-foreground">The Product Backlog is delivered - there's nothing left to plan.</p>
+      )}
+
+      <FloatingBar>
         {backlogEmpty ? (
-          <Button size="lg" onClick={onEnd}>Wrap up</Button>
+          <Button size="sm" onClick={onEnd}>Wrap up</Button>
         ) : (
-          <Button size="lg" disabled={!selected} onClick={() => selected && onChoose(selected)}>
+          <Button size="sm" disabled={!selected} onClick={() => selected && onChoose(selected)}>
             Start Sprint {number + 1}
           </Button>
         )}
-      </div>
-      {!selected && !backlogEmpty && (
-        <p className="text-right text-[11px] text-muted-foreground">Pick an improvement to carry into the next Sprint.</p>
-      )}
+      </FloatingBar>
     </div>
   );
 }

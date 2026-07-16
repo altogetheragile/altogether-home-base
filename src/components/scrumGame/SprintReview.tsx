@@ -8,6 +8,7 @@ import { BuildCanvas } from './BuildCanvas';
 import { SprintScorecard } from './SprintScorecard';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
+import { FloatingBar } from './FloatingBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, Trophy } from 'lucide-react';
@@ -35,7 +36,7 @@ export function SprintReview({ state, onContinue, onEnd }: SprintReviewProps) {
   const backlogEmpty = availableStories(state).length === 0 && state.productBacklog.every((s) => s.status === 'done');
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 space-y-6">
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 pb-28 space-y-6">
       <h1 className="text-2xl font-bold">Sprint {sprint.number} Review</h1>
       <p className="-mt-3 text-sm text-muted-foreground">
         {state.productOwner} and stakeholders inspect the Increment and progress toward the Product Goal.
@@ -116,15 +117,15 @@ export function SprintReview({ state, onContinue, onEnd }: SprintReviewProps) {
 
       <SprintScorecard state={state} sprintNumber={sprint.number} />
 
-      <div className="flex flex-wrap items-center justify-end gap-3">
+      <FloatingBar>
         {canEnd && (
-          <Button variant="outline" size="lg" onClick={onEnd}>
+          <Button variant="outline" size="sm" onClick={onEnd}>
             <Trophy className="mr-1.5 h-4 w-4" />
-            {backlogEmpty ? 'Product Goal complete - wrap up' : 'Product Goal achieved - wrap up'}
+            {backlogEmpty ? 'Product Goal complete' : 'Wrap up'}
           </Button>
         )}
-        <Button size="lg" onClick={onContinue}>Continue to Retrospective</Button>
-      </div>
+        <Button size="sm" onClick={onContinue}>Continue to Retrospective</Button>
+      </FloatingBar>
     </div>
   );
 }
