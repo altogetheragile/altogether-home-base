@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ScrumState, Story, Developer, Criterion } from './types';
 import { availableStories } from './engine';
-import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, isReady, REFINE_MAX } from './config';
+import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, isReady, isSplittable, REFINE_MAX, suggestSprintGoal } from './config';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { ScrumDodEditor } from './ScrumDodEditor';
@@ -11,7 +11,7 @@ import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Plus, X, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Plus, X, ChevronUp, ChevronDown, AlertTriangle, Scissors, Wand2 } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ScrumState;
@@ -19,13 +19,14 @@ interface SprintPlanningProps {
   onSetTeam: (team: Developer[]) => void;
   onSetDod: (dod: Criterion[]) => void;
   onMoveStory: (storyId: string, dir: 'up' | 'down') => void;
+  onSplitStory: (storyId: string) => void;
   onBack: () => void;
 }
 
 /** Sprint Planning: name the Sprint Goal and forecast stories from the Product
  *  Backlog into the Sprint, watching the forecast against capacity/velocity so an
  *  over-commitment is visible before you make it. */
-export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveStory, onBack }: SprintPlanningProps) {
+export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveStory, onSplitStory, onBack }: SprintPlanningProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -145,13 +146,27 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
 
       {/* Sprint Goal */}
       <div className="space-y-1.5">
-        <label htmlFor="sprint-goal" className="text-sm font-semibold">Sprint Goal</label>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="sprint-goal" className="text-sm font-semibold">Sprint Goal</label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            disabled={chosen.length === 0}
+            onClick={() => setGoal(suggestSprintGoal(chosen))}
+            title="Draft a Sprint Goal from the selected items - then shape it into one clear objective"
+          >
+            <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest from selection
+          </Button>
+        </div>
         <Input
           id="sprint-goal"
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
           placeholder="One outcome this Sprint is aiming for, e.g. 'A customer can book and pay for a slot'"
         />
+        <p className="text-[11px] text-muted-foreground">The Sprint Goal is a single objective, not just the list of items - shape the suggestion into one.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -190,17 +205,20 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
                   {isReady(s.points) ? (
                     <Row s={s} action="add" />
                   ) : (
-                    /* Not Ready: too big to commit. It gets refined (split) during the
-                       Sprint on the board, not here. Shown but not selectable. */
-                    <div
-                      className="flex w-full items-center gap-2 rounded-md border border-dashed border-border px-2.5 py-1.5 text-sm text-muted-foreground/70"
-                      title="Not Ready - refine it (split) on the board during the Sprint"
+                    /* Not Ready: too big to commit. You can refine it (split) here,
+                       before starting the Sprint - but it can't be selected until it is. */
+                    <button
+                      type="button"
+                      onClick={() => onSplitStory(s.id)}
+                      disabled={!isSplittable(s.points)}
+                      title="Not Ready - split it to refine before you start"
+                      className="flex w-full items-center gap-2 rounded-md border border-dashed border-amber-300 bg-amber-50/60 px-2.5 py-1.5 text-left text-sm hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/50 dark:bg-amber-950/20"
                     >
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600/70" />
-                      <span className="flex-1 truncate">{s.title}</span>
-                      <span className="text-[10px] font-medium text-amber-700/80 dark:text-amber-500/80">not Ready</span>
+                      <Scissors className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" />
+                      <span className="flex-1 truncate text-muted-foreground">{s.title}</span>
+                      <span className="flex items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-400"><AlertTriangle className="h-3 w-3" /> refine</span>
                       <span className="shrink-0 font-mono text-xs">{s.points} pts</span>
-                    </div>
+                    </button>
                   )}
                 </div>
               </div>

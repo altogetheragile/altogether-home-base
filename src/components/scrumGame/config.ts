@@ -40,6 +40,17 @@ export const sprintCapacity = (velocity: number[], teamSize: number, devDays: nu
  *  Sourced from the active theme. */
 export const PRODUCT_GOAL = ACTIVE_THEME.productGoal;
 
+/** Draft a Sprint Goal from the selected items - a starting point the team then
+ *  shapes into a single objective (the Goal is not just the list of PBIs). */
+export function suggestSprintGoal(stories: { title: string }[]): string {
+  const titles = stories.slice(0, 4).map((s) => s.title);
+  if (titles.length === 0) return '';
+  const list = titles.length === 1
+    ? titles[0]
+    : `${titles.slice(0, -1).join(', ')} and ${titles[titles.length - 1]}`;
+  return `Deliver ${list}`;
+}
+
 /** Share of the product's value that, once delivered, lets the Product Owner call
  *  the Product Goal achieved and wrap up - the Goal is an outcome, not "empty the
  *  Backlog", so the last low-value items needn't ship to be done. */

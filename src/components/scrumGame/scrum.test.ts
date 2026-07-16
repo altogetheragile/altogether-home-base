@@ -3,6 +3,7 @@ import {
   initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue,
   sprintCapacity, averageVelocity, CAPACITY_PER_DEV_DAY, improvementBonus, RETRO_IMPROVEMENTS,
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM, SPRINT_LENGTH_OPTIONS, DEV_DAY_RATIO,
+  suggestSprintGoal,
 } from './config';
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME } from './theme';
@@ -70,6 +71,13 @@ describe('scrum game scaffold', () => {
     const stories = initialScrumState().productBacklog;
     expect(totalPoints(stories)).toBe(PRODUCT_BACKLOG.reduce((n, s) => n + s.points, 0));
     expect(totalValue(stories)).toBe(PRODUCT_BACKLOG.reduce((n, s) => n + s.value, 0));
+  });
+
+  it('suggestSprintGoal drafts a goal from the selected items', () => {
+    expect(suggestSprintGoal([])).toBe('');
+    expect(suggestSprintGoal([{ title: 'Book a slot' }])).toBe('Deliver Book a slot');
+    expect(suggestSprintGoal([{ title: 'Browse' }, { title: 'Book' }, { title: 'Pay' }]))
+      .toBe('Deliver Browse, Book and Pay');
   });
 
   it('makeDeveloper derives distinct two-letter initials', () => {
