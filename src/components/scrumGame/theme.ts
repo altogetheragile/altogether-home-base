@@ -28,6 +28,18 @@ export interface BacklogItem {
   debtSensitivity?: number;
 }
 
+export interface Stakeholder {
+  id: string;
+  name: string;
+  agenda: string;
+  /** Weight per item tag (0-1). At the Review, satisfaction moves by the value of
+   *  newly Done items multiplied by these weights. Conflicting weights across
+   *  stakeholders create the prioritisation tension the Product Owner navigates. */
+  tagWeights: Record<string, number>;
+  /** Satisfaction lost per Sprint if nothing on their agenda shipped. */
+  neglectDecay: number;
+}
+
 export interface ThemeConfig {
   id: string;
   name: string;
@@ -41,6 +53,8 @@ export interface ThemeConfig {
   definitionOfDone: Criterion[];
   /** The starting Product Backlog, ordered by value. */
   items: BacklogItem[];
+  /** Stakeholders whose (conflicting) agendas the Product Owner balances. */
+  stakeholders: Stakeholder[];
 }
 
 /** THEME 1 - the booking platform the sim shipped with, now expressed as data. */
@@ -68,6 +82,23 @@ export const bookingTheme: ThemeConfig = {
     { id: 's10', name: 'Accessibility pass', value: 7, effort: 13, visualKey: 'accessibility', tags: ['quality'] },
     { id: 's11', name: 'Admin: view all bookings', value: 5, effort: 21, visualKey: 'admin', tags: ['ops'] },
     { id: 's12', name: 'Analytics dashboard', value: 3, effort: 21, visualKey: 'analytics', tags: ['ops'] },
+  ],
+  stakeholders: [
+    {
+      id: 'customers', name: 'Customers', agenda: 'A smooth booking experience they can trust',
+      tagWeights: { core: 1.0, discovery: 0.8, manage: 0.7, retention: 0.6, quality: 0.5, revenue: 0.1, ops: 0.0 },
+      neglectDecay: 5,
+    },
+    {
+      id: 'business', name: 'The Business', agenda: 'Revenue and growth, sooner rather than later',
+      tagWeights: { revenue: 1.0, retention: 0.6, ops: 0.5, core: 0.3, discovery: 0.2, manage: 0.1, quality: 0.0 },
+      neglectDecay: 6,
+    },
+    {
+      id: 'trust', name: 'Trust & Compliance', agenda: 'Nothing ships that is not safe and accessible',
+      tagWeights: { quality: 1.0, manage: 0.4, ops: 0.4, core: 0.3, revenue: 0.0, discovery: 0.0, retention: 0.0 },
+      neglectDecay: 8,
+    },
   ],
 };
 

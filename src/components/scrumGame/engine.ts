@@ -5,6 +5,28 @@ import {
   CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS, PRODUCT_GOAL_THRESHOLD,
   SPLIT_MAP, isSplittable,
 } from './config';
+import { ACTIVE_THEME } from './theme';
+
+/** Clamp a meter to 0-100. */
+const clampMeter = (n: number): number => Math.max(0, Math.min(100, n));
+
+/** How each stakeholder's satisfaction shifts after a Sprint: it rises with the
+ *  value of the Increment weighted by their agenda (tagWeights), and decays if
+ *  nothing on their agenda shipped. Conflicting weights are the prioritisation
+ *  tension the Product Owner navigates. */
+export function nextSatisfaction(state: ScrumState, sprintNumber: number): Record<string, number> {
+  const increment = incrementStories(state, sprintNumber);
+  const next: Record<string, number> = { ...state.satisfaction };
+  for (const sh of ACTIVE_THEME.stakeholders) {
+    let gain = 0;
+    for (const story of increment) {
+      for (const tag of story.tags ?? []) gain += story.value * (sh.tagWeights[tag] ?? 0);
+    }
+    const delta = gain > 0 ? Math.round(gain) : -sh.neglectDecay;
+    next[sh.id] = clampMeter((next[sh.id] ?? 50) + delta);
+  }
+  return next;
+}
 
 // ============= Planning =============
 
@@ -478,6 +500,7 @@ export function reviewSprint(state: ScrumState): ScrumState {
     currentImpediment: null,
     changeRequest: null,
     lastDay: null,
+    satisfaction: nextSatisfaction(state, sprint.number),
   };
 }
 

@@ -132,8 +132,12 @@ export function initialScrumState(): ScrumState {
     improvements: [],
     sprintLength: SPRINT_LENGTH,
     theme: { name: ACTIVE_THEME.name, buildMetaphor: ACTIVE_THEME.buildMetaphor, valueLabel: ACTIVE_THEME.valueLabel },
+    satisfaction: Object.fromEntries(ACTIVE_THEME.stakeholders.map((s) => [s.id, STAKEHOLDER_START])),
   };
 }
+
+/** Every stakeholder starts neutral. */
+export const STAKEHOLDER_START = 50;
 
 /** The improvement actions offered at a Retrospective. Picking one carries into
  *  the next Sprint and nudges the team's effectiveness up (kaizen compounds). */

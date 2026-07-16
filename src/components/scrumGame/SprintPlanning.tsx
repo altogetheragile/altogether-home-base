@@ -6,6 +6,7 @@ import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { ScrumDodEditor } from './ScrumDodEditor';
 import { ProductGoalProgress } from './ProductGoalProgress';
+import { StakeholderPanel } from './StakeholderPanel';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
@@ -143,6 +144,9 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
           </span>
         )}
       </div>
+
+      {/* Who you're serving - their agendas conflict, so choose what to deliver. */}
+      <StakeholderPanel state={state} />
 
       {/* Sprint Goal */}
       <div className="space-y-1.5">
