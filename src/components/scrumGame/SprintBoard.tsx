@@ -164,42 +164,29 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
   );
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 pb-28 space-y-4">
+      {/* Compact header: title + the Sprint Goal on one line. The day controls
+          live in a sticky bar (below) so they're always reachable. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h1 className="text-xl font-bold">
           Sprint {sprint.number} · Day {Math.min(sprint.day, sprint.length)}/{sprint.length}
           {sprint.devDays !== sprint.length && sprint.day === sprint.length && (
             <span className="ml-2 align-middle rounded bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">half day</span>
           )}
         </h1>
-        {!canReview ? (
-          <div className="flex items-center gap-2">
-            {sprint.day < sprint.length && (
-              <Button variant="outline" size="lg" onClick={onRunToEnd} disabled={working === 0} title="Fast-forward the rest of the Sprint; the Scrum Master keeps the way clear">
-                <FastForward className="mr-1.5 h-4 w-4" /> Run remaining days
-              </Button>
-            )}
-            <div className="flex flex-col items-end gap-0.5">
-              <Button size="lg" onClick={onRunDay} disabled={working === 0}>Run Day</Button>
-              {working === 0 && <span className="text-[10px] text-muted-foreground">Assign a Developer to a story to run the day</span>}
-            </div>
-          </div>
-        ) : (
-          <Button size="lg" onClick={onReview}>Sprint Review</Button>
-        )}
-      </div>
-
-      <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-5 py-3 dark:bg-emerald-950/30">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Sprint Goal</div>
-        <p className="text-sm font-medium">{sprint.goal}</p>
+        <span className="flex min-w-0 items-center gap-1.5 text-sm">
+          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Sprint Goal</span>
+          <span className="truncate font-medium">{sprint.goal}</span>
+        </span>
       </div>
 
       {/* The Daily Scrum, performed: the Developers inspect toward the Sprint Goal
           and re-plan the day. */}
       {!canReview && <DailyScrum state={state} />}
 
-      {/* Around the Daily Scrum: the Scrum Master clears the way... */}
-      {!canReview && (
+      {/* Around the Daily Scrum: the Scrum Master clears the way - only shown when
+          there's actually an impediment, to keep the board uncluttered. */}
+      {!canReview && state.currentImpediment && (
         <ScrumMasterPanel
           scrumMaster={state.scrumMaster}
           impediment={state.currentImpediment}
@@ -241,8 +228,6 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
         </div>
       )}
 
-      {!canReview && boardTrigger && <LearningTip point={learningFor(boardTrigger)} />}
-
       {/* The dice reveal + Done celebration for the last day run. */}
       <DaySummary state={state} />
 
@@ -253,6 +238,10 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
           <StoryCard key={s.id} s={s} devs={[]} assignable={false} onAssign={() => {}} onUnassignDev={onUnassignDev} />
         )} />
       </div>
+
+      {/* Coaching tip for what's on the board right now - below it, so it never
+          pushes the board down the page. */}
+      {!canReview && boardTrigger && <LearningTip point={learningFor(boardTrigger)} />}
 
       {/* The product assembling: each completed story lights up its component. */}
       <BuildCanvas state={state} compact />
@@ -304,6 +293,27 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
           keep the way clear to bring it down faster.
         </p>
       </section>
+
+      {/* Sticky action bar: the day's controls stay in view so you never scroll
+          up and down to Run the day. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-20 flex justify-center px-4">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border bg-background/95 px-4 py-2 shadow-lg backdrop-blur">
+          <span className="text-xs font-medium text-muted-foreground">Day {Math.min(sprint.day, sprint.length)}/{sprint.length}</span>
+          {!canReview ? (
+            <>
+              {sprint.day < sprint.length && (
+                <Button variant="outline" size="sm" onClick={onRunToEnd} disabled={working === 0} title="Fast-forward the rest of the Sprint; the Scrum Master keeps the way clear">
+                  <FastForward className="mr-1.5 h-4 w-4" /> Run remaining
+                </Button>
+              )}
+              <Button size="sm" onClick={onRunDay} disabled={working === 0}>Run Day</Button>
+              {working === 0 && <span className="hidden text-[10px] text-muted-foreground sm:inline">assign a Developer first</span>}
+            </>
+          ) : (
+            <Button size="sm" onClick={onReview}>Sprint Review</Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
