@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, moveBacklogStory, splitStory, startStory, addToSprint, assignDev, unassignDev, setTeam, setDefinitionOfDone, clearImpediment, acceptChange, declineChange, runSprintDay, runRemainingDays, reviewSprint, startNextSprint, endGame } from './engine';
+import { planSprint, moveBacklogStory, splitStory, startStory, addToSprint, assignDev, unassignDev, setTeam, setDefinitionOfDone, clearImpediment, acceptChange, declineChange, chooseEvent, runSprintDay, runRemainingDays, reviewSprint, startNextSprint, endGame } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -35,6 +35,8 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return acceptChange(state);
     case 'DECLINE_CHANGE':
       return declineChange(state);
+    case 'CHOOSE_EVENT':
+      return chooseEvent(state, action.index);
     case 'RUN_SPRINT_DAY':
       return runSprintDay(state);
     case 'RUN_TO_END':
@@ -72,6 +74,7 @@ export function useScrumGame() {
   const clearImpedimentAction = useCallback(() => dispatch({ type: 'CLEAR_IMPEDIMENT' }), []);
   const acceptChangeAction = useCallback(() => dispatch({ type: 'ACCEPT_CHANGE' }), []);
   const declineChangeAction = useCallback(() => dispatch({ type: 'DECLINE_CHANGE' }), []);
+  const chooseEventAction = useCallback((index: number) => dispatch({ type: 'CHOOSE_EVENT', index }), []);
   const runDay = useCallback(() => dispatch({ type: 'RUN_SPRINT_DAY' }), []);
   const runToEnd = useCallback(() => dispatch({ type: 'RUN_TO_END' }), []);
   const reviewSprintAction = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
@@ -95,6 +98,7 @@ export function useScrumGame() {
     clearImpediment: clearImpedimentAction,
     acceptChange: acceptChangeAction,
     declineChange: declineChangeAction,
+    chooseEvent: chooseEventAction,
     runDay,
     runToEnd,
     reviewSprint: reviewSprintAction,

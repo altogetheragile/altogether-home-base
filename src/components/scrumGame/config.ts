@@ -125,6 +125,8 @@ export function initialScrumState(): ScrumState {
     assignments: {},
     currentImpediment: null,
     changeRequest: null,
+    currentEvent: null,
+    eventLesson: null,
     lastDay: null,
     sprints: [],
     currentSprint: null,

@@ -3,12 +3,13 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import type { ScrumState, Story, Developer } from './types';
-import { sprintStories, availableStories, isSprintOver, deliveredPoints, forecastPoints, changeRequestDue } from './engine';
+import { sprintStories, availableStories, isSprintOver, deliveredPoints, forecastPoints, changeRequestDue, eventDue, currentEventCard } from './engine';
 import { devColor } from './config';
 import { DevBadge } from './DevBadge';
 import { TeamBench } from './TeamBench';
 import { ScrumMasterPanel } from './ScrumMasterPanel';
 import { ChangeRequestPanel } from './ChangeRequestPanel';
+import { EventCardPanel } from './EventCardPanel';
 import { DaySummary } from './DaySummary';
 import { DailyScrum } from './DailyScrum';
 import { BuildCanvas } from './BuildCanvas';
@@ -29,6 +30,7 @@ interface SprintBoardProps {
   onClearImpediment: () => void;
   onAcceptChange: () => void;
   onDeclineChange: () => void;
+  onChooseEvent: (index: number) => void;
   onRunDay: () => void;
   onRunToEnd: () => void;
   onReview: () => void;
@@ -108,7 +110,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
  *  Scrum - assign Developers to the stories they'll swarm, then Run Day. A burndown
  *  tracks remaining work; when the timebox runs out, the Sprint is reviewed. */
-export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onSplitStory, onClearImpediment, onAcceptChange, onDeclineChange, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
+export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onSplitStory, onClearImpediment, onAcceptChange, onDeclineChange, onChooseEvent, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
   const [selectedDevId, setSelectedDevId] = useState<string | null>(null);
   if (!sprint) return null;
@@ -209,6 +211,18 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
           onDecline={onDeclineChange}
           disabled={locked}
         />
+      )}
+
+      {/* ...or a mid-Sprint event-card dilemma to decide on. */}
+      {!canReview && eventDue(state) && currentEventCard(state) && (
+        <EventCardPanel card={currentEventCard(state)!} onChoose={onChooseEvent} disabled={locked} />
+      )}
+
+      {/* The lesson from the last event choice - a one-day debrief. */}
+      {state.eventLesson && (
+        <div className="rounded-lg border border-violet-200 bg-violet-50/70 px-4 py-2 text-xs text-violet-900 dark:border-violet-900/50 dark:bg-violet-950/20 dark:text-violet-200">
+          <strong>Lesson:</strong> {state.eventLesson}
+        </div>
       )}
 
       {/* ...then the team decides who's working on what today */}

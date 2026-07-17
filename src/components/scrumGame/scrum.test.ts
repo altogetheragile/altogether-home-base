@@ -7,7 +7,7 @@ import {
 } from './config';
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME } from './theme';
-import { nextSatisfaction } from './engine';
+import { nextSatisfaction, generateEvent, currentEventCard, chooseEvent } from './engine';
 import {
   planSprint, moveBacklogStory, splitStory, availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
@@ -369,6 +369,40 @@ describe('stakeholders and satisfaction', () => {
     expect(next.trust).toBeLessThan(before.trust); // revenue weight 0 -> neglect decay
     // The Business benefits far more than anyone else from a revenue Sprint.
     expect(next.business - before.business).toBeGreaterThan(next.customers - before.customers);
+  });
+});
+
+describe('event-card dilemmas', () => {
+  it('generateEvent is deterministic, and some Sprints have a card', () => {
+    for (let n = 1; n <= 5; n++) expect(generateEvent(n, 9)).toEqual(generateEvent(n, 9));
+    const some = Array.from({ length: 12 }, (_, i) => generateEvent(i + 1, 9));
+    expect(some.some((x) => x !== null)).toBe(true);
+  });
+
+  it('choosing an event applies its effects (satisfaction shift and any scope injection)', () => {
+    // Find a Sprint whose event injects scope, and plan it so the card is live.
+    let n = 1;
+    const injects = (id: string | null) => {
+      if (!id) return false;
+      const card = ACTIVE_THEME.events.find((e) => e.id === id)!;
+      return card.choices.some((c) => c.effects.scopeInjection);
+    };
+    while (n < 40 && !injects(generateEvent(n, 9)?.cardId ?? null)) n++;
+    const ev = generateEvent(n, 9)!;
+    let s = initialScrumState();
+    for (let k = 1; k < n; k++) s = startNextSprint(reviewSprint(planSprint(s, 'x', [])), 'i');
+    s = planSprint(s, 'g', ['s3']);
+    expect(s.currentEvent?.cardId).toBe(ev.cardId);
+    const card = currentEventCard(s)!;
+    const idx = card.choices.findIndex((c) => c.effects.scopeInjection);
+    const inject = card.choices[idx].effects.scopeInjection!;
+    const before = { ...s.satisfaction };
+    s = chooseEvent(s, idx);
+    expect(s.currentEvent).toBeNull();
+    expect(s.eventLesson).toBe(card.choices[idx].lesson);
+    expect(sprintStories(s, s.sprints.length + 1).some((x) => x.id === inject)).toBe(true); // pulled in
+    // At least one stakeholder moved.
+    expect(Object.keys(before).some((id) => s.satisfaction[id] !== before[id])).toBe(true);
   });
 });
 
