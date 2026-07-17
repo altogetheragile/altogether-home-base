@@ -2,7 +2,7 @@ import type { ScrumState } from './types';
 import { devColor, IMPEDIMENT_EFFECT } from './config';
 import { DevBadge } from './DevBadge';
 import { cn } from '@/lib/utils';
-import { PartyPopper, AlertTriangle } from 'lucide-react';
+import { PartyPopper, AlertTriangle, Scissors } from 'lucide-react';
 
 interface DaySummaryProps {
   state: ScrumState;
@@ -48,6 +48,13 @@ export function DaySummary({ state }: DaySummaryProps) {
           );
         })()}
       </div>
+
+      {last.refinementCost > 0 && (
+        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Scissors className="h-3.5 w-3.5" />
+          Refinement took {last.refinementCost} effort off today - splitting mid-Sprint is real work.
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         {[...byStory.entries()].map(([storyId, list]) => {

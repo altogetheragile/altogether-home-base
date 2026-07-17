@@ -170,6 +170,14 @@ export const SPLIT_MAP: Record<number, [number, number]> = {
   8: [5, 3],
 };
 
+/** Effort a mid-Sprint split costs the team. Refinement is legitimate, ongoing
+ *  work, but doing it DURING a Sprint takes a little of the team's time away from
+ *  the Sprint Goal - so each split charges this against the next Run Day. Kept
+ *  small: refinement should be a light, steady habit, not a Sprint-wrecking tax.
+ *  (Refinement done in the dedicated Refinement step between Sprints is free - it
+ *  happens outside the running Sprint's capacity.) */
+export const REFINE_COST = 2;
+
 /** Whether a story is small enough to be Ready to pull into a Sprint. */
 export const isReady = (points: number): boolean => points <= REFINE_MAX;
 

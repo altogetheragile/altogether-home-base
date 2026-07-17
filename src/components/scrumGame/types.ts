@@ -95,6 +95,10 @@ export interface Sprint {
   /** Days on which an impediment went unaddressed and so cost the full amount - the
    *  avoidable share, and a measure of how well the Scrum Master kept the way clear. */
   impedimentsIgnored: number;
+  /** Effort the team owes to refinement done DURING this Sprint (splitting a big
+   *  Backlog item mid-Sprint). It is charged against - and reduces - the next Run
+   *  Day's output, then cleared: refinement is real work that takes team time. */
+  refinementLoad: number;
 }
 
 /** An emergent need the Product Owner raises mid-Sprint - the classic "something
@@ -126,10 +130,14 @@ export interface DaySummary {
   rolls: { devId: string; storyId: string; roll: number }[];
   /** Story ids that reached Done on this day. */
   completed: string[];
+  /** Effort this day lost to refinement carried in from mid-Sprint splitting (0 if
+   *  none) - so the board can show that refinement took some of the team's time. */
+  refinementCost: number;
 }
 
 export type ScrumPhase =
   | 'intro'
+  | 'refine'     // Product Backlog Refinement: ready the Backlog before planning
   | 'planning'   // Sprint Planning: forecast stories against velocity
   | 'sprint'     // daily execution (Daily Scrum + Run Day)
   | 'review'     // Sprint Review: forecast vs actual, Increment

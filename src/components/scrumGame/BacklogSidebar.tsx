@@ -24,7 +24,7 @@ export function BacklogSidebar({ state, onAddToSprint, onSplitStory, disabled }:
         <h2 className="text-sm font-semibold">Product Backlog</h2>
         <span className="font-mono text-[11px] text-muted-foreground">{items.length}</span>
       </div>
-      <p className="mb-2 text-[11px] text-muted-foreground">Pull a Ready item onto the board. Refine big ones (over {REFINE_MAX}) by splitting - that's ongoing, not a Planning step.</p>
+      <p className="mb-2 text-[11px] text-muted-foreground">Pull a Ready item onto the board. Refine big ones (over {REFINE_MAX}) by splitting - ongoing work, but mid-Sprint it takes a little of the team's time from the next day.</p>
       <div className="space-y-1.5">
         {items.length === 0 && <p className="text-xs text-muted-foreground/60">The Backlog is empty.</p>}
         {items.map((s) =>

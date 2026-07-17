@@ -8,7 +8,7 @@ import { planSprint, moveBacklogStory, splitStory, startStory, addToSprint, assi
 function reducer(state: ScrumState, action: ScrumAction): ScrumState {
   switch (action.type) {
     case 'START':
-      return { ...state, phase: 'planning' };
+      return { ...state, phase: 'refine' };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
     case 'SET_TEAM':
