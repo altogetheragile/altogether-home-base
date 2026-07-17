@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useScrumGame } from '@/components/scrumGame/useScrumGame';
 import { ScrumIntro } from '@/components/scrumGame/ScrumIntro';
 import { RefinementScreen } from '@/components/scrumGame/RefinementScreen';
@@ -17,6 +18,12 @@ export default function ScrumGame() {
     clearImpediment, acceptChange, declineChange, chooseEvent, runDay, runToEnd, reviewSprint,
     nextSprint, endGame, reset,
   } = useScrumGame();
+
+  // Each phase is its own screen, so start it at the top - otherwise moving from a
+  // long screen (Refinement, Planning) into the next lands mid-page, scrolled down.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [state.phase]);
 
   const renderPhase = () => {
     switch (state.phase) {
