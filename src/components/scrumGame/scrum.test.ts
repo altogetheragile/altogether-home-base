@@ -3,7 +3,7 @@ import {
   initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue,
   sprintCapacity, averageVelocity, CAPACITY_PER_DEV_DAY, improvementBonus, RETRO_IMPROVEMENTS,
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM, SPRINT_LENGTH_OPTIONS, DEV_DAY_RATIO,
-  suggestSprintGoal,
+  suggestSprintGoal, REFINE_COST,
 } from './config';
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME } from './theme';
@@ -296,6 +296,28 @@ describe('the Product Owner: ordering and change requests', () => {
     expect(s.productBacklog.length).toBe(base.productBacklog.length + 1);
   });
 
+  it('splitting during Refinement (before a Sprint runs) is free - nothing to charge', () => {
+    const base = initialScrumState();
+    const big = base.productBacklog.find((s) => s.points === 21)!;
+    expect(splitStory(base, big.id).currentSprint).toBeNull();
+  });
+
+  it('splitting mid-Sprint charges refinement effort against the next Run Day, then clears it', () => {
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
+    const big = availableStories(s).find((x) => x.points === 21)!; // still in the Backlog
+    s = splitStory(s, big.id);
+    expect(s.currentSprint!.refinementLoad).toBe(REFINE_COST);
+    s = runSprintDay(s);
+    expect(s.lastDay!.refinementCost).toBeGreaterThan(0); // refinement took some of the day
+    expect(s.currentSprint!.refinementLoad).toBe(0); // charged and cleared
+  });
+
+  it('a Run Day with no mid-Sprint refinement costs the team nothing', () => {
+    let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
+    s = runSprintDay(s);
+    expect(s.lastDay!.refinementCost).toBe(0);
+  });
+
   it('moveBacklogStory re-prioritises an unplanned story', () => {
     const before = availableStories(initialScrumState()).map((x) => x.id);
     const s = moveBacklogStory(initialScrumState(), before[1], 'up');
@@ -505,7 +527,7 @@ describe('review and retrospective', () => {
     expect(improvementBonus(['a', 'b', 'c', 'd'])).toBe(2); // capped
   });
 
-  it('startNextSprint carries the improvement, files the sprint, and returns to planning', () => {
+  it('startNextSprint carries the improvement, files the sprint, and returns to Planning (no refine step between Sprints)', () => {
     let s = reviewSprint(swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3'));
     s = startNextSprint(s, RETRO_IMPROVEMENTS[0]);
     expect(s.phase).toBe('planning');

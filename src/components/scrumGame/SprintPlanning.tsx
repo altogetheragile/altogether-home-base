@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ScrumState, Story, Developer, Criterion } from './types';
 import { availableStories } from './engine';
-import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, isReady, isSplittable, REFINE_MAX, suggestSprintGoal } from './config';
+import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, isReady, REFINE_MAX, suggestSprintGoal } from './config';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { ScrumDodEditor } from './ScrumDodEditor';
@@ -12,7 +12,7 @@ import { learningFor } from './learning';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Plus, X, ChevronUp, ChevronDown, AlertTriangle, Scissors, Wand2 } from 'lucide-react';
+import { Plus, X, ChevronUp, ChevronDown, Lock, Wand2 } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ScrumState;
@@ -20,14 +20,16 @@ interface SprintPlanningProps {
   onSetTeam: (team: Developer[]) => void;
   onSetDod: (dod: Criterion[]) => void;
   onMoveStory: (storyId: string, dir: 'up' | 'down') => void;
-  onSplitStory: (storyId: string) => void;
-  onBack: () => void;
+  /** Back to the initial Refinement step - only offered before the first Sprint;
+   *  later Sprints refine on the board during the Sprint, so there is no step to
+   *  go back to. */
+  onBack?: () => void;
 }
 
 /** Sprint Planning: name the Sprint Goal and forecast stories from the Product
  *  Backlog into the Sprint, watching the forecast against capacity/velocity so an
  *  over-commitment is visible before you make it. */
-export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveStory, onSplitStory, onBack }: SprintPlanningProps) {
+export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveStory, onBack }: SprintPlanningProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -66,7 +68,7 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
     <div className="mx-auto w-full max-w-4xl px-4 py-8 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Sprint {sprintNumber} Planning</h1>
-        <Button variant="outline" size="sm" onClick={onBack}>Back</Button>
+        {onBack && <Button variant="outline" size="sm" onClick={onBack}>Back</Button>}
       </div>
 
       {/* Product Goal - a plain statement on Sprint 1, a progress bar once value
@@ -179,7 +181,7 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
         <section className="space-y-2">
           <h2 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({remaining.length})</span></h2>
           <p className="text-[11px] text-muted-foreground">
-            Ordered by the Product Owner ({state.productOwner}). Select from the Ready items (this is the "what" of Planning). Items over {REFINE_MAX} points aren't Ready - refine them by splitting on the board during the Sprint, not here.
+            Ordered by the Product Owner ({state.productOwner}). Select from the Ready items (this is the "what" of Planning). Items over {REFINE_MAX} points aren't Ready - refine those in the Refinement step or on the board, not here.
           </p>
           <div className="space-y-1.5">
             {remaining.length === 0 && <p className="text-xs text-muted-foreground/60">Everything's been pulled into the Sprint.</p>}
@@ -209,20 +211,17 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
                   {isReady(s.points) ? (
                     <Row s={s} action="add" />
                   ) : (
-                    /* Not Ready: too big to commit. You can refine it (split) here,
-                       before starting the Sprint - but it can't be selected until it is. */
-                    <button
-                      type="button"
-                      onClick={() => onSplitStory(s.id)}
-                      disabled={!isSplittable(s.points)}
-                      title="Not Ready - split it to refine before you start"
-                      className="flex w-full items-center gap-2 rounded-md border border-dashed border-amber-300 bg-amber-50/60 px-2.5 py-1.5 text-left text-sm hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/50 dark:bg-amber-950/20"
+                    /* Not Ready: too big to commit. Planning selects Ready items only -
+                       refinement happens in its own step and on the board, not here. */
+                    <div
+                      title="Not Ready - refine it in the Refinement step or on the board"
+                      className="flex w-full items-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-2.5 py-1.5 text-left text-sm"
                     >
-                      <Scissors className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" />
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
                       <span className="flex-1 truncate text-muted-foreground">{s.title}</span>
-                      <span className="flex items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-400"><AlertTriangle className="h-3 w-3" /> refine</span>
-                      <span className="shrink-0 font-mono text-xs">{s.points} pts</span>
-                    </button>
+                      <span className="text-[10px] font-medium text-muted-foreground">not Ready</span>
+                      <span className="shrink-0 font-mono text-xs text-muted-foreground">{s.points} pts</span>
+                    </div>
                   )}
                 </div>
               </div>

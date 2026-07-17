@@ -2,13 +2,12 @@ import { Button } from '@/components/ui/button';
 
 interface ScrumIntroProps {
   productGoal: string;
-  sprintLength: number;
   onStart: () => void;
 }
 
 /** Landing screen for the Scrum simulation. Sets up the loop and the three
  *  artifact commitments before play begins. */
-export function ScrumIntro({ productGoal, sprintLength, onStart }: ScrumIntroProps) {
+export function ScrumIntro({ productGoal, onStart }: ScrumIntroProps) {
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-4xl flex-col items-center justify-center gap-6 px-4 py-8 text-center">
       <div className="space-y-2">
@@ -24,7 +23,8 @@ export function ScrumIntro({ productGoal, sprintLength, onStart }: ScrumIntroPro
         <div className="space-y-2 rounded-lg bg-muted/50 p-5">
           <h2 className="text-lg font-semibold">How it works</h2>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li><strong>Sprint Planning:</strong> forecast stories from the Product Backlog into a two-week Sprint (~{sprintLength} development days once its events are accounted for).</li>
+            <li><strong>Refine the Backlog:</strong> ready it just enough to start - then keep refining a little during each Sprint, as much as it needs.</li>
+            <li><strong>Sprint Planning:</strong> forecast Ready stories into a Sprint - you choose its length (one, two, or four weeks), and the events take their share of it.</li>
             <li><strong>Each day is a Daily Scrum:</strong> the Scrum Master clears impediments, the team decides who works on what, then run the day.</li>
             <li><strong>Sprint Review:</strong> what met the Definition of Done? Forecast vs actual.</li>
             <li><strong>Retrospective:</strong> pick one improvement to carry into the next Sprint.</li>
@@ -48,7 +48,7 @@ export function ScrumIntro({ productGoal, sprintLength, onStart }: ScrumIntroPro
       </div>
 
       <Button size="lg" onClick={onStart} className="px-8 py-6 text-lg">
-        Start Sprint Planning
+        Start
       </Button>
     </div>
   );

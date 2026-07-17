@@ -74,6 +74,12 @@ export const LEARNING: Record<string, LearningPoint> = {
     title: 'One long-term objective',
     body: 'The Product Goal is the team\'s long-term objective. The Product Backlog is ordered toward it, and every Sprint should move the product closer.',
   },
+  refinement: {
+    id: 'refinement',
+    area: 'Scrum Artifacts',
+    title: 'Refinement readies the Backlog',
+    body: 'Product Backlog Refinement breaks items down and adds detail so they are small, clear and Ready before Planning. It is an ongoing activity, not a formal event - a little each Sprint - and the team needs a rough Backlog to refine before the first Sprint even starts.',
+  },
 };
 
 /** Look up a learning point by its trigger key. */

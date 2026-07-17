@@ -1,5 +1,6 @@
 import { useScrumGame } from '@/components/scrumGame/useScrumGame';
 import { ScrumIntro } from '@/components/scrumGame/ScrumIntro';
+import { RefinementScreen } from '@/components/scrumGame/RefinementScreen';
 import { SprintPlanning } from '@/components/scrumGame/SprintPlanning';
 import { SprintBoard } from '@/components/scrumGame/SprintBoard';
 import { SprintReview } from '@/components/scrumGame/SprintReview';
@@ -20,9 +21,11 @@ export default function ScrumGame() {
   const renderPhase = () => {
     switch (state.phase) {
       case 'intro':
-        return <ScrumIntro productGoal={state.productGoal} sprintLength={state.sprintLength} onStart={start} />;
+        return <ScrumIntro productGoal={state.productGoal} onStart={start} />;
+      case 'refine':
+        return <RefinementScreen state={state} onMoveStory={moveStory} onSplitStory={splitStory} onPlan={() => setPhase('planning')} onBack={state.sprints.length === 0 ? () => setPhase('intro') : undefined} />;
       case 'planning':
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onSplitStory={splitStory} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onBack={state.sprints.length === 0 ? () => setPhase('refine') : undefined} />;
       case 'sprint':
         return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onSplitStory={splitStory} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onChooseEvent={chooseEvent} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
       case 'review':
@@ -32,7 +35,7 @@ export default function ScrumGame() {
       case 'final':
         return <ScrumFinal state={state} onReset={reset} />;
       default:
-        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onSplitStory={splitStory} onBack={() => setPhase('intro')} />;
+        return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onBack={state.sprints.length === 0 ? () => setPhase('refine') : undefined} />;
     }
   };
 

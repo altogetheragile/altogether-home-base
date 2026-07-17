@@ -3,7 +3,7 @@ import {
   SPRINT_SEED, totalPoints, totalValue, improvementBonus,
   IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT, BLOCKER_RESOLVE_DAYS,
   CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS, PRODUCT_GOAL_THRESHOLD,
-  SPLIT_MAP, isSplittable,
+  SPLIT_MAP, isSplittable, REFINE_COST,
 } from './config';
 import { ACTIVE_THEME } from './theme';
 
@@ -51,6 +51,7 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     burndown: [startPoints], // day 0: the full commitment
     impedimentsHit: 0,
     impedimentsIgnored: 0,
+    refinementLoad: 0,
   };
   const changeRequest = generateChangeRequest(number, sprint.length);
   // A new Sprint starts with everyone on the bench and day 1's impediment (if any)
@@ -98,7 +99,12 @@ export function moveBacklogStory(state: ScrumState, storyId: string, dir: 'up' |
 /** Product Backlog Refinement: split a too-big, still-in-the-Backlog item into two
  *  smaller items in its place. Decomposition is the core refinement skill - small
  *  items are Ready and flow; big ones tend not to finish. Points split per the
- *  SPLIT_MAP; value splits proportionally so the total value is preserved. */
+ *  SPLIT_MAP; value splits proportionally so the total value is preserved.
+ *
+ *  When a Sprint is running, the split is refinement done mid-Sprint, so it charges
+ *  the team a little effort (REFINE_COST) against the next Run Day - real work takes
+ *  real time. In the dedicated Refinement step between Sprints there is no running
+ *  Sprint, so it is free. */
 export function splitStory(state: ScrumState, storyId: string): ScrumState {
   const i = state.productBacklog.findIndex((s) => s.id === storyId);
   if (i < 0) return state;
@@ -112,7 +118,12 @@ export function splitStory(state: ScrumState, storyId: string): ScrumState {
   ];
   const productBacklog = [...state.productBacklog];
   productBacklog.splice(i, 1, ...parts);
-  return { ...state, productBacklog };
+  // Charge the refinement to the running Sprint (if any). Free otherwise.
+  const sprint = state.currentSprint;
+  const currentSprint = sprint && sprint.status === 'active'
+    ? { ...sprint, refinementLoad: sprint.refinementLoad + REFINE_COST }
+    : sprint;
+  return { ...state, productBacklog, currentSprint };
 }
 
 // ============= Execution =============
@@ -391,6 +402,25 @@ export function runSprintDay(state: ScrumState): ScrumState {
     for (const [id, e] of effortByStory) effortByStory.set(id, Math.floor(e * impFactor * dayWeight));
   }
 
+  // Refinement done mid-Sprint takes some of the team's time: any load the team ran
+  // up by splitting big items is charged against today's output, spread across the
+  // work in progress, then cleared. Refinement is legitimate work - it just isn't free.
+  let refinementCost = 0;
+  if (sprint.refinementLoad > 0 && effortByStory.size > 0) {
+    const total = [...effortByStory.values()].reduce((a, b) => a + b, 0);
+    if (total > 0) {
+      const spend = Math.min(sprint.refinementLoad, total);
+      const factor = (total - spend) / total;
+      let after = 0;
+      for (const [id, e] of effortByStory) {
+        const reduced = Math.floor(e * factor);
+        effortByStory.set(id, reduced);
+        after += reduced;
+      }
+      refinementCost = total - after;
+    }
+  }
+
   const finished: string[] = [];
   const productBacklog = state.productBacklog.map((s) => {
     const work = effortByStory.get(s.id);
@@ -422,6 +452,7 @@ export function runSprintDay(state: ScrumState): ScrumState {
     burndown: [...sprint.burndown, remaining],
     impedimentsHit: sprint.impedimentsHit + hit,
     impedimentsIgnored: sprint.impedimentsIgnored + ignored,
+    refinementLoad: 0, // charged for today; a fresh split will build it up again
   };
   // A blocker persists across days: escalating it (addressed) counts it down and it
   // lifts once resolved; ignoring it keeps it (and its full cost) tomorrow. A
@@ -445,6 +476,7 @@ export function runSprintDay(state: ScrumState): ScrumState {
     impediment: imp && working ? { kind: imp.kind, addressed: imp.addressed } : null,
     rolls,
     completed: finished,
+    refinementCost,
   };
   // The event lesson is a one-day debrief; clear it as the next day starts.
   return { ...state, currentSprint: next, productBacklog, assignments, currentImpediment, lastDay, eventLesson: null };
@@ -551,7 +583,10 @@ export function reviewSprint(state: ScrumState): ScrumState {
 }
 
 /** After the Retrospective: carry the chosen improvement forward, file the Sprint
- *  in history, and open planning for the next one. */
+ *  in history, and open Planning for the next one. There is no separate refinement
+ *  step between Sprints - the team refined the Backlog DURING the Sprint just gone
+ *  (ongoing, on the board), so it goes straight to Planning. The dedicated
+ *  Refinement step is a one-time bootstrap: just enough Backlog to start Sprint 1. */
 export function startNextSprint(state: ScrumState, improvement: string): ScrumState {
   const sprint = state.currentSprint;
   return {
