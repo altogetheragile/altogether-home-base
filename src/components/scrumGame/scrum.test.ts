@@ -6,7 +6,7 @@ import {
   suggestSprintGoal, REFINE_COST, FIBONACCI, nearestFib, storyReady,
 } from './config';
 import { learningFor, LEARNING } from './learning';
-import { ACTIVE_THEME } from './theme';
+import { ACTIVE_THEME, THEMES, getTheme, bookingTheme, missionTheme } from './theme';
 import { nextSatisfaction, generateEvent, currentEventCard, chooseEvent } from './engine';
 import {
   planSprint, moveBacklogStory, splitStory, estimateStory, pokerHand, estimateSuggestion,
@@ -486,6 +486,52 @@ describe('event-card dilemmas', () => {
     expect(sprintStories(s, s.sprints.length + 1).some((x) => x.id === inject)).toBe(true); // pulled in
     // At least one stakeholder moved.
     expect(Object.keys(before).some((id) => s.satisfaction[id] !== before[id])).toBe(true);
+  });
+});
+
+describe('themes: one engine, many skins', () => {
+  it('every theme is well-formed (12 items, conflicting stakeholders, events, un-sized slots)', () => {
+    for (const t of THEMES) {
+      expect(t.items.length).toBe(12);
+      expect(t.stakeholders.length).toBeGreaterThanOrEqual(2);
+      expect(t.events.length).toBeGreaterThan(0);
+      expect(t.items.some((i) => i.unsized)).toBe(true);
+      // Every event's scope injection points at a real item in the same theme.
+      const ids = new Set(t.items.map((i) => i.id));
+      for (const ev of t.events) {
+        for (const c of ev.choices) {
+          if (c.effects.scopeInjection) expect(ids.has(c.effects.scopeInjection)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('getTheme resolves ids and falls back to booking', () => {
+    expect(getTheme('mission')).toBe(missionTheme);
+    expect(getTheme('booking')).toBe(bookingTheme);
+    expect(getTheme('nope')).toBe(bookingTheme);
+  });
+
+  it('initialScrumState skins the whole game from the chosen theme', () => {
+    const m = initialScrumState('mission');
+    expect(m.theme.id).toBe('mission');
+    expect(m.productGoal).toBe(missionTheme.productGoal);
+    expect(m.productBacklog.map((s) => s.id)).toEqual(missionTheme.items.map((i) => i.id));
+    // Satisfaction is seeded for the mission stakeholders, not the booking ones.
+    for (const sh of missionTheme.stakeholders) expect(m.satisfaction[sh.id]).toBe(50);
+    expect(m.satisfaction.business).toBeUndefined();
+  });
+
+  it('the mission theme plays through the same engine: satisfaction and events resolve from it', () => {
+    // Deliver a propulsion item (Main engine, m2) and Mission Control should rise.
+    let s = swarm(planSprint(initialScrumState('mission'), 'g', ['m2']), 'm2'); // m2 = Main engine, propulsion
+    s = runUntilDone(s, 'm2');
+    const before = { ...s.satisfaction };
+    const next = nextSatisfaction(s, 1);
+    expect(next.mission).toBeGreaterThan(before.mission); // propulsion is Mission Control's agenda
+    // An event drawn while the mission theme is active is one of the mission cards.
+    const ev = generateEvent(1, 9, missionTheme.events);
+    if (ev) expect(missionTheme.events.some((e) => e.id === ev.cardId)).toBe(true);
   });
 });
 

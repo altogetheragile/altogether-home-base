@@ -197,16 +197,17 @@ export interface ScrumState {
   improvements: string[];
   /** Working days per Sprint (the timebox length). */
   sprintLength: number;
-  /** The active theme's display bits - the build metaphor the sim is skinned as
-   *  (so one engine can render Booking, Theme Park, Rocket, and so on). */
-  theme: { name: string; buildMetaphor: string; valueLabel: string };
+  /** The active theme's id and display bits - the build metaphor the sim is skinned
+   *  as. The engine resolves the full theme (stakeholders, events) from this id, so
+   *  one engine can render Booking, Mission: Orbit, and so on. */
+  theme: { id: string; name: string; buildMetaphor: string; valueLabel: string };
   /** Each stakeholder's satisfaction (0-100), moved at the Review by what shipped
    *  against their agenda. The prioritisation tension made visible. */
   satisfaction: Record<string, number>;
 }
 
 export type ScrumAction =
-  | { type: 'START' }
+  | { type: 'START'; themeId?: string }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
   | { type: 'SET_TEAM'; team: Developer[] }
   | { type: 'SET_DOD'; dod: Criterion[] }

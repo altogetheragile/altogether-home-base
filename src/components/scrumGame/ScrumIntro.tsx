@@ -1,13 +1,20 @@
+import { useState } from 'react';
+import { THEMES } from './theme';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface ScrumIntroProps {
-  productGoal: string;
-  onStart: () => void;
+  /** Start the game with the chosen theme. */
+  onStart: (themeId: string) => void;
 }
 
 /** Landing screen for the Scrum simulation. Sets up the loop and the three
- *  artifact commitments before play begins. */
-export function ScrumIntro({ productGoal, onStart }: ScrumIntroProps) {
+ *  artifact commitments, and lets the player pick a theme - the same engine,
+ *  a different skin. */
+export function ScrumIntro({ onStart }: ScrumIntroProps) {
+  const [themeId, setThemeId] = useState(THEMES[0].id);
+  const theme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
+
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-4xl flex-col items-center justify-center gap-6 px-4 py-8 text-center">
       <div className="space-y-2">
@@ -42,12 +49,35 @@ export function ScrumIntro({ productGoal, onStart }: ScrumIntroProps) {
         </div>
       </div>
 
+      {/* Theme picker - the same engine, a different product to build. */}
+      {THEMES.length > 1 && (
+        <div className="w-full space-y-2 text-left">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Choose what to build</div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setThemeId(t.id)}
+                className={cn(
+                  'rounded-lg border p-4 text-left transition-colors',
+                  t.id === themeId ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:border-primary/50 hover:bg-muted/50',
+                )}
+              >
+                <div className="text-sm font-semibold">{t.name}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{t.buildMetaphor}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-2xl rounded-lg border border-primary/30 bg-primary/5 px-5 py-3 text-left">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
-        <p className="text-sm font-medium">{productGoal}</p>
+        <p className="text-sm font-medium">{theme.productGoal}</p>
       </div>
 
-      <Button size="lg" onClick={onStart} className="px-8 py-6 text-lg">
+      <Button size="lg" onClick={() => onStart(themeId)} className="px-8 py-6 text-lg">
         Start
       </Button>
     </div>

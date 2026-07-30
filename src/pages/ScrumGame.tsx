@@ -28,7 +28,7 @@ export default function ScrumGame() {
   const renderPhase = () => {
     switch (state.phase) {
       case 'intro':
-        return <ScrumIntro productGoal={state.productGoal} onStart={start} />;
+        return <ScrumIntro onStart={start} />;
       case 'refine':
         return <RefinementScreen state={state} onMoveStory={moveStory} onSplitStory={splitStory} onEstimate={estimateStory} onPlan={() => setPhase('planning')} onBack={state.sprints.length === 0 ? () => setPhase('intro') : undefined} />;
       case 'planning':
