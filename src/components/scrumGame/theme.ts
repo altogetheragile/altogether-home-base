@@ -84,6 +84,10 @@ export interface ThemeConfig {
   stakeholders: Stakeholder[];
   /** Mid-Sprint dilemmas - drawn occasionally, never with a right answer. */
   events: EventCard[];
+  /** A short "so that ..." outcome per item tag, used to pre-fill the value clause
+   *  of a suggested Sprint Goal ("...so that customers can book with confidence").
+   *  The player refines it - it is a scaffold, not the finished Goal. */
+  tagOutcomes: Record<string, string>;
 }
 
 /** THEME 1 - the booking platform the sim shipped with, now expressed as data. */
@@ -169,6 +173,15 @@ export const bookingTheme: ThemeConfig = {
       ],
     },
   ],
+  tagOutcomes: {
+    discovery: 'customers can find the right slot quickly',
+    core: 'customers can book with confidence',
+    manage: 'customers can manage their own bookings',
+    retention: 'customers keep coming back',
+    revenue: 'the business grows revenue',
+    quality: 'everything we ship is safe and accessible',
+    ops: 'the team can run the service smoothly',
+  },
 };
 
 /** THEME 2 - a crewed spaceflight, proving the engine is skin-agnostic. Same
@@ -258,6 +271,16 @@ export const missionTheme: ThemeConfig = {
       ],
     },
   ],
+  tagOutcomes: {
+    avionics: 'the vehicle can fly itself accurately',
+    propulsion: 'the vehicle can reach orbit',
+    comms: 'the ground can stay in contact',
+    crew: 'the crew can live and work aboard',
+    ops: 'mission control can run the flight smoothly',
+    safety: 'the crew comes home safely',
+    power: 'the spacecraft has the power it needs',
+    science: 'the mission returns real science',
+  },
 };
 
 /** Every theme the sim can run. Adding one here makes it selectable at the intro

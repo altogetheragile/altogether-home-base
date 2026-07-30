@@ -131,6 +131,11 @@ book. The committed baseline (`committedStoryIds`) stays fixed for scoring.
   stakeholder moves by the value of the Increment weighted by their `tagWeights`,
   or decays by `neglectDecay` if nothing on their agenda shipped. Conflicting
   weights are the prioritisation tension.
+- **Sprint Goal suggestion.** Planning's "Suggest from selection" drafts an
+  outcome-shaped Goal: "Our goal is to deliver [capability] so that [value]". The
+  capability is the selected item titles; the value clause is pre-filled from the
+  selection's dominant (highest-value) tag via the theme's `tagOutcomes` map. It is
+  a scaffold the player refines, not the finished Goal.
 - **Estimation.** Some theme items start un-sized (`unsized: true`); the team
   sizes them before they are Ready. `FIBONACCI = [1,2,3,5,8,13,21]`. Planning
   poker (`pokerHand`) reveals a deterministic card per Developer, clustered around

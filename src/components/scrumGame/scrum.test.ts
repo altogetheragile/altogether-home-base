@@ -3,7 +3,7 @@ import {
   initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue,
   sprintCapacity, averageVelocity, CAPACITY_PER_DEV_DAY, improvementBonus, RETRO_IMPROVEMENTS,
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM, SPRINT_LENGTH_OPTIONS, DEV_DAY_RATIO,
-  suggestSprintGoal, REFINE_COST, FIBONACCI, nearestFib, storyReady,
+  suggestSprintGoal, dominantTag, REFINE_COST, FIBONACCI, nearestFib, storyReady,
 } from './config';
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME, THEMES, getTheme, bookingTheme, missionTheme } from './theme';
@@ -75,11 +75,26 @@ describe('scrum game scaffold', () => {
     expect(totalValue(stories)).toBe(PRODUCT_BACKLOG.reduce((n, s) => n + s.value, 0));
   });
 
-  it('suggestSprintGoal drafts a goal from the selected items', () => {
+  it('suggestSprintGoal drafts an outcome-shaped goal with a tag-derived value clause', () => {
     expect(suggestSprintGoal([])).toBe('');
-    expect(suggestSprintGoal([{ title: 'Book a slot' }])).toBe('Deliver Book a slot');
-    expect(suggestSprintGoal([{ title: 'Browse' }, { title: 'Book' }, { title: 'Pay' }]))
-      .toBe('Deliver Browse, Book and Pay');
+    const outcomes = { core: 'customers can book with confidence', revenue: 'the business grows revenue' };
+    // The capability comes from the items (lower-cased into the sentence); the value
+    // clause is pre-filled from the selection's dominant (highest-value) tag.
+    expect(suggestSprintGoal([{ title: 'Book a slot', value: 10, tags: ['core'] }], outcomes))
+      .toBe('Our goal is to deliver book a slot so that customers can book with confidence');
+    expect(suggestSprintGoal(
+      [{ title: 'Browse', value: 8, tags: ['core'] }, { title: 'Pay', value: 9, tags: ['revenue'] }],
+      outcomes,
+    )).toBe('Our goal is to deliver browse and pay so that the business grows revenue'); // revenue 9 > core 8
+    // Falls back gracefully when the selection has no known tag outcome.
+    expect(suggestSprintGoal([{ title: 'Admin', value: 5, tags: ['ops'] }], outcomes))
+      .toBe('Our goal is to deliver admin so that we move closer to the Product Goal');
+  });
+
+  it('dominantTag picks the highest-value agenda in a selection', () => {
+    expect(dominantTag([])).toBeNull();
+    expect(dominantTag([{ value: 8, tags: ['core'] }, { value: 3, tags: ['revenue'] }])).toBe('core');
+    expect(dominantTag([{ value: 3, tags: ['core'] }, { value: 9, tags: ['revenue'] }])).toBe('revenue');
   });
 
   it('makeDeveloper derives distinct two-letter initials', () => {
@@ -502,6 +517,11 @@ describe('themes: one engine, many skins', () => {
         for (const c of ev.choices) {
           if (c.effects.scopeInjection) expect(ids.has(c.effects.scopeInjection)).toBe(true);
         }
+      }
+      // Every tag an item uses has an outcome clause, so a suggested Goal always
+      // has a value to pre-fill.
+      for (const it of t.items) {
+        for (const tag of it.tags ?? []) expect(t.tagOutcomes[tag]).toBeTruthy();
       }
     }
   });
