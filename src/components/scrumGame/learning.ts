@@ -80,6 +80,12 @@ export const LEARNING: Record<string, LearningPoint> = {
     title: 'Refinement readies the Backlog',
     body: 'Product Backlog Refinement breaks items down and adds detail so they are small, clear and Ready before Planning. It is an ongoing activity, not a formal event - a little each Sprint - and the team needs a rough Backlog to refine before the first Sprint even starts.',
   },
+  estimation: {
+    id: 'estimation',
+    area: 'Scrum Artifacts',
+    title: 'The doers estimate, by relative size',
+    body: 'The Developers who will do the work estimate its size, because they know it best - not a manager. Estimate in relative points, not hours: people are poor at absolute time but good at "bigger than". Planning poker surfaces different views so the team can discuss and agree. The estimate is a forecast, and velocity makes forecasts honest over time.',
+  },
 };
 
 /** Look up a learning point by its trigger key. */

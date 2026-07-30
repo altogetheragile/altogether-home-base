@@ -1,6 +1,7 @@
 import type { ScrumState } from './types';
 import { availableStories } from './engine';
-import { isReady, isSplittable, REFINE_MAX } from './config';
+import { isSplittable, REFINE_MAX, storyReady } from './config';
+import { PlanningPoker } from './PlanningPoker';
 import { Plus, Scissors, AlertTriangle } from 'lucide-react';
 
 interface BacklogSidebarProps {
@@ -9,13 +10,15 @@ interface BacklogSidebarProps {
   onAddToSprint: (storyId: string) => void;
   /** Split a too-big item - ongoing refinement, done during the Sprint. */
   onSplitStory: (storyId: string) => void;
+  /** Estimate an un-sized item - the Developers can still size it mid-Sprint. */
+  onEstimate: (storyId: string, points: number) => void;
   disabled?: boolean;
 }
 
 /** The Product Backlog, always on the right - pull Ready items onto the board, and
  *  refine (split) the too-big ones here, during the Sprint, so they become Ready
  *  for a future Sprint. Refinement is continuous; it does not belong in Planning. */
-export function BacklogSidebar({ state, onAddToSprint, onSplitStory, disabled }: BacklogSidebarProps) {
+export function BacklogSidebar({ state, onAddToSprint, onSplitStory, onEstimate, disabled }: BacklogSidebarProps) {
   const items = availableStories(state);
 
   return (
@@ -24,11 +27,13 @@ export function BacklogSidebar({ state, onAddToSprint, onSplitStory, disabled }:
         <h2 className="text-sm font-semibold">Product Backlog</h2>
         <span className="font-mono text-[11px] text-muted-foreground">{items.length}</span>
       </div>
-      <p className="mb-2 text-[11px] text-muted-foreground">Pull a Ready item onto the board. Refine big ones (over {REFINE_MAX}) by splitting - ongoing work, but mid-Sprint it takes a little of the team's time from the next day.</p>
+      <p className="mb-2 text-[11px] text-muted-foreground">Pull a Ready item onto the board. Estimate un-sized ones, and refine big ones (over {REFINE_MAX}) by splitting - ongoing work, but mid-Sprint it takes a little of the team's time from the next day.</p>
       <div className="space-y-1.5">
         {items.length === 0 && <p className="text-xs text-muted-foreground/60">The Backlog is empty.</p>}
         {items.map((s) =>
-          isReady(s.points) ? (
+          !s.estimated ? (
+            <PlanningPoker key={s.id} state={state} story={s} onEstimate={onEstimate} compact disabled={disabled} />
+          ) : storyReady(s) ? (
             <button
               key={s.id}
               type="button"

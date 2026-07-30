@@ -23,7 +23,7 @@ export function ScrumIntro({ productGoal, onStart }: ScrumIntroProps) {
         <div className="space-y-2 rounded-lg bg-muted/50 p-5">
           <h2 className="text-lg font-semibold">How it works</h2>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li><strong>Refine the Backlog:</strong> ready it just enough to start - then keep refining a little during each Sprint, as much as it needs.</li>
+            <li><strong>Refine the Backlog:</strong> estimate the un-sized items and split the big ones, just enough to start - then keep refining a little during each Sprint, as much as it needs.</li>
             <li><strong>Sprint Planning:</strong> forecast Ready stories into a Sprint - you choose its length (one, two, or four weeks), and the events take their share of it.</li>
             <li><strong>Each day is a Daily Scrum:</strong> the Scrum Master clears impediments, the team decides who works on what, then run the day.</li>
             <li><strong>Sprint Review:</strong> what met the Definition of Done? Forecast vs actual.</li>

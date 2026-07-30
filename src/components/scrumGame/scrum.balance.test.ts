@@ -2,9 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { initialScrumState, sprintCapacity } from './config';
 import {
   planSprint, sprintStories, assignDev, clearImpediment, runSprintDay, isSprintOver,
-  deliveredPoints, reviewSprint, sprintGoalMet,
+  deliveredPoints, reviewSprint, sprintGoalMet, estimateStory,
 } from './engine';
 import type { ScrumState } from './types';
+
+/** Balance is about capacity, not estimation, so start from a fully-sized Backlog:
+ *  size every un-estimated item accurately (estimate = its real effort), leaving the
+ *  points-equal-effort world these scenarios were tuned against. */
+const estimateAllAccurately = (s: ScrumState): ScrumState =>
+  s.productBacklog.filter((x) => !x.estimated).reduce((acc, x) => estimateStory(acc, x.id, x.trueEffort), s);
 
 /** A "good play" autopilot: each Daily Scrum optionally clears the impediment,
  *  then the whole team swarms the single nearest-to-done committed story (minimum
@@ -37,7 +43,7 @@ function commitUpTo(state: ScrumState, budget: number): string[] {
 }
 
 describe('balance: the 2-week Sprint has teeth', () => {
-  const base = initialScrumState();
+  const base = estimateAllAccurately(initialScrumState());
   const cap = sprintCapacity([], base.team.length, base.sprintLength);
 
   it('a right-sized, well-swarmed Sprint meets its Goal', () => {

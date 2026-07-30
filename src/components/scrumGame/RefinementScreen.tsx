@@ -1,7 +1,8 @@
 import type { ScrumState } from './types';
 import { availableStories } from './engine';
-import { isReady, isSplittable, REFINE_MAX } from './config';
+import { isSplittable, REFINE_MAX, storyReady } from './config';
 import { ProductGoalProgress } from './ProductGoalProgress';
+import { PlanningPoker } from './PlanningPoker';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
 import { FloatingBar } from './FloatingBar';
@@ -12,6 +13,7 @@ interface RefinementScreenProps {
   state: ScrumState;
   onMoveStory: (storyId: string, dir: 'up' | 'down') => void;
   onSplitStory: (storyId: string) => void;
+  onEstimate: (storyId: string, points: number) => void;
   /** Move on to Sprint Planning with the refined Backlog. */
   onPlan: () => void;
   /** Back to the intro (only offered before the first Sprint). */
@@ -24,10 +26,11 @@ interface RefinementScreenProps {
  *  to plan Sprint 1. From then on refinement is not a separate step - it is ongoing,
  *  done DURING each Sprint on the board (as much as each Sprint needs), which is
  *  where it costs the running Sprint a little capacity. */
-export function RefinementScreen({ state, onMoveStory, onSplitStory, onPlan, onBack }: RefinementScreenProps) {
+export function RefinementScreen({ state, onMoveStory, onSplitStory, onEstimate, onPlan, onBack }: RefinementScreenProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const items = availableStories(state);
-  const ready = items.filter((s) => isReady(s.points));
+  const ready = items.filter(storyReady);
+  const unsized = items.filter((s) => !s.estimated).length;
   const canPlan = ready.length > 0;
 
   return (
@@ -37,8 +40,9 @@ export function RefinementScreen({ state, onMoveStory, onSplitStory, onPlan, onB
           <h1 className="text-2xl font-bold">Refine the Product Backlog</h1>
           <p className="text-sm text-muted-foreground">
             You need a Backlog to start. Ready it <strong>just enough</strong> to begin Sprint {sprintNumber}:
-            order it, and split the biggest items until a few are <strong>Ready</strong> to pull in. From here
-            on you'll keep refining <strong>during</strong> each Sprint, on the board - as much as each one needs.
+            order it, <strong>estimate</strong> the un-sized items, and split the biggest until a few are
+            <strong> Ready</strong> to pull in. From here on you'll keep refining <strong>during</strong> each
+            Sprint, on the board - as much as each one needs.
           </p>
         </div>
         {onBack && <Button variant="outline" size="sm" onClick={onBack}>Back</Button>}
@@ -53,22 +57,26 @@ export function RefinementScreen({ state, onMoveStory, onSplitStory, onPlan, onB
         </div>
       )}
 
-      <LearningTip point={learningFor('refinement')} />
+      <LearningTip point={learningFor(unsized > 0 ? 'estimation' : 'refinement')} />
 
       <section className="space-y-2">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-sm font-semibold">
             Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span>
           </h2>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            {ready.length} Ready to plan
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            {unsized > 0 && <span className="text-sky-700 dark:text-sky-400">{unsized} to estimate</span>}
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              {ready.length} Ready to plan
+            </span>
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Ordered by the Product Owner ({state.productOwner}). Items over {REFINE_MAX} points aren't Ready -
-          split them here to refine. Refining now, before the Sprint starts, is free; once a Sprint is
-          running, refining on the board takes some of the team's time.
+          Ordered by the Product Owner ({state.productOwner}). Un-sized items need estimating first (the
+          Developers size them). Items over {REFINE_MAX} points aren't Ready - split them to refine.
+          Refining now, before the Sprint starts, is free; once a Sprint is running, refining on the board
+          takes some of the team's time.
         </p>
 
         <div className="space-y-1.5">
@@ -96,7 +104,9 @@ export function RefinementScreen({ state, onMoveStory, onSplitStory, onPlan, onB
                 </button>
               </div>
               <div className="flex-1">
-                {isReady(s.points) ? (
+                {!s.estimated ? (
+                  <PlanningPoker state={state} story={s} onEstimate={onEstimate} />
+                ) : storyReady(s) ? (
                   <div className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-sm">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <span className="flex-1 truncate">{s.title}</span>
@@ -125,7 +135,7 @@ export function RefinementScreen({ state, onMoveStory, onSplitStory, onPlan, onB
       </section>
 
       <FloatingBar>
-        {!canPlan && <span className="hidden text-[11px] text-muted-foreground sm:inline">Split an item until at least one is Ready</span>}
+        {!canPlan && <span className="hidden text-[11px] text-muted-foreground sm:inline">Estimate (and split) an item until at least one is Ready</span>}
         <Button size="sm" disabled={!canPlan} onClick={onPlan}>
           Plan Sprint {sprintNumber}
         </Button>

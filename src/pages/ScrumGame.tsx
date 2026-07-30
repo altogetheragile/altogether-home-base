@@ -14,7 +14,7 @@ import Footer from '@/components/Footer';
  *  daily Run + burndown) -> Review -> Retrospective -> next Sprint. */
 export default function ScrumGame() {
   const {
-    state, start, setPhase, setTeam, setDod, moveStory, splitStory, planSprint, assignDev, unassignDev, addToSprint,
+    state, start, setPhase, setTeam, setDod, moveStory, splitStory, estimateStory, planSprint, assignDev, unassignDev, addToSprint,
     clearImpediment, acceptChange, declineChange, chooseEvent, runDay, runToEnd, reviewSprint,
     nextSprint, endGame, reset,
   } = useScrumGame();
@@ -30,11 +30,11 @@ export default function ScrumGame() {
       case 'intro':
         return <ScrumIntro productGoal={state.productGoal} onStart={start} />;
       case 'refine':
-        return <RefinementScreen state={state} onMoveStory={moveStory} onSplitStory={splitStory} onPlan={() => setPhase('planning')} onBack={state.sprints.length === 0 ? () => setPhase('intro') : undefined} />;
+        return <RefinementScreen state={state} onMoveStory={moveStory} onSplitStory={splitStory} onEstimate={estimateStory} onPlan={() => setPhase('planning')} onBack={state.sprints.length === 0 ? () => setPhase('intro') : undefined} />;
       case 'planning':
         return <SprintPlanning state={state} onCommit={planSprint} onSetTeam={setTeam} onSetDod={setDod} onMoveStory={moveStory} onBack={state.sprints.length === 0 ? () => setPhase('refine') : undefined} />;
       case 'sprint':
-        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onSplitStory={splitStory} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onChooseEvent={chooseEvent} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
+        return <SprintBoard state={state} onAssignDev={assignDev} onUnassignDev={unassignDev} onAddToSprint={addToSprint} onSplitStory={splitStory} onEstimate={estimateStory} onClearImpediment={clearImpediment} onAcceptChange={acceptChange} onDeclineChange={declineChange} onChooseEvent={chooseEvent} onRunDay={runDay} onRunToEnd={runToEnd} onReview={reviewSprint} />;
       case 'review':
         return <SprintReview state={state} onContinue={() => setPhase('retro')} onEnd={endGame} />;
       case 'retro':

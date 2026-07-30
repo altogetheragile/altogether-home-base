@@ -50,8 +50,17 @@ export interface Impediment {
 export interface Story {
   id: string;
   title: string;
-  /** Relative size estimate (story points). */
+  /** The team's relative size estimate (story points, Fibonacci). 0 until the team
+   *  has estimated it - an un-estimated item is not Ready and cannot be planned. */
   points: number;
+  /** Whether the team has sized this item yet. Items can start un-estimated so the
+   *  Developers (not a manager) estimate them, by relative size, before they flow. */
+  estimated: boolean;
+  /** The real work the item takes to build, independent of the estimate. Building
+   *  consumes this, not `points`, so an inaccurate estimate shows up as a burndown
+   *  that lags (or beats) the forecast - estimates are forecasts, and velocity
+   *  self-corrects over Sprints. For an accurately-sized item it equals `points`. */
+  trueEffort: number;
   /** Business value delivered when this reaches Done (drives Product Goal progress). */
   value: number;
   /** Where the story is: the ordered backlog, or, once pulled into a Sprint, its
@@ -203,6 +212,7 @@ export type ScrumAction =
   | { type: 'SET_DOD'; dod: Criterion[] }
   | { type: 'MOVE_STORY'; storyId: string; dir: 'up' | 'down' }
   | { type: 'SPLIT_STORY'; storyId: string }
+  | { type: 'ESTIMATE_STORY'; storyId: string; points: number }
   | { type: 'PLAN_SPRINT'; goal: string; storyIds: string[]; length: number }
   | { type: 'START_STORY'; storyId: string }
   | { type: 'ADD_TO_SPRINT'; storyId: string }
