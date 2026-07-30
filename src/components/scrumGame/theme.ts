@@ -15,8 +15,12 @@ export interface BacklogItem {
   description?: string;
   /** Business value delivered when Done (drives the Product Goal). */
   value: number;
-  /** Effort in points against Sprint capacity. */
+  /** The real effort the item takes to build (its true size). When `unsized` is
+   *  set this is hidden from the player until the team estimates it. */
   effort: number;
+  /** Start this item un-estimated, so the team must size it (relative estimation)
+   *  before it is Ready. Omit for items that arrive already sized. */
+  unsized?: boolean;
   /** Key the build canvas uses to draw this component as it is completed. */
   visualKey: string;
   /** Which stakeholder agendas this item serves (used by later slices). */
@@ -98,13 +102,13 @@ export const bookingTheme: ThemeConfig = {
     { id: 's1', name: 'Browse available slots', value: 8, effort: 13, visualKey: 'browse', tags: ['discovery'] },
     { id: 's2', name: 'Book a slot', value: 10, effort: 21, visualKey: 'book', tags: ['core'] },
     { id: 's3', name: 'Confirmation email', value: 6, effort: 8, visualKey: 'email', tags: ['core'] },
-    { id: 's4', name: 'Reschedule a booking', value: 7, effort: 21, visualKey: 'reschedule', tags: ['manage'] },
+    { id: 's4', name: 'Reschedule a booking', value: 7, effort: 21, unsized: true, visualKey: 'reschedule', tags: ['manage'] },
     { id: 's5', name: 'Cancel a booking', value: 5, effort: 8, visualKey: 'cancel', tags: ['manage'] },
-    { id: 's6', name: 'Reminders before the slot', value: 6, effort: 13, visualKey: 'reminders', tags: ['retention'] },
+    { id: 's6', name: 'Reminders before the slot', value: 6, effort: 13, unsized: true, visualKey: 'reminders', tags: ['retention'] },
     { id: 's7', name: 'Pay for a booking', value: 9, effort: 21, visualKey: 'pay', tags: ['revenue'] },
-    { id: 's8', name: 'Manage my bookings', value: 6, effort: 21, visualKey: 'manage', tags: ['manage'] },
+    { id: 's8', name: 'Manage my bookings', value: 6, effort: 21, unsized: true, visualKey: 'manage', tags: ['manage'] },
     { id: 's9', name: 'Waitlist for a full slot', value: 4, effort: 13, visualKey: 'waitlist', tags: ['retention'] },
-    { id: 's10', name: 'Accessibility pass', value: 7, effort: 13, visualKey: 'accessibility', tags: ['quality'] },
+    { id: 's10', name: 'Accessibility pass', value: 7, effort: 13, unsized: true, visualKey: 'accessibility', tags: ['quality'] },
     { id: 's11', name: 'Admin: view all bookings', value: 5, effort: 21, visualKey: 'admin', tags: ['ops'] },
     { id: 's12', name: 'Analytics dashboard', value: 3, effort: 21, visualKey: 'analytics', tags: ['ops'] },
   ],

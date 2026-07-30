@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, moveBacklogStory, splitStory, startStory, addToSprint, assignDev, unassignDev, setTeam, setDefinitionOfDone, clearImpediment, acceptChange, declineChange, chooseEvent, runSprintDay, runRemainingDays, reviewSprint, startNextSprint, endGame } from './engine';
+import { planSprint, moveBacklogStory, splitStory, estimateStory, startStory, addToSprint, assignDev, unassignDev, setTeam, setDefinitionOfDone, clearImpediment, acceptChange, declineChange, chooseEvent, runSprintDay, runRemainingDays, reviewSprint, startNextSprint, endGame } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -19,6 +19,8 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return moveBacklogStory(state, action.storyId, action.dir);
     case 'SPLIT_STORY':
       return splitStory(state, action.storyId);
+    case 'ESTIMATE_STORY':
+      return estimateStory(state, action.storyId, action.points);
     case 'PLAN_SPRINT':
       return planSprint(state, action.goal, action.storyIds, action.length);
     case 'START_STORY':
@@ -65,6 +67,7 @@ export function useScrumGame() {
   );
   const moveStoryAction = useCallback((storyId: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_STORY', storyId, dir }), []);
   const splitStoryAction = useCallback((storyId: string) => dispatch({ type: 'SPLIT_STORY', storyId }), []);
+  const estimateStoryAction = useCallback((storyId: string, points: number) => dispatch({ type: 'ESTIMATE_STORY', storyId, points }), []);
   const startStoryAction = useCallback((storyId: string) => dispatch({ type: 'START_STORY', storyId }), []);
   const addToSprintAction = useCallback((storyId: string) => dispatch({ type: 'ADD_TO_SPRINT', storyId }), []);
   const setTeamAction = useCallback((team: ScrumState['team']) => dispatch({ type: 'SET_TEAM', team }), []);
@@ -93,6 +96,7 @@ export function useScrumGame() {
     setDod: setDodAction,
     moveStory: moveStoryAction,
     splitStory: splitStoryAction,
+    estimateStory: estimateStoryAction,
     assignDev: assignDevAction,
     unassignDev: unassignDevAction,
     clearImpediment: clearImpedimentAction,

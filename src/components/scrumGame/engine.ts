@@ -3,7 +3,7 @@ import {
   SPRINT_SEED, totalPoints, totalValue, improvementBonus,
   IMPEDIMENT_CHANCE, IMPEDIMENTS, IMPEDIMENT_EFFECT, BLOCKER_RESOLVE_DAYS,
   CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS, PRODUCT_GOAL_THRESHOLD,
-  SPLIT_MAP, isSplittable, REFINE_COST,
+  SPLIT_MAP, isSplittable, REFINE_COST, FIBONACCI, nearestFib,
 } from './config';
 import { ACTIVE_THEME } from './theme';
 
@@ -37,7 +37,7 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
   const number = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const committed = new Set(storyIds);
   const productBacklog: Story[] = state.productBacklog.map((s) =>
-    committed.has(s.id) ? { ...s, status: 'todo', sprintNumber: number, effortRemaining: s.points } : s,
+    committed.has(s.id) ? { ...s, status: 'todo', sprintNumber: number, effortRemaining: s.trueEffort } : s,
   );
   const startPoints = totalPoints(productBacklog.filter((s) => committed.has(s.id)));
   const sprint: Sprint = {
@@ -112,9 +112,12 @@ export function splitStory(state: ScrumState, storyId: string): ScrumState {
   if (s.status !== 'backlog' || !isSplittable(s.points)) return state;
   const [pa, pb] = SPLIT_MAP[s.points];
   const va = Math.round((s.value * pa) / s.points);
+  // The real work splits in the same proportion as the estimate (they match for an
+  // accurately-sized item), so an inaccurate estimate carries its inaccuracy down.
+  const ta = Math.round((s.trueEffort * pa) / s.points);
   const parts: Story[] = [
-    { ...s, id: `${s.id}a`, title: `${s.title} (1)`, points: pa, value: va, effortRemaining: pa },
-    { ...s, id: `${s.id}b`, title: `${s.title} (2)`, points: pb, value: s.value - va, effortRemaining: pb },
+    { ...s, id: `${s.id}a`, title: `${s.title} (1)`, points: pa, value: va, trueEffort: ta, estimated: true, effortRemaining: ta },
+    { ...s, id: `${s.id}b`, title: `${s.title} (2)`, points: pb, value: s.value - va, trueEffort: s.trueEffort - ta, estimated: true, effortRemaining: s.trueEffort - ta },
   ];
   const productBacklog = [...state.productBacklog];
   productBacklog.splice(i, 1, ...parts);
@@ -124,6 +127,60 @@ export function splitStory(state: ScrumState, storyId: string): ScrumState {
     ? { ...sprint, refinementLoad: sprint.refinementLoad + REFINE_COST }
     : sprint;
   return { ...state, productBacklog, currentSprint };
+}
+
+// ============= Estimation (the Developers sizing the work) =============
+
+/** A tiny string hash so a story's poker hand is deterministic from its id. */
+const hashStr = (str: string): number => {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+};
+
+/** Planning poker: each Developer reveals a Fibonacci card for a story. Cards
+ *  cluster around the item's real size but vary a little (people see complexity
+ *  differently), so a spread invites the discussion that is the point of the
+ *  exercise. Deterministic per (story, Developer). */
+export function pokerHand(story: Story, team: Developer[]): { devId: string; card: number }[] {
+  const baseIdx = FIBONACCI.indexOf(nearestFib(story.trueEffort));
+  return team.map((d, i) => {
+    const rng = mulberry32(SPRINT_SEED ^ hashStr(story.id) ^ ((i + 1) * 0x9e3779b1));
+    const r = rng();
+    const delta = r < 0.5 ? 0 : r < 0.75 ? -1 : 1; // most agree, some one step either way
+    const idx = Math.max(0, Math.min(FIBONACCI.length - 1, baseIdx + delta));
+    return { devId: d.id, card: FIBONACCI[idx] };
+  });
+}
+
+/** The team's suggested estimate from a poker hand: the most-common card, breaking
+ *  ties toward the larger (conservative) size. A starting point, not a verdict -
+ *  the team commits the number it agrees on. */
+export function estimateSuggestion(hand: { card: number }[]): number {
+  const counts = new Map<number, number>();
+  for (const { card } of hand) counts.set(card, (counts.get(card) ?? 0) + 1);
+  let best = FIBONACCI[0];
+  let bestN = -1;
+  for (const [card, n] of counts) {
+    if (n > bestN || (n === bestN && card > best)) { best = card; bestN = n; }
+  }
+  return best;
+}
+
+/** The Developers commit an estimate for a still-unsized Backlog item, making it
+ *  sizeable and, if small enough, Ready. Estimation is a refinement activity; like
+ *  splitting it is free before a Sprint runs and simply readies the item. */
+export function estimateStory(state: ScrumState, storyId: string, points: number): ScrumState {
+  const i = state.productBacklog.findIndex((s) => s.id === storyId);
+  if (i < 0) return state;
+  const s = state.productBacklog[i];
+  if (s.status !== 'backlog' || s.estimated || !FIBONACCI.includes(points)) return state;
+  const productBacklog = [...state.productBacklog];
+  productBacklog[i] = { ...s, estimated: true, points, effortRemaining: s.trueEffort };
+  return { ...state, productBacklog };
 }
 
 // ============= Execution =============
@@ -235,7 +292,8 @@ export function acceptChange(state: ScrumState): ScrumState {
   const sprint = state.currentSprint;
   if (!cr || !sprint) return state;
   const story: Story = {
-    id: cr.id, title: cr.title, points: cr.points, value: cr.value, visualKey: cr.visualKey,
+    id: cr.id, title: cr.title, points: cr.points, estimated: true, trueEffort: cr.points,
+    value: cr.value, visualKey: cr.visualKey,
     status: 'todo', sprintNumber: sprint.number, effortRemaining: cr.points,
   };
   return { ...state, productBacklog: [...state.productBacklog, story], changeRequest: null };
@@ -356,7 +414,7 @@ export function addToSprint(state: ScrumState, storyId: string): ScrumState {
   if (!sprint || isSprintOver(sprint)) return state;
   const productBacklog = state.productBacklog.map((s) =>
     s.id === storyId && s.status === 'backlog'
-      ? { ...s, status: 'todo' as const, sprintNumber: sprint.number, effortRemaining: s.points }
+      ? { ...s, status: 'todo' as const, sprintNumber: sprint.number, effortRemaining: s.trueEffort }
       : s,
   );
   return { ...state, productBacklog };
@@ -563,7 +621,7 @@ export function reviewSprint(state: ScrumState): ScrumState {
   // nearly-finished story comes back small. A never-started story is unchanged.
   const productBacklog = state.productBacklog.map((s) =>
     s.sprintNumber === sprint.number && s.status !== 'done'
-      ? { ...s, status: 'backlog' as const, sprintNumber: null, points: s.effortRemaining }
+      ? { ...s, status: 'backlog' as const, sprintNumber: null, points: s.effortRemaining, trueEffort: s.effortRemaining, estimated: true }
       : s,
   );
   return {

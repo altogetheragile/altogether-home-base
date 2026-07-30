@@ -27,6 +27,7 @@ interface SprintBoardProps {
   onUnassignDev: (devId: string) => void;
   onAddToSprint: (storyId: string) => void;
   onSplitStory: (storyId: string) => void;
+  onEstimate: (storyId: string, points: number) => void;
   onClearImpediment: () => void;
   onAcceptChange: () => void;
   onDeclineChange: () => void;
@@ -110,7 +111,7 @@ function Column({ title, stories, render }: { title: string; stories: Story[]; r
 /** The Sprint board: To Do / Doing / Done, played day by day. Each day is a Daily
  *  Scrum - assign Developers to the stories they'll swarm, then Run Day. A burndown
  *  tracks remaining work; when the timebox runs out, the Sprint is reviewed. */
-export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onSplitStory, onClearImpediment, onAcceptChange, onDeclineChange, onChooseEvent, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
+export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, onSplitStory, onEstimate, onClearImpediment, onAcceptChange, onDeclineChange, onChooseEvent, onRunDay, onRunToEnd, onReview }: SprintBoardProps) {
   const sprint = state.currentSprint;
   const [selectedDevId, setSelectedDevId] = useState<string | null>(null);
   if (!sprint) return null;
@@ -253,7 +254,7 @@ export function SprintBoard({ state, onAssignDev, onUnassignDev, onAddToSprint, 
       {/* The flow, left to right: Product Backlog -> Scrum board (+ charts) -> Product. */}
       <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)_220px]">
         {/* Product Backlog: pull Ready items across, refine the big ones here. */}
-        <BacklogSidebar state={state} onAddToSprint={onAddToSprint} onSplitStory={onSplitStory} disabled={over} />
+        <BacklogSidebar state={state} onAddToSprint={onAddToSprint} onSplitStory={onSplitStory} onEstimate={onEstimate} disabled={over} />
 
         {/* The Scrum board, with the charts filling the space below the columns. */}
         <div className="min-w-0 space-y-4">

@@ -3,13 +3,14 @@ import {
   initialScrumState, defaultDefinitionOfDone, PRODUCT_BACKLOG, totalPoints, totalValue,
   sprintCapacity, averageVelocity, CAPACITY_PER_DEV_DAY, improvementBonus, RETRO_IMPROVEMENTS,
   DEFAULT_TEAM, makeDeveloper, MIN_TEAM, MAX_TEAM, SPRINT_LENGTH_OPTIONS, DEV_DAY_RATIO,
-  suggestSprintGoal, REFINE_COST,
+  suggestSprintGoal, REFINE_COST, FIBONACCI, nearestFib, storyReady,
 } from './config';
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME } from './theme';
 import { nextSatisfaction, generateEvent, currentEventCard, chooseEvent } from './engine';
 import {
-  planSprint, moveBacklogStory, splitStory, availableStories, sprintStories, startStory, addToSprint,
+  planSprint, moveBacklogStory, splitStory, estimateStory, pokerHand, estimateSuggestion,
+  availableStories, sprintStories, startStory, addToSprint,
   assignDev, unassignDev, setTeam, setDefinitionOfDone, benchedDevs, devsOnStory,
   clearImpediment, generateImpediment, generateChangeRequest, acceptChange, declineChange,
   runSprintDay, runRemainingDays,
@@ -316,6 +317,66 @@ describe('the Product Owner: ordering and change requests', () => {
     let s = swarm(planSprint(initialScrumState(), 'g', ['s3']), 's3');
     s = runSprintDay(s);
     expect(s.lastDay!.refinementCost).toBe(0);
+  });
+
+  it('the Backlog ships with some un-sized items the team must estimate', () => {
+    const s = initialScrumState();
+    const unsized = s.productBacklog.filter((x) => !x.estimated);
+    expect(unsized.length).toBeGreaterThan(0);
+    // Un-sized items have no estimate yet and are not Ready, but carry real work.
+    for (const x of unsized) {
+      expect(x.points).toBe(0);
+      expect(storyReady(x)).toBe(false);
+      expect(x.trueEffort).toBeGreaterThan(0);
+    }
+  });
+
+  it('a poker hand is deterministic, on the scale, and clusters near the real size', () => {
+    const s = initialScrumState();
+    const item = s.productBacklog.find((x) => !x.estimated)!;
+    const hand = pokerHand(item, s.team);
+    expect(hand).toEqual(pokerHand(item, s.team)); // deterministic
+    expect(hand.length).toBe(s.team.length);
+    for (const { card } of hand) expect(FIBONACCI).toContain(card);
+    // The suggestion is a sensible size near the item's true effort.
+    const suggestion = estimateSuggestion(hand);
+    expect(FIBONACCI).toContain(suggestion);
+    expect(Math.abs(FIBONACCI.indexOf(suggestion) - FIBONACCI.indexOf(nearestFib(item.trueEffort)))).toBeLessThanOrEqual(1);
+  });
+
+  it('estimateStory sizes an un-sized item, making it Ready (if small enough)', () => {
+    const s0 = initialScrumState();
+    const small = s0.productBacklog.find((x) => !x.estimated && x.trueEffort <= 13)!;
+    const s = estimateStory(s0, small.id, 8);
+    const after = s.productBacklog.find((x) => x.id === small.id)!;
+    expect(after.estimated).toBe(true);
+    expect(after.points).toBe(8);
+    expect(storyReady(after)).toBe(true);
+    // Building still consumes the real work, not the estimate.
+    expect(after.trueEffort).toBe(small.trueEffort);
+  });
+
+  it('estimateStory rejects an off-scale estimate and re-estimating a sized item', () => {
+    const s0 = initialScrumState();
+    const unsized = s0.productBacklog.find((x) => !x.estimated)!;
+    expect(estimateStory(s0, unsized.id, 7)).toBe(s0); // 7 is not on the Fibonacci scale
+    const sized = s0.productBacklog.find((x) => x.estimated)!;
+    expect(estimateStory(s0, sized.id, 5)).toBe(s0); // already estimated - no change
+  });
+
+  it('an under-estimate leaves the burndown lagging the forecast (estimates are forecasts)', () => {
+    // Size a big item deliberately too small, plan it, and swarm one day.
+    const s0 = initialScrumState();
+    const big = s0.productBacklog.find((x) => !x.estimated && x.trueEffort >= 21)!;
+    let s = estimateStory(s0, big.id, 3); // wildly optimistic
+    s = swarm(planSprint(s, 'g', [big.id]), big.id);
+    const committed = s.currentSprint!.burndown[0];
+    s = runSprintDay(s);
+    const story = s.productBacklog.find((x) => x.id === big.id)!;
+    // The forecast said 3, but the real work is 21, so it is nowhere near Done.
+    expect(committed).toBe(3);
+    expect(story.status).not.toBe('done');
+    expect(story.effortRemaining).toBeGreaterThan(3);
   });
 
   it('moveBacklogStory re-prioritises an unplanned story', () => {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ScrumState, Story, Developer, Criterion } from './types';
 import { availableStories } from './engine';
-import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, isReady, REFINE_MAX, suggestSprintGoal } from './config';
+import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, storyReady, REFINE_MAX, suggestSprintGoal } from './config';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { ScrumDodEditor } from './ScrumDodEditor';
@@ -208,19 +208,20 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
                   </button>
                 </div>
                 <div className="flex-1">
-                  {isReady(s.points) ? (
+                  {storyReady(s) ? (
                     <Row s={s} action="add" />
                   ) : (
-                    /* Not Ready: too big to commit. Planning selects Ready items only -
-                       refinement happens in its own step and on the board, not here. */
+                    /* Not Ready: un-estimated or too big. Planning selects Ready items
+                       only - estimating and splitting happen in Refinement or on the
+                       board, not here. */
                     <div
-                      title="Not Ready - refine it in the Refinement step or on the board"
+                      title={s.estimated ? 'Not Ready - split it in Refinement or on the board' : 'Un-sized - estimate it in Refinement or on the board'}
                       className="flex w-full items-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-2.5 py-1.5 text-left text-sm"
                     >
                       <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
                       <span className="flex-1 truncate text-muted-foreground">{s.title}</span>
-                      <span className="text-[10px] font-medium text-muted-foreground">not Ready</span>
-                      <span className="shrink-0 font-mono text-xs text-muted-foreground">{s.points} pts</span>
+                      <span className="text-[10px] font-medium text-muted-foreground">{s.estimated ? 'not Ready' : 'un-sized'}</span>
+                      <span className="shrink-0 font-mono text-xs text-muted-foreground">{s.estimated ? `${s.points} pts` : 'v' + s.value}</span>
                     </div>
                   )}
                 </div>

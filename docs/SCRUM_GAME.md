@@ -125,6 +125,15 @@ book. The committed baseline (`committedStoryIds`) stays fixed for scoring.
   stakeholder moves by the value of the Increment weighted by their `tagWeights`,
   or decays by `neglectDecay` if nothing on their agenda shipped. Conflicting
   weights are the prioritisation tension.
+- **Estimation.** Some theme items start un-sized (`unsized: true`); the team
+  sizes them before they are Ready. `FIBONACCI = [1,2,3,5,8,13,21]`. Planning
+  poker (`pokerHand`) reveals a deterministic card per Developer, clustered around
+  the item's hidden real size (`trueEffort`); `estimateSuggestion` is the mode
+  (ties to the larger). The committed estimate becomes `points`; building always
+  consumes `trueEffort`, so an inaccurate estimate makes the burndown lag or beat
+  the forecast, and velocity self-corrects. `storyReady(s) = s.estimated &&
+  isReady(s.points)`. Estimation is free (a refinement activity); it lives in the
+  Refinement screen (full reveal) and the board's Backlog sidebar (compact).
 - **Refinement.** `REFINE_MAX = 13` (Ready threshold); `SPLIT_MAP`
   21 -> [13,8], 13 -> [8,5], 8 -> [5,3] (Fibonacci; value splits
   proportionally). Splitting in the bootstrap Refinement step is free. Splitting
@@ -144,21 +153,12 @@ Shipped so far: bigger configurable team, Scrum Master plus impediments, active
 product owner plus change requests, Product Goal thread plus ending, editable
 Definition of Done, juice plus Sprint scorecard, exam learning layer, theme-config
 refactor, build canvas, stakeholders plus satisfaction meters, event-card
-dilemmas, refinement bootstrap plus in-Sprint refinement cost.
+dilemmas, refinement bootstrap plus in-Sprint refinement cost, and **estimation
+with planning poker** (relative sizing; the doers estimate; estimates are
+forecasts that build against a hidden real size so velocity self-corrects).
 
-**Next up: Estimation.** This is the agreed next slice, and it closes the clearest
-gap against Sutherland's "How to Begin" checklist ("the people who are actually
-going to complete the items estimate how much effort they will take", by relative
-size or Fibonacci points, never hours). Design sketch:
-
-- Some backlog items start un-sized (no point estimate).
-- The team sizes them before they can be Ready, on the Fibonacci scale
-  (1, 2, 3, 5, 8, 13, 21). Optionally a light planning-poker reveal for juice.
-- Estimation happens in the Refinement step and can be revisited during the
-  Sprint. Only sized items can become Ready and be pulled into Planning.
-- Teach relative sizing over hours, and that the doers estimate, not the manager.
-
-Then the rest of the gamification deck:
+**Next up: a second theme** (for example Wonder Park or Mission: Orbit). Then the
+rest of the gamification deck:
 
 - **A second theme** (for example Wonder Park or Mission: Orbit). Mostly content
   in a new `ThemeConfig`; proves one engine, many skins end to end. Watch for any
@@ -174,7 +174,8 @@ only if a store listing is wanted).
 
 ## 6. Known Gaps (from the Sutherland "How to Begin" review)
 
-1. **Team estimation** is missing (addressed by the Estimation slice above).
+1. **Team estimation** - DONE. The Developers size un-estimated items with planning
+   poker before they are Ready (relative Fibonacci points, not hours).
 2. **Kaizen as a tracked item.** Sutherland wants the improvement carried into the
    next Sprint as a backlog item with acceptance tests, to verify it was done and
    its effect on velocity. The sim currently auto-applies it as a velocity nudge.

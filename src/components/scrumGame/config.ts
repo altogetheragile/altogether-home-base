@@ -88,7 +88,11 @@ export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRem
   ACTIVE_THEME.items.map((i) => ({
     id: i.id,
     title: i.name,
-    points: i.effort,
+    // Un-sized items start with no estimate (0 points); the team sizes them. The
+    // real work (trueEffort) is the theme's effort either way.
+    points: i.unsized ? 0 : i.effort,
+    estimated: !i.unsized,
+    trueEffort: i.effort,
     value: i.value,
     visualKey: i.visualKey,
     tags: i.tags,
@@ -118,7 +122,7 @@ export function initialScrumState(): ScrumState {
     phase: 'intro',
     productGoal: PRODUCT_GOAL,
     definitionOfDone: defaultDefinitionOfDone(),
-    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.points })),
+    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.trueEffort })),
     team: DEFAULT_TEAM.map((d) => ({ ...d })),
     scrumMaster: SCRUM_MASTER,
     productOwner: PRODUCT_OWNER,
@@ -183,6 +187,19 @@ export const isReady = (points: number): boolean => points <= REFINE_MAX;
 
 /** Whether a story can still be split into smaller items. */
 export const isSplittable = (points: number): boolean => points in SPLIT_MAP;
+
+/** The Fibonacci-ish scale the team estimates on. Relative sizes, not hours - the
+ *  Scrum way, because people are poor at absolute time but decent at "bigger than". */
+export const FIBONACCI: readonly number[] = [1, 2, 3, 5, 8, 13, 21];
+
+/** Snap any number to the nearest value on the estimation scale. */
+export const nearestFib = (n: number): number =>
+  FIBONACCI.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a), FIBONACCI[0]);
+
+/** A story is Ready only once the team has ESTIMATED it and it is small enough.
+ *  An un-estimated item is never Ready - the doers size it first. */
+export const storyReady = (s: { estimated: boolean; points: number }): boolean =>
+  s.estimated && isReady(s.points);
 
 /** Seed for the Sprint's deterministic dice, so a Sprint plays out reproducibly. */
 export const SPRINT_SEED = 0x5bd1e995;
