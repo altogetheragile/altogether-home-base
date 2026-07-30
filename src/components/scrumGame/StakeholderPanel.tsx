@@ -1,5 +1,5 @@
 import type { ScrumState } from './types';
-import { ACTIVE_THEME } from './theme';
+import { getTheme } from './theme';
 import { cn } from '@/lib/utils';
 import { Users } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export function StakeholderPanel({ state, previous }: StakeholderPanelProps) {
         <span className="text-[11px] text-muted-foreground">their agendas conflict - you can't please everyone every Sprint</span>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
-        {ACTIVE_THEME.stakeholders.map((sh) => {
+        {getTheme(state.theme.id).stakeholders.map((sh) => {
           const v = Math.round(state.satisfaction[sh.id] ?? 50);
           const delta = previous ? v - Math.round(previous[sh.id] ?? 50) : 0;
           return (

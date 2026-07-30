@@ -44,8 +44,14 @@ One engine, many skins.
   cards reproducible. Tests assert exact outcomes.
 - **Theme config.** `theme.ts` defines `ThemeConfig` (Product Goal, Definition
   of Done, backlog items with value/effort/visualKey/tags, stakeholders, event
-  cards). `ACTIVE_THEME = bookingTheme` today. Swapping the theme re-skins the
-  whole game without touching the engine. This is what a second theme proves.
+  cards) and a `THEMES` registry with `getTheme(id)`. Two themes ship today:
+  `bookingTheme` (Booking Platform) and `missionTheme` (Mission: Orbit). The
+  player picks one at the intro; `initialScrumState(themeId)` seeds everything
+  from it, and the engine resolves stakeholders/events from `state.theme.id`
+  (`themeOf(state)`), never a hard-coded theme. `ACTIVE_THEME` is just the default
+  (booking) used before a choice and by the booking-based constants. Adding a
+  theme to `THEMES` re-skins the whole game with no engine change. New visualKeys
+  need an icon in `BuildCanvas`'s `ICONS` map.
 - **Config and tuning.** `config.ts` holds constants and the initial state.
   Balance is guarded by `scrum.balance.test.ts`; behaviour by `scrum.test.ts`
   (60 tests at time of writing).
@@ -153,19 +159,19 @@ Shipped so far: bigger configurable team, Scrum Master plus impediments, active
 product owner plus change requests, Product Goal thread plus ending, editable
 Definition of Done, juice plus Sprint scorecard, exam learning layer, theme-config
 refactor, build canvas, stakeholders plus satisfaction meters, event-card
-dilemmas, refinement bootstrap plus in-Sprint refinement cost, and **estimation
+dilemmas, refinement bootstrap plus in-Sprint refinement cost, **estimation
 with planning poker** (relative sizing; the doers estimate; estimates are
-forecasts that build against a hidden real size so velocity self-corrects).
+forecasts that build against a hidden real size so velocity self-corrects), and a
+**second theme** (Mission: Orbit) selectable at the intro, proving one engine,
+many skins end to end.
 
-**Next up: a second theme** (for example Wonder Park or Mission: Orbit). Then the
-rest of the gamification deck:
+**Next up: meters plus quality and debt plus scoring.** Then the rest of the deck:
 
-- **A second theme** (for example Wonder Park or Mission: Orbit). Mostly content
-  in a new `ThemeConfig`; proves one engine, many skins end to end. Watch for any
-  engine assumption baked to the booking theme.
 - **Meters plus quality and debt plus scoring.** Morale and tech-debt meters;
   cutting corners creates debt (framed for fidelity, not just points); a
   cumulative or finale scoring win condition.
+- **A third theme** if wanted (for example Wonder Park). Adding a `ThemeConfig`
+  to `THEMES` plus its visualKey icons is now all it takes.
 
 Optional later: iPad or PWA packaging (tablet-first responsive pass; Capacitor
 only if a store listing is wanted).

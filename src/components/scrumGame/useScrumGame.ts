@@ -8,7 +8,9 @@ import { planSprint, moveBacklogStory, splitStory, estimateStory, startStory, ad
 function reducer(state: ScrumState, action: ScrumAction): ScrumState {
   switch (action.type) {
     case 'START':
-      return { ...state, phase: 'refine' };
+      // Re-seed the game with the chosen theme (nothing has happened yet at intro),
+      // then open the one-time Refinement step.
+      return { ...initialScrumState(action.themeId), phase: 'refine' };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
     case 'SET_TEAM':
@@ -59,7 +61,7 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
 export function useScrumGame() {
   const [state, dispatch] = useReducer(reducer, undefined, initialScrumState);
 
-  const start = useCallback(() => dispatch({ type: 'START' }), []);
+  const start = useCallback((themeId?: string) => dispatch({ type: 'START', themeId }), []);
   const setPhase = useCallback((phase: ScrumState['phase']) => dispatch({ type: 'SET_PHASE', phase }), []);
   const planSprintAction = useCallback(
     (goal: string, storyIds: string[], length: number) => dispatch({ type: 'PLAN_SPRINT', goal, storyIds, length }),

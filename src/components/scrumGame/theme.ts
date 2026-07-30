@@ -171,8 +171,103 @@ export const bookingTheme: ThemeConfig = {
   ],
 };
 
-/** The theme the sim currently runs. Swapping this (or making it selectable)
- *  re-skins the whole game. */
-export const ACTIVE_THEME: ThemeConfig = bookingTheme;
+/** THEME 2 - a crewed spaceflight, proving the engine is skin-agnostic. Same
+ *  shape as the booking theme (12 items, the same effort mix and un-sized slots so
+ *  it plays with the same balance), but a wholly different domain. The stakeholders
+ *  pull against each other just as hard: Mission Control wants capability, Crew
+ *  Safety wants safety, the Funders want visible science. */
+export const missionTheme: ThemeConfig = {
+  id: 'mission',
+  name: 'Mission: Orbit',
+  buildMetaphor: 'Build a spacecraft that reaches orbit',
+  valueLabel: 'Mission value',
+  productGoal: 'Launch a crewed spacecraft that safely reaches orbit.',
+  definitionOfDone: [
+    { id: 'dod-reviewed', label: 'Reviewed by another engineer' },
+    { id: 'dod-tested', label: 'Passes its test on the stand' },
+    { id: 'dod-flightready', label: 'Flight-ready - nothing left to finish' },
+  ],
+  items: [
+    { id: 'm1', name: 'Flight computer', value: 9, effort: 13, visualKey: 'flightComputer', tags: ['avionics'] },
+    { id: 'm2', name: 'Main engine', value: 10, effort: 21, visualKey: 'engine', tags: ['propulsion'] },
+    { id: 'm3', name: 'Comms array', value: 6, effort: 8, visualKey: 'comms', tags: ['comms'] },
+    { id: 'm4', name: 'Life support', value: 8, effort: 21, unsized: true, visualKey: 'lifeSupport', tags: ['crew'] },
+    { id: 'm5', name: 'Docking system', value: 5, effort: 8, visualKey: 'docking', tags: ['crew'] },
+    { id: 'm6', name: 'Telemetry ground link', value: 6, effort: 13, unsized: true, visualKey: 'telemetry', tags: ['ops'] },
+    { id: 'm7', name: 'Guidance and navigation', value: 9, effort: 21, visualKey: 'guidance', tags: ['avionics'] },
+    { id: 'm8', name: 'Heat shield', value: 7, effort: 21, unsized: true, visualKey: 'heatShield', tags: ['safety'] },
+    { id: 'm9', name: 'Solar power array', value: 6, effort: 13, visualKey: 'power', tags: ['ops'] },
+    { id: 'm10', name: 'Launch abort system', value: 7, effort: 13, unsized: true, visualKey: 'abort', tags: ['safety'] },
+    { id: 'm11', name: 'Science payload', value: 5, effort: 21, visualKey: 'payload', tags: ['science'] },
+    { id: 'm12', name: 'Fuel system', value: 6, effort: 21, visualKey: 'fuel', tags: ['propulsion'] },
+  ],
+  stakeholders: [
+    {
+      id: 'mission', name: 'Mission Control', agenda: 'A vehicle that can actually reach orbit',
+      tagWeights: { propulsion: 1.0, avionics: 0.9, ops: 0.6, comms: 0.5, safety: 0.4, crew: 0.3, science: 0.2 },
+      neglectDecay: 6,
+    },
+    {
+      id: 'crew', name: 'Crew Safety', agenda: 'Nothing flies that risks the crew',
+      tagWeights: { safety: 1.0, crew: 1.0, ops: 0.4, avionics: 0.4, propulsion: 0.3, comms: 0.2, science: 0.0 },
+      neglectDecay: 8,
+    },
+    {
+      id: 'funders', name: 'The Funders', agenda: 'Visible milestones and science return',
+      tagWeights: { science: 1.0, comms: 0.7, ops: 0.5, propulsion: 0.5, avionics: 0.4, crew: 0.1, safety: 0.1 },
+      neglectDecay: 6,
+    },
+  ],
+  events: [
+    {
+      id: 'anomaly-flag', name: 'A pressure anomaly',
+      narrative: 'A pressure anomaly shows up in testing. Crew Safety wants the launch abort system brought forward.',
+      choices: [
+        { label: 'Prioritise the abort system now', effects: { satisfaction: { crew: 12, funders: -4 }, scopeInjection: 'm10' },
+          lesson: 'A real safety need can reorder the plan - but pulling work in mid-Sprint still costs the team focus.' },
+        { label: 'Log it for a future Sprint', effects: { satisfaction: { crew: -8 } },
+          lesson: 'Deferring is a valid call - just a bet: cheap now, expensive if it is called in.' },
+      ],
+    },
+    {
+      id: 'comms-gap', name: 'Signal dropouts',
+      narrative: 'Ground stations keep losing the signal. Mission Control says a stronger telemetry link would help.',
+      choices: [
+        { label: 'Add the telemetry link this Sprint', effects: { satisfaction: { mission: 10, funders: 3 }, scopeInjection: 'm6' },
+          lesson: 'Responding to a real operational pain builds trust - within reason, and without abandoning the Sprint Goal.' },
+        { label: 'Hold the Sprint Goal, note it in the Backlog', effects: { satisfaction: { mission: -4 } },
+          lesson: 'Protecting the Sprint Goal is legitimate; capture the need and order it for later.' },
+      ],
+    },
+    {
+      id: 'funders-impatient', name: 'The Funders want results',
+      narrative: 'The Funders are frustrated there is no science to show yet and want the roadmap reshuffled.',
+      choices: [
+        { label: 'Reassure them and hold the plan', effects: { satisfaction: { funders: -6 } },
+          lesson: 'Saying no protects focus, but it has a cost - keep stakeholders informed, not just deflected.' },
+        { label: 'Promise the science payload next Sprint', effects: { satisfaction: { funders: 6, crew: -3 } },
+          lesson: 'Committing the next Sprint to one stakeholder eases them now - and boxes the team in later.' },
+      ],
+    },
+    {
+      id: 'steady', name: 'A steady day',
+      narrative: 'No fires today. The countdown is on schedule and the board is flowing.',
+      choices: [
+        { label: 'Keep the focus', effects: {},
+          lesson: 'Not every day has drama - steady, boring delivery is exactly what good Sprints look like.' },
+      ],
+    },
+  ],
+};
 
-// (deploy nudge: force a fresh production build of the current main)
+/** Every theme the sim can run. Adding one here makes it selectable at the intro
+ *  and re-skins the whole game - the engine reads a theme's data, never its name. */
+export const THEMES: ThemeConfig[] = [bookingTheme, missionTheme];
+
+/** Resolve a theme by id, defaulting to the booking theme if the id is unknown. */
+export const getTheme = (id: string): ThemeConfig =>
+  THEMES.find((t) => t.id === id) ?? bookingTheme;
+
+/** The default theme (used where a single theme is needed, e.g. the initial state
+ *  before the player has chosen, and the booking-based constants below). */
+export const ACTIVE_THEME: ThemeConfig = bookingTheme;

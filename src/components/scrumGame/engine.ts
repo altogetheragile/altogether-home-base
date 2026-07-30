@@ -5,7 +5,11 @@ import {
   CHANGE_REQUEST_CHANCE, CHANGE_REQUESTS, PRODUCT_GOAL_THRESHOLD,
   SPLIT_MAP, isSplittable, REFINE_COST, FIBONACCI, nearestFib,
 } from './config';
-import { ACTIVE_THEME } from './theme';
+import { ACTIVE_THEME, getTheme } from './theme';
+
+/** The full theme in play, resolved from the state's theme id - the engine reads a
+ *  theme's data (stakeholders, events), never a hard-coded one. */
+const themeOf = (state: ScrumState) => getTheme(state.theme.id);
 
 /** Clamp a meter to 0-100. */
 const clampMeter = (n: number): number => Math.max(0, Math.min(100, n));
@@ -17,7 +21,7 @@ const clampMeter = (n: number): number => Math.max(0, Math.min(100, n));
 export function nextSatisfaction(state: ScrumState, sprintNumber: number): Record<string, number> {
   const increment = incrementStories(state, sprintNumber);
   const next: Record<string, number> = { ...state.satisfaction };
-  for (const sh of ACTIVE_THEME.stakeholders) {
+  for (const sh of themeOf(state).stakeholders) {
     let gain = 0;
     for (const story of increment) {
       for (const tag of story.tags ?? []) gain += story.value * (sh.tagWeights[tag] ?? 0);
@@ -66,7 +70,7 @@ export function planSprint(state: ScrumState, goal: string, storyIds: string[], 
     currentImpediment: generateImpediment(number, 1),
     changeRequest,
     // At most one mid-Sprint dilemma: an event card only if there's no change request.
-    currentEvent: changeRequest ? null : generateEvent(number, sprint.length),
+    currentEvent: changeRequest ? null : generateEvent(number, sprint.length, themeOf(state).events),
     eventLesson: null,
     lastDay: null,
   };
@@ -306,9 +310,9 @@ export function declineChange(state: ScrumState): ScrumState {
 
 // ============= Event cards (mid-Sprint dilemmas) =============
 
-/** Deterministically draw a mid-Sprint event card (or none) and its day. */
-export function generateEvent(sprintNumber: number, length: number): { cardId: string; day: number } | null {
-  const events = ACTIVE_THEME.events;
+/** Deterministically draw a mid-Sprint event card (or none) and its day, from the
+ *  given theme's events (defaults to the booking theme's). */
+export function generateEvent(sprintNumber: number, length: number, events = ACTIVE_THEME.events): { cardId: string; day: number } | null {
   if (events.length === 0) return null;
   const rng = mulberry32(SPRINT_SEED ^ (sprintNumber * 6971) ^ 0x2f9b2a3d);
   if (rng() >= 0.7) return null; // not every Sprint has one
@@ -317,9 +321,9 @@ export function generateEvent(sprintNumber: number, length: number): { cardId: s
   return { cardId: card.id, day };
 }
 
-/** The event card in play right now (resolved from the theme), or null. */
+/** The event card in play right now (resolved from the state's theme), or null. */
 export const currentEventCard = (state: ScrumState) =>
-  state.currentEvent ? ACTIVE_THEME.events.find((e) => e.id === state.currentEvent!.cardId) ?? null : null;
+  state.currentEvent ? themeOf(state).events.find((e) => e.id === state.currentEvent!.cardId) ?? null : null;
 
 /** Whether an event card is live and has reached its day. */
 export const eventDue = (state: ScrumState): boolean =>

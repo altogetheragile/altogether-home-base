@@ -5,6 +5,8 @@ import {
   Search, CalendarCheck, Mail, CalendarClock, CalendarX, BellRing, CreditCard,
   ListChecks, Users, Accessibility, LayoutDashboard, BarChart3,
   Link2, ShieldCheck, Package, Check,
+  Cpu, Rocket, SatelliteDish, HeartPulse, Orbit, Radio, Navigation,
+  Thermometer, Zap, FlaskConical, Fuel,
 } from 'lucide-react';
 
 interface BuildCanvasProps {
@@ -15,10 +17,15 @@ interface BuildCanvasProps {
 
 /** Which icon each theme visualKey draws with. Unknown keys fall back to a box. */
 const ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  // Booking Platform
   browse: Search, book: CalendarCheck, email: Mail, reschedule: CalendarClock,
   cancel: CalendarX, reminders: BellRing, pay: CreditCard, manage: ListChecks,
   waitlist: Users, accessibility: Accessibility, admin: LayoutDashboard, analytics: BarChart3,
   partner: Link2, consent: ShieldCheck, group: Users,
+  // Mission: Orbit
+  flightComputer: Cpu, engine: Rocket, comms: SatelliteDish, lifeSupport: HeartPulse,
+  docking: Orbit, telemetry: Radio, guidance: Navigation, heatShield: Thermometer,
+  power: Zap, abort: ShieldCheck, payload: FlaskConical, fuel: Fuel,
 };
 
 /** The visible Increment: every backlog item is a component on the build canvas.

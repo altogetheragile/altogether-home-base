@@ -1,5 +1,6 @@
 import type { Criterion, Story, ScrumState, Developer, Impediment } from './types';
-import { ACTIVE_THEME } from './theme';
+import type { ThemeConfig } from './theme';
+import { ACTIVE_THEME, getTheme } from './theme';
 
 /** The Sprint is the container event: Sprint Planning, the Daily Scrums, the
  *  Sprint Review and the Retrospective all happen INSIDE the timebox, so a
@@ -84,12 +85,13 @@ export const SUGGESTED_DOD: string[] = [
 /** The starting Product Backlog, ordered by value - derived from the active
  *  theme's items (effort -> story points), carrying the visualKey so the build
  *  canvas can draw each component as it is completed. */
-export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining'>[] =
-  ACTIVE_THEME.items.map((i) => ({
+/** Build a starting Product Backlog from any theme's items (effort -> points),
+ *  carrying the visualKey and tags. Un-sized items start with no estimate (0
+ *  points) for the team to size; the real work (trueEffort) is the theme's effort. */
+export function backlogFromTheme(theme: ThemeConfig): Omit<Story, 'status' | 'sprintNumber' | 'effortRemaining'>[] {
+  return theme.items.map((i) => ({
     id: i.id,
     title: i.name,
-    // Un-sized items start with no estimate (0 points); the team sizes them. The
-    // real work (trueEffort) is the theme's effort either way.
     points: i.unsized ? 0 : i.effort,
     estimated: !i.unsized,
     trueEffort: i.effort,
@@ -97,6 +99,10 @@ export const PRODUCT_BACKLOG: Omit<Story, 'status' | 'sprintNumber' | 'effortRem
     visualKey: i.visualKey,
     tags: i.tags,
   }));
+}
+
+/** The default (booking) Product Backlog. */
+export const PRODUCT_BACKLOG = backlogFromTheme(ACTIVE_THEME);
 
 /** Build a Developer, deriving a short, readable badge from the name. Two-letter
  *  initials keep a bigger roster distinct (Robin vs Riley), unlike single letters. */
@@ -116,13 +122,17 @@ export const DEFAULT_TEAM: Developer[] = ['Robin', 'Riley', 'Jamie', 'Sam', 'Ale
 export const MIN_TEAM = 3;
 export const MAX_TEAM = 7;
 
-/** The starting game state: all stories in the Product Backlog, no Sprints yet. */
-export function initialScrumState(): ScrumState {
+/** The starting game state for a chosen theme: all stories in that theme's Product
+ *  Backlog, no Sprints yet. Defaults to the booking theme (the state the reducer is
+ *  seeded with before the player picks). Everything the engine needs is derived from
+ *  the theme, so one engine renders every skin. */
+export function initialScrumState(themeId: string = ACTIVE_THEME.id): ScrumState {
+  const theme = getTheme(themeId);
   return {
     phase: 'intro',
-    productGoal: PRODUCT_GOAL,
-    definitionOfDone: defaultDefinitionOfDone(),
-    productBacklog: PRODUCT_BACKLOG.map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.trueEffort })),
+    productGoal: theme.productGoal,
+    definitionOfDone: theme.definitionOfDone.map((c) => ({ ...c })),
+    productBacklog: backlogFromTheme(theme).map((s) => ({ ...s, status: 'backlog', sprintNumber: null, effortRemaining: s.trueEffort })),
     team: DEFAULT_TEAM.map((d) => ({ ...d })),
     scrumMaster: SCRUM_MASTER,
     productOwner: PRODUCT_OWNER,
@@ -137,8 +147,8 @@ export function initialScrumState(): ScrumState {
     velocity: [],
     improvements: [],
     sprintLength: SPRINT_LENGTH,
-    theme: { name: ACTIVE_THEME.name, buildMetaphor: ACTIVE_THEME.buildMetaphor, valueLabel: ACTIVE_THEME.valueLabel },
-    satisfaction: Object.fromEntries(ACTIVE_THEME.stakeholders.map((s) => [s.id, STAKEHOLDER_START])),
+    theme: { id: theme.id, name: theme.name, buildMetaphor: theme.buildMetaphor, valueLabel: theme.valueLabel },
+    satisfaction: Object.fromEntries(theme.stakeholders.map((s) => [s.id, STAKEHOLDER_START])),
   };
 }
 
