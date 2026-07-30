@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ScrumState, Story, Developer, Criterion } from './types';
 import { availableStories } from './engine';
 import { sprintCapacity, totalPoints, devColor, SPRINT_LENGTH_OPTIONS, storyReady, REFINE_MAX, suggestSprintGoal } from './config';
+import { getTheme } from './theme';
 import { DevBadge } from './DevBadge';
 import { ScrumTeamEditor } from './ScrumTeamEditor';
 import { ScrumDodEditor } from './ScrumDodEditor';
@@ -160,7 +161,7 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
             size="sm"
             className="h-7 px-2 text-xs"
             disabled={chosen.length === 0}
-            onClick={() => setGoal(suggestSprintGoal(chosen))}
+            onClick={() => setGoal(suggestSprintGoal(chosen, getTheme(state.theme.id).tagOutcomes))}
             title="Draft a Sprint Goal from the selected items - then shape it into one clear objective"
           >
             <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest from selection
@@ -172,7 +173,7 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
           onChange={(e) => setGoal(e.target.value)}
           placeholder="One outcome this Sprint is aiming for, e.g. 'A customer can book and pay for a slot'"
         />
-        <p className="text-[11px] text-muted-foreground">The Sprint Goal is a single objective, not just the list of items - shape the suggestion into one.</p>
+        <p className="text-[11px] text-muted-foreground">A good Sprint Goal is one outcome - "deliver [capability] so that [value]". The suggestion pre-fills the value from what you selected; shape it into a single, clear objective.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

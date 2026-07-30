@@ -41,15 +41,38 @@ export const sprintCapacity = (velocity: number[], teamSize: number, devDays: nu
  *  Sourced from the active theme. */
 export const PRODUCT_GOAL = ACTIVE_THEME.productGoal;
 
-/** Draft a Sprint Goal from the selected items - a starting point the team then
- *  shapes into a single objective (the Goal is not just the list of PBIs). */
-export function suggestSprintGoal(stories: { title: string }[]): string {
-  const titles = stories.slice(0, 4).map((s) => s.title);
+/** The item tag that dominates a selection, weighted by value - the agenda the
+ *  Sprint would serve most. Null if the selection carries no tags. */
+export function dominantTag(stories: { value: number; tags?: string[] }[]): string | null {
+  const byTag = new Map<string, number>();
+  for (const s of stories) {
+    for (const tag of s.tags ?? []) byTag.set(tag, (byTag.get(tag) ?? 0) + s.value);
+  }
+  let best: string | null = null;
+  let bestV = -1;
+  for (const [tag, v] of byTag) {
+    if (v > bestV) { best = tag; bestV = v; }
+  }
+  return best;
+}
+
+/** Draft a Sprint Goal from the selected items using the outcome-oriented shape
+ *  "Our goal is to deliver [capability] so that [value]". The capability comes from
+ *  the selected items; the value clause is pre-filled from the selection's dominant
+ *  tag (a starting point the team then shapes into a single, clear objective - the
+ *  Goal is an outcome, not just the list of PBIs). */
+export function suggestSprintGoal(
+  stories: { title: string; value: number; tags?: string[] }[],
+  tagOutcomes: Record<string, string> = {},
+): string {
+  const titles = stories.slice(0, 4).map((s) => s.title.charAt(0).toLowerCase() + s.title.slice(1));
   if (titles.length === 0) return '';
-  const list = titles.length === 1
+  const capability = titles.length === 1
     ? titles[0]
     : `${titles.slice(0, -1).join(', ')} and ${titles[titles.length - 1]}`;
-  return `Deliver ${list}`;
+  const tag = dominantTag(stories);
+  const value = (tag && tagOutcomes[tag]) || 'we move closer to the Product Goal';
+  return `Our goal is to deliver ${capability} so that ${value}`;
 }
 
 /** Share of the product's value that, once delivered, lets the Product Owner call
