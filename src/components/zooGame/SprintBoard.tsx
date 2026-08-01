@@ -5,6 +5,7 @@ import { openZoo } from './engine';
 import { DAY_SECONDS } from './config';
 import { DesignStudio } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
+import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Palette, DoorOpen, Check, AlertTriangle, Clock } from 'lucide-react';
@@ -108,6 +109,9 @@ export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum
           </div>
         </div>
       )}
+
+      {/* The live park: opening an item drops it into its zone here. */}
+      <ParkView state={state} compact />
 
       <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground">
         Build each item to the Definition of Done, then open it to visitors. You can open Done work at any
