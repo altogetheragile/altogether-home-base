@@ -119,6 +119,22 @@ describe('zoo game: emergent backlog from visitor signals', () => {
   });
 });
 
+describe('zoo game: design choices are the product', () => {
+  it('a bright, busy build favours Families; a calm, muted one favours Comfort Seekers', () => {
+    let bright = planSprint(initialZooState(1), ['lion']);
+    bright = buildItem(bright, 'lion', { palette: 0, pattern: 'spots', features: ['ears', 'tail'] }); // Tropical, busy
+    let calm = planSprint(initialZooState(1), ['lion']);
+    calm = buildItem(calm, 'lion', { palette: 2, pattern: 'none', features: [] }); // Natural, plain
+
+    const b = bright.backlog.find((i) => i.id === 'lion')!.appeal!;
+    const c = calm.backlog.find((i) => i.id === 'lion')!.appeal!;
+    expect(b.families).toBeGreaterThan(c.families);
+    expect(c.comfortSeekers).toBeGreaterThan(b.comfortSeekers);
+    // The design is recorded on the built item.
+    expect(bright.backlog.find((i) => i.id === 'lion')!.design).toEqual({ palette: 0, pattern: 'spots', features: ['ears', 'tail'] });
+  });
+});
+
 describe('zoo game: product goal progress', () => {
   it('grows as exhibits and amenities are opened', () => {
     let s = initialZooState(1);

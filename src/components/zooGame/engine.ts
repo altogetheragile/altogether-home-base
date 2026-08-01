@@ -1,5 +1,7 @@
 import type { ZooGameState, BacklogItem } from './types';
 import type { Signal } from './simulation/types';
+import type { ItemDesign } from './design';
+import { appealFromDesign } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { toZooItem } from './config';
@@ -17,10 +19,16 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
 
 // ============= Building and releasing =============
 
-/** A committed item is built to the Definition of Done (in this reducer slice, an
- *  explicit action; the design-and-build mechanic replaces it later). */
-export function buildItem(state: ZooGameState, id: string): ZooGameState {
-  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'committed' ? { ...it, status: 'done' as const } : it));
+/** A committed item is built to the Definition of Done. When a design is supplied
+ *  (the design-and-build mechanic), it is stored and, for an exhibit, its appeal is
+ *  recomputed from the design (the choices are the product). Without a design the
+ *  item is simply marked Done with its base appeal. */
+export function buildItem(state: ZooGameState, id: string, design?: ItemDesign): ZooGameState {
+  const backlog = state.backlog.map((it) => {
+    if (it.id !== id || it.status !== 'committed') return it;
+    if (!design) return { ...it, status: 'done' as const };
+    return { ...it, status: 'done' as const, design, appeal: appealFromDesign({ ...it, design }, design) };
+  });
   return { ...state, backlog };
 }
 

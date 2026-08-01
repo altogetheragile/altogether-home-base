@@ -1,5 +1,6 @@
 import { useReducer, useCallback } from 'react';
 import type { ZooGameState, ZooAction, ZooPhase } from './types';
+import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
   planSprint, buildItem, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
@@ -24,7 +25,7 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'PLAN_SPRINT':
       return planSprint(state, action.ids);
     case 'BUILD_ITEM':
-      return buildItem(state, action.id);
+      return buildItem(state, action.id, action.design);
     case 'OPEN_ITEM':
       return openItem(state, action.id);
     case 'REVIEW_SPRINT':
@@ -49,7 +50,7 @@ export function useZooGame(gameSeed?: number) {
   const setDod = useCallback((dod: string[]) => dispatch({ type: 'SET_DOD', dod }), []);
   const takeSignal = useCallback((index: number) => dispatch({ type: 'ACCEPT_SIGNAL', index }), []);
   const plan = useCallback((ids: string[]) => dispatch({ type: 'PLAN_SPRINT', ids }), []);
-  const build = useCallback((id: string) => dispatch({ type: 'BUILD_ITEM', id }), []);
+  const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
   const open = useCallback((id: string) => dispatch({ type: 'OPEN_ITEM', id }), []);
   const review = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
