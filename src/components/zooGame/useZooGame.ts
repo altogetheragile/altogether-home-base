@@ -4,7 +4,7 @@ import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
   planSprint, buildItem, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
-  reviewSprint, startNextSprint, endGame,
+  reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum,
 } from './engine';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
@@ -28,6 +28,12 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return buildItem(state, action.id, action.design);
     case 'OPEN_ITEM':
       return openItem(state, action.id);
+    case 'END_DAY':
+      return endDay(state);
+    case 'RUN_DAILY_SCRUM':
+      return runDailyScrum(state);
+    case 'SKIP_DAILY_SCRUM':
+      return skipDailyScrum(state);
     case 'REVIEW_SPRINT':
       return reviewSprint(state);
     case 'NEXT_SPRINT':
@@ -52,10 +58,16 @@ export function useZooGame(gameSeed?: number) {
   const plan = useCallback((ids: string[]) => dispatch({ type: 'PLAN_SPRINT', ids }), []);
   const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
   const open = useCallback((id: string) => dispatch({ type: 'OPEN_ITEM', id }), []);
+  const closeDay = useCallback(() => dispatch({ type: 'END_DAY' }), []);
+  const holdDailyScrum = useCallback(() => dispatch({ type: 'RUN_DAILY_SCRUM' }), []);
+  const skipDailyScrumCb = useCallback(() => dispatch({ type: 'SKIP_DAILY_SCRUM' }), []);
   const review = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
   const finish = useCallback(() => dispatch({ type: 'END_GAME' }), []);
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
-  return { state, start, setPhase, setGoal, setDod, takeSignal, plan, build, open, review, nextSprint, finish, reset };
+  return {
+    state, start, setPhase, setGoal, setDod, takeSignal, plan, build, open,
+    closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, review, nextSprint, finish, reset,
+  };
 }

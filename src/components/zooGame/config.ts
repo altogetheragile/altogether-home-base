@@ -6,6 +6,22 @@ import { jitterItems, driftAttendance } from './simulation/simulate';
 /** First-Sprint capacity guess, before there is velocity. */
 export const STARTER_CAPACITY = 16;
 
+// ---- Timed days and the Daily Scrum ----
+/** How many timed days each Sprint runs. */
+export const SPRINT_DAYS = 3;
+/** Seconds of build time in a full day (before any Daily Scrum / impediment cost). */
+export const DAY_SECONDS = 90;
+/** Chance an impediment surfaces on any given day (deterministic per game/Sprint/day). */
+export const IMPEDIMENT_CHANCE = 0.55;
+/** A held Daily Scrum takes a little of the next day (the event is timeboxed). */
+export const DAILY_SCRUM_MULT = 0.9;
+/** A skipped Daily Scrum with a waiting impediment costs much more of the next day:
+ *  the problem grew overnight. */
+export const SKIP_PENALTY_MULT = 0.55;
+/** The coaching tip shown when a skipped Daily Scrum lets an impediment through. */
+export const MISSED_SCRUM_TIP =
+  'A Daily Scrum yesterday would have surfaced this a day earlier, when it was smaller and cheaper to clear. The Scrum Master makes sure it happens.';
+
 /** The product-wide Definition of Done: the bar every item clears to be shippable. */
 export const DEFAULT_DOD: string[] = [
   'Meets its acceptance criteria',
@@ -78,6 +94,13 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     signalAge: {},
     improvements: [],
     gameSeed,
+    sprintDays: SPRINT_DAYS,
+    dayNumber: 1,
+    dayStage: 'building',
+    dayTimeMult: 1,
+    pendingImpediment: null,
+    carriedImpediment: null,
+    missedScrums: 0,
   };
 }
 

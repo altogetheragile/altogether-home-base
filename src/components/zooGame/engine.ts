@@ -1,20 +1,25 @@
-import type { ZooGameState, BacklogItem } from './types';
+import type { ZooGameState, BacklogItem, Impediment } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
-import { toZooItem } from './config';
+import { makeRng, hashStr } from './simulation/rng';
+import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP } from './config';
 
 // ============= Planning =============
 
-/** Commit the chosen Backlog items into the current Sprint and open it for play. */
+/** Commit the chosen Backlog items into the current Sprint and open it for play.
+ *  The Sprint starts on day 1, ready to build. */
 export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
   const committed = new Set(ids);
   const backlog = state.backlog.map((it) =>
     committed.has(it.id) && it.status === 'backlog' ? { ...it, status: 'committed' as const, sprintNumber: state.sprintNumber } : it,
   );
-  return { ...state, phase: 'sprint', committedIds: [...ids], backlog };
+  return {
+    ...state, phase: 'sprint', committedIds: [...ids], backlog,
+    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
+  };
 }
 
 // ============= Building and releasing =============
@@ -86,6 +91,65 @@ export function setProductGoal(state: ZooGameState, goal: string): ZooGameState 
 
 export function setDefinitionOfDone(state: ZooGameState, dod: string[]): ZooGameState {
   return { ...state, definitionOfDone: dod.map((d) => d.trim()).filter((d) => d.length > 0) };
+}
+
+// ============= Timed days and the Daily Scrum =============
+
+/** The pool of things that get in the team's way. Framed as zoo-build problems. */
+const IMPEDIMENTS: { title: string; detail: string }[] = [
+  { title: 'A keeper called in sick', detail: 'Nobody is free to prep the new enclosure, so the build is stalling.' },
+  { title: 'The paint delivery is late', detail: 'The colours for this zone have not arrived and work is piling up.' },
+  { title: 'A safety check is overdue', detail: 'The big enclosure cannot open until an inspection is signed off.' },
+  { title: 'The sign supplier changed the design', detail: 'The new signs do not match the zone and need reworking.' },
+  { title: 'The pond pump failed', detail: 'The Waterside filter needs an urgent fix before anything else there progresses.' },
+  { title: 'A volunteer no-showed', detail: 'You are short-handed today and the build is slower than planned.' },
+];
+
+/** Deterministically decide the impediment (if any) waiting on a given day. Same
+ *  game, Sprint and day always give the same result, so it is fair and repeatable. */
+export function generateImpediment(gameSeed: number, sprintNumber: number, dayNumber: number): Impediment | null {
+  const rng = makeRng(hashStr('impediment:' + sprintNumber + ':' + dayNumber, gameSeed));
+  if (rng.next() >= IMPEDIMENT_CHANCE) return null;
+  const def = IMPEDIMENTS[Math.floor(rng.next() * IMPEDIMENTS.length)];
+  return { id: `imp-${sprintNumber}-${dayNumber}`, title: def.title, detail: def.detail };
+}
+
+/** Close the current day and pause for its Daily Scrum, surfacing whatever
+ *  impediment (if any) is waiting. The Daily Scrum is the Developers' event; the
+ *  team chooses whether to hold it. */
+export function endDay(state: ZooGameState): ZooGameState {
+  if (state.phase !== 'sprint' || state.dayStage !== 'building') return state;
+  const pendingImpediment = generateImpediment(state.gameSeed, state.sprintNumber, state.dayNumber);
+  return { ...state, dayStage: 'dailyScrum', pendingImpediment };
+}
+
+/** Move to the next day, or end the Sprint (open the Review) after the last day.
+ *  `nextMult` sets how much build time the new day has. */
+function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
+  const next = state.dayNumber + 1;
+  if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
+  return { ...state, dayNumber: next, dayStage: 'building', dayTimeMult: nextMult };
+}
+
+/** Hold the Daily Scrum: the team inspects progress and the Scrum Master clears any
+ *  impediment. It costs a little of the next day (the event is timeboxed), but the
+ *  problem is handled today. */
+export function runDailyScrum(state: ZooGameState): ZooGameState {
+  if (state.dayStage !== 'dailyScrum') return state;
+  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, DAILY_SCRUM_MULT);
+}
+
+/** Skip the Daily Scrum. If an impediment was waiting, it goes unspotted and
+ *  resurfaces tomorrow, bigger: it carries into the next day with a coaching tip and
+ *  a heavier time cost. With nothing waiting, skipping costs nothing this time. */
+export function skipDailyScrum(state: ZooGameState): ZooGameState {
+  if (state.dayStage !== 'dailyScrum') return state;
+  const imp = state.pendingImpediment;
+  if (imp) {
+    const carried: Impediment = { ...imp, missed: true, tip: MISSED_SCRUM_TIP };
+    return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: carried, missedScrums: state.missedScrums + 1 }, SKIP_PENALTY_MULT);
+  }
+  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, 1);
 }
 
 // ============= The Sprint Review =============
