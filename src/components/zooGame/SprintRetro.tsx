@@ -24,10 +24,10 @@ export function SprintRetro({ state, onNextSprint, onWrapUp }: SprintRetroProps)
   const canWrap = productGoalProgress(state) >= 0.8;
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 pb-28 space-y-6">
+    <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold">Sprint {state.sprintNumber} Retrospective</h1>
-        <p className="text-sm text-muted-foreground">How did the team work this Sprint? Pick one improvement to carry into the next one.</p>
+        <h2 className="text-lg font-bold">Sprint {state.sprintNumber} Retrospective</h2>
+        <p className="text-xs text-muted-foreground">How did the team work this Sprint? Pick one improvement to carry into the next one.</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
@@ -54,7 +54,7 @@ export function SprintRetro({ state, onNextSprint, onWrapUp }: SprintRetroProps)
         </div>
       )}
 
-      <div className="fixed inset-x-0 bottom-4 z-20 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
+      <div className="sticky bottom-4 flex items-center justify-end gap-3 rounded-lg border border-border bg-background/95 px-4 py-2 shadow-sm backdrop-blur">
         {canWrap && <Button size="sm" variant="outline" onClick={onWrapUp}>Wrap up</Button>}
         <Button size="sm" disabled={!selected} onClick={() => selected && onNextSprint(selected)}>Start Sprint {state.sprintNumber + 1}</Button>
       </div>

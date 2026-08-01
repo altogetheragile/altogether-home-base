@@ -1,7 +1,6 @@
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress } from './engine';
-import { ParkView, type ParkArrange } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
@@ -10,7 +9,6 @@ interface SprintReviewProps {
   state: ZooGameState;
   onTakeSignal: (index: number) => void;
   onContinue: () => void;
-  arrange: ParkArrange;
 }
 
 const SEG_LABEL: Record<SegmentId, string> = { families: 'Families', enthusiasts: 'Enthusiasts', comfortSeekers: 'Comfort Seekers' };
@@ -19,16 +17,16 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onContinue, arrange }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const progress = Math.round(productGoalProgress(state) * 100);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 pb-28 space-y-6">
+    <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold">Sprint {state.sprintNumber} Review</h1>
-        <p className="text-sm text-muted-foreground">Inspect what was Done and how the visitors responded. Work is Done because it met its criteria during the Sprint - this is not a release gate.</p>
+        <h2 className="text-lg font-bold">Sprint {state.sprintNumber} Review</h2>
+        <p className="text-xs text-muted-foreground">Inspect what was Done and how the visitors responded. Done work met its criteria during the Sprint - this is not a release gate.</p>
       </div>
 
       {state.sprintGoal.trim() && (
@@ -42,9 +40,6 @@ export function SprintReview({ state, onTakeSignal, onContinue, arrange }: Sprin
           </div>
         </div>
       )}
-
-      {/* The park the visitors experienced this Sprint. Arrange it here too. */}
-      <ParkView state={state} arrange={arrange} />
 
       {!r || r.totalAttendance === 0 ? (
         <p className="rounded-lg border border-border bg-muted/40 px-5 py-4 text-sm text-muted-foreground">Nothing is open to visitors yet, so there is no crowd to inspect. Delivered <strong>{velocity} pts</strong> of work this Sprint - open some of it next time to see the visitors arrive.</p>
@@ -105,9 +100,8 @@ export function SprintReview({ state, onTakeSignal, onContinue, arrange }: Sprin
         </>
       )}
 
-      <p className="text-xs text-muted-foreground">Product Goal reached: <span className="font-medium text-foreground">{progress}%</span></p>
-
-      <div className="fixed inset-x-0 bottom-4 z-20 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
+      <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/95 px-4 py-2 shadow-sm backdrop-blur">
+        <span className="text-xs text-muted-foreground">Product Goal reached: <span className="font-medium text-foreground">{progress}%</span></span>
         <Button size="sm" onClick={onContinue}>Retrospective &rarr;</Button>
       </div>
     </div>
