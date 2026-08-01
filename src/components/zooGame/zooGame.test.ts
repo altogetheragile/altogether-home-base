@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
-  planSprint, buildItem, openItem, reviewSprint, startNextSprint, acceptSignal,
+  planSprint, pullIntoSprint, buildItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, generateImpediment,
 } from './engine';
@@ -89,6 +89,26 @@ describe('zoo game: the Sprint loop', () => {
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
     expect(s.velocity).toHaveLength(2);
     expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'penguins', 'tiger']);
+  });
+});
+
+describe('zoo game: pulling Backlog items mid-Sprint', () => {
+  it('commits a Backlog item into the running Sprint', () => {
+    let s = planSprint(initialZooState(1), ['lion']);
+    expect(availableItems(s).some((i) => i.id === 'tiger')).toBe(true);
+    s = pullIntoSprint(s, 'tiger');
+    const tiger = s.backlog.find((i) => i.id === 'tiger')!;
+    expect(tiger.status).toBe('committed');
+    expect(tiger.sprintNumber).toBe(s.sprintNumber);
+    expect(s.committedIds).toContain('tiger');
+    expect(availableItems(s).some((i) => i.id === 'tiger')).toBe(false);
+  });
+
+  it('only pulls from the Backlog, and only during a Sprint', () => {
+    const planning = initialZooState(1); // phase 'intro', not a Sprint
+    expect(pullIntoSprint(planning, 'tiger')).toBe(planning);
+    const s = planSprint(initialZooState(1), ['lion']);
+    expect(pullIntoSprint(s, 'lion')).toBe(s); // lion is committed, not in the Backlog
   });
 });
 

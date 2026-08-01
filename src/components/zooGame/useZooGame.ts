@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase } from './types';
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, buildItem, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, buildItem, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum,
 } from './engine';
 
@@ -24,6 +24,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return acceptSignal(state, action.index);
     case 'PLAN_SPRINT':
       return planSprint(state, action.ids);
+    case 'PULL_ITEM':
+      return pullIntoSprint(state, action.id);
     case 'BUILD_ITEM':
       return buildItem(state, action.id, action.design, action.animals);
     case 'OPEN_ITEM':
@@ -56,6 +58,7 @@ export function useZooGame(gameSeed?: number) {
   const setDod = useCallback((dod: string[]) => dispatch({ type: 'SET_DOD', dod }), []);
   const takeSignal = useCallback((index: number) => dispatch({ type: 'ACCEPT_SIGNAL', index }), []);
   const plan = useCallback((ids: string[]) => dispatch({ type: 'PLAN_SPRINT', ids }), []);
+  const pull = useCallback((id: string) => dispatch({ type: 'PULL_ITEM', id }), []);
   const build = useCallback((id: string, design?: ItemDesign, animals?: ItemDesign[]) => dispatch({ type: 'BUILD_ITEM', id, design, animals }), []);
   const open = useCallback((id: string) => dispatch({ type: 'OPEN_ITEM', id }), []);
   const closeDay = useCallback(() => dispatch({ type: 'END_DAY' }), []);
@@ -67,7 +70,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setDod, takeSignal, plan, build, open,
+    state, start, setPhase, setGoal, setDod, takeSignal, plan, pull, build, open,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, review, nextSprint, finish, reset,
   };
 }

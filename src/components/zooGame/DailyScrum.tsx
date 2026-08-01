@@ -69,17 +69,23 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
       )}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <Button size="lg" onClick={onHold}>
-          Hold the Daily Scrum
-          {last ? <ArrowRight className="ml-1.5 h-4 w-4" /> : null}
-        </Button>
-        <Button size="lg" variant="ghost" onClick={onSkip} className="text-muted-foreground">
-          Skip it, keep building
-        </Button>
+        <div className="flex flex-col items-center gap-1">
+          <Button size="lg" onClick={onHold}>
+            Hold the Daily Scrum
+            {last ? <ArrowRight className="ml-1.5 h-4 w-4" /> : null}
+          </Button>
+          <span className="text-[11px] text-muted-foreground">costs ~10% of tomorrow</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Button size="lg" variant="ghost" onClick={onSkip} className="text-muted-foreground">
+            Skip it, keep building
+          </Button>
+          <span className="text-[11px] text-muted-foreground">{imp ? 'this blocker then cuts ~45% of tomorrow' : 'free this time - nothing waiting'}</span>
+        </div>
       </div>
       <p className="text-center text-xs text-muted-foreground">
-        The sync takes a little time from tomorrow. Skipping saves that time, but a blocker you never surface
-        will cost you more when it resurfaces.
+        A blocker you surface here is dealt with cheaply; one you skip past grows overnight and eats into a
+        whole day's build time.
       </p>
     </div>
   );

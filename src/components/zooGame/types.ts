@@ -115,6 +115,7 @@ export type ZooAction =
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
+  | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign; animals?: ItemDesign[] }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }

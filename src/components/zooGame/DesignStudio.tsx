@@ -14,6 +14,10 @@ interface DesignStudioProps {
   item: BacklogItem;
   onFinish: (result: BuildResult) => void;
   onCancel: () => void;
+  /** In-progress work to resume (kept by the board so it survives the day ending). */
+  initial?: BuildResult;
+  /** Report the working design up so it is not lost when the studio unmounts. */
+  onChange?: (result: BuildResult) => void;
 }
 
 const MAX_ANIMALS = 5;
@@ -89,19 +93,23 @@ function Criteria({ item, design }: { item: BacklogItem; design: ItemDesign }) {
 /** Build an item by assembling and colouring it. An exhibit is an enclosure you can
  *  fill with several animals (each a creature you refine); an amenity is a building.
  *  It is Done when every part meets its acceptance criteria. */
-export function DesignStudio({ item, onFinish, onCancel }: DesignStudioProps) {
+export function DesignStudio({ item, onFinish, onCancel, initial, onChange }: DesignStudioProps) {
   const isExhibit = item.category === 'exhibit';
   const cell = Math.floor(232 / GRID_W);
 
   // Exhibit: a list of animals in the enclosure. Amenity: a single building design.
-  const [animals, setAnimals] = useState<ItemDesign[]>(item.animals ?? [presetFor(item)]);
+  // Resume from `initial` (draft kept by the board) before the item's built state.
+  const [animals, setAnimals] = useState<ItemDesign[]>(initial?.animals ?? item.animals ?? [presetFor(item)]);
   const [sel, setSel] = useState(0);
-  const [building, setBuilding] = useState<ItemDesign>(item.design ?? presetFor(item));
+  const [building, setBuilding] = useState<ItemDesign>(initial?.design ?? item.design ?? presetFor(item));
+
+  const commitAnimals = (next: ItemDesign[]) => { setAnimals(next); onChange?.({ animals: next }); };
+  const commitBuilding = (next: ItemDesign) => { setBuilding(next); onChange?.({ design: next }); };
 
   const selected = animals[Math.min(sel, animals.length - 1)];
-  const updateSel = (d: ItemDesign) => setAnimals((a) => a.map((x, i) => (i === sel ? d : x)));
-  const addAnimal = () => { if (animals.length >= MAX_ANIMALS) return; setAnimals((a) => [...a, { ...selected, parts: { ...selected.parts }, colors: { ...selected.colors } }]); setSel(animals.length); };
-  const removeAnimal = (i: number) => { if (animals.length <= 1) return; setAnimals((a) => a.filter((_, j) => j !== i)); setSel((s) => Math.max(0, s > i ? s - 1 : s === i ? Math.min(i, animals.length - 2) : s)); };
+  const updateSel = (d: ItemDesign) => commitAnimals(animals.map((x, i) => (i === sel ? d : x)));
+  const addAnimal = () => { if (animals.length >= MAX_ANIMALS) return; commitAnimals([...animals, { ...selected, parts: { ...selected.parts }, colors: { ...selected.colors } }]); setSel(animals.length); };
+  const removeAnimal = (i: number) => { if (animals.length <= 1) return; commitAnimals(animals.filter((_, j) => j !== i)); setSel((s) => Math.max(0, s > i ? s - 1 : s === i ? Math.min(i, animals.length - 2) : s)); };
 
   const readyCount = animals.filter((a) => isDesignDone(item, a)).length;
   const exhibitDone = animals.length >= 1 && readyCount === animals.length;
@@ -160,10 +168,10 @@ export function DesignStudio({ item, onFinish, onCancel }: DesignStudioProps) {
           <div className="space-y-3">
             {AMENITY_COLORS.map((c) => (
               <ColourPickerRow key={c.key} label={c.label} value={building.colors[c.key]}
-                onChange={(hex) => setBuilding((b) => ({ ...b, colors: { ...b.colors, [c.key]: hex }, parts: c.key === 'sign' ? { ...b.parts, sign: 'on' } : b.parts }))} />
+                onChange={(hex) => commitBuilding({ ...building, colors: { ...building.colors, [c.key]: hex }, parts: c.key === 'sign' ? { ...building.parts, sign: 'on' } : building.parts })} />
             ))}
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={building.parts.sign === 'on'} onChange={(e) => setBuilding((b) => ({ ...b, parts: { ...b.parts, sign: e.target.checked ? 'on' : 'off' } }))} />
+              <input type="checkbox" checked={building.parts.sign === 'on'} onChange={(e) => commitBuilding({ ...building, parts: { ...building.parts, sign: e.target.checked ? 'on' : 'off' } })} />
               Put up a sign
             </label>
           </div>

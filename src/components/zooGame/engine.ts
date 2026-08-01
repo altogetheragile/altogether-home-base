@@ -22,6 +22,17 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
   };
 }
 
+/** Pull a Backlog item into the current Sprint mid-Sprint. Scope can grow by
+ *  agreement during the Sprint, as long as the Sprint's goal is not put at risk -
+ *  so the Backlog stays visible and pullable while building. */
+export function pullIntoSprint(state: ZooGameState, id: string): ZooGameState {
+  if (state.phase !== 'sprint') return state;
+  const item = state.backlog.find((it) => it.id === id && it.status === 'backlog');
+  if (!item) return state;
+  const backlog = state.backlog.map((it) => (it.id === id ? { ...it, status: 'committed' as const, sprintNumber: state.sprintNumber } : it));
+  return { ...state, committedIds: [...state.committedIds, id], backlog };
+}
+
 // ============= Building and releasing =============
 
 /** A committed item is built to the Definition of Done. For an exhibit, the built
