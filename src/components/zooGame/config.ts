@@ -43,6 +43,14 @@ const STARTING_BACKLOG: BacklogItem[] = [
   ex('penguins', 'Penguins', 'Waterside', 8, [8, 6, 6]),
   ex('reef', 'Reef', 'Waterside', 5, [6, 8, 5]),
   am('wc', 'Toilets', 'Waterside', 3, 'toilet'),
+  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7]),
+  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6]),
+  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6]),
+  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5]),
+  am('cafe', 'Cafe', 'Savanna', 5, 'food'),
+  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6]),
+  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6]),
+  am('picnic', 'Picnic area', 'Forest', 3, 'rest'),
 ];
 
 function ex(id: string, name: string, zone: string, estimate: number, appeal: [number, number, number]): BacklogItem {
@@ -84,7 +92,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     productGoal: PRODUCT_GOAL,
     definitionOfDone: [...DEFAULT_DOD],
     backlog,
-    zones: ['Big Cats', 'Waterside'],
+    zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest'],
     sprintNumber: 1,
     committedIds: [],
     velocity: [],

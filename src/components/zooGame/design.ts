@@ -111,19 +111,34 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
   }
 
   const upright = bodyShape === 'upright';
-  const headCY = upright ? 4.3 : 5.4;
-  const headR = upright ? 2.5 : 3.2;
-  const bodyCY = headCY + headR + (upright ? 3 : 2.3);
-  const bodyRX = bodyShape === 'long' ? 4.7 : upright ? 2.9 : 3.7;
-  const bodyRY = upright ? 4.2 : 2.9;
+  const bulky = bodyShape === 'bulky';
+  const tall = bodyShape === 'tall'; // long neck (giraffe): head high, small body low
+
+  const headCY = tall ? 2.6 : upright ? 4.3 : 5.4;
+  const headR = tall ? 2.0 : upright ? 2.5 : bulky ? 3.5 : 3.2;
+  const bodyCY = tall ? 10.6 : headCY + headR + (upright ? 3 : bulky ? 2.6 : 2.3);
+  const bodyRX = tall ? 3.3 : bodyShape === 'long' ? 4.7 : upright ? 2.9 : bulky ? 4.8 : 3.7;
+  const bodyRY = tall ? 2.7 : upright ? 4.2 : bulky ? 3.5 : 2.9;
   const head = ellipse(8, headCY, headR, headR);
   const body = ellipse(8, bodyCY, bodyRX, bodyRY).filter(([, y]) => y < GRID_H);
   const mane = headShape === 'maned' ? ring(8, headCY, headR + 1.6, headR - 0.3) : [];
 
+  // A neck column links a small high head to the body (giraffe).
+  const neck: Cell[] = [];
+  if (tall) for (let y = Math.round(headCY + headR - 1); y <= Math.round(bodyCY - bodyRY + 1); y++) { neck.push([7, y], [8, y]); }
+
   const ey = headCY - headR + 0.2;
   let ears: Cell[] = [];
-  if (earsShape === 'round') ears = [...ellipse(8 - 2.3, ey, 1.2, 1.2), ...ellipse(8 + 2.3, ey, 1.2, 1.2)];
+  const bigEars = headShape === 'trunk'; // elephant ears
+  if (bigEars) ears = [...ellipse(8 - 2.7, headCY - 0.4, 1.8, 2), ...ellipse(8 + 2.7, headCY - 0.4, 1.8, 2)];
+  else if (earsShape === 'round') ears = [...ellipse(8 - 2.3, ey, 1.2, 1.2), ...ellipse(8 + 2.3, ey, 1.2, 1.2)];
   else if (earsShape === 'pointed') ears = [[6, ey - 1], [6, ey], [5, ey - 1], [10, ey - 1], [10, ey], [11, ey - 1]];
+
+  // Horns / antlers above the head.
+  const horns: Cell[] = headShape === 'horned' ? [[6, headCY - headR - 1], [6, headCY - headR], [10, headCY - headR - 1], [10, headCY - headR]] : [];
+  // Trunk hanging from the face (elephant).
+  const trunk: Cell[] = [];
+  if (headShape === 'trunk') for (let y = Math.round(headCY); y <= Math.round(headCY + headR + 2.5); y++) trunk.push([8, y]);
 
   const tx = Math.round(8 + bodyRX - 0.5), ty = Math.round(bodyCY + 0.6);
   let tail: Cell[] = [];
@@ -137,14 +152,18 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
 
   const beak: Cell[] = headShape === 'beaked' ? [[8, headCY + 0.6], [7, headCY + 1.2], [8, headCY + 1.2], [9, headCY + 1.2]] : [];
   const eyeY = Math.round(headCY - 0.2);
-  const eyeL = Math.round(8 - 1.3), eyeR = Math.round(8 + 1.3);
+  const eyeDX = tall ? 0.9 : 1.3;
+  const eyeL = Math.round(8 - eyeDX), eyeR = Math.round(8 + eyeDX);
 
   set(g, feet, shade(col('body'), -46));
   set(g, tail, has('tail') ? col('tail') : shade(col('body'), -10));
+  paintShaded(g, neck, col('body'));
   paintShaded(g, mane, col('ears'), 12, -22);      // mane behind the face
-  set(g, ears, col('ears'));
+  set(g, horns, has('ears') ? col('ears') : '#d8cbb0'); // horn/antler colour (editable via ears slot)
+  set(g, ears, bigEars && !has('ears') ? shade(col('body'), -8) : col('ears'));
   paintShaded(g, body, col('body'));
   set(g, markingsOn(body, markShape), col('markings'));
+  set(g, trunk, col('head'));
   paintShaded(g, head, col('head'), 22, -18);
   if (markShape === 'stripes' || markShape === 'spots') set(g, markingsOn(head, markShape), col('markings'));
   set(g, beak, BEAK);
@@ -179,8 +198,8 @@ export function renderDesign(item: BacklogItem, design: ItemDesign): (string | n
 
 export interface PartSpec { key: string; label: string; options: string[]; colorKey: string; optional?: boolean }
 export const EXHIBIT_PARTS: PartSpec[] = [
-  { key: 'body', label: 'Body', options: ['round', 'long', 'upright', 'finned'], colorKey: 'body' },
-  { key: 'head', label: 'Head', options: ['round', 'maned', 'beaked', 'none'], colorKey: 'head' },
+  { key: 'body', label: 'Body', options: ['round', 'long', 'upright', 'bulky', 'tall', 'finned'], colorKey: 'body' },
+  { key: 'head', label: 'Head', options: ['round', 'maned', 'beaked', 'horned', 'trunk', 'none'], colorKey: 'head' },
   { key: 'ears', label: 'Ears / mane', options: ['none', 'round', 'pointed'], colorKey: 'ears', optional: true },
   { key: 'tail', label: 'Tail / fin', options: ['none', 'tufted', 'long', 'fin'], colorKey: 'tail', optional: true },
   { key: 'markings', label: 'Markings', options: ['none', 'stripes', 'spots', 'patches'], colorKey: 'markings', optional: true },
@@ -199,6 +218,12 @@ const PART_PRESETS: Record<string, Record<string, string>> = {
   leopard: { body: 'long', head: 'round', ears: 'round', tail: 'long', markings: 'spots' },
   penguins: { body: 'upright', head: 'beaked', ears: 'none', tail: 'none', markings: 'patches' },
   reef: { body: 'finned', head: 'none', ears: 'none', tail: 'fin', markings: 'stripes' },
+  elephant: { body: 'bulky', head: 'trunk', ears: 'round', tail: 'long', markings: 'none' },
+  giraffe: { body: 'tall', head: 'round', ears: 'pointed', tail: 'long', markings: 'spots' },
+  zebra: { body: 'long', head: 'round', ears: 'pointed', tail: 'long', markings: 'stripes' },
+  rhino: { body: 'bulky', head: 'horned', ears: 'round', tail: 'long', markings: 'none' },
+  bear: { body: 'bulky', head: 'round', ears: 'round', tail: 'none', markings: 'none' },
+  monkey: { body: 'round', head: 'round', ears: 'round', tail: 'long', markings: 'none' },
 };
 const GENERIC_EXHIBIT = { body: 'round', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' };
 
