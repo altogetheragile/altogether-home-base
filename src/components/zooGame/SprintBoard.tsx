@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
+import type { ItemDesign } from './design';
 import { openZoo } from './engine';
+import { DesignStudio } from './DesignStudio';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Hammer, DoorOpen, Check } from 'lucide-react';
+import { Palette, DoorOpen, Check } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
-  onBuild: (id: string) => void;
+  onBuild: (id: string, design?: ItemDesign) => void;
   onOpen: (id: string) => void;
   onReview: () => void;
 }
@@ -14,11 +17,13 @@ interface SprintBoardProps {
 /** The Sprint board: build each committed item to the Definition of Done, then open
  *  (release) it to visitors whenever you like. Releasing is not the Review. */
 export function SprintBoard({ state, onBuild, onOpen, onReview }: SprintBoardProps) {
+  const [designing, setDesigning] = useState<string | null>(null);
   const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'));
   const open = openZoo(state);
+  const designItem = designing ? committed.find((it) => it.id === designing && it.status === 'committed') : null;
 
   const StatusButton = ({ it }: { it: BacklogItem }) => {
-    if (it.status === 'committed') return <Button size="sm" onClick={() => onBuild(it.id)}><Hammer className="mr-1.5 h-3.5 w-3.5" /> Build</Button>;
+    if (it.status === 'committed') return <Button size="sm" onClick={() => setDesigning(it.id)}><Palette className="mr-1.5 h-3.5 w-3.5" /> Design and build</Button>;
     if (it.status === 'done') return <Button size="sm" variant="outline" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1.5 h-3.5 w-3.5" /> Open to visitors</Button>;
     return <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> Open</span>;
   };
@@ -35,6 +40,13 @@ export function SprintBoard({ state, onBuild, onOpen, onReview }: SprintBoardPro
         time - you do not have to wait for the Review.
       </p>
 
+      {designItem ? (
+        <DesignStudio
+          item={designItem}
+          onFinish={(d) => { onBuild(designItem.id, d); setDesigning(null); }}
+          onCancel={() => setDesigning(null)}
+        />
+      ) : (
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">This Sprint's work</h2>
         <div className="space-y-1.5">
@@ -53,6 +65,7 @@ export function SprintBoard({ state, onBuild, onOpen, onReview }: SprintBoardPro
           ))}
         </div>
       </section>
+      )}
 
       <div className="fixed inset-x-0 bottom-4 z-20 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
         <span className="text-xs font-medium text-muted-foreground">Definition of Done: {state.definitionOfDone.length} criteria</span>

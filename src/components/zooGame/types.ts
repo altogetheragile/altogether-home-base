@@ -6,6 +6,7 @@
 // days and Daily Scrum, the design-and-build mechanic, the park view and the coach.
 
 import type { SegmentId, SimulationResult, Signal } from './simulation/types';
+import type { ItemDesign } from './design';
 
 export type ZooPhase = 'intro' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
@@ -32,6 +33,8 @@ export interface BacklogItem {
   /** The Sprint this item was committed to (null while in the Backlog). */
   sprintNumber: number | null;
   accessible: boolean;
+  /** The finish the team chose when building it (palette, pattern, features). */
+  design?: ItemDesign;
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -77,7 +80,7 @@ export type ZooAction =
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
-  | { type: 'BUILD_ITEM'; id: string }
+  | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }
