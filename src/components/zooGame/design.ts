@@ -36,14 +36,45 @@ function ellipse(cx: number, cy: number, rx: number, ry: number): Cell[] {
 const ring = (cx: number, cy: number, rOut: number, rIn: number): Cell[] =>
   ellipse(cx, cy, rOut, rOut).filter(([x, y]) => !inEllipse(x, y, cx, cy, rIn, rIn));
 
+const OUTLINE = '#241812';
+const HILITE = '#ffffff';
+
+const setCell = (g: (string | null)[][], cx: number, cy: number, color: string) => {
+  const x = Math.round(cx), y = Math.round(cy);
+  if (y >= 0 && y < GRID_H && x >= 0 && x < GRID_W) g[y][x] = color;
+};
 const set = (g: (string | null)[][], cells: Cell[], color: string | null) => {
   if (!color) return;
-  for (const [cx, cy] of cells) {
-    const x = Math.round(cx), y = Math.round(cy);
-    if (y >= 0 && y < GRID_H && x >= 0 && x < GRID_W) g[y][x] = color;
-  }
+  for (const [x, y] of cells) setCell(g, x, y, color);
 };
 const blank = (): (string | null)[][] => Array.from({ length: GRID_H }, () => Array<string | null>(GRID_W).fill(null));
+
+/** Lighten (amt > 0) or darken (amt < 0) a hex colour, for pixel-art shading. */
+function shade(hex: string, amt: number): string {
+  const h = hex.replace('#', '');
+  const ch = (i: number) => Math.max(0, Math.min(255, parseInt(h.slice(i, i + 2), 16) + amt));
+  return '#' + [ch(0), ch(2), ch(4)].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+
+/** Paint a region with soft top-light / belly-dark shading, the trick that gives the
+ *  reference sprites their rounded, hand-drawn feel. */
+function paintShaded(g: (string | null)[][], cells: Cell[], hex: string, top = 20, bot = -28) {
+  if (!cells.length) return;
+  const ys = cells.map((c) => c[1]);
+  const y0 = Math.min(...ys), span = Math.max(1, Math.max(...ys) - y0);
+  for (const [x, y] of cells) setCell(g, x, y, shade(hex, Math.round(top + (bot - top) * ((y - y0) / span))));
+}
+
+/** Wrap the filled silhouette in a 1px dark outline, so each creature reads as a
+ *  clean sticker like the reference art. */
+function outlined(g: (string | null)[][]): (string | null)[][] {
+  const out = g.map((row) => row.slice());
+  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) {
+    if (g[y][x] !== null) continue;
+    if ((g[y - 1]?.[x] ?? null) !== null || (g[y + 1]?.[x] ?? null) !== null || (g[y][x - 1] ?? null) !== null || (g[y][x + 1] ?? null) !== null) out[y][x] = OUTLINE;
+  }
+  return out;
+}
 
 /** Markings painted over a region (body or face): vertical stripes, scattered spots,
  *  or a pale belly patch. */
@@ -57,7 +88,8 @@ function markingsOn(cells: Cell[], shape: string): Cell[] {
 
 /** A recognisable front-facing creature assembled from the chosen parts: a face
  *  (with optional mane, ears, beak, eyes) above a body, with a tail and markings.
- *  A 'finned' body or headless head is drawn instead as a side-on swimmer. */
+ *  A 'finned' body or headless head is drawn instead as a side-on swimmer. Shaded
+ *  in the pixel-art style of the reference pack. */
 function creatureGrid(design: ItemDesign): (string | null)[][] {
   const g = blank();
   const col = (k: string) => design.colors[k] ?? PLACEHOLDER;
@@ -72,9 +104,9 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
   if (bodyShape === 'finned' || headShape === 'none') {
     const body = ellipse(8, 8, 4.6, 2.8);
     set(g, ellipse(2, 8, 1.9, 2.6), has('tail') ? col('tail') : col('body')); // tail fin
-    set(g, body, col('body'));
+    paintShaded(g, body, col('body'));
     set(g, markingsOn(body, markShape), col('markings'));
-    set(g, [[11, 7]], EYE);
+    setCell(g, 11, 7, EYE); setCell(g, 11, 6, HILITE);
     return g;
   }
 
@@ -99,35 +131,48 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
   else if (tailShape === 'long') tail = [[tx, ty], [tx + 1, ty - 1], [tx + 2, ty - 2], [tx + 2, ty - 3]];
   else if (tailShape === 'fin') tail = ellipse(tx + 1, ty, 1.3, 1.8);
 
-  const beak: Cell[] = headShape === 'beaked' ? [[8, headCY + 0.6], [7, headCY + 1.2], [8, headCY + 1.2], [9, headCY + 1.2]] : [];
-  const eyes: Cell[] = [[Math.round(8 - 1.3), Math.round(headCY - 0.2)], [Math.round(8 + 1.3), Math.round(headCY - 0.2)]];
+  // Little feet peeking out under the body, for groundedness.
+  const byMax = Math.max(...body.map((c) => c[1]));
+  const feet: Cell[] = upright ? [[7, byMax], [9, byMax]] : [[6, byMax], [10, byMax]];
 
-  set(g, tail, has('tail') ? col('tail') : col('body'));
-  set(g, mane, col('ears'));               // mane uses the ears/mane colour, behind the face
+  const beak: Cell[] = headShape === 'beaked' ? [[8, headCY + 0.6], [7, headCY + 1.2], [8, headCY + 1.2], [9, headCY + 1.2]] : [];
+  const eyeY = Math.round(headCY - 0.2);
+  const eyeL = Math.round(8 - 1.3), eyeR = Math.round(8 + 1.3);
+
+  set(g, feet, shade(col('body'), -46));
+  set(g, tail, has('tail') ? col('tail') : shade(col('body'), -10));
+  paintShaded(g, mane, col('ears'), 12, -22);      // mane behind the face
   set(g, ears, col('ears'));
-  set(g, body, col('body'));
+  paintShaded(g, body, col('body'));
   set(g, markingsOn(body, markShape), col('markings'));
-  set(g, head, col('head'));
+  paintShaded(g, head, col('head'), 22, -18);
   if (markShape === 'stripes' || markShape === 'spots') set(g, markingsOn(head, markShape), col('markings'));
   set(g, beak, BEAK);
-  set(g, eyes, EYE);
+  setCell(g, eyeL, eyeY, EYE); setCell(g, eyeR, eyeY, EYE);
+  setCell(g, eyeL, eyeY - 1, HILITE); setCell(g, eyeR, eyeY - 1, HILITE); // eye sparkle
   return g;
 }
 
-/** Render the assembled design as a GRID_H x GRID_W colour grid (null = empty). Used
- *  by the studio preview and the park sprites, so both always match. */
-export function renderDesign(item: BacklogItem, design: ItemDesign): (string | null)[][] {
-  if (item.category === 'exhibit') return creatureGrid(design);
-
-  // Building: walls, roof, door, glass, optional sign.
+/** A little building for an amenity: walls, gable roof, door, windows and an
+ *  optional sign, shaded and outlined to match the creatures. */
+function buildingGrid(design: ItemDesign): (string | null)[][] {
   const g = blank();
   const col = (k: string) => design.colors[k] ?? PLACEHOLDER;
-  for (let y = 6; y <= 12; y++) for (let x = 4; x <= 12; x++) g[y][x] = col('walls');
-  for (let y = 3; y <= 5; y++) for (let x = 4 + (5 - y); x <= 12 - (5 - y); x++) g[y][x] = col('roof'); // gable roof
-  for (let y = 8; y <= 12; y++) for (let x = 7; x <= 9; x++) g[y][x] = col('door'); // door
+  const wall: Cell[] = [], roof: Cell[] = [];
+  for (let y = 6; y <= 12; y++) for (let x = 4; x <= 12; x++) wall.push([x, y]);
+  for (let y = 3; y <= 5; y++) for (let x = 4 + (5 - y); x <= 12 - (5 - y); x++) roof.push([x, y]);
+  paintShaded(g, wall, col('walls'), 14, -18);
+  paintShaded(g, roof, col('roof'), 16, -20);
+  for (let y = 8; y <= 12; y++) for (let x = 7; x <= 9; x++) g[y][x] = col('door');
   g[8][5] = '#a9d3ea'; g[8][11] = '#a9d3ea'; // windows
   if (design.parts.sign === 'on') for (let x = 5; x <= 11; x++) g[1][x] = col('sign');
   return g;
+}
+
+/** Render the assembled design as a GRID_H x GRID_W colour grid (null = empty), with
+ *  a dark outline. Used by the studio preview and the park sprites, so both match. */
+export function renderDesign(item: BacklogItem, design: ItemDesign): (string | null)[][] {
+  return outlined(item.category === 'exhibit' ? creatureGrid(design) : buildingGrid(design));
 }
 
 // ---- Parts metadata for the studio ----
