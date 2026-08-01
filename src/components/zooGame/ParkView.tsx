@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { renderDesign, presetFor, GRID_W } from './design';
+import { renderDesign, presetFor, GRID_W, type ItemDesign } from './design';
 import type { SegmentId } from './simulation/types';
 import { cn } from '@/lib/utils';
 import { Users, Smile, LayoutGrid, Trees } from 'lucide-react';
@@ -27,9 +27,9 @@ function themeFor(zone: string, idx: number): ZoneTheme {
   return THEMES[ORDER[idx % ORDER.length]];
 }
 
-/** Render an item at a small scale, using the design the team built. */
-function ItemSprite({ item, cell }: { item: BacklogItem; cell: number }) {
-  const grid = renderDesign(item, item.design ?? presetFor(item));
+/** Render one design (a creature or building) at a small scale. */
+function Sprite({ item, design, cell }: { item: BacklogItem; design: ItemDesign; cell: number }) {
+  const grid = renderDesign(item, design);
   return (
     <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
       {grid.flatMap((row, r) => row.map((color, c) => (
@@ -39,17 +39,21 @@ function ItemSprite({ item, cell }: { item: BacklogItem; cell: number }) {
   );
 }
 
-/** A single exhibit / amenity as a plot tile with its critter and a label pill. */
+/** A single exhibit / amenity as a plot tile. Exhibits show every animal in the
+ *  enclosure; amenities show the building. */
 function Plot({ item, theme, cell }: { item: BacklogItem; theme: ZoneTheme; cell: number }) {
   const tile = item.category === 'amenity' ? '#cfd4d8' : theme.plot;
   const border = item.category === 'amenity' ? '#9aa3ab' : theme.plotBorder;
+  const designs = item.category === 'exhibit' ? (item.animals?.length ? item.animals : [presetFor(item)]) : [item.design ?? presetFor(item)];
   return (
     <div className="relative flex flex-col items-center">
-      <div className="flex items-center justify-center rounded-lg"
-        style={{ background: tile, border: `2px solid ${border}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: cell }}>
-        <ItemSprite item={item} cell={cell} />
+      <div className="flex flex-wrap items-end justify-center gap-x-1 rounded-lg"
+        style={{ background: tile, border: `2px solid ${border}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: cell, maxWidth: (GRID_W * cell + 4) * 2 }}>
+        {designs.map((d, i) => <Sprite key={i} item={item} design={d} cell={cell} />)}
       </div>
-      <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{item.name}</span>
+      <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">
+        {item.name}{item.category === 'exhibit' && designs.length > 1 ? ` ×${designs.length}` : ''}
+      </span>
     </div>
   );
 }

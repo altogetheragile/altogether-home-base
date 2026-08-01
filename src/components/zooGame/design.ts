@@ -267,3 +267,19 @@ export function appealFromDesign(item: BacklogItem, design: ItemDesign): Record<
     comfortSeekers: clamp(item.appeal.comfortSeekers * mult.comfortSeekers, 0, 10),
   };
 }
+
+/** Aggregate appeal for an enclosure holding several animals: the average of each
+ *  animal's appeal, lifted a little for a fuller enclosure (more to see). So adding
+ *  a second and third lion makes the exhibit more of a draw, with diminishing
+ *  returns. */
+export function appealFromAnimals(item: BacklogItem, animals: ItemDesign[]): Record<SegmentId, number> | undefined {
+  if (item.category !== 'exhibit' || !item.appeal || !animals.length) return item.appeal;
+  const each = animals.map((a) => appealFromDesign(item, a)!).filter(Boolean);
+  const avg = (k: SegmentId) => each.reduce((s, r) => s + r[k], 0) / each.length;
+  const fullness = Math.min(1.3, 1 + 0.09 * (animals.length - 1));
+  return {
+    families: clamp(avg('families') * fullness, 0, 10),
+    enthusiasts: clamp(avg('enthusiasts') * fullness, 0, 10),
+    comfortSeekers: clamp(avg('comfortSeekers') * fullness, 0, 10),
+  };
+}

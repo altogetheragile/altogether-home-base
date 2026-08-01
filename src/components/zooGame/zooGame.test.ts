@@ -181,15 +181,25 @@ describe('zoo game: design choices are the product', () => {
   it('a bright, busy build favours Families; a calm, muted one favours Comfort Seekers', () => {
     const brightDesign = { parts: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'spots' }, colors: { body: '#ffd54a', head: '#ffd54a', ears: '#ffcc00', tail: '#ffcc00', markings: '#ff8a00' } };
     const calmDesign = { parts: { body: 'round', head: 'round', ears: 'none', tail: 'none', markings: 'none' }, colors: { body: '#5a4a38', head: '#5a4a38', ears: '#5a4a38' } };
-    const bright = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign); // bright + busy
-    const calm = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', calmDesign); // dark + plain
+    const bright = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [brightDesign]); // bright + busy
+    const calm = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [calmDesign]); // dark + plain
 
     const b = bright.backlog.find((i) => i.id === 'lion')!.appeal!;
     const c = calm.backlog.find((i) => i.id === 'lion')!.appeal!;
     expect(b.families).toBeGreaterThan(c.families);
     expect(c.comfortSeekers).toBeGreaterThan(b.comfortSeekers);
-    // The design is recorded on the built item.
-    expect(bright.backlog.find((i) => i.id === 'lion')!.design).toEqual(brightDesign);
+    // The animals are recorded on the built enclosure.
+    expect(bright.backlog.find((i) => i.id === 'lion')!.animals).toEqual([brightDesign]);
+  });
+
+  it('an enclosure with several animals is more of a draw than a single one', () => {
+    const a = { parts: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'none' }, colors: { body: '#d99a4e', head: '#e6ad63', ears: '#8a5a2b', tail: '#8a5a2b' } };
+    const one = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [a]);
+    const three = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [a, { ...a, parts: { ...a.parts, body: 'upright' } }, { ...a, parts: { ...a.parts, body: 'long' } }]);
+    const p1 = one.backlog.find((i) => i.id === 'lion')!.appeal!;
+    const p3 = three.backlog.find((i) => i.id === 'lion')!.appeal!;
+    expect(p3.families).toBeGreaterThan(p1.families); // a fuller enclosure draws more
+    expect(three.backlog.find((i) => i.id === 'lion')!.animals).toHaveLength(3);
   });
 });
 
