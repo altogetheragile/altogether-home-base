@@ -3,16 +3,18 @@ import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
 import { openZoo, availableItems } from './engine';
 import { DAY_SECONDS } from './config';
-import { DesignStudio, type BuildResult } from './DesignStudio';
+import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
-  onBuild: (id: string, design?: ItemDesign, animals?: ItemDesign[]) => void;
+  onBuild: (id: string, design?: ItemDesign) => void;
+  onEditBuild: (id: string, design: ItemDesign) => void;
+  onAddAnother: (id: string) => void;
   onPull: (id: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
@@ -75,17 +77,23 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: nu
  *  Definition of Done and open (release) them whenever you like; the day ends on the
  *  timer or when you call it, opening the Daily Scrum. After the last day's Daily
  *  Scrum the Review opens. */
-export function SprintBoard({ state, onBuild, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
-  const [draft, setDraft] = useState<{ id: string; result: BuildResult } | null>(null);
+  const [draft, setDraft] = useState<{ id: string; design: ItemDesign } | null>(null);
   const [showBacklog, setShowBacklog] = useState(false);
   const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'));
   const available = availableItems(state);
   const open = openZoo(state);
-  const designItem = designing ? committed.find((it) => it.id === designing && it.status === 'committed') : null;
+  const designItem = designing ? committed.find((it) => it.id === designing) : null;
+  const editing = !!designItem && designItem.status !== 'committed';
   const cut = Math.round((1 - state.dayTimeMult) * 100);
+
+  // Built animals you can copy from when designing another of the same kind.
+  const copySources: CopySource[] = designItem
+    ? state.backlog.filter((it) => it.id !== designItem.id && it.category === designItem.category && it.design).map((it) => ({ id: it.id, name: it.name, design: it.design! }))
+    : [];
 
   if (state.dayStage === 'dailyScrum') {
     return <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />;
@@ -93,8 +101,14 @@ export function SprintBoard({ state, onBuild, onPull, onOpen, onEndDay, onHoldDa
 
   const StatusButton = ({ it }: { it: BacklogItem }) => {
     if (it.status === 'committed') return <Button size="sm" onClick={() => setDesigning(it.id)}><Palette className="mr-1.5 h-3.5 w-3.5" /> Design and build</Button>;
-    if (it.status === 'done') return <Button size="sm" variant="outline" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1.5 h-3.5 w-3.5" /> Open to visitors</Button>;
-    return <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> Open</span>;
+    return (
+      <div className="flex items-center gap-1.5">
+        {it.status === 'done' && <Button size="sm" variant="outline" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1.5 h-3.5 w-3.5" /> Open to visitors</Button>}
+        {it.status === 'open' && <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> Open</span>}
+        <Button size="sm" variant="ghost" className="h-8 px-2" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
+        {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-8 px-2" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
+      </div>
+    );
   };
 
   return (
@@ -133,9 +147,11 @@ export function SprintBoard({ state, onBuild, onPull, onOpen, onEndDay, onHoldDa
           {designItem ? (
             <DesignStudio
               item={designItem}
-              initial={draft && draft.id === designItem.id ? draft.result : undefined}
-              onChange={(r) => setDraft({ id: designItem.id, result: r })}
-              onFinish={(r) => { onBuild(designItem.id, r.design, r.animals); setDesigning(null); setDraft(null); }}
+              editing={editing}
+              copySources={copySources}
+              initial={draft && draft.id === designItem.id ? draft.design : undefined}
+              onChange={(d) => setDraft({ id: designItem.id, design: d })}
+              onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); setDraft(null); }}
               onCancel={() => setDesigning(null)}
             />
           ) : (
