@@ -39,8 +39,14 @@ export interface BacklogItem {
   category: 'exhibit' | 'amenity';
   /** Which themed zone this belongs to (Big Cats, Waterside, ...). */
   zone: string;
-  /** Estimate in points, from size and complexity. */
+  /** Estimate in points, the team's forecast from size and complexity. Meaningful
+   *  once the item has been estimated (see `unsized`). */
   estimate: number;
+  /** True until the team estimates it: an unsized item can't be planned yet - it
+   *  must be refined (estimated) first. */
+  unsized?: boolean;
+  /** Hidden intended size; what planning poker clusters the cards around. */
+  trueSize?: number;
   /** Per-item acceptance criteria (what makes this item correct). Distinct from the
    *  product-wide Definition of Done. */
   acceptance: string[];
@@ -114,6 +120,8 @@ export type ZooAction =
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
+  | { type: 'ESTIMATE_ITEM'; id: string; points: number }
+  | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }

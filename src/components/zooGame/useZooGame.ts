@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase } from './types';
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, moveItem, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum,
 } from './engine';
 
@@ -24,6 +24,10 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return acceptSignal(state, action.index);
     case 'PLAN_SPRINT':
       return planSprint(state, action.ids);
+    case 'ESTIMATE_ITEM':
+      return estimateItem(state, action.id, action.points);
+    case 'MOVE_ITEM':
+      return moveItem(state, action.id, action.dir);
     case 'PULL_ITEM':
       return pullIntoSprint(state, action.id);
     case 'BUILD_ITEM':
@@ -62,6 +66,8 @@ export function useZooGame(gameSeed?: number) {
   const setDod = useCallback((dod: string[]) => dispatch({ type: 'SET_DOD', dod }), []);
   const takeSignal = useCallback((index: number) => dispatch({ type: 'ACCEPT_SIGNAL', index }), []);
   const plan = useCallback((ids: string[]) => dispatch({ type: 'PLAN_SPRINT', ids }), []);
+  const estimate = useCallback((id: string, points: number) => dispatch({ type: 'ESTIMATE_ITEM', id, points }), []);
+  const reorder = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ITEM', id, dir }), []);
   const pull = useCallback((id: string) => dispatch({ type: 'PULL_ITEM', id }), []);
   const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
   const editBuild = useCallback((id: string, design: ItemDesign) => dispatch({ type: 'EDIT_ITEM', id, design }), []);
@@ -76,7 +82,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setDod, takeSignal, plan, pull, build, editBuild, addAnotherPbi, open,
+    state, start, setPhase, setGoal, setDod, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, review, nextSprint, finish, reset,
   };
 }

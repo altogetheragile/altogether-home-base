@@ -43,28 +43,31 @@ const STARTING_BACKLOG: BacklogItem[] = [
   ex('penguins', 'Penguins', 'Waterside', 8, [8, 6, 6]),
   ex('reef', 'Reef', 'Waterside', 5, [6, 8, 5]),
   am('wc', 'Toilets', 'Waterside', 3, 'toilet'),
-  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7]),
-  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6]),
-  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6]),
-  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5]),
-  am('cafe', 'Cafe', 'Savanna', 5, 'food'),
-  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6]),
-  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6]),
-  am('picnic', 'Picnic area', 'Forest', 3, 'rest'),
+  // The newer zones arrive UNSIZED: the team must estimate (refine) them first.
+  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7], true),
+  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6], true),
+  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6], true),
+  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5], true),
+  am('cafe', 'Cafe', 'Savanna', 5, 'food', true),
+  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6], true),
+  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6], true),
+  am('picnic', 'Picnic area', 'Forest', 3, 'rest', true),
 ];
 
-function ex(id: string, name: string, zone: string, estimate: number, appeal: [number, number, number]): BacklogItem {
+/** An exhibit. `unsized` items carry their intended size as `trueSize` and start
+ *  with estimate 0 until the team estimates them. */
+function ex(id: string, name: string, zone: string, size: number, appeal: [number, number, number], unsized = false): BacklogItem {
   return {
-    id, name, category: 'exhibit', zone, estimate,
+    id, name, category: 'exhibit', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: ['Recognisable as a ' + name.toLowerCase(), 'Uses at least two colours', 'No bare patches'],
     status: 'backlog', sprintNumber: null, accessible: true,
     appeal: { families: appeal[0], enthusiasts: appeal[1], comfortSeekers: appeal[2] }, capacity: 320,
   };
 }
 
-function am(id: string, name: string, zone: string, estimate: number, services: 'food' | 'toilet' | 'rest'): BacklogItem {
+function am(id: string, name: string, zone: string, size: number, services: 'food' | 'toilet' | 'rest', unsized = false): BacklogItem {
   return {
-    id, name, category: 'amenity', zone, estimate,
+    id, name, category: 'amenity', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: ['Clearly signed', services === 'food' ? 'Serves food and drink' : services === 'toilet' ? 'Has enough cubicles' : 'Enough seating'],
     status: 'backlog', sprintNumber: null, accessible: true, services, serviceCapacity: 500,
   };

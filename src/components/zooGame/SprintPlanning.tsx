@@ -3,21 +3,26 @@ import type { ZooGameState } from './types';
 import { availableItems, productGoalProgress } from './engine';
 import { zooCapacity } from './config';
 import { ParkView } from './ParkView';
+import { PlanningPoker } from './PlanningPoker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, X, Fish, Coffee, Lightbulb } from 'lucide-react';
+import { Plus, X, Fish, Coffee, Lightbulb, ChevronUp, ChevronDown, HelpCircle } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ZooGameState;
   onPlan: (ids: string[]) => void;
+  onEstimate: (id: string, points: number) => void;
+  onReorder: (id: string, dir: 'up' | 'down') => void;
   onTakeSignal: (index: number) => void;
 }
 
-/** Sprint Planning: commit exhibits and amenities up to a velocity-driven capacity,
- *  and decide what to do with the visitors' signals. */
-export function SprintPlanning({ state, onPlan, onTakeSignal }: SprintPlanningProps) {
+/** Sprint Planning: refine the Backlog (estimate unsized items by planning poker,
+ *  order it), then commit sized items up to a velocity-driven capacity. */
+export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onTakeSignal }: SprintPlanningProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [estimating, setEstimating] = useState<string | null>(null);
   const items = availableItems(state);
+  const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
   const chosen = items.filter((i) => selected.has(i.id));
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
   const capacity = zooCapacity(state.velocity);
@@ -84,35 +89,45 @@ export function SprintPlanning({ state, onPlan, onTakeSignal }: SprintPlanningPr
         <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over ${state.velocity.length} Sprint${state.velocity.length > 1 ? 's' : ''}.` : 'First-Sprint guess. Velocity will replace it after Sprint 1.'}</p>
       </div>
 
-      {/* Product Backlog */}
+      {/* Product Backlog + refinement */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span></h2>
-        <div className="grid gap-2 sm:grid-cols-2">
+        <h2 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length}) - ordered by you, the Product Owner</span></h2>
+        <p className="text-[11px] text-muted-foreground">Refine it: estimate the unsized items by planning poker, and order the backlog toward the Product Goal. Only estimated items can be committed.</p>
+
+        {estimatingItem && (
+          <PlanningPoker item={estimatingItem} seed={state.gameSeed}
+            onCommit={(pts) => { onEstimate(estimatingItem.id, pts); setEstimating(null); }}
+            onCancel={() => setEstimating(null)} />
+        )}
+
+        <div className="space-y-1.5">
           {items.length === 0 && <p className="text-xs text-muted-foreground/60">Everything is planned or built. Accept a signal to add more.</p>}
-          {items.map((it) => {
+          {items.map((it, idx) => {
             const on = selected.has(it.id);
             const Icon = it.category === 'amenity' ? (it.services === 'food' ? Coffee : Plus) : Fish;
             return (
-              <button
-                key={it.id}
-                type="button"
-                onClick={() => toggle(it.id)}
-                className={cn('flex flex-col gap-1.5 rounded-lg border p-3 text-left text-sm transition-colors',
-                  on ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/50')}
-              >
-                <div className="flex items-center gap-2">
-                  {on ? <X className="h-3.5 w-3.5 shrink-0 text-primary" /> : <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-                  <span className="flex-1 font-medium">{it.name}</span>
-                  <span className="font-mono text-xs text-muted-foreground">{it.estimate} pts</span>
+              <div key={it.id} className={cn('flex items-center gap-2 rounded-lg border p-2.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-muted/20' : 'border-border bg-card')}>
+                {/* Order (Product Owner priority) */}
+                <div className="flex flex-col text-muted-foreground">
+                  <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
+                  <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className="rounded-full bg-muted px-2 py-0.5">{it.zone}</span>
-                  <span>{it.category}</span>
-                </div>
-                <ul className="text-[11px] text-muted-foreground/80">
-                  {it.acceptance.map((a) => <li key={a}>· {a}</li>)}
-                </ul>
-              </button>
+                {/* Select (only sized items can be committed) */}
+                <button type="button" disabled={it.unsized} onClick={() => toggle(it.id)} className="flex flex-1 items-start gap-2 text-left disabled:cursor-not-allowed">
+                  {on ? <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> : <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+                  <span className="flex-1">
+                    <span className="font-medium">{it.name}</span>
+                    <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
+                    <span className="ml-1 text-[11px] text-muted-foreground">{it.category}</span>
+                  </span>
+                </button>
+                {/* Estimate / size */}
+                {it.unsized ? (
+                  <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
+                ) : (
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">{it.estimate} pts</span>
+                )}
+              </div>
             );
           })}
         </div>
