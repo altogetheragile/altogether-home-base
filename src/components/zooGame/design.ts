@@ -1,124 +1,219 @@
 import type { BacklogItem } from './types';
 import type { SegmentId } from './simulation/types';
 
-// ============= Design and build =============
+// ============= Design and build (parametric) =============
 //
-// Building an item is not one click: you pick a template (given shape) and tailor
-// the finish from curated options. It is Done when it meets its acceptance criteria.
-// The design choices are the product: they shape how much each visitor group values
-// an exhibit. (Templates here are generic per category; per-animal art comes later.)
+// Building an item is a real task: you assemble it from swappable parts and colour
+// each one. An exhibit is a creature kit - body, head, ears, tail, markings - and a
+// species like "lion" is a preset you refine, not a fixed shape. It starts
+// uncoloured, so colouring it is the work. The choices are the product: they shape
+// how much each visitor group values it. Amenities are buildings with editable
+// colours and a sign.
 
 export interface ItemDesign {
-  /** Index into the palettes for this item's category, or null if not chosen. */
-  palette: number | null;
-  pattern: 'none' | 'stripes' | 'spots';
-  /** Which optional features are on. */
-  features: string[];
-}
-
-export const emptyDesign = (): ItemDesign => ({ palette: null, pattern: 'none', features: [] });
-
-export interface Palette {
-  name: string;
+  /** Chosen shape per part (exhibit: body/head/ears/tail/markings; amenity: sign). */
+  parts: Record<string, string>;
+  /** Editable colour per part / building surface, as hex. Missing = not coloured yet. */
   colors: Record<string, string>;
-  /** How bright/bold this scheme reads, 0..1. Families reward it, Comfort Seekers do not. */
-  bright: number;
 }
 
-export interface Template {
-  w: number;
-  h: number;
-  /** Grid of role letters ('.' = empty). Feature letters render only when that feature is on. */
-  grid: string[];
-  /** Role letter -> palette colour key. */
-  roles: Record<string, string>;
-  /** The role a pattern decorates. */
-  primary: string;
-  features: { id: string; label: string; role: string }[];
-  /** The feature Enthusiasts prize. */
-  signature: string;
+// ---- Grid + geometry ----
+
+export const GRID_W = 16;
+export const GRID_H = 14;
+const PLACEHOLDER = '#cbcdc6';
+const EYE = '#26221e';
+const BEAK = '#e8a13a';
+
+type Cell = [number, number];
+const inEllipse = (x: number, y: number, cx: number, cy: number, rx: number, ry: number) =>
+  ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
+function ellipse(cx: number, cy: number, rx: number, ry: number): Cell[] {
+  const out: Cell[] = [];
+  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) if (inEllipse(x, y, cx, cy, rx, ry)) out.push([x, y]);
+  return out;
 }
+const ring = (cx: number, cy: number, rOut: number, rIn: number): Cell[] =>
+  ellipse(cx, cy, rOut, rOut).filter(([x, y]) => !inEllipse(x, y, cx, cy, rIn, rIn));
 
-const CREATURE: Template = {
-  w: 9, h: 7,
-  grid: ['...C.C...', '..BBBBB..', '.BBBBBBBT', 'BBkBBBBBT', '.BBBBBBBT', '..BBBBB..', '..L...L..'],
-  roles: { B: 'primary', k: 'eye', C: 'accent', T: 'accent', L: 'leg' },
-  primary: 'B',
-  features: [{ id: 'ears', label: 'Ears', role: 'C' }, { id: 'tail', label: 'Tail', role: 'T' }],
-  signature: 'ears',
-};
-
-const BUILDING: Template = {
-  w: 9, h: 7,
-  grid: ['...SSS...', '.RRRRRRR.', 'RRRRRRRRR', '.WWWWWWW.', '.WNWDWNW.', '.WWWDWWW.', '.AA...AA.'],
-  roles: { W: 'primary', R: 'secondary', D: 'accent', N: 'glass', S: 'accent', A: 'accent' },
-  primary: 'W',
-  features: [{ id: 'sign', label: 'Sign', role: 'S' }, { id: 'awning', label: 'Awning', role: 'A' }],
-  signature: 'sign',
-};
-
-const EXHIBIT_PALETTES: Palette[] = [
-  { name: 'Tropical', bright: 0.85, colors: { primary: '#43a047', accent: '#f4c430', eye: '#26221e', leg: '#6b4a2a' } },
-  { name: 'Sunset', bright: 0.65, colors: { primary: '#e6842a', accent: '#d1495b', eye: '#26221e', leg: '#6b4a2a' } },
-  { name: 'Natural', bright: 0.45, colors: { primary: '#8a6a44', accent: '#c9b18a', eye: '#26221e', leg: '#5a4630' } },
-];
-
-const AMENITY_PALETTES: Palette[] = [
-  { name: 'Rustic', bright: 0.5, colors: { primary: '#c8a26a', secondary: '#8a5a2b', accent: '#6b4a2a', glass: '#a9d3ea' } },
-  { name: 'Bright', bright: 0.9, colors: { primary: '#f0be34', secondary: '#d1495b', accent: '#cc4433', glass: '#a9d3ea' } },
-  { name: 'Modern', bright: 0.45, colors: { primary: '#cfd4d8', secondary: '#6b7076', accent: '#3a3f44', glass: '#a9d3ea' } },
-];
-
-export const templateFor = (item: BacklogItem): Template => (item.category === 'exhibit' ? CREATURE : BUILDING);
-export const palettesFor = (item: BacklogItem): Palette[] => (item.category === 'exhibit' ? EXHIBIT_PALETTES : AMENITY_PALETTES);
-
-const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
-
-/** The colour a cell renders, or null (empty / hidden feature). '#ccc' outline while
- *  no scheme is chosen. */
-export function cellColor(item: BacklogItem, design: ItemDesign, role: string, r: number, c: number): string | null {
-  if (role === '.') return null;
-  const t = templateFor(item);
-  const feat = t.features.find((f) => f.role === role);
-  if (feat && !design.features.includes(feat.id)) return null;
-  if (design.palette === null) return '#cbcdc6';
-  const pal = palettesFor(item)[design.palette];
-  let col = pal.colors[t.roles[role]] ?? pal.colors.primary;
-  if (role === t.primary && design.pattern !== 'none') {
-    if (design.pattern === 'stripes' && c % 2 === 1) col = pal.colors.accent ?? col;
-    if (design.pattern === 'spots' && (r * 5 + c * 3) % 6 === 0) col = pal.colors.accent ?? col;
+const set = (g: (string | null)[][], cells: Cell[], color: string | null) => {
+  if (!color) return;
+  for (const [cx, cy] of cells) {
+    const x = Math.round(cx), y = Math.round(cy);
+    if (y >= 0 && y < GRID_H && x >= 0 && x < GRID_W) g[y][x] = color;
   }
-  return col;
+};
+const blank = (): (string | null)[][] => Array.from({ length: GRID_H }, () => Array<string | null>(GRID_W).fill(null));
+
+/** Markings painted over a region (body or face): vertical stripes, scattered spots,
+ *  or a pale belly patch. */
+function markingsOn(cells: Cell[], shape: string): Cell[] {
+  if (shape === 'none' || cells.length === 0) return [];
+  if (shape === 'stripes') return cells.filter(([x]) => x % 3 === 0);
+  if (shape === 'spots') return cells.filter(([x, y]) => (x * 7 + y * 13) % 9 < 2);
+  const maxY = Math.max(...cells.map((c) => c[1])); // patches: central lower belly
+  return cells.filter(([x, y]) => y >= maxY - 3 && Math.abs(x - 8) <= 2);
 }
 
-/** Design completeness: the checkable gate for "Done". The item's descriptive
- *  acceptance criteria are shown alongside as what it should be. */
+/** A recognisable front-facing creature assembled from the chosen parts: a face
+ *  (with optional mane, ears, beak, eyes) above a body, with a tail and markings.
+ *  A 'finned' body or headless head is drawn instead as a side-on swimmer. */
+function creatureGrid(design: ItemDesign): (string | null)[][] {
+  const g = blank();
+  const col = (k: string) => design.colors[k] ?? PLACEHOLDER;
+  const has = (k: string) => !!design.colors[k];
+  const bodyShape = design.parts.body ?? 'round';
+  const headShape = design.parts.head ?? 'round';
+  const earsShape = design.parts.ears ?? 'none';
+  const tailShape = design.parts.tail ?? 'none';
+  const markShape = design.parts.markings ?? 'none';
+
+  // Fish / headless: a side-on swimmer whose body is the whole animal.
+  if (bodyShape === 'finned' || headShape === 'none') {
+    const body = ellipse(8, 8, 4.6, 2.8);
+    set(g, ellipse(2, 8, 1.9, 2.6), has('tail') ? col('tail') : col('body')); // tail fin
+    set(g, body, col('body'));
+    set(g, markingsOn(body, markShape), col('markings'));
+    set(g, [[11, 7]], EYE);
+    return g;
+  }
+
+  const upright = bodyShape === 'upright';
+  const headCY = upright ? 4.3 : 5.4;
+  const headR = upright ? 2.5 : 3.2;
+  const bodyCY = headCY + headR + (upright ? 3 : 2.3);
+  const bodyRX = bodyShape === 'long' ? 4.7 : upright ? 2.9 : 3.7;
+  const bodyRY = upright ? 4.2 : 2.9;
+  const head = ellipse(8, headCY, headR, headR);
+  const body = ellipse(8, bodyCY, bodyRX, bodyRY).filter(([, y]) => y < GRID_H);
+  const mane = headShape === 'maned' ? ring(8, headCY, headR + 1.6, headR - 0.3) : [];
+
+  const ey = headCY - headR + 0.2;
+  let ears: Cell[] = [];
+  if (earsShape === 'round') ears = [...ellipse(8 - 2.3, ey, 1.2, 1.2), ...ellipse(8 + 2.3, ey, 1.2, 1.2)];
+  else if (earsShape === 'pointed') ears = [[6, ey - 1], [6, ey], [5, ey - 1], [10, ey - 1], [10, ey], [11, ey - 1]];
+
+  const tx = Math.round(8 + bodyRX - 0.5), ty = Math.round(bodyCY + 0.6);
+  let tail: Cell[] = [];
+  if (tailShape === 'tufted') tail = [[tx, ty], [tx + 1, ty], [tx + 1, ty - 1]];
+  else if (tailShape === 'long') tail = [[tx, ty], [tx + 1, ty - 1], [tx + 2, ty - 2], [tx + 2, ty - 3]];
+  else if (tailShape === 'fin') tail = ellipse(tx + 1, ty, 1.3, 1.8);
+
+  const beak: Cell[] = headShape === 'beaked' ? [[8, headCY + 0.6], [7, headCY + 1.2], [8, headCY + 1.2], [9, headCY + 1.2]] : [];
+  const eyes: Cell[] = [[Math.round(8 - 1.3), Math.round(headCY - 0.2)], [Math.round(8 + 1.3), Math.round(headCY - 0.2)]];
+
+  set(g, tail, has('tail') ? col('tail') : col('body'));
+  set(g, mane, col('ears'));               // mane uses the ears/mane colour, behind the face
+  set(g, ears, col('ears'));
+  set(g, body, col('body'));
+  set(g, markingsOn(body, markShape), col('markings'));
+  set(g, head, col('head'));
+  if (markShape === 'stripes' || markShape === 'spots') set(g, markingsOn(head, markShape), col('markings'));
+  set(g, beak, BEAK);
+  set(g, eyes, EYE);
+  return g;
+}
+
+/** Render the assembled design as a GRID_H x GRID_W colour grid (null = empty). Used
+ *  by the studio preview and the park sprites, so both always match. */
+export function renderDesign(item: BacklogItem, design: ItemDesign): (string | null)[][] {
+  if (item.category === 'exhibit') return creatureGrid(design);
+
+  // Building: walls, roof, door, glass, optional sign.
+  const g = blank();
+  const col = (k: string) => design.colors[k] ?? PLACEHOLDER;
+  for (let y = 6; y <= 12; y++) for (let x = 4; x <= 12; x++) g[y][x] = col('walls');
+  for (let y = 3; y <= 5; y++) for (let x = 4 + (5 - y); x <= 12 - (5 - y); x++) g[y][x] = col('roof'); // gable roof
+  for (let y = 8; y <= 12; y++) for (let x = 7; x <= 9; x++) g[y][x] = col('door'); // door
+  g[8][5] = '#a9d3ea'; g[8][11] = '#a9d3ea'; // windows
+  if (design.parts.sign === 'on') for (let x = 5; x <= 11; x++) g[1][x] = col('sign');
+  return g;
+}
+
+// ---- Parts metadata for the studio ----
+
+export interface PartSpec { key: string; label: string; options: string[]; colorKey: string; optional?: boolean }
+export const EXHIBIT_PARTS: PartSpec[] = [
+  { key: 'body', label: 'Body', options: ['round', 'long', 'upright', 'finned'], colorKey: 'body' },
+  { key: 'head', label: 'Head', options: ['round', 'maned', 'beaked', 'none'], colorKey: 'head' },
+  { key: 'ears', label: 'Ears / mane', options: ['none', 'round', 'pointed'], colorKey: 'ears', optional: true },
+  { key: 'tail', label: 'Tail / fin', options: ['none', 'tufted', 'long', 'fin'], colorKey: 'tail', optional: true },
+  { key: 'markings', label: 'Markings', options: ['none', 'stripes', 'spots', 'patches'], colorKey: 'markings', optional: true },
+];
+export const AMENITY_COLORS: { key: string; label: string }[] = [
+  { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
+];
+/** Quick colour suggestions offered next to each picker (still fully editable). */
+export const SWATCHES = ['#c8873b', '#e6842a', '#e3c66b', '#8a5a2b', '#2a2622', '#f0efe9', '#43a047', '#ef6f53', '#f4c430', '#4a90d9'];
+
+// ---- Presets: a recognisable starting shape per species (uncoloured) ----
+
+const PART_PRESETS: Record<string, Record<string, string>> = {
+  lion: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'none' },
+  tiger: { body: 'long', head: 'round', ears: 'pointed', tail: 'long', markings: 'stripes' },
+  leopard: { body: 'long', head: 'round', ears: 'round', tail: 'long', markings: 'spots' },
+  penguins: { body: 'upright', head: 'beaked', ears: 'none', tail: 'none', markings: 'patches' },
+  reef: { body: 'finned', head: 'none', ears: 'none', tail: 'fin', markings: 'stripes' },
+};
+const GENERIC_EXHIBIT = { body: 'round', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' };
+
+/** The starting design for an item: a recognisable shape (for exhibits) with no
+ *  colours yet, so the player colours it in. */
+export function presetFor(item: BacklogItem): ItemDesign {
+  if (item.category !== 'exhibit') return { parts: { sign: 'on' }, colors: {} };
+  return { parts: { ...(PART_PRESETS[item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
+}
+export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
+
+// ---- The Done gate: acceptance criteria ----
+
+const coloured = (d: ItemDesign) => Object.values(d.colors).filter(Boolean).length;
+
 export function designCriteria(item: BacklogItem, design: ItemDesign): { label: string; pass: boolean }[] {
-  const distinctive = design.pattern !== 'none' || design.features.length > 0;
-  const list = [
-    { label: 'Choose a colour scheme', pass: design.palette !== null },
-    { label: 'Give it something distinctive (a feature or a pattern)', pass: distinctive },
+  if (item.category !== 'exhibit') {
+    return [
+      { label: 'Colour the walls', pass: !!design.colors.walls },
+      { label: 'Colour the roof', pass: !!design.colors.roof },
+      { label: 'Add a sign so visitors can find it', pass: design.parts.sign === 'on' && !!design.colors.sign },
+    ];
+  }
+  const fish = design.parts.head === 'none';
+  const distinctivePart = (['markings', 'ears', 'tail'] as const).find((k) => (design.parts[k] ?? 'none') !== 'none');
+  const distinctive = !!distinctivePart && !!design.colors[distinctivePart!];
+  return [
+    { label: 'Colour the body', pass: !!design.colors.body },
+    { label: fish ? 'Colour the fins' : 'Colour the head', pass: !!design.colors[fish ? 'tail' : 'head'] },
+    { label: 'Add and colour a distinctive feature (markings, ears or tail)', pass: distinctive },
+    { label: 'Give it a full finish: colour at least three parts', pass: coloured(design) >= 3 },
   ];
-  if (item.category === 'amenity') list.push({ label: 'Add a sign so visitors can find it', pass: design.features.includes('sign') });
-  return list;
 }
 
 export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => designCriteria(item, design).every((x) => x.pass);
 
-/** Turn design choices into appeal per segment for an exhibit. The base appeal is
- *  the animal's inherent draw; the design tilts it: Families reward bright and busy,
- *  Comfort Seekers reward calm and muted, Enthusiasts reward the signature feature
- *  and dislike clutter. So the same lion can be built for different crowds. */
+// ---- Appeal: the design choices are the product ----
+
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+function luminance(hex?: string): number {
+  if (!hex) return 0.5;
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16) / 255, g = parseInt(h.slice(2, 4), 16) / 255, b = parseInt(h.slice(4, 6), 16) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Turn design choices into appeal per segment for an exhibit. Base appeal is the
+ *  animal's inherent draw; the design tilts it: Families reward bright and busy,
+ *  Comfort Seekers reward calm and muted, Enthusiasts reward a distinctive, well
+ *  finished creature. So the same lion can be built for different crowds. */
 export function appealFromDesign(item: BacklogItem, design: ItemDesign): Record<SegmentId, number> | undefined {
-  if (item.category !== 'exhibit' || !item.appeal || design.palette === null) return item.appeal;
-  const t = templateFor(item);
-  const pal = palettesFor(item)[design.palette];
-  const bright = pal.bright;
-  const busy = (design.features.length + (design.pattern !== 'none' ? 1 : 0)) / (t.features.length + 1);
-  const signatureOn = design.features.includes(t.signature);
+  if (item.category !== 'exhibit' || !item.appeal) return item.appeal;
+  const bright = (luminance(design.colors.body) + luminance(design.colors.markings ?? design.colors.body)) / 2;
+  const activeParts = ['ears', 'tail', 'markings'].filter((k) => (design.parts[k] ?? 'none') !== 'none').length;
+  const busy = activeParts / 3;
+  const distinctive = (design.parts.markings ?? 'none') !== 'none';
+  const finish = clamp(coloured(design) / 4, 0, 1);
   const mult: Record<SegmentId, number> = {
     families: clamp(0.7 + 0.5 * (0.5 * bright + 0.5 * busy), 0.5, 1.25),
-    enthusiasts: clamp(0.8 + 0.35 * (signatureOn ? 1 : 0) - 0.15 * busy - 0.1 * bright, 0.5, 1.25),
+    enthusiasts: clamp(0.75 + 0.3 * (distinctive ? 1 : 0) + 0.15 * finish - 0.1 * bright, 0.5, 1.25),
     comfortSeekers: clamp(0.7 + 0.5 * (1 - busy) * (1 - 0.5 * bright), 0.5, 1.25),
   };
   return {

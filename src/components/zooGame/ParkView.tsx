@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { templateFor, cellColor, type ItemDesign } from './design';
+import { renderDesign, presetFor, GRID_W } from './design';
 import type { SegmentId } from './simulation/types';
 import { cn } from '@/lib/utils';
 import { Trees, Users, Smile, LayoutGrid } from 'lucide-react';
@@ -12,20 +12,17 @@ import { Trees, Users, Smile, LayoutGrid } from 'lucide-react';
 // grouped into their authored zone plots - there is no map-planning here, so it
 // stays a Scrum game, not a park-planning game.
 
-const DEFAULT_DESIGN: ItemDesign = { palette: 0, pattern: 'none', features: [] };
-
 const SEG_DOT: Record<SegmentId, string> = { families: '#f97316', enthusiasts: '#0ea5e9', comfortSeekers: '#b45309' };
 
-/** Render an item's template art at a small scale, using the design the team chose. */
+/** Render an item at a small scale, using the design the team built. */
 function ItemSprite({ item, cell }: { item: BacklogItem; cell: number }) {
-  const t = templateFor(item);
-  const design = item.design ?? DEFAULT_DESIGN;
+  const design = item.design ?? presetFor(item);
+  const grid = renderDesign(item, design);
   return (
-    <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${t.w}, ${cell}px)` }} aria-hidden>
-      {t.grid.flatMap((row, r) => row.split('').map((role, c) => {
-        const color = cellColor(item, design, role, r, c);
-        return <span key={`${r}-${c}`} style={{ width: cell, height: cell, background: color ?? 'transparent' }} />;
-      }))}
+    <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
+      {grid.flatMap((row, r) => row.map((color, c) => (
+        <span key={`${r}-${c}`} style={{ width: cell, height: cell, background: color ?? 'transparent' }} />
+      )))}
     </div>
   );
 }
@@ -89,7 +86,7 @@ export function ParkView({ state, compact = false }: ParkViewProps) {
   const amenities = open.filter((it) => it.category === 'amenity').length;
   const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
   const happiness = state.lastReview?.overallHappiness ?? null;
-  const cell = compact ? 5 : 7;
+  const cell = compact ? 3 : 4;
 
   // Visitors wander only once there is an exhibit to see; count scales with crowd.
   const dots: SegmentId[] = [];
