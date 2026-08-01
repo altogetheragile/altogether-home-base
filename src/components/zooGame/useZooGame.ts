@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase } from './types';
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, moveItem, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, moveItem, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum,
 } from './engine';
 
@@ -18,6 +18,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return { ...state, phase: action.phase };
     case 'SET_PRODUCT_GOAL':
       return setProductGoal(state, action.goal);
+    case 'SET_SPRINT_GOAL':
+      return setSprintGoal(state, action.goal);
     case 'SET_DOD':
       return setDefinitionOfDone(state, action.dod);
     case 'ACCEPT_SIGNAL':
@@ -63,6 +65,7 @@ export function useZooGame(gameSeed?: number) {
   const start = useCallback((seed?: number) => dispatch({ type: 'START', gameSeed: seed }), []);
   const setPhase = useCallback((phase: ZooPhase) => dispatch({ type: 'SET_PHASE', phase }), []);
   const setGoal = useCallback((goal: string) => dispatch({ type: 'SET_PRODUCT_GOAL', goal }), []);
+  const setSprintGoalCb = useCallback((goal: string) => dispatch({ type: 'SET_SPRINT_GOAL', goal }), []);
   const setDod = useCallback((dod: string[]) => dispatch({ type: 'SET_DOD', dod }), []);
   const takeSignal = useCallback((index: number) => dispatch({ type: 'ACCEPT_SIGNAL', index }), []);
   const plan = useCallback((ids: string[]) => dispatch({ type: 'PLAN_SPRINT', ids }), []);
@@ -82,7 +85,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setDod, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open,
+    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, review, nextSprint, finish, reset,
   };
 }

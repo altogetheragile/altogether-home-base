@@ -8,7 +8,7 @@ import { DailyScrum } from './DailyScrum';
 import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus, Target } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -123,6 +123,16 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull,
             </div>
             <DayTimer dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} onExpire={onEndDay} />
           </div>
+
+          {state.sprintGoal.trim() && (
+            <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
+              <Target className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">Sprint Goal</div>
+                <p className="text-sm font-medium">{state.sprintGoal}</p>
+              </div>
+            </div>
+          )}
 
           {state.carriedImpediment && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">

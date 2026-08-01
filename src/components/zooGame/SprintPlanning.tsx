@@ -1,24 +1,26 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
-import { availableItems, productGoalProgress } from './engine';
+import { availableItems, productGoalProgress, suggestSprintGoal } from './engine';
 import { zooCapacity } from './config';
 import { ParkView } from './ParkView';
 import { PlanningPoker } from './PlanningPoker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, X, Fish, Coffee, Lightbulb, ChevronUp, ChevronDown, HelpCircle } from 'lucide-react';
+import { Plus, X, Fish, Coffee, Lightbulb, ChevronUp, ChevronDown, HelpCircle, Target, Wand2 } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ZooGameState;
   onPlan: (ids: string[]) => void;
   onEstimate: (id: string, points: number) => void;
   onReorder: (id: string, dir: 'up' | 'down') => void;
+  onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
 }
 
-/** Sprint Planning: refine the Backlog (estimate unsized items by planning poker,
- *  order it), then commit sized items up to a velocity-driven capacity. */
-export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onTakeSignal }: SprintPlanningProps) {
+/** Sprint Planning: set the Sprint Goal, refine the Backlog (estimate unsized items
+ *  by planning poker, order it), then commit sized items up to a velocity-driven
+ *  capacity. */
+export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [estimating, setEstimating] = useState<string | null>(null);
   const items = availableItems(state);
@@ -46,6 +48,24 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onTakeSig
       <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-3">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
         <p className="text-sm font-medium">{state.productGoal}</p>
+      </div>
+
+      {/* Sprint Goal: the single objective for this Sprint (coached, editable). */}
+      <div className="space-y-1.5 rounded-lg border border-border bg-card px-5 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={chosen.length === 0} onClick={() => onSetSprintGoal(suggestSprintGoal(chosen))}>
+            <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest from selection
+          </Button>
+        </div>
+        <textarea
+          value={state.sprintGoal}
+          onChange={(e) => onSetSprintGoal(e.target.value)}
+          rows={2}
+          placeholder="One outcome for this Sprint - e.g. &ldquo;Open the Savanna so families have more to see.&rdquo; Or pick some items and let the coach suggest one."
+          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+        />
+        <p className="text-[11px] text-muted-foreground">A single objective the Sprint works toward. The Daily Scrum inspects progress against it; the Review judges whether it was met.</p>
       </div>
 
       {/* The zoo so far: what filling the zones is building toward. */}

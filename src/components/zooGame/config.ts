@@ -93,6 +93,8 @@ export function initialZooState(gameSeed = 1): ZooGameState {
   return {
     phase: 'intro',
     productGoal: PRODUCT_GOAL,
+    sprintGoal: '',
+    sprintGoalMet: null,
     definitionOfDone: [...DEFAULT_DOD],
     backlog,
     zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest'],

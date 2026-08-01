@@ -4,7 +4,7 @@ import { productGoalProgress } from './engine';
 import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Users, Quote, Lightbulb } from 'lucide-react';
+import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
 
 interface SprintReviewProps {
   state: ZooGameState;
@@ -29,6 +29,18 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
         <h1 className="text-2xl font-bold">Sprint {state.sprintNumber} Review</h1>
         <p className="text-sm text-muted-foreground">Inspect what was Done and how the visitors responded. Work is Done because it met its criteria during the Sprint - this is not a release gate.</p>
       </div>
+
+      {state.sprintGoal.trim() && (
+        <div className={cn('flex items-start gap-2.5 rounded-lg border px-4 py-3',
+          state.sprintGoalMet ? 'border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/20' : 'border-amber-300 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20')}>
+          {state.sprintGoalMet ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" /> : <CircleDashed className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />}
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Sprint Goal · {state.sprintGoalMet ? 'met' : 'not met'}</div>
+            <p className="text-sm font-medium">{state.sprintGoal}</p>
+            {!state.sprintGoalMet && <p className="text-[11px] text-muted-foreground">Not everything committed was finished. Inspect why, and adapt - forecasts get more honest with each Sprint.</p>}
+          </div>
+        </div>
+      )}
 
       {/* The park the visitors experienced this Sprint. */}
       <ParkView state={state} />

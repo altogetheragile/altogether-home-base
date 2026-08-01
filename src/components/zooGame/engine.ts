@@ -169,10 +169,29 @@ export function acceptSignal(state: ZooGameState, index: number): ZooGameState {
   return { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index) };
 }
 
-// ============= Product Goal and Definition of Done =============
+// ============= Product Goal, Sprint Goal and Definition of Done =============
 
 export function setProductGoal(state: ZooGameState, goal: string): ZooGameState {
   return { ...state, productGoal: goal.trim() || state.productGoal };
+}
+
+/** The Sprint Goal: a single, editable objective for the Sprint (may be blank). */
+export function setSprintGoal(state: ZooGameState, goal: string): ZooGameState {
+  return { ...state, sprintGoal: goal };
+}
+
+/** Coach an outcome-shaped Sprint Goal from the items the PO is selecting: what the
+ *  Sprint delivers, so that visitors get something. */
+export function suggestSprintGoal(items: BacklogItem[]): string {
+  if (!items.length) return 'Give visitors a reason to come back this Sprint.';
+  const counts: Record<string, number> = {};
+  for (const it of items) counts[it.zone] = (counts[it.zone] ?? 0) + 1;
+  const zone = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  const exhibits = items.filter((i) => i.category === 'exhibit').length;
+  const amenities = items.filter((i) => i.category === 'amenity').length;
+  if (exhibits && amenities) return `Open the ${zone} zone with things to see and somewhere to stop, so visitors stay longer.`;
+  if (amenities) return `Serve the ${zone} zone so visitors can eat, rest and stay longer.`;
+  return `Bring the ${zone} zone to life so visitors have more to enjoy.`;
 }
 
 export function setDefinitionOfDone(state: ZooGameState, dod: string[]): ZooGameState {
@@ -252,8 +271,12 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   const openItems = state.backlog.filter((it) => it.status === 'open').map(toZooItem);
   const result = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, state.attendance, seedFor(state));
 
-  const deliveredThisSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'done' || it.status === 'open'));
+  const committedThisSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
+  const deliveredThisSprint = committedThisSprint.filter((it) => it.status === 'done' || it.status === 'open');
   const velocityPts = deliveredThisSprint.reduce((s, it) => s + it.estimate, 0);
+
+  // The Sprint Goal is met when everything committed to it was delivered (Done).
+  const sprintGoalMet = state.sprintGoal.trim() ? committedThisSprint.length > 0 && deliveredThisSprint.length === committedThisSprint.length : null;
 
   const { signals, signalAge } = escalateSignals(state.signalAge, result.signals);
 
@@ -268,6 +291,7 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     velocity: [...state.velocity, velocityPts],
     attendance: result.nextAttendance,
     lastReview: result,
+    sprintGoalMet,
     signals,
     signalAge,
     committedIds: [],
@@ -282,6 +306,8 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     ...state,
     phase: 'planning',
     sprintNumber: state.sprintNumber + 1,
+    sprintGoal: '',
+    sprintGoalMet: null,
     improvements: improvement.trim() ? [...state.improvements, improvement.trim()] : state.improvements,
   };
 }

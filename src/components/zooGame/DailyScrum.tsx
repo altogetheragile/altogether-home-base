@@ -34,6 +34,9 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
           The Developers check how the Sprint is tracking and re-plan the day. It is a short progress sync,
           not a problem-solving session. The Scrum Master makes sure it happens.
         </p>
+        {state.sprintGoal.trim() && (
+          <p className="mx-auto max-w-md rounded-md bg-primary/5 px-3 py-1.5 text-xs text-muted-foreground">Working toward: <span className="font-medium text-foreground">{state.sprintGoal}</span></p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
