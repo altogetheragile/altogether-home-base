@@ -1,6 +1,7 @@
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress } from './engine';
+import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb } from 'lucide-react';
@@ -28,6 +29,9 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
         <h1 className="text-2xl font-bold">Sprint {state.sprintNumber} Review</h1>
         <p className="text-sm text-muted-foreground">Inspect what was Done and how the visitors responded. Work is Done because it met its criteria during the Sprint - this is not a release gate.</p>
       </div>
+
+      {/* The park the visitors experienced this Sprint. */}
+      <ParkView state={state} />
 
       {!r || r.totalAttendance === 0 ? (
         <p className="rounded-lg border border-border bg-muted/40 px-5 py-4 text-sm text-muted-foreground">Nothing is open to visitors yet, so there is no crowd to inspect. Delivered <strong>{velocity} pts</strong> of work this Sprint - open some of it next time to see the visitors arrive.</p>

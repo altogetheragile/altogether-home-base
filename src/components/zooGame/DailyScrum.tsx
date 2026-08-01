@@ -8,10 +8,12 @@ interface DailyScrumProps {
   onSkip: () => void;
 }
 
-/** The Daily Scrum: the Developers' event at the close of each day to inspect
- *  progress and adapt the plan. The Scrum Master is accountable for it happening
- *  (not for attending). Hold it and any impediment is caught and cleared; skip it
- *  and a waiting impediment resurfaces tomorrow, later and costlier. */
+/** The Daily Scrum: the Developers' short daily sync to inspect progress toward the
+ *  Sprint's goal and re-plan the day. It is not a problem-solving session - blockers
+ *  are surfaced here, then removed outside the event (the Scrum Master helps). The
+ *  Scrum Master is accountable for it happening, not for attending. Hold it and a
+ *  waiting blocker is spotted early; skip it and it goes unseen and resurfaces
+ *  tomorrow, later and costlier. */
 export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
   const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
   const built = committed.filter((it) => it.status === 'done' || it.status === 'open').length;
@@ -29,7 +31,8 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         </div>
         <h1 className="text-2xl font-bold">End of Day {state.dayNumber}</h1>
         <p className="text-sm text-muted-foreground">
-          The Developers pause to inspect progress and adapt. The Scrum Master makes sure this happens.
+          The Developers check how the Sprint is tracking and re-plan the day. It is a short progress sync,
+          not a problem-solving session. The Scrum Master makes sure it happens.
         </p>
       </div>
 
@@ -54,7 +57,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
             <div>
               <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">A blocker has come up: {imp.title}</div>
               <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{imp.detail}</div>
-              <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-300/70">Hold the Daily Scrum and the Scrum Master clears it now, before it grows.</div>
+              <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-300/70">The Daily Scrum surfaces it early - you note it now and it is dealt with outside the event, before it grows.</div>
             </div>
           </div>
         </div>
@@ -75,8 +78,8 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         </Button>
       </div>
       <p className="text-center text-xs text-muted-foreground">
-        Holding it takes a little time from tomorrow. Skipping saves that time, but any blocker you miss will
-        cost you more when it resurfaces.
+        The sync takes a little time from tomorrow. Skipping saves that time, but a blocker you never surface
+        will cost you more when it resurfaces.
       </p>
     </div>
   );

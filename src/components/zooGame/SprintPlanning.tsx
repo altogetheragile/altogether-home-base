@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ZooGameState } from './types';
 import { availableItems, productGoalProgress } from './engine';
 import { zooCapacity } from './config';
+import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, Fish, Coffee, Lightbulb } from 'lucide-react';
@@ -40,6 +41,12 @@ export function SprintPlanning({ state, onPlan, onTakeSignal }: SprintPlanningPr
       <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-3">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
         <p className="text-sm font-medium">{state.productGoal}</p>
+      </div>
+
+      {/* The zoo so far: what filling the zones is building toward. */}
+      <div className="space-y-1.5">
+        <h2 className="text-sm font-semibold">Your park so far</h2>
+        <ParkView state={state} />
       </div>
 
       {/* The visitors' signals: candidate backlog items the Product Owner decides on. */}

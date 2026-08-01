@@ -20,7 +20,7 @@ export const DAILY_SCRUM_MULT = 0.9;
 export const SKIP_PENALTY_MULT = 0.55;
 /** The coaching tip shown when a skipped Daily Scrum lets an impediment through. */
 export const MISSED_SCRUM_TIP =
-  'A Daily Scrum yesterday would have surfaced this a day earlier, when it was smaller and cheaper to clear. The Scrum Master makes sure it happens.';
+  'A Daily Scrum yesterday would have surfaced this a day earlier, while it was still small - the sync is where blockers become visible, so they can be removed before they grow. The Scrum Master makes sure it happens.';
 
 /** The product-wide Definition of Done: the bar every item clears to be shippable. */
 export const DEFAULT_DOD: string[] = [

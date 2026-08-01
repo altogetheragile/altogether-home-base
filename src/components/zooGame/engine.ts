@@ -131,9 +131,10 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   return { ...state, dayNumber: next, dayStage: 'building', dayTimeMult: nextMult };
 }
 
-/** Hold the Daily Scrum: the team inspects progress and the Scrum Master clears any
- *  impediment. It costs a little of the next day (the event is timeboxed), but the
- *  problem is handled today. */
+/** Hold the Daily Scrum: the team inspects progress toward the Sprint's goal and, in
+ *  re-planning the day, surfaces any blocker early - so it can be removed before it
+ *  grows (outside the event). It costs a little of the next day (the sync is
+ *  timeboxed). */
 export function runDailyScrum(state: ZooGameState): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, DAILY_SCRUM_MULT);
