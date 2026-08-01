@@ -1,16 +1,18 @@
+import { useState } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import { renderDesign, presetFor, GRID_W, type ItemDesign } from './design';
 import type { SegmentId } from './simulation/types';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Wand2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ============= The Park View =============
 //
-// The visual payoff and the Product Goal surface: one top-down park scene, not a
-// grid of cards. Open exhibits sit in their themed zone as plot tiles showing the
-// design the team built; amenities sit alongside; visitors from the simulation
-// wander the grounds. Items are auto-placed into their zone - no map-planning, so
-// it stays a Scrum game.
+// The visual payoff and the Product Goal surface: one top-down park scene. Open
+// exhibits sit in their themed zone as plot tiles showing the design the team built;
+// amenities sit alongside; visitors from the simulation wander the grounds. With the
+// arrange controls you lay the park out - create and name zones, and drag exhibits
+// and amenities between them - while building still happens via Sprints.
 
 const SEG_DOT: Record<SegmentId, string> = { families: '#e6842a', enthusiasts: '#3f8fd0', comfortSeekers: '#8a5a2b' };
 
@@ -27,6 +29,21 @@ function themeFor(zone: string, idx: number): ZoneTheme {
   return THEMES[ORDER[idx % ORDER.length]];
 }
 
+/** The arrange handlers + drag state, present only while arranging. */
+export interface ParkArrange {
+  onMoveZone: (id: string, zone: string) => void;
+  onAddZone: (name: string) => void;
+  onRenameZone: (oldName: string, newName: string) => void;
+  onReorder: (id: string, dir: 'up' | 'down') => void;
+}
+interface ArrangeCtx extends ParkArrange {
+  zones: string[];
+  dragId: string | null;
+  setDragId: (id: string | null) => void;
+  overZone: string | null;
+  setOverZone: (z: string | null) => void;
+}
+
 /** Render one design (a creature or building) at a small scale. */
 function Sprite({ item, design, cell }: { item: BacklogItem; design: ItemDesign; cell: number }) {
   const grid = renderDesign(item, design);
@@ -39,37 +56,90 @@ function Sprite({ item, design, cell }: { item: BacklogItem; design: ItemDesign;
   );
 }
 
-/** A single exhibit / amenity as a plot tile: its built animal or building. */
-function Plot({ item, theme, cell }: { item: BacklogItem; theme: ZoneTheme; cell: number }) {
+/** A single exhibit / amenity as a plot tile. In arrange mode it can be dragged to
+ *  another zone, moved via a menu, and reordered within its zone. */
+function Plot({ item, theme, cell, arrange }: { item: BacklogItem; theme: ZoneTheme; cell: number; arrange?: ArrangeCtx }) {
   const tile = item.category === 'amenity' ? '#cfd4d8' : theme.plot;
   const border = item.category === 'amenity' ? '#9aa3ab' : theme.plotBorder;
   return (
-    <div className="relative flex flex-col items-center">
+    <div className={cn('relative flex flex-col items-center', arrange && 'cursor-grab')}
+      draggable={!!arrange}
+      onDragStart={arrange ? (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', item.id); arrange.setDragId(item.id); } : undefined}
+      onDragEnd={arrange ? () => arrange.setDragId(null) : undefined}>
       <div className="flex items-center justify-center rounded-lg"
         style={{ background: tile, border: `2px solid ${border}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: cell }}>
         <Sprite item={item} design={item.design ?? presetFor(item)} cell={cell} />
       </div>
       <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{item.name}</span>
+      {arrange && (
+        <div className="mt-1 flex items-center gap-0.5">
+          <button type="button" title="Move earlier" onClick={() => arrange.onReorder(item.id, 'up')} className="rounded bg-white/80 p-0.5 text-emerald-950 dark:bg-black/50 dark:text-emerald-50"><ChevronLeft className="h-3 w-3" /></button>
+          <select aria-label={`Move ${item.name} to a zone`} value="" onChange={(e) => { if (e.target.value) arrange.onMoveZone(item.id, e.target.value); }}
+            className="rounded border border-border bg-white/90 px-1 text-[9px] text-emerald-950 dark:bg-black/60 dark:text-emerald-50">
+            <option value="">move to…</option>
+            {arrange.zones.filter((z) => z !== item.zone).map((z) => <option key={z} value={z}>{z}</option>)}
+          </select>
+          <button type="button" title="Move later" onClick={() => arrange.onReorder(item.id, 'down')} className="rounded bg-white/80 p-0.5 text-emerald-950 dark:bg-black/50 dark:text-emerald-50"><ChevronRight className="h-3 w-3" /></button>
+        </div>
+      )}
     </div>
   );
 }
 
-/** One themed zone as a translucent region with a pill label and its plots. */
-function ZoneRegion({ zone, items, theme, cell }: { zone: string; items: BacklogItem[]; theme: ZoneTheme; cell: number }) {
+/** The zone's pill label; editable when arranging. */
+function ZoneLabel({ zone, theme, arrange }: { zone: string; theme: ZoneTheme; arrange?: ArrangeCtx }) {
+  if (!arrange) return <span className="absolute -top-2.5 left-3 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white shadow" style={{ background: theme.pill }}>{zone}</span>;
+  return (
+    <input
+      key={zone}
+      defaultValue={zone}
+      onBlur={(e) => arrange.onRenameZone(zone, e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+      className="absolute -top-3 left-3 w-28 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white shadow outline-none ring-white/50 focus:ring-2"
+      style={{ background: theme.pill }}
+      aria-label={`Rename ${zone} zone`}
+    />
+  );
+}
+
+/** One themed zone as a translucent region with a pill label and its plots. In
+ *  arrange mode it is a drop target for dragged plots. */
+function ZoneRegion({ zone, items, theme, cell, arrange }: { zone: string; items: BacklogItem[]; theme: ZoneTheme; cell: number; arrange?: ArrangeCtx }) {
   const exhibits = items.filter((i) => i.category === 'exhibit').length;
   const amenities = items.filter((i) => i.category === 'amenity').length;
   const unserved = exhibits > 0 && amenities === 0;
+  const over = arrange?.overZone === zone;
   return (
-    <div className="relative rounded-2xl border-2 border-dashed p-3 pt-5" style={{ background: theme.region, borderColor: theme.border }}>
-      <span className="absolute -top-2.5 left-3 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white shadow" style={{ background: theme.pill }}>{zone}</span>
+    <div className={cn('relative rounded-2xl border-2 border-dashed p-3 pt-5', over && 'ring-2 ring-primary ring-offset-1')}
+      style={{ background: theme.region, borderColor: theme.border }}
+      onDragOver={arrange ? (e) => { e.preventDefault(); arrange.setOverZone(zone); } : undefined}
+      onDragLeave={arrange ? () => arrange.setOverZone(null) : undefined}
+      onDrop={arrange ? (e) => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain') || arrange.dragId; if (id) arrange.onMoveZone(id, zone); arrange.setOverZone(null); arrange.setDragId(null); } : undefined}>
+      <ZoneLabel zone={zone} theme={theme} arrange={arrange} />
       {items.length ? (
         <div className="flex flex-wrap items-end gap-x-3 gap-y-4">
-          {items.map((it) => <Plot key={it.id} item={it} theme={theme} cell={cell} />)}
+          {items.map((it) => <Plot key={it.id} item={it} theme={theme} cell={cell} arrange={arrange} />)}
         </div>
       ) : (
-        <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-white/60 py-4 text-[11px] font-semibold text-white/90">plot ready - nothing open here yet</div>
+        <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-white/60 py-4 text-[11px] font-semibold text-white/90">{arrange ? 'drop an animal or amenity here' : 'plot ready - nothing open here yet'}</div>
       )}
-      {unserved && <div className="mt-2 text-[10px] font-medium italic text-amber-900/80 dark:text-amber-200/80">Great animals, but no amenities nearby yet.</div>}
+      {unserved && !arrange && <div className="mt-2 text-[10px] font-medium italic text-amber-900/80 dark:text-amber-200/80">Great animals, but no amenities nearby yet.</div>}
+    </div>
+  );
+}
+
+/** Create a new named zone. */
+function NewZoneTile({ onAdd }: { onAdd: (name: string) => void }) {
+  const [name, setName] = useState('');
+  const add = () => { if (name.trim()) { onAdd(name.trim()); setName(''); } };
+  return (
+    <div className="flex flex-col justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-background/40 p-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">New zone</div>
+      <div className="flex gap-1.5">
+        <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
+          placeholder="e.g. Reptile House" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary" />
+        <Button size="sm" className="h-7 px-2 text-xs" onClick={add}>Add</Button>
+      </div>
     </div>
   );
 }
@@ -80,12 +150,17 @@ const jitter = (n: number, k: number) => {
   return x - Math.floor(x);
 };
 
-interface ParkViewProps { state: ZooGameState; compact?: boolean; fill?: boolean }
+interface ParkViewProps { state: ZooGameState; compact?: boolean; fill?: boolean; arrange?: ParkArrange }
 
 /** The park as it stands: open items in their themed zones, a HUD at a glance, and
- *  visitors strolling the grounds when there is something to see. `fill` makes it a
- *  large square scene for a prominent side panel; `compact` a small live strip. */
-export function ParkView({ state, compact = false, fill = false }: ParkViewProps) {
+ *  visitors strolling when there is something to see. `fill` = large square side
+ *  panel; `compact` = small live strip; `arrange` enables the layout controls. */
+export function ParkView({ state, compact = false, fill = false, arrange }: ParkViewProps) {
+  const [arranging, setArranging] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overZone, setOverZone] = useState<string | null>(null);
+  const canArrange = !!arrange && !compact && !fill;
+
   const open = state.backlog.filter((it) => it.status === 'open');
   const zones = Array.from(new Set([...state.zones, ...open.map((it) => it.zone)]));
   const byZone = zones.map((z, i) => ({ zone: z, theme: themeFor(z, i), items: open.filter((it) => it.zone === z) }));
@@ -96,9 +171,12 @@ export function ParkView({ state, compact = false, fill = false }: ParkViewProps
   const happiness = state.lastReview?.overallHappiness ?? null;
   const cell = compact ? 2 : fill ? 4 : 3;
 
-  // Little visitors stroll once there is an exhibit to see; count scales with crowd.
+  const arrangeCtx: ArrangeCtx | undefined = canArrange && arranging && arrange
+    ? { ...arrange, zones, dragId, setDragId, overZone, setOverZone } : undefined;
+
+  // Little visitors stroll once there is an exhibit to see; hidden while arranging.
   const dots: SegmentId[] = [];
-  if (open.some((it) => it.category === 'exhibit')) {
+  if (!arrangeCtx && open.some((it) => it.category === 'exhibit')) {
     const cap = compact ? 8 : fill ? 24 : 16;
     for (const seg of ['families', 'enthusiasts', 'comfortSeekers'] as SegmentId[]) {
       const n = Math.min(cap, Math.round(((state.attendance[seg] ?? 0) / Math.max(1, total)) * Math.min(cap, Math.max(3, Math.round(total / 60)))));
@@ -122,13 +200,23 @@ export function ParkView({ state, compact = false, fill = false }: ParkViewProps
         </div>
       )}
 
+      {canArrange && (
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] text-muted-foreground">{arranging ? 'Drag animals between zones, rename or add zones, reorder plots.' : 'Lay out your park: group animals into zones.'}</span>
+          <Button variant={arranging ? 'default' : 'outline'} size="sm" onClick={() => setArranging((a) => !a)}>
+            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> {arranging ? 'Done arranging' : 'Arrange the park'}
+          </Button>
+        </div>
+      )}
+
       {/* The park scene */}
       <div className={cn('relative overflow-hidden rounded-2xl border shadow-sm', fill && 'aspect-square')}
         style={{ borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
         <div className={cn('relative z-10 grid grid-cols-1 gap-3 p-3 pb-9 sm:grid-cols-2 sm:p-4',
           fill ? 'h-full content-stretch' : 'content-start')}
           style={{ minHeight: fill ? undefined : compact ? 140 : 230 }}>
-          {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} items={z.items} theme={z.theme} cell={cell} />)}
+          {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} items={z.items} theme={z.theme} cell={cell} arrange={arrangeCtx} />)}
+          {arrangeCtx && <NewZoneTile onAdd={arrangeCtx.onAddZone} />}
         </div>
 
         {/* Decor: trees at the corners, an entrance gate at the foot. */}

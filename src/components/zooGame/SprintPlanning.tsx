@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ZooGameState } from './types';
 import { availableItems, productGoalProgress, suggestSprintGoal } from './engine';
 import { zooCapacity } from './config';
-import { ParkView } from './ParkView';
+import { ParkView, type ParkArrange } from './ParkView';
 import { PlanningPoker } from './PlanningPoker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,12 +15,13 @@ interface SprintPlanningProps {
   onReorder: (id: string, dir: 'up' | 'down') => void;
   onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
+  arrange: ParkArrange;
 }
 
 /** Sprint Planning: set the Sprint Goal, refine the Backlog (estimate unsized items
  *  by planning poker, order it), then commit sized items up to a velocity-driven
  *  capacity. */
-export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSprintGoal, onTakeSignal, arrange }: SprintPlanningProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [estimating, setEstimating] = useState<string | null>(null);
   const items = availableItems(state);
@@ -68,10 +69,10 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
         <p className="text-[11px] text-muted-foreground">A single objective the Sprint works toward. The Daily Scrum inspects progress against it; the Review judges whether it was met.</p>
       </div>
 
-      {/* The zoo so far: what filling the zones is building toward. */}
+      {/* The zoo so far: what filling the zones is building toward. Arrange it here. */}
       <div className="space-y-1.5">
         <h2 className="text-sm font-semibold">Your park so far</h2>
-        <ParkView state={state} />
+        <ParkView state={state} arrange={arrange} />
       </div>
 
       {/* The visitors' signals: candidate backlog items the Product Owner decides on. */}

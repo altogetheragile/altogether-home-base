@@ -53,6 +53,49 @@ export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): Z
   return { ...state, backlog };
 }
 
+// ============= Park layout (arrange within the Scrum flow) =============
+
+/** Move an item into a different zone. Building still happens via Sprints; this just
+ *  arranges what you have built. A new zone name is added to the known zones. */
+export function moveToZone(state: ZooGameState, id: string, zone: string): ZooGameState {
+  const z = zone.trim();
+  if (!z) return state;
+  const backlog = state.backlog.map((it) => (it.id === id ? { ...it, zone: z } : it));
+  const zones = state.zones.includes(z) ? state.zones : [...state.zones, z];
+  return { ...state, backlog, zones };
+}
+
+/** Create a new (empty) themed zone. */
+export function addZone(state: ZooGameState, name: string): ZooGameState {
+  const z = name.trim();
+  if (!z || state.zones.includes(z)) return state;
+  return { ...state, zones: [...state.zones, z] };
+}
+
+/** Rename a zone everywhere (the zone list and every item in it). */
+export function renameZone(state: ZooGameState, oldName: string, newName: string): ZooGameState {
+  const z = newName.trim();
+  if (!z || z === oldName || state.zones.includes(z)) return state;
+  const zones = state.zones.map((x) => (x === oldName ? z : x));
+  const backlog = state.backlog.map((it) => (it.zone === oldName ? { ...it, zone: z } : it));
+  return { ...state, zones, backlog };
+}
+
+/** Reorder an item within its zone (swap with the nearest same-zone item), so you
+ *  can arrange the plots in an enclosure. */
+export function reorderInZone(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
+  const backlog = [...state.backlog];
+  const idx = backlog.findIndex((it) => it.id === id);
+  if (idx < 0) return state;
+  const zone = backlog[idx].zone;
+  const step = dir === 'up' ? -1 : 1;
+  let j = idx + step;
+  while (j >= 0 && j < backlog.length && backlog[j].zone !== zone) j += step;
+  if (j < 0 || j >= backlog.length) return state;
+  [backlog[idx], backlog[j]] = [backlog[j], backlog[idx]];
+  return { ...state, backlog };
+}
+
 // ============= Planning =============
 
 /** Commit the chosen Backlog items into the current Sprint and open it for play.
