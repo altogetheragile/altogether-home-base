@@ -1,7 +1,7 @@
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress } from './engine';
-import { ParkView } from './ParkView';
+import { ParkView, type ParkArrange } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
@@ -10,6 +10,7 @@ interface SprintReviewProps {
   state: ZooGameState;
   onTakeSignal: (index: number) => void;
   onContinue: () => void;
+  arrange: ParkArrange;
 }
 
 const SEG_LABEL: Record<SegmentId, string> = { families: 'Families', enthusiasts: 'Enthusiasts', comfortSeekers: 'Comfort Seekers' };
@@ -18,7 +19,7 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onContinue, arrange }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const progress = Math.round(productGoalProgress(state) * 100);
@@ -42,8 +43,8 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
         </div>
       )}
 
-      {/* The park the visitors experienced this Sprint. */}
-      <ParkView state={state} />
+      {/* The park the visitors experienced this Sprint. Arrange it here too. */}
+      <ParkView state={state} arrange={arrange} />
 
       {!r || r.totalAttendance === 0 ? (
         <p className="rounded-lg border border-border bg-muted/40 px-5 py-4 text-sm text-muted-foreground">Nothing is open to visitors yet, so there is no crowd to inspect. Delivered <strong>{velocity} pts</strong> of work this Sprint - open some of it next time to see the visitors arrive.</p>

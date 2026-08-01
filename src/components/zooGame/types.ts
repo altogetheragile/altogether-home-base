@@ -129,6 +129,10 @@ export type ZooAction =
   | { type: 'PLAN_SPRINT'; ids: string[] }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
+  | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
+  | { type: 'ADD_ZONE'; name: string }
+  | { type: 'RENAME_ZONE'; oldName: string; newName: string }
+  | { type: 'REORDER_IN_ZONE'; id: string; dir: 'up' | 'down' }
   | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }

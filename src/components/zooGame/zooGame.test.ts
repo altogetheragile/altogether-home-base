@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, generateImpediment,
 } from './engine';
 import type { ZooGameState } from './types';
@@ -89,6 +89,35 @@ describe('zoo game: the Sprint loop', () => {
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
     expect(s.velocity).toHaveLength(2);
     expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'penguins', 'tiger']);
+  });
+});
+
+describe('zoo game: arranging the park layout', () => {
+  it('moves an item to another zone (adding the zone if new)', () => {
+    let s = moveToZone(initialZooState(1), 'lion', 'Waterside');
+    expect(s.backlog.find((i) => i.id === 'lion')!.zone).toBe('Waterside');
+    s = moveToZone(s, 'tiger', 'Reptile House'); // new zone
+    expect(s.backlog.find((i) => i.id === 'tiger')!.zone).toBe('Reptile House');
+    expect(s.zones).toContain('Reptile House');
+  });
+
+  it('creates and renames zones (renaming updates every item in it)', () => {
+    let s = addZone(initialZooState(1), 'Nocturnal House');
+    expect(s.zones).toContain('Nocturnal House');
+    s = renameZone(s, 'Big Cats', 'Predators');
+    expect(s.zones).toContain('Predators');
+    expect(s.zones).not.toContain('Big Cats');
+    expect(s.backlog.filter((i) => i.zone === 'Predators').length).toBeGreaterThan(0);
+    expect(s.backlog.some((i) => i.zone === 'Big Cats')).toBe(false);
+  });
+
+  it('reorders items within a zone', () => {
+    const s = initialZooState(1);
+    const bigCats = () => s.backlog.filter((i) => i.zone === 'Big Cats').map((i) => i.id);
+    const before = bigCats();
+    const moved = reorderInZone(s, before[1], 'up');
+    const after = moved.backlog.filter((i) => i.zone === 'Big Cats').map((i) => i.id);
+    expect(after[0]).toBe(before[1]);
   });
 });
 

@@ -13,7 +13,9 @@ import Footer from '@/components/Footer';
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, nextSprint, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open, moveZone, createZone, renameZone, reorderZone, closeDay, holdDailyScrum, skipDailyScrum, nextSprint, reset } = useZooGame();
+
+  const arrange = { onMoveZone: moveZone, onAddZone: createZone, onRenameZone: renameZone, onReorder: reorderZone };
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
@@ -23,17 +25,17 @@ export default function ZooGame() {
       case 'intro':
         return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start} />;
       case 'planning':
-        return <SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onReorder={reorder} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} />;
+        return <SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onReorder={reorder} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} arrange={arrange} />;
       case 'sprint':
         return <SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} />;
       case 'review':
-        return <SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} />;
+        return <SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} arrange={arrange} />;
       case 'retro':
         return <SprintRetro state={state} onNextSprint={nextSprint} onWrapUp={() => setPhase('final')} />;
       case 'final':
         return <ZooFinal state={state} onReset={reset} />;
       default:
-        return <SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onReorder={reorder} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} />;
+        return <SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onReorder={reorder} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} arrange={arrange} />;
     }
   };
 

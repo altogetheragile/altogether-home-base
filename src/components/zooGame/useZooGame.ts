@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase } from './types';
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, moveItem, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, moveItem, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum,
 } from './engine';
 
@@ -30,6 +30,14 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return estimateItem(state, action.id, action.points);
     case 'MOVE_ITEM':
       return moveItem(state, action.id, action.dir);
+    case 'MOVE_TO_ZONE':
+      return moveToZone(state, action.id, action.zone);
+    case 'ADD_ZONE':
+      return addZone(state, action.name);
+    case 'RENAME_ZONE':
+      return renameZone(state, action.oldName, action.newName);
+    case 'REORDER_IN_ZONE':
+      return reorderInZone(state, action.id, action.dir);
     case 'PULL_ITEM':
       return pullIntoSprint(state, action.id);
     case 'BUILD_ITEM':
@@ -72,6 +80,10 @@ export function useZooGame(gameSeed?: number) {
   const estimate = useCallback((id: string, points: number) => dispatch({ type: 'ESTIMATE_ITEM', id, points }), []);
   const reorder = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ITEM', id, dir }), []);
   const pull = useCallback((id: string) => dispatch({ type: 'PULL_ITEM', id }), []);
+  const moveZone = useCallback((id: string, zone: string) => dispatch({ type: 'MOVE_TO_ZONE', id, zone }), []);
+  const createZone = useCallback((name: string) => dispatch({ type: 'ADD_ZONE', name }), []);
+  const renameZoneCb = useCallback((oldName: string, newName: string) => dispatch({ type: 'RENAME_ZONE', oldName, newName }), []);
+  const reorderZone = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'REORDER_IN_ZONE', id, dir }), []);
   const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
   const editBuild = useCallback((id: string, design: ItemDesign) => dispatch({ type: 'EDIT_ITEM', id, design }), []);
   const addAnotherPbi = useCallback((id: string) => dispatch({ type: 'ADD_ANOTHER', id }), []);
@@ -86,6 +98,7 @@ export function useZooGame(gameSeed?: number) {
 
   return {
     state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open,
+    moveZone, createZone, renameZone: renameZoneCb, reorderZone,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, review, nextSprint, finish, reset,
   };
 }
