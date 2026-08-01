@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, generateImpediment,
 } from './engine';
 import type { ZooGameState } from './types';
@@ -89,6 +89,35 @@ describe('zoo game: the Sprint loop', () => {
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
     expect(s.velocity).toHaveLength(2);
     expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'penguins', 'tiger']);
+  });
+});
+
+describe('zoo game: the Sprint Goal', () => {
+  it('is set at Planning and coached from the selection, and is judged at the Review', () => {
+    let s = setSprintGoal(initialZooState(1), 'Open Big Cats so families have more to see.');
+    expect(s.sprintGoal).toContain('Big Cats');
+    expect(s.sprintGoalMet).toBeNull();
+    // Deliver everything committed -> goal met.
+    s = reviewSprint(buildAndOpen(s, ['lion', 'kiosk']));
+    expect(s.sprintGoalMet).toBe(true);
+    // A new Sprint clears the goal.
+    s = startNextSprint(s, 'x');
+    expect(s.sprintGoal).toBe('');
+    expect(s.sprintGoalMet).toBeNull();
+  });
+
+  it('is not met when committed work is left unfinished', () => {
+    let s = setSprintGoal(initialZooState(1), 'Fill Big Cats.');
+    s = planSprint(s, ['lion', 'tiger']);
+    s = openItem(buildItem(s, 'lion'), 'lion'); // tiger left unbuilt
+    s = reviewSprint(s);
+    expect(s.sprintGoalMet).toBe(false);
+  });
+
+  it('the coach shapes an outcome from the selection', () => {
+    const items = initialZooState(1).backlog.filter((i) => ['lion', 'tiger'].includes(i.id));
+    expect(suggestSprintGoal(items)).toMatch(/Big Cats/);
+    expect(suggestSprintGoal(items)).toMatch(/so /); // outcome-shaped
   });
 });
 

@@ -70,6 +70,12 @@ export interface ZooGameState {
   phase: ZooPhase;
   /** The long-term objective the Backlog is ordered toward (coached, editable). */
   productGoal: string;
+  /** The single objective for the current Sprint (coached, outcome-shaped). Empty
+   *  until set at Planning. The Daily Scrum inspects progress toward it. */
+  sprintGoal: string;
+  /** Whether the current Sprint's goal was met, set at the Review (null until then,
+   *  or when there is no goal). */
+  sprintGoalMet: boolean | null;
   /** Product-wide, team-owned quality bar every item clears to be shippable. */
   definitionOfDone: string[];
   /** The Product Backlog: dynamic and emergent (signals add to it). */
@@ -117,6 +123,7 @@ export type ZooAction =
   | { type: 'START'; gameSeed?: number }
   | { type: 'SET_PHASE'; phase: ZooPhase }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
+  | { type: 'SET_SPRINT_GOAL'; goal: string }
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
