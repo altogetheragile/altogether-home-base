@@ -72,6 +72,7 @@ export interface ZooGameState {
 
 export type ZooAction =
   | { type: 'START'; gameSeed?: number }
+  | { type: 'SET_PHASE'; phase: ZooPhase }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
