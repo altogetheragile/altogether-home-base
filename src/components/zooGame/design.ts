@@ -247,15 +247,35 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
       { label: 'Add a sign so visitors can find it', pass: design.parts.sign === 'on' && !!design.colors.sign },
     ];
   }
-  const fish = design.parts.head === 'none';
-  const distinctivePart = (['markings', 'ears', 'tail'] as const).find((k) => (design.parts[k] ?? 'none') !== 'none');
-  const distinctive = !!distinctivePart && !!design.colors[distinctivePart!];
-  return [
-    { label: 'Colour the body', pass: !!design.colors.body },
-    { label: fish ? 'Colour the fins' : 'Colour the head', pass: !!design.colors[fish ? 'tail' : 'head'] },
-    { label: 'Add and colour a distinctive feature (markings, ears or tail)', pass: distinctive },
-    { label: 'Give it a full finish: colour at least three parts', pass: coloured(design) >= 3 },
+  // Criteria reflect the animal's ACTUAL parts, so they read sensibly per species
+  // (a penguin is not asked for a tail; a lion is asked to colour its mane).
+  const p = design.parts;
+  const fish = p.head === 'none';
+
+  // Colourable parts this animal actually has.
+  const present: string[] = ['body'];
+  if (!fish) present.push('head');
+  if ((p.ears && p.ears !== 'none') || p.head === 'maned') present.push('ears');
+  if (p.tail && p.tail !== 'none') present.push('tail');
+  if (p.markings && p.markings !== 'none') present.push('markings');
+
+  // Its signature feature, named naturally for the criterion.
+  const markLabel: Record<string, string> = { stripes: 'stripes', spots: 'spots', patches: 'belly' };
+  let sig: { key: string; label: string } | null = null;
+  if (p.markings && p.markings !== 'none') sig = { key: 'markings', label: markLabel[p.markings] ?? 'markings' };
+  else if (p.head === 'maned') sig = { key: 'ears', label: 'mane' };
+  else if (p.head === 'horned') sig = { key: 'ears', label: 'horn' };
+  else if (p.ears && p.ears !== 'none') sig = { key: 'ears', label: 'ears' };
+  else if (p.tail && p.tail !== 'none') sig = { key: 'tail', label: fish ? 'fins' : 'tail' };
+
+  const list = [
+    { label: 'Colour its body', pass: !!design.colors.body },
+    { label: fish ? 'Colour its fins' : 'Colour its head', pass: !!design.colors[fish ? 'tail' : 'head'] },
   ];
+  if (sig) list.push({ label: `Colour its ${sig.label}`, pass: !!design.colors[sig.key] });
+  else list.push({ label: 'Give it a distinctive feature (ears, a tail or markings)', pass: false });
+  list.push({ label: 'Finish every part it has', pass: present.every((k) => !!design.colors[k]) });
+  return list;
 }
 
 export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => designCriteria(item, design).every((x) => x.pass);
