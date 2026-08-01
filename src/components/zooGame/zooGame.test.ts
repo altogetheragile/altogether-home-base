@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
-  planSprint, pullIntoSprint, buildItem, openItem, reviewSprint, startNextSprint, acceptSignal,
+  planSprint, pullIntoSprint, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, generateImpediment,
 } from './engine';
@@ -198,28 +198,38 @@ describe('zoo game: emergent backlog from visitor signals', () => {
 });
 
 describe('zoo game: design choices are the product', () => {
-  it('a bright, busy build favours Families; a calm, muted one favours Comfort Seekers', () => {
-    const brightDesign = { parts: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'spots' }, colors: { body: '#ffd54a', head: '#ffd54a', ears: '#ffcc00', tail: '#ffcc00', markings: '#ff8a00' } };
-    const calmDesign = { parts: { body: 'round', head: 'round', ears: 'none', tail: 'none', markings: 'none' }, colors: { body: '#5a4a38', head: '#5a4a38', ears: '#5a4a38' } };
-    const bright = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [brightDesign]); // bright + busy
-    const calm = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [calmDesign]); // dark + plain
+  const brightDesign = { parts: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'spots' }, colors: { body: '#ffd54a', head: '#ffd54a', ears: '#ffcc00', tail: '#ffcc00', markings: '#ff8a00' } };
+  const calmDesign = { parts: { body: 'round', head: 'round', ears: 'none', tail: 'none', markings: 'none' }, colors: { body: '#5a4a38', head: '#5a4a38', ears: '#5a4a38' } };
 
+  it('a bright, busy build favours Families; a calm, muted one favours Comfort Seekers', () => {
+    const bright = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign);
+    const calm = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', calmDesign);
     const b = bright.backlog.find((i) => i.id === 'lion')!.appeal!;
     const c = calm.backlog.find((i) => i.id === 'lion')!.appeal!;
     expect(b.families).toBeGreaterThan(c.families);
     expect(c.comfortSeekers).toBeGreaterThan(b.comfortSeekers);
-    // The animals are recorded on the built enclosure.
-    expect(bright.backlog.find((i) => i.id === 'lion')!.animals).toEqual([brightDesign]);
+    expect(bright.backlog.find((i) => i.id === 'lion')!.design).toEqual(brightDesign); // one animal per PBI
   });
 
-  it('an enclosure with several animals is more of a draw than a single one', () => {
-    const a = { parts: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'none' }, colors: { body: '#d99a4e', head: '#e6ad63', ears: '#8a5a2b', tail: '#8a5a2b' } };
-    const one = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [a]);
-    const three = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', undefined, [a, { ...a, parts: { ...a.parts, body: 'upright' } }, { ...a, parts: { ...a.parts, body: 'long' } }]);
-    const p1 = one.backlog.find((i) => i.id === 'lion')!.appeal!;
-    const p3 = three.backlog.find((i) => i.id === 'lion')!.appeal!;
-    expect(p3.families).toBeGreaterThan(p1.families); // a fuller enclosure draws more
-    expect(three.backlog.find((i) => i.id === 'lion')!.animals).toHaveLength(3);
+  it('a built animal can be re-edited without changing its status, and appeal follows', () => {
+    let s = openItem(buildItem(planSprint(initialZooState(1), ['lion']), 'lion', calmDesign), 'lion');
+    expect(s.backlog.find((i) => i.id === 'lion')!.status).toBe('open');
+    const before = s.backlog.find((i) => i.id === 'lion')!.appeal!.families;
+    s = editItem(s, 'lion', brightDesign); // repaint it bright
+    const after = s.backlog.find((i) => i.id === 'lion')!;
+    expect(after.status).toBe('open'); // still open, just refined
+    expect(after.appeal!.families).toBeGreaterThan(before);
+  });
+
+  it('add another creates a fresh PBI for the same species (a pride is several PBIs)', () => {
+    let s = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign);
+    s = addAnother(s, 'lion');
+    const lions = s.backlog.filter((i) => i.name.replace(/ \d+$/, '') === 'Lion');
+    expect(lions.length).toBe(2);
+    const clone = lions.find((i) => i.id !== 'lion')!;
+    expect(clone.status).toBe('backlog'); // a new item to plan and build
+    expect(clone.design).toBeUndefined(); // not built yet
+    expect(clone.name).toBe('Lion 2');
   });
 });
 

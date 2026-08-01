@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase } from './types';
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, buildItem, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum,
 } from './engine';
 
@@ -27,7 +27,11 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'PULL_ITEM':
       return pullIntoSprint(state, action.id);
     case 'BUILD_ITEM':
-      return buildItem(state, action.id, action.design, action.animals);
+      return buildItem(state, action.id, action.design);
+    case 'EDIT_ITEM':
+      return editItem(state, action.id, action.design);
+    case 'ADD_ANOTHER':
+      return addAnother(state, action.id);
     case 'OPEN_ITEM':
       return openItem(state, action.id);
     case 'END_DAY':
@@ -59,7 +63,9 @@ export function useZooGame(gameSeed?: number) {
   const takeSignal = useCallback((index: number) => dispatch({ type: 'ACCEPT_SIGNAL', index }), []);
   const plan = useCallback((ids: string[]) => dispatch({ type: 'PLAN_SPRINT', ids }), []);
   const pull = useCallback((id: string) => dispatch({ type: 'PULL_ITEM', id }), []);
-  const build = useCallback((id: string, design?: ItemDesign, animals?: ItemDesign[]) => dispatch({ type: 'BUILD_ITEM', id, design, animals }), []);
+  const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
+  const editBuild = useCallback((id: string, design: ItemDesign) => dispatch({ type: 'EDIT_ITEM', id, design }), []);
+  const addAnotherPbi = useCallback((id: string) => dispatch({ type: 'ADD_ANOTHER', id }), []);
   const open = useCallback((id: string) => dispatch({ type: 'OPEN_ITEM', id }), []);
   const closeDay = useCallback(() => dispatch({ type: 'END_DAY' }), []);
   const holdDailyScrum = useCallback(() => dispatch({ type: 'RUN_DAILY_SCRUM' }), []);
@@ -70,7 +76,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setDod, takeSignal, plan, pull, build, open,
+    state, start, setPhase, setGoal, setDod, takeSignal, plan, pull, build, editBuild, addAnotherPbi, open,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, review, nextSprint, finish, reset,
   };
 }

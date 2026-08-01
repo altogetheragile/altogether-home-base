@@ -48,11 +48,10 @@ export interface BacklogItem {
   /** The Sprint this item was committed to (null while in the Backlog). */
   sprintNumber: number | null;
   accessible: boolean;
-  /** The finish the team chose when building an amenity (the building). */
+  /** The finish the team built: for an exhibit the one animal, for an amenity the
+   *  building. Every animal is its own Product Backlog Item - to add more of a
+   *  species you add more PBIs, not more animals in one build. */
   design?: ItemDesign;
-  /** For an exhibit: the animals in the enclosure. The parametric builder lets you
-   *  add several (e.g. a round, an upright and a long lion) to one enclosure. */
-  animals?: ItemDesign[];
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -116,7 +115,9 @@ export type ZooAction =
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
   | { type: 'PULL_ITEM'; id: string }
-  | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign; animals?: ItemDesign[] }
+  | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
+  | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
+  | { type: 'ADD_ANOTHER'; id: string }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM' }

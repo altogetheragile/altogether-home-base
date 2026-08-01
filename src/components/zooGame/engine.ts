@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem, Impediment } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromAnimals } from './design';
+import { appealFromDesign } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -35,18 +35,43 @@ export function pullIntoSprint(state: ZooGameState, id: string): ZooGameState {
 
 // ============= Building and releasing =============
 
-/** A committed item is built to the Definition of Done. For an exhibit, the built
- *  animals are stored and the enclosure's appeal is aggregated from them (more
- *  animals, more of a draw). For an amenity, the building design is stored. The
- *  choices are the product. Without either, the item is just marked Done. */
-export function buildItem(state: ZooGameState, id: string, design?: ItemDesign, animals?: ItemDesign[]): ZooGameState {
+/** A committed item is built to the Definition of Done. One PBI builds one thing:
+ *  an exhibit's animal or an amenity's building. For an exhibit the appeal is
+ *  computed from the design (the choices are the product). Without a design the item
+ *  is just marked Done. */
+export function buildItem(state: ZooGameState, id: string, design?: ItemDesign): ZooGameState {
   const backlog = state.backlog.map((it) => {
     if (it.id !== id || it.status !== 'committed') return it;
-    if (animals && animals.length) return { ...it, status: 'done' as const, animals, appeal: appealFromAnimals(it, animals) };
-    if (design) return { ...it, status: 'done' as const, design };
-    return { ...it, status: 'done' as const };
+    if (!design) return { ...it, status: 'done' as const };
+    return { ...it, status: 'done' as const, design, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal };
   });
   return { ...state, backlog };
+}
+
+/** Go back and edit an already-built item (Done or Open) without changing its
+ *  status - so you can refine a design after the fact. */
+export function editItem(state: ZooGameState, id: string, design: ItemDesign): ZooGameState {
+  const backlog = state.backlog.map((it) =>
+    it.id === id && (it.status === 'done' || it.status === 'open')
+      ? { ...it, design, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
+      : it,
+  );
+  return { ...state, backlog };
+}
+
+/** Add another PBI for the same thing (e.g. a second lion). Every animal is its own
+ *  Product Backlog Item, so a pride is several lion PBIs - this creates a fresh
+ *  backlog item cloned from an existing one, ready to be planned and built. */
+export function addAnother(state: ZooGameState, id: string): ZooGameState {
+  const src = state.backlog.find((it) => it.id === id);
+  if (!src) return state;
+  const n = state.backlog.filter((it) => it.name.replace(/ \d+$/, '') === src.name.replace(/ \d+$/, '') && it.category === src.category).length;
+  const base = src.name.replace(/ \d+$/, '');
+  const clone: BacklogItem = {
+    ...src, id: `${src.id.replace(/-\d+$/, '')}-${n + 1}`, name: `${base} ${n + 1}`,
+    status: 'backlog', sprintNumber: null, design: undefined, appeal: src.appeal,
+  };
+  return { ...state, backlog: [...state.backlog, clone] };
 }
 
 /** Release a Done item to visitors. Decoupled from the Review: you can open a Done
