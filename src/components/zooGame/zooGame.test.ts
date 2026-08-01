@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
   planSprint, buildItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, openZoo, availableItems, productGoalProgress,
+  endDay, runDailyScrum, skipDailyScrum, generateImpediment,
 } from './engine';
 import type { ZooGameState } from './types';
 
@@ -88,6 +89,63 @@ describe('zoo game: the Sprint loop', () => {
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
     expect(s.velocity).toHaveLength(2);
     expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'penguins', 'tiger']);
+  });
+});
+
+describe('zoo game: timed days and the Daily Scrum', () => {
+  it('a Sprint runs a fixed number of timed days, then the Review opens', () => {
+    let s = planSprint(initialZooState(1), ['lion']);
+    s = openItem(buildItem(s, 'lion'), 'lion');
+    expect(s.dayNumber).toBe(1);
+    for (let d = 1; d <= SPRINT_DAYS; d++) {
+      expect(s.phase).toBe('sprint');
+      s = endDay(s);
+      expect(s.dayStage).toBe('dailyScrum');
+      s = runDailyScrum(s);
+    }
+    expect(s.phase).toBe('review'); // the Review opens after the last day's Daily Scrum
+    expect(s.lastReview).not.toBeNull();
+    expect(s.velocity[0]).toBe(8);
+  });
+
+  it('impediments are deterministic per game, Sprint and day; some days have none', () => {
+    expect(generateImpediment(1, 1, 1)).toEqual(generateImpediment(1, 1, 1));
+    const days = Array.from({ length: 20 }, (_, i) => generateImpediment(1, 1, i + 1));
+    expect(days.some((x) => x !== null)).toBe(true);
+    expect(days.some((x) => x === null)).toBe(true);
+  });
+
+  it('holding the Daily Scrum clears the impediment and costs a little time', () => {
+    let s = endDay(planSprint(initialZooState(1), ['lion']));
+    s = { ...s, pendingImpediment: { id: 'x', title: 'A keeper called in sick', detail: '...' } };
+    s = runDailyScrum(s);
+    expect(s.pendingImpediment).toBeNull();
+    expect(s.carriedImpediment).toBeNull();
+    expect(s.dayNumber).toBe(2);
+    expect(s.dayTimeMult).toBe(DAILY_SCRUM_MULT);
+    expect(s.missedScrums).toBe(0);
+  });
+
+  it('skipping the Daily Scrum lets a waiting impediment through, later and costlier', () => {
+    let s = endDay(planSprint(initialZooState(1), ['lion']));
+    s = { ...s, pendingImpediment: { id: 'x', title: 'The pond pump failed', detail: '...' } };
+    s = skipDailyScrum(s);
+    expect(s.dayNumber).toBe(2);
+    expect(s.carriedImpediment).toMatchObject({ missed: true, title: 'The pond pump failed' });
+    expect(s.carriedImpediment!.tip!.length).toBeGreaterThan(0);
+    expect(SKIP_PENALTY_MULT).toBeLessThan(DAILY_SCRUM_MULT); // a heavier cost than holding it
+    expect(s.dayTimeMult).toBe(SKIP_PENALTY_MULT);
+    expect(s.missedScrums).toBe(1);
+  });
+
+  it('skipping a Daily Scrum with nothing waiting costs nothing', () => {
+    let s = endDay(planSprint(initialZooState(1), ['lion']));
+    s = { ...s, pendingImpediment: null };
+    s = skipDailyScrum(s);
+    expect(s.dayNumber).toBe(2);
+    expect(s.carriedImpediment).toBeNull();
+    expect(s.dayTimeMult).toBe(1);
+    expect(s.missedScrums).toBe(0);
   });
 });
 

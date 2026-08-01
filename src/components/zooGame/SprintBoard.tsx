@@ -1,26 +1,82 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
 import { openZoo } from './engine';
+import { DAY_SECONDS } from './config';
 import { DesignStudio } from './DesignStudio';
+import { DailyScrum } from './DailyScrum';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
   onBuild: (id: string, design?: ItemDesign) => void;
   onOpen: (id: string) => void;
-  onReview: () => void;
+  onEndDay: () => void;
+  onHoldDailyScrum: () => void;
+  onSkipDailyScrum: () => void;
 }
 
-/** The Sprint board: build each committed item to the Definition of Done, then open
- *  (release) it to visitors whenever you like. Releasing is not the Review. */
-export function SprintBoard({ state, onBuild, onOpen, onReview }: SprintBoardProps) {
+/** The countdown for a single timed day. Runs while the day is being worked; when it
+ *  reaches zero the day ends and the Daily Scrum opens. */
+function DayTimer({ dayNumber, dayTimeMult, onExpire }: { dayNumber: number; dayTimeMult: number; onExpire: () => void }) {
+  const total = Math.round(DAY_SECONDS * dayTimeMult);
+  const [left, setLeft] = useState(total);
+  const fired = useRef(false);
+
+  // Reset for each new day (dayNumber changes) and count down once per second.
+  useEffect(() => {
+    fired.current = false;
+    setLeft(total);
+    const id = setInterval(() => {
+      setLeft((s) => {
+        if (s <= 1) {
+          clearInterval(id);
+          if (!fired.current) { fired.current = true; onExpire(); }
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+    // total is derived from dayNumber+dayTimeMult; reset on a genuinely new day.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayNumber]);
+
+  const pct = Math.max(0, Math.min(100, (left / total) * 100));
+  const mm = Math.floor(left / 60);
+  const ss = String(left % 60).padStart(2, '0');
+  const low = pct <= 25;
+  return (
+    <div className="w-full max-w-[220px]">
+      <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Day time</span>
+        <span className={cn('tabular-nums', low && 'text-red-600 dark:text-red-400')}>{mm}:{ss}</span>
+      </div>
+      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn('h-full rounded-full transition-[width] duration-500 ease-linear', low ? 'bg-red-500' : 'bg-primary')}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** The Sprint board: a run of timed days. Each day you build committed items to the
+ *  Definition of Done and open (release) them whenever you like; the day ends on the
+ *  timer or when you call it, opening the Daily Scrum. After the last day's Daily
+ *  Scrum the Review opens. */
+export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'));
   const open = openZoo(state);
   const designItem = designing ? committed.find((it) => it.id === designing && it.status === 'committed') : null;
+
+  if (state.dayStage === 'dailyScrum') {
+    return <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />;
+  }
 
   const StatusButton = ({ it }: { it: BacklogItem }) => {
     if (it.status === 'committed') return <Button size="sm" onClick={() => setDesigning(it.id)}><Palette className="mr-1.5 h-3.5 w-3.5" /> Design and build</Button>;
@@ -31,13 +87,31 @@ export function SprintBoard({ state, onBuild, onOpen, onReview }: SprintBoardPro
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 pb-28 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Sprint {state.sprintNumber}</h1>
-        <span className="text-xs text-muted-foreground">{open.length} exhibit{open.length === 1 ? '' : 's'} and amenities open to visitors</span>
+        <div>
+          <h1 className="text-2xl font-bold">Sprint {state.sprintNumber}</h1>
+          <p className="text-xs text-muted-foreground">Day {state.dayNumber} of {state.sprintDays} &middot; {open.length} open to visitors</p>
+        </div>
+        <DayTimer dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} onExpire={onEndDay} />
       </div>
+
+      {state.carriedImpediment && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div>
+              <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
+              <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} Today's build time is cut while you deal with it.</div>
+              {state.carriedImpediment.tip && (
+                <div className="mt-1 text-xs italic text-amber-700/80 dark:text-amber-300/70">Tip: {state.carriedImpediment.tip}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground">
         Build each item to the Definition of Done, then open it to visitors. You can open Done work at any
-        time - you do not have to wait for the Review.
+        time - you do not have to wait for the Review. Finishing fewer items well beats starting many.
       </p>
 
       {designItem ? (
@@ -69,7 +143,9 @@ export function SprintBoard({ state, onBuild, onOpen, onReview }: SprintBoardPro
 
       <div className="fixed inset-x-0 bottom-4 z-20 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
         <span className="text-xs font-medium text-muted-foreground">Definition of Done: {state.definitionOfDone.length} criteria</span>
-        <Button size="sm" onClick={onReview}>End Sprint &rarr; Review</Button>
+        <Button size="sm" onClick={onEndDay}>
+          {state.dayNumber === state.sprintDays ? 'End last day' : `End Day ${state.dayNumber}`} &rarr; Daily Scrum
+        </Button>
       </div>
     </div>
   );

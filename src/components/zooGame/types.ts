@@ -10,6 +10,21 @@ import type { ItemDesign } from './design';
 
 export type ZooPhase = 'intro' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
+/** Within a Sprint, a day is either being worked (building) or paused at its close
+ *  for the Daily Scrum. */
+export type DayStage = 'building' | 'dailyScrum';
+
+/** Something that gets in the team's way. Surfaced at the Daily Scrum: hold it and
+ *  the Scrum Master clears the way; skip it and the impediment resurfaces the next
+ *  day (`missed`), later and costlier, with a coaching `tip`. */
+export interface Impediment {
+  id: string;
+  title: string;
+  detail: string;
+  missed?: boolean;
+  tip?: string;
+}
+
 /** backlog -> committed (into a Sprint) -> done (meets AC + DoD) -> open (released
  *  to visitors). Release is decoupled from the Review: a Done item can be opened at
  *  any time during the Sprint. */
@@ -71,6 +86,23 @@ export interface ZooGameState {
   improvements: string[];
   /** Per-game seed: drives taste jitter and attendance drift (anti-scripting). */
   gameSeed: number;
+  // ---- Timed days and the Daily Scrum (within a Sprint) ----
+  /** How many days this Sprint runs. */
+  sprintDays: number;
+  /** The current day, 1..sprintDays. */
+  dayNumber: number;
+  /** Whether the current day is being worked or paused for its Daily Scrum. */
+  dayStage: DayStage;
+  /** Multiplier on the current day's build time: the Daily Scrum costs a little
+   *  time, a missed impediment costs more. 1 = a full day. */
+  dayTimeMult: number;
+  /** The impediment surfaced at the current Daily Scrum, awaiting the team's call. */
+  pendingImpediment: Impediment | null;
+  /** A missed impediment carried into the current building day (skipped Daily
+   *  Scrum), shown as a banner with its coaching tip. */
+  carriedImpediment: Impediment | null;
+  /** How many Daily Scrums were skipped while an impediment was waiting. */
+  missedScrums: number;
 }
 
 export type ZooAction =
@@ -82,6 +114,9 @@ export type ZooAction =
   | { type: 'PLAN_SPRINT'; ids: string[] }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'OPEN_ITEM'; id: string }
+  | { type: 'END_DAY' }
+  | { type: 'RUN_DAILY_SCRUM' }
+  | { type: 'SKIP_DAILY_SCRUM' }
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'END_GAME' }

@@ -13,7 +13,7 @@ import Footer from '@/components/Footer';
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, takeSignal, plan, build, open, review, nextSprint, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, takeSignal, plan, build, open, closeDay, holdDailyScrum, skipDailyScrum, nextSprint, reset } = useZooGame();
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
@@ -25,7 +25,7 @@ export default function ZooGame() {
       case 'planning':
         return <SprintPlanning state={state} onPlan={plan} onTakeSignal={takeSignal} />;
       case 'sprint':
-        return <SprintBoard state={state} onBuild={build} onOpen={open} onReview={review} />;
+        return <SprintBoard state={state} onBuild={build} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} />;
       case 'review':
         return <SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} />;
       case 'retro':
