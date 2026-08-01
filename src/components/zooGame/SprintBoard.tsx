@@ -5,10 +5,9 @@ import { openZoo, availableItems } from './engine';
 import { DAY_SECONDS } from './config';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
-import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus, Target } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -112,63 +111,50 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull,
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 pb-28">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,42%)] lg:items-start lg:gap-8">
-        {/* Left: the Sprint's work */}
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold">Build &middot; Day {state.dayNumber} of {state.sprintDays}</h2>
+          <p className="text-xs text-muted-foreground">{open.length} open to visitors</p>
+        </div>
+        <DayTimer dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} onExpire={onEndDay} />
+      </div>
+
+      {state.carriedImpediment && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
             <div>
-              <h1 className="text-2xl font-bold">Sprint {state.sprintNumber}</h1>
-              <p className="text-xs text-muted-foreground">Day {state.dayNumber} of {state.sprintDays} &middot; {open.length} open to visitors</p>
+              <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
+              <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
+              {state.carriedImpediment.tip && (
+                <div className="mt-1 text-xs italic text-amber-700/80 dark:text-amber-300/70">Tip: {state.carriedImpediment.tip}</div>
+              )}
             </div>
-            <DayTimer dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} onExpire={onEndDay} />
           </div>
+        </div>
+      )}
 
-          {state.sprintGoal.trim() && (
-            <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
-              <Target className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">Sprint Goal</div>
-                <p className="text-sm font-medium">{state.sprintGoal}</p>
-              </div>
-            </div>
-          )}
+      <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground">
+        Build each item to the Definition of Done, then open it to visitors - any time, you do not have to
+        wait for the Review. Finishing fewer items well beats starting many.
+      </p>
 
-          {state.carriedImpediment && (
-            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
-              <div className="flex items-start gap-2.5">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <div>
-                  <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
-                  <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
-                  {state.carriedImpediment.tip && (
-                    <div className="mt-1 text-xs italic text-amber-700/80 dark:text-amber-300/70">Tip: {state.carriedImpediment.tip}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground">
-            Build each item to the Definition of Done, then open it to visitors. You can open Done work at any
-            time - you do not have to wait for the Review. Finishing fewer items well beats starting many.
-          </p>
-
-          {designItem ? (
-            <DesignStudio
-              item={designItem}
-              editing={editing}
-              copySources={copySources}
-              initial={draft && draft.id === designItem.id ? draft.design : undefined}
-              onChange={(d) => setDraft({ id: designItem.id, design: d })}
-              onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); setDraft(null); }}
-              onCancel={() => setDesigning(null)}
-            />
-          ) : (
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold">This Sprint's work</h2>
-            <div className="space-y-1.5">
-              {committed.map((it) => (
+      {designItem ? (
+        <DesignStudio
+          item={designItem}
+          editing={editing}
+          copySources={copySources}
+          initial={draft && draft.id === designItem.id ? draft.design : undefined}
+          onChange={(d) => setDraft({ id: designItem.id, design: d })}
+          onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); setDraft(null); }}
+          onCancel={() => setDesigning(null)}
+        />
+      ) : (
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold">Sprint Backlog - this Sprint's work</h3>
+        <div className="space-y-1.5">
+          {committed.map((it) => (
                 <div key={it.id} className={cn('flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2', it.status === 'open' && 'bg-emerald-50/50 dark:bg-emerald-950/20')}>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 text-sm">
@@ -213,14 +199,6 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull,
               )}
             </section>
           )}
-        </div>
-
-        {/* Right: the live park, growing as you open items. Sticky so it stays in view. */}
-        <div className="mt-8 lg:mt-0 lg:sticky lg:top-24">
-          <h2 className="mb-2 text-sm font-semibold">Your zoo</h2>
-          <ParkView state={state} fill />
-        </div>
-      </div>
 
       <div className="fixed inset-x-0 bottom-4 z-30 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
         <span className="text-xs font-medium text-muted-foreground">Definition of Done: {state.definitionOfDone.length} criteria</span>

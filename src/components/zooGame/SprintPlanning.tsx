@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { ZooGameState } from './types';
 import { availableItems, productGoalProgress, suggestSprintGoal } from './engine';
 import { zooCapacity } from './config';
-import { ParkView, type ParkArrange } from './ParkView';
 import { PlanningPoker } from './PlanningPoker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,13 +14,12 @@ interface SprintPlanningProps {
   onReorder: (id: string, dir: 'up' | 'down') => void;
   onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
-  arrange: ParkArrange;
 }
 
-/** Sprint Planning: set the Sprint Goal, refine the Backlog (estimate unsized items
- *  by planning poker, order it), then commit sized items up to a velocity-driven
- *  capacity. */
-export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSprintGoal, onTakeSignal, arrange }: SprintPlanningProps) {
+/** Sprint Planning panel: set the Sprint Goal, refine the Backlog (estimate unsized
+ *  items by planning poker, order it), then commit sized items up to a
+ *  velocity-driven capacity. The park and goals live in the surrounding shell. */
+export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [estimating, setEstimating] = useState<string | null>(null);
   const items = availableItems(state);
@@ -40,19 +38,14 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
     });
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Sprint {state.sprintNumber} Planning</h1>
-        <span className="text-xs text-muted-foreground">Product Goal reached: <span className="font-medium text-foreground">{progress}%</span></span>
-      </div>
-
-      <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-3">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
-        <p className="text-sm font-medium">{state.productGoal}</p>
+    <div className="space-y-5">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-lg font-bold">Plan the Sprint</h2>
+        <span className="text-xs text-muted-foreground">Product Goal {progress}%</span>
       </div>
 
       {/* Sprint Goal: the single objective for this Sprint (coached, editable). */}
-      <div className="space-y-1.5 rounded-lg border border-border bg-card px-5 py-3">
+      <div className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={chosen.length === 0} onClick={() => onSetSprintGoal(suggestSprintGoal(chosen))}>
@@ -66,13 +59,6 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
           placeholder="One outcome for this Sprint - e.g. &ldquo;Open the Savanna so families have more to see.&rdquo; Or pick some items and let the coach suggest one."
           className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
         />
-        <p className="text-[11px] text-muted-foreground">A single objective the Sprint works toward. The Daily Scrum inspects progress against it; the Review judges whether it was met.</p>
-      </div>
-
-      {/* The zoo so far: what filling the zones is building toward. Arrange it here. */}
-      <div className="space-y-1.5">
-        <h2 className="text-sm font-semibold">Your park so far</h2>
-        <ParkView state={state} arrange={arrange} />
       </div>
 
       {/* The visitors' signals: candidate backlog items the Product Owner decides on. */}
@@ -112,8 +98,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
 
       {/* Product Backlog + refinement */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length}) - ordered by you, the Product Owner</span></h2>
-        <p className="text-[11px] text-muted-foreground">Refine it: estimate the unsized items by planning poker, and order the backlog toward the Product Goal. Only estimated items can be committed.</p>
+        <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length}) - ordered by you</span></h3>
+        <p className="text-[11px] text-muted-foreground">Refine it: estimate the unsized items by planning poker, and order it toward the Product Goal. Only estimated items can be committed.</p>
 
         {estimatingItem && (
           <PlanningPoker item={estimatingItem} seed={state.gameSeed}
@@ -128,21 +114,17 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
             const Icon = it.category === 'amenity' ? (it.services === 'food' ? Coffee : Plus) : Fish;
             return (
               <div key={it.id} className={cn('flex items-center gap-2 rounded-lg border p-2.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-muted/20' : 'border-border bg-card')}>
-                {/* Order (Product Owner priority) */}
                 <div className="flex flex-col text-muted-foreground">
                   <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
                   <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
                 </div>
-                {/* Select (only sized items can be committed) */}
                 <button type="button" disabled={it.unsized} onClick={() => toggle(it.id)} className="flex flex-1 items-start gap-2 text-left disabled:cursor-not-allowed">
                   {on ? <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> : <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                   <span className="flex-1">
                     <span className="font-medium">{it.name}</span>
                     <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
-                    <span className="ml-1 text-[11px] text-muted-foreground">{it.category}</span>
                   </span>
                 </button>
-                {/* Estimate / size */}
                 {it.unsized ? (
                   <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
                 ) : (
@@ -154,7 +136,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
         </div>
       </section>
 
-      <div className="flex justify-end">
+      <div className="sticky bottom-4 flex justify-end">
         <Button size="lg" disabled={chosen.length === 0} onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber}</Button>
       </div>
     </div>
