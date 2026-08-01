@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
-  planSprint, pullIntoSprint, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
+  planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, generateImpediment,
 } from './engine';
@@ -89,6 +89,49 @@ describe('zoo game: the Sprint loop', () => {
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
     expect(s.velocity).toHaveLength(2);
     expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'penguins', 'tiger']);
+  });
+});
+
+describe('zoo game: backlog refinement (estimation and ordering)', () => {
+  it('new-zone items start unsized and cannot be committed until estimated', () => {
+    let s = initialZooState(1);
+    const elephant = s.backlog.find((i) => i.id === 'elephant')!;
+    expect(elephant.unsized).toBe(true);
+    expect(elephant.estimate).toBe(0);
+    // Planning skips unsized items.
+    s = planSprint(s, ['elephant']);
+    expect(s.committedIds).not.toContain('elephant');
+    expect(s.backlog.find((i) => i.id === 'elephant')!.status).toBe('backlog');
+  });
+
+  it('planning poker is deterministic and yields a Fibonacci suggestion near the true size', () => {
+    const elephant = initialZooState(1).backlog.find((i) => i.id === 'elephant')!;
+    const hand = pokerHand(elephant, 1);
+    expect(pokerHand(elephant, 1)).toEqual(hand); // deterministic
+    const FIB = [1, 2, 3, 5, 8, 13, 21];
+    expect(hand.every((c) => FIB.includes(c))).toBe(true);
+    const s = estimateSuggestion(hand);
+    expect(FIB.includes(s)).toBe(true);
+    expect(s).toBeGreaterThanOrEqual(5); // clusters around trueSize 10
+  });
+
+  it('estimating an item makes it sized and committable', () => {
+    let s = estimateItem(initialZooState(1), 'elephant', 13);
+    const e = s.backlog.find((i) => i.id === 'elephant')!;
+    expect(e.unsized).toBe(false);
+    expect(e.estimate).toBe(13);
+    s = planSprint(s, ['elephant']);
+    expect(s.committedIds).toContain('elephant');
+  });
+
+  it('the Product Owner can re-order the Backlog', () => {
+    const s = initialZooState(1);
+    const order = () => availableItems(s).map((i) => i.id);
+    const before = order();
+    const moved = moveItem(s, before[1], 'up');
+    const after = availableItems(moved).map((i) => i.id);
+    expect(after[0]).toBe(before[1]); // the second item moved to the front
+    expect(after[1]).toBe(before[0]);
   });
 });
 

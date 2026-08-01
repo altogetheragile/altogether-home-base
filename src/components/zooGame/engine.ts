@@ -7,27 +7,74 @@ import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP } from './config';
 
+// ============= Refinement: estimation and ordering =============
+
+const FIB = [1, 2, 3, 5, 8, 13, 21];
+const snapFib = (n: number): number => FIB.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a));
+
+/** Deterministic planning-poker hand for an item: several estimators reveal a
+ *  Fibonacci card clustered around the item's true size, so the spread is real but
+ *  reproducible. */
+export function pokerHand(item: BacklogItem, seed: number): number[] {
+  const rng = makeRng(hashStr('poker:' + item.id, seed));
+  const base = item.trueSize ?? item.estimate ?? 5;
+  return Array.from({ length: 4 }, () => snapFib(base * (1 + (rng.next() - 0.5) * 0.7)));
+}
+
+/** The team's suggested estimate from a hand: the most common card, ties rounding up
+ *  (the honest forecast, not an average). */
+export function estimateSuggestion(hand: number[]): number {
+  const counts = new Map<number, number>();
+  for (const c of hand) counts.set(c, (counts.get(c) ?? 0) + 1);
+  let best = hand[0], bestN = 0;
+  for (const [v, n] of counts) if (n > bestN || (n === bestN && v > best)) { best = v; bestN = n; }
+  return best;
+}
+
+/** Commit an estimate to a Backlog item (refinement): it becomes sized and can now
+ *  be planned. */
+export function estimateItem(state: ZooGameState, id: string, points: number): ZooGameState {
+  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false } : it));
+  return { ...state, backlog };
+}
+
+/** Re-order the Product Backlog (the Product Owner's job): move an item up or down
+ *  among the other still-in-Backlog items. */
+export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
+  const backlog = [...state.backlog];
+  const idx = backlog.findIndex((it) => it.id === id);
+  if (idx < 0 || backlog[idx].status !== 'backlog') return state;
+  // Find the previous/next item that is also still in the Backlog.
+  const step = dir === 'up' ? -1 : 1;
+  let j = idx + step;
+  while (j >= 0 && j < backlog.length && backlog[j].status !== 'backlog') j += step;
+  if (j < 0 || j >= backlog.length) return state;
+  [backlog[idx], backlog[j]] = [backlog[j], backlog[idx]];
+  return { ...state, backlog };
+}
+
 // ============= Planning =============
 
 /** Commit the chosen Backlog items into the current Sprint and open it for play.
  *  The Sprint starts on day 1, ready to build. */
 export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
-  const committed = new Set(ids);
+  // Only estimated (sized) Backlog items can be committed.
+  const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && !it.unsized).map((it) => it.id));
   const backlog = state.backlog.map((it) =>
-    committed.has(it.id) && it.status === 'backlog' ? { ...it, status: 'committed' as const, sprintNumber: state.sprintNumber } : it,
+    committed.has(it.id) ? { ...it, status: 'committed' as const, sprintNumber: state.sprintNumber } : it,
   );
   return {
-    ...state, phase: 'sprint', committedIds: [...ids], backlog,
+    ...state, phase: 'sprint', committedIds: [...committed], backlog,
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
   };
 }
 
 /** Pull a Backlog item into the current Sprint mid-Sprint. Scope can grow by
  *  agreement during the Sprint, as long as the Sprint's goal is not put at risk -
- *  so the Backlog stays visible and pullable while building. */
+ *  so the Backlog stays visible and pullable while building. Must be estimated first. */
 export function pullIntoSprint(state: ZooGameState, id: string): ZooGameState {
   if (state.phase !== 'sprint') return state;
-  const item = state.backlog.find((it) => it.id === id && it.status === 'backlog');
+  const item = state.backlog.find((it) => it.id === id && it.status === 'backlog' && !it.unsized);
   if (!item) return state;
   const backlog = state.backlog.map((it) => (it.id === id ? { ...it, status: 'committed' as const, sprintNumber: state.sprintNumber } : it));
   return { ...state, committedIds: [...state.committedIds, id], backlog };
@@ -100,14 +147,16 @@ function escalateSignals(prevAge: Record<string, number>, fresh: Signal[]): { si
   return { signals, signalAge };
 }
 
-/** Turn a signal into a candidate Backlog item (the Product Owner's call). */
+/** Turn a signal into a candidate Backlog item (the Product Owner's call). Emergent
+ *  work arrives UNSIZED - it must be refined (estimated) before it can be planned.
+ *  `trueSize` is the hidden intended size the planning poker clusters around. */
 function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
   const id = 'sig-' + sig.drivenBy.replace(/[^a-z]/g, '') + '-' + state.backlog.length;
-  const base = { id, status: 'backlog' as const, sprintNumber: null, accessible: true, zone: 'General' };
-  if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', estimate: 5, acceptance: ['Clearly signed', 'Serves food and drink'], services: 'food', serviceCapacity: 500 };
-  if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', estimate: 3, acceptance: ['Clearly signed', 'Has enough cubicles'], services: 'toilet', serviceCapacity: 500 };
-  if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', estimate: 3, acceptance: ['Enough seating', 'Some shade'], services: 'rest', serviceCapacity: 500 };
-  if (sig.drivenBy === 'crowding') return { ...base, name: 'Extra viewing area', category: 'amenity', estimate: 5, acceptance: ['Eases the queues', 'Good sightlines'] };
+  const base = { id, status: 'backlog' as const, sprintNumber: null, accessible: true, zone: 'General', unsized: true, estimate: 0 };
+  if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', trueSize: 5, acceptance: ['Clearly signed', 'Serves food and drink'], services: 'food', serviceCapacity: 500 };
+  if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', trueSize: 3, acceptance: ['Clearly signed', 'Has enough cubicles'], services: 'toilet', serviceCapacity: 500 };
+  if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', trueSize: 3, acceptance: ['Enough seating', 'Some shade'], services: 'rest', serviceCapacity: 500 };
+  if (sig.drivenBy === 'crowding') return { ...base, name: 'Extra viewing area', category: 'amenity', trueSize: 5, acceptance: ['Eases the queues', 'Good sightlines'] };
   return null;
 }
 
