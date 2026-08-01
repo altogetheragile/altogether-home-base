@@ -80,11 +80,12 @@ const jitter = (n: number, k: number) => {
   return x - Math.floor(x);
 };
 
-interface ParkViewProps { state: ZooGameState; compact?: boolean }
+interface ParkViewProps { state: ZooGameState; compact?: boolean; fill?: boolean }
 
 /** The park as it stands: open items in their themed zones, a HUD at a glance, and
- *  visitors strolling the grounds when there is something to see. */
-export function ParkView({ state, compact = false }: ParkViewProps) {
+ *  visitors strolling the grounds when there is something to see. `fill` makes it a
+ *  large square scene for a prominent side panel; `compact` a small live strip. */
+export function ParkView({ state, compact = false, fill = false }: ParkViewProps) {
   const open = state.backlog.filter((it) => it.status === 'open');
   const zones = Array.from(new Set([...state.zones, ...open.map((it) => it.zone)]));
   const byZone = zones.map((z, i) => ({ zone: z, theme: themeFor(z, i), items: open.filter((it) => it.zone === z) }));
@@ -93,12 +94,12 @@ export function ParkView({ state, compact = false }: ParkViewProps) {
   const amenities = open.filter((it) => it.category === 'amenity').length;
   const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
   const happiness = state.lastReview?.overallHappiness ?? null;
-  const cell = compact ? 2 : 3;
+  const cell = compact ? 2 : fill ? 4 : 3;
 
   // Little visitors stroll once there is an exhibit to see; count scales with crowd.
   const dots: SegmentId[] = [];
   if (open.some((it) => it.category === 'exhibit')) {
-    const cap = compact ? 8 : 16;
+    const cap = compact ? 8 : fill ? 24 : 16;
     for (const seg of ['families', 'enthusiasts', 'comfortSeekers'] as SegmentId[]) {
       const n = Math.min(cap, Math.round(((state.attendance[seg] ?? 0) / Math.max(1, total)) * Math.min(cap, Math.max(3, Math.round(total / 60)))));
       for (let i = 0; i < n; i++) dots.push(seg);
@@ -122,9 +123,11 @@ export function ParkView({ state, compact = false }: ParkViewProps) {
       )}
 
       {/* The park scene */}
-      <div className="relative overflow-hidden rounded-2xl border shadow-sm"
+      <div className={cn('relative overflow-hidden rounded-2xl border shadow-sm', fill && 'aspect-square')}
         style={{ borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
-        <div className="relative z-10 grid grid-cols-1 content-start gap-3 p-3 pb-9 sm:grid-cols-2 sm:p-4" style={{ minHeight: compact ? 140 : 230 }}>
+        <div className={cn('relative z-10 grid grid-cols-1 gap-3 p-3 pb-9 sm:grid-cols-2 sm:p-4',
+          fill ? 'h-full content-stretch' : 'content-start')}
+          style={{ minHeight: fill ? undefined : compact ? 140 : 230 }}>
           {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} items={z.items} theme={z.theme} cell={cell} />)}
         </div>
 
