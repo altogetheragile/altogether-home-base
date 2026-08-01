@@ -12,7 +12,7 @@ import { Palette, DoorOpen, Check, AlertTriangle, Clock } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
-  onBuild: (id: string, design?: ItemDesign) => void;
+  onBuild: (id: string, design?: ItemDesign, animals?: ItemDesign[]) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
@@ -121,7 +121,7 @@ export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum
           {designItem ? (
             <DesignStudio
               item={designItem}
-              onFinish={(d) => { onBuild(designItem.id, d); setDesigning(null); }}
+              onFinish={(r) => { onBuild(designItem.id, r.design, r.animals); setDesigning(null); }}
               onCancel={() => setDesigning(null)}
             />
           ) : (

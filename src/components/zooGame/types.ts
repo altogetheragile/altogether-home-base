@@ -48,8 +48,11 @@ export interface BacklogItem {
   /** The Sprint this item was committed to (null while in the Backlog). */
   sprintNumber: number | null;
   accessible: boolean;
-  /** The finish the team chose when building it (palette, pattern, features). */
+  /** The finish the team chose when building an amenity (the building). */
   design?: ItemDesign;
+  /** For an exhibit: the animals in the enclosure. The parametric builder lets you
+   *  add several (e.g. a round, an upright and a long lion) to one enclosure. */
+  animals?: ItemDesign[];
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -112,7 +115,7 @@ export type ZooAction =
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
-  | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
+  | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign; animals?: ItemDesign[] }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM' }

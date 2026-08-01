@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem, Impediment } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign } from './design';
+import { appealFromAnimals } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -24,15 +24,16 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
 
 // ============= Building and releasing =============
 
-/** A committed item is built to the Definition of Done. When a design is supplied
- *  (the design-and-build mechanic), it is stored and, for an exhibit, its appeal is
- *  recomputed from the design (the choices are the product). Without a design the
- *  item is simply marked Done with its base appeal. */
-export function buildItem(state: ZooGameState, id: string, design?: ItemDesign): ZooGameState {
+/** A committed item is built to the Definition of Done. For an exhibit, the built
+ *  animals are stored and the enclosure's appeal is aggregated from them (more
+ *  animals, more of a draw). For an amenity, the building design is stored. The
+ *  choices are the product. Without either, the item is just marked Done. */
+export function buildItem(state: ZooGameState, id: string, design?: ItemDesign, animals?: ItemDesign[]): ZooGameState {
   const backlog = state.backlog.map((it) => {
     if (it.id !== id || it.status !== 'committed') return it;
-    if (!design) return { ...it, status: 'done' as const };
-    return { ...it, status: 'done' as const, design, appeal: appealFromDesign({ ...it, design }, design) };
+    if (animals && animals.length) return { ...it, status: 'done' as const, animals, appeal: appealFromAnimals(it, animals) };
+    if (design) return { ...it, status: 'done' as const, design };
+    return { ...it, status: 'done' as const };
   });
   return { ...state, backlog };
 }
