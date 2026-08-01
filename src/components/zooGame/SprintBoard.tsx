@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
-import { openZoo } from './engine';
+import { openZoo, availableItems } from './engine';
 import { DAY_SECONDS } from './config';
-import { DesignStudio } from './DesignStudio';
+import { DesignStudio, type BuildResult } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ParkView } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check, AlertTriangle, Clock } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
   onBuild: (id: string, design?: ItemDesign, animals?: ItemDesign[]) => void;
+  onPull: (id: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
@@ -20,8 +21,10 @@ interface SprintBoardProps {
 }
 
 /** The countdown for a single timed day. Runs while the day is being worked; when it
- *  reaches zero the day ends and the Daily Scrum opens. */
-function DayTimer({ dayNumber, dayTimeMult, onExpire }: { dayNumber: number; dayTimeMult: number; onExpire: () => void }) {
+ *  reaches zero the day ends and the Daily Scrum opens. When a day is shortened -
+ *  by the Daily Scrum's timebox, or (much more) by a blocker that slipped through -
+ *  it says so, so the cost of impediments is obvious. */
+function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: number; dayTimeMult: number; impeded: boolean; onExpire: () => void }) {
   const total = Math.round(DAY_SECONDS * dayTimeMult);
   const [left, setLeft] = useState(total);
   const fired = useRef(false);
@@ -49,18 +52,21 @@ function DayTimer({ dayNumber, dayTimeMult, onExpire }: { dayNumber: number; day
   const mm = Math.floor(left / 60);
   const ss = String(left % 60).padStart(2, '0');
   const low = pct <= 25;
+  const cut = Math.round((1 - dayTimeMult) * 100);
   return (
-    <div className="w-full max-w-[220px]">
+    <div className="w-full max-w-[240px]">
       <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
         <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Day time</span>
         <span className={cn('tabular-nums', low && 'text-red-600 dark:text-red-400')}>{mm}:{ss}</span>
       </div>
       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn('h-full rounded-full transition-[width] duration-500 ease-linear', low ? 'bg-red-500' : 'bg-primary')}
-          style={{ width: `${pct}%` }}
-        />
+        <div className={cn('h-full rounded-full transition-[width] duration-500 ease-linear', impeded ? 'bg-red-500' : low ? 'bg-red-500' : 'bg-primary')} style={{ width: `${pct}%` }} />
       </div>
+      {dayTimeMult < 1 && (
+        <div className={cn('mt-1 text-[10px] font-semibold', impeded ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>
+          {impeded ? `−${cut}% today: dealing with yesterday's blocker` : `−${cut}%: the Daily Scrum takes a little time`}
+        </div>
+      )}
     </div>
   );
 }
@@ -69,11 +75,17 @@ function DayTimer({ dayNumber, dayTimeMult, onExpire }: { dayNumber: number; day
  *  Definition of Done and open (release) them whenever you like; the day ends on the
  *  timer or when you call it, opening the Daily Scrum. After the last day's Daily
  *  Scrum the Review opens. */
-export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
+  // In-progress design, kept here (the board stays mounted through the Daily Scrum)
+  // so an unfinished animal survives the day ending and resumes the next day.
+  const [draft, setDraft] = useState<{ id: string; result: BuildResult } | null>(null);
+  const [showBacklog, setShowBacklog] = useState(false);
   const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'));
+  const available = availableItems(state);
   const open = openZoo(state);
   const designItem = designing ? committed.find((it) => it.id === designing && it.status === 'committed') : null;
+  const cut = Math.round((1 - state.dayTimeMult) * 100);
 
   if (state.dayStage === 'dailyScrum') {
     return <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />;
@@ -95,7 +107,7 @@ export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum
               <h1 className="text-2xl font-bold">Sprint {state.sprintNumber}</h1>
               <p className="text-xs text-muted-foreground">Day {state.dayNumber} of {state.sprintDays} &middot; {open.length} open to visitors</p>
             </div>
-            <DayTimer dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} onExpire={onEndDay} />
+            <DayTimer dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} onExpire={onEndDay} />
           </div>
 
           {state.carriedImpediment && (
@@ -104,7 +116,7 @@ export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
                 <div>
                   <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
-                  <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} Today's build time is cut while you deal with it.</div>
+                  <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
                   {state.carriedImpediment.tip && (
                     <div className="mt-1 text-xs italic text-amber-700/80 dark:text-amber-300/70">Tip: {state.carriedImpediment.tip}</div>
                   )}
@@ -121,7 +133,9 @@ export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum
           {designItem ? (
             <DesignStudio
               item={designItem}
-              onFinish={(r) => { onBuild(designItem.id, r.design, r.animals); setDesigning(null); }}
+              initial={draft && draft.id === designItem.id ? draft.result : undefined}
+              onChange={(r) => setDraft({ id: designItem.id, result: r })}
+              onFinish={(r) => { onBuild(designItem.id, r.design, r.animals); setDesigning(null); setDraft(null); }}
               onCancel={() => setDesigning(null)}
             />
           ) : (
@@ -135,6 +149,7 @@ export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum
                       <span className="font-medium">{it.name}</span>
                       <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
                       <span className="font-mono text-xs text-muted-foreground">{it.estimate} pts</span>
+                      {draft && draft.id === it.id && it.status === 'committed' && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
                     </div>
                     {it.status === 'committed' && <div className="text-[11px] text-muted-foreground">Not built yet - meet: {it.acceptance.join(', ')}</div>}
                   </div>
@@ -143,6 +158,34 @@ export function SprintBoard({ state, onBuild, onOpen, onEndDay, onHoldDailyScrum
               ))}
             </div>
           </section>
+          )}
+
+          {/* The Product Backlog stays visible: you can pull more in mid-Sprint. */}
+          {!designItem && (
+            <section className="space-y-2">
+              <button type="button" onClick={() => setShowBacklog((s) => !s)} className="flex items-center gap-1.5 text-sm font-semibold">
+                {showBacklog ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                Product Backlog <span className="font-normal text-muted-foreground">({available.length})</span>
+              </button>
+              {showBacklog && (
+                <div className="space-y-1.5">
+                  {available.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Accept a signal at the Review to add more.</p>}
+                  {available.map((it) => (
+                    <div key={it.id} className="flex items-center gap-3 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium">{it.name}</span>
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
+                          <span className="font-mono text-xs text-muted-foreground">{it.estimate} pts</span>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => onPull(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</Button>
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-muted-foreground">Pulling in more work mid-Sprint is fine by agreement, as long as it will not put the Sprint's goal at risk.</p>
+                </div>
+              )}
+            </section>
           )}
         </div>
 
