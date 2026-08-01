@@ -179,17 +179,17 @@ describe('zoo game: emergent backlog from visitor signals', () => {
 
 describe('zoo game: design choices are the product', () => {
   it('a bright, busy build favours Families; a calm, muted one favours Comfort Seekers', () => {
-    let bright = planSprint(initialZooState(1), ['lion']);
-    bright = buildItem(bright, 'lion', { palette: 0, pattern: 'spots', features: ['ears', 'tail'] }); // Tropical, busy
-    let calm = planSprint(initialZooState(1), ['lion']);
-    calm = buildItem(calm, 'lion', { palette: 2, pattern: 'none', features: [] }); // Natural, plain
+    const brightDesign = { parts: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'spots' }, colors: { body: '#ffd54a', head: '#ffd54a', ears: '#ffcc00', tail: '#ffcc00', markings: '#ff8a00' } };
+    const calmDesign = { parts: { body: 'round', head: 'round', ears: 'none', tail: 'none', markings: 'none' }, colors: { body: '#5a4a38', head: '#5a4a38', ears: '#5a4a38' } };
+    const bright = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign); // bright + busy
+    const calm = buildItem(planSprint(initialZooState(1), ['lion']), 'lion', calmDesign); // dark + plain
 
     const b = bright.backlog.find((i) => i.id === 'lion')!.appeal!;
     const c = calm.backlog.find((i) => i.id === 'lion')!.appeal!;
     expect(b.families).toBeGreaterThan(c.families);
     expect(c.comfortSeekers).toBeGreaterThan(b.comfortSeekers);
     // The design is recorded on the built item.
-    expect(bright.backlog.find((i) => i.id === 'lion')!.design).toEqual({ palette: 0, pattern: 'spots', features: ['ears', 'tail'] });
+    expect(bright.backlog.find((i) => i.id === 'lion')!.design).toEqual(brightDesign);
   });
 });
 
