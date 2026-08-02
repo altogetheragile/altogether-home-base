@@ -1,9 +1,12 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { ZooGameState } from './types';
-import { ParkView, type ParkArrange } from './ParkView';
-import { Target, Trophy } from 'lucide-react';
+import { ParkView } from './ParkView';
+import { cn } from '@/lib/utils';
+import { Target, Trophy, Trees, ClipboardList } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
+/** The work tab's label per phase - what you are actually doing there. */
+const WORK_TAB: Record<string, string> = { planning: 'Plan', sprint: 'Build', review: 'Review', retro: 'Retro' };
 
 function GoalChip({ icon: Icon, label, text, tone }: { icon: typeof Target; label: string; text: string; tone: 'product' | 'sprint' }) {
   return (
@@ -14,10 +17,26 @@ function GoalChip({ icon: Icon, label, text, tone }: { icon: typeof Target; labe
   );
 }
 
-/** The consistent app frame, tablet-app style: the Product Goal and Sprint Goal are
- *  always visible at the top, the park is the main area (always on show, arrange-able),
- *  and the current phase's controls live in a panel beside it. */
-export function ZooShell({ state, arrange, children }: { state: ZooGameState; arrange: ParkArrange; children: ReactNode }) {
+function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={cn('flex items-center gap-1.5 rounded-t-lg border-b-2 px-4 py-2 text-sm font-semibold transition-colors',
+        active ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
+      <Icon className="h-4 w-4" /> {label}
+      {badge && <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold text-muted-foreground">{badge}</span>}
+    </button>
+  );
+}
+
+/** The consistent app frame, tablet-app style: the Product Goal and Sprint Goal stay
+ *  at the top, and two tabs sit below - the phase's work (backlogs and studio) and the
+ *  Park, which gets the full width so it can be big and impressive. Laying the park out
+ *  is Backlog work: each PBI names its zone, so the park changes by refining PBIs, not
+ *  by dragging things around here. */
+export function ZooShell({ state, children }: { state: ZooGameState; children: ReactNode }) {
+  const [tab, setTab] = useState<'work' | 'park'>('work');
+  const open = state.backlog.filter((it) => it.status === 'open').length;
+
   return (
     <div className="mx-auto w-full max-w-7xl px-3 py-4 pb-28 sm:px-4">
       {/* Persistent goals + phase */}
@@ -29,13 +48,22 @@ export function ZooShell({ state, arrange, children }: { state: ZooGameState; ar
         </div>
       </div>
 
-      {/* Park (main) + phase panel */}
-      <div className="lg:grid lg:grid-cols-[1.35fr_1fr] lg:items-start lg:gap-5">
-        <div className="lg:sticky lg:top-4">
-          <ParkView state={state} arrange={arrange} />
-        </div>
-        <div className="mt-4 space-y-5 lg:mt-0">{children}</div>
+      {/* Tabs */}
+      <div className="mb-4 flex gap-1 border-b border-border">
+        <Tab active={tab === 'work'} onClick={() => setTab('work')} icon={ClipboardList} label={WORK_TAB[state.phase] ?? 'Work'} />
+        <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label="Park" badge={open ? String(open) : undefined} />
       </div>
+
+      {tab === 'work' ? (
+        <div className="mx-auto max-w-3xl space-y-5">{children}</div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-[11px] text-muted-foreground">
+            The park shows the work you have delivered. To lay it out - what goes where, or a new zone - refine a Backlog item&rsquo;s zone or add a PBI, then build and open it in a Sprint.
+          </p>
+          <ParkView state={state} large />
+        </div>
+      )}
     </div>
   );
 }
