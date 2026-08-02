@@ -55,7 +55,9 @@ export function ZooShell({ state, children }: { state: ZooGameState; children: R
       </div>
 
       {tab === 'work' ? (
-        <div className="mx-auto max-w-3xl space-y-5">{children}</div>
+        // The board phases (Plan, Build) want the full width for the sidebar +
+        // columns; Review and Retro read better in a narrower column.
+        <div className={cn('space-y-5', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>{children}</div>
       ) : (
         <div className="space-y-3">
           <p className="text-[11px] text-muted-foreground">

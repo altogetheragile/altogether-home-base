@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import type { ZooGameState, BacklogItem } from './types';
+import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
-import { openZoo, availableItems } from './engine';
+import { openZoo } from './engine';
 import { DAY_SECONDS } from './config';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
-import { PbiEditor } from './PbiEditor';
-import type { PbiDraft } from './types';
+import { ProductBacklogSidebar, BoardColumn, ItemCard } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus, Sunrise, FilePlus } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock, Pencil, CopyPlus, Sunrise } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -94,23 +93,28 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: nu
   );
 }
 
-/** The Sprint board: a run of timed days. Each day you build committed items to the
- *  Definition of Done and open (release) them whenever you like; the day ends on the
- *  timer or when you call it, opening the Daily Scrum. After the last day's Daily
- *  Scrum the Review opens. */
+/** The Sprint board: To Do / Doing / Done, played over a run of timed days. Each day
+ *  you take a committed item into the studio (Doing), build it to the Definition of
+ *  Done, and open (release) it whenever you like; the day ends on the timer or when
+ *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
+ *  opens. The Product Backlog stays on the left to pull, add and refine items. */
 export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
-  const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const [draft, setDraft] = useState<{ id: string; design: ItemDesign } | null>(null);
-  const [showBacklog, setShowBacklog] = useState(false);
   const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'));
-  const available = availableItems(state);
   const open = openZoo(state);
   const designItem = designing ? committed.find((it) => it.id === designing) : null;
   const editing = !!designItem && designItem.status !== 'committed';
   const cut = Math.round((1 - state.dayTimeMult) * 100);
+
+  // Column split: a committed item with an in-progress draft (or open in the studio) is
+  // Doing; the rest of the committed-not-built are To Do; built/open are Done.
+  const inProgress = (it: BacklogItem) => it.status === 'committed' && ((!!draft && draft.id === it.id) || designing === it.id);
+  const todo = committed.filter((it) => it.status === 'committed' && !inProgress(it));
+  const doing = committed.filter(inProgress);
+  const done = committed.filter((it) => it.status === 'done' || it.status === 'open');
 
   // Built animals you can copy from when designing another of the same kind.
   const copySources: CopySource[] = designItem
@@ -122,20 +126,17 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   }
   const dayStarting = state.dayStage === 'dayStart';
 
-  const StatusButton = ({ it }: { it: BacklogItem }) => {
-    if (it.status === 'committed') return <Button size="sm" onClick={() => setDesigning(it.id)}><Palette className="mr-1.5 h-3.5 w-3.5" /> Design and build</Button>;
-    return (
-      <div className="flex items-center gap-1.5">
-        {it.status === 'done' && <Button size="sm" variant="outline" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1.5 h-3.5 w-3.5" /> Open to visitors</Button>}
-        {it.status === 'open' && <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> Open</span>}
-        <Button size="sm" variant="ghost" className="h-8 px-2" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
-        {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-8 px-2" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
-      </div>
-    );
-  };
+  const doneActions = (it: BacklogItem) => (
+    <>
+      {it.status === 'done' && <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1 h-3.5 w-3.5" /> Open</Button>}
+      {it.status === 'open' && <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Open</span>}
+      <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
+      {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
+    </>
+  );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">Build &middot; Day {state.dayNumber} of {state.sprintDays}</h2>
@@ -147,29 +148,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
 
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
-      ) : (
-      <>
-      {state.carriedImpediment && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
-          <div className="flex items-start gap-2.5">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <div>
-              <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
-              <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
-              {state.carriedImpediment.tip && (
-                <div className="mt-1 text-xs italic text-amber-700/80 dark:text-amber-300/70">Tip: {state.carriedImpediment.tip}</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground">
-        Build each item to the Definition of Done, then open it to visitors - any time, you do not have to
-        wait for the Review. Finishing fewer items well beats starting many.
-      </p>
-
-      {designItem ? (
+      ) : designItem ? (
         <DesignStudio
           item={designItem}
           editing={editing}
@@ -180,65 +159,56 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
           onCancel={() => setDesigning(null)}
         />
       ) : (
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold">Sprint Backlog - this Sprint's work</h3>
-        <div className="space-y-1.5">
-          {committed.map((it) => (
-                <div key={it.id} className={cn('flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2', it.status === 'open' && 'bg-emerald-50/50 dark:bg-emerald-950/20')}>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">{it.name}</span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{it.estimate} pts</span>
-                      {draft && draft.id === it.id && it.status === 'committed' && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
-                    </div>
-                    {it.status === 'committed' && <div className="text-[11px] text-muted-foreground">Not built yet - meet: {it.acceptance.join(', ')}</div>}
-                  </div>
-                  <StatusButton it={it} />
+        <>
+          {state.carriedImpediment && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <div>
+                  <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
+                  <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
+                  {state.carriedImpediment.tip && (
+                    <div className="mt-1 text-xs italic text-amber-700/80 dark:text-amber-300/70">Tip: {state.carriedImpediment.tip}</div>
+                  )}
                 </div>
-              ))}
+              </div>
             </div>
-          </section>
           )}
 
-          {/* The Product Backlog stays visible: add, refine and pull items mid-Sprint. */}
-          {!designItem && (
-            <section className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <button type="button" onClick={() => setShowBacklog((s) => !s)} className="flex items-center gap-1.5 text-sm font-semibold">
-                  {showBacklog ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  Product Backlog <span className="font-normal text-muted-foreground">({available.length})</span>
-                </button>
-                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { setShowBacklog(true); setEditingPbi('new'); }}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
-              </div>
-              {editingPbi && (
-                <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi}
-                  useStories={state.useUserStories} onToggleStories={onSetUseStories}
-                  onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
-                  onCancel={() => setEditingPbi(null)} />
-              )}
-              {showBacklog && (
-                <div className="space-y-1.5">
-                  {available.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Add a PBI or accept a signal at the Review.</p>}
-                  {available.map((it) => (
-                    <div key={it.id} className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="font-medium">{it.name}</span>
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
-                          <span className="font-mono text-xs text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
-                        </div>
-                      </div>
-                      <button type="button" title="Refine this PBI" onClick={() => setEditingPbi(it)} className="text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                      <Button size="sm" variant="outline" disabled={it.unsized} title={it.unsized ? 'Estimate it at Planning first' : undefined} onClick={() => onPull(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</Button>
-                    </div>
+          {/* The board: Product Backlog (left) + To Do / Doing / Done columns. */}
+          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+            <ProductBacklogSidebar state={state} mode="sprint" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
+              onSetUseStories={onSetUseStories} onPull={onPull} />
+
+            <div className="min-w-0 space-y-3">
+              <p className="rounded-lg border border-border bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
+                Take a To Do item into the studio, build it to the Definition of Done, then open it to visitors - any time, you do not have to wait for the Review. Finishing fewer items well beats starting many.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
+                  {todo.map((it) => (
+                    <ItemCard key={it.id} item={it}
+                      subtitle={<div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>}
+                      actions={<Button size="sm" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> Design and build</Button>} />
                   ))}
-                  <p className="text-[11px] text-muted-foreground">Pulling in more work mid-Sprint is fine by agreement, as long as it will not put the Sprint's goal at risk.</p>
-                </div>
-              )}
-            </section>
-          )}
-      </>
+                </BoardColumn>
+                <BoardColumn title="Doing" count={doing.length} hint="Nothing in progress">
+                  {doing.map((it) => (
+                    <ItemCard key={it.id} item={it}
+                      badge={<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
+                      actions={<Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> Resume</Button>} />
+                  ))}
+                </BoardColumn>
+                <BoardColumn title="Done ✓" count={done.length} hint="Nothing built yet" tone="done">
+                  {done.map((it) => (
+                    <ItemCard key={it.id} item={it} className={it.status === 'open' ? 'bg-emerald-50/50 dark:bg-emerald-950/20' : undefined}
+                      actions={doneActions(it)} />
+                  ))}
+                </BoardColumn>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {!dayStarting && (
