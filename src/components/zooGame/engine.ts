@@ -266,17 +266,29 @@ export function generateImpediment(gameSeed: number, sprintNumber: number, dayNu
  *  impediment (if any) is waiting. The Daily Scrum is the Developers' event; the
  *  team chooses whether to hold it. */
 export function endDay(state: ZooGameState): ZooGameState {
-  if (state.phase !== 'sprint' || state.dayStage !== 'building') return state;
+  // The day's clock runs through the start-of-day breather and the build, so a day
+  // can end from either stage (the pause uses real time).
+  if (state.phase !== 'sprint' || (state.dayStage !== 'building' && state.dayStage !== 'dayStart')) return state;
+  // The last day ends straight to the Review: there is no next day to re-plan, so
+  // there is no end-of-day Daily Scrum.
+  if (state.dayNumber >= state.sprintDays) return reviewSprint(state);
   const pendingImpediment = generateImpediment(state.gameSeed, state.sprintNumber, state.dayNumber);
   return { ...state, dayStage: 'dailyScrum', pendingImpediment };
 }
 
 /** Move to the next day, or end the Sprint (open the Review) after the last day.
- *  `nextMult` sets how much build time the new day has. */
+ *  A new day opens paused (`dayStart`) - a breather before the build resumes; the
+ *  team starts it when ready. `nextMult` sets how much build time the new day has. */
 function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   const next = state.dayNumber + 1;
   if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
-  return { ...state, dayNumber: next, dayStage: 'building', dayTimeMult: nextMult };
+  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult };
+}
+
+/** Begin the new day's build (leaves the between-days pause). */
+export function startDay(state: ZooGameState): ZooGameState {
+  if (state.dayStage !== 'dayStart') return state;
+  return { ...state, dayStage: 'building' };
 }
 
 /** Hold the Daily Scrum: the team inspects progress toward the Sprint's goal and, in

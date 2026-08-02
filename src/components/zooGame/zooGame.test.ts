@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, generateImpediment,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment,
 } from './engine';
 import type { ZooGameState } from './types';
 
@@ -214,19 +214,40 @@ describe('zoo game: pulling Backlog items mid-Sprint', () => {
 });
 
 describe('zoo game: timed days and the Daily Scrum', () => {
-  it('a Sprint runs a fixed number of timed days, then the Review opens', () => {
+  it('runs its timed days, with a Daily Scrum between days but not after the last, then the Review opens', () => {
     let s = planSprint(initialZooState(1), ['lion']);
     s = openItem(buildItem(s, 'lion'), 'lion');
     expect(s.dayNumber).toBe(1);
-    for (let d = 1; d <= SPRINT_DAYS; d++) {
-      expect(s.phase).toBe('sprint');
+    let scrums = 0;
+    while (s.phase === 'sprint') {
+      expect(s.dayStage).toBe('building');
       s = endDay(s);
+      if (s.phase !== 'sprint') break; // the last day ends straight to the Review
       expect(s.dayStage).toBe('dailyScrum');
+      scrums++;
       s = runDailyScrum(s);
+      if (s.dayStage === 'dayStart') s = startDay(s); // a new day pauses, then begins
     }
-    expect(s.phase).toBe('review'); // the Review opens after the last day's Daily Scrum
-    expect(s.lastReview).not.toBeNull();
+    expect(s.phase).toBe('review');
+    expect(scrums).toBe(SPRINT_DAYS - 1); // no Daily Scrum after the last day
     expect(s.velocity[0]).toBe(8);
+  });
+
+  it('after the Daily Scrum a new day pauses (dayStart) until it is started', () => {
+    let s = openItem(buildItem(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
+    s = runDailyScrum(endDay(s));
+    expect(s.dayStage).toBe('dayStart'); // a breather before the build resumes
+    expect(s.dayNumber).toBe(2);
+    s = startDay(s);
+    expect(s.dayStage).toBe('building');
+  });
+
+  it('the clock runs through the breather: the day can end from dayStart', () => {
+    let s = openItem(buildItem(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
+    s = runDailyScrum(endDay(s)); // -> dayStart on day 2
+    expect(s.dayStage).toBe('dayStart');
+    s = endDay(s); // the day's time ran out during the breather
+    expect(s.dayStage).toBe('dailyScrum'); // day 2 is not the last, so its close opens a Daily Scrum
   });
 
   it('impediments are deterministic per game, Sprint and day; some days have none', () => {

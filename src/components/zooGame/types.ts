@@ -10,9 +10,9 @@ import type { ItemDesign } from './design';
 
 export type ZooPhase = 'intro' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
-/** Within a Sprint, a day is either being worked (building) or paused at its close
- *  for the Daily Scrum. */
-export type DayStage = 'building' | 'dailyScrum';
+/** Within a Sprint, a day is being worked (building), paused at its close for the
+ *  Daily Scrum, or pausing at the start of a new day before the build resumes. */
+export type DayStage = 'building' | 'dailyScrum' | 'dayStart';
 
 /** Something that gets in the team's way. Surfaced at the Daily Scrum: hold it and
  *  the Scrum Master clears the way; skip it and the impediment resurfaces the next
@@ -141,6 +141,7 @@ export type ZooAction =
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM' }
   | { type: 'SKIP_DAILY_SCRUM' }
+  | { type: 'START_DAY' }
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'END_GAME' }
