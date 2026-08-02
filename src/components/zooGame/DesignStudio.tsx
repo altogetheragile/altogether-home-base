@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { BacklogItem } from './types';
 import {
-  renderDesign, designCriteria, isDesignDone, presetFor, GRID_W,
+  renderDesign, isDesignDone, presetFor, GRID_W,
   EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES, type ItemDesign,
 } from './design';
 import { Button } from '@/components/ui/button';
@@ -68,8 +68,19 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   const setColor = (key: string, hex: string) => commit({ ...design, colors: { ...design.colors, [key]: hex } });
   const copyFrom = (src: CopySource) => commit({ parts: { ...src.design.parts }, colors: { ...src.design.colors } });
 
-  const criteria = designCriteria(item, design);
-  const done = isDesignDone(item, design);
+  // Acceptance criteria are the Product Owner's, carried on the PBI. Building is you
+  // accepting the work against them, so you confirm each (a judgement, like a lion
+  // being "recognisable"). Already-built items being refined start fully confirmed.
+  const acceptance = item.acceptance ?? [];
+  const [confirmed, setConfirmed] = useState<Set<number>>(() => new Set(editing ? acceptance.map((_, i) => i) : []));
+  const toggleAc = (i: number) => setConfirmed((prev) => {
+    const next = new Set(prev);
+    if (next.has(i)) next.delete(i); else next.add(i);
+    return next;
+  });
+  // The product-wide Definition of Done is the mechanical bar: every part coloured.
+  const built = isDesignDone(item, design);
+  const done = built && acceptance.every((_, i) => confirmed.has(i));
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -147,18 +158,37 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
         )}
       </div>
 
-      {/* Acceptance criteria */}
-      <div className="mt-4 space-y-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Acceptance criteria</div>
-        <ul className="space-y-1">
-          {criteria.map((x) => (
-            <li key={x.label} className={cn('flex items-center gap-2 text-sm', x.pass ? 'text-foreground' : 'text-muted-foreground')}>
-              <span className={cn('flex h-4 w-4 items-center justify-center rounded-full text-[10px]', x.pass ? 'bg-emerald-500 text-white' : 'border border-border')}>{x.pass ? <Check className="h-3 w-3" /> : ''}</span>
-              {x.label}
-            </li>
-          ))}
-        </ul>
-        {isExhibit && <p className="pt-1 text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
+      {/* Acceptance criteria: the PBI's own, confirmed by you as you accept the work. */}
+      <div className="mt-4 space-y-3">
+        {acceptance.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Acceptance criteria <span className="font-normal normal-case tracking-normal text-muted-foreground/70">from the Product Backlog</span>
+            </div>
+            <ul className="space-y-1">
+              {acceptance.map((c, i) => {
+                const on = confirmed.has(i);
+                return (
+                  <li key={i}>
+                    <button type="button" onClick={() => toggleAc(i)} className="flex w-full items-center gap-2 text-left text-sm">
+                      <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-3 w-3" />}</span>
+                      <span className={cn(on ? 'text-foreground' : 'text-muted-foreground')}>{c}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it - this is you accepting the work against the Product Owner's criteria.</p>
+          </div>
+        )}
+
+        {/* Definition of Done: product-wide, checked mechanically from the design. */}
+        <div className="flex items-center gap-2 text-sm">
+          <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]', built ? 'bg-emerald-500 text-white' : 'border border-border')}>{built && <Check className="h-3 w-3" />}</span>
+          <span className={cn(built ? 'text-foreground' : 'text-muted-foreground')}>Definition of Done: every part coloured, no bare patches</span>
+        </div>
+
+        {isExhibit && <p className="text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
       </div>
 
       <div className="mt-3 flex justify-end">
