@@ -188,10 +188,28 @@ function buildingGrid(design: ItemDesign): (string | null)[][] {
   return g;
 }
 
+/** Scenery: a tree, bush or flowerbed, with editable foliage (and trunk) colours. */
+function floraGrid(design: ItemDesign): (string | null)[][] {
+  const g = blank();
+  const foliage = design.colors.foliage ?? PLACEHOLDER;
+  const trunk = design.colors.trunk ?? '#7a5230';
+  const type = design.parts.type ?? 'tree';
+  if (type === 'flowers') {
+    for (let x = 3; x <= 12; x++) for (let y = 10; y <= 12; y++) g[y][x] = shade(trunk, y === 10 ? 6 : -10); // bed
+    for (const [fx, fy] of [[4, 8], [7, 7], [10, 8], [5, 9], [11, 9]] as Cell[]) { set(g, ellipse(fx, fy, 1.2, 1.2), foliage); setCell(g, fx, fy, '#f4d03a'); }
+    return g;
+  }
+  if (type === 'bush') { paintShaded(g, ellipse(8, 9, 4.2, 3.4).filter(([, y]) => y >= 6), foliage, 22, -20); return g; }
+  paintShaded(g, ellipse(8, 6, 4.4, 4).filter(([, y]) => y <= 10), foliage, 24, -22); // crown
+  for (let y = 10; y <= 13; y++) { g[y][7] = trunk; g[y][8] = shade(trunk, -14); } // trunk
+  return g;
+}
+
 /** Render the assembled design as a GRID_H x GRID_W colour grid (null = empty), with
  *  a dark outline. Used by the studio preview and the park sprites, so both match. */
 export function renderDesign(item: BacklogItem, design: ItemDesign): (string | null)[][] {
-  return outlined(item.category === 'exhibit' ? creatureGrid(design) : buildingGrid(design));
+  const grid = item.category === 'exhibit' ? creatureGrid(design) : item.category === 'flora' ? floraGrid(design) : buildingGrid(design);
+  return outlined(grid);
 }
 
 // ---- Parts metadata for the studio ----
@@ -206,6 +224,10 @@ export const EXHIBIT_PARTS: PartSpec[] = [
 ];
 export const AMENITY_COLORS: { key: string; label: string }[] = [
   { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
+];
+export const FLORA_TYPES = ['tree', 'bush', 'flowers'];
+export const FLORA_COLORS: { key: string; label: string }[] = [
+  { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
 ];
 /** Quick colour suggestions offered next to each picker (still fully editable). */
 export const SWATCHES = ['#c8873b', '#e6842a', '#e3c66b', '#8a5a2b', '#2a2622', '#f0efe9', '#43a047', '#ef6f53', '#f4c430', '#4a90d9'];
@@ -230,7 +252,8 @@ const GENERIC_EXHIBIT = { body: 'round', head: 'round', ears: 'round', tail: 'tu
 /** The starting design for an item: a recognisable shape (for exhibits) with no
  *  colours yet, so the player colours it in. */
 export function presetFor(item: BacklogItem): ItemDesign {
-  if (item.category !== 'exhibit') return { parts: { sign: 'on' }, colors: {} };
+  if (item.category === 'flora') return { parts: { type: 'tree' }, colors: {} };
+  if (item.category === 'amenity') return { parts: { sign: 'on' }, colors: {} };
   return { parts: { ...(PART_PRESETS[item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
 }
 export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
@@ -240,7 +263,13 @@ export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 const coloured = (d: ItemDesign) => Object.values(d.colors).filter(Boolean).length;
 
 export function designCriteria(item: BacklogItem, design: ItemDesign): { label: string; pass: boolean }[] {
-  if (item.category !== 'exhibit') {
+  if (item.category === 'flora') {
+    return [
+      { label: 'Choose a plant type', pass: !!design.parts.type },
+      { label: 'Colour the foliage', pass: !!design.colors.foliage },
+    ];
+  }
+  if (item.category === 'amenity') {
     return [
       { label: 'Colour the walls', pass: !!design.colors.walls },
       { label: 'Colour the roof', pass: !!design.colors.roof },

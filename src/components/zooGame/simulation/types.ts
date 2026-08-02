@@ -6,7 +6,7 @@
 // seed): same inputs, same outputs. See docs/ZOO_GAME.md and the Visitor Simulation
 // Spec for the design.
 
-export type ItemCategory = 'exhibit' | 'amenity';
+export type ItemCategory = 'exhibit' | 'amenity' | 'flora';
 
 export type NeedType = 'food' | 'toilet' | 'rest';
 
