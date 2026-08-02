@@ -266,7 +266,9 @@ export function generateImpediment(gameSeed: number, sprintNumber: number, dayNu
  *  impediment (if any) is waiting. The Daily Scrum is the Developers' event; the
  *  team chooses whether to hold it. */
 export function endDay(state: ZooGameState): ZooGameState {
-  if (state.phase !== 'sprint' || state.dayStage !== 'building') return state;
+  // The day's clock runs through the start-of-day breather and the build, so a day
+  // can end from either stage (the pause uses real time).
+  if (state.phase !== 'sprint' || (state.dayStage !== 'building' && state.dayStage !== 'dayStart')) return state;
   // The last day ends straight to the Review: there is no next day to re-plan, so
   // there is no end-of-day Daily Scrum.
   if (state.dayNumber >= state.sprintDays) return reviewSprint(state);

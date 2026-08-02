@@ -242,6 +242,14 @@ describe('zoo game: timed days and the Daily Scrum', () => {
     expect(s.dayStage).toBe('building');
   });
 
+  it('the clock runs through the breather: the day can end from dayStart', () => {
+    let s = openItem(buildItem(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
+    s = runDailyScrum(endDay(s)); // -> dayStart on day 2
+    expect(s.dayStage).toBe('dayStart');
+    s = endDay(s); // the day's time ran out during the breather
+    expect(s.dayStage).toBe('dailyScrum'); // day 2 is not the last, so its close opens a Daily Scrum
+  });
+
   it('impediments are deterministic per game, Sprint and day; some days have none', () => {
     expect(generateImpediment(1, 1, 1)).toEqual(generateImpediment(1, 1, 1));
     const days = Array.from({ length: 20 }, (_, i) => generateImpediment(1, 1, i + 1));

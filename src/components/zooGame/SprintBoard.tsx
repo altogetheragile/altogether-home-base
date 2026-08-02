@@ -22,22 +22,18 @@ interface SprintBoardProps {
   onStartDay: () => void;
 }
 
-/** A short breather at the start of a new day, after the Daily Scrum, before the
- *  build resumes - the team catches its breath, then starts when ready. */
+/** The start of a new day, after the Daily Scrum: the team gathers before the build.
+ *  The day's clock is already running (shown above), so this pause uses some of the
+ *  day's time - start building when the team is ready. */
 function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void }) {
-  const cut = Math.round((1 - state.dayTimeMult) * 100);
   return (
-    <div className="space-y-4 py-8 text-center">
-      <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><Sunrise className="h-3.5 w-3.5" /> Day {state.dayNumber} of {state.sprintDays}</div>
-      <h2 className="text-2xl font-bold">A new day begins</h2>
-      <p className="mx-auto max-w-sm text-sm text-muted-foreground">Take a breath. When the team is ready, start the day's build.</p>
-      {state.carriedImpediment ? (
-        <p className="mx-auto max-w-sm rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200">Heads up: yesterday's blocker ({state.carriedImpediment.title}) is still being dealt with - today's build time is cut by ~{cut}%.</p>
-      ) : cut > 0 ? (
-        <p className="mx-auto max-w-sm text-xs text-muted-foreground">Yesterday's Daily Scrum took a little time, so today is slightly shorter.</p>
-      ) : null}
-      {state.sprintGoal.trim() && <p className="mx-auto max-w-sm text-xs text-muted-foreground">Working toward: <span className="font-medium text-foreground">{state.sprintGoal}</span></p>}
-      <Button size="lg" onClick={onStart}>Start Day {state.dayNumber} &rarr;</Button>
+    <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-6 text-center">
+      <div className="mx-auto inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><Sunrise className="h-3.5 w-3.5" /> A new day begins</div>
+      <p className="mx-auto max-w-sm text-sm text-muted-foreground">The team gathers to start the day. The clock is already running - start the build when you are ready.</p>
+      {state.carriedImpediment && (
+        <p className="mx-auto max-w-sm rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200">Yesterday's blocker ({state.carriedImpediment.title}) is still being dealt with, so today's build time is shorter.</p>
+      )}
+      <Button size="lg" onClick={onStart}>Start building &rarr;</Button>
     </div>
   );
 }
@@ -118,9 +114,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull,
   if (state.dayStage === 'dailyScrum') {
     return <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />;
   }
-  if (state.dayStage === 'dayStart') {
-    return <DayStart state={state} onStart={onStartDay} />;
-  }
+  const dayStarting = state.dayStage === 'dayStart';
 
   const StatusButton = ({ it }: { it: BacklogItem }) => {
     if (it.status === 'committed') return <Button size="sm" onClick={() => setDesigning(it.id)}><Palette className="mr-1.5 h-3.5 w-3.5" /> Design and build</Button>;
@@ -141,9 +135,14 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull,
           <h2 className="text-lg font-bold">Build &middot; Day {state.dayNumber} of {state.sprintDays}</h2>
           <p className="text-xs text-muted-foreground">{open.length} open to visitors</p>
         </div>
-        <DayTimer dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} onExpire={onEndDay} />
+        {/* The clock runs through the start-of-day breather and the build alike. */}
+        <DayTimer key={state.dayNumber} dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} onExpire={onEndDay} />
       </div>
 
+      {dayStarting ? (
+        <DayStart state={state} onStart={onStartDay} />
+      ) : (
+      <>
       {state.carriedImpediment && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
           <div className="flex items-start gap-2.5">
@@ -223,13 +222,17 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull,
               )}
             </section>
           )}
+      </>
+      )}
 
-      <div className="fixed inset-x-0 bottom-4 z-30 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
-        <span className="text-xs font-medium text-muted-foreground">Definition of Done: {state.definitionOfDone.length} criteria</span>
-        <Button size="sm" onClick={onEndDay}>
-          {state.dayNumber === state.sprintDays ? 'End last day → Review' : `End Day ${state.dayNumber} → Daily Scrum`}
-        </Button>
-      </div>
+      {!dayStarting && (
+        <div className="fixed inset-x-0 bottom-4 z-30 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
+          <span className="text-xs font-medium text-muted-foreground">Definition of Done: {state.definitionOfDone.length} criteria</span>
+          <Button size="sm" onClick={onEndDay}>
+            {state.dayNumber === state.sprintDays ? 'End last day → Review' : `End Day ${state.dayNumber} → Daily Scrum`}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
