@@ -36,6 +36,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
   const capacity = zooCapacity(state.velocity);
   const over = committed > capacity;
   const progress = Math.round(productGoalProgress(state) * 100);
+  const noGoal = state.sprintGoal.trim().length === 0;
+  const canStart = chosen.length > 0 && !noGoal;
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -162,8 +164,15 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
         </div>
       </section>
 
-      <div className="sticky bottom-4 flex justify-end">
-        <Button size="lg" disabled={chosen.length === 0} onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber}</Button>
+      <div className="sticky bottom-4 flex flex-col items-end gap-1">
+        {!canStart && (
+          <p className="text-[11px] text-muted-foreground">
+            {noGoal && chosen.length === 0 ? 'Agree a Sprint Goal and select at least one item to start.'
+              : noGoal ? 'Agree a Sprint Goal before starting - it is the objective the Sprint commits to.'
+                : 'Select at least one Backlog item to start.'}
+          </p>
+        )}
+        <Button size="lg" disabled={!canStart} onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber}</Button>
       </div>
     </div>
   );
