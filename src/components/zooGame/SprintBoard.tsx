@@ -18,6 +18,7 @@ interface SprintBoardProps {
   onAddAnother: (id: string) => void;
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
+  onSetUseStories: (on: boolean) => void;
   onPull: (id: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
@@ -97,7 +98,7 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: nu
  *  Definition of Done and open (release) them whenever you like; the day ends on the
  *  timer or when you call it, opening the Daily Scrum. After the last day's Daily
  *  Scrum the Review opens. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
@@ -212,6 +213,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               </div>
               {editingPbi && (
                 <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi}
+                  useStories={state.useUserStories} onToggleStories={onSetUseStories}
                   onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
                   onCancel={() => setEditingPbi(null)} />
               )}

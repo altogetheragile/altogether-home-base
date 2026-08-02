@@ -96,6 +96,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     sprintGoal: '',
     sprintGoalMet: null,
     definitionOfDone: [...DEFAULT_DOD],
+    useUserStories: false,
     backlog,
     zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest'],
     sprintNumber: 1,

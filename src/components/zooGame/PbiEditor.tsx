@@ -1,15 +1,25 @@
 import { useState } from 'react';
 import type { BacklogItem, PbiDraft, ItemCategory } from './types';
+import { suggestStory } from './engine';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Wand2 } from 'lucide-react';
 
 interface PbiEditorProps {
   zones: string[];
   /** The item being refined; omit to create a new PBI. */
   item?: BacklogItem;
+  /** Whether the user-story format defaults on (a preference, never forced). */
+  useStories: boolean;
+  onToggleStories: (on: boolean) => void;
   onSave: (draft: PbiDraft) => void;
   onCancel: () => void;
+}
+
+/** Parse "As a X, I want Y so that Z." back into its parts (best effort). */
+function parseStory(s: string): { role: string; want: string; soThat: string } {
+  const m = /^as\s+(.+?),?\s+i\s+want\s+(.+?)\s+so that\s+(.+?)\.?$/i.exec(s.trim());
+  return m ? { role: m[1], want: m[2], soThat: m[3] } : { role: '', want: s, soThat: '' };
 }
 
 const CATEGORIES: { key: ItemCategory; label: string; hint: string }[] = [
@@ -24,7 +34,7 @@ const NEW_ZONE = '__new__';
 
 /** The Product Owner writes or refines a Product Backlog Item: name, kind, zone and
  *  acceptance criteria. New PBIs arrive unsized, ready to estimate. */
-export function PbiEditor({ zones, item, onSave, onCancel }: PbiEditorProps) {
+export function PbiEditor({ zones, item, useStories, onToggleStories, onSave, onCancel }: PbiEditorProps) {
   const editing = !!item;
   const [name, setName] = useState(item?.name ?? '');
   const [category, setCategory] = useState<ItemCategory>(item?.category ?? 'exhibit');
@@ -32,14 +42,24 @@ export function PbiEditor({ zones, item, onSave, onCancel }: PbiEditorProps) {
   const [newZone, setNewZone] = useState('');
   const [services, setServices] = useState<'food' | 'toilet' | 'rest' | undefined>(item?.services);
   const [acceptance, setAcceptance] = useState<string[]>(item?.acceptance?.length ? item.acceptance : ['']);
+  const [storyMode, setStoryMode] = useState(item ? !!item.story : useStories);
+  const parsed = parseStory(item?.story ?? '');
+  const [role, setRole] = useState(parsed.role);
+  const [want, setWant] = useState(parsed.want);
+  const [soThat, setSoThat] = useState(parsed.soThat);
 
   const setAc = (i: number, v: string) => setAcceptance((a) => a.map((x, j) => (j === i ? v : x)));
   const zone = zoneSel === NEW_ZONE ? newZone : zoneSel;
   const valid = name.trim().length > 0 && zone.trim().length > 0;
 
+  const toggleStory = (on: boolean) => { setStoryMode(on); onToggleStories(on); };
+  const autoSuggest = () => { const s = suggestStory({ name, category, zone }); setRole(s.role); setWant(s.want); setSoThat(s.soThat); };
+  const story = storyMode && (role.trim() || want.trim() || soThat.trim())
+    ? `As ${role.trim() || 'a visitor'}, I want ${want.trim()} so that ${soThat.trim()}.` : undefined;
+
   const save = () => {
     if (!valid) return;
-    onSave({ name: name.trim(), category, zone: zone.trim(), acceptance: acceptance.filter((a) => a.trim()), services: category === 'amenity' ? services : undefined });
+    onSave({ name: name.trim(), story, category, zone: zone.trim(), acceptance: acceptance.filter((a) => a.trim()), services: category === 'amenity' ? services : undefined });
   };
 
   return (
@@ -50,10 +70,32 @@ export function PbiEditor({ zones, item, onSave, onCancel }: PbiEditorProps) {
       </div>
 
       <label className="block space-y-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Name</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{storyMode ? 'Short label' : 'Name'}</span>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Meerkats, Ice cream stand, Oak tree"
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
       </label>
+
+      {/* User-story format: optional, toggleable, with an auto-suggest. */}
+      <div className="space-y-2 rounded-md border border-border bg-background/40 p-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <label className="flex items-center gap-2 text-xs font-medium">
+            <input type="checkbox" checked={storyMode} onChange={(e) => toggleStory(e.target.checked)} />
+            Write as a user story
+          </label>
+          {storyMode && <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={autoSuggest}><Wand2 className="mr-1 h-3.5 w-3.5" /> Auto-suggest</Button>}
+        </div>
+        {storyMode && (
+          <div className="space-y-1.5 text-sm">
+            <div className="flex items-center gap-1.5"><span className="w-14 shrink-0 text-[11px] text-muted-foreground">As</span>
+              <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="a visiting family" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 outline-none focus:border-primary" /></div>
+            <div className="flex items-center gap-1.5"><span className="w-14 shrink-0 text-[11px] text-muted-foreground">I want</span>
+              <input value={want} onChange={(e) => setWant(e.target.value)} placeholder="to see meerkats in the Savanna" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 outline-none focus:border-primary" /></div>
+            <div className="flex items-center gap-1.5"><span className="w-14 shrink-0 text-[11px] text-muted-foreground">so that</span>
+              <input value={soThat} onChange={(e) => setSoThat(e.target.value)} placeholder="the children stay engaged" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 outline-none focus:border-primary" /></div>
+            {story && <p className="rounded bg-muted/50 px-2 py-1 text-[11px] italic text-muted-foreground">{story}</p>}
+          </div>
+        )}
+      </div>
 
       {!editing && (
         <div className="space-y-1">

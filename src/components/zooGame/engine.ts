@@ -1,4 +1,4 @@
-import type { ZooGameState, BacklogItem, Impediment, PbiDraft } from './types';
+import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign } from './design';
@@ -31,6 +31,21 @@ export function estimateSuggestion(hand: number[]): number {
   return best;
 }
 
+/** Turn the user-story preference on or off (a default, never forced per item). */
+export function setUseUserStories(state: ZooGameState, on: boolean): ZooGameState {
+  return { ...state, useUserStories: on };
+}
+
+/** Coach a user story from a PBI draft: "As a ... I want ... so that ...", shaped by
+ *  the item's kind - the same outcome-first idea as the Sprint Goal suggestion. */
+export function suggestStory(p: { name: string; category: ItemCategory; zone: string }): { role: string; want: string; soThat: string } {
+  const name = p.name.trim() || (p.category === 'exhibit' ? 'a new animal' : p.category === 'flora' ? 'some planting' : 'a facility');
+  const zone = p.zone.trim() || 'the park';
+  if (p.category === 'exhibit') return { role: 'a visiting family', want: `to see ${name} in ${zone}`, soThat: 'there is more to enjoy and a reason to come back' };
+  if (p.category === 'flora') return { role: 'a visitor', want: `${name} planted around ${zone}`, soThat: 'the area feels green, shady and pleasant to spend time in' };
+  return { role: 'a visitor', want: `${name} in ${zone}`, soThat: 'I can stay longer without cutting my visit short' };
+}
+
 const DEFAULT_SIZE: Record<string, number> = { exhibit: 8, amenity: 5, flora: 3 };
 
 /** Add a Product Backlog Item the Product Owner has written (name + acceptance
@@ -44,7 +59,7 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   const zone = draft.zone.trim() || 'General';
   const acceptance = draft.acceptance.map((a) => a.trim()).filter(Boolean);
   const base = {
-    id, name, category: draft.category, zone,
+    id, name, story: draft.story?.trim() || undefined, category: draft.category, zone,
     acceptance: acceptance.length ? acceptance : ['Meets its purpose'],
     status: 'backlog' as const, sprintNumber: null, accessible: true,
     unsized: true, estimate: 0, trueSize: DEFAULT_SIZE[draft.category] ?? 5,
@@ -64,7 +79,7 @@ export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): Zoo
   const zone = draft.zone.trim();
   const backlog = state.backlog.map((it) =>
     it.id === id && it.status === 'backlog'
-      ? { ...it, name: draft.name.trim() || it.name, zone: zone || it.zone, acceptance: acceptance.length ? acceptance : it.acceptance }
+      ? { ...it, name: draft.name.trim() || it.name, story: draft.story?.trim() || undefined, zone: zone || it.zone, acceptance: acceptance.length ? acceptance : it.acceptance }
       : it,
   );
   const zones = zone && !state.zones.includes(zone) ? [...state.zones, zone] : state.zones;
@@ -119,6 +134,19 @@ export function renameZone(state: ZooGameState, oldName: string, newName: string
   const zones = state.zones.map((x) => (x === oldName ? z : x));
   const backlog = state.backlog.map((it) => (it.zone === oldName ? { ...it, zone: z } : it));
   return { ...state, zones, backlog };
+}
+
+/** Move an item to just before another (drag-and-drop reorder of the Backlog). */
+export function moveItemBefore(state: ZooGameState, id: string, beforeId: string): ZooGameState {
+  if (id === beforeId) return state;
+  const backlog = [...state.backlog];
+  const from = backlog.findIndex((it) => it.id === id);
+  if (from < 0) return state;
+  const [item] = backlog.splice(from, 1);
+  const to = backlog.findIndex((it) => it.id === beforeId);
+  if (to < 0) return state;
+  backlog.splice(to, 0, item);
+  return { ...state, backlog };
 }
 
 /** Reorder an item within its zone (swap with the nearest same-zone item), so you

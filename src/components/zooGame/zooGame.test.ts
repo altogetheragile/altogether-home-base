@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment,
 } from './engine';
 import type { ZooGameState } from './types';
@@ -169,6 +169,23 @@ describe('zoo game: the PO adds and refines PBIs', () => {
     s = estimateItem(s, id, 5);
     s = planSprint(s, [id]);
     expect(s.committedIds).toContain(id);
+  });
+
+  it('carries an optional user story, and the coach can suggest one', () => {
+    const s = suggestStory({ name: 'Meerkats', category: 'exhibit', zone: 'Savanna' });
+    expect(s.role.length).toBeGreaterThan(0);
+    expect(s.want).toContain('Meerkats');
+    expect(s.soThat.length).toBeGreaterThan(0);
+    const st = addPbi(initialZooState(1), { name: 'Meerkats', story: 'As a family, I want meerkats so that the kids are engaged.', category: 'exhibit', zone: 'Savanna', acceptance: [] });
+    expect(st.backlog.find((i) => i.name === 'Meerkats')!.story).toContain('so that');
+  });
+
+  it('drag-and-drop reorders the Backlog (move one item before another)', () => {
+    const s = initialZooState(1);
+    const ids = s.backlog.map((i) => i.id);
+    const moved = moveItemBefore(s, ids[3], ids[0]); // move the 4th item before the 1st
+    expect(moved.backlog[0].id).toBe(ids[3]);
+    expect(moved.backlog.length).toBe(s.backlog.length); // nothing lost
   });
 
   it('refines an existing Backlog PBI (name, zone, acceptance)', () => {
