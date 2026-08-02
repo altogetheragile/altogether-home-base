@@ -11,6 +11,7 @@ import type { ItemDesign } from './design';
 /** A Product Owner's draft for a new or refined Backlog item. */
 export interface PbiDraft {
   name: string;
+  story?: string;
   category: ItemCategory;
   zone: string;
   acceptance: string[];
@@ -49,6 +50,9 @@ export type ItemCategory = 'exhibit' | 'amenity' | 'flora';
 export interface BacklogItem {
   id: string;
   name: string;
+  /** Optional user story ("As a ... I want ... so that ...") - a richer way to
+   *  express the item's value. The name stays as the short label. */
+  story?: string;
   category: ItemCategory;
   /** Which themed zone this belongs to (Big Cats, Waterside, ...). */
   zone: string;
@@ -91,6 +95,9 @@ export interface ZooGameState {
   sprintGoalMet: boolean | null;
   /** Product-wide, team-owned quality bar every item clears to be shippable. */
   definitionOfDone: string[];
+  /** Whether new PBIs default to the user-story format (a preference, off by default
+   *  so it is never forced). */
+  useUserStories: boolean;
   /** The Product Backlog: dynamic and emergent (signals add to it). */
   backlog: BacklogItem[];
   /** The themes / zones known so far. */
@@ -144,6 +151,8 @@ export type ZooAction =
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
+  | { type: 'MOVE_ITEM_BEFORE'; id: string; beforeId: string }
+  | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
   | { type: 'ADD_ZONE'; name: string }
   | { type: 'RENAME_ZONE'; oldName: string; newName: string }

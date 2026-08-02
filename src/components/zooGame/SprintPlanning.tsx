@@ -6,7 +6,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, X, Fish, Coffee, Trees, Lightbulb, ChevronUp, ChevronDown, HelpCircle, Target, Wand2, Pencil, FilePlus } from 'lucide-react';
+import { Plus, X, Fish, Coffee, Trees, Lightbulb, ChevronUp, ChevronDown, HelpCircle, Target, Wand2, Pencil, FilePlus, GripVertical } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ZooGameState;
@@ -15,6 +15,8 @@ interface SprintPlanningProps {
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onReorder: (id: string, dir: 'up' | 'down') => void;
+  onMoveBefore: (id: string, beforeId: string) => void;
+  onSetUseStories: (on: boolean) => void;
   onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
 }
@@ -22,10 +24,11 @@ interface SprintPlanningProps {
 /** Sprint Planning panel: set the Sprint Goal, refine the Backlog (estimate unsized
  *  items by planning poker, order it), then commit sized items up to a
  *  velocity-driven capacity. The park and goals live in the surrounding shell. */
-export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePbi, onReorder, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [estimating, setEstimating] = useState<string | null>(null);
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
   const items = availableItems(state);
   const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
   const chosen = items.filter((i) => selected.has(i.id));
@@ -110,6 +113,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
 
         {editingPbi && (
           <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi}
+            useStories={state.useUserStories} onToggleStories={onSetUseStories}
             onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
             onCancel={() => setEditingPbi(null)} />
         )}
@@ -126,8 +130,15 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
             const on = selected.has(it.id);
             const Icon = it.category === 'flora' ? Trees : it.category === 'amenity' ? (it.services === 'food' ? Coffee : Plus) : Fish;
             return (
-              <div key={it.id} className={cn('flex items-center gap-2 rounded-lg border p-2.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-muted/20' : 'border-border bg-card')}>
-                <div className="flex flex-col text-muted-foreground">
+              <div key={it.id}
+                draggable
+                onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', it.id); setDragId(it.id); }}
+                onDragEnd={() => setDragId(null)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const from = e.dataTransfer?.getData('text/plain') || dragId; if (from && from !== it.id) onMoveBefore(from, it.id); setDragId(null); }}
+                className={cn('flex items-start gap-2 rounded-lg border p-2.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-muted/20' : 'border-border bg-card', dragId === it.id && 'opacity-50')}>
+                <div className="flex flex-col text-muted-foreground" title="Drag to reorder, or use the arrows">
+                  <GripVertical className="mb-0.5 h-3.5 w-3.5 cursor-grab opacity-50" />
                   <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
                   <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
                 </div>
@@ -136,6 +147,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
                   <span className="flex-1">
                     <span className="font-medium">{it.name}</span>
                     <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
+                    {it.story && <span className="mt-0.5 block text-[11px] italic text-muted-foreground">{it.story}</span>}
                   </span>
                 </button>
                 {it.unsized ? (
