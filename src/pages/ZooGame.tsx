@@ -14,7 +14,7 @@ import Footer from '@/components/Footer';
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open, moveZone, createZone, renameZone, reorderZone, closeDay, holdDailyScrum, skipDailyScrum, nextSprint, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open, moveZone, createZone, renameZone, reorderZone, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, reset } = useZooGame();
 
   const arrange = { onMoveZone: moveZone, onAddZone: createZone, onRenameZone: renameZone, onReorder: reorderZone };
 
@@ -28,7 +28,7 @@ export default function ZooGame() {
       case 'planning':
         return <ZooShell state={state} arrange={arrange}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onReorder={reorder} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} arrange={arrange}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} /></ZooShell>;
+        return <ZooShell state={state} arrange={arrange}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} arrange={arrange}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
       case 'retro':

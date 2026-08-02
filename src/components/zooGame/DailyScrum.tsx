@@ -1,6 +1,6 @@
 import type { ZooGameState } from './types';
 import { Button } from '@/components/ui/button';
-import { Users, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Users, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface DailyScrumProps {
   state: ZooGameState;
@@ -21,7 +21,6 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
   const pts = committed.filter((it) => it.status === 'done' || it.status === 'open').reduce((s, it) => s + it.estimate, 0);
   const daysLeft = state.sprintDays - state.dayNumber;
   const imp = state.pendingImpediment;
-  const last = state.dayNumber === state.sprintDays;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-10 space-y-6">
@@ -44,7 +43,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
           { label: 'Built', value: `${built}/${committed.length}` },
           { label: 'Points Done', value: pts },
           { label: 'Open to visitors', value: openCount },
-          { label: 'Days left', value: last ? 'last day' : daysLeft },
+          { label: 'Days left', value: daysLeft },
         ].map((s) => (
           <div key={s.label} className="rounded-lg border border-border bg-card px-3 py-2.5 text-center">
             <div className="text-lg font-bold tabular-nums">{s.value}</div>
@@ -73,10 +72,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
         <div className="flex flex-col items-center gap-1">
-          <Button size="lg" onClick={onHold}>
-            Hold the Daily Scrum
-            {last ? <ArrowRight className="ml-1.5 h-4 w-4" /> : null}
-          </Button>
+          <Button size="lg" onClick={onHold}>Hold the Daily Scrum</Button>
           <span className="text-[11px] text-muted-foreground">costs ~10% of tomorrow</span>
         </div>
         <div className="flex flex-col items-center gap-1">

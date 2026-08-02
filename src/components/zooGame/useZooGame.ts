@@ -4,7 +4,7 @@ import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
-  reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum,
+  reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
@@ -54,6 +54,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return runDailyScrum(state);
     case 'SKIP_DAILY_SCRUM':
       return skipDailyScrum(state);
+    case 'START_DAY':
+      return startDay(state);
     case 'REVIEW_SPRINT':
       return reviewSprint(state);
     case 'NEXT_SPRINT':
@@ -91,6 +93,7 @@ export function useZooGame(gameSeed?: number) {
   const closeDay = useCallback(() => dispatch({ type: 'END_DAY' }), []);
   const holdDailyScrum = useCallback(() => dispatch({ type: 'RUN_DAILY_SCRUM' }), []);
   const skipDailyScrumCb = useCallback(() => dispatch({ type: 'SKIP_DAILY_SCRUM' }), []);
+  const beginDay = useCallback(() => dispatch({ type: 'START_DAY' }), []);
   const review = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
   const finish = useCallback(() => dispatch({ type: 'END_GAME' }), []);
@@ -99,6 +102,6 @@ export function useZooGame(gameSeed?: number) {
   return {
     state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, reorder, pull, build, editBuild, addAnotherPbi, open,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone,
-    closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, review, nextSprint, finish, reset,
+    closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };
 }

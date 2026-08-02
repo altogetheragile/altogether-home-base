@@ -137,7 +137,7 @@ function NewZoneTile({ onAdd }: { onAdd: (name: string) => void }) {
       <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">New zone</div>
       <div className="flex gap-1.5">
         <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
-          placeholder="e.g. Reptile House" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary" />
+          placeholder="Zone name" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary" />
         <Button size="sm" className="h-7 px-2 text-xs" onClick={add}>Add</Button>
       </div>
     </div>
