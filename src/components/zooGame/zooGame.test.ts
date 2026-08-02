@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment,
 } from './engine';
 import type { ZooGameState } from './types';
@@ -147,6 +147,38 @@ describe('zoo game: the Sprint Goal', () => {
     const items = initialZooState(1).backlog.filter((i) => ['lion', 'tiger'].includes(i.id));
     expect(suggestSprintGoal(items)).toMatch(/Big Cats/);
     expect(suggestSprintGoal(items)).toMatch(/so /); // outcome-shaped
+  });
+});
+
+describe('zoo game: the PO adds and refines PBIs', () => {
+  it('adds a custom PBI (unsized, with acceptance criteria), including flora', () => {
+    let s = addPbi(initialZooState(1), { name: 'Meerkats', category: 'exhibit', zone: 'Savanna', acceptance: ['Recognisable meerkats', 'A lookout mound'] });
+    const meerkats = s.backlog.find((i) => i.name === 'Meerkats')!;
+    expect(meerkats.category).toBe('exhibit');
+    expect(meerkats.unsized).toBe(true);
+    expect(meerkats.acceptance).toEqual(['Recognisable meerkats', 'A lookout mound']);
+    // A new zone on the PBI is registered.
+    s = addPbi(s, { name: 'Oak tree', category: 'flora', zone: 'Woodland', acceptance: [] });
+    expect(s.zones).toContain('Woodland');
+    expect(s.backlog.find((i) => i.name === 'Oak tree')!.category).toBe('flora');
+  });
+
+  it('a custom, estimated PBI can be planned and built like any other', () => {
+    let s = addPbi(initialZooState(1), { name: 'Otters', category: 'exhibit', zone: 'Waterside', acceptance: ['Playful otters'] });
+    const id = s.backlog.find((i) => i.name === 'Otters')!.id;
+    s = estimateItem(s, id, 5);
+    s = planSprint(s, [id]);
+    expect(s.committedIds).toContain(id);
+  });
+
+  it('refines an existing Backlog PBI (name, zone, acceptance)', () => {
+    let s = addPbi(initialZooState(1), { name: 'Birds', category: 'exhibit', zone: 'General', acceptance: ['x'] });
+    const id = s.backlog.find((i) => i.name === 'Birds')!.id;
+    s = refinePbi(s, id, { name: 'Flamingos', category: 'exhibit', zone: 'Waterside', acceptance: ['Pink and tall', 'Standing on one leg'] });
+    const it = s.backlog.find((i) => i.id === id)!;
+    expect(it.name).toBe('Flamingos');
+    expect(it.zone).toBe('Waterside');
+    expect(it.acceptance).toEqual(['Pink and tall', 'Standing on one leg']);
   });
 });
 

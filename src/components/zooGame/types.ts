@@ -8,6 +8,15 @@
 import type { SegmentId, SimulationResult, Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 
+/** A Product Owner's draft for a new or refined Backlog item. */
+export interface PbiDraft {
+  name: string;
+  category: ItemCategory;
+  zone: string;
+  acceptance: string[];
+  services?: 'food' | 'toilet' | 'rest';
+}
+
 export type ZooPhase = 'intro' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
 /** Within a Sprint, a day is being worked (building), paused at its close for the
@@ -33,10 +42,14 @@ export type ItemStatus = 'backlog' | 'committed' | 'done' | 'open';
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
  *  seating). Carries the attributes the visitor simulation reads, plus game fields
  *  (estimate, per-item acceptance criteria, status). */
+/** exhibit = an animal, amenity = a facility (cafe/toilets/seating), flora =
+ *  scenery/planting (trees, bushes, flowerbeds). */
+export type ItemCategory = 'exhibit' | 'amenity' | 'flora';
+
 export interface BacklogItem {
   id: string;
   name: string;
-  category: 'exhibit' | 'amenity';
+  category: ItemCategory;
   /** Which themed zone this belongs to (Big Cats, Waterside, ...). */
   zone: string;
   /** Estimate in points, the team's forecast from size and complexity. Meaningful
@@ -128,6 +141,8 @@ export type ZooAction =
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
+  | { type: 'ADD_PBI'; draft: PbiDraft }
+  | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
   | { type: 'ADD_ZONE'; name: string }

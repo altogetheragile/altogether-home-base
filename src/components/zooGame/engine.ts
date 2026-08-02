@@ -1,4 +1,4 @@
-import type { ZooGameState, BacklogItem, Impediment } from './types';
+import type { ZooGameState, BacklogItem, Impediment, PbiDraft } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign } from './design';
@@ -29,6 +29,46 @@ export function estimateSuggestion(hand: number[]): number {
   let best = hand[0], bestN = 0;
   for (const [v, n] of counts) if (n > bestN || (n === bestN && v > best)) { best = v; bestN = n; }
   return best;
+}
+
+const DEFAULT_SIZE: Record<string, number> = { exhibit: 8, amenity: 5, flora: 3 };
+
+/** Add a Product Backlog Item the Product Owner has written (name + acceptance
+ *  criteria + kind + zone). It arrives UNSIZED - it must be estimated before it can
+ *  be planned - so the PO can grow the Backlog before Sprint 1 or during a Sprint. */
+export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
+  const name = draft.name.trim();
+  if (!name) return state;
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'item';
+  const id = `pbi-${slug}-${state.backlog.length}`;
+  const zone = draft.zone.trim() || 'General';
+  const acceptance = draft.acceptance.map((a) => a.trim()).filter(Boolean);
+  const base = {
+    id, name, category: draft.category, zone,
+    acceptance: acceptance.length ? acceptance : ['Meets its purpose'],
+    status: 'backlog' as const, sprintNumber: null, accessible: true,
+    unsized: true, estimate: 0, trueSize: DEFAULT_SIZE[draft.category] ?? 5,
+  };
+  let item: BacklogItem;
+  if (draft.category === 'exhibit') item = { ...base, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
+  else if (draft.category === 'amenity') item = { ...base, services: draft.services, serviceCapacity: draft.services ? 500 : undefined };
+  else item = base; // flora is scenery: designable and placeable, no simulation input yet
+  const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
+  return { ...state, backlog: [...state.backlog, item], zones };
+}
+
+/** Refine an existing Backlog PBI (edit its name, zone and acceptance criteria).
+ *  Only items still in the Backlog can be refined. */
+export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): ZooGameState {
+  const acceptance = draft.acceptance.map((a) => a.trim()).filter(Boolean);
+  const zone = draft.zone.trim();
+  const backlog = state.backlog.map((it) =>
+    it.id === id && it.status === 'backlog'
+      ? { ...it, name: draft.name.trim() || it.name, zone: zone || it.zone, acceptance: acceptance.length ? acceptance : it.acceptance }
+      : it,
+  );
+  const zones = zone && !state.zones.includes(zone) ? [...state.zones, zone] : state.zones;
+  return { ...state, backlog, zones };
 }
 
 /** Commit an estimate to a Backlog item (refinement): it becomes sized and can now

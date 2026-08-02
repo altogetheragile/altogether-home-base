@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import type { ZooGameState } from './types';
+import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { availableItems, productGoalProgress, suggestSprintGoal } from './engine';
 import { zooCapacity } from './config';
 import { PlanningPoker } from './PlanningPoker';
+import { PbiEditor } from './PbiEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, X, Fish, Coffee, Lightbulb, ChevronUp, ChevronDown, HelpCircle, Target, Wand2 } from 'lucide-react';
+import { Plus, X, Fish, Coffee, Trees, Lightbulb, ChevronUp, ChevronDown, HelpCircle, Target, Wand2, Pencil, FilePlus } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ZooGameState;
   onPlan: (ids: string[]) => void;
   onEstimate: (id: string, points: number) => void;
+  onAddPbi: (draft: PbiDraft) => void;
+  onRefinePbi: (id: string, draft: PbiDraft) => void;
   onReorder: (id: string, dir: 'up' | 'down') => void;
   onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
@@ -19,9 +22,10 @@ interface SprintPlanningProps {
 /** Sprint Planning panel: set the Sprint Goal, refine the Backlog (estimate unsized
  *  items by planning poker, order it), then commit sized items up to a
  *  velocity-driven capacity. The park and goals live in the surrounding shell. */
-export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePbi, onReorder, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [estimating, setEstimating] = useState<string | null>(null);
+  const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const items = availableItems(state);
   const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
   const chosen = items.filter((i) => selected.has(i.id));
@@ -98,8 +102,17 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
 
       {/* Product Backlog + refinement */}
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length}) - ordered by you</span></h3>
-        <p className="text-[11px] text-muted-foreground">Refine it: estimate the unsized items by planning poker, and order it toward the Product Goal. Only estimated items can be committed.</p>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span></h3>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">You own the Backlog: add and refine PBIs (animals, facilities and flora), estimate them by planning poker, and order them. Only estimated items can be committed.</p>
+
+        {editingPbi && (
+          <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi}
+            onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
+            onCancel={() => setEditingPbi(null)} />
+        )}
 
         {estimatingItem && (
           <PlanningPoker item={estimatingItem} seed={state.gameSeed}
@@ -111,7 +124,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
           {items.length === 0 && <p className="text-xs text-muted-foreground/60">Everything is planned or built. Accept a signal to add more.</p>}
           {items.map((it, idx) => {
             const on = selected.has(it.id);
-            const Icon = it.category === 'amenity' ? (it.services === 'food' ? Coffee : Plus) : Fish;
+            const Icon = it.category === 'flora' ? Trees : it.category === 'amenity' ? (it.services === 'food' ? Coffee : Plus) : Fish;
             return (
               <div key={it.id} className={cn('flex items-center gap-2 rounded-lg border p-2.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-muted/20' : 'border-border bg-card')}>
                 <div className="flex flex-col text-muted-foreground">
@@ -130,6 +143,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onReorder, onSetSpri
                 ) : (
                   <span className="shrink-0 font-mono text-xs text-muted-foreground">{it.estimate} pts</span>
                 )}
+                <button type="button" title="Refine this PBI" onClick={() => setEditingPbi(it)} className="shrink-0 text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
               </div>
             );
           })}

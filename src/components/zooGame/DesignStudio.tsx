@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { BacklogItem } from './types';
 import {
   renderDesign, designCriteria, isDesignDone, presetFor, GRID_W,
-  EXHIBIT_PARTS, AMENITY_COLORS, SWATCHES, type ItemDesign,
+  EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES, type ItemDesign,
 } from './design';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -59,6 +59,7 @@ function ColourPickerRow({ label, value, onChange, disabled }: { label: string; 
  *  tweak it. It is Done when it meets its acceptance criteria. */
 export function DesignStudio({ item, editing, onFinish, onCancel, initial, onChange, copySources = [] }: DesignStudioProps) {
   const isExhibit = item.category === 'exhibit';
+  const isFlora = item.category === 'flora';
   const cell = Math.floor(232 / GRID_W);
   const [design, setDesign] = useState<ItemDesign>(initial ?? item.design ?? presetFor(item));
 
@@ -75,7 +76,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="font-semibold">{editing ? 'Edit' : 'Design'} your {item.name.toLowerCase()}</h3>
-          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isExhibit ? 'one animal, one PBI' : 'set the colours and add a sign'}</p>
+          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isExhibit ? 'one animal, one PBI' : isFlora ? 'pick a plant and colour it' : 'set the colours and add a sign'}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onCancel}>Back</Button>
       </div>
@@ -116,6 +117,21 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
                 </div>
               );
             })}
+          </div>
+        ) : isFlora ? (
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Plant type</span>
+              <div className="flex flex-wrap gap-1.5">
+                {FLORA_TYPES.map((o) => (
+                  <button key={o} type="button" onClick={() => setPart('type', o)}
+                    className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize', (design.parts.type ?? 'tree') === o ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{o}</button>
+                ))}
+              </div>
+            </div>
+            {FLORA_COLORS.map((c) => (
+              <ColourPickerRow key={c.key} label={c.label} value={design.colors[c.key]} onChange={(hex) => setColor(c.key, hex)} />
+            ))}
           </div>
         ) : (
           <div className="space-y-3">

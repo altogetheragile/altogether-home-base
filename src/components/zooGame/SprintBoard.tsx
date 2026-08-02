@@ -5,15 +5,19 @@ import { openZoo, availableItems } from './engine';
 import { DAY_SECONDS } from './config';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
+import { PbiEditor } from './PbiEditor';
+import type { PbiDraft } from './types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus, Sunrise } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock, Plus, ChevronDown, ChevronRight, Pencil, CopyPlus, Sunrise, FilePlus } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
   onBuild: (id: string, design?: ItemDesign) => void;
   onEditBuild: (id: string, design: ItemDesign) => void;
   onAddAnother: (id: string) => void;
+  onAddPbi: (draft: PbiDraft) => void;
+  onRefinePbi: (id: string, draft: PbiDraft) => void;
   onPull: (id: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
@@ -93,8 +97,9 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: nu
  *  Definition of Done and open (release) them whenever you like; the day ends on the
  *  timer or when you call it, opening the Daily Scrum. After the last day's Daily
  *  Scrum the Review opens. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
+  const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const [draft, setDraft] = useState<{ id: string; design: ItemDesign } | null>(null);
@@ -195,26 +200,35 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onPull,
           </section>
           )}
 
-          {/* The Product Backlog stays visible: you can pull more in mid-Sprint. */}
+          {/* The Product Backlog stays visible: add, refine and pull items mid-Sprint. */}
           {!designItem && (
             <section className="space-y-2">
-              <button type="button" onClick={() => setShowBacklog((s) => !s)} className="flex items-center gap-1.5 text-sm font-semibold">
-                {showBacklog ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                Product Backlog <span className="font-normal text-muted-foreground">({available.length})</span>
-              </button>
+              <div className="flex items-center justify-between gap-2">
+                <button type="button" onClick={() => setShowBacklog((s) => !s)} className="flex items-center gap-1.5 text-sm font-semibold">
+                  {showBacklog ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  Product Backlog <span className="font-normal text-muted-foreground">({available.length})</span>
+                </button>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { setShowBacklog(true); setEditingPbi('new'); }}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
+              </div>
+              {editingPbi && (
+                <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi}
+                  onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
+                  onCancel={() => setEditingPbi(null)} />
+              )}
               {showBacklog && (
                 <div className="space-y-1.5">
-                  {available.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Accept a signal at the Review to add more.</p>}
+                  {available.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Add a PBI or accept a signal at the Review.</p>}
                   {available.map((it) => (
-                    <div key={it.id} className="flex items-center gap-3 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
+                    <div key={it.id} className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 text-sm">
                           <span className="font-medium">{it.name}</span>
                           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{it.zone}</span>
-                          <span className="font-mono text-xs text-muted-foreground">{it.estimate} pts</span>
+                          <span className="font-mono text-xs text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
                         </div>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => onPull(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</Button>
+                      <button type="button" title="Refine this PBI" onClick={() => setEditingPbi(it)} className="text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                      <Button size="sm" variant="outline" disabled={it.unsized} title={it.unsized ? 'Estimate it at Planning first' : undefined} onClick={() => onPull(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</Button>
                     </div>
                   ))}
                   <p className="text-[11px] text-muted-foreground">Pulling in more work mid-Sprint is fine by agreement, as long as it will not put the Sprint's goal at risk.</p>
