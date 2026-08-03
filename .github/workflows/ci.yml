@@ -5,6 +5,9 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  # Nightly full cross-browser E2E run on main (the PR path stays lean - see below).
+  schedule:
+    - cron: '0 3 * * *'
 
 jobs:
   ci:
@@ -45,23 +48,46 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      # Cache the Playwright browser binaries (keyed on the Playwright version) so we
+      # do not re-download ~300MB every run.
+      - name: Playwright version
+        id: pw
+        run: |
+          V=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # The route guard (below) drives chromium, so chromium is installed on every run.
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
 
       # Hard gate: fails the build if any sitemap URL renders the Not Found page
       # (an orphan URL with no real route, e.g. the /courses soft-404). Runs after
-      # Build (needs dist + sitemap) and Playwright install (needs chromium).
+      # Build (needs dist + sitemap) and chromium install.
       - name: Route guard (soft-404 check)
         run: npm run check:routes
 
-      # continue-on-error: E2E tests check for content (e.g. testimonials)
-      # that only renders when Supabase returns data. CI has no live DB
-      # connection, so these will fail until we add seed data or mocks.
+      # The full cross-browser E2E and BDD suites are the slow part of CI (~15 min) and,
+      # until Supabase is seeded/mocked in CI, they are non-gating (continue-on-error) -
+      # they cannot pass without live DB data. So they run on pushes to main and the
+      # nightly schedule, NOT on every PR, keeping PR feedback to a few minutes.
+      # TODO: seed/mock the DB so these become deterministic and can gate PRs again.
+      - name: Install Playwright firefox + webkit
+        if: github.ref == 'refs/heads/main'
+        run: npx playwright install --with-deps firefox webkit
+
       - name: E2E tests (Playwright)
+        if: github.ref == 'refs/heads/main'
         run: npx playwright test
         continue-on-error: true
 
       - name: BDD smoke tests
+        if: github.ref == 'refs/heads/main'
         run: npm run bdd:smoke
         continue-on-error: true
 
