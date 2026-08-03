@@ -1,6 +1,6 @@
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress } from './engine';
+import { productGoalProgress, dodGaps } from './engine';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,8 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
   const progress = Math.round(productGoalProgress(state) * 100);
   // Output-chasing: a lot delivered but visitors are not loving it (low happiness).
   const outputChasing = velocity >= 8 && r != null && r.totalAttendance > 0 && r.overallHappiness < 34;
+  // A weak Definition of Done that cost the visitors this Sprint.
+  const gaps = r != null && r.totalAttendance > 0 ? dodGaps(state.definitionOfDone) : [];
 
   return (
     <div className="space-y-5">
@@ -48,6 +50,9 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
 
       {outputChasing && (
         <CoachTip>You delivered <strong>{velocity} pts</strong>, but visitors aren&rsquo;t loving the zoo yet. Value is the <em>outcome</em>, not the output - build what a visitor group actually wants (serve a zone, match a design to its crowd), not just more.</CoachTip>
+      )}
+      {gaps.length > 0 && (
+        <CoachTip>Your Definition of Done doesn&rsquo;t require it to be <strong>{gaps.map((g) => g.label).join(' or ')}</strong> - so {gaps.map((g) => g.effect).join('; ')}, and happiness took a hit. Add the criterion back at the Retrospective and it lifts next Sprint.</CoachTip>
       )}
 
       {!r || r.totalAttendance === 0 ? (

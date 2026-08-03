@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDefinitionOfDone, dodGaps, dodHappinessFactor,
 } from './engine';
 import type { ZooGameState } from './types';
 import type { ItemDesign } from './design';
@@ -569,5 +569,25 @@ describe('zoo game: sprint length and learn mode', () => {
     expect(s.learnMode).toBe(false);
     s = setLearnMode(s, true);
     expect(s.learnMode).toBe(true);
+  });
+});
+
+describe('zoo game: a weak Definition of Done bites the outcome', () => {
+  const NICE = ['lion', 'tiger', 'kiosk', 'penguins', 'reef', 'wc'];
+
+  it('dropping accessibility / signposting from the DoD lowers visitor happiness', () => {
+    const strong = reviewSprint(buildAndOpen(initialZooState(1), NICE));
+    // A DoD that no longer requires safe/accessible or signposted.
+    let weak = setDefinitionOfDone(initialZooState(1), ['Meets its acceptance criteria', 'Fully finished']);
+    weak = reviewSprint(buildAndOpen(weak, NICE));
+    expect(dodGaps(weak.definitionOfDone).length).toBe(2);
+    expect(dodHappinessFactor(weak.definitionOfDone)).toBeCloseTo(0.81, 5);
+    expect(weak.lastReview!.overallHappiness).toBeLessThan(strong.lastReview!.overallHappiness);
+  });
+
+  it('the default DoD covers both concerns, so there is no penalty', () => {
+    const s = initialZooState(1);
+    expect(dodGaps(s.definitionOfDone)).toHaveLength(0);
+    expect(dodHappinessFactor(s.definitionOfDone)).toBe(1);
   });
 });
