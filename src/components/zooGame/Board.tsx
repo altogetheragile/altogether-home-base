@@ -95,8 +95,9 @@ export function TaskEditor({ item, onSetTasks }: { item: BacklogItem; onSetTasks
   );
 }
 
-/** The plan on a board card: the tasks, ticked off as the Developers work through them. */
-export function TaskChecklist({ item, onToggle }: { item: BacklogItem; onToggle: (id: string, taskId: string) => void }) {
+/** The plan on a board card: the tasks, ticked off as the Developers work through them.
+ *  `readOnly` shows the plan without checkboxes (To Do preview, or a finished Done item). */
+export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem; onToggle: (id: string, taskId: string) => void; readOnly?: boolean }) {
   const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
   if (!tasks.length) return null;
   const done = tasks.filter((t) => t.done).length;
@@ -107,8 +108,8 @@ export function TaskChecklist({ item, onToggle }: { item: BacklogItem; onToggle:
       </div>
       <div className="space-y-0.5">
         {tasks.map((t) => (
-          <label key={t.id} className="flex cursor-pointer items-start gap-1.5 text-[11px]">
-            <input type="checkbox" checked={t.done} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
+          <label key={t.id} className={cn('flex items-start gap-1.5 text-[11px]', !readOnly && 'cursor-pointer')}>
+            <input type="checkbox" checked={t.done} disabled={readOnly} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
             <span className={cn(t.done && 'text-muted-foreground line-through')}>{t.label}</span>
           </label>
         ))}

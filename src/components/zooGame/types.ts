@@ -80,8 +80,11 @@ export interface BacklogItem {
   design?: ItemDesign;
   /** The Developers' plan for how this item gets built: a decomposition into tasks,
    *  written during Sprint Planning (the "how") and ticked off as the work is done.
-   *  A planning/tracking aid - the Definition of Done still gates when it is Done. */
+   *  The item reaches Done only when its design is built AND every task is ticked. */
   tasks?: SprintTask[];
+  /** True once work has started (it moved from To Do into Doing and opened the studio).
+   *  Keeps it in the Doing column while it is being built and its tasks ticked. */
+  started?: boolean;
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -157,6 +160,7 @@ export type ZooAction =
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
+  | { type: 'START_ITEM'; id: string }
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }

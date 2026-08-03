@@ -99,27 +99,41 @@ export function estimateItem(state: ZooGameState, id: string, points: number): Z
  *  then opening it. It is a starting point the Developers edit, not a fixed template. */
 export function suggestTasks(item: BacklogItem): SprintTask[] {
   const zone = item.zone;
+  // Opening to visitors is a separate step (the Open button on a Done item), so the
+  // plan stops at placing it - it is not a task.
   const labels = item.category === 'exhibit'
-    ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features', `Place it in ${zone} and open to visitors`]
+    ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features', `Place it in ${zone}`]
     : item.category === 'amenity'
-      ? [`Design the ${item.name.toLowerCase()}`, 'Colour it and put up a sign', `Place it in ${zone} and open`]
+      ? [`Design the ${item.name.toLowerCase()}`, 'Colour it and put up a sign', `Place it in ${zone}`]
       : ['Choose the plant type', 'Colour the foliage', `Place it in ${zone}`];
   return labels.map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
 }
+
+/** Whether a PBI's whole plan is complete (an empty plan counts as complete). */
+export const allTasksDone = (item: BacklogItem): boolean => (item.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
 
 /** Replace a PBI's task plan (used for add / edit / remove / suggest during Planning). */
 export function setItemTasks(state: ZooGameState, id: string, tasks: SprintTask[]): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, tasks } : it)) };
 }
 
-/** Tick a plan task done / not-done as the Developers work through it on the board. */
+/** Tick a plan task done / not-done as the Developers work through it. Ticking the last
+ *  task on a built item finishes it (Doing -> Done); un-ticking a task on a Done-but-
+ *  not-yet-open item sends it back to Doing. */
 export function toggleItemTask(state: ZooGameState, id: string, taskId: string): ZooGameState {
-  return {
-    ...state,
-    backlog: state.backlog.map((it) =>
-      it.id === id ? { ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) } : it,
-    ),
-  };
+  const backlog = state.backlog.map((it) => {
+    if (it.id !== id) return it;
+    const next = { ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) };
+    if (next.status === 'committed' && next.design && allTasksDone(next)) return { ...next, status: 'done' as const };
+    if (next.status === 'done' && !allTasksDone(next)) return { ...next, status: 'committed' as const };
+    return next;
+  });
+  return { ...state, backlog };
+}
+
+/** Start work on a committed item: it moves from To Do into Doing (the studio opens). */
+export function startItem(state: ZooGameState, id: string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'committed' ? { ...it, started: true } : it)) };
 }
 
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down
@@ -229,8 +243,12 @@ export function pullIntoSprint(state: ZooGameState, id: string): ZooGameState {
 export function buildItem(state: ZooGameState, id: string, design?: ItemDesign): ZooGameState {
   const backlog = state.backlog.map((it) => {
     if (it.id !== id || it.status !== 'committed') return it;
-    if (!design) return { ...it, status: 'done' as const };
-    return { ...it, status: 'done' as const, design, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal };
+    // The design is built in the studio. The item is only Done when its plan is also
+    // complete - otherwise it waits in Doing while the Developers tick the tasks off.
+    const built = design
+      ? { ...it, started: true, design, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
+      : { ...it, started: true };
+    return allTasksDone(built) ? { ...built, status: 'done' as const } : { ...built, status: 'committed' as const };
   });
   return { ...state, backlog };
 }

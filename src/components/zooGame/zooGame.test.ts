@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone,
 } from './engine';
 import type { ZooGameState } from './types';
 
@@ -413,26 +413,46 @@ describe('zoo game: product goal progress', () => {
   });
 });
 
-describe('zoo game: the plan (task decomposition)', () => {
-  it('suggests a breakdown, edits it, carries it into the Sprint, and ticks tasks off', () => {
-    let s = initialZooState(1);
-    // Coached breakdown for an exhibit.
-    const tasks = suggestTasks(s.backlog.find((i) => i.id === 'lion')!);
+describe('zoo game: the plan (task decomposition) gates Done', () => {
+  const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
+
+  it('suggests a breakdown that stops at placing it (opening is a separate step)', () => {
+    const tasks = suggestTasks(initialZooState(1).backlog.find((i) => i.id === 'lion')!);
     expect(tasks.length).toBeGreaterThan(0);
     expect(tasks.every((t) => !t.done)).toBe(true);
+    expect(tasks.some((t) => /open to visitors/i.test(t.label))).toBe(false);
+  });
 
-    // Plan the tasks onto the (still-Backlog) item, then commit the Sprint.
+  it('starting moves To Do -> Doing; building with tasks left stays Doing; the last tick finishes it', () => {
+    let s = initialZooState(1);
+    const tasks = suggestTasks(lion(s));
     s = setItemTasks(s, 'lion', tasks);
     s = planSprint(s, ['lion']);
-    const committed = s.backlog.find((i) => i.id === 'lion')!;
-    expect(committed.status).toBe('committed');
-    expect(committed.tasks).toHaveLength(tasks.length); // the plan survives planning
+    expect(lion(s).started).toBeFalsy(); // To Do
 
-    // Tick a task done on the board.
+    // Start -> Doing.
+    s = startItem(s, 'lion');
+    expect(lion(s).started).toBe(true);
+    expect(lion(s).status).toBe('committed');
+
+    // Finish the design in the studio, but tasks remain -> still Doing, not Done.
+    s = buildItem(s, 'lion', { parts: {}, colors: { body: '#c8873b', head: '#c8873b', ears: '#e3c66b' } });
+    expect(lion(s).design).toBeDefined();
+    expect(lion(s).status).toBe('committed'); // built, but the plan is not complete
+    expect(allTasksDone(lion(s))).toBe(false);
+
+    // Tick every task; the last one promotes it Doing -> Done.
+    for (const t of tasks) s = toggleItemTask(s, 'lion', t.id);
+    expect(lion(s).status).toBe('done');
+
+    // Un-ticking a task on a Done (not yet open) item sends it back to Doing.
     s = toggleItemTask(s, 'lion', tasks[0].id);
-    expect(s.backlog.find((i) => i.id === 'lion')!.tasks!.find((t) => t.id === tasks[0].id)!.done).toBe(true);
-    // Toggling is idempotent-reversible.
-    s = toggleItemTask(s, 'lion', tasks[0].id);
-    expect(s.backlog.find((i) => i.id === 'lion')!.tasks!.find((t) => t.id === tasks[0].id)!.done).toBe(false);
+    expect(lion(s).status).toBe('committed');
+  });
+
+  it('an item with no plan is Done as soon as it is built', () => {
+    let s = planSprint(initialZooState(1), ['lion']); // no tasks planned
+    s = buildItem(s, 'lion', { parts: {}, colors: { body: '#c8873b' } });
+    expect(lion(s).status).toBe('done');
   });
 });
