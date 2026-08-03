@@ -8,12 +8,11 @@ interface DailyScrumProps {
   onSkip: () => void;
 }
 
-/** The Daily Scrum: the Developers' short daily sync to inspect progress toward the
- *  Sprint's goal and re-plan the day. It is not a problem-solving session - blockers
- *  are surfaced here, then removed outside the event (the Scrum Master helps). The
- *  Scrum Master is accountable for it happening, not for attending. Hold it and a
- *  waiting blocker is spotted early; skip it and it goes unseen and resurfaces
- *  tomorrow, later and costlier. */
+/** The Daily Scrum: the Developers' short daily event to inspect progress toward the
+ *  Sprint Goal and re-plan the next day's work. It always happens (it is not optional).
+ *  Blockers are surfaced here, not solved here - the Scrum Master removes them outside
+ *  the event. The real choice is whether you ADAPT the plan to what it surfaced or carry
+ *  on regardless; carrying on lets a blocker grow overnight, costing far more tomorrow. */
 export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
   const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
   const built = committed.filter((it) => it.status === 'done' || it.status === 'open').length;
@@ -30,8 +29,8 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         </div>
         <h1 className="text-2xl font-bold">End of Day {state.dayNumber}</h1>
         <p className="text-sm text-muted-foreground">
-          The Developers check how the Sprint is tracking and re-plan the day. It is a short progress sync,
-          not a problem-solving session. The Scrum Master makes sure it happens.
+          The Developers inspect progress toward the Sprint Goal and re-plan the next day. This event always
+          happens - it is not optional. Blockers are surfaced here and removed by the Scrum Master outside it.
         </p>
         {state.sprintGoal.trim() && (
           <p className="mx-auto max-w-md rounded-md bg-primary/5 px-3 py-1.5 text-xs text-muted-foreground">Working toward: <span className="font-medium text-foreground">{state.sprintGoal}</span></p>
@@ -53,39 +52,44 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
       </div>
 
       {imp ? (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
-          <div className="flex items-start gap-2.5">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <div>
-              <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">A blocker has come up: {imp.title}</div>
-              <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{imp.detail}</div>
-              <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-300/70">The Daily Scrum surfaces it early - you note it now and it is dealt with outside the event, before it grows.</div>
+        <>
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div>
+                <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">A blocker surfaced: {imp.title}</div>
+                <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{imp.detail}</div>
+                <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-300/70">Do you adapt the plan around it (the Scrum Master removes it), or carry on with the original plan?</div>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-          No blockers surfaced today. Holding the Daily Scrum is still how you find that out.
-        </div>
-      )}
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <div className="flex flex-col items-center gap-1">
-          <Button size="lg" onClick={onHold}>Hold the Daily Scrum</Button>
-          <span className="text-[11px] text-muted-foreground">costs ~10% of tomorrow</span>
-        </div>
-        <div className="flex flex-col items-center gap-1">
-          <Button size="lg" variant="ghost" onClick={onSkip} className="text-muted-foreground">
-            Skip it, keep building
-          </Button>
-          <span className="text-[11px] text-muted-foreground">{imp ? 'this blocker then cuts ~45% of tomorrow' : 'free this time - nothing waiting'}</span>
-        </div>
-      </div>
-      <p className="text-center text-xs text-muted-foreground">
-        A blocker you surface here is dealt with cheaply; one you skip past grows overnight and eats into a
-        whole day's build time.
-      </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <div className="flex flex-col items-center gap-1">
+              <Button size="lg" onClick={onHold}>Adapt the plan</Button>
+              <span className="text-[11px] text-muted-foreground">{state.scrumDiscipline ? 'efficient - no time lost tomorrow' : 'the event takes ~10% of tomorrow'}</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Button size="lg" variant="ghost" onClick={onSkip} className="text-muted-foreground">Carry on regardless</Button>
+              <span className="text-[11px] text-muted-foreground">the blocker grows overnight - ~45% of tomorrow</span>
+            </div>
+          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            Adapting is cheap; ignoring a surfaced blocker lets it grow overnight and eat into a whole day&rsquo;s build time.
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            On track for the Sprint Goal - nothing blocking today. The Daily Scrum is how you know that.
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <Button size="lg" onClick={onHold}>Re-plan and continue &rarr;</Button>
+            <span className="text-[11px] text-muted-foreground">{state.scrumDiscipline ? 'efficient - no time lost' : 'the event takes ~10% of tomorrow'}</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
