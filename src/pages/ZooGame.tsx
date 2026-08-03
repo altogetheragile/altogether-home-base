@@ -15,7 +15,7 @@ import Footer from '@/components/Footer';
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, takeSignal, plan, estimate, setTasks, toggleTask, startItem, createPbi, refinePbi, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, createPbi, refinePbi, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, reset } = useZooGame();
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
@@ -33,7 +33,7 @@ export default function ZooGame() {
       case 'review':
         return <ZooShell state={state}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
       case 'retro':
-        return <ZooShell state={state}><SprintRetro state={state} onNextSprint={nextSprint} onWrapUp={() => setPhase('final')} /></ZooShell>;
+        return <ZooShell state={state}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onWrapUp={() => setPhase('final')} /></ZooShell>;
       case 'final':
         return <ZooFinal state={state} onReset={reset} />;
       default:

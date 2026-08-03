@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { ZooGameState } from './types';
 import { ParkView } from './ParkView';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList } from 'lucide-react';
+import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -13,6 +13,25 @@ function GoalChip({ icon: Icon, label, text, tone }: { icon: typeof Target; labe
     <div className={tone === 'product' ? 'rounded-lg border border-primary/30 bg-primary/5 px-4 py-2' : 'rounded-lg border border-border bg-card px-4 py-2'}>
       <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"><Icon className="h-3 w-3" /> {label}</div>
       <p className="line-clamp-2 text-sm font-medium leading-snug">{text}</p>
+    </div>
+  );
+}
+
+/** The product-wide Definition of Done, always in view (collapsible). It is edited at
+ *  the Retrospective; here it is read-only so the bar every item clears is never hidden. */
+function DodBar({ dod }: { dod: string[] }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="mb-3 rounded-lg border border-border bg-muted/20 px-3 py-1.5">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
+        <ClipboardCheck className="h-3.5 w-3.5" /> Definition of Done <span className="text-muted-foreground/70">({dod.length})</span>
+        <ChevronDown className={cn('ml-auto h-3.5 w-3.5 transition-transform', !open && '-rotate-90')} />
+      </button>
+      {open && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {dod.map((d) => <span key={d} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
+        </div>
+      )}
     </div>
   );
 }
@@ -47,6 +66,9 @@ export function ZooShell({ state, children }: { state: ZooGameState; children: R
           Sprint {state.sprintNumber}<span className="mx-1.5 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}
         </div>
       </div>
+
+      {/* Definition of Done - always visible; refined at the Retrospective. */}
+      <DodBar dod={state.definitionOfDone} />
 
       {/* Tabs */}
       <div className="mb-4 flex gap-1 border-b border-border">

@@ -182,10 +182,11 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
           </div>
         )}
 
-        {/* Definition of Done: product-wide, checked mechanically from the design. */}
+        {/* The build-completeness check (part of the Definition of Done: "fully finished,
+            no gaps"), verified mechanically from the design. The full DoD is in the header. */}
         <div className="flex items-center gap-2 text-sm">
           <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]', built ? 'bg-emerald-500 text-white' : 'border border-border')}>{built && <Check className="h-3 w-3" />}</span>
-          <span className={cn(built ? 'text-foreground' : 'text-muted-foreground')}>Definition of Done: every part coloured, no bare patches</span>
+          <span className={cn(built ? 'text-foreground' : 'text-muted-foreground')}>Fully built - every part coloured, no bare patches</span>
         </div>
 
         {isExhibit && <p className="text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
