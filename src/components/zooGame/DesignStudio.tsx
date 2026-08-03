@@ -13,6 +13,9 @@ export interface CopySource { id: string; name: string; design: ItemDesign }
 
 interface DesignStudioProps {
   item: BacklogItem;
+  /** The product-wide Definition of Done - confirmed here to make an item Done, and
+   *  refined at the Retro so an edit changes the bar for every later item. */
+  dod: string[];
   /** True when refining an already-built item rather than building a new one. */
   editing?: boolean;
   onFinish: (design: ItemDesign) => void;
@@ -57,7 +60,7 @@ function ColourPickerRow({ label, value, onChange, disabled }: { label: string; 
 /** Build (or refine) one item: an exhibit's animal or an amenity's building. Every
  *  animal is its own PBI; to save time you can copy an existing built animal and
  *  tweak it. It is Done when it meets its acceptance criteria. */
-export function DesignStudio({ item, editing, onFinish, onCancel, initial, onChange, copySources = [] }: DesignStudioProps) {
+export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, onChange, copySources = [] }: DesignStudioProps) {
   const isExhibit = item.category === 'exhibit';
   const isFlora = item.category === 'flora';
   const cell = Math.floor(232 / GRID_W);
@@ -78,9 +81,23 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
     if (next.has(i)) next.delete(i); else next.add(i);
     return next;
   });
-  // The product-wide Definition of Done is the mechanical bar: every part coloured.
   const built = isDesignDone(item, design);
-  const done = built && acceptance.every((_, i) => confirmed.has(i));
+  const acAll = acceptance.every((_, i) => confirmed.has(i));
+
+  // The product-wide Definition of Done also gates Done. Criteria that just restate the
+  // acceptance criteria or "fully finished" auto-satisfy from what is already checked; the
+  // genuinely new ones (safe, signposted, peer-reviewed, ...) are self-certified. Reading
+  // the live DoD means an edit at the Retro changes the bar for every later item.
+  const dodAuto = (c: string): 'ac' | 'build' | null => {
+    const s = c.toLowerCase();
+    if (/acceptance crit/.test(s)) return 'ac';
+    if (/finish|built|gap|patch|complete|no gaps/.test(s)) return 'build';
+    return null;
+  };
+  const [dodConfirmed, setDodConfirmed] = useState<Set<number>>(() => new Set(editing ? dod.map((_, i) => i) : []));
+  const toggleDod = (i: number) => setDodConfirmed((prev) => { const n = new Set(prev); if (n.has(i)) n.delete(i); else n.add(i); return n; });
+  const dodMet = (c: string, i: number) => { const a = dodAuto(c); return a === 'ac' ? acAll : a === 'build' ? built : dodConfirmed.has(i); };
+  const done = built && acAll && dod.every(dodMet);
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -182,12 +199,31 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
           </div>
         )}
 
-        {/* The build-completeness check (part of the Definition of Done: "fully finished,
-            no gaps"), verified mechanically from the design. The full DoD is in the header. */}
-        <div className="flex items-center gap-2 text-sm">
-          <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]', built ? 'bg-emerald-500 text-white' : 'border border-border')}>{built && <Check className="h-3 w-3" />}</span>
-          <span className={cn(built ? 'text-foreground' : 'text-muted-foreground')}>Fully built - every part coloured, no bare patches</span>
-        </div>
+        {/* Definition of Done: the product-wide bar, confirmed to make the item Done. */}
+        {dod.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Definition of Done <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the team&rsquo;s standing bar for every item</span>
+            </div>
+            <ul className="space-y-1">
+              {dod.map((c, i) => {
+                const auto = dodAuto(c);
+                const on = dodMet(c, i);
+                return (
+                  <li key={i}>
+                    <button type="button" disabled={!!auto} onClick={() => toggleDod(i)}
+                      className={cn('flex w-full items-center gap-2 text-left text-sm', auto && 'cursor-default')}>
+                      <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-3 w-3" />}</span>
+                      <span className={cn(on ? 'text-foreground' : 'text-muted-foreground')}>{c}</span>
+                      {auto && <span className="text-[10px] text-muted-foreground/60">· {auto === 'ac' ? 'from acceptance criteria' : 'built above'}</span>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[11px] text-muted-foreground/70">Confirm the product-wide bar too - it applies to every item and is refined at the Retrospective.</p>
+          </div>
+        )}
 
         {isExhibit && <p className="text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
       </div>
