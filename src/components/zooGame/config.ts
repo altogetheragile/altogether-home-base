@@ -6,6 +6,11 @@ import { jitterItems, driftAttendance } from './simulation/simulate';
 /** First-Sprint capacity guess, before there is velocity. */
 export const STARTER_CAPACITY = 16;
 
+/** How many items may be in Doing at once (a WIP limit). Limiting work-in-progress
+ *  helps the team finish things rather than start many; the "finish fewer" improvement
+ *  tightens it. */
+export const DEFAULT_WIP_LIMIT = 3;
+
 // ---- Timed days and the Daily Scrum ----
 /** How many timed days each Sprint runs. */
 export const SPRINT_DAYS = 3;
@@ -127,6 +132,8 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     pendingImpediment: null,
     carriedImpediment: null,
     missedScrums: 0,
+    wipLimit: DEFAULT_WIP_LIMIT,
+    scrumDiscipline: false,
   };
 }
 

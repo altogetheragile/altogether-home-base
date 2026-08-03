@@ -131,9 +131,17 @@ export function toggleItemTask(state: ZooGameState, id: string, taskId: string):
   return { ...state, backlog };
 }
 
-/** Start work on a committed item: it moves from To Do into Doing (the studio opens). */
+/** How many committed items are in Doing (started, not yet Done) this Sprint. */
+export const doingCount = (state: ZooGameState): number =>
+  state.backlog.filter((it) => it.status === 'committed' && it.started && it.sprintNumber === state.sprintNumber).length;
+
+/** Start work on a committed item: it moves from To Do into Doing (the studio opens).
+ *  Blocked once the WIP limit is reached - finish something before starting more. */
 export function startItem(state: ZooGameState, id: string): ZooGameState {
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'committed' ? { ...it, started: true } : it)) };
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item || item.status !== 'committed' || item.started) return state;
+  if (doingCount(state) >= state.wipLimit) return state; // WIP limit reached
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
 }
 
 /** Mark / unmark an item as essential to the Sprint Goal (done at Planning). */
@@ -423,7 +431,9 @@ export function startDay(state: ZooGameState): ZooGameState {
  *  timeboxed). */
 export function runDailyScrum(state: ZooGameState): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
-  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, DAILY_SCRUM_MULT);
+  // A disciplined team (the "hold the Daily Scrum every day" improvement) runs an
+  // efficient, timeboxed Daily Scrum that costs no build time.
+  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT);
 }
 
 /** Skip the Daily Scrum. If an impediment was waiting, it goes unspotted and
@@ -490,13 +500,21 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
 // ============= Retrospective and next Sprint =============
 
 export function startNextSprint(state: ZooGameState, improvement: string): ZooGameState {
+  // The chosen improvement has a mechanical effect next Sprint, so inspect-and-adapt
+  // actually changes how the team works (not just a note): "finish fewer" tightens the
+  // WIP limit; committing to the Daily Scrum makes it efficient (no time cost).
+  const imp = improvement.trim();
+  const wipLimit = /finish fewer/i.test(imp) ? Math.max(1, state.wipLimit - 1) : state.wipLimit;
+  const scrumDiscipline = state.scrumDiscipline || /daily scrum every day/i.test(imp);
   return {
     ...state,
     phase: 'planning',
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
-    improvements: improvement.trim() ? [...state.improvements, improvement.trim()] : state.improvements,
+    wipLimit,
+    scrumDiscipline,
+    improvements: imp ? [...state.improvements, imp] : state.improvements,
   };
 }
 

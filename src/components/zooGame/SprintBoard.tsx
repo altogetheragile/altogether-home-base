@@ -117,6 +117,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   const todo = committed.filter((it) => it.status === 'committed' && !it.started);
   const doing = committed.filter((it) => it.status === 'committed' && it.started);
   const done = committed.filter((it) => it.status === 'done' || it.status === 'open');
+  const atWipLimit = doing.length >= state.wipLimit;
 
   // Built animals you can copy from when designing another of the same kind.
   const copySources: CopySource[] = designItem
@@ -174,7 +175,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
 
             <div className="min-w-0 space-y-3">
               <p className="rounded-lg border border-border bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
-                <strong>Start</strong> an item to move it into <strong>Doing</strong> - the board stays in view. Then <strong>Design &amp; build</strong> it in the studio and tick off its plan; when the build is done and every task is ticked it moves to <strong>Done</strong>, ready to open to visitors. Finishing fewer items well beats starting many.
+                <strong>Start</strong> an item to move it into <strong>Doing</strong> - up to the <strong>WIP limit of {state.wipLimit}</strong>, so you finish work before starting more. Then <strong>Design &amp; build</strong> it in the studio and tick off its plan; when the build is done and every task is ticked it moves to <strong>Done</strong>, ready to open to visitors.
               </p>
               <div className="grid gap-3 sm:grid-cols-3">
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
@@ -184,10 +185,10 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                         <div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>
                         <TaskChecklist item={it} onToggle={onToggleTask} readOnly />
                       </>}
-                      actions={<Button size="sm" className="h-7 px-2 text-xs" onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
+                      actions={<Button size="sm" className="h-7 px-2 text-xs" disabled={atWipLimit} title={atWipLimit ? `WIP limit ${state.wipLimit} reached - finish something in Doing first` : undefined} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
                   ))}
                 </BoardColumn>
-                <BoardColumn title="Doing" count={doing.length} hint="Nothing in progress">
+                <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
