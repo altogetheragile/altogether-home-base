@@ -98,14 +98,14 @@ export function estimateItem(state: ZooGameState, id: string, points: number): Z
 /** A coached default breakdown of how a PBI gets built, by kind - the design work and
  *  then opening it. It is a starting point the Developers edit, not a fixed template. */
 export function suggestTasks(item: BacklogItem): SprintTask[] {
-  const zone = item.zone;
-  // Opening to visitors is a separate step (the Open button on a Done item), so the
-  // plan stops at placing it - it is not a task.
+  // The plan is the BUILD work (the design steps). Placing and opening to visitors is a
+  // separate step - the Open button on a Done item - not a task, so the plan does not
+  // include "place it" or "open it" (that would duplicate the Open action).
   const labels = item.category === 'exhibit'
-    ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features', `Place it in ${zone}`]
+    ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features']
     : item.category === 'amenity'
-      ? [`Design the ${item.name.toLowerCase()}`, 'Colour it and put up a sign', `Place it in ${zone}`]
-      : ['Choose the plant type', 'Colour the foliage', `Place it in ${zone}`];
+      ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
+      : ['Choose the plant type', 'Colour the foliage'];
   return labels.map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
 }
 
@@ -211,11 +211,17 @@ export function reorderInZone(state: ZooGameState, id: string, dir: 'up' | 'down
 
 /** Commit the chosen Backlog items into the current Sprint and open it for play.
  *  The Sprint starts on day 1, ready to build. */
+/** Give a committed item a task plan if it has none, so every item goes through the
+ *  Doing checklist and nothing can skip straight to Done. A plan written during
+ *  Planning (the "how") is kept as-is. */
+const withPlan = (item: BacklogItem): BacklogItem =>
+  (item.tasks ?? []).filter((t) => t.label.trim()).length ? item : { ...item, tasks: suggestTasks(item) };
+
 export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
   // Only estimated (sized) Backlog items can be committed.
   const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && !it.unsized).map((it) => it.id));
   const backlog = state.backlog.map((it) =>
-    committed.has(it.id) ? { ...it, status: 'committed' as const, sprintNumber: state.sprintNumber } : it,
+    committed.has(it.id) ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it,
   );
   return {
     ...state, phase: 'sprint', committedIds: [...committed], backlog,
@@ -230,7 +236,7 @@ export function pullIntoSprint(state: ZooGameState, id: string): ZooGameState {
   if (state.phase !== 'sprint') return state;
   const item = state.backlog.find((it) => it.id === id && it.status === 'backlog' && !it.unsized);
   if (!item) return state;
-  const backlog = state.backlog.map((it) => (it.id === id ? { ...it, status: 'committed' as const, sprintNumber: state.sprintNumber } : it));
+  const backlog = state.backlog.map((it) => (it.id === id ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it));
   return { ...state, committedIds: [...state.committedIds, id], backlog };
 }
 
