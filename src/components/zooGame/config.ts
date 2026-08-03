@@ -25,9 +25,21 @@ export const MISSED_SCRUM_TIP =
 /** The product-wide Definition of Done: the bar every item clears to be shippable. */
 export const DEFAULT_DOD: string[] = [
   'Meets its acceptance criteria',
-  'Fits its zone theme',
-  'No unfinished patches',
-  'Safe and accessible',
+  'Fully finished - every part built, no gaps',
+  'Safe and accessible to all visitors',
+  'Signposted so visitors can find it',
+  'Peer-reviewed by another Developer',
+  'Nothing already open is broken by it',
+];
+
+/** Coached suggestions for the Definition of Done: general, product-wide criteria the
+ *  team can add, grouped by the kind of quality bar each one sets. The DoD is the same
+ *  bar for every item (unlike per-item acceptance criteria), so these read generally. */
+export const DOD_LIBRARY: { group: string; items: string[] }[] = [
+  { group: 'Complete', items: ['Meets its acceptance criteria', 'Fully finished - every part built, no gaps', 'Cleaned up - no leftover materials or hazards'] },
+  { group: 'Quality', items: ['Peer-reviewed by another Developer', 'No known defects', 'On-brand and fits the park look'] },
+  { group: 'Safe & usable', items: ['Safe and accessible to all visitors', 'Signposted so visitors can find it', 'Enclosures secure and escape-proof'] },
+  { group: 'No regressions', items: ['Nothing already open is broken by it', 'Amenities still cope with the extra visitors'] },
 ];
 
 export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';

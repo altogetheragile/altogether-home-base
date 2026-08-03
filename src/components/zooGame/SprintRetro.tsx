@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
 import { productGoalProgress } from './engine';
+import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface SprintRetroProps {
   state: ZooGameState;
   onNextSprint: (improvement: string) => void;
+  onSetDod: (dod: string[]) => void;
   onWrapUp: () => void;
 }
 
@@ -19,7 +21,7 @@ const IMPROVEMENTS = [
 
 /** Retrospective: inspect how the team worked and pick one improvement to carry
  *  forward, then plan the next Sprint. */
-export function SprintRetro({ state, onNextSprint, onWrapUp }: SprintRetroProps) {
+export function SprintRetro({ state, onNextSprint, onSetDod, onWrapUp }: SprintRetroProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const canWrap = productGoalProgress(state) >= 0.8;
 
@@ -27,15 +29,11 @@ export function SprintRetro({ state, onNextSprint, onWrapUp }: SprintRetroProps)
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="text-lg font-bold">Sprint {state.sprintNumber} Retrospective</h2>
-        <p className="text-xs text-muted-foreground">How did the team work this Sprint? Pick one improvement to carry into the next one.</p>
+        <p className="text-xs text-muted-foreground">How did the team work this Sprint? Refine the Definition of Done and pick one improvement to carry into the next one.</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
-        <span className="text-sm font-semibold">Definition of Done</span>
-        {state.definitionOfDone.map((d) => (
-          <span key={d} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>
-        ))}
-      </div>
+      {/* The Retrospective is where the team inspects and adapts the Definition of Done. */}
+      <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
 
       <div className="space-y-2">
         {IMPROVEMENTS.map((imp) => (
