@@ -6,6 +6,7 @@ import { DAY_SECONDS } from './config';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskChecklist } from './Board';
+import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Palette, DoorOpen, Check, AlertTriangle, Clock, Pencil, CopyPlus, Sunrise, ArrowRight } from 'lucide-react';
@@ -177,6 +178,9 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               <p className="rounded-lg border border-border bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
                 <strong>Start</strong> an item to move it into <strong>Doing</strong> - up to the <strong>WIP limit of {state.wipLimit}</strong>, so you finish work before starting more. Then <strong>Design &amp; build</strong> it in the studio and tick off its plan; when the build is done and every task is ticked it moves to <strong>Done</strong>, ready to open to visitors.
               </p>
+              {atWipLimit && done.length === 0 && (
+                <CoachTip>You&rsquo;re at your WIP limit with nothing Done yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
+              )}
               <div className="grid gap-3 sm:grid-cols-3">
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
                   {todo.map((it) => (

@@ -1,6 +1,7 @@
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress } from './engine';
+import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
@@ -21,6 +22,8 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const progress = Math.round(productGoalProgress(state) * 100);
+  // Output-chasing: a lot delivered but visitors are not loving it (low happiness).
+  const outputChasing = velocity >= 8 && r != null && r.totalAttendance > 0 && r.overallHappiness < 34;
 
   return (
     <div className="space-y-5">
@@ -41,6 +44,10 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
               : <p className="text-[11px] text-muted-foreground">Work the Goal depended on was left unfinished. Inspect why, and adapt - protect the Goal by committing to less, or marking fewer items essential.</p>}
           </div>
         </div>
+      )}
+
+      {outputChasing && (
+        <CoachTip>You delivered <strong>{velocity} pts</strong>, but visitors aren&rsquo;t loving the zoo yet. Value is the <em>outcome</em>, not the output - build what a visitor group actually wants (serve a zone, match a design to its crowd), not just more.</CoachTip>
       )}
 
       {!r || r.totalAttendance === 0 ? (
