@@ -1,3 +1,4 @@
+import { useRef, useState, useLayoutEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import { renderDesign, presetFor, GRID_W, type ItemDesign } from './design';
 import type { SegmentId } from './simulation/types';
@@ -76,6 +77,39 @@ function ZoneRegion({ zone, items, theme, cell }: { zone: string; items: Backlog
   );
 }
 
+/** Lay content out at a FIXED design width and scale it uniformly to fill the container.
+ *  Because the layout always computes at `designWidth`, it never reflows on resize - the
+ *  whole park just scales up or down as one piece, like zooming a map. */
+function ScaledScene({ designWidth, children }: { designWidth: number; children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState<number>();
+
+  useLayoutEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    const update = () => {
+      const s = o.clientWidth / designWidth;
+      setScale(s);
+      setHeight(i.offsetHeight * s);
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(o);
+    ro.observe(i);
+    update();
+    return () => ro.disconnect();
+  }, [designWidth]);
+
+  return (
+    <div ref={outer} style={{ height }} className="relative w-full">
+      <div ref={inner} style={{ width: designWidth, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** Deterministic 0..1 from an index + channel (stable across renders). */
 const jitter = (n: number, k: number) => {
   const x = Math.sin((n + 1) * (k === 0 ? 12.9898 : 78.233)) * 43758.5453;
@@ -108,6 +142,48 @@ export function ParkView({ state, compact = false, fill = false, large = false }
     }
   }
 
+  // The park scene, laid out once. For the large (Park tab) view it renders inside a
+  // ScaledScene at a fixed design width, so it scales rather than reflows on resize.
+  const scene = (
+    <div className={cn('relative overflow-hidden rounded-2xl border shadow-sm', fill && 'aspect-square')}
+      style={{ borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
+      {/* Fixed 2-column grid (not the viewport-based sm: breakpoint) so the layout is
+          driven by content, not window width - the ScaledScene handles fitting the width. */}
+      <div className={cn('relative z-10 grid gap-3 p-4 pb-9', compact ? 'grid-cols-1' : 'grid-cols-2',
+        fill ? 'h-full content-stretch' : 'content-start')}
+        style={{ minHeight: fill ? undefined : compact ? 140 : large ? 460 : 230 }}>
+        {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} items={z.items} theme={z.theme} cell={cell} />)}
+      </div>
+
+      {/* Decor: trees at the corners, an entrance gate at the foot. */}
+      {!compact && (
+        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+          <Tree style={{ left: '2%', bottom: '4%' }} />
+          <Tree style={{ right: '2%', bottom: '4%' }} />
+          <div className="absolute left-1/2 bottom-1 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ color: '#5a3a1c' }}>
+            <div className="mx-auto mb-0.5 h-2.5 w-24 rounded-t-md border-2 border-b-0" style={{ borderColor: '#8a5a2b', background: 'rgba(138,90,43,.15)' }} />
+            ENTRANCE
+          </div>
+        </div>
+      )}
+
+      {/* Visitors */}
+      {dots.length > 0 && (
+        <div className="pointer-events-none absolute inset-0 z-20" aria-hidden>
+          {dots.map((seg, i) => (
+            <span key={i} className="zoo-visitor absolute" style={{
+              left: `${6 + jitter(i, 0) * 88}%`, top: `${10 + jitter(i, 1) * 78}%`,
+              animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite`,
+            }}>
+              <span className="block rounded-full ring-1 ring-white/70" style={{ width: compact ? 4 : 5, height: compact ? 4 : 5, margin: '0 auto', background: '#f0c9a8' }} />
+              <span className="block rounded-b-sm rounded-t" style={{ width: compact ? 6 : 7, height: compact ? 6 : 7, background: SEG_DOT[seg] }} />
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <section className={cn('space-y-3', compact && 'space-y-2')}>
       <style>{`
@@ -124,42 +200,8 @@ export function ParkView({ state, compact = false, fill = false, large = false }
         </div>
       )}
 
-      {/* The park scene */}
-      <div className={cn('relative overflow-hidden rounded-2xl border shadow-sm', fill && 'aspect-square')}
-        style={{ borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
-        <div className={cn('relative z-10 grid grid-cols-1 gap-3 p-3 pb-9 sm:grid-cols-2 sm:p-4',
-          fill ? 'h-full content-stretch' : 'content-start')}
-          style={{ minHeight: fill ? undefined : compact ? 140 : large ? 460 : 230 }}>
-          {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} items={z.items} theme={z.theme} cell={cell} />)}
-        </div>
-
-        {/* Decor: trees at the corners, an entrance gate at the foot. */}
-        {!compact && (
-          <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-            <Tree style={{ left: '2%', bottom: '4%' }} />
-            <Tree style={{ right: '2%', bottom: '4%' }} />
-            <div className="absolute left-1/2 bottom-1 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ color: '#5a3a1c' }}>
-              <div className="mx-auto mb-0.5 h-2.5 w-24 rounded-t-md border-2 border-b-0" style={{ borderColor: '#8a5a2b', background: 'rgba(138,90,43,.15)' }} />
-              ENTRANCE
-            </div>
-          </div>
-        )}
-
-        {/* Visitors */}
-        {dots.length > 0 && (
-          <div className="pointer-events-none absolute inset-0 z-20" aria-hidden>
-            {dots.map((seg, i) => (
-              <span key={i} className="zoo-visitor absolute" style={{
-                left: `${6 + jitter(i, 0) * 88}%`, top: `${10 + jitter(i, 1) * 78}%`,
-                animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite`,
-              }}>
-                <span className="block rounded-full ring-1 ring-white/70" style={{ width: compact ? 4 : 5, height: compact ? 4 : 5, margin: '0 auto', background: '#f0c9a8' }} />
-                <span className="block rounded-b-sm rounded-t" style={{ width: compact ? 6 : 7, height: compact ? 6 : 7, background: SEG_DOT[seg] }} />
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* The park scene - scaled to fit (never reflows) on the large Park tab. */}
+      {large ? <ScaledScene designWidth={880}>{scene}</ScaledScene> : scene}
     </section>
   );
 }
