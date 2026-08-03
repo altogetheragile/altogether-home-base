@@ -519,3 +519,36 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
     expect((s.backlog.find((i) => i.id === 'tiger')!.tasks ?? []).length).toBeGreaterThan(0);
   });
 });
+
+describe('zoo game: WIP limit and improvements with teeth', () => {
+  it('the WIP limit blocks starting more items than the limit allows', () => {
+    let s = planSprint(initialZooState(1), ['lion', 'tiger', 'leopard', 'penguins']);
+    expect(s.wipLimit).toBe(3);
+    const doing = () => s.backlog.filter((i) => i.status === 'committed' && i.started).length;
+    s = startItem(s, 'lion'); s = startItem(s, 'tiger'); s = startItem(s, 'leopard');
+    expect(doing()).toBe(3);
+    s = startItem(s, 'penguins'); // over the limit -> no-op
+    expect(doing()).toBe(3);
+    expect(s.backlog.find((i) => i.id === 'penguins')!.started).toBeFalsy();
+  });
+
+  it('the "finish fewer" improvement tightens the WIP limit next Sprint', () => {
+    let s = initialZooState(1);
+    expect(s.wipLimit).toBe(3);
+    s = startNextSprint(s, 'Finish fewer things properly, rather than starting more');
+    expect(s.wipLimit).toBe(2);
+    s = startNextSprint(s, 'Finish fewer things properly, rather than starting more');
+    expect(s.wipLimit).toBe(1); // floored at 1
+    s = startNextSprint(s, 'Finish fewer things properly, rather than starting more');
+    expect(s.wipLimit).toBe(1);
+  });
+
+  it('committing to the Daily Scrum every day makes it efficient (no time cost)', () => {
+    let s = startNextSprint(initialZooState(1), 'Hold the Daily Scrum every day and catch issues early');
+    expect(s.scrumDiscipline).toBe(true);
+    s = { ...s, phase: 'sprint', dayStage: 'dailyScrum', dayNumber: 1, sprintDays: 3 };
+    expect(runDailyScrum(s).dayTimeMult).toBe(1); // efficient: no cut
+    // Without the discipline, holding the Daily Scrum costs a little time.
+    expect(runDailyScrum({ ...s, scrumDiscipline: false }).dayTimeMult).toBe(DAILY_SCRUM_MULT);
+  });
+});

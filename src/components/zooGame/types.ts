@@ -150,6 +150,12 @@ export interface ZooGameState {
   carriedImpediment: Impediment | null;
   /** How many Daily Scrums were skipped while an impediment was waiting. */
   missedScrums: number;
+  /** Max items allowed in Doing at once - a WIP limit. Tightened by the "finish fewer"
+   *  Retrospective improvement, so a chosen improvement has a real, mechanical effect. */
+  wipLimit: number;
+  /** Set by the "hold the Daily Scrum every day" improvement: disciplined Daily Scrums
+   *  become efficient, so holding one costs no build time. */
+  scrumDiscipline: boolean;
 }
 
 export type ZooAction =

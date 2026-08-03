@@ -4,6 +4,7 @@ import { productGoalProgress } from './engine';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Zap } from 'lucide-react';
 
 interface SprintRetroProps {
   state: ZooGameState;
@@ -12,11 +13,13 @@ interface SprintRetroProps {
   onWrapUp: () => void;
 }
 
-const IMPROVEMENTS = [
-  'Finish fewer things properly, rather than starting more',
-  'Hold the Daily Scrum every day and catch issues early',
-  'Serve each zone before adding the next exhibit',
-  'Read the visitor feedback before re-planning',
+/** Improvements the team can commit to. Some have a real mechanical effect next Sprint,
+ *  so inspect-and-adapt actually changes how the team works. */
+const IMPROVEMENTS: { text: string; effect?: string }[] = [
+  { text: 'Finish fewer things properly, rather than starting more', effect: 'Tightens the WIP limit by 1' },
+  { text: 'Hold the Daily Scrum every day and catch issues early', effect: 'Daily Scrums become efficient - they cost no build time' },
+  { text: 'Serve each zone before adding the next exhibit' },
+  { text: 'Read the visitor feedback before re-planning' },
 ];
 
 /** Retrospective: inspect how the team worked and pick one improvement to carry
@@ -35,12 +38,17 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onWrapUp }: SprintR
       {/* The Retrospective is where the team inspects and adapts the Definition of Done. */}
       <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
 
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold">Commit to one improvement</h3>
+        <p className="text-[11px] text-muted-foreground">Inspect-and-adapt has teeth: some improvements change how the team works next Sprint. Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · Daily Scrums are efficient' : ''}.</p>
+      </div>
       <div className="space-y-2">
         {IMPROVEMENTS.map((imp) => (
-          <button key={imp} type="button" onClick={() => setSelected(imp)}
+          <button key={imp.text} type="button" onClick={() => setSelected(imp.text)}
             className={cn('w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
-              selected === imp ? 'border-primary bg-primary/10 font-medium' : 'border-border bg-card hover:border-primary hover:bg-primary/5')}>
-            {imp}
+              selected === imp.text ? 'border-primary bg-primary/10 font-medium' : 'border-border bg-card hover:border-primary hover:bg-primary/5')}>
+            {imp.text}
+            {imp.effect && <span className="mt-1 flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-300"><Zap className="h-3 w-3" /> {imp.effect}</span>}
           </button>
         ))}
       </div>

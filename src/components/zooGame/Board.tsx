@@ -14,13 +14,16 @@ export function CategoryIcon({ item, className }: { item: BacklogItem; className
   return <Fish className={className} />;
 }
 
-/** One board column - To Do / Doing / Done - with a header count and an empty hint. */
-export function BoardColumn({ title, count, hint, tone = 'default', children }: { title: string; count: number; hint?: string; tone?: 'default' | 'done'; children?: ReactNode }) {
+/** One board column - To Do / Doing / Done - with a header count and an empty hint. When
+ *  `limit` is set (a WIP limit) the header shows count/limit and flags when it is full. */
+export function BoardColumn({ title, count, hint, tone = 'default', limit, children }: { title: string; count: number; hint?: string; tone?: 'default' | 'done'; limit?: number; children?: ReactNode }) {
+  const full = limit != null && count >= limit;
   return (
     <div className="flex min-w-0 flex-col">
       <div className={cn('flex items-center justify-between rounded-t-lg border border-b-0 border-border px-3 py-2',
-        tone === 'done' ? 'bg-emerald-100/60 dark:bg-emerald-950/30' : 'bg-muted')}>
-        <h3 className="text-sm font-semibold">{title} <span className="font-normal text-muted-foreground">({count})</span></h3>
+        tone === 'done' ? 'bg-emerald-100/60 dark:bg-emerald-950/30' : full ? 'bg-amber-100/70 dark:bg-amber-950/30' : 'bg-muted')}>
+        <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? `/${limit}` : ''})</span></h3>
+        {limit != null && <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground" title="Work-in-progress limit">WIP</span>}
       </div>
       <div className="flex-1 space-y-1.5 rounded-b-lg border border-border bg-card/40 p-2" style={{ minHeight: 84 }}>
         {count === 0 && <div className="py-5 text-center text-[11px] text-muted-foreground/50">{hint ?? '—'}</div>}
