@@ -52,7 +52,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onWrapUp }: SprintR
         </div>
       )}
 
-      <div className="sticky bottom-4 flex items-center justify-end gap-3 rounded-lg border border-border bg-background/95 px-4 py-2 shadow-sm backdrop-blur">
+      {/* A normal in-flow action row (not sticky), so a long, coached DoD editor is never
+          overlapped by a floating bar. */}
+      <div className="mt-2 flex items-center justify-end gap-3 border-t border-border pt-4">
         {canWrap && <Button size="sm" variant="outline" onClick={onWrapUp}>Wrap up</Button>}
         <Button size="sm" disabled={!selected} onClick={() => selected && onNextSprint(selected)}>Start Sprint {state.sprintNumber + 1}</Button>
       </div>
