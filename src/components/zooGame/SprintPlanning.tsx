@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { ZooGameState, PbiDraft } from './types';
-import { availableItems, suggestSprintGoal } from './engine';
+import type { ZooGameState, PbiDraft, SprintTask } from './types';
+import { availableItems, suggestSprintGoal, suggestTasks } from './engine';
 import { zooCapacity } from './config';
-import { ProductBacklogSidebar, BoardColumn, ItemCard } from './Board';
+import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Lightbulb, Target, Wand2, X, Check, ClipboardCheck } from 'lucide-react';
@@ -11,6 +11,7 @@ interface SprintPlanningProps {
   state: ZooGameState;
   onPlan: (ids: string[]) => void;
   onEstimate: (id: string, points: number) => void;
+  onSetTasks: (id: string, tasks: SprintTask[]) => void;
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onReorder: (id: string, dir: 'up' | 'down') => void;
@@ -31,7 +32,7 @@ const STEPS: { key: Step; label: string; full: string }[] = [
  *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
  *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
  *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi, onRefinePbi, onReorder, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
   const [step, setStep] = useState<Step>('why');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const items = availableItems(state);
@@ -41,6 +42,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
   const over = committed > capacity;
   const hasGoal = state.sprintGoal.trim().length > 0;
   const hasWhat = chosen.length > 0;
+  const totalTasks = chosen.reduce((s, i) => s + (i.tasks?.filter((t) => t.label.trim()).length ?? 0), 0);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -176,12 +178,13 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
         </div>
       )}
 
-      {/* ---- HOW: confirm the plan and start ---- */}
+      {/* ---- HOW: decompose each item into a plan of tasks, then start ---- */}
       {step === 'how' && (
         <div className="mx-auto max-w-2xl space-y-3">
           <p className="text-sm text-muted-foreground">
-            The plan for turning the forecast into a Done Increment: build each item in the Sprint Backlog to the Definition
-            of Done over the Sprint&rsquo;s {state.sprintDays} days. You can adapt day by day at each Daily Scrum.
+            Plan <em>how</em> the work gets done: break each item in the Sprint Backlog into the tasks that build it to the
+            Definition of Done. This is the Developers&rsquo; plan - suggest a breakdown or write your own, and adapt it day
+            by day. The Definition of Done still decides when an item is truly Done.
           </p>
 
           <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
@@ -189,13 +192,18 @@ export function SprintPlanning({ state, onPlan, onEstimate, onAddPbi, onRefinePb
             <p className="text-sm font-medium">{state.sprintGoal || '(not set)'}</p>
           </div>
 
-          <section className="space-y-1.5">
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({chosen.length})</span></h3>
-              <span className={cn('font-mono text-xs', over ? 'text-destructive' : 'text-muted-foreground')}>{committed} / {capacity} pts</span>
+          <section className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({chosen.length})</span> <span className="font-normal text-muted-foreground">· {totalTasks} task{totalTasks === 1 ? '' : 's'}</span></h3>
+              <div className="flex items-center gap-2">
+                <span className={cn('font-mono text-xs', over ? 'text-destructive' : 'text-muted-foreground')}>{committed} / {capacity} pts</span>
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
+                  <Wand2 className="mr-1 h-3.5 w-3.5" /> Break all down
+                </Button>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              {chosen.map((it) => <ItemCard key={it.id} item={it} />)}
+            <div className="space-y-2">
+              {chosen.map((it) => <TaskEditor key={it.id} item={it} onSetTasks={onSetTasks} />)}
             </div>
           </section>
 

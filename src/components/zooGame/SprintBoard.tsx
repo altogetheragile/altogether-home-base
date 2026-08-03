@@ -5,7 +5,7 @@ import { openZoo } from './engine';
 import { DAY_SECONDS } from './config';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
-import { ProductBacklogSidebar, BoardColumn, ItemCard } from './Board';
+import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Palette, DoorOpen, Check, AlertTriangle, Clock, Pencil, CopyPlus, Sunrise } from 'lucide-react';
@@ -18,6 +18,7 @@ interface SprintBoardProps {
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onSetUseStories: (on: boolean) => void;
+  onToggleTask: (id: string, taskId: string) => void;
   onPull: (id: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
@@ -98,7 +99,7 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: nu
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -188,7 +189,10 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
                   {todo.map((it) => (
                     <ItemCard key={it.id} item={it}
-                      subtitle={<div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>}
+                      subtitle={<>
+                        <div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>
+                        <TaskChecklist item={it} onToggle={onToggleTask} />
+                      </>}
                       actions={<Button size="sm" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> Design and build</Button>} />
                   ))}
                 </BoardColumn>
@@ -196,12 +200,14 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                   {doing.map((it) => (
                     <ItemCard key={it.id} item={it}
                       badge={<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
+                      subtitle={<TaskChecklist item={it} onToggle={onToggleTask} />}
                       actions={<Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> Resume</Button>} />
                   ))}
                 </BoardColumn>
                 <BoardColumn title="Done ✓" count={done.length} hint="Nothing built yet" tone="done">
                   {done.map((it) => (
                     <ItemCard key={it.id} item={it} className={it.status === 'open' ? 'bg-emerald-50/50 dark:bg-emerald-950/20' : undefined}
+                      subtitle={<TaskChecklist item={it} onToggle={onToggleTask} />}
                       actions={doneActions(it)} />
                   ))}
                 </BoardColumn>

@@ -1,11 +1,11 @@
-import { useState, type ReactNode } from 'react';
-import type { ZooGameState, BacklogItem, PbiDraft } from './types';
-import { availableItems } from './engine';
+import { useState, useRef, type ReactNode } from 'react';
+import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
+import { availableItems, suggestTasks } from './engine';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
@@ -52,6 +52,67 @@ export function ItemCard({ item, badge, subtitle, actions, onClick, selectable, 
       </div>
       {subtitle}
       {actions && <div className="mt-1.5 flex items-center justify-end gap-1.5">{actions}</div>}
+    </div>
+  );
+}
+
+/** Plan-time task decomposition for one PBI (Sprint Planning's "how"): a coached
+ *  breakdown you can suggest, then add / edit / remove. */
+export function TaskEditor({ item, onSetTasks }: { item: BacklogItem; onSetTasks: (id: string, tasks: SprintTask[]) => void }) {
+  const tasks = item.tasks ?? [];
+  const uid = useRef(0);
+  const set = (next: SprintTask[]) => onSetTasks(item.id, next);
+  const add = () => set([...tasks, { id: `${item.id}-u${uid.current++}`, label: '', done: false }]);
+  const edit = (tid: string, label: string) => set(tasks.map((t) => (t.id === tid ? { ...t, label } : t)));
+  const remove = (tid: string) => set(tasks.filter((t) => t.id !== tid));
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 text-sm">
+          <CategoryIcon item={item} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate font-medium">{item.name}</span>
+          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{item.zone}</span>
+          <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{item.estimate} pts</span>
+        </div>
+        <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => set(suggestTasks(item))}>
+          <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest tasks
+        </Button>
+      </div>
+      <div className="mt-2 space-y-1">
+        {tasks.length === 0 && <p className="text-[11px] text-muted-foreground/70">No tasks yet - suggest a breakdown or add your own steps for how this gets built.</p>}
+        {tasks.map((t) => (
+          <div key={t.id} className="flex items-center gap-1.5">
+            <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+            <input value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
+              className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[13px] outline-none focus:border-primary" />
+            <button type="button" onClick={() => remove(t.id)} className="shrink-0 text-muted-foreground hover:text-foreground" aria-label="Remove task"><X className="h-3.5 w-3.5" /></button>
+          </div>
+        ))}
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={add}><Plus className="mr-1 h-3.5 w-3.5" /> Add task</Button>
+      </div>
+    </div>
+  );
+}
+
+/** The plan on a board card: the tasks, ticked off as the Developers work through them. */
+export function TaskChecklist({ item, onToggle }: { item: BacklogItem; onToggle: (id: string, taskId: string) => void }) {
+  const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
+  if (!tasks.length) return null;
+  const done = tasks.filter((t) => t.done).length;
+  return (
+    <div className="mt-1.5 rounded-md border border-border/70 bg-muted/30 p-1.5">
+      <div className="mb-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <ListChecks className="h-3 w-3" /> Plan {done}/{tasks.length}
+      </div>
+      <div className="space-y-0.5">
+        {tasks.map((t) => (
+          <label key={t.id} className="flex cursor-pointer items-start gap-1.5 text-[11px]">
+            <input type="checkbox" checked={t.done} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
+            <span className={cn(t.done && 'text-muted-foreground line-through')}>{t.label}</span>
+          </label>
+        ))}
+      </div>
     </div>
   );
 }
