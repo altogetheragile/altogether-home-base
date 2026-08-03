@@ -192,7 +192,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
       </div>
 
       <div className="mt-3 flex justify-end">
-        <Button size="sm" disabled={!done} onClick={() => onFinish(design)}>{editing ? 'Save changes' : 'Finish and mark Done'}</Button>
+        <Button size="sm" disabled={!done} onClick={() => onFinish(design)}>{editing ? 'Save changes' : 'Finish the build'}</Button>
       </div>
     </div>
   );
