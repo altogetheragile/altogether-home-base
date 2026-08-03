@@ -102,9 +102,6 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi
             />
             <p className="text-[11px] text-muted-foreground">Not sure yet? Draft one now - you can refine it while choosing what to build, including a coached suggestion from your selection.</p>
           </div>
-          <div className="flex justify-end">
-            <Button size="lg" disabled={!hasGoal} onClick={() => setStep('what')}>Next: what to build →</Button>
-          </div>
         </div>
       )}
 
@@ -171,10 +168,6 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi
             </div>
           </div>
 
-          <div className="flex justify-between">
-            <Button variant="outline" size="lg" onClick={() => setStep('why')}>← Back</Button>
-            <Button size="lg" disabled={!hasWhat} onClick={() => setStep('how')}>Next: plan the how →</Button>
-          </div>
         </div>
       )}
 
@@ -214,12 +207,30 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi
             </div>
           </div>
 
-          <div className="flex justify-between">
-            <Button variant="outline" size="lg" onClick={() => setStep('what')}>← Back</Button>
-            <Button size="lg" onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber} →</Button>
-          </div>
         </div>
       )}
+
+      {/* Always-visible step navigation so Next / Start never sits below the fold. */}
+      <div className="sticky bottom-4 z-20 mt-2 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur">
+        <div className="min-w-0">
+          {step !== 'why' && <Button variant="outline" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>← Back</Button>}
+        </div>
+        <div className="flex items-center gap-2.5">
+          {step === 'why' && (
+            <>
+              {!hasGoal && <span className="hidden text-[11px] text-muted-foreground sm:inline">Agree a Sprint Goal to continue</span>}
+              <Button size="sm" disabled={!hasGoal} onClick={() => setStep('what')}>Next: what to build →</Button>
+            </>
+          )}
+          {step === 'what' && (
+            <>
+              {!hasWhat && <span className="hidden text-[11px] text-muted-foreground sm:inline">Forecast at least one item to continue</span>}
+              <Button size="sm" disabled={!hasWhat} onClick={() => setStep('how')}>Next: plan the how →</Button>
+            </>
+          )}
+          {step === 'how' && <Button size="sm" onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber} →</Button>}
+        </div>
+      </div>
     </div>
   );
 }
