@@ -5,7 +5,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
@@ -58,7 +58,7 @@ export function ItemCard({ item, badge, subtitle, actions, onClick, selectable, 
 
 interface SidebarProps {
   state: ZooGameState;
-  mode: 'plan' | 'sprint';
+  mode: 'plan' | 'sprint' | 'refine';
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onSetUseStories: (on: boolean) => void;
@@ -89,9 +89,11 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
       </div>
       <p className="text-[11px] text-muted-foreground">
-        {mode === 'plan'
-          ? 'Ordered by you (the PO). Estimate unsized items, then select the Ready ones to forecast into the Sprint.'
-          : 'Pull a Ready item into the Sprint by agreement, as long as it will not put the Sprint Goal at risk.'}
+        {mode === 'refine'
+          ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. Refining now is free; later it happens on the board and costs the Sprint a little time.'
+          : mode === 'plan'
+            ? 'Ordered by you (the PO). Select the Ready ones to forecast into the Sprint (estimate any that are still unsized).'
+            : 'Pull a Ready item into the Sprint by agreement, as long as it will not put the Sprint Goal at risk.'}
       </p>
 
       {editingPbi && (
@@ -139,6 +141,8 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
               <div className="mt-1.5 flex items-center justify-end gap-1.5">
                 {it.unsized ? (
                   <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
+                ) : mode === 'refine' ? (
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
                 ) : mode === 'plan' ? (
                   <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
                     {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</>}

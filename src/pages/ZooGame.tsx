@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import { ZooIntro } from '@/components/zooGame/ZooIntro';
+import { RefineBacklog } from '@/components/zooGame/RefineBacklog';
 import { SprintPlanning } from '@/components/zooGame/SprintPlanning';
 import { SprintBoard } from '@/components/zooGame/SprintBoard';
 import { SprintReview } from '@/components/zooGame/SprintReview';
@@ -23,6 +24,8 @@ export default function ZooGame() {
     switch (state.phase) {
       case 'intro':
         return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start} />;
+      case 'refine':
+        return <ZooShell state={state}><RefineBacklog state={state} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onPlan={() => setPhase('planning')} /></ZooShell>;
       case 'planning':
         return <ZooShell state={state}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} /></ZooShell>;
       case 'sprint':

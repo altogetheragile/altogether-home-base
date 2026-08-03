@@ -4,9 +4,9 @@ import { ParkView } from './ParkView';
 import { cn } from '@/lib/utils';
 import { Target, Trophy, Trees, ClipboardList } from 'lucide-react';
 
-const PHASE_LABEL: Record<string, string> = { planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
+const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
-const WORK_TAB: Record<string, string> = { planning: 'Plan', sprint: 'Build', review: 'Review', retro: 'Retro' };
+const WORK_TAB: Record<string, string> = { refine: 'Refine', planning: 'Plan', sprint: 'Build', review: 'Review', retro: 'Retro' };
 
 function GoalChip({ icon: Icon, label, text, tone }: { icon: typeof Target; label: string; text: string; tone: 'product' | 'sprint' }) {
   return (
@@ -56,7 +56,7 @@ export function ZooShell({ state, children }: { state: ZooGameState; children: R
 
       {tab === 'work' ? (
         // The board phases (Plan, Build) want the full width for the sidebar +
-        // columns; Review and Retro read better in a narrower column.
+        // columns; Refine, Review and Retro read better in a narrower column.
         <div className={cn('space-y-5', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>{children}</div>
       ) : (
         <div className="space-y-3">

@@ -18,7 +18,7 @@ export interface PbiDraft {
   services?: 'food' | 'toilet' | 'rest';
 }
 
-export type ZooPhase = 'intro' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
+export type ZooPhase = 'intro' | 'refine' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
 /** Within a Sprint, a day is being worked (building), paused at its close for the
  *  Daily Scrum, or pausing at the start of a new day before the build resumes. */

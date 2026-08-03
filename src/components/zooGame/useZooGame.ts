@@ -13,7 +13,9 @@ import {
 function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
   switch (action.type) {
     case 'START':
-      return { ...initialZooState(action.gameSeed ?? state.gameSeed), phase: 'planning' };
+      // Sprint 1 begins with a one-time Product Backlog refinement (order + estimate);
+      // from Sprint 2 on, refinement is ongoing on the board, so it goes to planning.
+      return { ...initialZooState(action.gameSeed ?? state.gameSeed), phase: 'refine' };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
     case 'SET_PRODUCT_GOAL':
