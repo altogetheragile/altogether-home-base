@@ -12,8 +12,11 @@ export const STARTER_CAPACITY = 16;
 export const DEFAULT_WIP_LIMIT = 3;
 
 // ---- Timed days and the Daily Scrum ----
-/** How many timed days each Sprint runs. */
+/** How many timed days each Sprint runs (the default cadence). */
 export const SPRINT_DAYS = 3;
+/** Sprint-length choices: fewer days = faster feedback but more event overhead per unit
+ *  of build time; more days = more build time but slower feedback. */
+export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
 /** Seconds of build time in a full day (before any Daily Scrum / impediment cost). */
 export const DAY_SECONDS = 90;
 /** Chance an impediment surfaces on any given day (deterministic per game/Sprint/day). */
@@ -134,6 +137,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     missedScrums: 0,
     wipLimit: DEFAULT_WIP_LIMIT,
     scrumDiscipline: false,
+    learnMode: false,
   };
 }
 

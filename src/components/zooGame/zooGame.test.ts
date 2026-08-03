@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode,
 } from './engine';
 import type { ZooGameState } from './types';
 import type { ItemDesign } from './design';
@@ -550,5 +550,24 @@ describe('zoo game: WIP limit and improvements with teeth', () => {
     expect(runDailyScrum(s).dayTimeMult).toBe(1); // efficient: no cut
     // Without the discipline, holding the Daily Scrum costs a little time.
     expect(runDailyScrum({ ...s, scrumDiscipline: false }).dayTimeMult).toBe(DAILY_SCRUM_MULT);
+  });
+});
+
+describe('zoo game: sprint length and learn mode', () => {
+  it('choosing the Sprint length sets the number of build days (at Planning)', () => {
+    let s: ZooGameState = { ...initialZooState(1), phase: 'planning' };
+    expect(s.sprintDays).toBe(SPRINT_DAYS);
+    s = setSprintDays(s, 5);
+    expect(s.sprintDays).toBe(5);
+    // planning it in commits with that length preserved
+    s = planSprint(s, ['lion']);
+    expect(s.sprintDays).toBe(5);
+  });
+
+  it('learn mode is a toggle on state (pauses the clock in the UI)', () => {
+    let s = initialZooState(1);
+    expect(s.learnMode).toBe(false);
+    s = setLearnMode(s, true);
+    expect(s.learnMode).toBe(true);
   });
 });

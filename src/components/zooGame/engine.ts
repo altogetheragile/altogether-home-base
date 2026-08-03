@@ -149,6 +149,17 @@ export function toggleGoalCritical(state: ZooGameState, id: string): ZooGameStat
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, goalCritical: !it.goalCritical } : it)) };
 }
 
+/** Choose the Sprint length (number of build days) at Planning. */
+export function setSprintDays(state: ZooGameState, days: number): ZooGameState {
+  if (state.phase !== 'planning' && state.phase !== 'refine') return state;
+  return { ...state, sprintDays: Math.max(1, Math.round(days)) };
+}
+
+/** Toggle learn mode: pause the day clock so there is no real-time pressure. */
+export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
+  return { ...state, learnMode: on };
+}
+
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down
  *  among the other still-in-Backlog items. */
 export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
