@@ -85,6 +85,9 @@ export interface BacklogItem {
   /** True once work has started (it moved from To Do into Doing and opened the studio).
    *  Keeps it in the Doing column while it is being built and its tasks ticked. */
   started?: boolean;
+  /** Marked at Planning as essential to the Sprint Goal. The Goal is met when the
+   *  goal-critical items are delivered - you can drop the rest and still meet it. */
+  goalCritical?: boolean;
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -161,6 +164,7 @@ export type ZooAction =
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
   | { type: 'START_ITEM'; id: string }
+  | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }

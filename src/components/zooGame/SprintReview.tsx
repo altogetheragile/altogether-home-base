@@ -36,7 +36,9 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Sprint Goal · {state.sprintGoalMet ? 'met' : 'not met'}</div>
             <p className="text-sm font-medium">{state.sprintGoal}</p>
-            {!state.sprintGoalMet && <p className="text-[11px] text-muted-foreground">Not everything committed was finished. Inspect why, and adapt - forecasts get more honest with each Sprint.</p>}
+            {state.sprintGoalMet
+              ? <p className="text-[11px] text-muted-foreground">The work the Goal depended on was delivered - dropping less-essential scope to protect the Goal is a win, not a miss.</p>
+              : <p className="text-[11px] text-muted-foreground">Work the Goal depended on was left unfinished. Inspect why, and adapt - protect the Goal by committing to less, or marking fewer items essential.</p>}
           </div>
         </div>
       )}
@@ -101,7 +103,7 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
       )}
 
       <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/95 px-4 py-2 shadow-sm backdrop-blur">
-        <span className="text-xs text-muted-foreground">Product Goal reached: <span className="font-medium text-foreground">{progress}%</span></span>
+        <span className="text-xs text-muted-foreground" title="Measured by how much visitors love the zoo (happiness), not by how much of the Backlog is built.">Product Goal (visitors love it): <span className="font-medium text-foreground">{progress}%</span></span>
         <Button size="sm" onClick={onContinue}>Retrospective &rarr;</Button>
       </div>
     </div>

@@ -12,6 +12,7 @@ interface SprintPlanningProps {
   onPlan: (ids: string[]) => void;
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
+  onToggleGoalCritical: (id: string) => void;
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onReorder: (id: string, dir: 'up' | 'down') => void;
@@ -32,7 +33,7 @@ const STEPS: { key: Step; label: string; full: string }[] = [
  *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
  *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
  *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi, onRefinePbi, onReorder, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onAddPbi, onRefinePbi, onReorder, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
   const [step, setStep] = useState<Step>('why');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const items = availableItems(state);
@@ -43,6 +44,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi
   const hasGoal = state.sprintGoal.trim().length > 0;
   const hasWhat = chosen.length > 0;
   const totalTasks = chosen.reduce((s, i) => s + (i.tasks?.filter((t) => t.label.trim()).length ?? 0), 0);
+  const essentials = chosen.filter((i) => i.goalCritical).length;
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -185,6 +187,14 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi
             <p className="text-sm font-medium">{state.sprintGoal || '(not set)'}</p>
           </div>
 
+          {/* Mark which items the Goal depends on. The Goal is an outcome: deliver the
+              essentials and it is met, even if you drop the rest. */}
+          <p className="rounded-lg border border-amber-300/70 bg-amber-50/60 px-4 py-2 text-[11px] text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-200">
+            Star the items the <strong>Sprint Goal</strong> truly depends on. The Goal is an outcome, not a to-do list -
+            deliver the {essentials} essential{essentials === 1 ? '' : 's'} and it is met, even if you drop the rest.
+            {essentials === 0 && ' (None starred yet - the Goal will then need every item.)'}
+          </p>
+
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({chosen.length})</span> <span className="font-normal text-muted-foreground">· {totalTasks} task{totalTasks === 1 ? '' : 's'}</span></h3>
@@ -196,7 +206,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onAddPbi
               </div>
             </div>
             <div className="space-y-2">
-              {chosen.map((it) => <TaskEditor key={it.id} item={it} onSetTasks={onSetTasks} />)}
+              {chosen.map((it) => <TaskEditor key={it.id} item={it} onSetTasks={onSetTasks} onToggleGoalCritical={onToggleGoalCritical} />)}
             </div>
           </section>
 

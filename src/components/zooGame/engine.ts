@@ -136,6 +136,11 @@ export function startItem(state: ZooGameState, id: string): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'committed' ? { ...it, started: true } : it)) };
 }
 
+/** Mark / unmark an item as essential to the Sprint Goal (done at Planning). */
+export function toggleGoalCritical(state: ZooGameState, id: string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, goalCritical: !it.goalCritical } : it)) };
+}
+
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down
  *  among the other still-in-Backlog items. */
 export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
@@ -451,14 +456,21 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   const deliveredThisSprint = committedThisSprint.filter((it) => it.status === 'done' || it.status === 'open');
   const velocityPts = deliveredThisSprint.reduce((s, it) => s + it.estimate, 0);
 
-  // The Sprint Goal is met when everything committed to it was delivered (Done).
-  const sprintGoalMet = state.sprintGoal.trim() ? committedThisSprint.length > 0 && deliveredThisSprint.length === committedThisSprint.length : null;
+  // The Sprint Goal is an OUTCOME, not "finish everything". It is met when the items the
+  // team marked as essential to the Goal were delivered - the rest is scope that can flex.
+  // If nothing was marked essential, fall back to all committed items.
+  const essentials = committedThisSprint.filter((it) => it.goalCritical);
+  const goalItems = essentials.length ? essentials : committedThisSprint;
+  const sprintGoalMet = state.sprintGoal.trim()
+    ? goalItems.length > 0 && goalItems.every((it) => it.status === 'done' || it.status === 'open')
+    : null;
 
   const { signals, signalAge } = escalateSignals(state.signalAge, result.signals);
 
-  // Unfinished committed items (never built) return to the Backlog.
+  // Unfinished committed items (never built) return to the Backlog; clear the per-Sprint
+  // goal-critical mark so it is re-decided next time they are planned.
   const backlog = state.backlog.map((it) =>
-    it.sprintNumber === state.sprintNumber && it.status === 'committed' ? { ...it, status: 'backlog' as const, sprintNumber: null } : it,
+    it.sprintNumber === state.sprintNumber && it.status === 'committed' ? { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false } : it,
   );
 
   return {
@@ -500,8 +512,15 @@ export const openZoo = (state: ZooGameState): BacklogItem[] => state.backlog.fil
 /** Items still available to plan (in the Backlog, not yet committed or built). */
 export const availableItems = (state: ZooGameState): BacklogItem[] => state.backlog.filter((it) => it.status === 'backlog');
 
-/** Progress toward the Product Goal: share of the known Backlog that is open. */
+/** Progress toward the Product Goal - "a zoo visitors love and come back to" - measured
+ *  by the OUTCOME, not by how much of the Backlog is built. Visitor happiness (0..100)
+ *  is the "love", and because happy visitors return it also drives "come back", so it is
+ *  the signal we track. Building more Backlog does not move this on its own; delivering
+ *  things visitors love does. Zero until the first Review produces an outcome. */
+const GOAL_HAPPINESS_FLOOR = 25; // below this, visitors are not enjoying the zoo
+const GOAL_HAPPINESS_TARGET = 80; // "visitors love it": the Product Goal outcome
 export function productGoalProgress(state: ZooGameState): number {
-  if (!state.backlog.length) return 0;
-  return state.backlog.filter((it) => it.status === 'open').length / state.backlog.length;
+  const h = state.lastReview?.overallHappiness;
+  if (h == null) return 0;
+  return Math.max(0, Math.min(1, (h - GOAL_HAPPINESS_FLOOR) / (GOAL_HAPPINESS_TARGET - GOAL_HAPPINESS_FLOOR)));
 }
