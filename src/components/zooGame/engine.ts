@@ -1,4 +1,4 @@
-import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory } from './types';
+import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign } from './design';
@@ -91,6 +91,35 @@ export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): Zoo
 export function estimateItem(state: ZooGameState, id: string, points: number): ZooGameState {
   const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false } : it));
   return { ...state, backlog };
+}
+
+// ============= The plan: decomposing a PBI into tasks (Planning's "how") =============
+
+/** A coached default breakdown of how a PBI gets built, by kind - the design work and
+ *  then opening it. It is a starting point the Developers edit, not a fixed template. */
+export function suggestTasks(item: BacklogItem): SprintTask[] {
+  const zone = item.zone;
+  const labels = item.category === 'exhibit'
+    ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features', `Place it in ${zone} and open to visitors`]
+    : item.category === 'amenity'
+      ? [`Design the ${item.name.toLowerCase()}`, 'Colour it and put up a sign', `Place it in ${zone} and open`]
+      : ['Choose the plant type', 'Colour the foliage', `Place it in ${zone}`];
+  return labels.map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
+}
+
+/** Replace a PBI's task plan (used for add / edit / remove / suggest during Planning). */
+export function setItemTasks(state: ZooGameState, id: string, tasks: SprintTask[]): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, tasks } : it)) };
+}
+
+/** Tick a plan task done / not-done as the Developers work through it on the board. */
+export function toggleItemTask(state: ZooGameState, id: string, taskId: string): ZooGameState {
+  return {
+    ...state,
+    backlog: state.backlog.map((it) =>
+      it.id === id ? { ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) } : it,
+    ),
+  };
 }
 
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down

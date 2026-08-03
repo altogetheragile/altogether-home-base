@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask,
 } from './engine';
 import type { ZooGameState } from './types';
 
@@ -410,5 +410,29 @@ describe('zoo game: product goal progress', () => {
     expect(productGoalProgress(s)).toBe(0);
     s = buildAndOpen(s, ['lion', 'tiger']);
     expect(productGoalProgress(s)).toBeGreaterThan(0);
+  });
+});
+
+describe('zoo game: the plan (task decomposition)', () => {
+  it('suggests a breakdown, edits it, carries it into the Sprint, and ticks tasks off', () => {
+    let s = initialZooState(1);
+    // Coached breakdown for an exhibit.
+    const tasks = suggestTasks(s.backlog.find((i) => i.id === 'lion')!);
+    expect(tasks.length).toBeGreaterThan(0);
+    expect(tasks.every((t) => !t.done)).toBe(true);
+
+    // Plan the tasks onto the (still-Backlog) item, then commit the Sprint.
+    s = setItemTasks(s, 'lion', tasks);
+    s = planSprint(s, ['lion']);
+    const committed = s.backlog.find((i) => i.id === 'lion')!;
+    expect(committed.status).toBe('committed');
+    expect(committed.tasks).toHaveLength(tasks.length); // the plan survives planning
+
+    // Tick a task done on the board.
+    s = toggleItemTask(s, 'lion', tasks[0].id);
+    expect(s.backlog.find((i) => i.id === 'lion')!.tasks!.find((t) => t.id === tasks[0].id)!.done).toBe(true);
+    // Toggling is idempotent-reversible.
+    s = toggleItemTask(s, 'lion', tasks[0].id);
+    expect(s.backlog.find((i) => i.id === 'lion')!.tasks!.find((t) => t.id === tasks[0].id)!.done).toBe(false);
   });
 });

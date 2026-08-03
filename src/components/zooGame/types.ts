@@ -40,6 +40,9 @@ export interface Impediment {
  *  any time during the Sprint. */
 export type ItemStatus = 'backlog' | 'committed' | 'done' | 'open';
 
+/** One task in a PBI's build plan: a small step the Developers tick off as they work. */
+export interface SprintTask { id: string; label: string; done: boolean }
+
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
  *  seating). Carries the attributes the visitor simulation reads, plus game fields
  *  (estimate, per-item acceptance criteria, status). */
@@ -75,6 +78,10 @@ export interface BacklogItem {
    *  building. Every animal is its own Product Backlog Item - to add more of a
    *  species you add more PBIs, not more animals in one build. */
   design?: ItemDesign;
+  /** The Developers' plan for how this item gets built: a decomposition into tasks,
+   *  written during Sprint Planning (the "how") and ticked off as the work is done.
+   *  A planning/tracking aid - the Definition of Done still gates when it is Done. */
+  tasks?: SprintTask[];
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -148,6 +155,8 @@ export type ZooAction =
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[] }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
+  | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
+  | { type: 'TOGGLE_TASK'; id: string; taskId: string }
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
