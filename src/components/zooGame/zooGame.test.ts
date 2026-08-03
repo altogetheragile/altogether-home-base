@@ -361,13 +361,13 @@ describe('zoo game: timed days and the Daily Scrum', () => {
     expect(s.missedScrums).toBe(1);
   });
 
-  it('skipping a Daily Scrum with nothing waiting costs nothing', () => {
+  it('the Daily Scrum is not skippable: with nothing waiting it still costs its timebox', () => {
     let s = endDay(planSprint(initialZooState(1), ['lion']));
     s = { ...s, pendingImpediment: null };
     s = skipDailyScrum(s);
     expect(s.dayNumber).toBe(2);
     expect(s.carriedImpediment).toBeNull();
-    expect(s.dayTimeMult).toBe(1);
+    expect(s.dayTimeMult).toBe(DAILY_SCRUM_MULT); // the event happened - no free skip
     expect(s.missedScrums).toBe(0);
   });
 });

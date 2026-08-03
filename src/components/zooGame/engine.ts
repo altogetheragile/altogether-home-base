@@ -439,6 +439,9 @@ export function runDailyScrum(state: ZooGameState): ZooGameState {
 /** Skip the Daily Scrum. If an impediment was waiting, it goes unspotted and
  *  resurfaces tomorrow, bigger: it carries into the next day with a coaching tip and
  *  a heavier time cost. With nothing waiting, skipping costs nothing this time. */
+/** Carry on with the original plan instead of adapting. With a blocker surfaced, ignoring
+ *  it lets it grow overnight (a big cost tomorrow). With nothing surfaced, this is just the
+ *  Daily Scrum concluding - it still costs its small timebox (the event is not skippable). */
 export function skipDailyScrum(state: ZooGameState): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   const imp = state.pendingImpediment;
@@ -446,7 +449,7 @@ export function skipDailyScrum(state: ZooGameState): ZooGameState {
     const carried: Impediment = { ...imp, missed: true, tip: MISSED_SCRUM_TIP };
     return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: carried, missedScrums: state.missedScrums + 1 }, SKIP_PENALTY_MULT);
   }
-  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, 1);
+  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT);
 }
 
 // ============= The Sprint Review =============
