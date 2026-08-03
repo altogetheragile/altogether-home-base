@@ -4,8 +4,10 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // One retry is enough to absorb genuine flakiness; 2 mostly tripled the time on the
+  // DB-dependent failures. Run in parallel in CI rather than serially (workers: 1).
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? '50%' : undefined,
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:4173',
