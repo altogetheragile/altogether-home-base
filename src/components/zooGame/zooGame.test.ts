@@ -6,11 +6,24 @@ import {
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone,
 } from './engine';
 import type { ZooGameState } from './types';
+import type { ItemDesign } from './design';
 
-/** Commit ids, build them all, and open (release) them. */
+/** A design that colours every part, so any category's build meets the Definition of Done. */
+const FULL_DESIGN: ItemDesign = { parts: {}, colors: { body: '#c8873b', head: '#8a5a2b', ears: '#e3c66b', tail: '#2a2622', markings: '#f0efe9', foliage: '#43a047', trunk: '#7a5230', walls: '#cfd4d8', roof: '#9aa3ab', door: '#8a5a2b', sign: '#e6842a' } };
+
+/** Fully finish a committed item: build its design and tick every plan task, so it
+ *  reaches Done (every committed item now carries a default plan). */
+function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIGN): ZooGameState {
+  let s = buildItem(state, id, design);
+  const it = s.backlog.find((x) => x.id === id);
+  for (const t of it?.tasks ?? []) if (!t.done) s = toggleItemTask(s, id, t.id);
+  return s;
+}
+
+/** Commit ids, build them all to Done, and open (release) them. */
 function buildAndOpen(state: ZooGameState, ids: string[]): ZooGameState {
   let s = planSprint(state, ids);
-  for (const id of ids) s = openItem(buildItem(s, id), id);
+  for (const id of ids) s = openItem(finish(s, id), id);
   return s;
 }
 
@@ -62,7 +75,7 @@ describe('zoo game: the Sprint loop', () => {
   it('velocity counts Done work; releasing (open) is what the visitors see', () => {
     // Build but do NOT open: Done delivers velocity, but nothing is released to visitors.
     let s = planSprint(initialZooState(1), ['lion', 'penguins']);
-    s = buildItem(buildItem(s, 'lion'), 'penguins');
+    s = finish(finish(s, 'lion'), 'penguins');
     expect(openZoo(s)).toHaveLength(0);
     s = reviewSprint(s);
     expect(s.velocity[0]).toBe(16); // points Done
@@ -71,7 +84,7 @@ describe('zoo game: the Sprint loop', () => {
 
   it('unfinished committed items return to the Backlog', () => {
     let s = planSprint(initialZooState(1), ['lion', 'tiger', 'penguins']);
-    s = openItem(buildItem(s, 'lion'), 'lion'); // only lion finished
+    s = openItem(finish(s, 'lion'), 'lion'); // only lion finished
     s = reviewSprint(s);
     const tiger = s.backlog.find((i) => i.id === 'tiger')!;
     expect(tiger.status).toBe('backlog');
@@ -138,7 +151,7 @@ describe('zoo game: the Sprint Goal', () => {
   it('is not met when committed work is left unfinished', () => {
     let s = setSprintGoal(initialZooState(1), 'Fill Big Cats.');
     s = planSprint(s, ['lion', 'tiger']);
-    s = openItem(buildItem(s, 'lion'), 'lion'); // tiger left unbuilt
+    s = openItem(finish(s, 'lion'), 'lion'); // tiger left unbuilt
     s = reviewSprint(s);
     expect(s.sprintGoalMet).toBe(false);
   });
@@ -265,7 +278,7 @@ describe('zoo game: pulling Backlog items mid-Sprint', () => {
 describe('zoo game: timed days and the Daily Scrum', () => {
   it('runs its timed days, with a Daily Scrum between days but not after the last, then the Review opens', () => {
     let s = planSprint(initialZooState(1), ['lion']);
-    s = openItem(buildItem(s, 'lion'), 'lion');
+    s = openItem(finish(s, 'lion'), 'lion');
     expect(s.dayNumber).toBe(1);
     let scrums = 0;
     while (s.phase === 'sprint') {
@@ -283,7 +296,7 @@ describe('zoo game: timed days and the Daily Scrum', () => {
   });
 
   it('after the Daily Scrum a new day pauses (dayStart) until it is started', () => {
-    let s = openItem(buildItem(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
+    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
     s = runDailyScrum(endDay(s));
     expect(s.dayStage).toBe('dayStart'); // a breather before the build resumes
     expect(s.dayNumber).toBe(2);
@@ -292,7 +305,7 @@ describe('zoo game: timed days and the Daily Scrum', () => {
   });
 
   it('the clock runs through the breather: the day can end from dayStart', () => {
-    let s = openItem(buildItem(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
+    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
     s = runDailyScrum(endDay(s)); // -> dayStart on day 2
     expect(s.dayStage).toBe('dayStart');
     s = endDay(s); // the day's time ran out during the breather
@@ -383,7 +396,7 @@ describe('zoo game: design choices are the product', () => {
   });
 
   it('a built animal can be re-edited without changing its status, and appeal follows', () => {
-    let s = openItem(buildItem(planSprint(initialZooState(1), ['lion']), 'lion', calmDesign), 'lion');
+    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion', calmDesign), 'lion');
     expect(s.backlog.find((i) => i.id === 'lion')!.status).toBe('open');
     const before = s.backlog.find((i) => i.id === 'lion')!.appeal!.families;
     s = editItem(s, 'lion', brightDesign); // repaint it bright
@@ -416,11 +429,11 @@ describe('zoo game: product goal progress', () => {
 describe('zoo game: the plan (task decomposition) gates Done', () => {
   const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
 
-  it('suggests a breakdown that stops at placing it (opening is a separate step)', () => {
+  it('suggests build steps only (placing / opening is the Open action, not a task)', () => {
     const tasks = suggestTasks(initialZooState(1).backlog.find((i) => i.id === 'lion')!);
     expect(tasks.length).toBeGreaterThan(0);
     expect(tasks.every((t) => !t.done)).toBe(true);
-    expect(tasks.some((t) => /open to visitors/i.test(t.label))).toBe(false);
+    expect(tasks.some((t) => /open|place/i.test(t.label))).toBe(false);
   });
 
   it('starting moves To Do -> Doing; building with tasks left stays Doing; the last tick finishes it', () => {
@@ -450,9 +463,29 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
     expect(lion(s).status).toBe('committed');
   });
 
-  it('an item with no plan is Done as soon as it is built', () => {
-    let s = planSprint(initialZooState(1), ['lion']); // no tasks planned
-    s = buildItem(s, 'lion', { parts: {}, colors: { body: '#c8873b' } });
-    expect(lion(s).status).toBe('done');
+  it('committing an item gives it a default plan, so nothing can skip the checklist', () => {
+    // No plan set during Planning -> planSprint seeds one, so building it does NOT jump
+    // straight to Done: it waits in Doing until the plan is ticked.
+    let s = planSprint(initialZooState(1), ['penguins']);
+    const p = () => s.backlog.find((i) => i.id === 'penguins')!;
+    expect((p().tasks ?? []).length).toBeGreaterThan(0);
+    s = buildItem(s, 'penguins', { parts: {}, colors: { body: '#6db6d8', tail: '#4f9cbf' } });
+    expect(p().status).toBe('committed'); // built, but plan not ticked -> still Doing
+    for (const t of p().tasks ?? []) s = toggleItemTask(s, 'penguins', t.id);
+    expect(p().status).toBe('done');
+  });
+
+  it('a plan written during Planning is kept (not overwritten by the default)', () => {
+    let s = setItemTasks(initialZooState(1), 'lion', [{ id: 'x', label: 'Only this step', done: false }]);
+    s = planSprint(s, ['lion']);
+    const t = lion(s).tasks!;
+    expect(t).toHaveLength(1);
+    expect(t[0].label).toBe('Only this step');
+  });
+
+  it('a mid-Sprint pull also gets a default plan', () => {
+    let s = planSprint(initialZooState(1), ['lion']);
+    s = pullIntoSprint(s, 'tiger');
+    expect((s.backlog.find((i) => i.id === 'tiger')!.tasks ?? []).length).toBeGreaterThan(0);
   });
 });
