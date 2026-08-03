@@ -8,7 +8,7 @@ import { DailyScrum } from './DailyScrum';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Palette, DoorOpen, Check, AlertTriangle, Clock, Pencil, CopyPlus, Sunrise } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Clock, Pencil, CopyPlus, Sunrise, ArrowRight } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -118,8 +118,6 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   const doing = committed.filter((it) => it.status === 'committed' && it.started);
   const done = committed.filter((it) => it.status === 'done' || it.status === 'open');
 
-  const startBuilding = (id: string) => { onStartItem(id); setDesigning(id); };
-
   // Built animals you can copy from when designing another of the same kind.
   const copySources: CopySource[] = designItem
     ? state.backlog.filter((it) => it.id !== designItem.id && it.category === designItem.category && it.design).map((it) => ({ id: it.id, name: it.name, design: it.design! }))
@@ -152,16 +150,6 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
 
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
-      ) : designItem ? (
-        <DesignStudio
-          item={designItem}
-          editing={editing}
-          copySources={copySources}
-          initial={draft && draft.id === designItem.id ? draft.design : undefined}
-          onChange={(d) => setDraft({ id: designItem.id, design: d })}
-          onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); setDraft(null); }}
-          onCancel={() => setDesigning(null)}
-        />
       ) : (
         <>
           {state.carriedImpediment && (
@@ -186,7 +174,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
 
             <div className="min-w-0 space-y-3">
               <p className="rounded-lg border border-border bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
-                Start an item to take it into the studio (that moves it to Doing). Build it to the Definition of Done and tick off its plan - when every task is done it moves to Done, ready to open to visitors. Finishing fewer items well beats starting many.
+                <strong>Start</strong> an item to move it into <strong>Doing</strong> - the board stays in view. Then <strong>Design &amp; build</strong> it in the studio and tick off its plan; when the build is done and every task is ticked it moves to <strong>Done</strong>, ready to open to visitors. Finishing fewer items well beats starting many.
               </p>
               <div className="grid gap-3 sm:grid-cols-3">
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
@@ -196,7 +184,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                         <div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>
                         <TaskChecklist item={it} onToggle={onToggleTask} readOnly />
                       </>}
-                      actions={<Button size="sm" className="h-7 px-2 text-xs" onClick={() => startBuilding(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
+                      actions={<Button size="sm" className="h-7 px-2 text-xs" onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
                   ))}
                 </BoardColumn>
                 <BoardColumn title="Doing" count={doing.length} hint="Nothing in progress">
@@ -223,6 +211,24 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
             </div>
           </div>
         </>
+      )}
+
+      {/* The studio opens as a modal OVER the board, so the Scrum board stays in view
+          (the card sits in Doing behind it) while you build. */}
+      {designItem && !dayStarting && (
+        <div className="fixed inset-0 z-40 flex overflow-y-auto bg-black/50 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true">
+          <div className="m-auto w-full max-w-3xl">
+            <DesignStudio
+              item={designItem}
+              editing={editing}
+              copySources={copySources}
+              initial={draft && draft.id === designItem.id ? draft.design : undefined}
+              onChange={(d) => setDraft({ id: designItem.id, design: d })}
+              onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); setDraft(null); }}
+              onCancel={() => setDesigning(null)}
+            />
+          </div>
+        </div>
       )}
 
       {!dayStarting && (
