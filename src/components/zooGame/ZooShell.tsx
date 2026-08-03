@@ -2,11 +2,20 @@ import { useState, type ReactNode } from 'react';
 import type { ZooGameState } from './types';
 import { ParkView } from './ParkView';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown } from 'lucide-react';
+import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
 const WORK_TAB: Record<string, string> = { refine: 'Refine', planning: 'Plan', sprint: 'Build', review: 'Review', retro: 'Retro' };
+/** Which Scrum accountabilities you are wearing in each phase - a solo game plays all
+ *  three, so naming the "hat" keeps who-does-what visible (the most-tested concept). */
+const ROLE_HINT: Record<string, string> = {
+  refine: 'Hats: Product Owner (orders the Backlog) + Developers (estimate)',
+  planning: 'Hats: the whole Scrum Team - PO proposes value, Developers forecast & plan',
+  sprint: 'Hats: Developers (do the work) - the Scrum Master keeps the way clear',
+  review: 'Hats: the Scrum Team + your visitors (the stakeholders) inspect the Increment',
+  retro: 'Hats: the Scrum Team inspects how it works and adapts',
+};
 
 function GoalChip({ icon: Icon, label, text, tone }: { icon: typeof Target; label: string; text: string; tone: 'product' | 'sprint' }) {
   return (
@@ -69,6 +78,13 @@ export function ZooShell({ state, children }: { state: ZooGameState; children: R
 
       {/* Definition of Done - always visible; refined at the Retrospective. */}
       <DodBar dod={state.definitionOfDone} />
+
+      {/* Which accountabilities you're wearing this phase (a solo game plays all three). */}
+      {ROLE_HINT[state.phase] && (
+        <div className="mb-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <Users className="h-3.5 w-3.5 shrink-0" /> {ROLE_HINT[state.phase]}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="mb-4 flex gap-1 border-b border-border">

@@ -3,6 +3,7 @@ import type { ZooGameState, PbiDraft, SprintTask } from './types';
 import { availableItems, suggestSprintGoal, suggestTasks } from './engine';
 import { zooCapacity } from './config';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
+import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Lightbulb, Target, Wand2, X, Check, ClipboardCheck } from 'lucide-react';
@@ -148,7 +149,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div className={cn('h-full rounded-full', over ? 'bg-destructive' : 'bg-primary')} style={{ width: `${Math.min(100, capacity ? (committed / capacity) * 100 : 0)}%` }} />
                 </div>
-                {over && <p className="text-[11px] text-destructive">Over capacity of ~{capacity}. Prefer finishing fewer things to the Definition of Done over starting more.</p>}
+                {over && <CoachTip>You&rsquo;re forecasting <strong>{committed} pts</strong> against a capacity of ~{capacity}. Over-committing tends to miss the Sprint Goal and carry unfinished work - forecast what you can finish to Done, not the most you could start.</CoachTip>}
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over ${state.velocity.length} Sprint${state.velocity.length > 1 ? 's' : ''}.` : 'First-Sprint guess. Velocity will replace it after Sprint 1.'}</p>
                   <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={chosen.length === 0} onClick={() => onSetSprintGoal(suggestSprintGoal(chosen))} title="Draft a Sprint Goal from what you selected">
