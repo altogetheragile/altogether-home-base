@@ -21,6 +21,7 @@ interface SprintBoardProps {
   onSetUseStories: (on: boolean) => void;
   onToggleTask: (id: string, taskId: string) => void;
   onStartItem: (id: string) => void;
+  onSetLearnMode: (on: boolean) => void;
   onPull: (id: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
@@ -49,15 +50,17 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
  *  reaches zero the day ends and the Daily Scrum opens. When a day is shortened -
  *  by the Daily Scrum's timebox, or (much more) by a blocker that slipped through -
  *  it says so, so the cost of impediments is obvious. */
-function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: number; dayTimeMult: number; impeded: boolean; onExpire: () => void }) {
+function DayTimer({ dayNumber, dayTimeMult, impeded, learnMode, onExpire }: { dayNumber: number; dayTimeMult: number; impeded: boolean; learnMode: boolean; onExpire: () => void }) {
   const total = Math.round(DAY_SECONDS * dayTimeMult);
   const [left, setLeft] = useState(total);
   const fired = useRef(false);
 
-  // Reset for each new day (dayNumber changes) and count down once per second.
+  // Reset for each new day (dayNumber changes) and count down once per second. In learn
+  // mode the clock is paused - no countdown and no auto-expire, so you end days yourself.
   useEffect(() => {
     fired.current = false;
     setLeft(total);
+    if (learnMode) return;
     const id = setInterval(() => {
       setLeft((s) => {
         if (s <= 1) {
@@ -71,7 +74,15 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: nu
     return () => clearInterval(id);
     // total is derived from dayNumber+dayTimeMult; reset on a genuinely new day.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayNumber]);
+  }, [dayNumber, learnMode]);
+
+  if (learnMode) {
+    return (
+      <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+        <Clock className="h-3 w-3" /> Learn mode - clock paused, end days yourself
+      </div>
+    );
+  }
 
   const pct = Math.max(0, Math.min(100, (left / total) * 100));
   const mm = Math.floor(left / 60);
@@ -101,7 +112,7 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, onExpire }: { dayNumber: nu
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onSetLearnMode, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -147,7 +158,14 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
           <p className="text-xs text-muted-foreground">{open.length} open to visitors</p>
         </div>
         {/* The clock runs through the start-of-day breather and the build alike. */}
-        <DayTimer key={state.dayNumber} dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} onExpire={onEndDay} />
+        <div className="flex items-center gap-2">
+          <DayTimer key={state.dayNumber} dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+          <button type="button" onClick={() => onSetLearnMode(!state.learnMode)}
+            title={state.learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
+            className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+            {state.learnMode ? 'Timed mode' : 'Learn mode'}
+          </button>
+        </div>
       </div>
 
       {dayStarting ? (

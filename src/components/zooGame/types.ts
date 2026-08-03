@@ -156,6 +156,9 @@ export interface ZooGameState {
   /** Set by the "hold the Daily Scrum every day" improvement: disciplined Daily Scrums
    *  become efficient, so holding one costs no build time. */
   scrumDiscipline: boolean;
+  /** Learn mode: pause the day clock so there is no real-time pressure - days end only
+   *  when you choose. The timed mode teaches Sprint pressure; this is the reflective one. */
+  learnMode: boolean;
 }
 
 export type ZooAction =
@@ -171,6 +174,8 @@ export type ZooAction =
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
   | { type: 'START_ITEM'; id: string }
   | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
+  | { type: 'SET_SPRINT_DAYS'; days: number }
+  | { type: 'SET_LEARN_MODE'; on: boolean }
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
