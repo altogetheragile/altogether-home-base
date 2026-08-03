@@ -5,7 +5,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
@@ -57,8 +57,9 @@ export function ItemCard({ item, badge, subtitle, actions, onClick, selectable, 
 }
 
 /** Plan-time task decomposition for one PBI (Sprint Planning's "how"): a coached
- *  breakdown you can suggest, then add / edit / remove. */
-export function TaskEditor({ item, onSetTasks }: { item: BacklogItem; onSetTasks: (id: string, tasks: SprintTask[]) => void }) {
+ *  breakdown you can suggest, then add / edit / remove. Optionally shows a goal-critical
+ *  star, so the team marks which items the Sprint Goal truly depends on. */
+export function TaskEditor({ item, onSetTasks, onToggleGoalCritical }: { item: BacklogItem; onSetTasks: (id: string, tasks: SprintTask[]) => void; onToggleGoalCritical?: (id: string) => void }) {
   const tasks = item.tasks ?? [];
   const uid = useRef(0);
   const set = (next: SprintTask[]) => onSetTasks(item.id, next);
@@ -67,7 +68,7 @@ export function TaskEditor({ item, onSetTasks }: { item: BacklogItem; onSetTasks
   const remove = (tid: string) => set(tasks.filter((t) => t.id !== tid));
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
+    <div className={cn('rounded-lg border bg-card p-3', item.goalCritical ? 'border-amber-400/70' : 'border-border')}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5 text-sm">
           <CategoryIcon item={item} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -75,9 +76,20 @@ export function TaskEditor({ item, onSetTasks }: { item: BacklogItem; onSetTasks
           <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{item.zone}</span>
           <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{item.estimate} pts</span>
         </div>
-        <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => set(suggestTasks(item))}>
-          <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest tasks
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          {onToggleGoalCritical && (
+            <button type="button" onClick={() => onToggleGoalCritical(item.id)}
+              title={item.goalCritical ? 'Essential to the Sprint Goal - click to unmark' : 'Mark essential to the Sprint Goal'}
+              className={cn('flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors',
+                item.goalCritical ? 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-300'
+                  : 'border-border text-muted-foreground hover:border-amber-400 hover:text-amber-600')}>
+              <Star className={cn('h-3.5 w-3.5', item.goalCritical && 'fill-amber-400')} /> Goal
+            </button>
+          )}
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => set(suggestTasks(item))}>
+            <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest tasks
+          </Button>
+        </div>
       </div>
       <div className="mt-2 space-y-1">
         {tasks.length === 0 && <p className="text-[11px] text-muted-foreground/70">No tasks yet - suggest a breakdown or add your own steps for how this gets built.</p>}

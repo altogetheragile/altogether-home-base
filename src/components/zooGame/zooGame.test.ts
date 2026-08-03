@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical,
 } from './engine';
 import type { ZooGameState } from './types';
 import type { ItemDesign } from './design';
@@ -148,10 +148,29 @@ describe('zoo game: the Sprint Goal', () => {
     expect(s.sprintGoalMet).toBeNull();
   });
 
-  it('is not met when committed work is left unfinished', () => {
+  it('is not met when committed work is left unfinished (with nothing marked essential)', () => {
     let s = setSprintGoal(initialZooState(1), 'Fill Big Cats.');
     s = planSprint(s, ['lion', 'tiger']);
     s = openItem(finish(s, 'lion'), 'lion'); // tiger left unbuilt
+    s = reviewSprint(s);
+    expect(s.sprintGoalMet).toBe(false);
+  });
+
+  it('is MET when the goal-critical items are delivered, even if other scope is dropped', () => {
+    let s = setSprintGoal(initialZooState(1), 'Open the lion for families.');
+    s = planSprint(s, ['lion', 'tiger']);
+    s = toggleGoalCritical(s, 'lion'); // lion is essential to the Goal; tiger is not
+    s = openItem(finish(s, 'lion'), 'lion'); // deliver lion, drop tiger
+    s = reviewSprint(s);
+    expect(s.sprintGoalMet).toBe(true); // the essential landed -> outcome met
+    expect(s.backlog.find((i) => i.id === 'tiger')!.status).toBe('backlog'); // tiger returns, fine
+  });
+
+  it('is NOT met when a goal-critical item is unfinished, even if others are done', () => {
+    let s = setSprintGoal(initialZooState(1), 'Open the tiger.');
+    s = planSprint(s, ['lion', 'tiger']);
+    s = toggleGoalCritical(s, 'tiger'); // tiger essential
+    s = openItem(finish(s, 'lion'), 'lion'); // lion done, tiger not
     s = reviewSprint(s);
     expect(s.sprintGoalMet).toBe(false);
   });
@@ -417,12 +436,23 @@ describe('zoo game: design choices are the product', () => {
   });
 });
 
-describe('zoo game: product goal progress', () => {
-  it('grows as exhibits and amenities are opened', () => {
+describe('zoo game: product goal progress is an OUTCOME, not backlog burn', () => {
+  const NICE_ZOO = ['lion', 'tiger', 'kiosk', 'penguins', 'reef', 'wc'];
+
+  it('is zero until a Review measures an outcome, then reflects visitor happiness', () => {
     let s = initialZooState(1);
-    expect(productGoalProgress(s)).toBe(0);
-    s = buildAndOpen(s, ['lion', 'tiger']);
-    expect(productGoalProgress(s)).toBeGreaterThan(0);
+    expect(productGoalProgress(s)).toBe(0); // no Review yet
+    s = reviewSprint(buildAndOpen(s, NICE_ZOO));
+    expect(productGoalProgress(s)).toBeGreaterThan(0); // happy visitors -> progress
+    expect(s.lastReview!.overallHappiness).toBeGreaterThan(0);
+  });
+
+  it('adding unbuilt Backlog items does NOT lower progress (it is outcome, not % built)', () => {
+    let s = reviewSprint(buildAndOpen(initialZooState(1), NICE_ZOO));
+    const before = productGoalProgress(s);
+    expect(before).toBeGreaterThan(0);
+    s = addPbi(s, { name: 'Meerkats', category: 'exhibit', zone: 'Savanna', acceptance: ['Recognisable'] });
+    expect(productGoalProgress(s)).toBe(before); // unchanged - depends on the last Review, not backlog size
   });
 });
 

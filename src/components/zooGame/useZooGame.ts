@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask } from './
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
@@ -36,6 +36,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return toggleItemTask(state, action.id, action.taskId);
     case 'START_ITEM':
       return startItem(state, action.id);
+    case 'TOGGLE_GOAL_CRITICAL':
+      return toggleGoalCritical(state, action.id);
     case 'ADD_PBI':
       return addPbi(state, action.draft);
     case 'REFINE_PBI':
@@ -99,6 +101,7 @@ export function useZooGame(gameSeed?: number) {
   const setTasks = useCallback((id: string, tasks: SprintTask[]) => dispatch({ type: 'SET_TASKS', id, tasks }), []);
   const toggleTask = useCallback((id: string, taskId: string) => dispatch({ type: 'TOGGLE_TASK', id, taskId }), []);
   const startWork = useCallback((id: string) => dispatch({ type: 'START_ITEM', id }), []);
+  const markGoalCritical = useCallback((id: string) => dispatch({ type: 'TOGGLE_GOAL_CRITICAL', id }), []);
   const createPbi = useCallback((draft: PbiDraft) => dispatch({ type: 'ADD_PBI', draft }), []);
   const refinePbiCb = useCallback((id: string, draft: PbiDraft) => dispatch({ type: 'REFINE_PBI', id, draft }), []);
   const reorder = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ITEM', id, dir }), []);
@@ -123,7 +126,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open,
+    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };
