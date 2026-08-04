@@ -16,6 +16,9 @@ export interface PbiDraft {
   zone: string;
   acceptance: string[];
   services?: 'food' | 'toilet' | 'rest';
+  /** The toolbox template this came from (e.g. 'lion'), so the studio starts from the
+   *  right species shape. */
+  template?: string;
 }
 
 export type ZooPhase = 'intro' | 'refine' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
@@ -59,6 +62,9 @@ export interface BacklogItem {
   category: ItemCategory;
   /** Which themed zone this belongs to (Big Cats, Waterside, ...). */
   zone: string;
+  /** The toolbox template this item was created from (e.g. 'lion'), used to pick its
+   *  species shape in the studio. */
+  template?: string;
   /** Estimate in points, the team's forecast from size and complexity. Meaningful
    *  once the item has been estimated (see `unsized`). */
   estimate: number;
