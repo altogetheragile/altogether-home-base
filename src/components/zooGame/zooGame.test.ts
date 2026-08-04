@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
@@ -854,5 +854,36 @@ describe('zoo game: save / resume (serialisation)', () => {
     expect(loaded.phase).toBe('sprint');
     expect(loaded.sprintNumber).toBe(4);
     expect(loaded.dailyScrumAt).toBe('start'); // absent in the save -> sensible default
+  });
+});
+
+describe('zoo game: ongoing refinement consumes Sprint time', () => {
+  it('refining during a Sprint spends build time; refining before it is free', () => {
+    // Before the Sprint (in a fresh, non-sprint state) refinement is free.
+    const planning = splitAll(initialZooState(1));
+    expect(planning.refinePenalty).toBe(0);
+    expect(estimateItem(planning, 'penguins', 5).refinePenalty).toBe(0);
+
+    // During a Sprint, each refinement action eats into the day's clock.
+    let s = planSprint(flat(initialZooState(1)), ['lion']);
+    expect(s.phase).toBe('sprint');
+    expect(s.refinePenalty).toBe(0);
+    s = addPbi(s, { name: 'Meerkats', category: 'exhibit', zone: 'Savanna', acceptance: ['Recognisable'] });
+    expect(s.refinePenalty).toBe(REFINE_COSTS.addPbi);
+    const meer = s.backlog.find((i) => i.name === 'Meerkats')!.id;
+    s = estimateItem(s, meer, 5);
+    expect(s.refinePenalty).toBe(REFINE_COSTS.addPbi + REFINE_COSTS.estimate);
+  });
+
+  it('refining a PBI mid-Sprint costs time, and the spend resets when the day advances', () => {
+    let s = planSprint(flat(initialZooState(1)), ['lion']);
+    s = addPbi(s, { name: 'Reptiles', category: 'exhibit', zone: 'Reptiles', acceptance: ['x'] });
+    const before = s.refinePenalty;
+    s = refinePbi(s, s.backlog.find((i) => i.name === 'Reptiles')!.id, { name: 'Reptiles', category: 'exhibit', zone: 'Reptiles', acceptance: ['scaly'] });
+    expect(s.refinePenalty).toBe(before + REFINE_COSTS.refinePbi);
+    // Ending the day (which advances it) clears the day's refinement spend.
+    s = { ...s, dayStage: 'building' };
+    s = endDay(s);
+    if (s.phase === 'sprint') expect(s.refinePenalty).toBe(0);
   });
 });

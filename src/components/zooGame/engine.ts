@@ -5,7 +5,14 @@ import { appealFromDesign } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP } from './config';
+import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS } from './config';
+
+/** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
+ *  the cost to the current day's refinement penalty. Free outside the Sprint (the
+ *  Refinement and Planning phases are the dedicated time to refine), so this is a no-op
+ *  unless a Sprint is in progress. */
+const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number): ZooGameState =>
+  before.phase === 'sprint' ? { ...after, refinePenalty: after.refinePenalty + seconds } : after;
 
 // ============= Refinement: estimation and ordering =============
 
@@ -75,7 +82,7 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   else if (draft.category === 'enclosure') item = { ...base, enclosureSize: draft.enclosureSize ?? 'medium' };
   else item = base; // flora is scenery: designable and placeable, no simulation input yet
   const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
-  return { ...state, backlog: [...state.backlog, item], zones };
+  return chargeRefine(state, { ...state, backlog: [...state.backlog, item], zones }, REFINE_COSTS.addPbi);
 }
 
 /** Refine an existing Backlog PBI (edit its name, zone and acceptance criteria).
@@ -98,7 +105,7 @@ export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): Zoo
       : it,
   );
   const zones = zone && !state.zones.includes(zone) ? [...state.zones, zone] : state.zones;
-  return { ...state, backlog, zones };
+  return chargeRefine(state, { ...state, backlog, zones }, REFINE_COSTS.refinePbi);
 }
 
 /** Refine an EPIC by splitting the chosen members out into their own PBIs. Each animal
@@ -142,14 +149,14 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
   const remaining = members.filter((mem) => !memberIds.includes(mem.id));
   const replacement = remaining.length ? [{ ...epicItem, epicMembers: remaining }, ...created] : created;
   const backlog = [...state.backlog.slice(0, idx), ...replacement, ...state.backlog.slice(idx + 1)];
-  return { ...state, backlog };
+  return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.split);
 }
 
 /** Commit an estimate to a Backlog item (refinement): it becomes sized and can now
  *  be planned. */
 export function estimateItem(state: ZooGameState, id: string, points: number): ZooGameState {
   const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false } : it));
-  return { ...state, backlog };
+  return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.estimate);
 }
 
 // ============= The plan: decomposing a PBI into tasks (Planning's "how") =============
@@ -340,7 +347,7 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
   );
   return {
     ...state, phase: 'sprint', committedIds: [...committed], backlog,
-    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
+    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null, refinePenalty: 0,
   };
 }
 
@@ -510,7 +517,7 @@ export function endDay(state: ZooGameState): ZooGameState {
   if (state.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = state.dayNumber + 1;
-    return { ...state, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(state.gameSeed, state.sprintNumber, next) };
+    return { ...state, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(state.gameSeed, state.sprintNumber, next), refinePenalty: 0 };
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
   return { ...state, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(state.gameSeed, state.sprintNumber, state.dayNumber) };
@@ -522,7 +529,8 @@ export function endDay(state: ZooGameState): ZooGameState {
 function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   const next = state.dayNumber + 1;
   if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
-  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult };
+  // A new day gets a fresh build clock, so the refinement spend resets too.
+  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0 };
 }
 
 /** Begin the new day's build (leaves the between-days pause). */

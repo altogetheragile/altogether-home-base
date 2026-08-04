@@ -210,6 +210,10 @@ export interface ZooGameState {
   /** When the Daily Scrum is held: at the START of each day (Scrum's usual cadence) or at
    *  the END. Chosen by the team; the same event either way, just timed differently. */
   dailyScrumAt: 'start' | 'end';
+  /** Seconds of the CURRENT day already spent on Backlog refinement (estimating, splitting,
+   *  adding/refining PBIs) while a Sprint is running - it eats into the build clock. Resets
+   *  each day. Refinement in the Refinement/Planning phases is free (0 here). */
+  refinePenalty: number;
 }
 
 export type ZooAction =
