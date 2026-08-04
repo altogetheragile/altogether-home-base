@@ -28,6 +28,17 @@ export interface PbiDraft {
 
 export type ZooPhase = 'intro' | 'refine' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
+/** The single-player AI Product Owner's refinement decisions (from the zoo-po-refine edge
+ *  function). The PO orders by value, splits epics, adds items and clarifies acceptance -
+ *  it never estimates effort (that is the Developers' job). */
+export interface PoDecisions {
+  rationale?: string;
+  splitEpics?: { epicId: string; memberIds: string[] }[];
+  order?: string[];
+  newItems?: { name: string; category: 'exhibit' | 'amenity' | 'flora'; zone: string; services?: 'food' | 'toilet' | 'rest'; acceptance?: string[] }[];
+  refine?: { id: string; acceptance: string[] }[];
+}
+
 /** Within a Sprint, a day is being worked (building), paused at its close for the
  *  Daily Scrum, or pausing at the start of a new day before the build resumes. */
 export type DayStage = 'building' | 'dailyScrum' | 'dayStart';
@@ -257,4 +268,5 @@ export type ZooAction =
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'END_GAME' }
   | { type: 'LOAD_GAME'; state: ZooGameState }
+  | { type: 'PO_REFINE'; decisions: PoDecisions }
   | { type: 'RESET' };
