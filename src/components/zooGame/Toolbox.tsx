@@ -50,13 +50,15 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
                       <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted/50">
                         {it.category === 'exhibit'
                           ? <Preview item={it} cell={2} />
+                          : it.category === 'enclosure'
+                            ? <span className="rounded-sm border-2 border-muted-foreground/50 bg-background" style={{ width: it.footprint === 'large' ? 28 : it.footprint === 'small' ? 15 : 22, height: it.footprint === 'large' ? 20 : it.footprint === 'small' ? 11 : 16 }} />
                           : it.category === 'amenity'
                             ? <Coffee className="h-5 w-5 text-muted-foreground" />
                             : <Trees className="h-5 w-5 text-emerald-600" />}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{it.name}</span>
-                        <span className="block truncate text-[10px] text-muted-foreground">{it.zone === 'General' ? it.category : it.zone}</span>
+                        <span className="block truncate text-[10px] text-muted-foreground">{it.category === 'enclosure' ? `${it.footprint} footprint` : it.zone === 'General' ? it.category : it.zone}</span>
                       </span>
                       {n > 0 && <span className={cn('flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300')}><Check className="h-3 w-3" />{n > 1 ? n : ''}</span>}
                     </button>

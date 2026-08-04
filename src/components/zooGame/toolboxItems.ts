@@ -15,13 +15,22 @@ export interface ToolboxItem {
   /** The zone this piece naturally belongs in (the user can change it). */
   zone: string;
   services?: 'food' | 'toilet' | 'rest';
+  /** Enclosures: the habitat footprint. */
+  footprint?: 'small' | 'medium' | 'large';
 }
 
 const exhibit = (template: string, name: string, zone: string): ToolboxItem => ({ template, name, category: 'exhibit', zone });
 const amenity = (name: string, zone: string, services: 'food' | 'toilet' | 'rest'): ToolboxItem => ({ name, category: 'amenity', zone, services });
 const flora = (name: string): ToolboxItem => ({ name, category: 'flora', zone: 'General' });
+const enclosure = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint });
 
 export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
+  {
+    // Habitats are built FIRST, then animals go in them (animals and enclosures are
+    // separate PBIs). Pick a footprint here, then point an animal at it.
+    group: 'Habitats',
+    items: [enclosure('Small Enclosure', 'small'), enclosure('Medium Enclosure', 'medium'), enclosure('Large Enclosure', 'large')],
+  },
   {
     group: 'Big Cats',
     items: [exhibit('lion', 'Lion', 'Big Cats'), exhibit('tiger', 'Tiger', 'Big Cats'), exhibit('leopard', 'Leopard', 'Big Cats'), exhibit('cheetah', 'Cheetah', 'Big Cats')],
@@ -52,8 +61,10 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
 export function toolboxDraft(t: ToolboxItem): PbiDraft {
   const acceptance = t.category === 'exhibit'
     ? [`Recognisable as ${/s$/.test(t.name) ? t.name.toLowerCase() : 'a ' + t.name.toLowerCase()}`, 'Uses at least two colours', 'No bare patches']
+    : t.category === 'enclosure'
+      ? ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up']
     : t.category === 'amenity'
       ? ['Clearly signed', t.services === 'food' ? 'Serves food and drink' : t.services === 'toilet' ? 'Has enough cubicles' : 'Enough seating']
       : ['Fits the planting', 'Coloured, no bare patches'];
-  return { name: t.name, template: t.template, category: t.category, zone: t.zone, services: t.services, acceptance };
+  return { name: t.name, template: t.template, category: t.category, zone: t.zone, services: t.services, enclosureSize: t.footprint, acceptance };
 }
