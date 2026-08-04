@@ -925,3 +925,15 @@ describe('zoo game: AI Product Owner refinement', () => {
     expect(s.refinePenalty).toBe(0); // restored - the PO's work is not the Developers' time
   });
 });
+
+describe('zoo game: the PO can suggest the initial Sprint Goal', () => {
+  it('sets the Sprint Goal when none is set, and never overwrites an agreed one', () => {
+    // No goal yet -> the PO's suggestion seeds it.
+    let s = applyPoRefinements(initialZooState(1), { sprintGoal: 'Open the Big Cats zone so families have a headline exhibit.' });
+    expect(s.sprintGoal).toContain('Big Cats');
+    // A goal already agreed -> the PO does not overwrite it.
+    s = setSprintGoal(initialZooState(1), 'Our own goal');
+    s = applyPoRefinements(s, { sprintGoal: 'A different PO idea' });
+    expect(s.sprintGoal).toBe('Our own goal');
+  });
+});

@@ -37,6 +37,9 @@ export interface PoDecisions {
   order?: string[];
   newItems?: { name: string; category: 'exhibit' | 'amenity' | 'flora'; zone: string; services?: 'food' | 'toilet' | 'rest'; acceptance?: string[] }[];
   refine?: { id: string; acceptance: string[] }[];
+  /** An outcome-shaped Sprint Goal the PO proposes. Applied only when none is set yet, so it
+   *  seeds the initial goal without overwriting one the team has agreed. */
+  sprintGoal?: string;
 }
 
 /** Within a Sprint, a day is being worked (building), paused at its close for the
