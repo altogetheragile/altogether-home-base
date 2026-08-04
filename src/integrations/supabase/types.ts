@@ -1678,6 +1678,39 @@ export type Database = {
         }
         Relationships: []
       }
+      zoo_game_saves: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phase: string | null
+          sprint_number: number | null
+          state: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phase?: string | null
+          sprint_number?: number | null
+          state: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phase?: string | null
+          sprint_number?: number | null
+          state?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       formats: {
         Row: {
           id: string

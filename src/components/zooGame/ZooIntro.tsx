@@ -6,11 +6,13 @@ interface ZooIntroProps {
   productGoal: string;
   onSetGoal: (goal: string) => void;
   onStart: () => void;
+  /** Signed-in players can resume a saved game. */
+  onOpenSaves?: () => void;
 }
 
 /** Landing screen. The player is the Product Owner: they shape the Product Goal
  *  before the first Sprint, then run the zoo in Sprints. */
-export function ZooIntro({ productGoal, onSetGoal, onStart }: ZooIntroProps) {
+export function ZooIntro({ productGoal, onSetGoal, onStart, onOpenSaves }: ZooIntroProps) {
   const [goal, setGoal] = useState(productGoal);
 
   return (
@@ -42,9 +44,16 @@ export function ZooIntro({ productGoal, onSetGoal, onStart }: ZooIntroProps) {
         </div>
       </div>
 
-      <Button size="lg" className="px-8 py-6 text-lg" onClick={() => { onSetGoal(goal); onStart(); }}>
-        Start
-      </Button>
+      <div className="flex flex-col items-center gap-2">
+        <Button size="lg" className="px-8 py-6 text-lg" onClick={() => { onSetGoal(goal); onStart(); }}>
+          Start
+        </Button>
+        {onOpenSaves && (
+          <button type="button" onClick={onOpenSaves} className="text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+            Resume a saved game
+          </button>
+        )}
+      </div>
     </div>
   );
 }
