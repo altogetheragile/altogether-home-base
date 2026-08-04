@@ -61,7 +61,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
  *  Park, which gets the full width so it can be big and impressive. Laying the park out
  *  is Backlog work: each PBI names its zone, so the park changes by refining PBIs, not
  *  by dragging things around here. */
-export function ZooShell({ state, children }: { state: ZooGameState; children: ReactNode }) {
+export function ZooShell({ state, children, onPlaceItem }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
@@ -92,18 +92,16 @@ export function ZooShell({ state, children }: { state: ZooGameState; children: R
         <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label="Park" badge={open ? String(open) : undefined} />
       </div>
 
-      {tab === 'work' ? (
-        // The board phases (Plan, Build) want the full width for the sidebar +
-        // columns; Refine, Review and Retro read better in a narrower column.
-        <div className={cn('space-y-5', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>{children}</div>
-      ) : (
-        <div className="space-y-3">
-          <p className="text-[11px] text-muted-foreground">
-            The park shows the work you have delivered. To lay it out - what goes where, or a new zone - refine a Backlog item&rsquo;s zone or add a PBI, then build and open it in a Sprint.
-          </p>
-          <ParkView state={state} large />
-        </div>
-      )}
+      {/* Both tabs stay MOUNTED and are toggled with CSS, not conditionally rendered - so
+          the day clock (and any in-progress studio work) keeps running when you glance at
+          the Park and come back, instead of resetting on remount. */}
+      <div className={cn('space-y-5', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl', tab !== 'work' && 'hidden')}>{children}</div>
+      <div className={cn('space-y-3', tab !== 'park' && 'hidden')}>
+        <p className="text-[11px] text-muted-foreground">
+          The park shows the work you have delivered. Drag an enclosure, building or planting to lay out your zoo - animals move with their enclosure.
+        </p>
+        <ParkView state={state} large onPlaceItem={onPlaceItem} />
+      </div>
     </div>
   );
 }
