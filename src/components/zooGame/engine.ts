@@ -60,6 +60,7 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   const acceptance = draft.acceptance.map((a) => a.trim()).filter(Boolean);
   const base = {
     id, name, story: draft.story?.trim() || undefined, category: draft.category, zone,
+    template: draft.template,
     acceptance: acceptance.length ? acceptance : ['Meets its purpose'],
     status: 'backlog' as const, sprintNumber: null, accessible: true,
     unsized: true, estimate: 0, trueSize: DEFAULT_SIZE[draft.category] ?? 5,

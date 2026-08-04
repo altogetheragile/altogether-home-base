@@ -7,6 +7,8 @@ import {
 } from './engine';
 import type { ZooGameState } from './types';
 import type { ItemDesign } from './design';
+import { presetFor } from './design';
+import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
 const FULL_DESIGN: ItemDesign = { parts: {}, colors: { body: '#c8873b', head: '#8a5a2b', ears: '#e3c66b', tail: '#2a2622', markings: '#f0efe9', foliage: '#43a047', trunk: '#7a5230', walls: '#cfd4d8', roof: '#9aa3ab', door: '#8a5a2b', sign: '#e6842a' } };
@@ -589,5 +591,24 @@ describe('zoo game: a weak Definition of Done bites the outcome', () => {
     const s = initialZooState(1);
     expect(dodGaps(s.definitionOfDone)).toHaveLength(0);
     expect(dodHappinessFactor(s.definitionOfDone)).toBe(1);
+  });
+});
+
+describe('zoo game: the toolbox', () => {
+  it('adds a templated PBI that keeps its species shape into the studio', () => {
+    const lion = TOOLBOX.flatMap((g) => g.items).find((i) => i.template === 'lion')!;
+    const s = addPbi(initialZooState(1), toolboxDraft(lion));
+    const item = s.backlog.find((i) => i.template === 'lion' && i.status === 'backlog')!;
+    expect(item.category).toBe('exhibit');
+    expect(item.unsized).toBe(true);
+    expect(item.acceptance.some((a) => /recognisable/i.test(a))).toBe(true);
+    // presetFor uses the template, not the id, so a maned lion shape is the starting point
+    expect(presetFor(item).parts.head).toBe('maned');
+  });
+
+  it('offers a broad selection of animal templates, all with known shapes', () => {
+    const exhibits = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'exhibit');
+    expect(exhibits.length).toBeGreaterThanOrEqual(20);
+    for (const e of exhibits) expect(presetFor({ category: 'exhibit', template: e.template } as never).parts.body).toBeDefined();
   });
 });

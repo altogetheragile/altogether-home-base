@@ -234,27 +234,45 @@ export const SWATCHES = ['#c8873b', '#e6842a', '#e3c66b', '#8a5a2b', '#2a2622', 
 
 // ---- Presets: a recognisable starting shape per species (uncoloured) ----
 
-const PART_PRESETS: Record<string, Record<string, string>> = {
+/** Recognisable starting shapes per species, assembled from the creature-kit parts.
+ *  These are the animal TEMPLATES the toolbox offers; a PBI keeps its template key so
+ *  the studio starts from the right shape (then you tailor the colours and features). */
+export const PART_PRESETS: Record<string, Record<string, string>> = {
   lion: { body: 'round', head: 'maned', ears: 'round', tail: 'tufted', markings: 'none' },
   tiger: { body: 'long', head: 'round', ears: 'pointed', tail: 'long', markings: 'stripes' },
   leopard: { body: 'long', head: 'round', ears: 'round', tail: 'long', markings: 'spots' },
+  cheetah: { body: 'long', head: 'round', ears: 'round', tail: 'long', markings: 'spots' },
   penguins: { body: 'upright', head: 'beaked', ears: 'none', tail: 'none', markings: 'patches' },
   reef: { body: 'finned', head: 'none', ears: 'none', tail: 'fin', markings: 'stripes' },
+  seal: { body: 'finned', head: 'none', ears: 'none', tail: 'fin', markings: 'none' },
+  otter: { body: 'finned', head: 'none', ears: 'none', tail: 'fin', markings: 'none' },
+  flamingo: { body: 'tall', head: 'beaked', ears: 'none', tail: 'none', markings: 'none' },
   elephant: { body: 'bulky', head: 'trunk', ears: 'round', tail: 'long', markings: 'none' },
   giraffe: { body: 'tall', head: 'round', ears: 'pointed', tail: 'long', markings: 'spots' },
   zebra: { body: 'long', head: 'round', ears: 'pointed', tail: 'long', markings: 'stripes' },
   rhino: { body: 'bulky', head: 'horned', ears: 'round', tail: 'long', markings: 'none' },
+  hippo: { body: 'bulky', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' },
+  buffalo: { body: 'bulky', head: 'horned', ears: 'round', tail: 'tufted', markings: 'none' },
+  antelope: { body: 'tall', head: 'horned', ears: 'pointed', tail: 'tufted', markings: 'none' },
+  meerkat: { body: 'upright', head: 'round', ears: 'round', tail: 'long', markings: 'none' },
   bear: { body: 'bulky', head: 'round', ears: 'round', tail: 'none', markings: 'none' },
+  panda: { body: 'bulky', head: 'round', ears: 'round', tail: 'none', markings: 'patches' },
+  wolf: { body: 'long', head: 'round', ears: 'pointed', tail: 'long', markings: 'none' },
+  fox: { body: 'long', head: 'round', ears: 'pointed', tail: 'long', markings: 'none' },
+  gorilla: { body: 'bulky', head: 'round', ears: 'round', tail: 'none', markings: 'none' },
   monkey: { body: 'round', head: 'round', ears: 'round', tail: 'long', markings: 'none' },
+  kangaroo: { body: 'upright', head: 'round', ears: 'pointed', tail: 'long', markings: 'none' },
+  camel: { body: 'tall', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' },
 };
 const GENERIC_EXHIBIT = { body: 'round', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' };
 
 /** The starting design for an item: a recognisable shape (for exhibits) with no
- *  colours yet, so the player colours it in. */
+ *  colours yet, so the player colours it in. Uses the item's toolbox template (falling
+ *  back to its id) to pick the species shape. */
 export function presetFor(item: BacklogItem): ItemDesign {
   if (item.category === 'flora') return { parts: { type: 'tree' }, colors: {} };
   if (item.category === 'amenity') return { parts: { sign: 'on' }, colors: {} };
-  return { parts: { ...(PART_PRESETS[item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
+  return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
 }
 export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 

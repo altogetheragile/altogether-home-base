@@ -3,9 +3,11 @@ import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
 import { availableItems, suggestTasks } from './engine';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
+import { Toolbox } from './Toolbox';
+import { toolboxDraft } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
@@ -156,14 +158,19 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [showToolbox, setShowToolbox] = useState(false);
   const items = availableItems(state);
   const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
 
   return (
     <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
-      <div className="flex items-center justify-between gap-2">
+      {showToolbox && <Toolbox onPick={(t) => onAddPbi(toolboxDraft(t))} onClose={() => setShowToolbox(false)} />}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span></h3>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
+        <div className="flex items-center gap-1.5">
+          <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
+        </div>
       </div>
       <p className="text-[11px] text-muted-foreground">
         {mode === 'refine'
