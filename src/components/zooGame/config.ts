@@ -181,6 +181,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     wipLimit: DEFAULT_WIP_LIMIT,
     scrumDiscipline: false,
     learnMode: false,
+    dailyScrumAt: 'start',
   };
 }
 

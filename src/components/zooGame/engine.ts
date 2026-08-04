@@ -236,6 +236,11 @@ export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, learnMode: on };
 }
 
+/** Choose when the Daily Scrum is held - at the start of each day or the end. */
+export function setDailyScrumAt(state: ZooGameState, at: 'start' | 'end'): ZooGameState {
+  return { ...state, dailyScrumAt: at };
+}
+
 /** Set an enclosure's footprint size (chosen while building the habitat in the studio). */
 export function setEnclosureSize(state: ZooGameState, id: string, size: 'small' | 'medium' | 'large'): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureSize: size } : it)) };
@@ -500,11 +505,15 @@ export function endDay(state: ZooGameState): ZooGameState {
   // The day's clock runs through the start-of-day breather and the build, so a day
   // can end from either stage (the pause uses real time).
   if (state.phase !== 'sprint' || (state.dayStage !== 'building' && state.dayStage !== 'dayStart')) return state;
-  // The last day ends straight to the Review: there is no next day to re-plan, so
-  // there is no end-of-day Daily Scrum.
+  // The last day ends straight to the Review: there is no next day to re-plan.
   if (state.dayNumber >= state.sprintDays) return reviewSprint(state);
-  const pendingImpediment = generateImpediment(state.gameSeed, state.sprintNumber, state.dayNumber);
-  return { ...state, dayStage: 'dailyScrum', pendingImpediment };
+  if (state.dailyScrumAt === 'start') {
+    // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
+    const next = state.dayNumber + 1;
+    return { ...state, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(state.gameSeed, state.sprintNumber, next) };
+  }
+  // End-of-day: hold the Daily Scrum now, before advancing.
+  return { ...state, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(state.gameSeed, state.sprintNumber, state.dayNumber) };
 }
 
 /** Move to the next day, or end the Sprint (open the Review) after the last day.
@@ -530,7 +539,11 @@ export function runDailyScrum(state: ZooGameState): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   // A disciplined team (the "hold the Daily Scrum every day" improvement) runs an
   // efficient, timeboxed Daily Scrum that costs no build time.
-  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT);
+  const mult = state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
+  const cleared = { ...state, pendingImpediment: null, carriedImpediment: null };
+  // Start-of-day scrums are held ON the day (endDay already advanced it): begin building.
+  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult };
+  return advanceDay(cleared, mult);
 }
 
 /** Skip the Daily Scrum. If an impediment was waiting, it goes unspotted and
@@ -542,11 +555,15 @@ export function runDailyScrum(state: ZooGameState): ZooGameState {
 export function skipDailyScrum(state: ZooGameState): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   const imp = state.pendingImpediment;
-  if (imp) {
-    const carried: Impediment = { ...imp, missed: true, tip: MISSED_SCRUM_TIP };
-    return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: carried, missedScrums: state.missedScrums + 1 }, SKIP_PENALTY_MULT);
-  }
-  return advanceDay({ ...state, pendingImpediment: null, carriedImpediment: null }, state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT);
+  const mult = imp ? SKIP_PENALTY_MULT : state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
+  const base = {
+    ...state,
+    pendingImpediment: null,
+    carriedImpediment: imp ? { ...imp, missed: true, tip: MISSED_SCRUM_TIP } : null,
+    missedScrums: state.missedScrums + (imp ? 1 : 0),
+  };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult };
+  return advanceDay(base, mult);
 }
 
 // ============= The Sprint Review =============

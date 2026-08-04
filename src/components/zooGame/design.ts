@@ -275,6 +275,14 @@ export const PART_PRESETS: Record<string, Record<string, string>> = {
   monkey: { body: 'round', head: 'round', ears: 'round', tail: 'long', markings: 'none' },
   kangaroo: { body: 'upright', head: 'round', ears: 'pointed', tail: 'long', markings: 'none' },
   camel: { body: 'tall', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' },
+  // Birds - beaked heads, assembled from the shared kit.
+  eagle: { body: 'upright', head: 'beaked', ears: 'none', tail: 'long', markings: 'none' },
+  parrot: { body: 'round', head: 'beaked', ears: 'none', tail: 'long', markings: 'patches' },
+  owl: { body: 'round', head: 'beaked', ears: 'pointed', tail: 'none', markings: 'dapples' },
+  toucan: { body: 'round', head: 'beaked', ears: 'none', tail: 'long', markings: 'patches' },
+  peacock: { body: 'tall', head: 'beaked', ears: 'none', tail: 'long', markings: 'spots' },
+  ostrich: { body: 'tall', head: 'beaked', ears: 'none', tail: 'tufted', markings: 'none' },
+  emu: { body: 'tall', head: 'beaked', ears: 'none', tail: 'bushy', markings: 'none' },
 };
 const GENERIC_EXHIBIT = { body: 'round', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' };
 
