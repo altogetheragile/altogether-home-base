@@ -33,6 +33,7 @@ export default function ZooGame() {
   const [saveName, setSaveName] = useState('');
   const [saveOpen, setSaveOpen] = useState(false);
   const [savesOpen, setSavesOpen] = useState(false);
+  const [poNote, setPoNote] = useState<string | null>(null);
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
@@ -63,13 +64,14 @@ export default function ZooGame() {
     try {
       const decisions = await poRefineCall(state);
       poRefine(decisions);
-      toast.success('Product Owner refined the Backlog', { description: decisions.rationale || undefined });
+      setPoNote(decisions.rationale?.trim() || 'The Product Owner refined the Backlog.');
+      toast.success('Product Owner refined the Backlog');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'The Product Owner could not refine the Backlog.');
     }
   };
 
-  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining };
+  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {

@@ -3,7 +3,7 @@ import type { ZooGameState } from './types';
 import { ParkView } from './ParkView';
 import { DodEditor } from './DodEditor';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users, Pencil, Check, Save, FolderOpen, Sparkles, Loader2 } from 'lucide-react';
+import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users, Pencil, Check, Save, FolderOpen, Sparkles, Loader2, X } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -75,7 +75,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
  *  Park, which gets the full width so it can be big and impressive. Laying the park out
  *  is Backlog work: each PBI names its zone, so the park changes by refining PBIs, not
  *  by dragging things around here. */
-export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpenSaves, onPoRefine, poRefining }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean }) {
+export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
@@ -101,6 +101,20 @@ export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpe
             <button type="button" onClick={onSave} className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
               <Save className="h-3.5 w-3.5" /> Save
             </button>
+          )}
+        </div>
+      )}
+
+      {/* The AI Product Owner's note, from the last refinement - readable and dismissible. */}
+      {poNote && (
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Owner</div>
+            <p className="mt-0.5 whitespace-pre-line text-sm leading-snug text-foreground">{poNote}</p>
+          </div>
+          {onDismissPoNote && (
+            <button type="button" onClick={onDismissPoNote} aria-label="Dismiss" className="shrink-0 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
           )}
         </div>
       )}

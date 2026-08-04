@@ -186,6 +186,9 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
     s = { ...s, backlog: s.backlog.map((it) => (it.id === rf.id && it.status === 'backlog' ? { ...it, acceptance: acc } : it)) };
   }
   if (d.order?.length) s = reorderByPriority(s, d.order);
+  // The PO may propose the initial Sprint Goal - apply it only when none is set yet.
+  const goal = d.sprintGoal?.trim();
+  if (goal && !state.sprintGoal.trim()) s = { ...s, sprintGoal: goal };
   return { ...s, refinePenalty: penaltyBefore };
 }
 
