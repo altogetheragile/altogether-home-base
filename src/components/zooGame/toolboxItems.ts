@@ -44,6 +44,10 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
     items: [exhibit('penguins', 'Penguins', 'Waterside'), exhibit('seal', 'Seals', 'Waterside'), exhibit('otter', 'Otters', 'Waterside'), exhibit('flamingo', 'Flamingos', 'Waterside'), exhibit('reef', 'Reef', 'Waterside')],
   },
   {
+    group: 'Birds',
+    items: [exhibit('eagle', 'Eagle', 'Aviary'), exhibit('parrot', 'Parrots', 'Aviary'), exhibit('owl', 'Owl', 'Aviary'), exhibit('toucan', 'Toucan', 'Aviary'), exhibit('peacock', 'Peacock', 'Aviary'), exhibit('ostrich', 'Ostrich', 'Aviary'), exhibit('emu', 'Emu', 'Aviary')],
+  },
+  {
     group: 'Forest',
     items: [exhibit('bear', 'Bear', 'Forest'), exhibit('panda', 'Panda', 'Forest'), exhibit('wolf', 'Wolves', 'Forest'), exhibit('fox', 'Fox', 'Forest'), exhibit('gorilla', 'Gorilla', 'Forest'), exhibit('monkey', 'Monkeys', 'Forest'), exhibit('kangaroo', 'Kangaroo', 'Forest')],
   },

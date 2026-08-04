@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setEnclosureSize, setItemPos, splitEpic, setDefinitionOfDone, dodGaps, dodHappinessFactor,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, setDefinitionOfDone, dodGaps, dodHappinessFactor,
 } from './engine';
 import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
@@ -115,6 +115,19 @@ describe('zoo game: the Sprint loop', () => {
     expect(tiger.status).toBe('backlog');
     expect(tiger.sprintNumber).toBeNull();
     expect(s.velocity[0]).toBe(8); // only the lion's points
+  });
+
+  it('Done-but-not-opened work is NOT lost when the Sprint ends (stays Done, still openable)', () => {
+    let s = planSprint(flat(initialZooState(1)), ['lion']);
+    s = finish(s, 'lion'); // built to Done, but never Opened
+    expect(s.backlog.find((i) => i.id === 'lion')!.status).toBe('done');
+    s = reviewSprint(s);
+    const lion = () => s.backlog.find((i) => i.id === 'lion')!;
+    expect(lion().status).toBe('done'); // still there after the Review - not vanished, not reverted to backlog
+    s = startNextSprint(s, 'x');
+    expect(lion().status).toBe('done'); // carries into the next Sprint
+    s = openItem(s, 'lion'); // and can still be released
+    expect(lion().status).toBe('open');
   });
 
   it('runs across Sprints, carrying velocity and the growing zoo', () => {
@@ -339,8 +352,8 @@ describe('zoo game: timed days and the Daily Scrum', () => {
     expect(s.velocity[0]).toBe(8);
   });
 
-  it('after the Daily Scrum a new day pauses (dayStart) until it is started', () => {
-    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
+  it('with END-of-day scrums, a new day pauses (dayStart) until it is started', () => {
+    let s = openItem(finish(planSprint({ ...initialZooState(1), dailyScrumAt: 'end' }, ['lion']), 'lion'), 'lion');
     s = runDailyScrum(endDay(s));
     expect(s.dayStage).toBe('dayStart'); // a breather before the build resumes
     expect(s.dayNumber).toBe(2);
@@ -348,12 +361,25 @@ describe('zoo game: timed days and the Daily Scrum', () => {
     expect(s.dayStage).toBe('building');
   });
 
-  it('the clock runs through the breather: the day can end from dayStart', () => {
-    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion'), 'lion');
+  it('the clock runs through the breather: the day can end from dayStart (end-of-day scrums)', () => {
+    let s = openItem(finish(planSprint({ ...initialZooState(1), dailyScrumAt: 'end' }, ['lion']), 'lion'), 'lion');
     s = runDailyScrum(endDay(s)); // -> dayStart on day 2
     expect(s.dayStage).toBe('dayStart');
     s = endDay(s); // the day's time ran out during the breather
     expect(s.dayStage).toBe('dailyScrum'); // day 2 is not the last, so its close opens a Daily Scrum
+  });
+
+  it('the Daily Scrum timing is settable; by default it is held at the START of each day', () => {
+    let s = planSprint(initialZooState(1), ['lion']);
+    expect(s.dailyScrumAt).toBe('start'); // Scrum's usual cadence
+    expect(s.dayNumber).toBe(1);
+    s = endDay(s); // day 1 ends -> advance to day 2 and hold ITS Daily Scrum before building
+    expect(s.dayNumber).toBe(2);
+    expect(s.dayStage).toBe('dailyScrum');
+    s = runDailyScrum(s); // scrum done -> straight into building day 2 (no separate breather)
+    expect(s.dayStage).toBe('building');
+    // The team can switch to end-of-day scrums.
+    expect(setDailyScrumAt(initialZooState(1), 'end').dailyScrumAt).toBe('end');
   });
 
   it('impediments are deterministic per game, Sprint and day; some days have none', () => {
@@ -729,6 +755,14 @@ describe('zoo game: the toolbox', () => {
     const exhibits = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'exhibit');
     expect(exhibits.length).toBeGreaterThanOrEqual(20);
     for (const e of exhibits) expect(presetFor({ category: 'exhibit', template: e.template } as never).parts.body).toBeDefined();
+  });
+
+  it('includes a Birds group with recognisable bird shapes', () => {
+    const birds = TOOLBOX.find((g) => g.group === 'Birds')!;
+    expect(birds).toBeDefined();
+    const names = birds.items.map((i) => i.template);
+    expect(names).toEqual(expect.arrayContaining(['eagle', 'parrot', 'ostrich', 'emu', 'owl']));
+    for (const b of birds.items) expect(presetFor({ category: 'exhibit', template: b.template } as never).parts.head).toBe('beaked');
   });
 
   it('offers enclosures (habitats) too, which add a sized enclosure PBI', () => {

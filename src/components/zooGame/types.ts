@@ -207,6 +207,9 @@ export interface ZooGameState {
   /** Learn mode: pause the day clock so there is no real-time pressure - days end only
    *  when you choose. The timed mode teaches Sprint pressure; this is the reflective one. */
   learnMode: boolean;
+  /** When the Daily Scrum is held: at the START of each day (Scrum's usual cadence) or at
+   *  the END. Chosen by the team; the same event either way, just timed differently. */
+  dailyScrumAt: 'start' | 'end';
 }
 
 export type ZooAction =
@@ -224,6 +227,7 @@ export type ZooAction =
   | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
   | { type: 'SET_SPRINT_DAYS'; days: number }
   | { type: 'SET_LEARN_MODE'; on: boolean }
+  | { type: 'SET_SCRUM_AT'; at: 'start' | 'end' }
   | { type: 'SET_ENCLOSURE'; id: string; size: 'small' | 'medium' | 'large' }
   | { type: 'SET_POS'; id: string; pos: { x: number; y: number } }
   | { type: 'SPLIT_EPIC'; id: string; memberIds: string[] }

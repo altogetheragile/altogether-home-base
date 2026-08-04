@@ -23,6 +23,7 @@ interface SprintBoardProps {
   onStartItem: (id: string) => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   onSetLearnMode: (on: boolean) => void;
+  onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
   onOpen: (id: string) => void;
@@ -114,12 +115,16 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, learnMode, onExpire }: { da
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onPull, onSplitEpic, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const [draft, setDraft] = useState<{ id: string; design: ItemDesign } | null>(null);
-  const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'));
+  const committed = state.backlog.filter((it) =>
+    (it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'))
+    // Unreleased Done work built in an earlier Sprint carries over here (not lost) until you open it.
+    || (it.status === 'done' && it.sprintNumber !== state.sprintNumber),
+  );
   const open = openZoo(state);
   const designItem = designing ? committed.find((it) => it.id === designing) : null;
   const editing = !!designItem && designItem.status !== 'committed';
@@ -162,6 +167,11 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
         {/* The clock runs through the start-of-day breather and the build alike. */}
         <div className="flex items-center gap-2">
           <DayTimer key={state.dayNumber} dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+          <button type="button" onClick={() => onSetScrumAt(state.dailyScrumAt === 'start' ? 'end' : 'start')}
+            title="When the Daily Scrum is held each day"
+            className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+            Daily Scrum: {state.dailyScrumAt === 'start' ? 'start of day' : 'end of day'}
+          </button>
           <button type="button" onClick={() => onSetLearnMode(!state.learnMode)}
             title={state.learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
             className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
