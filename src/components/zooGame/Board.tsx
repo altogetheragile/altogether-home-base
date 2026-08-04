@@ -7,14 +7,47 @@ import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
+  if (item.category === 'epic') return <Layers className={className} />;
   if (item.category === 'enclosure') return <Boxes className={className} />;
   if (item.category === 'flora') return <Trees className={className} />;
   if (item.category === 'amenity') return item.services === 'food' ? <Coffee className={className} /> : <Plus className={className} />;
   return <Fish className={className} />;
+}
+
+/** Refine an epic: tick the members to split out into their own PBIs (each animal becomes
+ *  an enclosure + the animal that depends on it; each facility becomes an amenity). */
+function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem; onSplit: (memberIds: string[]) => void; onCancel: () => void }) {
+  const members = epic.epicMembers ?? [];
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(members.map((m) => m.id)));
+  const toggle = (id: string) => setPicked((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const count = members.filter((m) => picked.has(m.id)).reduce((n, m) => n + (m.kind === 'exhibit' ? 2 : 1), 0);
+  return (
+    <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold"><Scissors className="mr-1 inline h-3.5 w-3.5" />Split &ldquo;{epic.name}&rdquo; into PBIs</h3>
+        <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+      </div>
+      <p className="text-[11px] text-muted-foreground">Each animal becomes an enclosure plus the animal that lives in it (the animal can&rsquo;t be built until its enclosure is). Untick anything you don&rsquo;t want yet - the epic stays for the rest.</p>
+      <ul className="space-y-1.5">
+        {members.map((mem) => (
+          <li key={mem.id}>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={picked.has(mem.id)} onChange={() => toggle(mem.id)} />
+              <span className="font-medium">{mem.name}</span>
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{mem.kind === 'exhibit' ? 'animal + enclosure' : 'facility'}</span>
+            </label>
+          </li>
+        ))}
+      </ul>
+      <div className="flex justify-end">
+        <Button size="sm" disabled={count === 0} onClick={() => onSplit(members.filter((m) => picked.has(m.id)).map((m) => m.id))}>Create {count} PBI{count === 1 ? '' : 's'}</Button>
+      </div>
+    </div>
+  );
 }
 
 /** One board column - To Do / Doing / Done - with a header count and an empty hint. When
@@ -150,17 +183,22 @@ interface SidebarProps {
   onMoveBefore?: (id: string, beforeId: string) => void;
   /** sprint mode: pull a Ready item into the running Sprint. */
   onPull?: (id: string) => void;
+  /** Refine an epic by splitting the chosen members into their own PBIs. */
+  onSplitEpic?: (id: string, memberIds: string[]) => void;
 }
 
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveBefore, onPull }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveBefore, onPull, onSplitEpic }: SidebarProps) {
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
+  const [splitting, setSplitting] = useState<BacklogItem | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [showToolbox, setShowToolbox] = useState(false);
   const items = availableItems(state);
+  // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
+  const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
 
   return (
@@ -182,10 +220,15 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
       </p>
 
       {editingPbi && (
-        <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi}
+        <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi} enclosures={enclosures}
           useStories={state.useUserStories} onToggleStories={onSetUseStories}
           onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
           onCancel={() => setEditingPbi(null)} />
+      )}
+      {splitting && (
+        <SplitEpicPanel epic={splitting}
+          onSplit={(ids) => { onSplitEpic?.(splitting.id, ids); setSplitting(null); }}
+          onCancel={() => setSplitting(null)} />
       )}
       {estimatingItem && (
         <PlanningPoker item={estimatingItem} seed={state.gameSeed}
@@ -224,7 +267,9 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
                 <button type="button" title="Refine this PBI" onClick={() => setEditingPbi(it)} className="shrink-0 text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
               </div>
               <div className="mt-1.5 flex items-center justify-end gap-1.5">
-                {it.unsized ? (
+                {it.category === 'epic' ? (
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split into PBIs</Button>
+                ) : it.unsized ? (
                   <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
                 ) : mode === 'refine' ? (
                   <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>

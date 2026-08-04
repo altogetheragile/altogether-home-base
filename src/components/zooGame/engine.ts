@@ -66,28 +66,16 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
     unsized: true, estimate: 0, trueSize: DEFAULT_SIZE[draft.category] ?? 5,
   };
   let item: BacklogItem;
-  const extra: BacklogItem[] = []; // any infrastructure created alongside the item (a species enclosure)
   if (draft.category === 'exhibit') {
-    // Each species has its own enclosure (lions and tigers don't share). Reuse one for this
-    // species if it already exists - a second lion joins the Lion Enclosure - otherwise
-    // create the enclosure too, so the animal always has a habitat to be built into first.
-    const encName = `${name} Enclosure`;
-    let home = state.backlog.find((it) => it.category === 'enclosure' && it.name === encName);
-    if (!home) {
-      home = {
-        id: `${id}-enc`, name: encName, category: 'enclosure', zone, enclosureSize: 'medium',
-        acceptance: ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up'],
-        status: 'backlog' as const, sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: 5,
-      };
-      extra.push(home);
-    }
-    item = { ...base, enclosureId: home.id, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
+    // Animals and enclosures are SEPARATE PBIs. The PO links the animal to an enclosure
+    // (draft.enclosureId) - it can only be built once that enclosure is Done. Left unlinked,
+    // it is not gated (nothing to wait for); assign it later by refining it.
+    item = { ...base, enclosureId: draft.enclosureId || undefined, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
   } else if (draft.category === 'amenity') item = { ...base, services: draft.services, serviceCapacity: draft.services ? 500 : undefined };
-  else if (draft.category === 'enclosure') item = { ...base, enclosureSize: 'medium' };
+  else if (draft.category === 'enclosure') item = { ...base, enclosureSize: draft.enclosureSize ?? 'medium' };
   else item = base; // flora is scenery: designable and placeable, no simulation input yet
   const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
-  // The enclosure is added BEFORE the animal, so it reads above it in the Backlog.
-  return { ...state, backlog: [...state.backlog, ...extra, item], zones };
+  return { ...state, backlog: [...state.backlog, item], zones };
 }
 
 /** Refine an existing Backlog PBI (edit its name, zone and acceptance criteria).
@@ -97,11 +85,64 @@ export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): Zoo
   const zone = draft.zone.trim();
   const backlog = state.backlog.map((it) =>
     it.id === id && it.status === 'backlog'
-      ? { ...it, name: draft.name.trim() || it.name, story: draft.story?.trim() || undefined, zone: zone || it.zone, acceptance: acceptance.length ? acceptance : it.acceptance }
+      ? {
+          ...it,
+          name: draft.name.trim() || it.name,
+          story: draft.story?.trim() || undefined,
+          zone: zone || it.zone,
+          acceptance: acceptance.length ? acceptance : it.acceptance,
+          // An animal can be (re)assigned to an enclosure while refining it.
+          ...(it.category === 'exhibit' ? { enclosureId: draft.enclosureId || undefined } : {}),
+          ...(it.category === 'enclosure' && draft.enclosureSize ? { enclosureSize: draft.enclosureSize } : {}),
+        }
       : it,
   );
   const zones = zone && !state.zones.includes(zone) ? [...state.zones, zone] : state.zones;
   return { ...state, backlog, zones };
+}
+
+/** Refine an EPIC by splitting the chosen members out into their own PBIs. Each animal
+ *  member becomes an enclosure PBI plus the animal PBI that lives in it (the animal
+ *  depends on its enclosure); each facility member becomes an amenity PBI. The new PBIs
+ *  arrive unsized (ready to estimate). The epic is removed once every member is split out;
+ *  split some and it stays with the rest, so refinement can be incremental. */
+export function splitEpic(state: ZooGameState, id: string, memberIds: string[]): ZooGameState {
+  const idx = state.backlog.findIndex((it) => it.id === id && it.category === 'epic');
+  if (idx < 0) return state;
+  const epicItem = state.backlog[idx];
+  const members = epicItem.epicMembers ?? [];
+  const chosen = members.filter((mem) => memberIds.includes(mem.id));
+  if (!chosen.length) return state;
+  const zone = epicItem.zone;
+
+  const created: BacklogItem[] = [];
+  for (const mem of chosen) {
+    if (mem.kind === 'exhibit') {
+      created.push({
+        id: mem.enclosureId ?? `${mem.id}-enc`, name: `${mem.name} Enclosure`, category: 'enclosure', zone,
+        enclosureSize: mem.footprint ?? 'medium',
+        acceptance: ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up'],
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: Math.max(3, Math.round(mem.size / 2)),
+      });
+      created.push({
+        id: mem.id, name: mem.name, category: 'exhibit', zone, template: mem.template, enclosureId: mem.enclosureId,
+        acceptance: ['Recognisable as a ' + mem.name.toLowerCase(), 'Uses at least two colours', 'No bare patches'],
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
+        appeal: mem.appeal ? { families: mem.appeal[0], enthusiasts: mem.appeal[1], comfortSeekers: mem.appeal[2] } : undefined, capacity: 320,
+      });
+    } else {
+      created.push({
+        id: mem.id, name: mem.name, category: 'amenity', zone, services: mem.services, serviceCapacity: 500,
+        acceptance: ['Clearly signed', mem.services === 'food' ? 'Serves food and drink' : mem.services === 'toilet' ? 'Has enough cubicles' : 'Enough seating'],
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
+      });
+    }
+  }
+
+  const remaining = members.filter((mem) => !memberIds.includes(mem.id));
+  const replacement = remaining.length ? [{ ...epicItem, epicMembers: remaining }, ...created] : created;
+  const backlog = [...state.backlog.slice(0, idx), ...replacement, ...state.backlog.slice(idx + 1)];
+  return { ...state, backlog };
 }
 
 /** Commit an estimate to a Backlog item (refinement): it becomes sized and can now

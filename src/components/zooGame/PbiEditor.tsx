@@ -9,6 +9,8 @@ interface PbiEditorProps {
   zones: string[];
   /** The item being refined; omit to create a new PBI. */
   item?: BacklogItem;
+  /** Existing enclosures an animal can be assigned to live in. */
+  enclosures?: { id: string; name: string }[];
   /** Whether the user-story format defaults on (a preference, never forced). */
   useStories: boolean;
   onToggleStories: (on: boolean) => void;
@@ -23,10 +25,13 @@ function parseStory(s: string): { role: string; want: string; soThat: string } {
 }
 
 const CATEGORIES: { key: ItemCategory; label: string; hint: string }[] = [
-  { key: 'exhibit', label: 'Animal', hint: 'an exhibit' },
+  { key: 'exhibit', label: 'Animal', hint: 'an exhibit that lives in an enclosure' },
+  { key: 'enclosure', label: 'Enclosure', hint: 'a habitat you build for animals' },
   { key: 'amenity', label: 'Facility', hint: 'cafe, toilets, seating' },
   { key: 'flora', label: 'Flora', hint: 'trees, bushes, flowers' },
 ];
+const FOOTPRINTS: ('small' | 'medium' | 'large')[] = ['small', 'medium', 'large'];
+const NO_ENCLOSURE = '__none__';
 const SERVICES: { key: 'food' | 'toilet' | 'rest'; label: string }[] = [
   { key: 'food', label: 'Food' }, { key: 'toilet', label: 'Toilets' }, { key: 'rest', label: 'Seating' },
 ];
@@ -34,13 +39,15 @@ const NEW_ZONE = '__new__';
 
 /** The Product Owner writes or refines a Product Backlog Item: name, kind, zone and
  *  acceptance criteria. New PBIs arrive unsized, ready to estimate. */
-export function PbiEditor({ zones, item, useStories, onToggleStories, onSave, onCancel }: PbiEditorProps) {
+export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleStories, onSave, onCancel }: PbiEditorProps) {
   const editing = !!item;
   const [name, setName] = useState(item?.name ?? '');
   const [category, setCategory] = useState<ItemCategory>(item?.category ?? 'exhibit');
   const [zoneSel, setZoneSel] = useState(item?.zone ?? zones[0] ?? NEW_ZONE);
   const [newZone, setNewZone] = useState('');
   const [services, setServices] = useState<'food' | 'toilet' | 'rest' | undefined>(item?.services);
+  const [footprint, setFootprint] = useState<'small' | 'medium' | 'large'>(item?.enclosureSize ?? 'medium');
+  const [enclosureId, setEnclosureId] = useState<string>(item?.enclosureId ?? NO_ENCLOSURE);
   const [acceptance, setAcceptance] = useState<string[]>(item?.acceptance?.length ? item.acceptance : ['']);
   const [storyMode, setStoryMode] = useState(item ? !!item.story : useStories);
   const parsed = parseStory(item?.story ?? '');
@@ -59,7 +66,13 @@ export function PbiEditor({ zones, item, useStories, onToggleStories, onSave, on
 
   const save = () => {
     if (!valid) return;
-    onSave({ name: name.trim(), story, category, zone: zone.trim(), acceptance: acceptance.filter((a) => a.trim()), services: category === 'amenity' ? services : undefined });
+    onSave({
+      name: name.trim(), story, category, zone: zone.trim(),
+      acceptance: acceptance.filter((a) => a.trim()),
+      services: category === 'amenity' ? services : undefined,
+      enclosureSize: category === 'enclosure' ? footprint : undefined,
+      enclosureId: category === 'exhibit' && enclosureId !== NO_ENCLOSURE ? enclosureId : undefined,
+    });
   };
 
   return (
@@ -118,6 +131,29 @@ export function PbiEditor({ zones, item, useStories, onToggleStories, onSave, on
                 className={cn('rounded-full border px-3 py-1 text-xs', services === s.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{s.label}</button>
             ))}
           </div>
+        </div>
+      )}
+
+      {category === 'enclosure' && (
+        <div className="space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Footprint</span>
+          <div className="flex flex-wrap gap-1.5">
+            {FOOTPRINTS.map((f) => (
+              <button key={f} type="button" onClick={() => setFootprint(f)}
+                className={cn('rounded-full border px-3 py-1 text-xs capitalize', footprint === f ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{f}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {category === 'exhibit' && (
+        <div className="space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lives in</span>
+          <select value={enclosureId} onChange={(e) => setEnclosureId(e.target.value)} className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm">
+            <option value={NO_ENCLOSURE}>No enclosure yet</option>
+            {enclosures.map((en) => <option key={en.id} value={en.id}>{en.name}</option>)}
+          </select>
+          <p className="text-[10px] text-muted-foreground/70">An animal is built into its enclosure, so the enclosure must be built first. Add an Enclosure PBI, then point the animal at it.</p>
         </div>
       )}
 

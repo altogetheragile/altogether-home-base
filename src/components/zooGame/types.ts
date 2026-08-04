@@ -19,6 +19,11 @@ export interface PbiDraft {
   /** The toolbox template this came from (e.g. 'lion'), so the studio starts from the
    *  right species shape. */
   template?: string;
+  /** For an ENCLOSURE draft: its footprint (habitat size). */
+  enclosureSize?: 'small' | 'medium' | 'large';
+  /** For an EXHIBIT draft: the id of the enclosure it lives in (chosen by the PO).
+   *  Animals and enclosures are separate PBIs; this links an animal to a habitat. */
+  enclosureId?: string;
 }
 
 export type ZooPhase = 'intro' | 'refine' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
@@ -49,10 +54,29 @@ export interface SprintTask { id: string; label: string; done: boolean }
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
  *  seating). Carries the attributes the visitor simulation reads, plus game fields
  *  (estimate, per-item acceptance criteria, status). */
-/** enclosure = a habitat you build FIRST (its footprint and fences), then populate with
- *  animals; exhibit = an animal that lives inside an enclosure; amenity = a facility
- *  (cafe/toilets/seating); flora = scenery/planting (trees, bushes, flowerbeds). */
-export type ItemCategory = 'enclosure' | 'exhibit' | 'amenity' | 'flora';
+/** epic = a themed area (e.g. Savanna) too big to build - it is REFINED by splitting it
+ *  into smaller PBIs; enclosure = a habitat you build FIRST (its footprint and fences),
+ *  then populate with animals; exhibit = an animal that lives inside an enclosure; amenity
+ *  = a facility (cafe/toilets/seating); flora = scenery/planting. */
+export type ItemCategory = 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora';
+
+/** One thing an epic contains, ready to be split out into its own PBI(s). An exhibit
+ *  member becomes an enclosure PBI plus the animal PBI that lives in it (the dependency);
+ *  an amenity member becomes a facility PBI. */
+export interface EpicMember {
+  id: string;
+  name: string;
+  kind: 'exhibit' | 'amenity';
+  /** Exhibits: the species shape and its enclosure. */
+  template?: string;
+  appeal?: [number, number, number];
+  enclosureId?: string;
+  footprint?: 'small' | 'medium' | 'large';
+  /** Amenities: which need it serves. */
+  services?: 'food' | 'toilet' | 'rest';
+  /** Intended size in points (the hidden trueSize the estimate clusters around). */
+  size: number;
+}
 
 export interface BacklogItem {
   id: string;
@@ -73,6 +97,9 @@ export interface BacklogItem {
   /** For an EXHIBIT (animal): the id of the enclosure it lives in. The animal can only be
    *  built once that enclosure is built (Done), and it is drawn inside it in the park. */
   enclosureId?: string;
+  /** For an EPIC: the things it contains, still to be split out into their own PBIs. An
+   *  epic is refined (split), never built directly. */
+  epicMembers?: EpicMember[];
   /** Free-placement position in the park, in fixed design-canvas px (the centre of the
    *  feature). Set by dragging on the Park tab. Unset = auto-laid-out in a default flow.
    *  Only top-level features carry a position (enclosures, amenities, flora); an animal
@@ -197,6 +224,7 @@ export type ZooAction =
   | { type: 'SET_LEARN_MODE'; on: boolean }
   | { type: 'SET_ENCLOSURE'; id: string; size: 'small' | 'medium' | 'large' }
   | { type: 'SET_POS'; id: string; pos: { x: number; y: number } }
+  | { type: 'SPLIT_EPIC'; id: string; memberIds: string[] }
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
