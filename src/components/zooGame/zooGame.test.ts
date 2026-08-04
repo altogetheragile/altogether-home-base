@@ -3,9 +3,9 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, setDefinitionOfDone, dodGaps, dodHappinessFactor,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor,
 } from './engine';
-import type { ZooGameState, BacklogItem } from './types';
+import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
@@ -885,5 +885,43 @@ describe('zoo game: ongoing refinement consumes Sprint time', () => {
     s = { ...s, dayStage: 'building' };
     s = endDay(s);
     if (s.phase === 'sprint') expect(s.refinePenalty).toBe(0);
+  });
+});
+
+describe('zoo game: AI Product Owner refinement', () => {
+  it('splits, adds, clarifies and re-orders by value - and never estimates (Developers do)', () => {
+    let s = initialZooState(1);
+    const decisions: PoDecisions = {
+      rationale: 'Open Waterside; add food near the cats.',
+      splitEpics: [{ epicId: 'waterside', memberIds: ['penguins'] }],
+      newItems: [{ name: 'Ice Cream Stand', category: 'amenity', zone: 'Big Cats', services: 'food', acceptance: ['Serves food and drink'] }],
+      refine: [{ id: 'lion', acceptance: ['Unmistakably a lion', 'Two or more colours'] }],
+      order: ['lion', 'kiosk'],
+    };
+    s = applyPoRefinements(s, decisions);
+
+    // Split out penguins (+ its enclosure); the Waterside epic keeps the rest.
+    expect(s.backlog.some((i) => i.id === 'penguins')).toBe(true);
+    expect(s.backlog.some((i) => i.id === 'penguin-enc')).toBe(true);
+    expect(s.backlog.find((i) => i.id === 'waterside')!.epicMembers!.some((m) => m.id === 'penguins')).toBe(false);
+    // Added a facility.
+    const ice = s.backlog.find((i) => i.name === 'Ice Cream Stand')!;
+    expect(ice.category).toBe('amenity');
+    expect(ice.services).toBe('food');
+    expect(ice.unsized).toBe(true); // the PO does NOT estimate - it arrives unsized
+    // Clarified acceptance.
+    expect(s.backlog.find((i) => i.id === 'lion')!.acceptance).toContain('Unmistakably a lion');
+    // Re-ordered by value: lion then kiosk at the front of the Backlog.
+    const backlogIds = s.backlog.filter((i) => i.status === 'backlog').map((i) => i.id);
+    expect(backlogIds[0]).toBe('lion');
+    expect(backlogIds[1]).toBe('kiosk');
+  });
+
+  it('the PO doing refinement does NOT charge the Developers build clock', () => {
+    let s = planSprint(flat(initialZooState(1)), ['lion']); // in a Sprint, penalty starts at 0
+    expect(s.refinePenalty).toBe(0);
+    s = applyPoRefinements(s, { newItems: [{ name: 'Meerkats', category: 'exhibit', zone: 'Savanna', acceptance: ['Recognisable'] }] });
+    expect(s.backlog.some((i) => i.name === 'Meerkats')).toBe(true);
+    expect(s.refinePenalty).toBe(0); // restored - the PO's work is not the Developers' time
   });
 });

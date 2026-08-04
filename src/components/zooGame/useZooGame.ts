@@ -1,9 +1,9 @@
 import { useReducer, useCallback } from 'react';
-import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask } from './types';
+import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
@@ -96,6 +96,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       // Resume a saved game: replace the whole state with the loaded snapshot. Merge over a
       // fresh state so any fields added since the save get sensible defaults.
       return { ...initialZooState(action.state.gameSeed ?? state.gameSeed), ...action.state };
+    case 'PO_REFINE':
+      return applyPoRefinements(state, action.decisions);
     case 'RESET':
       return initialZooState(state.gameSeed);
     default:
@@ -146,10 +148,11 @@ export function useZooGame(gameSeed?: number) {
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
   const finish = useCallback(() => dispatch({ type: 'END_GAME' }), []);
   const loadGame = useCallback((loaded: ZooGameState) => dispatch({ type: 'LOAD_GAME', state: loaded }), []);
+  const poRefine = useCallback((decisions: PoDecisions) => dispatch({ type: 'PO_REFINE', decisions }), []);
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, loadGame,
+    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, loadGame, poRefine,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };

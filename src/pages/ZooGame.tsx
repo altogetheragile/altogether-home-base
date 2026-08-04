@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
+import { useZooProductOwner } from '@/components/zooGame/useZooProductOwner';
 import { useAuth } from '@/contexts/AuthContext';
 import { ZooIntro } from '@/components/zooGame/ZooIntro';
 import { RefineBacklog } from '@/components/zooGame/RefineBacklog';
@@ -21,9 +22,10 @@ import Footer from '@/components/Footer';
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, reset } = useZooGame();
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
+  const { refine: poRefineCall, isRefining } = useZooProductOwner();
 
   // Save/resume orchestration. saveId tracks the row this game maps to, so a second
   // save updates rather than duplicates; saveName seeds the name field.
@@ -56,8 +58,18 @@ export default function ZooGame() {
     setSaveName(name);
     toast.success(`Resumed "${name}"`);
   };
+  const handlePoRefine = async () => {
+    if (!user) { toast.error('Sign in to use the AI Product Owner.'); return; }
+    try {
+      const decisions = await poRefineCall(state);
+      poRefine(decisions);
+      toast.success('Product Owner refined the Backlog', { description: decisions.rationale || undefined });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'The Product Owner could not refine the Backlog.');
+    }
+  };
 
-  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSave: requestSave, onOpenSaves: () => setSavesOpen(true) };
+  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining };
 
   const render = () => {
     switch (state.phase) {

@@ -3,7 +3,7 @@ import type { ZooGameState } from './types';
 import { ParkView } from './ParkView';
 import { DodEditor } from './DodEditor';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users, Pencil, Check, Save, FolderOpen } from 'lucide-react';
+import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users, Pencil, Check, Save, FolderOpen, Sparkles, Loader2 } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -75,15 +75,23 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
  *  Park, which gets the full width so it can be big and impressive. Laying the park out
  *  is Backlog work: each PBI names its zone, so the park changes by refining PBIs, not
  *  by dragging things around here. */
-export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpenSaves }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void; onSave?: () => void; onOpenSaves?: () => void }) {
+export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpenSaves, onPoRefine, poRefining }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3 py-4 pb-28 sm:px-4">
       {/* Save / resume this game */}
-      {(onSave || onOpenSaves) && (
+      {(onSave || onOpenSaves || onPoRefine) && (
         <div className="mb-2 flex items-center justify-end gap-1.5">
+          {onPoRefine && state.phase !== 'sprint' && (
+            <button type="button" onClick={onPoRefine} disabled={poRefining}
+              title="The AI Product Owner refines the Backlog by value - splits epics, adds items, clarifies acceptance (it doesn't estimate)"
+              className="mr-auto flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-60">
+              {poRefining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {poRefining ? 'PO refining…' : 'Ask the PO to refine'}
+            </button>
+          )}
           {onOpenSaves && (
             <button type="button" onClick={onOpenSaves} className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
               <FolderOpen className="h-3.5 w-3.5" /> Saved games

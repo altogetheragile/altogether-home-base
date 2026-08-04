@@ -1,4 +1,4 @@
-import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask } from './types';
+import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign } from './design';
@@ -150,6 +150,43 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
   const replacement = remaining.length ? [{ ...epicItem, epicMembers: remaining }, ...created] : created;
   const backlog = [...state.backlog.slice(0, idx), ...replacement, ...state.backlog.slice(idx + 1)];
   return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.split);
+}
+
+/** Move the given Backlog-status items to the front of the Backlog in the given order (the
+ *  Product Owner re-prioritising by value). Items not listed keep their relative order. */
+function reorderByPriority(state: ZooGameState, ids: string[]): ZooGameState {
+  const seen = new Set<string>();
+  const front: BacklogItem[] = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    const it = state.backlog.find((x) => x.id === id && x.status === 'backlog');
+    if (it) { front.push(it); seen.add(id); }
+  }
+  if (!front.length) return state;
+  const rest = state.backlog.filter((x) => !seen.has(x.id));
+  return { ...state, backlog: [...front, ...rest] };
+}
+
+/** Apply the AI Product Owner's refinement decisions: split epics, add PBIs, clarify
+ *  acceptance criteria, and re-order by value. The PO does this work, so it does NOT charge
+ *  the Developers' build clock (the refinement penalty is restored afterwards). Never sets
+ *  estimates - the Developers estimate. */
+export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGameState {
+  const penaltyBefore = state.refinePenalty;
+  let s = state;
+  for (const sp of d.splitEpics ?? []) s = splitEpic(s, sp.epicId, sp.memberIds ?? []);
+  for (const ni of d.newItems ?? []) {
+    if (!ni?.name?.trim()) continue;
+    const category: ItemCategory = ni.category === 'amenity' || ni.category === 'flora' ? ni.category : 'exhibit';
+    s = addPbi(s, { name: ni.name, category, zone: ni.zone || 'General', acceptance: ni.acceptance ?? [], services: category === 'amenity' ? ni.services : undefined });
+  }
+  for (const rf of d.refine ?? []) {
+    const acc = (rf.acceptance ?? []).map((a) => a.trim()).filter(Boolean);
+    if (!acc.length) continue;
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === rf.id && it.status === 'backlog' ? { ...it, acceptance: acc } : it)) };
+  }
+  if (d.order?.length) s = reorderByPriority(s, d.order);
+  return { ...s, refinePenalty: penaltyBefore };
 }
 
 /** Commit an estimate to a Backlog item (refinement): it becomes sized and can now
