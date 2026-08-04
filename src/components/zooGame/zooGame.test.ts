@@ -729,6 +729,17 @@ describe('zoo game: the toolbox', () => {
     expect(exhibits.length).toBeGreaterThanOrEqual(20);
     for (const e of exhibits) expect(presetFor({ category: 'exhibit', template: e.template } as never).parts.body).toBeDefined();
   });
+
+  it('offers enclosures (habitats) too, which add a sized enclosure PBI', () => {
+    const encs = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'enclosure');
+    expect(encs.length).toBeGreaterThanOrEqual(3);
+    const large = encs.find((e) => e.footprint === 'large')!;
+    const s = addPbi(initialZooState(1), toolboxDraft(large));
+    const item = s.backlog.find((i) => i.name === large.name && i.status === 'backlog')!;
+    expect(item.category).toBe('enclosure');
+    expect(item.enclosureSize).toBe('large');
+    expect(item.unsized).toBe(true);
+  });
 });
 
 describe('zoo game: bespoke animals (base shape)', () => {
