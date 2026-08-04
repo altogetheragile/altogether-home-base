@@ -91,8 +91,8 @@ export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): Zoo
           story: draft.story?.trim() || undefined,
           zone: zone || it.zone,
           acceptance: acceptance.length ? acceptance : it.acceptance,
-          // An animal can be (re)assigned to an enclosure while refining it.
-          ...(it.category === 'exhibit' ? { enclosureId: draft.enclosureId || undefined } : {}),
+          // An animal can be (re)assigned to an enclosure and given a base shape while refining it.
+          ...(it.category === 'exhibit' ? { enclosureId: draft.enclosureId || undefined, template: draft.template || undefined } : {}),
           ...(it.category === 'enclosure' && draft.enclosureSize ? { enclosureSize: draft.enclosureSize } : {}),
         }
       : it,
