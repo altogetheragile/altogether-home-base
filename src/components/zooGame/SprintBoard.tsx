@@ -24,6 +24,7 @@ interface SprintBoardProps {
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   onSetLearnMode: (on: boolean) => void;
   onPull: (id: string) => void;
+  onSplitEpic: (id: string, memberIds: string[]) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
@@ -113,7 +114,7 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, learnMode, onExpire }: { da
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onPull, onSplitEpic, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -191,7 +192,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
           {/* The board: Product Backlog (left) + To Do / Doing / Done columns. */}
           <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
             <ProductBacklogSidebar state={state} mode="sprint" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-              onSetUseStories={onSetUseStories} onPull={onPull} />
+              onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} />
 
             <div className="min-w-0 space-y-3">
               <p className="rounded-lg border border-border bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">

@@ -1,4 +1,4 @@
-import type { BacklogItem, ZooGameState } from './types';
+import type { BacklogItem, ZooGameState, EpicMember } from './types';
 import type { ZooItem } from './simulation/types';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
@@ -55,11 +55,11 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
 /** The starting Product Backlog: rough and partial on purpose. It grows and changes
  *  from play (signals add to it). Appeal is the base value before per-game taste
  *  jitter. */
-// A zoo is built infrastructure-first: every SPECIES has its own ENCLOSURE (habitat) that
-// must be built before that animal can be - lions and tigers don't share a pen just
-// because they're both Big Cats. So each animal carries the id of its species enclosure,
-// and the enclosure sits above it in the Backlog. (A pride is several lion PBIs sharing
-// the one Lion Enclosure.)
+// The Backlog mixes granularity on purpose. Big Cats is already REFINED - split into a
+// per-species enclosure + animal (lions and tigers don't share a pen) plus a kiosk. The
+// other areas arrive as EPICS: a single themed PBI that is too big to build and must be
+// refined by splitting it into its animals (each an enclosure + animal, with the animal
+// depending on its enclosure) and facilities. Every species has its own enclosure.
 const STARTING_BACKLOG: BacklogItem[] = [
   enc('lion-enc', 'Lion Enclosure', 'Big Cats', 5, 'large'),
   ex('lion', 'Lion', 'Big Cats', 8, [8, 7, 6], 'lion-enc'),
@@ -68,27 +68,42 @@ const STARTING_BACKLOG: BacklogItem[] = [
   enc('leopard-enc', 'Leopard Enclosure', 'Big Cats', 5, 'medium'),
   ex('leopard', 'Leopard', 'Big Cats', 8, [7, 8, 5], 'leopard-enc'),
   am('kiosk', 'Kiosk', 'Big Cats', 5, 'food'),
-  enc('penguin-enc', 'Penguin Habitat', 'Waterside', 3, 'medium'),
-  ex('penguins', 'Penguins', 'Waterside', 8, [8, 6, 6], 'penguin-enc'),
-  enc('reef-enc', 'Reef Tank', 'Waterside', 3, 'medium'),
-  ex('reef', 'Reef', 'Waterside', 5, [6, 8, 5], 'reef-enc'),
-  am('wc', 'Toilets', 'Waterside', 3, 'toilet'),
-  // The newer zones arrive UNSIZED: the team must estimate (refine) them first.
-  enc('elephant-enc', 'Elephant Reserve', 'Savanna', 5, 'large', true),
-  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7], 'elephant-enc', true),
-  enc('giraffe-enc', 'Giraffe Paddock', 'Savanna', 5, 'large', true),
-  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6], 'giraffe-enc', true),
-  enc('zebra-enc', 'Zebra Paddock', 'Savanna', 3, 'medium', true),
-  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6], 'zebra-enc', true),
-  enc('rhino-enc', 'Rhino Reserve', 'Savanna', 5, 'large', true),
-  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5], 'rhino-enc', true),
-  am('cafe', 'Cafe', 'Savanna', 5, 'food', true),
-  enc('bear-enc', 'Bear Habitat', 'Forest', 5, 'large', true),
-  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6], 'bear-enc', true),
-  enc('monkey-enc', 'Monkey Habitat', 'Forest', 3, 'medium', true),
-  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6], 'monkey-enc', true),
-  am('picnic', 'Picnic area', 'Forest', 3, 'rest', true),
+  epic('waterside', 'Waterside', 'Waterside', [
+    m('penguins', 'Penguins', 'penguin-enc', [8, 6, 6], 'medium', 8),
+    m('reef', 'Reef', 'reef-enc', [6, 8, 5], 'medium', 5),
+    ma('wc', 'Toilets', 'toilet', 3),
+  ]),
+  epic('savanna', 'Savanna', 'Savanna', [
+    m('elephant', 'Elephant', 'elephant-enc', [9, 8, 7], 'large', 10),
+    m('giraffe', 'Giraffe', 'giraffe-enc', [8, 8, 6], 'large', 8),
+    m('zebra', 'Zebra', 'zebra-enc', [7, 6, 6], 'medium', 5),
+    m('rhino', 'Rhino', 'rhino-enc', [6, 8, 5], 'large', 8),
+    ma('cafe', 'Cafe', 'food', 5),
+  ]),
+  epic('forest', 'Forest', 'Forest', [
+    m('bear', 'Bear', 'bear-enc', [8, 7, 6], 'large', 8),
+    m('monkey', 'Monkey', 'monkey-enc', [8, 6, 6], 'medium', 5),
+    ma('picnic', 'Picnic area', 'rest', 3),
+  ]),
 ];
+
+/** An epic member that is an animal (exhibit): splits into its enclosure + the animal. */
+function m(id: string, name: string, encId: string, appeal: [number, number, number], footprint: 'small' | 'medium' | 'large', size: number): EpicMember {
+  return { id, name, kind: 'exhibit', template: id, appeal, enclosureId: encId, footprint, size };
+}
+/** An epic member that is a facility (amenity): splits into one amenity PBI. */
+function ma(id: string, name: string, services: 'food' | 'toilet' | 'rest', size: number): EpicMember {
+  return { id, name, kind: 'amenity', services, size };
+}
+/** A themed EPIC to be refined (split) into its members. Arrives unsized - an epic is not
+ *  estimated or built directly; it is broken down first. */
+function epic(id: string, name: string, zone: string, members: EpicMember[]): BacklogItem {
+  return {
+    id, name, category: 'epic', zone, estimate: 0, unsized: true, trueSize: 0,
+    acceptance: ['Every animal is recognisable and well built', 'Each species has its own secure enclosure', 'Facilities serve the visitors in this area'],
+    status: 'backlog', sprintNumber: null, accessible: true, epicMembers: members,
+  };
+}
 
 /** An exhibit (animal). It lives in the enclosure `enclosureId` and can only be built
  *  once that enclosure is Done. `unsized` items carry their intended size as `trueSize`

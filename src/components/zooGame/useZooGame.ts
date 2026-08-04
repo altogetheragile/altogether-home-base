@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask } from './
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setEnclosureSize, setItemPos, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setEnclosureSize, setItemPos, splitEpic, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
@@ -46,6 +46,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return setEnclosureSize(state, action.id, action.size);
     case 'SET_POS':
       return setItemPos(state, action.id, action.pos);
+    case 'SPLIT_EPIC':
+      return splitEpic(state, action.id, action.memberIds);
     case 'ADD_PBI':
       return addPbi(state, action.draft);
     case 'REFINE_PBI':
@@ -114,6 +116,7 @@ export function useZooGame(gameSeed?: number) {
   const setLearn = useCallback((on: boolean) => dispatch({ type: 'SET_LEARN_MODE', on }), []);
   const chooseEnclosure = useCallback((id: string, size: 'small' | 'medium' | 'large') => dispatch({ type: 'SET_ENCLOSURE', id, size }), []);
   const placeItem = useCallback((id: string, pos: { x: number; y: number }) => dispatch({ type: 'SET_POS', id, pos }), []);
+  const splitEpicCb = useCallback((id: string, memberIds: string[]) => dispatch({ type: 'SPLIT_EPIC', id, memberIds }), []);
   const createPbi = useCallback((draft: PbiDraft) => dispatch({ type: 'ADD_PBI', draft }), []);
   const refinePbiCb = useCallback((id: string, draft: PbiDraft) => dispatch({ type: 'REFINE_PBI', id, draft }), []);
   const reorder = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ITEM', id, dir }), []);
@@ -138,7 +141,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open,
+    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };

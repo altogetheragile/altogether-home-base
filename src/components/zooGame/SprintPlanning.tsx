@@ -22,6 +22,7 @@ interface SprintPlanningProps {
   onSetUseStories: (on: boolean) => void;
   onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
+  onSplitEpic: (id: string, memberIds: string[]) => void;
 }
 
 type Step = 'why' | 'what' | 'how';
@@ -35,7 +36,7 @@ const STEPS: { key: Step; label: string; full: string }[] = [
  *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
  *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
  *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic }: SprintPlanningProps) {
   const [step, setStep] = useState<Step>('why');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const items = availableItems(state);
@@ -138,7 +139,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
           <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
             <ProductBacklogSidebar state={state} mode="plan" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
               onSetUseStories={onSetUseStories} onEstimate={onEstimate} selected={selected} onToggle={toggle}
-              onReorder={onReorder} onMoveBefore={onMoveBefore} />
+              onReorder={onReorder} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} />
 
             <div className="min-w-0 space-y-3">
               {/* Capacity + a coached goal suggestion from the selection. */}
