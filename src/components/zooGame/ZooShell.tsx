@@ -3,7 +3,7 @@ import type { ZooGameState } from './types';
 import { ParkView } from './ParkView';
 import { DodEditor } from './DodEditor';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users, Pencil, Check } from 'lucide-react';
+import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users, Pencil, Check, Save, FolderOpen } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -75,12 +75,28 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
  *  Park, which gets the full width so it can be big and impressive. Laying the park out
  *  is Backlog work: each PBI names its zone, so the park changes by refining PBIs, not
  *  by dragging things around here. */
-export function ZooShell({ state, children, onPlaceItem, onSetDod }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void }) {
+export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpenSaves }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void; onSave?: () => void; onOpenSaves?: () => void }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3 py-4 pb-28 sm:px-4">
+      {/* Save / resume this game */}
+      {(onSave || onOpenSaves) && (
+        <div className="mb-2 flex items-center justify-end gap-1.5">
+          {onOpenSaves && (
+            <button type="button" onClick={onOpenSaves} className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <FolderOpen className="h-3.5 w-3.5" /> Saved games
+            </button>
+          )}
+          {onSave && (
+            <button type="button" onClick={onSave} className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <Save className="h-3.5 w-3.5" /> Save
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Persistent goals + phase */}
       <div className="mb-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]">
         <GoalChip icon={Trophy} label="Product Goal" text={state.productGoal} tone="product" />

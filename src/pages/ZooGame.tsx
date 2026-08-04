@@ -1,5 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
+import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
+import { useAuth } from '@/contexts/AuthContext';
 import { ZooIntro } from '@/components/zooGame/ZooIntro';
 import { RefineBacklog } from '@/components/zooGame/RefineBacklog';
 import { SprintPlanning } from '@/components/zooGame/SprintPlanning';
@@ -8,36 +11,72 @@ import { SprintReview } from '@/components/zooGame/SprintReview';
 import { SprintRetro } from '@/components/zooGame/SprintRetro';
 import { ZooFinal } from '@/components/zooGame/ZooFinal';
 import { ZooShell } from '@/components/zooGame/ZooShell';
+import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
+import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
+import type { ZooGameState } from '@/components/zooGame/types';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
- *  retro -> next Sprint. */
+ *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, reset } = useZooGame();
+  const { user } = useAuth();
+  const { saveGame, isSaving } = useZooGameSaves();
+
+  // Save/resume orchestration. saveId tracks the row this game maps to, so a second
+  // save updates rather than duplicates; saveName seeds the name field.
+  const [saveId, setSaveId] = useState<string | null>(null);
+  const [saveName, setSaveName] = useState('');
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [savesOpen, setSavesOpen] = useState(false);
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
 
+  const requestSave = () => {
+    if (!user) { toast.error('Sign in to save your zoo.'); return; }
+    setSaveOpen(true);
+  };
+  const handleSave = async (name: string) => {
+    try {
+      const id = await saveGame({ id: saveId, name, state });
+      setSaveId(id);
+      setSaveName(name);
+      setSaveOpen(false);
+      toast.success('Zoo saved');
+    } catch {
+      toast.error('Could not save. Please try again.');
+    }
+  };
+  const handleResume = (id: string, loaded: ZooGameState, name: string) => {
+    loadGame(loaded);
+    setSaveId(id);
+    setSaveName(name);
+    toast.success(`Resumed "${name}"`);
+  };
+
+  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSave: requestSave, onOpenSaves: () => setSavesOpen(true) };
+
   const render = () => {
     switch (state.phase) {
       case 'intro':
-        return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start} />;
+        return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start} onOpenSaves={user ? () => setSavesOpen(true) : undefined} />;
       case 'refine':
-        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><RefineBacklog state={state} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onPlan={() => setPhase('planning')} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><RefineBacklog state={state} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onPlan={() => setPhase('planning')} /></ZooShell>;
       case 'planning':
-        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} /></ZooShell>;
       case 'review':
-        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
       case 'retro':
-        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onWrapUp={() => setPhase('final')} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onWrapUp={() => setPhase('final')} /></ZooShell>;
       case 'final':
         return <ZooFinal state={state} onReset={reset} />;
       default:
-        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
     }
   };
 
@@ -46,6 +85,8 @@ export default function ZooGame() {
       <Navigation />
       <main className="flex-1">{render()}</main>
       <Footer />
+      <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />
+      <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
     </div>
   );
 }

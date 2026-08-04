@@ -92,6 +92,10 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return startNextSprint(state, action.improvement);
     case 'END_GAME':
       return endGame(state);
+    case 'LOAD_GAME':
+      // Resume a saved game: replace the whole state with the loaded snapshot. Merge over a
+      // fresh state so any fields added since the save get sensible defaults.
+      return { ...initialZooState(action.state.gameSeed ?? state.gameSeed), ...action.state };
     case 'RESET':
       return initialZooState(state.gameSeed);
     default:
@@ -141,10 +145,11 @@ export function useZooGame(gameSeed?: number) {
   const review = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
   const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
   const finish = useCallback(() => dispatch({ type: 'END_GAME' }), []);
+  const loadGame = useCallback((loaded: ZooGameState) => dispatch({ type: 'LOAD_GAME', state: loaded }), []);
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open,
+    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, loadGame,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };

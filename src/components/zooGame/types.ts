@@ -252,4 +252,5 @@ export type ZooAction =
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'END_GAME' }
+  | { type: 'LOAD_GAME'; state: ZooGameState }
   | { type: 'RESET' };

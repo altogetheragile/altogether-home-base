@@ -834,3 +834,25 @@ describe('zoo game: bespoke animals (base shape)', () => {
     expect(presetFor(it).parts.head).toBe('beaked');
   });
 });
+
+describe('zoo game: save / resume (serialisation)', () => {
+  it('a mid-game state survives a JSON round-trip (the jsonb save/load path)', () => {
+    let s = flat(initialZooState(3));
+    s = planSprint(s, ['lion', 'penguins']);
+    s = setItemPos(finish(s, 'lion'), 'lion', { x: 100, y: 50 });
+    const roundTripped = JSON.parse(JSON.stringify(s)) as ZooGameState;
+    expect(roundTripped).toEqual(s); // nothing lost through jsonb
+    // the engine keeps working on the restored state
+    expect(openItem(roundTripped, 'lion').backlog.find((i) => i.id === 'lion')!.status).toBe('open');
+  });
+
+  it('resuming merges the save over a fresh state, so fields added later get defaults', () => {
+    const fresh = initialZooState(1);
+    // An older save that predates a field (dailyScrumAt) - omit it.
+    const partial: Partial<ZooGameState> = { phase: 'sprint', sprintNumber: 4, backlog: fresh.backlog };
+    const loaded: ZooGameState = { ...initialZooState(fresh.gameSeed), ...partial };
+    expect(loaded.phase).toBe('sprint');
+    expect(loaded.sprintNumber).toBe(4);
+    expect(loaded.dailyScrumAt).toBe('start'); // absent in the save -> sensible default
+  });
+});
