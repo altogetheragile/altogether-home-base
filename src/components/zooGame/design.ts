@@ -270,6 +270,7 @@ const GENERIC_EXHIBIT = { body: 'round', head: 'round', ears: 'round', tail: 'tu
  *  colours yet, so the player colours it in. Uses the item's toolbox template (falling
  *  back to its id) to pick the species shape. */
 export function presetFor(item: BacklogItem): ItemDesign {
+  if (item.category === 'enclosure') return { parts: { water: 'on' }, colors: {} };
   if (item.category === 'flora') return { parts: { type: 'tree' }, colors: {} };
   if (item.category === 'amenity') return { parts: { sign: 'on' }, colors: {} };
   return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
@@ -281,6 +282,12 @@ export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 const coloured = (d: ItemDesign) => Object.values(d.colors).filter(Boolean).length;
 
 export function designCriteria(item: BacklogItem, design: ItemDesign): { label: string; pass: boolean }[] {
+  if (item.category === 'enclosure') {
+    return [
+      { label: 'Lay the ground', pass: !!design.colors.ground },
+      { label: 'Fence it securely', pass: !!design.colors.fence },
+    ];
+  }
   if (item.category === 'flora') {
     return [
       { label: 'Choose a plant type', pass: !!design.parts.type },

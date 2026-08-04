@@ -66,8 +66,14 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
     unsized: true, estimate: 0, trueSize: DEFAULT_SIZE[draft.category] ?? 5,
   };
   let item: BacklogItem;
-  if (draft.category === 'exhibit') item = { ...base, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
-  else if (draft.category === 'amenity') item = { ...base, services: draft.services, serviceCapacity: draft.services ? 500 : undefined };
+  if (draft.category === 'exhibit') {
+    // An animal lives in its zone's enclosure (if that zone already has one), so it inherits
+    // the enclosure-before-animals dependency. In a brand-new zone with no enclosure yet it
+    // has none, and is not gated (nothing to wait for).
+    const zoneEnc = state.backlog.find((it) => it.category === 'enclosure' && it.zone === zone);
+    item = { ...base, enclosureId: zoneEnc?.id, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
+  } else if (draft.category === 'amenity') item = { ...base, services: draft.services, serviceCapacity: draft.services ? 500 : undefined };
+  else if (draft.category === 'enclosure') item = { ...base, enclosureSize: 'medium' };
   else item = base; // flora is scenery: designable and placeable, no simulation input yet
   const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
   return { ...state, backlog: [...state.backlog, item], zones };
@@ -102,7 +108,9 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
   // The plan is the BUILD work (the design steps). Placing and opening to visitors is a
   // separate step - the Open button on a Done item - not a task, so the plan does not
   // include "place it" or "open it" (that would duplicate the Open action).
-  const labels = item.category === 'exhibit'
+  const labels = item.category === 'enclosure'
+    ? ['Set the footprint size', 'Fence it securely', 'Lay the ground, shelter and water']
+    : item.category === 'exhibit'
     ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features']
     : item.category === 'amenity'
       ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
@@ -136,12 +144,27 @@ export function toggleItemTask(state: ZooGameState, id: string, taskId: string):
 export const doingCount = (state: ZooGameState): number =>
   state.backlog.filter((it) => it.status === 'committed' && it.started && it.sprintNumber === state.sprintNumber).length;
 
+/** The enclosure an exhibit lives in, if any (looked up by `enclosureId`). */
+export const enclosureOf = (state: ZooGameState, item: BacklogItem): BacklogItem | undefined =>
+  item.enclosureId ? state.backlog.find((it) => it.id === item.enclosureId) : undefined;
+
+/** Whether an animal's habitat is built yet: you build the enclosure BEFORE the animals.
+ *  True when the item is not an exhibit, has no enclosure, or its enclosure is built
+ *  (Done or Open). A referenced-but-unbuilt enclosure blocks the animal. */
+export function enclosureReady(state: ZooGameState, item: BacklogItem): boolean {
+  if (item.category !== 'exhibit' || !item.enclosureId) return true;
+  const home = enclosureOf(state, item);
+  return !!home && (home.status === 'done' || home.status === 'open');
+}
+
 /** Start work on a committed item: it moves from To Do into Doing (the studio opens).
- *  Blocked once the WIP limit is reached - finish something before starting more. */
+ *  Blocked once the WIP limit is reached - finish something before starting more - and,
+ *  for an animal, until its enclosure is built (you build the habitat first). */
 export function startItem(state: ZooGameState, id: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   if (!item || item.status !== 'committed' || item.started) return state;
   if (doingCount(state) >= state.wipLimit) return state; // WIP limit reached
+  if (!enclosureReady(state, item)) return state; // build the enclosure before the animals
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
 }
 
@@ -159,6 +182,11 @@ export function setSprintDays(state: ZooGameState, days: number): ZooGameState {
 /** Toggle learn mode: pause the day clock so there is no real-time pressure. */
 export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, learnMode: on };
+}
+
+/** Set an enclosure's footprint size (chosen while building the habitat in the studio). */
+export function setEnclosureSize(state: ZooGameState, id: string, size: 'small' | 'medium' | 'large'): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureSize: size } : it)) };
 }
 
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down
@@ -491,7 +519,9 @@ export function dodHappinessFactor(dod: string[]): number {
 }
 
 export function reviewSprint(state: ZooGameState): ZooGameState {
-  const openItems = state.backlog.filter((it) => it.status === 'open').map(toZooItem);
+  // Enclosures are infrastructure, not something visitors score directly - exclude them
+  // from the simulation (the animals inside them carry the appeal).
+  const openItems = state.backlog.filter((it) => it.status === 'open' && it.category !== 'enclosure').map(toZooItem);
   const sim = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, state.attendance, seedFor(state));
   // A weak Definition of Done costs happiness (safety/wayfinding gaps visitors feel).
   const dodFactor = dodHappinessFactor(state.definitionOfDone);

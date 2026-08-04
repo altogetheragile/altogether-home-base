@@ -41,7 +41,7 @@ function Sprite({ item, design, cell }: { item: BacklogItem; design: ItemDesign;
   );
 }
 
-/** A single exhibit / amenity as a plot tile. */
+/** A single amenity / flora as a plot tile. */
 function Plot({ item, theme, cell }: { item: BacklogItem; theme: ZoneTheme; cell: number }) {
   const tile = item.category === 'amenity' ? '#cfd4d8' : theme.plot;
   const border = item.category === 'amenity' ? '#9aa3ab' : theme.plotBorder;
@@ -56,21 +56,71 @@ function Plot({ item, theme, cell }: { item: BacklogItem; theme: ZoneTheme; cell
   );
 }
 
-/** One themed zone as a translucent region with a pill label and its plots. */
-function ZoneRegion({ zone, items, theme, cell }: { zone: string; items: BacklogItem[]; theme: ZoneTheme; cell: number }) {
-  const exhibits = items.filter((i) => i.category === 'exhibit').length;
-  const amenities = items.filter((i) => i.category === 'amenity').length;
-  const unserved = exhibits > 0 && amenities === 0;
+/** Enclosure footprints (in the fixed design px). A bigger habitat is simply a bigger
+ *  box; how many animals appear inside is how many you have actually built. */
+const ENCLOSURE: Record<'small' | 'medium' | 'large', { w: number; h: number }> = {
+  small: { w: 120, h: 84 },
+  medium: { w: 164, h: 110 },
+  large: { w: 210, h: 138 },
+};
+
+/** A built enclosure (habitat) with the animals that live in it rendered to scale
+ *  inside - one sprite per animal the team has actually built and opened, so you see
+ *  "lions in a space", not one huge lion, and never more animals than were built. */
+function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: BacklogItem[]; theme: ZoneTheme }) {
+  const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
+  const d = enc.design;
+  const ground = d?.colors.ground ?? theme.plot;
+  const fence = d?.colors.fence ?? theme.plotBorder;
+  const n = animals.length;
+  const cell = n >= 4 ? 1 : 2; // more animals share the space, so each is drawn smaller
+  const positions = animals.map((_, i) => ({
+    left: n <= 1 ? 50 : 14 + (i / (n - 1)) * 72,
+    top: 62 + (i % 2 === 0 ? -6 : 6),
+  }));
+  return (
+    <div className="relative flex flex-col items-center">
+      <div className="relative overflow-hidden rounded-lg"
+        style={{ width: cfg.w, height: cfg.h, background: ground, border: `3px solid ${fence}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.2), 0 2px 0 rgba(0,0,0,.08)' }}>
+        <div className="absolute inset-x-0 bottom-0" style={{ height: '30%', background: 'rgba(0,0,0,.08)' }} />
+        {d?.parts.water === 'on' && (
+          <div className="absolute" style={{ bottom: '12%', right: '10%', width: '34%', height: '30%', borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
+        )}
+        {n === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
+        {positions.map((p, i) => (
+          <div key={animals[i].id} className="absolute" style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)' }}>
+            <Sprite item={animals[i]} design={animals[i].design ?? presetFor(animals[i])} cell={cell} />
+          </div>
+        ))}
+      </div>
+      <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{enc.name}</span>
+    </div>
+  );
+}
+
+/** One themed zone as a translucent region with a pill label: its built enclosure (with
+ *  the animals inside), plus any amenities and planting on the grounds. Animals whose
+ *  enclosure is not built yet fall back to plots (this should not normally happen, since
+ *  the habitat is built first). */
+function ZoneRegion({ zone, theme, cell, enclosure, animals, others }: {
+  zone: string; theme: ZoneTheme; cell: number;
+  enclosure?: BacklogItem; animals: BacklogItem[]; others: BacklogItem[];
+}) {
+  const empty = !enclosure && animals.length === 0 && others.length === 0;
+  const unserved = animals.length > 0 && others.every((o) => o.category !== 'amenity');
   return (
     <div className="relative rounded-2xl border-2 border-dashed p-3 pt-5"
       style={{ background: theme.region, borderColor: theme.border }}>
       <span className="absolute -top-2.5 left-3 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white shadow" style={{ background: theme.pill }}>{zone}</span>
-      {items.length ? (
-        <div className="flex flex-wrap items-end gap-x-3 gap-y-4">
-          {items.map((it) => <Plot key={it.id} item={it} theme={theme} cell={cell} />)}
-        </div>
-      ) : (
+      {empty ? (
         <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-white/60 py-4 text-[11px] font-semibold text-white/90">plot ready - nothing open here yet</div>
+      ) : (
+        <div className="flex flex-wrap items-end gap-x-3 gap-y-4">
+          {enclosure
+            ? <Enclosure key={enclosure.id} enc={enclosure} animals={animals} theme={theme} />
+            : animals.map((it) => <Plot key={it.id} item={it} theme={theme} cell={cell} />)}
+          {others.map((it) => <Plot key={it.id} item={it} theme={theme} cell={cell} />)}
+        </div>
       )}
       {unserved && <div className="mt-2 text-[10px] font-medium italic text-amber-900/80 dark:text-amber-200/80">Great animals, but no amenities nearby yet.</div>}
     </div>
@@ -123,9 +173,18 @@ interface ParkViewProps { state: ZooGameState; compact?: boolean; fill?: boolean
  *  tab (big, impressive); `fill` = square side panel; `compact` = small live strip. */
 export function ParkView({ state, compact = false, fill = false, large = false }: ParkViewProps) {
   const open = state.backlog.filter((it) => it.status === 'open');
-  const zones = Array.from(new Set([...state.zones, ...open.map((it) => it.zone)]));
-  const byZone = zones.map((z, i) => ({ zone: z, theme: themeFor(z, i), items: open.filter((it) => it.zone === z) }));
-  const filled = byZone.filter((z) => z.items.length > 0).length;
+  // An enclosure appears in the park once it is BUILT (Done or Open) - the habitat is
+  // infrastructure, so it is there before its animals are released.
+  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open'));
+  const zones = Array.from(new Set([...state.zones, ...open.map((it) => it.zone), ...builtEnc.map((it) => it.zone)]));
+  const byZone = zones.map((z, i) => ({
+    zone: z,
+    theme: themeFor(z, i),
+    enclosure: builtEnc.find((e) => e.zone === z),
+    animals: open.filter((it) => it.category === 'exhibit' && it.zone === z),
+    others: open.filter((it) => (it.category === 'amenity' || it.category === 'flora') && it.zone === z),
+  }));
+  const filled = byZone.filter((z) => z.enclosure || z.animals.length > 0 || z.others.length > 0).length;
   const exhibits = open.filter((it) => it.category === 'exhibit').length;
   const amenities = open.filter((it) => it.category === 'amenity').length;
   const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
@@ -152,27 +211,29 @@ export function ParkView({ state, compact = false, fill = false, large = false }
       <div className={cn('relative z-10 grid gap-3 p-4 pb-9', compact ? 'grid-cols-1' : 'grid-cols-2',
         fill ? 'h-full content-stretch' : 'content-start')}
         style={{ minHeight: fill ? undefined : compact ? 140 : large ? 460 : 230 }}>
-        {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} items={z.items} theme={z.theme} cell={cell} />)}
+        {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} theme={z.theme} cell={cell} enclosure={z.enclosure} animals={z.animals} others={z.others} />)}
       </div>
 
-      {/* Decor: trees at the corners, an entrance gate at the foot. */}
+      {/* Decor: a path/promenade along the foot (where the visitors stroll), trees at the
+          corners, an entrance gate. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0" style={{ height: compact ? 22 : 34, background: 'linear-gradient(#d9c7a6,#cdb98f)', boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
       {!compact && (
         <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-          <Tree style={{ left: '2%', bottom: '4%' }} />
-          <Tree style={{ right: '2%', bottom: '4%' }} />
-          <div className="absolute left-1/2 bottom-1 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ color: '#5a3a1c' }}>
-            <div className="mx-auto mb-0.5 h-2.5 w-24 rounded-t-md border-2 border-b-0" style={{ borderColor: '#8a5a2b', background: 'rgba(138,90,43,.15)' }} />
+          <Tree style={{ left: '2%', bottom: '36px' }} />
+          <Tree style={{ right: '2%', bottom: '36px' }} />
+          <div className="absolute left-1/2 bottom-0.5 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ color: '#5a3a1c' }}>
             ENTRANCE
           </div>
         </div>
       )}
 
-      {/* Visitors */}
+      {/* Visitors keep to the path around the enclosures - they stroll the promenade
+          along the foot of the park, never inside a habitat. */}
       {dots.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 z-20" aria-hidden>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20" style={{ height: compact ? 22 : 34 }} aria-hidden>
           {dots.map((seg, i) => (
             <span key={i} className="zoo-visitor absolute" style={{
-              left: `${6 + jitter(i, 0) * 88}%`, top: `${10 + jitter(i, 1) * 78}%`,
+              left: `${4 + jitter(i, 0) * 92}%`, top: `${18 + jitter(i, 1) * 55}%`,
               animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite`,
             }}>
               <span className="block rounded-full ring-1 ring-white/70" style={{ width: compact ? 4 : 5, height: compact ? 4 : 5, margin: '0 auto', background: '#f0c9a8' }} />

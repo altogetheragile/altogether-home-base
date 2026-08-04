@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDefinitionOfDone, dodGaps, dodHappinessFactor,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setEnclosureSize, setDefinitionOfDone, dodGaps, dodHappinessFactor,
 } from './engine';
 import type { ZooGameState } from './types';
 import type { ItemDesign } from './design';
@@ -29,6 +29,12 @@ function buildAndOpen(state: ZooGameState, ids: string[]): ZooGameState {
   return s;
 }
 
+/** Mark enclosure items as built (Done), so their animals can be started - the game
+ *  builds the habitat before the animals. */
+function withEnclosuresBuilt(state: ZooGameState, ...ids: string[]): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'done' as const } : it)) };
+}
+
 describe('zoo game: setup', () => {
   it('starts with a rough backlog, a Product Goal, a DoD, and drifted attendance', () => {
     const s = initialZooState(1);
@@ -44,8 +50,9 @@ describe('zoo game: setup', () => {
 
   it('is deterministic per game seed (taste jitter and drift)', () => {
     expect(initialZooState(7)).toEqual(initialZooState(7));
-    // A different seed jitters the appeal differently.
-    expect(initialZooState(7).backlog[0].appeal).not.toEqual(initialZooState(8).backlog[0].appeal);
+    // A different seed jitters the appeal differently (the lion is an exhibit with appeal).
+    const lionAppeal = (seed: number) => initialZooState(seed).backlog.find((i) => i.id === 'lion')!.appeal;
+    expect(lionAppeal(7)).not.toEqual(lionAppeal(8));
   });
 
   it('editing the Product Goal keeps a non-empty value', () => {
@@ -469,13 +476,13 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
   });
 
   it('starting moves To Do -> Doing; building with tasks left stays Doing; the last tick finishes it', () => {
-    let s = initialZooState(1);
+    let s = withEnclosuresBuilt(initialZooState(1), 'bigcats-enc');
     const tasks = suggestTasks(lion(s));
     s = setItemTasks(s, 'lion', tasks);
     s = planSprint(s, ['lion']);
     expect(lion(s).started).toBeFalsy(); // To Do
 
-    // Start -> Doing.
+    // Start -> Doing (its enclosure is already built).
     s = startItem(s, 'lion');
     expect(lion(s).started).toBe(true);
     expect(lion(s).status).toBe('committed');
@@ -524,7 +531,9 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
 
 describe('zoo game: WIP limit and improvements with teeth', () => {
   it('the WIP limit blocks starting more items than the limit allows', () => {
-    let s = planSprint(initialZooState(1), ['lion', 'tiger', 'leopard', 'penguins']);
+    // Their enclosures are built first, so the WIP limit is what gates starting (not the habitat).
+    let s = withEnclosuresBuilt(initialZooState(1), 'bigcats-enc', 'waterside-enc');
+    s = planSprint(s, ['lion', 'tiger', 'leopard', 'penguins']);
     expect(s.wipLimit).toBe(3);
     const doing = () => s.backlog.filter((i) => i.status === 'committed' && i.started).length;
     s = startItem(s, 'lion'); s = startItem(s, 'tiger'); s = startItem(s, 'leopard');
@@ -571,6 +580,56 @@ describe('zoo game: sprint length and learn mode', () => {
     expect(s.learnMode).toBe(false);
     s = setLearnMode(s, true);
     expect(s.learnMode).toBe(true);
+  });
+});
+
+describe('zoo game: enclosures are built before their animals', () => {
+  const find = (s: ZooGameState, id: string) => s.backlog.find((i) => i.id === id)!;
+
+  it('every animal zone starts with an enclosure, and animals reference it', () => {
+    const s = initialZooState(1);
+    expect(find(s, 'bigcats-enc').category).toBe('enclosure');
+    expect(find(s, 'lion').enclosureId).toBe('bigcats-enc');
+    expect(find(s, 'penguins').enclosureId).toBe('waterside-enc');
+  });
+
+  it('an animal cannot be started until its enclosure is built', () => {
+    // Plan the enclosure and the lion together; the lion is blocked until the habitat is Done.
+    let s = planSprint(initialZooState(1), ['bigcats-enc', 'lion']);
+    s = startItem(s, 'lion');
+    expect(find(s, 'lion').started).toBeFalsy(); // habitat not built yet -> blocked
+
+    // Build the enclosure (Done), then the lion can start.
+    s = finish(s, 'bigcats-enc');
+    expect(find(s, 'bigcats-enc').status).toBe('done');
+    s = startItem(s, 'lion');
+    expect(find(s, 'lion').started).toBe(true);
+  });
+
+  it('an animal added to a brand-new zone (no enclosure) is not gated', () => {
+    let s = addPbi(initialZooState(1), { name: 'Toucan', category: 'exhibit', zone: 'Rainforest', acceptance: ['Recognisable'] });
+    const toucan = s.backlog.find((i) => i.name === 'Toucan')!;
+    expect(toucan.enclosureId).toBeUndefined();
+    s = estimateItem(s, toucan.id, 5);
+    s = planSprint(s, [toucan.id]);
+    s = startItem(s, toucan.id);
+    expect(s.backlog.find((i) => i.id === toucan.id)!.started).toBe(true);
+  });
+
+  it('setting an enclosure footprint is targeted (other enclosures untouched)', () => {
+    let s = initialZooState(1);
+    expect(find(s, 'bigcats-enc').enclosureSize).toBe('large'); // its starter footprint
+    s = setEnclosureSize(s, 'bigcats-enc', 'small');
+    expect(find(s, 'bigcats-enc').enclosureSize).toBe('small');
+    expect(find(s, 'waterside-enc').enclosureSize).toBe('medium'); // unaffected
+  });
+
+  it('enclosures are excluded from the visitor simulation (they carry no appeal)', () => {
+    // Open only the enclosure: no exhibits open, so visitors have nothing to enjoy.
+    let s = planSprint(initialZooState(1), ['bigcats-enc']);
+    s = openItem(finish(s, 'bigcats-enc'), 'bigcats-enc');
+    s = reviewSprint(s);
+    expect(s.lastReview!.segments.every((seg) => seg.happiness === 0)).toBe(true);
   });
 });
 
