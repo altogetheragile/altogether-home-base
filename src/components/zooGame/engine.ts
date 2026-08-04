@@ -119,7 +119,7 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
   for (const mem of chosen) {
     if (mem.kind === 'exhibit') {
       created.push({
-        id: mem.enclosureId ?? `${mem.id}-enc`, name: `${mem.name} Enclosure`, category: 'enclosure', zone,
+        id: mem.enclosureId ?? `${mem.id}-enc`, name: mem.habitat ?? `${mem.name} Enclosure`, category: 'enclosure', zone,
         enclosureSize: mem.footprint ?? 'medium',
         acceptance: ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up'],
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: Math.max(3, Math.round(mem.size / 2)),

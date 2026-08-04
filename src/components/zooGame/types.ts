@@ -72,6 +72,8 @@ export interface EpicMember {
   appeal?: [number, number, number];
   enclosureId?: string;
   footprint?: 'small' | 'medium' | 'large';
+  /** Exhibits: a bespoke name for the enclosure the split creates (else "<name> Enclosure"). */
+  habitat?: string;
   /** Amenities: which need it serves. */
   services?: 'food' | 'toilet' | 'rest';
   /** Intended size in points (the hidden trueSize the estimate clusters around). */

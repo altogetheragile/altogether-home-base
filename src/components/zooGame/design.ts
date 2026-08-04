@@ -82,6 +82,8 @@ function markingsOn(cells: Cell[], shape: string): Cell[] {
   if (shape === 'none' || cells.length === 0) return [];
   if (shape === 'stripes') return cells.filter(([x]) => x % 3 === 0);
   if (shape === 'spots') return cells.filter(([x, y]) => (x * 7 + y * 13) % 9 < 2);
+  if (shape === 'dapples') return cells.filter(([x, y]) => (x * 5 + y * 11) % 5 < 2); // denser flecks
+  if (shape === 'saddle') { const y0 = Math.min(...cells.map((c) => c[1])); return cells.filter(([, y]) => y >= y0 + 1 && y <= y0 + 3); } // a band over the back
   const maxY = Math.max(...cells.map((c) => c[1])); // patches: central lower belly
   return cells.filter(([x, y]) => y >= maxY - 3 && Math.abs(x - 8) <= 2);
 }
@@ -133,9 +135,16 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
   if (bigEars) ears = [...ellipse(8 - 2.7, headCY - 0.4, 1.8, 2), ...ellipse(8 + 2.7, headCY - 0.4, 1.8, 2)];
   else if (earsShape === 'round') ears = [...ellipse(8 - 2.3, ey, 1.2, 1.2), ...ellipse(8 + 2.3, ey, 1.2, 1.2)];
   else if (earsShape === 'pointed') ears = [[6, ey - 1], [6, ey], [5, ey - 1], [10, ey - 1], [10, ey], [11, ey - 1]];
+  else if (earsShape === 'floppy') ears = [...ellipse(8 - 2.6, ey + 1.6, 1.2, 2.3), ...ellipse(8 + 2.6, ey + 1.6, 1.2, 2.3)]; // long droopy ears
 
   // Horns / antlers above the head.
   const horns: Cell[] = headShape === 'horned' ? [[6, headCY - headR - 1], [6, headCY - headR], [10, headCY - headR - 1], [10, headCY - headR]] : [];
+  // A crest / plume standing up on top of the head.
+  const cy0 = Math.round(headCY - headR);
+  const crest: Cell[] = headShape === 'crested' ? [[8, cy0], [8, cy0 - 1], [8, cy0 - 2], [7, cy0 - 1], [9, cy0 - 1]] : [];
+  // Tusks curving down from the face.
+  const ty0 = Math.round(headCY + headR - 0.5);
+  const tusks: Cell[] = headShape === 'tusked' ? [[6, ty0], [6, ty0 + 1], [10, ty0], [10, ty0 + 1]] : [];
   // Trunk hanging from the face (elephant).
   const trunk: Cell[] = [];
   if (headShape === 'trunk') for (let y = Math.round(headCY); y <= Math.round(headCY + headR + 2.5); y++) trunk.push([8, y]);
@@ -145,6 +154,7 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
   if (tailShape === 'tufted') tail = [[tx, ty], [tx + 1, ty], [tx + 1, ty - 1]];
   else if (tailShape === 'long') tail = [[tx, ty], [tx + 1, ty - 1], [tx + 2, ty - 2], [tx + 2, ty - 3]];
   else if (tailShape === 'fin') tail = ellipse(tx + 1, ty, 1.3, 1.8);
+  else if (tailShape === 'bushy') tail = ellipse(tx + 1, ty - 0.3, 1.9, 1.7); // big fluffy brush
 
   // Little feet peeking out under the body, for groundedness.
   const byMax = Math.max(...body.map((c) => c[1]));
@@ -165,8 +175,10 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
   set(g, markingsOn(body, markShape), col('markings'));
   set(g, trunk, col('head'));
   paintShaded(g, head, col('head'), 22, -18);
-  if (markShape === 'stripes' || markShape === 'spots') set(g, markingsOn(head, markShape), col('markings'));
+  if (markShape === 'stripes' || markShape === 'spots' || markShape === 'dapples') set(g, markingsOn(head, markShape), col('markings'));
   set(g, beak, BEAK);
+  set(g, crest, has('ears') ? col('ears') : '#caa15a');   // crest / plume (editable via the ears slot)
+  set(g, tusks, has('ears') ? col('ears') : '#efe6d0');   // ivory tusks (editable via the ears slot)
   setCell(g, eyeL, eyeY, EYE); setCell(g, eyeR, eyeY, EYE);
   setCell(g, eyeL, eyeY - 1, HILITE); setCell(g, eyeR, eyeY - 1, HILITE); // eye sparkle
   return g;
@@ -217,10 +229,10 @@ export function renderDesign(item: BacklogItem, design: ItemDesign): (string | n
 export interface PartSpec { key: string; label: string; options: string[]; colorKey: string; optional?: boolean }
 export const EXHIBIT_PARTS: PartSpec[] = [
   { key: 'body', label: 'Body', options: ['round', 'long', 'upright', 'bulky', 'tall', 'finned'], colorKey: 'body' },
-  { key: 'head', label: 'Head', options: ['round', 'maned', 'beaked', 'horned', 'trunk', 'none'], colorKey: 'head' },
-  { key: 'ears', label: 'Ears / mane', options: ['none', 'round', 'pointed'], colorKey: 'ears', optional: true },
-  { key: 'tail', label: 'Tail / fin', options: ['none', 'tufted', 'long', 'fin'], colorKey: 'tail', optional: true },
-  { key: 'markings', label: 'Markings', options: ['none', 'stripes', 'spots', 'patches'], colorKey: 'markings', optional: true },
+  { key: 'head', label: 'Head', options: ['round', 'maned', 'beaked', 'horned', 'crested', 'tusked', 'trunk', 'none'], colorKey: 'head' },
+  { key: 'ears', label: 'Ears / mane', options: ['none', 'round', 'pointed', 'floppy'], colorKey: 'ears', optional: true },
+  { key: 'tail', label: 'Tail / fin', options: ['none', 'tufted', 'long', 'bushy', 'fin'], colorKey: 'tail', optional: true },
+  { key: 'markings', label: 'Markings', options: ['none', 'stripes', 'spots', 'dapples', 'saddle', 'patches'], colorKey: 'markings', optional: true },
 ];
 export const AMENITY_COLORS: { key: string; label: string }[] = [
   { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
@@ -310,19 +322,24 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
   const p = design.parts;
   const fish = p.head === 'none';
 
+  // Heads whose feature (mane/horn/crest/tusks) is coloured through the ears slot.
+  const earFeature = p.head === 'maned' || p.head === 'horned' || p.head === 'crested' || p.head === 'tusked';
+
   // Colourable parts this animal actually has.
   const present: string[] = ['body'];
   if (!fish) present.push('head');
-  if ((p.ears && p.ears !== 'none') || p.head === 'maned') present.push('ears');
+  if ((p.ears && p.ears !== 'none') || earFeature) present.push('ears');
   if (p.tail && p.tail !== 'none') present.push('tail');
   if (p.markings && p.markings !== 'none') present.push('markings');
 
   // Its signature feature, named naturally for the criterion.
-  const markLabel: Record<string, string> = { stripes: 'stripes', spots: 'spots', patches: 'belly' };
+  const markLabel: Record<string, string> = { stripes: 'stripes', spots: 'spots', dapples: 'dapples', saddle: 'saddle', patches: 'belly' };
   let sig: { key: string; label: string } | null = null;
   if (p.markings && p.markings !== 'none') sig = { key: 'markings', label: markLabel[p.markings] ?? 'markings' };
   else if (p.head === 'maned') sig = { key: 'ears', label: 'mane' };
   else if (p.head === 'horned') sig = { key: 'ears', label: 'horn' };
+  else if (p.head === 'crested') sig = { key: 'ears', label: 'crest' };
+  else if (p.head === 'tusked') sig = { key: 'ears', label: 'tusks' };
   else if (p.ears && p.ears !== 'none') sig = { key: 'ears', label: 'ears' };
   else if (p.tail && p.tail !== 'none') sig = { key: 'tail', label: fish ? 'fins' : 'tail' };
 
