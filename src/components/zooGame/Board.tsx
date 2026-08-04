@@ -196,10 +196,68 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [showToolbox, setShowToolbox] = useState(false);
+  const [collapsedZones, setCollapsedZones] = useState<Set<string>>(new Set());
   const items = availableItems(state);
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
+
+  // Group the Backlog by zone (in first-appearance order) so a long list stays scannable;
+  // reorder/drag still act on the whole ordered Backlog underneath.
+  const flatIndex = new Map(items.map((it, i) => [it.id, i]));
+  const zoneOrder: string[] = [];
+  const byZone = new Map<string, BacklogItem[]>();
+  for (const it of items) {
+    if (!byZone.has(it.zone)) { byZone.set(it.zone, []); zoneOrder.push(it.zone); }
+    byZone.get(it.zone)!.push(it);
+  }
+  const toggleZone = (z: string) => setCollapsedZones((prev) => { const n = new Set(prev); if (n.has(z)) n.delete(z); else n.add(z); return n; });
+
+  const renderItem = (it: BacklogItem, idx: number) => {
+    const on = selected?.has(it.id);
+    return (
+      <div key={it.id}
+        draggable={!!onMoveBefore}
+        onDragStart={onMoveBefore ? (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', it.id); setDragId(it.id); } : undefined}
+        onDragEnd={onMoveBefore ? () => setDragId(null) : undefined}
+        onDragOver={onMoveBefore ? (e) => e.preventDefault() : undefined}
+        onDrop={onMoveBefore ? (e) => { e.preventDefault(); const from = e.dataTransfer?.getData('text/plain') || dragId; if (from && from !== it.id) onMoveBefore(from, it.id); setDragId(null); } : undefined}
+        className={cn('rounded-md border p-2 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-background/60' : 'border-border bg-card', dragId === it.id && 'opacity-50')}>
+        <div className="flex items-start gap-1.5">
+          {onReorder && (
+            <div className="flex flex-col items-center text-muted-foreground" title="Drag, or use the arrows, to reorder">
+              <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
+              <GripVertical className="h-3 w-3 cursor-grab opacity-50" />
+              <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5"><CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><span className="truncate font-medium">{it.name}</span></div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              <span className="font-mono text-[10px] text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
+            </div>
+            {it.story && <div className="mt-0.5 truncate text-[10px] italic text-muted-foreground">{it.story}</div>}
+          </div>
+          <button type="button" title="Refine this PBI" onClick={() => setEditingPbi(it)} className="shrink-0 text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+        </div>
+        <div className="mt-1.5 flex items-center justify-end gap-1.5">
+          {it.category === 'epic' ? (
+            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split into PBIs</Button>
+          ) : it.unsized ? (
+            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
+          ) : mode === 'refine' ? (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
+          ) : mode === 'plan' ? (
+            <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
+              {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</>}
+            </Button>
+          ) : (
+            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</Button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
@@ -236,51 +294,19 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
           onCancel={() => setEstimating(null)} />
       )}
 
-      <div className="space-y-1.5">
+      <div className="space-y-2.5">
         {items.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
-        {items.map((it, idx) => {
-          const on = selected?.has(it.id);
+        {zoneOrder.map((zone) => {
+          const zoneItems = byZone.get(zone)!;
+          const collapsed = collapsedZones.has(zone);
           return (
-            <div key={it.id}
-              draggable={!!onMoveBefore}
-              onDragStart={onMoveBefore ? (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', it.id); setDragId(it.id); } : undefined}
-              onDragEnd={onMoveBefore ? () => setDragId(null) : undefined}
-              onDragOver={onMoveBefore ? (e) => e.preventDefault() : undefined}
-              onDrop={onMoveBefore ? (e) => { e.preventDefault(); const from = e.dataTransfer?.getData('text/plain') || dragId; if (from && from !== it.id) onMoveBefore(from, it.id); setDragId(null); } : undefined}
-              className={cn('rounded-md border p-2 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-background/60' : 'border-border bg-card', dragId === it.id && 'opacity-50')}>
-              <div className="flex items-start gap-1.5">
-                {onReorder && (
-                  <div className="flex flex-col items-center text-muted-foreground" title="Drag, or use the arrows, to reorder">
-                    <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
-                    <GripVertical className="h-3 w-3 cursor-grab opacity-50" />
-                    <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{it.name}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{it.zone}</span>
-                    <span className="font-mono text-[10px] text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
-                  </div>
-                  {it.story && <div className="mt-0.5 truncate text-[10px] italic text-muted-foreground">{it.story}</div>}
-                </div>
-                <button type="button" title="Refine this PBI" onClick={() => setEditingPbi(it)} className="shrink-0 text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-              </div>
-              <div className="mt-1.5 flex items-center justify-end gap-1.5">
-                {it.category === 'epic' ? (
-                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split into PBIs</Button>
-                ) : it.unsized ? (
-                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
-                ) : mode === 'refine' ? (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
-                ) : mode === 'plan' ? (
-                  <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
-                    {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</>}
-                  </Button>
-                ) : (
-                  <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</Button>
-                )}
-              </div>
+            <div key={zone} className="space-y-1.5">
+              <button type="button" onClick={() => toggleZone(zone)}
+                className="flex w-full items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
+                <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', collapsed && '-rotate-90')} />
+                {zone} <span className="font-normal text-muted-foreground/60">({zoneItems.length})</span>
+              </button>
+              {!collapsed && <div className="space-y-1.5">{zoneItems.map((it) => renderItem(it, flatIndex.get(it.id)!))}</div>}
             </div>
           );
         })}

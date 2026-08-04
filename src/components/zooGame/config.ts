@@ -69,27 +69,28 @@ const STARTING_BACKLOG: BacklogItem[] = [
   ex('leopard', 'Leopard', 'Big Cats', 8, [7, 8, 5], 'leopard-enc'),
   am('kiosk', 'Kiosk', 'Big Cats', 5, 'food'),
   epic('waterside', 'Waterside', 'Waterside', [
-    m('penguins', 'Penguins', 'penguin-enc', [8, 6, 6], 'medium', 8),
-    m('reef', 'Reef', 'reef-enc', [6, 8, 5], 'medium', 5),
+    m('penguins', 'Penguins', 'penguin-enc', [8, 6, 6], 'medium', 8, 'Penguin Habitat'),
+    m('reef', 'Reef', 'reef-enc', [6, 8, 5], 'medium', 5, 'Reef Tank'),
     ma('wc', 'Toilets', 'toilet', 3),
   ]),
   epic('savanna', 'Savanna', 'Savanna', [
-    m('elephant', 'Elephant', 'elephant-enc', [9, 8, 7], 'large', 10),
-    m('giraffe', 'Giraffe', 'giraffe-enc', [8, 8, 6], 'large', 8),
-    m('zebra', 'Zebra', 'zebra-enc', [7, 6, 6], 'medium', 5),
-    m('rhino', 'Rhino', 'rhino-enc', [6, 8, 5], 'large', 8),
+    m('elephant', 'Elephant', 'elephant-enc', [9, 8, 7], 'large', 10, 'Elephant Reserve'),
+    m('giraffe', 'Giraffe', 'giraffe-enc', [8, 8, 6], 'large', 8, 'Giraffe Paddock'),
+    m('zebra', 'Zebra', 'zebra-enc', [7, 6, 6], 'medium', 5, 'Zebra Paddock'),
+    m('rhino', 'Rhino', 'rhino-enc', [6, 8, 5], 'large', 8, 'Rhino Reserve'),
     ma('cafe', 'Cafe', 'food', 5),
   ]),
   epic('forest', 'Forest', 'Forest', [
-    m('bear', 'Bear', 'bear-enc', [8, 7, 6], 'large', 8),
-    m('monkey', 'Monkey', 'monkey-enc', [8, 6, 6], 'medium', 5),
+    m('bear', 'Bear', 'bear-enc', [8, 7, 6], 'large', 8, 'Bear Habitat'),
+    m('monkey', 'Monkey', 'monkey-enc', [8, 6, 6], 'medium', 5, 'Monkey Habitat'),
     ma('picnic', 'Picnic area', 'rest', 3),
   ]),
 ];
 
-/** An epic member that is an animal (exhibit): splits into its enclosure + the animal. */
-function m(id: string, name: string, encId: string, appeal: [number, number, number], footprint: 'small' | 'medium' | 'large', size: number): EpicMember {
-  return { id, name, kind: 'exhibit', template: id, appeal, enclosureId: encId, footprint, size };
+/** An epic member that is an animal (exhibit): splits into its enclosure + the animal.
+ *  `habitat` is the bespoke name for the enclosure the split creates. */
+function m(id: string, name: string, encId: string, appeal: [number, number, number], footprint: 'small' | 'medium' | 'large', size: number, habitat: string): EpicMember {
+  return { id, name, kind: 'exhibit', template: id, appeal, enclosureId: encId, footprint, size, habitat };
 }
 /** An epic member that is a facility (amenity): splits into one amenity PBI. */
 function ma(id: string, name: string, services: 'food' | 'toilet' | 'rest', size: number): EpicMember {

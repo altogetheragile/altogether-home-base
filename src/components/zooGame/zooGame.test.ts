@@ -5,9 +5,9 @@ import {
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setEnclosureSize, setItemPos, splitEpic, setDefinitionOfDone, dodGaps, dodHappinessFactor,
 } from './engine';
-import type { ZooGameState } from './types';
+import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
-import { presetFor } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -650,6 +650,7 @@ describe('zoo game: enclosures are built before their animals', () => {
     s = splitEpic(s, 'waterside', ['penguins', 'reef', 'wc']);
     expect(s.backlog.some((i) => i.id === 'waterside')).toBe(false); // fully split -> epic gone
     expect(find(s, 'penguin-enc').category).toBe('enclosure');
+    expect(find(s, 'penguin-enc').name).toBe('Penguin Habitat'); // bespoke habitat name, not "Penguins Enclosure"
     expect(find(s, 'penguins').enclosureId).toBe('penguin-enc');
     expect(find(s, 'wc').category).toBe('amenity');
     // Children arrive unsized (ready to estimate); the enclosure reads above its animal.
@@ -739,6 +740,41 @@ describe('zoo game: the toolbox', () => {
     expect(item.category).toBe('enclosure');
     expect(item.enclosureSize).toBe('large');
     expect(item.unsized).toBe(true);
+  });
+});
+
+describe('zoo game: richer studio kit', () => {
+  const exhibit = (): BacklogItem => ({ id: 'x', name: 'X', category: 'exhibit', zone: 'Z', acceptance: [], status: 'backlog', sprintNumber: null, accessible: true, estimate: 0 });
+
+  it('offers the expanded part options', () => {
+    const opt = (k: string) => EXHIBIT_PARTS.find((p) => p.key === k)!.options;
+    expect(opt('head')).toEqual(expect.arrayContaining(['crested', 'tusked']));
+    expect(opt('ears')).toContain('floppy');
+    expect(opt('tail')).toContain('bushy');
+    expect(opt('markings')).toEqual(expect.arrayContaining(['dapples', 'saddle']));
+  });
+
+  it('every part option renders to a grid without error', () => {
+    for (const part of EXHIBIT_PARTS) {
+      for (const o of part.options) {
+        const design: ItemDesign = { parts: { body: 'round', head: 'round', [part.key]: o }, colors: { body: '#c8873b', head: '#8a5a2b' } };
+        const grid = renderDesign(exhibit(), design);
+        expect(grid.length).toBe(GRID_H);
+        expect(grid[0].length).toBe(GRID_W);
+      }
+    }
+  });
+
+  it('a crested / tusked head is the signature feature, coloured via the ears slot', () => {
+    for (const head of ['crested', 'tusked']) {
+      const design: ItemDesign = { parts: { body: 'round', head }, colors: { body: '#c8873b', head: '#8a5a2b' } };
+      const crit = designCriteria(exhibit(), design);
+      const feature = crit.find((c) => /crest|tusks/.test(c.label))!;
+      expect(feature).toBeDefined();
+      expect(feature.pass).toBe(false); // needs the ears-slot colour
+      design.colors.ears = '#efe6d0';
+      expect(designCriteria(exhibit(), design).find((c) => /crest|tusks/.test(c.label))!.pass).toBe(true);
+    }
   });
 });
 
