@@ -66,17 +66,28 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
     unsized: true, estimate: 0, trueSize: DEFAULT_SIZE[draft.category] ?? 5,
   };
   let item: BacklogItem;
+  const extra: BacklogItem[] = []; // any infrastructure created alongside the item (a species enclosure)
   if (draft.category === 'exhibit') {
-    // An animal lives in its zone's enclosure (if that zone already has one), so it inherits
-    // the enclosure-before-animals dependency. In a brand-new zone with no enclosure yet it
-    // has none, and is not gated (nothing to wait for).
-    const zoneEnc = state.backlog.find((it) => it.category === 'enclosure' && it.zone === zone);
-    item = { ...base, enclosureId: zoneEnc?.id, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
+    // Each species has its own enclosure (lions and tigers don't share). Reuse one for this
+    // species if it already exists - a second lion joins the Lion Enclosure - otherwise
+    // create the enclosure too, so the animal always has a habitat to be built into first.
+    const encName = `${name} Enclosure`;
+    let home = state.backlog.find((it) => it.category === 'enclosure' && it.name === encName);
+    if (!home) {
+      home = {
+        id: `${id}-enc`, name: encName, category: 'enclosure', zone, enclosureSize: 'medium',
+        acceptance: ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up'],
+        status: 'backlog' as const, sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: 5,
+      };
+      extra.push(home);
+    }
+    item = { ...base, enclosureId: home.id, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
   } else if (draft.category === 'amenity') item = { ...base, services: draft.services, serviceCapacity: draft.services ? 500 : undefined };
   else if (draft.category === 'enclosure') item = { ...base, enclosureSize: 'medium' };
   else item = base; // flora is scenery: designable and placeable, no simulation input yet
   const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
-  return { ...state, backlog: [...state.backlog, item], zones };
+  // The enclosure is added BEFORE the animal, so it reads above it in the Backlog.
+  return { ...state, backlog: [...state.backlog, ...extra, item], zones };
 }
 
 /** Refine an existing Backlog PBI (edit its name, zone and acceptance criteria).
@@ -187,6 +198,11 @@ export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
 /** Set an enclosure's footprint size (chosen while building the habitat in the studio). */
 export function setEnclosureSize(state: ZooGameState, id: string, size: 'small' | 'medium' | 'large'): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureSize: size } : it)) };
+}
+
+/** Set a feature's free-placement position in the park (from dragging on the Park tab). */
+export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };
 }
 
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down

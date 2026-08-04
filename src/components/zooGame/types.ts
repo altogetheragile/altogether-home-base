@@ -73,6 +73,11 @@ export interface BacklogItem {
   /** For an EXHIBIT (animal): the id of the enclosure it lives in. The animal can only be
    *  built once that enclosure is built (Done), and it is drawn inside it in the park. */
   enclosureId?: string;
+  /** Free-placement position in the park, in fixed design-canvas px (the centre of the
+   *  feature). Set by dragging on the Park tab. Unset = auto-laid-out in a default flow.
+   *  Only top-level features carry a position (enclosures, amenities, flora); an animal
+   *  moves with its enclosure. */
+  pos?: { x: number; y: number };
   /** Estimate in points, the team's forecast from size and complexity. Meaningful
    *  once the item has been estimated (see `unsized`). */
   estimate: number;
@@ -191,6 +196,7 @@ export type ZooAction =
   | { type: 'SET_SPRINT_DAYS'; days: number }
   | { type: 'SET_LEARN_MODE'; on: boolean }
   | { type: 'SET_ENCLOSURE'; id: string; size: 'small' | 'medium' | 'large' }
+  | { type: 'SET_POS'; id: string; pos: { x: number; y: number } }
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }

@@ -1,26 +1,26 @@
-import { useRef, useState, useLayoutEffect, type ReactNode } from 'react';
+import { useRef, useState, useLayoutEffect, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import { renderDesign, presetFor, GRID_W, type ItemDesign } from './design';
 import type { SegmentId } from './simulation/types';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Move } from 'lucide-react';
 
 // ============= The Park View =============
 //
-// The visual payoff and the Product Goal surface: one top-down park scene. Open
-// exhibits sit in their themed zone as plot tiles showing the design the team built;
-// amenities sit alongside; visitors from the simulation wander the grounds. The park
-// is a picture of delivered work - what it looks like is decided by the Backlog:
-// every item names its zone, so laying out the park is done by refining PBIs (their
-// zone) and adding new ones, and delivering them through Sprints.
+// The visual payoff and the Product Goal surface: one top-down park scene. Each SPECIES
+// lives in its own built enclosure (a habitat), with the animals you have delivered drawn
+// to scale inside it; amenities and planting sit on the grounds; visitors keep to the
+// promenade. On the big Park tab the layout is FREE: drag any enclosure, building or
+// planting to arrange your zoo (an animal moves with its enclosure). Positions are saved
+// on the items, so the park is both a picture of delivered work and something you compose.
 
 const SEG_DOT: Record<SegmentId, string> = { families: '#e6842a', enthusiasts: '#3f8fd0', comfortSeekers: '#8a5a2b' };
 
-interface ZoneTheme { region: string; border: string; pill: string; plot: string; plotBorder: string }
+interface ZoneTheme { plot: string; plotBorder: string }
 const THEMES: Record<string, ZoneTheme> = {
-  savanna: { region: 'rgba(214,176,112,.30)', border: 'rgba(150,110,50,.55)', pill: '#b7864a', plot: '#d9b98a', plotBorder: '#b7965f' },
-  water: { region: 'rgba(90,170,205,.24)', border: 'rgba(55,125,160,.55)', pill: '#3f8fb0', plot: '#6db6d8', plotBorder: '#4f9cbf' },
-  forest: { region: 'rgba(70,150,80,.24)', border: 'rgba(40,110,55,.55)', pill: '#3f8a4c', plot: '#93c977', plotBorder: '#6b8f4e' },
+  savanna: { plot: '#d9b98a', plotBorder: '#b7965f' },
+  water: { plot: '#6db6d8', plotBorder: '#4f9cbf' },
+  forest: { plot: '#93c977', plotBorder: '#6b8f4e' },
 };
 const ORDER = ['forest', 'savanna', 'water'];
 function themeFor(zone: string, idx: number): ZoneTheme {
@@ -63,6 +63,7 @@ const ENCLOSURE: Record<'small' | 'medium' | 'large', { w: number; h: number }> 
   medium: { w: 164, h: 110 },
   large: { w: 210, h: 138 },
 };
+const LABEL_H = 18; // the name pill under a feature, counted in its layout height
 
 /** A built enclosure (habitat) with the animals that live in it rendered to scale
  *  inside - one sprite per animal the team has actually built and opened, so you see
@@ -98,67 +99,55 @@ function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: Backlog
   );
 }
 
-/** One themed zone as a translucent region with a pill label: its built enclosure (with
- *  the animals inside), plus any amenities and planting on the grounds. Animals whose
- *  enclosure is not built yet fall back to plots (this should not normally happen, since
- *  the habitat is built first). */
-function ZoneRegion({ zone, theme, cell, enclosure, animals, others }: {
-  zone: string; theme: ZoneTheme; cell: number;
-  enclosure?: BacklogItem; animals: BacklogItem[]; others: BacklogItem[];
-}) {
-  const empty = !enclosure && animals.length === 0 && others.length === 0;
-  const unserved = animals.length > 0 && others.every((o) => o.category !== 'amenity');
-  return (
-    <div className="relative rounded-2xl border-2 border-dashed p-3 pt-5"
-      style={{ background: theme.region, borderColor: theme.border }}>
-      <span className="absolute -top-2.5 left-3 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white shadow" style={{ background: theme.pill }}>{zone}</span>
-      {empty ? (
-        <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-white/60 py-4 text-[11px] font-semibold text-white/90">plot ready - nothing open here yet</div>
-      ) : (
-        <div className="flex flex-wrap items-end gap-x-3 gap-y-4">
-          {enclosure
-            ? <Enclosure key={enclosure.id} enc={enclosure} animals={animals} theme={theme} />
-            : animals.map((it) => <Plot key={it.id} item={it} theme={theme} cell={cell} />)}
-          {others.map((it) => <Plot key={it.id} item={it} theme={theme} cell={cell} />)}
-        </div>
-      )}
-      {unserved && <div className="mt-2 text-[10px] font-medium italic text-amber-900/80 dark:text-amber-200/80">Great animals, but no amenities nearby yet.</div>}
-    </div>
-  );
+// ---- Features: the positionable things in the park (enclosures + amenities + planting) ----
+
+interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h: number; animals: BacklogItem[]; theme: ZoneTheme }
+
+/** Everything currently shown in the park, as positionable features. An enclosure appears
+ *  once BUILT (Done or Open) - the habitat is there before its animals are released - with
+ *  its open animals inside; amenities and planting appear when open. */
+function buildFeatures(state: ZooGameState): Feature[] {
+  const open = state.backlog.filter((it) => it.status === 'open');
+  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open'));
+  const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
+  const theme = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
+  const feats: Feature[] = [];
+  for (const e of builtEnc) {
+    const cfg = ENCLOSURE[e.enclosureSize ?? 'medium'];
+    const animals = open.filter((o) => o.category === 'exhibit' && o.enclosureId === e.id);
+    feats.push({ item: e, kind: 'enclosure', w: cfg.w, h: cfg.h + LABEL_H, animals, theme: theme(e.zone) });
+  }
+  // Any open exhibit whose enclosure is not built falls back to a small plot (shouldn't
+  // normally happen, since the habitat is built first).
+  for (const o of open.filter((o) => o.category === 'exhibit' && !builtEnc.some((e) => e.id === o.enclosureId))) {
+    feats.push({ item: o, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], theme: theme(o.zone) });
+  }
+  for (const a of open.filter((o) => o.category === 'amenity' || o.category === 'flora')) {
+    feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], theme: theme(a.zone) });
+  }
+  return feats;
 }
 
-/** Lay content out at a FIXED design width and scale it uniformly to fill the container.
- *  Because the layout always computes at `designWidth`, it never reflows on resize - the
- *  whole park just scales up or down as one piece, like zooming a map. */
-function ScaledScene({ designWidth, children }: { designWidth: number; children: ReactNode }) {
-  const outer = useRef<HTMLDivElement>(null);
-  const inner = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [height, setHeight] = useState<number>();
+const CANVAS_W = 880;
+const PATH_H = 40; // promenade band along the foot, where visitors stroll
+const PAD = 20;
+const GAP = 18;
 
-  useLayoutEffect(() => {
-    const o = outer.current, i = inner.current;
-    if (!o || !i) return;
-    const update = () => {
-      const s = o.clientWidth / designWidth;
-      setScale(s);
-      setHeight(i.offsetHeight * s);
-    };
-    const ro = new ResizeObserver(update);
-    ro.observe(o);
-    ro.observe(i);
-    update();
-    return () => ro.disconnect();
-  }, [designWidth]);
-
-  return (
-    <div ref={outer} style={{ height }} className="relative w-full">
-      <div ref={inner} style={{ width: designWidth, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-        {children}
-      </div>
-    </div>
-  );
+/** Default tidy layout for features without a saved position: shelf-pack left-to-right,
+ *  wrapping within the canvas width. Returns each feature's CENTRE in design px. */
+function autoLayout(features: Feature[]): Map<string, { x: number; y: number }> {
+  const pos = new Map<string, { x: number; y: number }>();
+  let x = PAD, y = PAD, rowH = 0;
+  for (const f of features) {
+    if (x + f.w > CANVAS_W - PAD && x > PAD) { x = PAD; y += rowH + GAP; rowH = 0; }
+    pos.set(f.item.id, { x: x + f.w / 2, y: y + f.h / 2 });
+    x += f.w + GAP;
+    rowH = Math.max(rowH, f.h);
+  }
+  return pos;
 }
+
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
 /** Deterministic 0..1 from an index + channel (stable across renders). */
 const jitter = (n: number, k: number) => {
@@ -166,84 +155,167 @@ const jitter = (n: number, k: number) => {
   return x - Math.floor(x);
 };
 
-interface ParkViewProps { state: ZooGameState; compact?: boolean; fill?: boolean; large?: boolean }
+/** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
+ *  feature absolutely positioned and draggable. Dragging updates a live local position and
+ *  commits to the item on release (so the layout persists). */
+function FreeScene({ features, dots, onPlaceItem }: {
+  features: Feature[];
+  dots: SegmentId[];
+  onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
+}) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [drag, setDrag] = useState<{ id: string; pos: { x: number; y: number } } | null>(null);
 
-/** The park as it stands: open items in their themed zones, a HUD at a glance, and
- *  visitors strolling when there is something to see. `large` = the full-width Park
- *  tab (big, impressive); `fill` = square side panel; `compact` = small live strip. */
-export function ParkView({ state, compact = false, fill = false, large = false }: ParkViewProps) {
-  const open = state.backlog.filter((it) => it.status === 'open');
-  // An enclosure appears in the park once it is BUILT (Done or Open) - the habitat is
-  // infrastructure, so it is there before its animals are released.
-  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open'));
-  const zones = Array.from(new Set([...state.zones, ...open.map((it) => it.zone), ...builtEnc.map((it) => it.zone)]));
-  const byZone = zones.map((z, i) => ({
-    zone: z,
-    theme: themeFor(z, i),
-    enclosure: builtEnc.find((e) => e.zone === z),
-    animals: open.filter((it) => it.category === 'exhibit' && it.zone === z),
-    others: open.filter((it) => (it.category === 'amenity' || it.category === 'flora') && it.zone === z),
-  }));
-  const filled = byZone.filter((z) => z.enclosure || z.animals.length > 0 || z.others.length > 0).length;
-  const exhibits = open.filter((it) => it.category === 'exhibit').length;
-  const amenities = open.filter((it) => it.category === 'amenity').length;
-  const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
-  const happiness = state.lastReview?.overallHappiness ?? null;
-  const cell = compact ? 2 : large ? 5 : fill ? 4 : 3;
+  const auto = autoLayout(features);
+  const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD });
+  const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
+  const canvasH = Math.max(440, Math.round(contentBottom + PAD)) + PATH_H;
 
-  // Little visitors stroll once there is an exhibit to see.
-  const dots: SegmentId[] = [];
-  if (open.some((it) => it.category === 'exhibit')) {
-    const cap = compact ? 8 : large ? 34 : fill ? 24 : 16;
-    for (const seg of ['families', 'enthusiasts', 'comfortSeekers'] as SegmentId[]) {
-      const n = Math.min(cap, Math.round(((state.attendance[seg] ?? 0) / Math.max(1, total)) * Math.min(cap, Math.max(3, Math.round(total / 60)))));
-      for (let i = 0; i < n; i++) dots.push(seg);
-    }
-  }
+  useLayoutEffect(() => {
+    const o = outer.current;
+    if (!o) return;
+    const update = () => setScale(o.clientWidth / CANVAS_W);
+    const ro = new ResizeObserver(update);
+    ro.observe(o);
+    update();
+    return () => ro.disconnect();
+  }, []);
 
-  // The park scene, laid out once. For the large (Park tab) view it renders inside a
-  // ScaledScene at a fixed design width, so it scales rather than reflows on resize.
-  const scene = (
-    <div className={cn('relative overflow-hidden rounded-2xl border shadow-sm', fill && 'aspect-square')}
-      style={{ borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
-      {/* Fixed 2-column grid (not the viewport-based sm: breakpoint) so the layout is
-          driven by content, not window width - the ScaledScene handles fitting the width. */}
-      <div className={cn('relative z-10 grid gap-3 p-4 pb-9', compact ? 'grid-cols-1' : 'grid-cols-2',
-        fill ? 'h-full content-stretch' : 'content-start')}
-        style={{ minHeight: fill ? undefined : compact ? 140 : large ? 460 : 230 }}>
-        {byZone.map((z) => <ZoneRegion key={z.zone} zone={z.zone} theme={z.theme} cell={cell} enclosure={z.enclosure} animals={z.animals} others={z.others} />)}
-      </div>
+  const startDrag = (e: ReactPointerEvent, f: Feature) => {
+    if (!onPlaceItem) return;
+    e.preventDefault();
+    const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
+    const startX = e.clientX, startY = e.clientY;
+    const origin = posOf(f);
+    const minX = f.w / 2 + 4, maxX = CANVAS_W - f.w / 2 - 4;
+    const minY = f.h / 2 + 4, maxY = canvasH - PATH_H - f.h / 2;
+    const at = (ev: PointerEvent) => ({
+      x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
+      y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
+    });
+    const move = (ev: PointerEvent) => setDrag({ id: f.item.id, pos: at(ev) });
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      onPlaceItem(f.item.id, at(ev));
+      setDrag(null);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    setDrag({ id: f.item.id, pos: origin });
+  };
 
-      {/* Decor: a path/promenade along the foot (where the visitors stroll), trees at the
-          corners, an entrance gate. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0" style={{ height: compact ? 22 : 34, background: 'linear-gradient(#d9c7a6,#cdb98f)', boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
-      {!compact && (
-        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-          <Tree style={{ left: '2%', bottom: '36px' }} />
-          <Tree style={{ right: '2%', bottom: '36px' }} />
-          <div className="absolute left-1/2 bottom-0.5 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ color: '#5a3a1c' }}>
-            ENTRANCE
+  return (
+    <div ref={outer} className="relative w-full" style={{ height: canvasH * scale }}>
+      <div ref={inner} className="absolute left-0 top-0 overflow-hidden rounded-2xl border shadow-sm"
+        style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left',
+          borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
+
+        {/* Promenade path + entrance + trees along the foot. */}
+        <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: 'linear-gradient(#d9c7a6,#cdb98f)', boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
+        <Tree style={{ left: 14, bottom: PATH_H + 6 }} />
+        <Tree style={{ right: 14, bottom: PATH_H + 6 }} />
+        <div className="absolute left-1/2 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ bottom: 4, color: '#5a3a1c' }} aria-hidden>ENTRANCE</div>
+
+        {features.length === 0 && (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm font-semibold text-white/90">Nothing open yet - build and open an enclosure and its animals.</div>
+        )}
+
+        {/* Features - each absolutely positioned at its centre and draggable. */}
+        {features.map((f) => {
+          const p = posOf(f);
+          const dragging = drag?.id === f.item.id;
+          return (
+            <div key={f.item.id}
+              onPointerDown={(e) => startDrag(e, f)}
+              className={cn('absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30')}
+              style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
+              {f.kind === 'enclosure'
+                ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} />
+                : <Plot item={f.item} theme={f.theme} cell={4} />}
+            </div>
+          );
+        })}
+
+        {/* Visitors keep to the promenade, never inside a habitat. */}
+        {dots.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20" style={{ height: PATH_H }} aria-hidden>
+            {dots.map((seg, i) => (
+              <span key={i} className="zoo-visitor absolute" style={{
+                left: `${4 + jitter(i, 0) * 92}%`, top: `${18 + jitter(i, 1) * 50}%`,
+                animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite`,
+              }}>
+                <span className="block rounded-full ring-1 ring-white/70" style={{ width: 5, height: 5, margin: '0 auto', background: '#f0c9a8' }} />
+                <span className="block rounded-b-sm rounded-t" style={{ width: 7, height: 7, background: SEG_DOT[seg] }} />
+              </span>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    </div>
+  );
+}
 
-      {/* Visitors keep to the path around the enclosures - they stroll the promenade
-          along the foot of the park, never inside a habitat. */}
+/** A simple read-only flow of features, for the small live views (no drag). */
+function FlowScene({ features, dots, minHeight }: { features: Feature[]; dots: SegmentId[]; minHeight: number }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border shadow-sm"
+      style={{ minHeight, borderColor: 'rgba(120,140,90,.5)', background: 'linear-gradient(#86c06a,#7ab85f)' }}>
+      <div className="relative z-10 flex flex-wrap items-end gap-3 p-3 pb-8">
+        {features.map((f) => (
+          <div key={f.item.id}>
+            {f.kind === 'enclosure' ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} /> : <Plot item={f.item} theme={f.theme} cell={3} />}
+          </div>
+        ))}
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0" style={{ height: 22, background: 'linear-gradient(#d9c7a6,#cdb98f)' }} aria-hidden />
       {dots.length > 0 && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20" style={{ height: compact ? 22 : 34 }} aria-hidden>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20" style={{ height: 22 }} aria-hidden>
           {dots.map((seg, i) => (
-            <span key={i} className="zoo-visitor absolute" style={{
-              left: `${4 + jitter(i, 0) * 92}%`, top: `${18 + jitter(i, 1) * 55}%`,
-              animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite`,
-            }}>
-              <span className="block rounded-full ring-1 ring-white/70" style={{ width: compact ? 4 : 5, height: compact ? 4 : 5, margin: '0 auto', background: '#f0c9a8' }} />
-              <span className="block rounded-b-sm rounded-t" style={{ width: compact ? 6 : 7, height: compact ? 6 : 7, background: SEG_DOT[seg] }} />
+            <span key={i} className="zoo-visitor absolute" style={{ left: `${4 + jitter(i, 0) * 92}%`, top: `${18 + jitter(i, 1) * 50}%`, animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite` }}>
+              <span className="block rounded-full ring-1 ring-white/70" style={{ width: 4, height: 4, margin: '0 auto', background: '#f0c9a8' }} />
+              <span className="block rounded-b-sm rounded-t" style={{ width: 6, height: 6, background: SEG_DOT[seg] }} />
             </span>
           ))}
         </div>
       )}
     </div>
   );
+}
+
+interface ParkViewProps {
+  state: ZooGameState;
+  compact?: boolean;
+  fill?: boolean;
+  large?: boolean;
+  /** On the big Park tab, called when a feature is dragged to a new position. */
+  onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
+}
+
+/** The park as it stands: built enclosures with their animals, amenities and planting,
+ *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
+ *  Park tab; `compact`/`fill` = small read-only live views. */
+export function ParkView({ state, compact = false, large = false, onPlaceItem }: ParkViewProps) {
+  const open = state.backlog.filter((it) => it.status === 'open');
+  const features = buildFeatures(state);
+  const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
+  const activeZones = new Set(features.map((f) => f.item.zone));
+  const exhibits = open.filter((it) => it.category === 'exhibit').length;
+  const amenities = open.filter((it) => it.category === 'amenity').length;
+  const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
+  const happiness = state.lastReview?.overallHappiness ?? null;
+
+  // Little visitors stroll once there is an exhibit to see.
+  const dots: SegmentId[] = [];
+  if (open.some((it) => it.category === 'exhibit')) {
+    const cap = compact ? 8 : 34;
+    for (const seg of ['families', 'enthusiasts', 'comfortSeekers'] as SegmentId[]) {
+      const n = Math.min(cap, Math.round(((state.attendance[seg] ?? 0) / Math.max(1, total)) * Math.min(cap, Math.max(3, Math.round(total / 60)))));
+      for (let i = 0; i < n; i++) dots.push(seg);
+    }
+  }
 
   return (
     <section className={cn('space-y-3', compact && 'space-y-2')}>
@@ -254,22 +326,30 @@ export function ParkView({ state, compact = false, fill = false, large = false }
 
       {!compact && (
         <div className="grid grid-cols-4 gap-2">
-          <Hud icon={LayoutGrid} label="Zones" value={`${filled}/${zones.length}`} />
+          <Hud icon={LayoutGrid} label="Zones" value={`${activeZones.size}/${zones.length}`} />
           <Hud icon={Trees} label={`${amenities} amenit${amenities === 1 ? 'y' : 'ies'}`} value={`${exhibits}`} sub="exhibits" />
           <Hud icon={Users} label="Visitors" value={total ? total.toLocaleString() : '—'} />
           <Hud icon={Smile} label="Happiness" value={happiness === null ? '—' : `${happiness}`} />
         </div>
       )}
 
-      {/* The park scene - scaled to fit (never reflows) on the large Park tab. */}
-      {large ? <ScaledScene designWidth={880}>{scene}</ScaledScene> : scene}
+      {large ? (
+        <>
+          {features.length > 0 && onPlaceItem && (
+            <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
+          )}
+          <FreeScene features={features} dots={dots} onPlaceItem={onPlaceItem} />
+        </>
+      ) : (
+        <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} />
+      )}
     </section>
   );
 }
 
 function Tree({ style }: { style: React.CSSProperties }) {
   return (
-    <div className="absolute" style={{ width: 26, height: 34, ...style }}>
+    <div className="absolute z-0" style={{ width: 26, height: 34, ...style }} aria-hidden>
       <div className="absolute left-1/2 -translate-x-1/2 rounded-full" style={{ top: 0, width: 26, height: 26, background: 'radial-gradient(circle at 40% 35%,#5fa049,#3f7d33)', boxShadow: '0 3px 0 rgba(0,0,0,.08)' }} />
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2" style={{ width: 5, height: 12, background: '#7a5230', borderRadius: 2 }} />
     </div>

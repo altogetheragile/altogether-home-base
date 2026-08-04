@@ -55,29 +55,38 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
 /** The starting Product Backlog: rough and partial on purpose. It grows and changes
  *  from play (signals add to it). Appeal is the base value before per-game taste
  *  jitter. */
-// A zoo is built infrastructure-first: each animal zone has an ENCLOSURE (habitat) that
-// must be built before its animals can be. So every animal carries the id of the
-// enclosure it lives in, and the enclosure sits above it in the Backlog.
+// A zoo is built infrastructure-first: every SPECIES has its own ENCLOSURE (habitat) that
+// must be built before that animal can be - lions and tigers don't share a pen just
+// because they're both Big Cats. So each animal carries the id of its species enclosure,
+// and the enclosure sits above it in the Backlog. (A pride is several lion PBIs sharing
+// the one Lion Enclosure.)
 const STARTING_BACKLOG: BacklogItem[] = [
-  enc('bigcats-enc', 'Big Cats Enclosure', 'Big Cats', 8, 'large'),
-  ex('lion', 'Lion', 'Big Cats', 8, [8, 7, 6], 'bigcats-enc'),
-  ex('tiger', 'Tiger', 'Big Cats', 8, [8, 7, 6], 'bigcats-enc'),
-  ex('leopard', 'Leopard', 'Big Cats', 8, [7, 8, 5], 'bigcats-enc'),
+  enc('lion-enc', 'Lion Enclosure', 'Big Cats', 5, 'large'),
+  ex('lion', 'Lion', 'Big Cats', 8, [8, 7, 6], 'lion-enc'),
+  enc('tiger-enc', 'Tiger Enclosure', 'Big Cats', 5, 'large'),
+  ex('tiger', 'Tiger', 'Big Cats', 8, [8, 7, 6], 'tiger-enc'),
+  enc('leopard-enc', 'Leopard Enclosure', 'Big Cats', 5, 'medium'),
+  ex('leopard', 'Leopard', 'Big Cats', 8, [7, 8, 5], 'leopard-enc'),
   am('kiosk', 'Kiosk', 'Big Cats', 5, 'food'),
-  enc('waterside-enc', 'Waterside Habitat', 'Waterside', 5, 'medium'),
-  ex('penguins', 'Penguins', 'Waterside', 8, [8, 6, 6], 'waterside-enc'),
-  ex('reef', 'Reef', 'Waterside', 5, [6, 8, 5], 'waterside-enc'),
+  enc('penguin-enc', 'Penguin Habitat', 'Waterside', 3, 'medium'),
+  ex('penguins', 'Penguins', 'Waterside', 8, [8, 6, 6], 'penguin-enc'),
+  enc('reef-enc', 'Reef Tank', 'Waterside', 3, 'medium'),
+  ex('reef', 'Reef', 'Waterside', 5, [6, 8, 5], 'reef-enc'),
   am('wc', 'Toilets', 'Waterside', 3, 'toilet'),
   // The newer zones arrive UNSIZED: the team must estimate (refine) them first.
-  enc('savanna-enc', 'Savanna Reserve', 'Savanna', 8, 'large', true),
-  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7], 'savanna-enc', true),
-  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6], 'savanna-enc', true),
-  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6], 'savanna-enc', true),
-  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5], 'savanna-enc', true),
+  enc('elephant-enc', 'Elephant Reserve', 'Savanna', 5, 'large', true),
+  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7], 'elephant-enc', true),
+  enc('giraffe-enc', 'Giraffe Paddock', 'Savanna', 5, 'large', true),
+  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6], 'giraffe-enc', true),
+  enc('zebra-enc', 'Zebra Paddock', 'Savanna', 3, 'medium', true),
+  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6], 'zebra-enc', true),
+  enc('rhino-enc', 'Rhino Reserve', 'Savanna', 5, 'large', true),
+  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5], 'rhino-enc', true),
   am('cafe', 'Cafe', 'Savanna', 5, 'food', true),
-  enc('forest-enc', 'Forest Habitat', 'Forest', 5, 'medium', true),
-  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6], 'forest-enc', true),
-  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6], 'forest-enc', true),
+  enc('bear-enc', 'Bear Habitat', 'Forest', 5, 'large', true),
+  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6], 'bear-enc', true),
+  enc('monkey-enc', 'Monkey Habitat', 'Forest', 3, 'medium', true),
+  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6], 'monkey-enc', true),
   am('picnic', 'Picnic area', 'Forest', 3, 'rest', true),
 ];
 
