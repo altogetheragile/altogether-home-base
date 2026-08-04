@@ -25,19 +25,19 @@ export default function ZooGame() {
       case 'intro':
         return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start} />;
       case 'refine':
-        return <ZooShell state={state} onPlaceItem={setItemPos}><RefineBacklog state={state} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onPlan={() => setPhase('planning')} /></ZooShell>;
+        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><RefineBacklog state={state} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onPlan={() => setPhase('planning')} /></ZooShell>;
       case 'planning':
-        return <ZooShell state={state} onPlaceItem={setItemPos}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
+        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} onPlaceItem={setItemPos}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} /></ZooShell>;
+        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} /></ZooShell>;
       case 'review':
-        return <ZooShell state={state} onPlaceItem={setItemPos}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
+        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
       case 'retro':
-        return <ZooShell state={state} onPlaceItem={setItemPos}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onWrapUp={() => setPhase('final')} /></ZooShell>;
+        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onWrapUp={() => setPhase('final')} /></ZooShell>;
       case 'final':
         return <ZooFinal state={state} onReset={reset} />;
       default:
-        return <ZooShell state={state} onPlaceItem={setItemPos}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
+        return <ZooShell state={state} onPlaceItem={setItemPos} onSetDod={setDod}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} /></ZooShell>;
     }
   };
 

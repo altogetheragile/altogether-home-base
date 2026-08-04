@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import type { ZooGameState } from './types';
 import { ParkView } from './ParkView';
+import { DodEditor } from './DodEditor';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users } from 'lucide-react';
+import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, ChevronDown, Users, Pencil, Check } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -26,20 +27,33 @@ function GoalChip({ icon: Icon, label, text, tone }: { icon: typeof Target; labe
   );
 }
 
-/** The product-wide Definition of Done, always in view (collapsible). It is edited at
- *  the Retrospective; here it is read-only so the bar every item clears is never hidden. */
-function DodBar({ dod }: { dod: string[] }) {
+/** The product-wide Definition of Done, always in view (collapsible). It is the team's
+ *  shared quality bar - editable here at any time (agree it before the first Sprint, adapt
+ *  it at the Retrospective). */
+function DodBar({ dod, onSetDod }: { dod: string[]; onSetDod?: (dod: string[]) => void }) {
   const [open, setOpen] = useState(true);
+  const [editing, setEditing] = useState(false);
   return (
     <div className="mb-3 rounded-lg border border-border bg-muted/20 px-3 py-1.5">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
-        <ClipboardCheck className="h-3.5 w-3.5" /> Definition of Done <span className="text-muted-foreground/70">({dod.length})</span>
-        <ChevronDown className={cn('ml-auto h-3.5 w-3.5 transition-transform', !open && '-rotate-90')} />
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button type="button" onClick={() => setOpen((o) => !o)} className="flex flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
+          <ClipboardCheck className="h-3.5 w-3.5" /> Definition of Done <span className="text-muted-foreground/70">({dod.length})</span>
+          <ChevronDown className={cn('ml-auto h-3.5 w-3.5 transition-transform', !open && '-rotate-90')} />
+        </button>
+        {onSetDod && open && (
+          <button type="button" onClick={() => setEditing((e) => !e)} className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+            {editing ? <><Check className="h-3 w-3" /> Done</> : <><Pencil className="h-3 w-3" /> Edit</>}
+          </button>
+        )}
+      </div>
       {open && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {dod.map((d) => <span key={d} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
-        </div>
+        editing && onSetDod ? (
+          <div className="mt-2"><DodEditor dod={dod} onSave={onSetDod} /></div>
+        ) : (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {dod.map((d) => <span key={d} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
+          </div>
+        )
       )}
     </div>
   );
@@ -61,7 +75,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
  *  Park, which gets the full width so it can be big and impressive. Laying the park out
  *  is Backlog work: each PBI names its zone, so the park changes by refining PBIs, not
  *  by dragging things around here. */
-export function ZooShell({ state, children, onPlaceItem }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void }) {
+export function ZooShell({ state, children, onPlaceItem, onSetDod }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
@@ -76,8 +90,8 @@ export function ZooShell({ state, children, onPlaceItem }: { state: ZooGameState
         </div>
       </div>
 
-      {/* Definition of Done - always visible; refined at the Retrospective. */}
-      <DodBar dod={state.definitionOfDone} />
+      {/* Definition of Done - always visible and editable; agree it up front, adapt it at the Retro. */}
+      <DodBar dod={state.definitionOfDone} onSetDod={onSetDod} />
 
       {/* Which accountabilities you're wearing this phase (a solo game plays all three). */}
       {ROLE_HINT[state.phase] && (
