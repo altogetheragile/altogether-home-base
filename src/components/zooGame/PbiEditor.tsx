@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { BacklogItem, PbiDraft, ItemCategory } from './types';
 import { suggestStory } from './engine';
+import { SPECIES_SHAPES } from './design';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, Wand2 } from 'lucide-react';
@@ -48,6 +49,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
   const [services, setServices] = useState<'food' | 'toilet' | 'rest' | undefined>(item?.services);
   const [footprint, setFootprint] = useState<'small' | 'medium' | 'large'>(item?.enclosureSize ?? 'medium');
   const [enclosureId, setEnclosureId] = useState<string>(item?.enclosureId ?? NO_ENCLOSURE);
+  const [shape, setShape] = useState<string>(item?.template ?? '');
   const [acceptance, setAcceptance] = useState<string[]>(item?.acceptance?.length ? item.acceptance : ['']);
   const [storyMode, setStoryMode] = useState(item ? !!item.story : useStories);
   const parsed = parseStory(item?.story ?? '');
@@ -72,6 +74,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
       services: category === 'amenity' ? services : undefined,
       enclosureSize: category === 'enclosure' ? footprint : undefined,
       enclosureId: category === 'exhibit' && enclosureId !== NO_ENCLOSURE ? enclosureId : undefined,
+      template: category === 'exhibit' && shape ? shape : undefined,
     });
   };
 
@@ -143,6 +146,17 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
                 className={cn('rounded-full border px-3 py-1 text-xs capitalize', footprint === f ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{f}</button>
             ))}
           </div>
+        </div>
+      )}
+
+      {category === 'exhibit' && (
+        <div className="space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Base shape</span>
+          <select value={shape} onChange={(e) => setShape(e.target.value)} className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm">
+            <option value="">Generic creature</option>
+            {SPECIES_SHAPES.map((sh) => <option key={sh.key} value={sh.key}>{sh.label}</option>)}
+          </select>
+          <p className="text-[10px] text-muted-foreground/70">The silhouette the studio starts from - just a starting point you tailor (parts, markings, colours). Pick one close to your animal.</p>
         </div>
       )}
 

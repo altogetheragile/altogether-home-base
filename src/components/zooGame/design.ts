@@ -266,6 +266,10 @@ export const PART_PRESETS: Record<string, Record<string, string>> = {
 };
 const GENERIC_EXHIBIT = { body: 'round', head: 'round', ears: 'round', tail: 'tufted', markings: 'none' };
 
+/** Base silhouettes a bespoke (New PBI) animal can start from, then tailor in the studio.
+ *  Just a starting shape - the name is only the silhouette's origin, not the animal. */
+export const SPECIES_SHAPES: { key: string; label: string }[] = Object.keys(PART_PRESETS).map((k) => ({ key: k, label: k[0].toUpperCase() + k.slice(1) }));
+
 /** The starting design for an item: a recognisable shape (for exhibits) with no
  *  colours yet, so the player colours it in. Uses the item's toolbox template (falling
  *  back to its id) to pick the species shape. */

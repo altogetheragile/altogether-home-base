@@ -730,3 +730,26 @@ describe('zoo game: the toolbox', () => {
     for (const e of exhibits) expect(presetFor({ category: 'exhibit', template: e.template } as never).parts.body).toBeDefined();
   });
 });
+
+describe('zoo game: bespoke animals (base shape)', () => {
+  it('a New PBI animal can start from a base species shape the studio uses', () => {
+    let s = addPbi(initialZooState(1), { name: 'Sabretooth', category: 'exhibit', zone: 'Big Cats', acceptance: ['Fierce'], template: 'tiger' });
+    const sabre = s.backlog.find((i) => i.name === 'Sabretooth')!;
+    expect(sabre.template).toBe('tiger');
+    expect(presetFor(sabre).parts.markings).toBe('stripes'); // starts from the tiger silhouette
+    // With no base shape it falls back to a generic creature that still builds.
+    s = addPbi(s, { name: 'Blob', category: 'exhibit', zone: 'Big Cats', acceptance: ['Odd'] });
+    const blob = s.backlog.find((i) => i.name === 'Blob')!;
+    expect(blob.template).toBeUndefined();
+    expect(presetFor(blob).parts.body).toBeDefined();
+  });
+
+  it('refining an unbuilt animal can change its base shape', () => {
+    let s = addPbi(initialZooState(1), { name: 'Mystery', category: 'exhibit', zone: 'Big Cats', acceptance: ['?'] });
+    const id = s.backlog.find((i) => i.name === 'Mystery')!.id;
+    s = refinePbi(s, id, { name: 'Mystery', category: 'exhibit', zone: 'Big Cats', acceptance: ['?'], template: 'penguins' });
+    const it = s.backlog.find((i) => i.id === id)!;
+    expect(it.template).toBe('penguins');
+    expect(presetFor(it).parts.head).toBe('beaked');
+  });
+});
