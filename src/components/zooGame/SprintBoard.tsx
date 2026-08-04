@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
-import { openZoo } from './engine';
+import { openZoo, enclosureReady, enclosureOf } from './engine';
 import { DAY_SECONDS } from './config';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
@@ -21,6 +21,7 @@ interface SprintBoardProps {
   onSetUseStories: (on: boolean) => void;
   onToggleTask: (id: string, taskId: string) => void;
   onStartItem: (id: string) => void;
+  onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   onSetLearnMode: (on: boolean) => void;
   onPull: (id: string) => void;
   onOpen: (id: string) => void;
@@ -112,7 +113,7 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, learnMode, onExpire }: { da
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onSetLearnMode, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onPull, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -201,14 +202,24 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               )}
               <div className="grid gap-3 sm:grid-cols-3">
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
-                  {todo.map((it) => (
-                    <ItemCard key={it.id} item={it}
-                      subtitle={<>
-                        <div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>
-                        <TaskChecklist item={it} onToggle={onToggleTask} readOnly />
-                      </>}
-                      actions={<Button size="sm" className="h-7 px-2 text-xs" disabled={atWipLimit} title={atWipLimit ? `WIP limit ${state.wipLimit} reached - finish something in Doing first` : undefined} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
-                  ))}
+                  {todo.map((it) => {
+                    // You build the habitat before its animals: an animal can't start until
+                    // its enclosure is built.
+                    const needsEnc = !enclosureReady(state, it);
+                    const encName = enclosureOf(state, it)?.name ?? 'its enclosure';
+                    const blocked = atWipLimit || needsEnc;
+                    const why = needsEnc ? `Build ${encName} first - animals go in once their habitat is ready`
+                      : atWipLimit ? `WIP limit ${state.wipLimit} reached - finish something in Doing first` : undefined;
+                    return (
+                      <ItemCard key={it.id} item={it}
+                        subtitle={<>
+                          <div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>
+                          {needsEnc && <div className="mt-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">Needs {encName} built first</div>}
+                          <TaskChecklist item={it} onToggle={onToggleTask} readOnly />
+                        </>}
+                        actions={<Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
+                    );
+                  })}
                 </BoardColumn>
                 <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
                   {doing.map((it) => {
@@ -246,6 +257,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               dod={state.definitionOfDone}
               editing={editing}
               copySources={copySources}
+              onSetEnclosure={(size) => onSetEnclosure(designItem.id, size)}
               initial={draft && draft.id === designItem.id ? draft.design : undefined}
               onChange={(d) => setDraft({ id: designItem.id, design: d })}
               onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); setDraft(null); }}

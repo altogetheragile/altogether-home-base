@@ -49,9 +49,10 @@ export interface SprintTask { id: string; label: string; done: boolean }
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
  *  seating). Carries the attributes the visitor simulation reads, plus game fields
  *  (estimate, per-item acceptance criteria, status). */
-/** exhibit = an animal, amenity = a facility (cafe/toilets/seating), flora =
- *  scenery/planting (trees, bushes, flowerbeds). */
-export type ItemCategory = 'exhibit' | 'amenity' | 'flora';
+/** enclosure = a habitat you build FIRST (its footprint and fences), then populate with
+ *  animals; exhibit = an animal that lives inside an enclosure; amenity = a facility
+ *  (cafe/toilets/seating); flora = scenery/planting (trees, bushes, flowerbeds). */
+export type ItemCategory = 'enclosure' | 'exhibit' | 'amenity' | 'flora';
 
 export interface BacklogItem {
   id: string;
@@ -65,6 +66,13 @@ export interface BacklogItem {
   /** The toolbox template this item was created from (e.g. 'lion'), used to pick its
    *  species shape in the studio. */
   template?: string;
+  /** For an ENCLOSURE item: its footprint. The habitat is drawn at this size in the park
+   *  and the animals inside it are rendered to scale, so you see animals in a space, not
+   *  one giant one. Chosen when building the enclosure in the studio. */
+  enclosureSize?: 'small' | 'medium' | 'large';
+  /** For an EXHIBIT (animal): the id of the enclosure it lives in. The animal can only be
+   *  built once that enclosure is built (Done), and it is drawn inside it in the park. */
+  enclosureId?: string;
   /** Estimate in points, the team's forecast from size and complexity. Meaningful
    *  once the item has been estimated (see `unsized`). */
   estimate: number;
@@ -182,6 +190,7 @@ export type ZooAction =
   | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
   | { type: 'SET_SPRINT_DAYS'; days: number }
   | { type: 'SET_LEARN_MODE'; on: boolean }
+  | { type: 'SET_ENCLOSURE'; id: string; size: 'small' | 'medium' | 'large' }
   | { type: 'ADD_PBI'; draft: PbiDraft }
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }

@@ -26,6 +26,9 @@ interface DesignStudioProps {
   onChange?: (design: ItemDesign) => void;
   /** Other built things of the same kind, to copy from to save time. */
   copySources?: CopySource[];
+  /** For exhibits: set the enclosure/habitat size. The animal is rendered to scale in the
+   *  park, so a bigger enclosure shows a small group in a larger space. */
+  onSetEnclosure?: (size: 'small' | 'medium' | 'large') => void;
 }
 
 /** Live preview of an assembled design at a given cell size. */
@@ -36,6 +39,21 @@ function Preview({ item, design, cell }: { item: BacklogItem; design: ItemDesign
       {grid.flatMap((row, r) => row.map((color, c) => (
         <span key={`${r}-${c}`} style={{ width: cell, height: cell, background: color ?? 'transparent' }} />
       )))}
+    </div>
+  );
+}
+
+/** Live preview of an enclosure: the habitat box at its chosen footprint, with the
+ *  ground, fence and optional water feature the team is building. */
+function EnclosurePreview({ item, design }: { item: BacklogItem; design: ItemDesign }) {
+  const dims = { small: { w: 132, h: 92 }, medium: { w: 176, h: 118 }, large: { w: 220, h: 146 } }[item.enclosureSize ?? 'medium'];
+  return (
+    <div className="relative overflow-hidden rounded-lg" aria-hidden
+      style={{ width: dims.w, height: dims.h, background: design.colors.ground ?? '#cbb78d', border: `4px solid ${design.colors.fence ?? '#9a7b4f'}` }}>
+      <div className="absolute inset-x-0 bottom-0" style={{ height: '30%', background: 'rgba(0,0,0,.06)' }} />
+      {design.parts.water === 'on' && (
+        <div className="absolute" style={{ bottom: '14%', right: '12%', width: '40%', height: '32%', borderRadius: 999, background: design.colors.water ?? '#5aa9c8', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.3)' }} />
+      )}
     </div>
   );
 }
@@ -60,8 +78,9 @@ function ColourPickerRow({ label, value, onChange, disabled }: { label: string; 
 /** Build (or refine) one item: an exhibit's animal or an amenity's building. Every
  *  animal is its own PBI; to save time you can copy an existing built animal and
  *  tweak it. It is Done when it meets its acceptance criteria. */
-export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, onChange, copySources = [] }: DesignStudioProps) {
+export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, onChange, copySources = [], onSetEnclosure }: DesignStudioProps) {
   const isExhibit = item.category === 'exhibit';
+  const isEnclosure = item.category === 'enclosure';
   const isFlora = item.category === 'flora';
   const cell = Math.floor(232 / GRID_W);
   const [design, setDesign] = useState<ItemDesign>(initial ?? item.design ?? presetFor(item));
@@ -104,7 +123,7 @@ export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, 
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="font-semibold">{editing ? 'Edit' : 'Design'} your {item.name.toLowerCase()}</h3>
-          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isExhibit ? 'one animal, one PBI' : isFlora ? 'pick a plant and colour it' : 'set the colours and add a sign'}</p>
+          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isEnclosure ? 'build the habitat first, then add animals' : isExhibit ? 'one animal, one PBI' : isFlora ? 'pick a plant and colour it' : 'set the colours and add a sign'}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onCancel}>Back</Button>
       </div>
@@ -121,14 +140,40 @@ export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, 
         </div>
       )}
 
+      {isEnclosure && onSetEnclosure && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Footprint</span>
+          {(['small', 'medium', 'large'] as const).map((size) => {
+            const on = (item.enclosureSize ?? 'medium') === size;
+            return (
+              <button key={size} type="button" onClick={() => onSetEnclosure(size)}
+                className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{size}</button>
+            );
+          })}
+          <span className="text-[11px] text-muted-foreground/70">A bigger habitat holds more animals - each one is drawn to scale inside it.</span>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
         {/* Live preview */}
         <div className="flex items-start justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
-          <Preview item={item} design={design} cell={cell} />
+          {isEnclosure ? <EnclosurePreview item={item} design={design} /> : <Preview item={item} design={design} cell={cell} />}
         </div>
 
         {/* Controls */}
-        {isExhibit ? (
+        {isEnclosure ? (
+          <div className="space-y-3">
+            <ColourPickerRow label="Ground" value={design.colors.ground} onChange={(hex) => setColor('ground', hex)} />
+            <ColourPickerRow label="Fence" value={design.colors.fence} onChange={(hex) => setColor('fence', hex)} />
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={design.parts.water === 'on'} onChange={(e) => setPart('water', e.target.checked ? 'on' : 'off')} />
+              Add a water feature
+            </label>
+            {design.parts.water === 'on' && (
+              <ColourPickerRow label="Water" value={design.colors.water} onChange={(hex) => setColor('water', hex)} />
+            )}
+          </div>
+        ) : isExhibit ? (
           <div className="space-y-3">
             {EXHIBIT_PARTS.map((p) => {
               const opt = design.parts[p.key] ?? p.options[0];

@@ -11,6 +11,7 @@ import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, 
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
+  if (item.category === 'enclosure') return <Boxes className={className} />;
   if (item.category === 'flora') return <Trees className={className} />;
   if (item.category === 'amenity') return item.services === 'food' ? <Coffee className={className} /> : <Plus className={className} />;
   return <Fish className={className} />;

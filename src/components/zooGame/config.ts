@@ -55,33 +55,51 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
 /** The starting Product Backlog: rough and partial on purpose. It grows and changes
  *  from play (signals add to it). Appeal is the base value before per-game taste
  *  jitter. */
+// A zoo is built infrastructure-first: each animal zone has an ENCLOSURE (habitat) that
+// must be built before its animals can be. So every animal carries the id of the
+// enclosure it lives in, and the enclosure sits above it in the Backlog.
 const STARTING_BACKLOG: BacklogItem[] = [
-  ex('lion', 'Lion', 'Big Cats', 8, [8, 7, 6]),
-  ex('tiger', 'Tiger', 'Big Cats', 8, [8, 7, 6]),
-  ex('leopard', 'Leopard', 'Big Cats', 8, [7, 8, 5]),
+  enc('bigcats-enc', 'Big Cats Enclosure', 'Big Cats', 8, 'large'),
+  ex('lion', 'Lion', 'Big Cats', 8, [8, 7, 6], 'bigcats-enc'),
+  ex('tiger', 'Tiger', 'Big Cats', 8, [8, 7, 6], 'bigcats-enc'),
+  ex('leopard', 'Leopard', 'Big Cats', 8, [7, 8, 5], 'bigcats-enc'),
   am('kiosk', 'Kiosk', 'Big Cats', 5, 'food'),
-  ex('penguins', 'Penguins', 'Waterside', 8, [8, 6, 6]),
-  ex('reef', 'Reef', 'Waterside', 5, [6, 8, 5]),
+  enc('waterside-enc', 'Waterside Habitat', 'Waterside', 5, 'medium'),
+  ex('penguins', 'Penguins', 'Waterside', 8, [8, 6, 6], 'waterside-enc'),
+  ex('reef', 'Reef', 'Waterside', 5, [6, 8, 5], 'waterside-enc'),
   am('wc', 'Toilets', 'Waterside', 3, 'toilet'),
   // The newer zones arrive UNSIZED: the team must estimate (refine) them first.
-  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7], true),
-  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6], true),
-  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6], true),
-  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5], true),
+  enc('savanna-enc', 'Savanna Reserve', 'Savanna', 8, 'large', true),
+  ex('elephant', 'Elephant', 'Savanna', 10, [9, 8, 7], 'savanna-enc', true),
+  ex('giraffe', 'Giraffe', 'Savanna', 8, [8, 8, 6], 'savanna-enc', true),
+  ex('zebra', 'Zebra', 'Savanna', 5, [7, 6, 6], 'savanna-enc', true),
+  ex('rhino', 'Rhino', 'Savanna', 8, [6, 8, 5], 'savanna-enc', true),
   am('cafe', 'Cafe', 'Savanna', 5, 'food', true),
-  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6], true),
-  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6], true),
+  enc('forest-enc', 'Forest Habitat', 'Forest', 5, 'medium', true),
+  ex('bear', 'Bear', 'Forest', 8, [8, 7, 6], 'forest-enc', true),
+  ex('monkey', 'Monkey', 'Forest', 5, [8, 6, 6], 'forest-enc', true),
   am('picnic', 'Picnic area', 'Forest', 3, 'rest', true),
 ];
 
-/** An exhibit. `unsized` items carry their intended size as `trueSize` and start
- *  with estimate 0 until the team estimates them. */
-function ex(id: string, name: string, zone: string, size: number, appeal: [number, number, number], unsized = false): BacklogItem {
+/** An exhibit (animal). It lives in the enclosure `enclosureId` and can only be built
+ *  once that enclosure is Done. `unsized` items carry their intended size as `trueSize`
+ *  and start with estimate 0 until the team estimates them. */
+function ex(id: string, name: string, zone: string, size: number, appeal: [number, number, number], enclosureId?: string, unsized = false): BacklogItem {
   return {
-    id, name, category: 'exhibit', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
+    id, name, category: 'exhibit', zone, enclosureId, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: ['Recognisable as a ' + name.toLowerCase(), 'Uses at least two colours', 'No bare patches'],
     status: 'backlog', sprintNumber: null, accessible: true,
     appeal: { families: appeal[0], enthusiasts: appeal[1], comfortSeekers: appeal[2] }, capacity: 320,
+  };
+}
+
+/** An enclosure (habitat) - infrastructure built first, then populated with animals. Its
+ *  `enclosureSize` footprint (chosen in the studio) sizes the habitat in the park. */
+function enc(id: string, name: string, zone: string, size: number, footprint: 'small' | 'medium' | 'large', unsized = false): BacklogItem {
+  return {
+    id, name, category: 'enclosure', zone, enclosureSize: footprint, estimate: unsized ? 0 : size, unsized, trueSize: size,
+    acceptance: ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up'],
+    status: 'backlog', sprintNumber: null, accessible: true,
   };
 }
 
