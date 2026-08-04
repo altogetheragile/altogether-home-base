@@ -53,15 +53,17 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
  *  reaches zero the day ends and the Daily Scrum opens. When a day is shortened -
  *  by the Daily Scrum's timebox, or (much more) by a blocker that slipped through -
  *  it says so, so the cost of impediments is obvious. */
-function DayTimer({ dayNumber, dayTimeMult, impeded, learnMode, onExpire }: { dayNumber: number; dayTimeMult: number; impeded: boolean; learnMode: boolean; onExpire: () => void }) {
+function DayTimer({ dayNumber, dayTimeMult, refinePenalty, impeded, learnMode, onExpire }: { dayNumber: number; dayTimeMult: number; refinePenalty: number; impeded: boolean; learnMode: boolean; onExpire: () => void }) {
   const total = Math.round(DAY_SECONDS * dayTimeMult);
   const [left, setLeft] = useState(total);
   const fired = useRef(false);
+  const spent = useRef(0); // refinement seconds already deducted this day
 
   // Reset for each new day (dayNumber changes) and count down once per second. In learn
   // mode the clock is paused - no countdown and no auto-expire, so you end days yourself.
   useEffect(() => {
     fired.current = false;
+    spent.current = 0;
     setLeft(total);
     if (learnMode) return;
     const id = setInterval(() => {
@@ -78,6 +80,14 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, learnMode, onExpire }: { da
     // total is derived from dayNumber+dayTimeMult; reset on a genuinely new day.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayNumber, learnMode]);
+
+  // Refining the Backlog mid-Sprint spends build time: deduct the new refinement seconds
+  // from the clock as they accrue (the interval below picks up the expiry within a tick).
+  useEffect(() => {
+    const delta = refinePenalty - spent.current;
+    spent.current = refinePenalty;
+    if (delta > 0) setLeft((s) => Math.max(0, s - delta));
+  }, [refinePenalty]);
 
   if (learnMode) {
     return (
@@ -105,6 +115,9 @@ function DayTimer({ dayNumber, dayTimeMult, impeded, learnMode, onExpire }: { da
         <div className={cn('mt-1 text-[10px] font-semibold', impeded ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>
           {impeded ? `−${cut}% today: dealing with yesterday's blocker` : `−${cut}%: the Daily Scrum takes a little time`}
         </div>
+      )}
+      {refinePenalty > 0 && (
+        <div className="mt-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">−{refinePenalty}s: refining the Backlog this Sprint</div>
       )}
     </div>
   );
@@ -166,7 +179,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
         </div>
         {/* The clock runs through the start-of-day breather and the build alike. */}
         <div className="flex items-center gap-2">
-          <DayTimer key={state.dayNumber} dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+          <DayTimer key={state.dayNumber} dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
           <button type="button" onClick={() => onSetScrumAt(state.dailyScrumAt === 'start' ? 'end' : 'start')}
             title="When the Daily Scrum is held each day"
             className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">

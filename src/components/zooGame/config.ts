@@ -19,6 +19,11 @@ export const SPRINT_DAYS = 3;
 export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
 /** Seconds of build time in a full day (before any Daily Scrum / impediment cost). */
 export const DAY_SECONDS = 90;
+
+/** Refining the Backlog DURING a Sprint takes time from building (ongoing refinement is
+ *  real work with a cost). Each action spends this many seconds of the current day. In the
+ *  Refinement/Planning phases it is free - that is the dedicated time to refine. */
+export const REFINE_COSTS = { estimate: 8, split: 12, addPbi: 6, refinePbi: 5 } as const;
 /** Chance an impediment surfaces on any given day (deterministic per game/Sprint/day). */
 export const IMPEDIMENT_CHANCE = 0.55;
 /** A held Daily Scrum takes a little of the next day (the event is timeboxed). */
@@ -182,6 +187,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     scrumDiscipline: false,
     learnMode: false,
     dailyScrumAt: 'start',
+    refinePenalty: 0,
   };
 }
 
