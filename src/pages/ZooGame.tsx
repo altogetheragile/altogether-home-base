@@ -70,7 +70,7 @@ export default function ZooGame() {
     }
   };
 
-  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {

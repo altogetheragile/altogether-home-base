@@ -51,6 +51,46 @@ function DodPopover({ dod, onSetDod }: { dod: string[]; onSetDod?: (dod: string[
   );
 }
 
+/** The Product Goal as a tappable popover on the trophy - readable, and editable in place
+ *  (the PO refines it any time), consistent with the DoD chip. */
+function ProductGoalPopover({ goal, onSetGoal }: { goal: string; onSetGoal?: (g: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(goal);
+  return (
+    <Popover onOpenChange={(o) => { if (!o) setEditing(false); }}>
+      <PopoverTrigger asChild>
+        <button type="button" aria-label="Product Goal" title="Product Goal"
+          className="shrink-0 rounded-md border border-primary/30 bg-primary/5 p-1.5 text-primary hover:bg-primary/10">
+          <Trophy className="h-4 w-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</span>
+          {onSetGoal && !editing && (
+            <button type="button" onClick={() => { setDraft(goal); setEditing(true); }} className="flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+              <Pencil className="h-3 w-3" /> Edit
+            </button>
+          )}
+        </div>
+        {editing && onSetGoal ? (
+          <div className="space-y-2">
+            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={3} autoFocus
+              className="w-full resize-none rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary"
+              placeholder="One clear outcome: a park that [who] love, so that [outcome]." />
+            <div className="flex justify-end gap-1.5">
+              <button type="button" onClick={() => setEditing(false)} className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">Cancel</button>
+              <button type="button" disabled={!draft.trim()} onClick={() => { onSetGoal(draft); setEditing(false); }} className="rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">Save</button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm leading-snug">{goal}</p>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string }) {
   return (
     <button type="button" onClick={onClick}
@@ -65,7 +105,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
+export function ZooShell({ state, children, onPlaceItem, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
@@ -74,19 +114,8 @@ export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpe
       {/* Slim header: everything that used to be a stack of bands, in one row + a tabs row. */}
       <header className="shrink-0 border-b border-border bg-background/95 px-2 pt-1.5 sm:px-3">
         <div className="flex items-center gap-2">
-          {/* Product Goal: a tappable popover on the trophy (touch-friendly, not a hover tooltip). */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button type="button" aria-label="Product Goal" title="Product Goal"
-                className="shrink-0 rounded-md border border-primary/30 bg-primary/5 p-1.5 text-primary hover:bg-primary/10">
-                <Trophy className="h-4 w-4" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-72">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
-              <p className="mt-1 text-sm leading-snug">{state.productGoal}</p>
-            </PopoverContent>
-          </Popover>
+          {/* Product Goal: tappable popover on the trophy - readable and editable in place. */}
+          <ProductGoalPopover goal={state.productGoal} onSetGoal={onSetProductGoal} />
           <span title={ROLE_HINT[state.phase]} className="shrink-0 rounded-md bg-muted/60 px-2 py-1 text-xs font-semibold">
             Sprint {state.sprintNumber}<span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}
           </span>
