@@ -180,6 +180,8 @@ interface SidebarProps {
   selected?: Set<string>;
   onToggle?: (id: string) => void;
   onReorder?: (id: string, dir: 'up' | 'down') => void;
+  /** Move a whole zone (a themed epic and all its PBIs) up/down among the zones. */
+  onMoveZone?: (zone: string, dir: 'up' | 'down') => void;
   onMoveBefore?: (id: string, beforeId: string) => void;
   /** sprint mode: pull a Ready item into the running Sprint. */
   onPull?: (id: string) => void;
@@ -190,7 +192,7 @@ interface SidebarProps {
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveBefore, onPull, onSplitEpic }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic }: SidebarProps) {
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
@@ -309,16 +311,25 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
 
       <div className="space-y-2.5">
         {items.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
-        {zoneOrder.map((zone) => {
+        {zoneOrder.map((zone, zi) => {
           const zoneItems = byZone.get(zone)!;
           const collapsed = collapsedZones.has(zone);
           return (
             <div key={zone} className="space-y-1.5">
-              <button type="button" onClick={() => toggleZone(zone)}
-                className="flex w-full items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
-                <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', collapsed && '-rotate-90')} />
-                {zone} <span className="font-normal text-muted-foreground/60">({zoneItems.length})</span>
-              </button>
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={() => toggleZone(zone)}
+                  className="flex min-w-0 flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
+                  <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', collapsed && '-rotate-90')} />
+                  <span className="truncate">{zone}</span> <span className="font-normal text-muted-foreground/60">({zoneItems.length})</span>
+                </button>
+                {/* Move the whole theme (epic) up or down among the zones - the PO ordering by value. */}
+                {onMoveZone && zoneOrder.length > 1 && (
+                  <div className="flex shrink-0 items-center text-muted-foreground" title="Move this whole theme up or down">
+                    <button type="button" title={`Move ${zone} up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className="p-0.5 disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
+                    <button type="button" title={`Move ${zone} down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className="p-0.5 disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
+                  </div>
+                )}
+              </div>
               {!collapsed && <div className="space-y-1.5">{zoneItems.map((it) => renderItem(it, flatIndex.get(it.id)!))}</div>}
             </div>
           );
