@@ -16,7 +16,6 @@ import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState } from '@/components/zooGame/types';
 import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
@@ -95,10 +94,11 @@ export default function ZooGame() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col">
+    // Fixed viewport height so the game frame never scrolls - the shell scrolls internally.
+    // The marketing footer is omitted here to reclaim the full screen for the game.
+    <div className="flex h-dvh flex-col overflow-hidden">
       <Navigation />
-      <main className="flex-1">{render()}</main>
-      <Footer />
+      <main className="min-h-0 flex-1 overflow-hidden">{render()}</main>
       <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />
       <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
     </div>

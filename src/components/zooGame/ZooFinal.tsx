@@ -15,7 +15,7 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
   const amenities = open.filter((i) => i.category === 'amenity').length;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-2xl flex-col items-center justify-center gap-6 px-4 py-8 text-center">
+    <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold md:text-4xl">Your zoo is open</h1>
         <p className="text-muted-foreground">You reached the Product Goal in {state.sprintNumber} Sprint{state.sprintNumber === 1 ? '' : 's'}.</p>

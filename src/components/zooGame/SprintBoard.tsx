@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
-import { openZoo, enclosureReady, enclosureOf } from './engine';
+import { enclosureReady, enclosureOf } from './engine';
 import { DAY_SECONDS } from './config';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
@@ -138,7 +138,6 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
     // Unreleased Done work built in an earlier Sprint carries over here (not lost) until you open it.
     || (it.status === 'done' && it.sprintNumber !== state.sprintNumber),
   );
-  const open = openZoo(state);
   const designItem = designing ? committed.find((it) => it.id === designing) : null;
   const editing = !!designItem && designItem.status !== 'committed';
   const cut = Math.round((1 - state.dayTimeMult) * 100);
@@ -172,24 +171,28 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold">Build &middot; Day {state.dayNumber} of {state.sprintDays}</h2>
-          <p className="text-xs text-muted-foreground">{open.length} open to visitors</p>
-        </div>
-        {/* The clock runs through the start-of-day breather and the build alike. */}
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <h2 className="shrink-0 text-base font-bold">Day {state.dayNumber} / {state.sprintDays}</h2>
+          {/* The clock runs through the start-of-day breather and the build alike. */}
           <DayTimer key={state.dayNumber} dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+        </div>
+        <div className="flex items-center gap-1.5">
           <button type="button" onClick={() => onSetScrumAt(state.dailyScrumAt === 'start' ? 'end' : 'start')}
             title="When the Daily Scrum is held each day"
             className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
-            Daily Scrum: {state.dailyScrumAt === 'start' ? 'start of day' : 'end of day'}
+            Scrum: {state.dailyScrumAt === 'start' ? 'day start' : 'day end'}
           </button>
           <button type="button" onClick={() => onSetLearnMode(!state.learnMode)}
             title={state.learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
             className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
             {state.learnMode ? 'Timed mode' : 'Learn mode'}
           </button>
+          {!dayStarting && (
+            <Button size="sm" className="h-8" onClick={onEndDay}>
+              {state.dayNumber === state.sprintDays ? 'End day → Review' : `End Day ${state.dayNumber} → Scrum`}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -218,8 +221,8 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} />
 
             <div className="min-w-0 space-y-3">
-              <p className="rounded-lg border border-border bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
-                <strong>Start</strong> an item to move it into <strong>Doing</strong> - up to the <strong>WIP limit of {state.wipLimit}</strong>, so you finish work before starting more. Then <strong>Design &amp; build</strong> it in the studio and tick off its plan; when the build is done and every task is ticked it moves to <strong>Done</strong>, ready to open to visitors.
+              <p className="text-[11px] text-muted-foreground">
+                <strong>Start</strong> → <strong>Doing</strong> (WIP {state.wipLimit}) → <strong>Design &amp; build</strong> + tick the plan → <strong>Done</strong> → open to visitors.
               </p>
               {atWipLimit && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing Done yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
@@ -291,14 +294,6 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
         </div>
       )}
 
-      {!dayStarting && (
-        <div className="fixed inset-x-0 bottom-4 z-30 mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-background/95 px-5 py-2.5 shadow-lg backdrop-blur">
-          <span className="text-xs font-medium text-muted-foreground">Definition of Done: {state.definitionOfDone.length} criteria</span>
-          <Button size="sm" onClick={onEndDay}>
-            {state.dayNumber === state.sprintDays ? 'End last day → Review' : `End Day ${state.dayNumber} → Daily Scrum`}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
