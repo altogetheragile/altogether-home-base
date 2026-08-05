@@ -1,10 +1,10 @@
 import { useRef, useState, useLayoutEffect, type PointerEvent as ReactPointerEvent } from 'react';
-import type { ZooGameState, BacklogItem } from './types';
+import type { ZooGameState, BacklogItem, ZooPath } from './types';
 import { renderDesign, presetFor, GRID_W, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees, Move } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Move, Pencil, Eraser, Undo2, Check, X } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -18,10 +18,11 @@ import { Users, Smile, LayoutGrid, Trees, Move } from 'lucide-react';
 const SEG_DOT: Record<SegmentId, string> = { families: '#e6842a', enthusiasts: '#3f8fd0', comfortSeekers: '#8a5a2b' };
 
 // The path route shapes offered on the Park (local, not exported, to keep react-refresh happy).
-const ROUTE_OPTIONS: { key: 'straight' | 'elbow' | 'spine'; label: string }[] = [
+const ROUTE_OPTIONS: { key: 'straight' | 'elbow' | 'spine' | 'none'; label: string }[] = [
   { key: 'straight', label: 'Straight' },
   { key: 'elbow', label: 'Elbow' },
   { key: 'spine', label: 'Spine' },
+  { key: 'none', label: 'None' },
 ];
 
 interface ZoneTheme { plot: string; plotBorder: string }
@@ -166,12 +167,17 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, route, onPlaceItem }: {
+function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
-  route: 'straight' | 'elbow' | 'spine';
+  route: 'straight' | 'elbow' | 'spine' | 'none';
+  tool: 'none' | 'draw' | 'erase';
+  draft: { x: number; y: number }[];
+  paths: ZooPath[];
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
+  onCanvasPoint?: (pt: { x: number; y: number }) => void;
+  onDeletePath?: (id: string) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
@@ -194,7 +200,7 @@ function FreeScene({ features, dots, style, route, onPlaceItem }: {
   }, []);
 
   const startDrag = (e: ReactPointerEvent, f: Feature) => {
-    if (!onPlaceItem) return;
+    if (!onPlaceItem || tool !== 'none') return; // in draw/erase mode, clicks are for paths
     e.preventDefault();
     const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
     const startX = e.clientX, startY = e.clientY;
@@ -217,48 +223,75 @@ function FreeScene({ features, dots, style, route, onPlaceItem }: {
     setDrag({ id: f.item.id, pos: origin });
   };
 
+  // In draw mode, a click on the canvas adds a vertex to the current path (design-px coords).
+  const addPoint = (e: ReactPointerEvent) => {
+    if (tool !== 'draw' || !onCanvasPoint || !inner.current) return;
+    const rect = inner.current.getBoundingClientRect();
+    const s = rect.width / CANVAS_W || 1;
+    onCanvasPoint({ x: clamp((e.clientX - rect.left) / s, 0, CANVAS_W), y: clamp((e.clientY - rect.top) / s, 0, canvasH) });
+  };
+
   return (
     <div ref={outer} className="relative w-full" style={{ height: canvasH * scale }}>
-      <div ref={inner} className="absolute left-0 top-0 overflow-hidden rounded-2xl border shadow-sm"
-        style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left',
+      <div ref={inner} onPointerDown={tool === 'draw' ? addPoint : undefined}
+        className="absolute left-0 top-0 overflow-hidden rounded-2xl border shadow-sm"
+        style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left', cursor: tool === 'draw' ? 'crosshair' : undefined,
           borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
 
         {/* Promenade path + entrance + trees along the foot. Surface follows the chosen style. */}
         <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})`, boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
 
-        {/* Paths: connect every feature to the entrance promenade, so the promenade is the main
-            road and each enclosure branches off it - a connected zoo, not floating boxes. The
-            route shapes how: 'straight' drops a spur straight down; 'elbow' drops to a shared
-            boulevard then into the entrance; 'spine' runs a central avenue with a branch to each.
-            All follow features live as they are dragged (posOf recomputes each render). */}
-        {features.length > 0 && (() => {
+        {/* Paths layer: auto-routes connect each feature to the promenade ('straight'/'elbow'/
+            'spine'; 'none' turns them off), plus any hand-drawn paths, plus the live draw draft.
+            The promenade is the main road; everything branches off it. Auto-routes follow
+            features live as they are dragged (posOf recomputes each render). */}
+        {(() => {
           const cx = CANVAS_W / 2;
           const promY = canvasH - PATH_H + 3; // where paths meet the promenade
-          const pts = features.map((f) => ({ id: f.item.id, ...posOf(f) }));
-          const lines: { key: string; d: string }[] = [];
-          const poly = (key: string, pointsList: number[][]) => lines.push({ key, d: pointsList.map(([x, y]) => `${x},${y}`).join(' ') });
-          if (route === 'spine') {
-            const topY = Math.min(promY, ...pts.map((p) => p.y));
-            poly('spine', [[cx, promY], [cx, topY]]);
-            pts.forEach((p) => poly(p.id, [[p.x, p.y], [cx, p.y]]));
-          } else if (route === 'elbow') {
-            const boulevardY = Math.max(promY - 44, Math.max(...pts.map((p) => p.y)) + 4);
-            const xs = pts.map((p) => p.x);
-            poly('boulevard', [[Math.min(cx, ...xs), boulevardY], [Math.max(cx, ...xs), boulevardY]]);
-            poly('entry', [[cx, boulevardY], [cx, promY]]);
-            pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, boulevardY]]));
-          } else {
-            pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, promY]]));
+          const auto: { key: string; d: string }[] = [];
+          const poly = (key: string, pointsList: number[][]) => auto.push({ key, d: pointsList.map(([x, y]) => `${x},${y}`).join(' ') });
+          if (features.length > 0 && route !== 'none') {
+            const pts = features.map((f) => ({ id: f.item.id, ...posOf(f) }));
+            if (route === 'spine') {
+              const topY = Math.min(promY, ...pts.map((p) => p.y));
+              poly('spine', [[cx, promY], [cx, topY]]);
+              pts.forEach((p) => poly(p.id, [[p.x, p.y], [cx, p.y]]));
+            } else if (route === 'elbow') {
+              const boulevardY = Math.max(promY - 44, Math.max(...pts.map((p) => p.y)) + 4);
+              const xs = pts.map((p) => p.x);
+              poly('boulevard', [[Math.min(cx, ...xs), boulevardY], [Math.max(cx, ...xs), boulevardY]]);
+              poly('entry', [[cx, boulevardY], [cx, promY]]);
+              pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, boulevardY]]));
+            } else {
+              pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, promY]]));
+            }
           }
+          const toD = (points: { x: number; y: number }[]) => points.map((p) => `${p.x},${p.y}`).join(' ');
+          const layered = (key: string, d: string) => (
+            <g key={key}>
+              <polyline points={d} fill="none" stroke={style.edge} strokeWidth={17} strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points={d} fill="none" stroke={style.road} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round" />
+              {style.dash && <polyline points={d} fill="none" stroke={style.dash} strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" strokeLinejoin="round" />}
+            </g>
+          );
+          if (auto.length === 0 && paths.length === 0 && draft.length === 0) return null;
           return (
             <svg className="pointer-events-none absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} aria-hidden>
-              {lines.map((l) => (
-                <g key={l.key}>
-                  <polyline points={l.d} fill="none" stroke={style.edge} strokeWidth={17} strokeLinecap="round" strokeLinejoin="round" />
-                  <polyline points={l.d} fill="none" stroke={style.road} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round" />
-                  {style.dash && <polyline points={l.d} fill="none" stroke={style.dash} strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" strokeLinejoin="round" />}
-                </g>
+              {auto.map((l) => layered(l.key, l.d))}
+              {paths.map((p) => layered(p.id, toD(p.points)))}
+              {/* Erase mode: a fat clickable overlay per drawn path removes it. */}
+              {tool === 'erase' && onDeletePath && paths.map((p) => (
+                <polyline key={`erase-${p.id}`} points={toD(p.points)} fill="none" stroke="rgba(220,40,40,.35)" strokeWidth={20}
+                  strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
+                  onPointerDown={(e) => { e.stopPropagation(); onDeletePath(p.id); }} />
               ))}
+              {/* Live draft while drawing: the road preview plus a dot at each placed vertex. */}
+              {tool === 'draw' && draft.length > 0 && (
+                <g>
+                  {draft.length > 1 && layered('draft', toD(draft))}
+                  {draft.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} fill="#fff" stroke={style.edge} strokeWidth={2} />)}
+                </g>
+              )}
             </svg>
           );
         })()}
@@ -343,15 +376,25 @@ interface ParkViewProps {
   /** On the big Park tab, called when the path/road surface is changed. */
   onSetPathStyle?: (key: string) => void;
   /** On the big Park tab, called when the path route shape is changed. */
-  onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine') => void;
+  onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine' | 'none') => void;
+  /** On the big Park tab, path drawing: commit a drawn path, delete one, or clear all. */
+  onAddPath?: (points: { x: number; y: number }[]) => void;
+  onDeletePath?: (id: string) => void;
+  onClearPaths?: () => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const route = state.pathRoute ?? 'straight';
+  const paths = state.paths ?? [];
+  // The path-drawing tool: 'draw' lays vertices, 'erase' removes a path, 'none' = arrange.
+  const [tool, setTool] = useState<'none' | 'draw' | 'erase'>('none');
+  const [draft, setDraft] = useState<{ x: number; y: number }[]>([]);
+  const commitDraft = () => { if (draft.length >= 2) onAddPath?.(draft); setDraft([]); };
+  const exitDraw = () => { setDraft([]); setTool('none'); };
   const open = state.backlog.filter((it) => it.status === 'open');
   const features = buildFeatures(state);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
@@ -419,9 +462,47 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
                   ))}
                 </div>
               )}
+              {onAddPath && (
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => { setDraft([]); setTool((t) => (t === 'draw' ? 'none' : 'draw')); }} title="Draw a path" aria-pressed={tool === 'draw'}
+                    className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+                      tool === 'draw' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+                    <Pencil className="h-3.5 w-3.5" /> Draw
+                  </button>
+                  {paths.length > 0 && onDeletePath && (
+                    <button type="button" onClick={() => { setDraft([]); setTool((t) => (t === 'erase' ? 'none' : 'erase')); }} title="Erase a path" aria-pressed={tool === 'erase'}
+                      className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+                        tool === 'erase' ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border text-muted-foreground hover:text-foreground')}>
+                      <Eraser className="h-3.5 w-3.5" /> Erase
+                    </button>
+                  )}
+                  {paths.length > 0 && onClearPaths && (
+                    <button type="button" onClick={() => { exitDraw(); onClearPaths(); }} title="Remove all drawn paths"
+                      className="rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">Clear</button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          <FreeScene features={features} dots={dots} style={style} route={route} onPlaceItem={onPlaceItem} />
+          {/* Active-tool guidance and the draft controls. */}
+          {tool === 'draw' && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1.5 text-[11px]">
+              <span className="font-medium text-primary">Tap the park to place points{draft.length > 0 ? ` (${draft.length})` : ''}. Add at least two, then Done.</span>
+              <div className="ml-auto flex items-center gap-1">
+                <button type="button" disabled={draft.length === 0} onClick={() => setDraft((d) => d.slice(0, -1))} className="flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground disabled:opacity-40"><Undo2 className="h-3 w-3" /> Undo</button>
+                <button type="button" disabled={draft.length < 2} onClick={commitDraft} className="flex items-center gap-1 rounded bg-primary px-1.5 py-0.5 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40"><Check className="h-3 w-3" /> Done</button>
+                <button type="button" onClick={exitDraw} className="flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Cancel</button>
+              </div>
+            </div>
+          )}
+          {tool === 'erase' && (
+            <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5 text-[11px]">
+              <span className="font-medium text-destructive">Tap a drawn path to remove it.</span>
+              <button type="button" onClick={() => setTool('none')} className="ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Done</button>
+            </div>
+          )}
+          <FreeScene features={features} dots={dots} style={style} route={route} tool={tool} draft={draft} paths={paths}
+            onPlaceItem={onPlaceItem} onCanvasPoint={(pt) => setDraft((d) => [...d, pt])} onDeletePath={onDeletePath} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />

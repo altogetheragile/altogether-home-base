@@ -190,6 +190,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     refinePenalty: 0,
     pathStyle: 'gravel',
     pathRoute: 'straight',
+    paths: [],
   };
 }
 

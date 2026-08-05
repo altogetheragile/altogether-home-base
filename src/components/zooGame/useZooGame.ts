@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisio
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, setPathRoute, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
@@ -74,6 +74,12 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return setPathStyle(state, action.style);
     case 'SET_PATH_ROUTE':
       return setPathRoute(state, action.route);
+    case 'ADD_PATH':
+      return addZooPath(state, action.points);
+    case 'DELETE_PATH':
+      return deleteZooPath(state, action.id);
+    case 'CLEAR_PATHS':
+      return clearZooPaths(state);
     case 'PULL_ITEM':
       return pullIntoSprint(state, action.id);
     case 'BUILD_ITEM':
@@ -144,7 +150,10 @@ export function useZooGame(gameSeed?: number) {
   const reorderZone = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'REORDER_IN_ZONE', id, dir }), []);
   const moveZoneOrder = useCallback((zone: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ZONE', zone, dir }), []);
   const setPathStyleCb = useCallback((style: string) => dispatch({ type: 'SET_PATH_STYLE', style }), []);
-  const setPathRouteCb = useCallback((route: 'straight' | 'elbow' | 'spine') => dispatch({ type: 'SET_PATH_ROUTE', route }), []);
+  const setPathRouteCb = useCallback((route: 'straight' | 'elbow' | 'spine' | 'none') => dispatch({ type: 'SET_PATH_ROUTE', route }), []);
+  const addPathCb = useCallback((points: { x: number; y: number }[]) => dispatch({ type: 'ADD_PATH', points }), []);
+  const deletePathCb = useCallback((id: string) => dispatch({ type: 'DELETE_PATH', id }), []);
+  const clearPathsCb = useCallback(() => dispatch({ type: 'CLEAR_PATHS' }), []);
   const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
   const editBuild = useCallback((id: string, design: ItemDesign) => dispatch({ type: 'EDIT_ITEM', id, design }), []);
   const addAnotherPbi = useCallback((id: string) => dispatch({ type: 'ADD_ANOTHER', id }), []);
@@ -162,7 +171,7 @@ export function useZooGame(gameSeed?: number) {
 
   return {
     state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, loadGame, poRefine,
-    moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, setPathStyle: setPathStyleCb, setPathRoute: setPathRouteCb,
+    moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, setPathStyle: setPathStyleCb, setPathRoute: setPathRouteCb, addPath: addPathCb, deletePath: deletePathCb, clearPaths: clearPathsCb,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };
 }

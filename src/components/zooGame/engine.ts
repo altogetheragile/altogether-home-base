@@ -288,9 +288,28 @@ export function setPathStyle(state: ZooGameState, style: string): ZooGameState {
   return { ...state, pathStyle: style };
 }
 
-/** Choose how the auto-drawn paths route to the promenade (straight / elbow / spine). */
+/** Choose how the auto-drawn paths route to the promenade (straight / elbow / spine / none). */
 export function setPathRoute(state: ZooGameState, route: ZooGameState['pathRoute']): ZooGameState {
   return { ...state, pathRoute: route };
+}
+
+/** Commit a hand-drawn path (a polyline of >=2 points). The id is deterministic (no RNG),
+ *  from the path count and its first point, so it is stable across renders/saves. */
+export function addZooPath(state: ZooGameState, points: { x: number; y: number }[]): ZooGameState {
+  if (points.length < 2) return state;
+  const p0 = points[0];
+  const id = `path-${state.paths.length}-${Math.round(p0.x)}-${Math.round(p0.y)}`;
+  return { ...state, paths: [...state.paths, { id, points }] };
+}
+
+/** Remove one hand-drawn path by id. */
+export function deleteZooPath(state: ZooGameState, id: string): ZooGameState {
+  return { ...state, paths: state.paths.filter((p) => p.id !== id) };
+}
+
+/** Remove every hand-drawn path. */
+export function clearZooPaths(state: ZooGameState): ZooGameState {
+  return { ...state, paths: [] };
 }
 
 /** Choose when the Daily Scrum is held - at the start of each day or the end. */

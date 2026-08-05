@@ -158,6 +158,13 @@ export interface BacklogItem {
   serviceCapacity?: number;
 }
 
+/** A hand-drawn park path: a polyline of points in the park's design-pixel space. Its
+ *  surface follows the global pathStyle; it renders alongside the auto-drawn routes. */
+export interface ZooPath {
+  id: string;
+  points: { x: number; y: number }[];
+}
+
 export interface ZooGameState {
   phase: ZooPhase;
   /** The long-term objective the Backlog is ordered toward (coached, editable). */
@@ -233,9 +240,12 @@ export interface ZooGameState {
    *  Defaults to 'gravel'. Older saves without it fall back to the default at render time. */
   pathStyle: string;
   /** How the auto-drawn paths route from each enclosure to the entrance promenade:
-   *  'straight' (a spur straight down), 'elbow' (drop to a shared boulevard, then in), or
-   *  'spine' (a central avenue with a branch to each). Defaults to 'straight'. */
-  pathRoute: 'straight' | 'elbow' | 'spine';
+   *  'straight' (a spur straight down), 'elbow' (drop to a shared boulevard, then in),
+   *  'spine' (a central avenue with a branch to each), or 'none' (no auto-paths - draw your
+   *  own). Defaults to 'straight'. */
+  pathRoute: 'straight' | 'elbow' | 'spine' | 'none';
+  /** Hand-drawn paths, laid on the Park with the draw tool. Persist with the game. */
+  paths: ZooPath[];
 }
 
 export type ZooAction =
@@ -268,7 +278,10 @@ export type ZooAction =
   | { type: 'REORDER_IN_ZONE'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_ZONE'; zone: string; dir: 'up' | 'down' }
   | { type: 'SET_PATH_STYLE'; style: string }
-  | { type: 'SET_PATH_ROUTE'; route: 'straight' | 'elbow' | 'spine' }
+  | { type: 'SET_PATH_ROUTE'; route: 'straight' | 'elbow' | 'spine' | 'none' }
+  | { type: 'ADD_PATH'; points: { x: number; y: number }[] }
+  | { type: 'DELETE_PATH'; id: string }
+  | { type: 'CLEAR_PATHS' }
   | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
