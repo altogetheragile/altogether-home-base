@@ -118,6 +118,19 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
             of Done, guided by the Sprint Goal and your capacity. Finishing fewer things well beats starting many.
           </p>
 
+          {/* The Sprint Goal you agreed in Why - shown here to guide selection, and editable so
+              you can refine it as the forecast takes shape (or draft one from your selection). */}
+          <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
+            <textarea
+              value={state.sprintGoal}
+              onChange={(e) => onSetSprintGoal(e.target.value)}
+              rows={2}
+              placeholder="One outcome for this Sprint - refine it as you choose what to build."
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+
           {state.signals.length > 0 && (
             <section className="space-y-2 rounded-lg border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-800/50 dark:bg-amber-950/20">
               <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-300"><Lightbulb className="h-4 w-4" /> Signals from your visitors</div>
