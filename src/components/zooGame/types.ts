@@ -258,6 +258,7 @@ export type ZooAction =
   | { type: 'ADD_ZONE'; name: string }
   | { type: 'RENAME_ZONE'; oldName: string; newName: string }
   | { type: 'REORDER_IN_ZONE'; id: string; dir: 'up' | 'down' }
+  | { type: 'MOVE_ZONE'; zone: string; dir: 'up' | 'down' }
   | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }

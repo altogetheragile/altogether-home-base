@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
@@ -169,6 +169,22 @@ describe('zoo game: arranging the park layout', () => {
     const moved = reorderInZone(s, before[1], 'up');
     const after = moved.backlog.filter((i) => i.zone === 'Big Cats').map((i) => i.id);
     expect(after[0]).toBe(before[1]);
+  });
+
+  it('moves a whole zone (epic) up as a block, keeping item order within it', () => {
+    const s = initialZooState(1);
+    const zoneOrder = (st: typeof s) => { const o: string[] = []; for (const it of st.backlog) if (!o.includes(it.zone)) o.push(it.zone); return o; };
+    const before = zoneOrder(s); // Big Cats, Waterside, Savanna, Forest
+    const bigCatsBefore = s.backlog.filter((i) => i.zone === 'Big Cats').map((i) => i.id);
+    const moved = moveZone(s, before[1], 'up'); // Waterside up above Big Cats
+    const after = zoneOrder(moved);
+    expect(after[0]).toBe(before[1]);
+    expect(after[1]).toBe(before[0]);
+    // Item order within Big Cats is preserved.
+    expect(moved.backlog.filter((i) => i.zone === 'Big Cats').map((i) => i.id)).toEqual(bigCatsBefore);
+    // First/last zone clamps.
+    expect(moveZone(s, before[0], 'up')).toBe(s);
+    expect(moveZone(s, before[before.length - 1], 'down')).toBe(s);
   });
 });
 

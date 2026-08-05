@@ -354,6 +354,21 @@ export function moveItemBefore(state: ZooGameState, id: string, beforeId: string
   return { ...state, backlog };
 }
 
+/** Move a whole zone (a themed epic and all its PBIs) up or down relative to the other
+ *  zones - the PO ordering the Backlog by theme. Regroups the Backlog by the new zone
+ *  order, keeping each item's order within its zone. */
+export function moveZone(state: ZooGameState, zone: string, dir: 'up' | 'down'): ZooGameState {
+  const order: string[] = [];
+  for (const it of state.backlog) if (!order.includes(it.zone)) order.push(it.zone);
+  const i = order.indexOf(zone);
+  if (i < 0) return state;
+  const j = dir === 'up' ? i - 1 : i + 1;
+  if (j < 0 || j >= order.length) return state;
+  [order[i], order[j]] = [order[j], order[i]];
+  const backlog = order.flatMap((z) => state.backlog.filter((it) => it.zone === z));
+  return { ...state, backlog };
+}
+
 /** Reorder an item within its zone (swap with the nearest same-zone item), so you
  *  can arrange the plots in an enclosure. */
 export function reorderInZone(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
