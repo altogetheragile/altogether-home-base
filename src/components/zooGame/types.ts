@@ -232,6 +232,10 @@ export interface ZooGameState {
    *  entrance promenade and the spurs to each enclosure both use it, so they stay consistent.
    *  Defaults to 'gravel'. Older saves without it fall back to the default at render time. */
   pathStyle: string;
+  /** How the auto-drawn paths route from each enclosure to the entrance promenade:
+   *  'straight' (a spur straight down), 'elbow' (drop to a shared boulevard, then in), or
+   *  'spine' (a central avenue with a branch to each). Defaults to 'straight'. */
+  pathRoute: 'straight' | 'elbow' | 'spine';
 }
 
 export type ZooAction =
@@ -264,6 +268,7 @@ export type ZooAction =
   | { type: 'REORDER_IN_ZONE'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_ZONE'; zone: string; dir: 'up' | 'down' }
   | { type: 'SET_PATH_STYLE'; style: string }
+  | { type: 'SET_PATH_ROUTE'; route: 'straight' | 'elbow' | 'spine' }
   | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }

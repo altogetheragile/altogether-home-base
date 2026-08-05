@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, setPathRoute, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
@@ -175,6 +175,13 @@ describe('zoo game: arranging the park layout', () => {
     const s = initialZooState(1);
     expect(s.pathStyle).toBe('gravel');
     expect(setPathStyle(s, 'boardwalk').pathStyle).toBe('boardwalk');
+  });
+
+  it('sets the park path route, defaulting to straight', () => {
+    const s = initialZooState(1);
+    expect(s.pathRoute).toBe('straight');
+    expect(setPathRoute(s, 'spine').pathRoute).toBe('spine');
+    expect(setPathRoute(s, 'elbow').pathRoute).toBe('elbow');
   });
 
   it('moves a whole zone (epic) up as a block, keeping item order within it', () => {

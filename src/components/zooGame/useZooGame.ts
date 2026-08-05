@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisio
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, setPathRoute, buildItem, editItem, addAnother, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
@@ -72,6 +72,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return moveZone(state, action.zone, action.dir);
     case 'SET_PATH_STYLE':
       return setPathStyle(state, action.style);
+    case 'SET_PATH_ROUTE':
+      return setPathRoute(state, action.route);
     case 'PULL_ITEM':
       return pullIntoSprint(state, action.id);
     case 'BUILD_ITEM':
@@ -142,6 +144,7 @@ export function useZooGame(gameSeed?: number) {
   const reorderZone = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'REORDER_IN_ZONE', id, dir }), []);
   const moveZoneOrder = useCallback((zone: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ZONE', zone, dir }), []);
   const setPathStyleCb = useCallback((style: string) => dispatch({ type: 'SET_PATH_STYLE', style }), []);
+  const setPathRouteCb = useCallback((route: 'straight' | 'elbow' | 'spine') => dispatch({ type: 'SET_PATH_ROUTE', route }), []);
   const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
   const editBuild = useCallback((id: string, design: ItemDesign) => dispatch({ type: 'EDIT_ITEM', id, design }), []);
   const addAnotherPbi = useCallback((id: string) => dispatch({ type: 'ADD_ANOTHER', id }), []);
@@ -159,7 +162,7 @@ export function useZooGame(gameSeed?: number) {
 
   return {
     state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, loadGame, poRefine,
-    moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, setPathStyle: setPathStyleCb,
+    moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, setPathStyle: setPathStyleCb, setPathRoute: setPathRouteCb,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };
 }

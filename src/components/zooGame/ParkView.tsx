@@ -17,6 +17,13 @@ import { Users, Smile, LayoutGrid, Trees, Move } from 'lucide-react';
 
 const SEG_DOT: Record<SegmentId, string> = { families: '#e6842a', enthusiasts: '#3f8fd0', comfortSeekers: '#8a5a2b' };
 
+// The path route shapes offered on the Park (local, not exported, to keep react-refresh happy).
+const ROUTE_OPTIONS: { key: 'straight' | 'elbow' | 'spine'; label: string }[] = [
+  { key: 'straight', label: 'Straight' },
+  { key: 'elbow', label: 'Elbow' },
+  { key: 'spine', label: 'Spine' },
+];
+
 interface ZoneTheme { plot: string; plotBorder: string }
 const THEMES: Record<string, ZoneTheme> = {
   savanna: { plot: '#d9b98a', plotBorder: '#b7965f' },
@@ -159,10 +166,11 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, onPlaceItem }: {
+function FreeScene({ features, dots, style, route, onPlaceItem }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
+  route: 'straight' | 'elbow' | 'spine';
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
@@ -218,25 +226,42 @@ function FreeScene({ features, dots, style, onPlaceItem }: {
         {/* Promenade path + entrance + trees along the foot. Surface follows the chosen style. */}
         <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})`, boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
 
-        {/* Paths: a spur from each feature down to the promenade, so the promenade is the main
-            road and every enclosure branches off it - a connected zoo, not floating boxes. The
-            spurs follow features live as they are dragged (posOf recomputes each render). */}
-        {features.length > 0 && (
-          <svg className="pointer-events-none absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} aria-hidden>
-            {features.map((f) => {
-              const p = posOf(f);
-              const yTop = p.y; // starts under the feature (hidden behind it), so there is no gap
-              const yBot = canvasH - PATH_H + 3; // meets the promenade
-              return (
-                <g key={f.item.id}>
-                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke={style.edge} strokeWidth={17} strokeLinecap="round" />
-                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke={style.road} strokeWidth={12} strokeLinecap="round" />
-                  {style.dash && <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke={style.dash} strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" />}
+        {/* Paths: connect every feature to the entrance promenade, so the promenade is the main
+            road and each enclosure branches off it - a connected zoo, not floating boxes. The
+            route shapes how: 'straight' drops a spur straight down; 'elbow' drops to a shared
+            boulevard then into the entrance; 'spine' runs a central avenue with a branch to each.
+            All follow features live as they are dragged (posOf recomputes each render). */}
+        {features.length > 0 && (() => {
+          const cx = CANVAS_W / 2;
+          const promY = canvasH - PATH_H + 3; // where paths meet the promenade
+          const pts = features.map((f) => ({ id: f.item.id, ...posOf(f) }));
+          const lines: { key: string; d: string }[] = [];
+          const poly = (key: string, pointsList: number[][]) => lines.push({ key, d: pointsList.map(([x, y]) => `${x},${y}`).join(' ') });
+          if (route === 'spine') {
+            const topY = Math.min(promY, ...pts.map((p) => p.y));
+            poly('spine', [[cx, promY], [cx, topY]]);
+            pts.forEach((p) => poly(p.id, [[p.x, p.y], [cx, p.y]]));
+          } else if (route === 'elbow') {
+            const boulevardY = Math.max(promY - 44, Math.max(...pts.map((p) => p.y)) + 4);
+            const xs = pts.map((p) => p.x);
+            poly('boulevard', [[Math.min(cx, ...xs), boulevardY], [Math.max(cx, ...xs), boulevardY]]);
+            poly('entry', [[cx, boulevardY], [cx, promY]]);
+            pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, boulevardY]]));
+          } else {
+            pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, promY]]));
+          }
+          return (
+            <svg className="pointer-events-none absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} aria-hidden>
+              {lines.map((l) => (
+                <g key={l.key}>
+                  <polyline points={l.d} fill="none" stroke={style.edge} strokeWidth={17} strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points={l.d} fill="none" stroke={style.road} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round" />
+                  {style.dash && <polyline points={l.d} fill="none" stroke={style.dash} strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" strokeLinejoin="round" />}
                 </g>
-              );
-            })}
-          </svg>
-        )}
+              ))}
+            </svg>
+          );
+        })()}
 
         <Tree style={{ left: 14, bottom: PATH_H + 6 }} />
         <Tree style={{ right: 14, bottom: PATH_H + 6 }} />
@@ -317,13 +342,16 @@ interface ParkViewProps {
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   /** On the big Park tab, called when the path/road surface is changed. */
   onSetPathStyle?: (key: string) => void;
+  /** On the big Park tab, called when the path route shape is changed. */
+  onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine') => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
+  const route = state.pathRoute ?? 'straight';
   const open = state.backlog.filter((it) => it.status === 'open');
   const features = buildFeatures(state);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
@@ -365,20 +393,35 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
             {features.length > 0 && onPlaceItem ? (
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
             ) : <span />}
-            {onSetPathStyle && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-medium text-muted-foreground">Paths</span>
-                {PATH_STYLES.map((s) => (
-                  <button key={s.key} type="button" onClick={() => onSetPathStyle(s.key)} title={s.label} aria-label={`${s.label} paths`}
-                    aria-pressed={style.key === s.key}
-                    className={cn('h-5 w-5 rounded-full border-2 transition-transform hover:scale-110',
-                      style.key === s.key ? 'border-foreground' : 'border-transparent')}
-                    style={{ background: `linear-gradient(135deg, ${s.road}, ${s.edge})` }} />
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {onSetPathRoute && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-medium text-muted-foreground">Route</span>
+                  {ROUTE_OPTIONS.map((r) => (
+                    <button key={r.key} type="button" onClick={() => onSetPathRoute(r.key)} title={r.label} aria-label={`${r.label} route`}
+                      aria-pressed={route === r.key}
+                      className={cn('rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+                        route === r.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {onSetPathStyle && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-medium text-muted-foreground">Paths</span>
+                  {PATH_STYLES.map((s) => (
+                    <button key={s.key} type="button" onClick={() => onSetPathStyle(s.key)} title={s.label} aria-label={`${s.label} paths`}
+                      aria-pressed={style.key === s.key}
+                      className={cn('h-5 w-5 rounded-full border-2 transition-transform hover:scale-110',
+                        style.key === s.key ? 'border-foreground' : 'border-transparent')}
+                      style={{ background: `linear-gradient(135deg, ${s.road}, ${s.edge})` }} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <FreeScene features={features} dots={dots} style={style} onPlaceItem={onPlaceItem} />
+          <FreeScene features={features} dots={dots} style={style} route={route} onPlaceItem={onPlaceItem} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />
