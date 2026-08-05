@@ -228,6 +228,10 @@ export interface ZooGameState {
    *  adding/refining PBIs) while a Sprint is running - it eats into the build clock. Resets
    *  each day. Refinement in the Refinement/Planning phases is free (0 here). */
   refinePenalty: number;
+  /** The look of the park paths/roads: a key into PATH_STYLES (surface + colour). The
+   *  entrance promenade and the spurs to each enclosure both use it, so they stay consistent.
+   *  Defaults to 'gravel'. Older saves without it fall back to the default at render time. */
+  pathStyle: string;
 }
 
 export type ZooAction =
@@ -259,6 +263,7 @@ export type ZooAction =
   | { type: 'RENAME_ZONE'; oldName: string; newName: string }
   | { type: 'REORDER_IN_ZONE'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_ZONE'; zone: string; dir: 'up' | 'down' }
+  | { type: 'SET_PATH_STYLE'; style: string }
   | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
