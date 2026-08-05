@@ -28,15 +28,10 @@ export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReor
   const canPlan = ready.length > 0;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 pb-12">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><ClipboardList className="h-3.5 w-3.5" /> Before Sprint 1 · Product Backlog Refinement</div>
-        <h2 className="text-lg font-bold">Refine the Product Backlog</h2>
-        <p className="text-sm text-muted-foreground">
-          Ready the Backlog <strong>just enough</strong> to start: order it, and <strong>estimate</strong> the unsized
-          items so the top ones are <strong>Ready</strong> to plan. Refinement is ongoing - from Sprint 2 you will keep
-          refining on the board, as much as each Sprint needs. Then move on to Sprint Planning.
-        </p>
+    <div className="mx-auto max-w-3xl space-y-3">
+      <div className="flex items-center gap-2 text-sm font-bold">
+        <ClipboardList className="h-4 w-4 text-muted-foreground" /> Refine the Product Backlog
+        <span title="Order the Backlog and estimate the unsized items so the top ones are Ready to plan. From Sprint 2 you refine on the board (which costs a little Sprint time). Then move on to Planning." className="cursor-help text-[11px] font-normal text-muted-foreground/70">ⓘ</span>
       </div>
 
       <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-xs">

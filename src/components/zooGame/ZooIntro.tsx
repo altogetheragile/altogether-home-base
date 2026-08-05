@@ -16,7 +16,7 @@ export function ZooIntro({ productGoal, onSetGoal, onStart, onOpenSaves }: ZooIn
   const [goal, setGoal] = useState(productGoal);
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-3xl flex-col items-center justify-center gap-6 px-4 py-8 text-center">
+    <div className="mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold md:text-4xl">Build a Zoo</h1>
         <p className="mx-auto max-w-xl text-muted-foreground">
