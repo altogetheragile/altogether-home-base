@@ -38,6 +38,17 @@ const SERVICES: { key: 'food' | 'toilet' | 'rest'; label: string }[] = [
 ];
 const NEW_ZONE = '__new__';
 
+/** Guess the Kind a PBI name implies, so we can nudge when it disagrees with the picked Kind
+ *  (e.g. a name with "enclosure" while Kind is Animal). Returns null when the name gives no
+ *  clear signal - animals are the default and are not name-detected. */
+function suggestedCategory(name: string): ItemCategory | null {
+  const n = name.toLowerCase();
+  if (/enclosure|habitat|paddock|\bpen\b|aviary|vivarium|terrarium|reef tank|tank\b/.test(n)) return 'enclosure';
+  if (/caf|kiosk|toilet|restroom|\bloo\b|\bshop\b|seating|bench|first aid|ticket|stand\b|stall\b/.test(n)) return 'amenity';
+  if (/\btree|bush|shrub|flower|planting|hedge|fern|\boak\b|\bpalm\b|bamboo|flower bed|garden/.test(n)) return 'flora';
+  return null;
+}
+
 /** The Product Owner writes or refines a Product Backlog Item: name, kind, zone and
  *  acceptance criteria. New PBIs arrive unsized, ready to estimate. */
 export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleStories, onSave, onCancel }: PbiEditorProps) {
@@ -122,6 +133,18 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
                 className={cn('rounded-full border px-3 py-1 text-xs', category === c.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')} title={c.hint}>{c.label}</button>
             ))}
           </div>
+          {/* Nudge: if the name implies a different Kind than the one picked, offer a one-click switch. */}
+          {(() => {
+            const suggested = suggestedCategory(name);
+            if (!suggested || suggested === category) return null;
+            const label = CATEGORIES.find((c) => c.key === suggested)!.label;
+            return (
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50/70 px-2.5 py-1.5 text-[11px] text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200">
+                <span>That name suggests <strong>{label}</strong>, but the Kind is <strong>{CATEGORIES.find((c) => c.key === category)!.label}</strong>.</span>
+                <button type="button" onClick={() => setCategory(suggested)} className="rounded-full border border-amber-400 bg-background px-2 py-0.5 font-medium text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900/40">Switch to {label}</button>
+              </div>
+            );
+          })()}
         </div>
       )}
 
