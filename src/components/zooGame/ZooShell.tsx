@@ -145,7 +145,9 @@ export function ZooShell({ state, children, onPlaceItem, onSetDod, onSetProductG
             )}
           </div>
         </div>
-        <div className="mt-1 flex gap-1">
+        {/* Tabs only when the panes are stacked (narrow / portrait). On a wide screen the
+            Park rides alongside as a persistent rail, so the toggle is unnecessary. */}
+        <div className="mt-1 flex gap-1 xl:hidden">
           <Tab active={tab === 'work'} onClick={() => setTab('work')} icon={ClipboardList} label={WORK_TAB[state.phase] ?? 'Work'} />
           <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label="Park" badge={open ? String(open) : undefined} />
         </div>
@@ -165,13 +167,15 @@ export function ZooShell({ state, children, onPlaceItem, onSetDod, onSetProductG
         </div>
       )}
 
-      {/* Body: fills the remaining height; each tab pane scrolls INTERNALLY so the page never scrolls.
-          Both stay mounted (toggled with CSS) so the day clock / studio work survive a glance at the Park. */}
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'work' && 'hidden')}>
+      {/* Body: fills the remaining height and scrolls INTERNALLY so the page never scrolls.
+          Narrow/portrait: one pane at a time via the tabs. Wide (xl): the work pane and a
+          persistent Park rail sit side by side, so you can watch the zoo fill while you build.
+          Both panes stay mounted (toggled with CSS) so the day clock / studio work survive. */}
+      <div className="min-h-0 flex-1 overflow-hidden xl:flex">
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3 xl:min-w-0 xl:flex-1', tab !== 'work' && 'hidden xl:block')}>
           <div className={cn(state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>{children}</div>
         </div>
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'park' && 'hidden')}>
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3 xl:w-[360px] xl:shrink-0 xl:border-l xl:border-border', tab !== 'park' && 'hidden xl:block')}>
           <p className="mb-2 text-[11px] text-muted-foreground">The park shows the work you have delivered. Drag an enclosure, building or planting to lay out your zoo - animals move with their enclosure.</p>
           <ParkView state={state} large onPlaceItem={onPlaceItem} />
         </div>
