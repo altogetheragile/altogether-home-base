@@ -197,6 +197,9 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
   const [dragId, setDragId] = useState<string | null>(null);
   const [showToolbox, setShowToolbox] = useState(false);
   const [collapsedZones, setCollapsedZones] = useState<Set<string>>(new Set());
+  // PBIs render collapsed (one neat line) by default; expand on demand for the detail.
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const toggleItem = (id: string) => setExpandedItems((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const items = availableItems(state);
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
@@ -215,6 +218,21 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
 
   const renderItem = (it: BacklogItem, idx: number) => {
     const on = selected?.has(it.id);
+    const isOpen = expandedItems.has(it.id);
+    const action =
+      it.category === 'epic' ? (
+        <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split</Button>
+      ) : it.unsized ? (
+        <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
+      ) : mode === 'refine' ? (
+        <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
+      ) : mode === 'plan' ? (
+        <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 shrink-0 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
+          {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Add</>}
+        </Button>
+      ) : (
+        <Button size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add</Button>
+      );
     return (
       <div key={it.id}
         draggable={!!onMoveBefore}
@@ -222,39 +240,33 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         onDragEnd={onMoveBefore ? () => setDragId(null) : undefined}
         onDragOver={onMoveBefore ? (e) => e.preventDefault() : undefined}
         onDrop={onMoveBefore ? (e) => { e.preventDefault(); const from = e.dataTransfer?.getData('text/plain') || dragId; if (from && from !== it.id) onMoveBefore(from, it.id); setDragId(null); } : undefined}
-        className={cn('rounded-md border p-2 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-background/60' : 'border-border bg-card', dragId === it.id && 'opacity-50')}>
-        <div className="flex items-start gap-1.5">
-          {onReorder && (
-            <div className="flex flex-col items-center text-muted-foreground" title="Drag, or use the arrows, to reorder">
-              <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
-              <GripVertical className="h-3 w-3 cursor-grab opacity-50" />
-              <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
+        className={cn('rounded-md border px-2 py-1.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-background/60' : 'border-border bg-card', dragId === it.id && 'opacity-50')}>
+        {/* Collapsed by default: one line - expand toggle, name, points, primary action. */}
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={() => toggleItem(it.id)} title={isOpen ? 'Collapse' : 'Expand'} aria-expanded={isOpen}
+            className="shrink-0 text-muted-foreground hover:text-foreground">
+            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !isOpen && '-rotate-90')} />
+          </button>
+          <CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 truncate text-left font-medium hover:text-foreground">{it.name}</button>
+          <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
+          {action}
+        </div>
+        {isOpen && (
+          <div className="mt-1.5 space-y-1.5 border-t border-border/60 pt-1.5 pl-5">
+            {it.story && <div className="text-[11px] italic text-muted-foreground">{it.story}</div>}
+            <div className="flex items-center justify-between gap-2">
+              {onReorder ? (
+                <div className="flex items-center gap-1 text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
+                  <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
+                  <GripVertical className="h-3.5 w-3.5 cursor-grab opacity-50" />
+                  <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
+                </div>
+              ) : <span />}
+              <button type="button" onClick={() => setEditingPbi(it)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /> Refine</button>
             </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5"><CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><span className="truncate font-medium">{it.name}</span></div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-              <span className="font-mono text-[10px] text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
-            </div>
-            {it.story && <div className="mt-0.5 truncate text-[10px] italic text-muted-foreground">{it.story}</div>}
           </div>
-          <button type="button" title="Refine this PBI" onClick={() => setEditingPbi(it)} className="shrink-0 text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-        </div>
-        <div className="mt-1.5 flex items-center justify-end gap-1.5">
-          {it.category === 'epic' ? (
-            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split into PBIs</Button>
-          ) : it.unsized ? (
-            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
-          ) : mode === 'refine' ? (
-            <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
-          ) : mode === 'plan' ? (
-            <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
-              {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</>}
-            </Button>
-          ) : (
-            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add to Sprint</Button>
-          )}
-        </div>
+        )}
       </div>
     );
   };
