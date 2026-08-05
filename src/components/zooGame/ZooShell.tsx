@@ -117,7 +117,9 @@ export function ZooShell({ state, children, onPlaceItem, onSetDod, onSetProductG
           {/* Product Goal: tappable popover on the trophy - readable and editable in place. */}
           <ProductGoalPopover goal={state.productGoal} onSetGoal={onSetProductGoal} />
           <span title={ROLE_HINT[state.phase]} className="shrink-0 rounded-md bg-muted/60 px-2 py-1 text-xs font-semibold">
-            Sprint {state.sprintNumber}<span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}
+            {state.phase === 'refine'
+              ? 'Initial Refinement'
+              : <>Sprint {state.sprintNumber}<span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}</>}
           </span>
           <span className="flex min-w-0 flex-1 items-center gap-1 text-xs">
             <Target className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
