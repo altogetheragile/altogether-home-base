@@ -121,7 +121,12 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
           {/* The Sprint Goal you agreed in Why - shown here to guide selection, and editable so
               you can refine it as the forecast takes shape (or draft one from your selection). */}
           <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
+              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={chosen.length === 0} onClick={() => onSetSprintGoal(suggestSprintGoal(chosen))} title="Draft a Sprint Goal from what you selected">
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest Goal
+              </Button>
+            </div>
             <textarea
               value={state.sprintGoal}
               onChange={(e) => onSetSprintGoal(e.target.value)}
@@ -165,12 +170,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                   <div className={cn('h-full rounded-full', over ? 'bg-destructive' : 'bg-primary')} style={{ width: `${Math.min(100, capacity ? (committed / capacity) * 100 : 0)}%` }} />
                 </div>
                 {over && <CoachTip>You&rsquo;re forecasting <strong>{committed} pts</strong> against a capacity of ~{capacity}. Over-committing tends to miss the Sprint Goal and carry unfinished work - forecast what you can finish to Done, not the most you could start.</CoachTip>}
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over ${state.velocity.length} Sprint${state.velocity.length > 1 ? 's' : ''}.` : 'First-Sprint guess. Velocity will replace it after Sprint 1.'}</p>
-                  <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={chosen.length === 0} onClick={() => onSetSprintGoal(suggestSprintGoal(chosen))} title="Draft a Sprint Goal from what you selected">
-                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest Goal
-                  </Button>
-                </div>
+                <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over ${state.velocity.length} Sprint${state.velocity.length > 1 ? 's' : ''}.` : 'First-Sprint guess. Velocity will replace it after Sprint 1.'}</p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
