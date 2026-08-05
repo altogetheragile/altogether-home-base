@@ -74,10 +74,19 @@ export function ZooShell({ state, children, onPlaceItem, onSetDod, onSave, onOpe
       {/* Slim header: everything that used to be a stack of bands, in one row + a tabs row. */}
       <header className="shrink-0 border-b border-border bg-background/95 px-2 pt-1.5 sm:px-3">
         <div className="flex items-center gap-2">
-          {/* Product Goal folds into a tooltip on the trophy, so it's a click away without a band. */}
-          <span title={`Product Goal: ${state.productGoal}`} className="hidden shrink-0 rounded-md border border-primary/30 bg-primary/5 p-1.5 text-primary sm:inline-flex" aria-label="Product Goal">
-            <Trophy className="h-4 w-4" />
-          </span>
+          {/* Product Goal: a tappable popover on the trophy (touch-friendly, not a hover tooltip). */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" aria-label="Product Goal" title="Product Goal"
+                className="shrink-0 rounded-md border border-primary/30 bg-primary/5 p-1.5 text-primary hover:bg-primary/10">
+                <Trophy className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</div>
+              <p className="mt-1 text-sm leading-snug">{state.productGoal}</p>
+            </PopoverContent>
+          </Popover>
           <span title={ROLE_HINT[state.phase]} className="shrink-0 rounded-md bg-muted/60 px-2 py-1 text-xs font-semibold">
             Sprint {state.sprintNumber}<span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}
           </span>
