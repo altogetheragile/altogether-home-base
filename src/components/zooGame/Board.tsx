@@ -322,11 +322,14 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
                   <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', collapsed && '-rotate-90')} />
                   <span className="truncate">{zone}</span> <span className="font-normal text-muted-foreground/60">({zoneItems.length})</span>
                 </button>
-                {/* Move the whole theme (epic) up or down among the zones - the PO ordering by value. */}
+                {/* Move the whole theme (epic) up or down among the zones - the PO ordering by
+                    value. A labelled, bordered pill so it reads as a reorder control, distinct
+                    from the collapse chevron on the left. */}
                 {onMoveZone && zoneOrder.length > 1 && (
-                  <div className="flex shrink-0 items-center text-muted-foreground" title="Move this whole theme up or down">
-                    <button type="button" title={`Move ${zone} up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className="p-0.5 disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
-                    <button type="button" title={`Move ${zone} down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className="p-0.5 disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
+                  <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-background px-1 py-0.5 text-muted-foreground" title={`Move the ${zone} theme up or down`}>
+                    <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Move</span>
+                    <button type="button" aria-label={`Move ${zone} up`} title={`Move ${zone} up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className="rounded disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
+                    <button type="button" aria-label={`Move ${zone} down`} title={`Move ${zone} down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className="rounded disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
                   </div>
                 )}
               </div>
