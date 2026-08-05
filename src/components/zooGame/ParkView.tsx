@@ -215,6 +215,27 @@ function FreeScene({ features, dots, onPlaceItem }: {
 
         {/* Promenade path + entrance + trees along the foot. */}
         <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: 'linear-gradient(#d9c7a6,#cdb98f)', boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
+
+        {/* Paths: a spur from each feature down to the promenade, so the promenade is the main
+            road and every enclosure branches off it - a connected zoo, not floating boxes. The
+            spurs follow features live as they are dragged (posOf recomputes each render). */}
+        {features.length > 0 && (
+          <svg className="pointer-events-none absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} aria-hidden>
+            {features.map((f) => {
+              const p = posOf(f);
+              const yTop = p.y; // starts under the feature (hidden behind it), so there is no gap
+              const yBot = canvasH - PATH_H + 3; // meets the promenade
+              return (
+                <g key={f.item.id}>
+                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke="#b9a578" strokeWidth={17} strokeLinecap="round" />
+                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke="#dccbaa" strokeWidth={12} strokeLinecap="round" />
+                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke="rgba(255,255,255,.35)" strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" />
+                </g>
+              );
+            })}
+          </svg>
+        )}
+
         <Tree style={{ left: 14, bottom: PATH_H + 6 }} />
         <Tree style={{ right: 14, bottom: PATH_H + 6 }} />
         <div className="absolute left-1/2 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ bottom: 4, color: '#5a3a1c' }} aria-hidden>ENTRANCE</div>
