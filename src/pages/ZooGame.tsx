@@ -21,7 +21,7 @@ import Navigation from '@/components/Navigation';
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, reset } = useZooGame();
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -70,7 +70,7 @@ export default function ZooGame() {
     }
   };
 
-  const shellProps = { onPlaceItem: setItemPos, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {

@@ -283,6 +283,11 @@ export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, learnMode: on };
 }
 
+/** Choose the surface/colour of the park paths and roads (a key into PATH_STYLES). */
+export function setPathStyle(state: ZooGameState, style: string): ZooGameState {
+  return { ...state, pathStyle: style };
+}
+
 /** Choose when the Daily Scrum is held - at the start of each day or the end. */
 export function setDailyScrumAt(state: ZooGameState, at: 'start' | 'end'): ZooGameState {
   return { ...state, dailyScrumAt: at };

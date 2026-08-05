@@ -128,6 +128,19 @@ function buildFeatures(state: ZooGameState): Feature[] {
   return feats;
 }
 
+// The surfaces the park paths + entrance promenade can be laid in. `road`/`edge` colour the
+// spurs to each enclosure; `promenade` is the entrance band's gradient; `dash` is the painted
+// centre-line (null = no centre-line, e.g. planks). Keys are stored on state.pathStyle.
+export interface PathStyle { key: string; label: string; road: string; edge: string; dash: string | null; promenade: [string, string] }
+export const PATH_STYLES: PathStyle[] = [
+  { key: 'gravel', label: 'Gravel', road: '#dccbaa', edge: '#b9a578', dash: 'rgba(255,255,255,.35)', promenade: ['#d9c7a6', '#cdb98f'] },
+  { key: 'paved', label: 'Paved', road: '#c3c7cc', edge: '#9aa0a7', dash: 'rgba(255,255,255,.55)', promenade: ['#cdd1d6', '#b4bac1'] },
+  { key: 'sand', label: 'Sand', road: '#ecd9a6', edge: '#cdb877', dash: null, promenade: ['#ecdcae', '#dcc888'] },
+  { key: 'boardwalk', label: 'Boardwalk', road: '#c79a5e', edge: '#9c6f3a', dash: 'rgba(60,35,10,.30)', promenade: ['#c99b5e', '#a87940'] },
+  { key: 'brick', label: 'Brick', road: '#c17a5c', edge: '#96543b', dash: 'rgba(255,255,255,.28)', promenade: ['#c48065', '#a45f45'] },
+];
+export const pathStyleFor = (key: string | undefined): PathStyle => PATH_STYLES.find((s) => s.key === key) ?? PATH_STYLES[0];
+
 const CANVAS_W = 880;
 const PATH_H = 40; // promenade band along the foot, where visitors stroll
 const PAD = 20;
@@ -158,9 +171,10 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, onPlaceItem }: {
+function FreeScene({ features, dots, style, onPlaceItem }: {
   features: Feature[];
   dots: SegmentId[];
+  style: PathStyle;
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
@@ -213,8 +227,8 @@ function FreeScene({ features, dots, onPlaceItem }: {
         style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left',
           borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
 
-        {/* Promenade path + entrance + trees along the foot. */}
-        <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: 'linear-gradient(#d9c7a6,#cdb98f)', boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
+        {/* Promenade path + entrance + trees along the foot. Surface follows the chosen style. */}
+        <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})`, boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
 
         {/* Paths: a spur from each feature down to the promenade, so the promenade is the main
             road and every enclosure branches off it - a connected zoo, not floating boxes. The
@@ -227,9 +241,9 @@ function FreeScene({ features, dots, onPlaceItem }: {
               const yBot = canvasH - PATH_H + 3; // meets the promenade
               return (
                 <g key={f.item.id}>
-                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke="#b9a578" strokeWidth={17} strokeLinecap="round" />
-                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke="#dccbaa" strokeWidth={12} strokeLinecap="round" />
-                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke="rgba(255,255,255,.35)" strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" />
+                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke={style.edge} strokeWidth={17} strokeLinecap="round" />
+                  <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke={style.road} strokeWidth={12} strokeLinecap="round" />
+                  {style.dash && <line x1={p.x} y1={yTop} x2={p.x} y2={yBot} stroke={style.dash} strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" />}
                 </g>
               );
             })}
@@ -280,7 +294,7 @@ function FreeScene({ features, dots, onPlaceItem }: {
 }
 
 /** A simple read-only flow of features, for the small live views (no drag). */
-function FlowScene({ features, dots, minHeight }: { features: Feature[]; dots: SegmentId[]; minHeight: number }) {
+function FlowScene({ features, dots, minHeight, style }: { features: Feature[]; dots: SegmentId[]; minHeight: number; style: PathStyle }) {
   return (
     <div className="relative overflow-hidden rounded-2xl border shadow-sm"
       style={{ minHeight, borderColor: 'rgba(120,140,90,.5)', background: 'linear-gradient(#86c06a,#7ab85f)' }}>
@@ -291,7 +305,7 @@ function FlowScene({ features, dots, minHeight }: { features: Feature[]; dots: S
           </div>
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0" style={{ height: 22, background: 'linear-gradient(#d9c7a6,#cdb98f)' }} aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0" style={{ height: 22, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})` }} aria-hidden />
       {dots.length > 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20" style={{ height: 22 }} aria-hidden>
           {dots.map((seg, i) => (
@@ -313,12 +327,15 @@ interface ParkViewProps {
   large?: boolean;
   /** On the big Park tab, called when a feature is dragged to a new position. */
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
+  /** On the big Park tab, called when the path/road surface is changed. */
+  onSetPathStyle?: (key: string) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle }: ParkViewProps) {
+  const style = pathStyleFor(state.pathStyle);
   const open = state.backlog.filter((it) => it.status === 'open');
   const features = buildFeatures(state);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
@@ -356,13 +373,27 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem }:
 
       {large ? (
         <>
-          {features.length > 0 && onPlaceItem && (
-            <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
-          )}
-          <FreeScene features={features} dots={dots} onPlaceItem={onPlaceItem} />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {features.length > 0 && onPlaceItem ? (
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
+            ) : <span />}
+            {onSetPathStyle && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium text-muted-foreground">Paths</span>
+                {PATH_STYLES.map((s) => (
+                  <button key={s.key} type="button" onClick={() => onSetPathStyle(s.key)} title={s.label} aria-label={`${s.label} paths`}
+                    aria-pressed={style.key === s.key}
+                    className={cn('h-5 w-5 rounded-full border-2 transition-transform hover:scale-110',
+                      style.key === s.key ? 'border-foreground' : 'border-transparent')}
+                    style={{ background: `linear-gradient(135deg, ${s.road}, ${s.edge})` }} />
+                ))}
+              </div>
+            )}
+          </div>
+          <FreeScene features={features} dots={dots} style={style} onPlaceItem={onPlaceItem} />
         </>
       ) : (
-        <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} />
+        <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />
       )}
     </section>
   );

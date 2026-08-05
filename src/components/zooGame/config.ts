@@ -188,6 +188,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     learnMode: false,
     dailyScrumAt: 'start',
     refinePenalty: 0,
+    pathStyle: 'gravel',
   };
 }
 
