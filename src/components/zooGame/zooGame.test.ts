@@ -889,6 +889,10 @@ describe('zoo game: ongoing refinement consumes Sprint time', () => {
     const meer = s.backlog.find((i) => i.name === 'Meerkats')!.id;
     s = estimateItem(s, meer, 5);
     expect(s.refinePenalty).toBe(REFINE_COSTS.addPbi + REFINE_COSTS.estimate);
+    // The estimate persists on the item (the UI must wire onEstimate on the board).
+    const est = s.backlog.find((i) => i.id === meer)!;
+    expect(est.unsized).toBe(false);
+    expect(est.estimate).toBe(5);
   });
 
   it('refining a PBI mid-Sprint costs time, and the spend resets when the day advances', () => {
