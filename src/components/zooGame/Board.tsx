@@ -241,8 +241,16 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         onDragOver={onMoveBefore ? (e) => e.preventDefault() : undefined}
         onDrop={onMoveBefore ? (e) => { e.preventDefault(); const from = e.dataTransfer?.getData('text/plain') || dragId; if (from && from !== it.id) onMoveBefore(from, it.id); setDragId(null); } : undefined}
         className={cn('rounded-md border px-2 py-1.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-background/60' : 'border-border bg-card', dragId === it.id && 'opacity-50')}>
-        {/* Collapsed by default: one line - expand toggle, name, points, primary action. */}
+        {/* Collapsed by default: one line - reorder handle, expand toggle, name, points, primary action.
+            Reorder stays visible while collapsed (drag the card, or use the arrows). */}
         <div className="flex items-center gap-1.5">
+          {onReorder && (
+            <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
+              <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
+              <GripVertical className="h-3 w-3 cursor-grab opacity-50" />
+              <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
+            </div>
+          )}
           <button type="button" onClick={() => toggleItem(it.id)} title={isOpen ? 'Collapse' : 'Expand'} aria-expanded={isOpen}
             className="shrink-0 text-muted-foreground hover:text-foreground">
             <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !isOpen && '-rotate-90')} />
@@ -255,14 +263,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         {isOpen && (
           <div className="mt-1.5 space-y-1.5 border-t border-border/60 pt-1.5 pl-5">
             {it.story && <div className="text-[11px] italic text-muted-foreground">{it.story}</div>}
-            <div className="flex items-center justify-between gap-2">
-              {onReorder ? (
-                <div className="flex items-center gap-1 text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
-                  <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
-                  <GripVertical className="h-3.5 w-3.5 cursor-grab opacity-50" />
-                  <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
-                </div>
-              ) : <span />}
+            <div className="flex items-center justify-end gap-2">
               <button type="button" onClick={() => setEditingPbi(it)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /> Refine</button>
             </div>
           </div>
