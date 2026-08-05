@@ -288,6 +288,11 @@ export function setPathStyle(state: ZooGameState, style: string): ZooGameState {
   return { ...state, pathStyle: style };
 }
 
+/** Choose how the auto-drawn paths route to the promenade (straight / elbow / spine). */
+export function setPathRoute(state: ZooGameState, route: ZooGameState['pathRoute']): ZooGameState {
+  return { ...state, pathRoute: route };
+}
+
 /** Choose when the Daily Scrum is held - at the start of each day or the end. */
 export function setDailyScrumAt(state: ZooGameState, at: 'start' | 'end'): ZooGameState {
   return { ...state, dailyScrumAt: at };

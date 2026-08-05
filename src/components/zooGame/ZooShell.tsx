@@ -105,7 +105,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, onPlaceItem, onSetPathStyle, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
+export function ZooShell({ state, children, onPlaceItem, onSetPathStyle, onSetPathRoute, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine') => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
@@ -181,7 +181,7 @@ export function ZooShell({ state, children, onPlaceItem, onSetPathStyle, onSetDo
           tab === 'work' && 'xl:w-[360px] xl:shrink-0 xl:border-l xl:border-border',
           tab === 'park' && 'xl:flex-1 xl:min-w-0')}>
           <p className="mb-2 text-[11px] text-muted-foreground">The park shows the work you have delivered. Drag an enclosure, building or planting to lay out your zoo - animals move with their enclosure.</p>
-          <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} />
+          <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onSetPathRoute={onSetPathRoute} />
         </div>
       </div>
     </div>
