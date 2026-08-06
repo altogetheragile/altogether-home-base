@@ -90,7 +90,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
       acceptance: acceptance.filter((a) => a.trim()),
       services: category === 'amenity' ? services : undefined,
       enclosureSize: category === 'enclosure' ? footprint : undefined,
-      enclosureId: (category === 'exhibit' || category === 'flora') && enclosureId !== NO_ENCLOSURE ? enclosureId : undefined,
+      enclosureId: category === 'exhibit' && enclosureId !== NO_ENCLOSURE ? enclosureId : undefined,
       template: category === 'exhibit' && shape ? shape : undefined,
     });
     // Estimation is part of refinement: apply the chosen points if they changed.
@@ -191,19 +191,18 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
         </div>
       )}
 
-      {(category === 'exhibit' || category === 'flora') && (
+      {category === 'exhibit' && (
         <div className="space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lives in</span>
           <select value={enclosureId} onChange={(e) => setEnclosureId(e.target.value)} className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm">
-            <option value={NO_ENCLOSURE}>{category === 'flora' ? 'Standalone on the grounds' : 'No enclosure yet'}</option>
+            <option value={NO_ENCLOSURE}>No enclosure yet</option>
             {enclosures.map((en) => <option key={en.id} value={en.id}>{en.name}</option>)}
           </select>
-          <p className="text-[10px] text-muted-foreground/70">
-            {category === 'flora'
-              ? 'Planting can sit inside an animal compound (once its enclosure is built), or stand alone on the grounds.'
-              : 'An animal is built into its enclosure, so the enclosure must be built first. Add an Enclosure PBI, then point the animal at it.'}
-          </p>
+          <p className="text-[10px] text-muted-foreground/70">An animal is built into its enclosure, so the enclosure must be built first. Add an Enclosure PBI, then point the animal at it.</p>
         </div>
+      )}
+      {category === 'flora' && (
+        <p className="rounded-md bg-muted/40 px-2.5 py-1.5 text-[10px] text-muted-foreground">Planting is placed freely - build it, then drag it anywhere on the park (including onto a compound).</p>
       )}
 
       <div className="space-y-1">

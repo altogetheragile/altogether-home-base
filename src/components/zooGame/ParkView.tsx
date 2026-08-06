@@ -79,7 +79,7 @@ const LABEL_H = 18; // the name pill under a feature, counted in its layout heig
 /** A built enclosure (habitat) with the animals that live in it rendered to scale
  *  inside - one sprite per animal the team has actually built and opened, so you see
  *  "lions in a space", not one huge lion, and never more animals than were built. */
-function Enclosure({ enc, animals, flora, theme }: { enc: BacklogItem; animals: BacklogItem[]; flora: BacklogItem[]; theme: ZoneTheme }) {
+function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: BacklogItem[]; theme: ZoneTheme }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = enc.design;
   const ground = d?.colors.ground ?? theme.plot;
@@ -90,8 +90,6 @@ function Enclosure({ enc, animals, flora, theme }: { enc: BacklogItem; animals: 
     left: n <= 1 ? 50 : 14 + (i / (n - 1)) * 72,
     top: 62 + (i % 2 === 0 ? -6 : 6),
   }));
-  // Planting sits toward the back corners so it frames the habitat behind the animals.
-  const floraPos = flora.map((_, i) => ({ left: i % 2 === 0 ? 12 : 88, top: 26 + Math.floor(i / 2) * 20 }));
   return (
     <div className="relative flex flex-col items-center">
       <div className="relative overflow-hidden rounded-lg"
@@ -100,12 +98,7 @@ function Enclosure({ enc, animals, flora, theme }: { enc: BacklogItem; animals: 
         {d?.parts.water === 'on' && (
           <div className="absolute" style={{ bottom: '12%', right: '10%', width: '34%', height: '30%', borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
         )}
-        {floraPos.map((p, i) => (
-          <div key={flora[i].id} className="absolute" style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: 0 }} title={flora[i].name}>
-            <Sprite item={flora[i]} design={flora[i].design ?? presetFor(flora[i])} cell={1} />
-          </div>
-        ))}
-        {n === 0 && flora.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
+        {n === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
         {positions.map((p, i) => (
           <div key={animals[i].id} className="absolute" style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: 1 }}>
             <Sprite item={animals[i]} design={animals[i].design ?? presetFor(animals[i])} cell={cell} />
@@ -119,7 +112,7 @@ function Enclosure({ enc, animals, flora, theme }: { enc: BacklogItem; animals: 
 
 // ---- Features: the positionable things in the park (enclosures + amenities + planting) ----
 
-interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h: number; animals: BacklogItem[]; flora: BacklogItem[]; theme: ZoneTheme }
+interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h: number; animals: BacklogItem[]; theme: ZoneTheme }
 
 /** Everything currently shown in the park, as positionable features. An enclosure appears
  *  once BUILT (Done or Open) - the habitat is there before its animals are released - with
@@ -133,18 +126,16 @@ function buildFeatures(state: ZooGameState): Feature[] {
   for (const e of builtEnc) {
     const cfg = ENCLOSURE[e.enclosureSize ?? 'medium'];
     const animals = open.filter((o) => o.category === 'exhibit' && o.enclosureId === e.id);
-    // Planting assigned to this compound is drawn inside it (like the animals).
-    const flora = open.filter((o) => o.category === 'flora' && o.enclosureId === e.id);
-    feats.push({ item: e, kind: 'enclosure', w: cfg.w, h: cfg.h + LABEL_H, animals, flora, theme: theme(e.zone) });
+    feats.push({ item: e, kind: 'enclosure', w: cfg.w, h: cfg.h + LABEL_H, animals, theme: theme(e.zone) });
   }
   // Any open exhibit whose enclosure is not built falls back to a small plot (shouldn't
   // normally happen, since the habitat is built first).
   for (const o of open.filter((o) => o.category === 'exhibit' && !builtEnc.some((e) => e.id === o.enclosureId))) {
-    feats.push({ item: o, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], flora: [], theme: theme(o.zone) });
+    feats.push({ item: o, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], theme: theme(o.zone) });
   }
-  // Amenities, and standalone planting (flora NOT assigned to a built compound), sit on the grounds.
-  for (const a of open.filter((o) => o.category === 'amenity' || (o.category === 'flora' && !builtEnc.some((e) => e.id === o.enclosureId)))) {
-    feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], flora: [], theme: theme(a.zone) });
+  // Amenities and planting (flora) sit freely on the grounds - drag them anywhere.
+  for (const a of open.filter((o) => o.category === 'amenity' || o.category === 'flora')) {
+    feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], theme: theme(a.zone) });
   }
   return feats;
 }
@@ -327,7 +318,7 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
               className={cn('absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'enclosure'
-                ? <Enclosure enc={f.item} animals={f.animals} flora={f.flora} theme={f.theme} />
+                ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} />
                 : <Plot item={f.item} cell={4} />}
             </div>
           );
@@ -360,7 +351,7 @@ function FlowScene({ features, dots, minHeight, style }: { features: Feature[]; 
       <div className="relative z-10 flex flex-wrap items-end gap-3 p-3 pb-8">
         {features.map((f) => (
           <div key={f.item.id}>
-            {f.kind === 'enclosure' ? <Enclosure enc={f.item} animals={f.animals} flora={f.flora} theme={f.theme} /> : <Plot item={f.item} cell={3} />}
+            {f.kind === 'enclosure' ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} /> : <Plot item={f.item} cell={3} />}
           </div>
         ))}
       </div>
