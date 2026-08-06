@@ -32,6 +32,10 @@ export const REFINE_COSTS = { estimate: 8, split: 12, addPbi: 6, refinePbi: 5 } 
 export const IMPEDIMENT_CHANCE = 0.55;
 /** A held Daily Scrum takes a little of the next day (the event is timeboxed). */
 export const DAILY_SCRUM_MULT = 0.9;
+/** The Daily Scrum's timebox, in seconds - a playable stand-in for the real 15-minute box.
+ *  Long enough to inspect the burndown and decide, short enough to feel timeboxed. On expiry
+ *  the event auto-resolves to the disciplined default (re-plan / adapt). Paused in learn mode. */
+export const DAILY_SCRUM_SECONDS = 20;
 /** A skipped Daily Scrum with a waiting impediment costs much more of the next day:
  *  the problem grew overnight. */
 export const SKIP_PENALTY_MULT = 0.55;
@@ -175,6 +179,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     committedIds: [],
     velocity: [],
     sprintForecast: STARTER_CAPACITY,
+    burndown: [],
     attendance: driftAttendance(DEFAULT_CONFIG, gameSeed),
     lastReview: null,
     signals: [],

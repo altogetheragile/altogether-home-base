@@ -1,6 +1,11 @@
+import { useState, useEffect, useRef } from 'react';
 import type { ZooGameState } from './types';
 import { Button } from '@/components/ui/button';
-import { Users, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
+import { DAILY_SCRUM_SECONDS } from './config';
+import { sprintProgress } from './engine';
+import { Burndown } from './Burndown';
+import { cn } from '@/lib/utils';
 
 interface DailyScrumProps {
   state: ZooGameState;
@@ -8,47 +13,91 @@ interface DailyScrumProps {
   onSkip: () => void;
 }
 
-/** The Daily Scrum: the Developers' short daily event to inspect progress toward the
- *  Sprint Goal and re-plan the next day's work. It always happens (it is not optional).
- *  Blockers are surfaced here, not solved here - the Scrum Master removes them outside
- *  the event. The real choice is whether you ADAPT the plan to what it surfaced or carry
- *  on regardless; carrying on lets a blocker grow overnight, costing far more tomorrow. */
+/** The Daily Scrum: the Developers' short, TIMEBOXED daily event to inspect progress toward
+ *  the Sprint Goal (the burndown + essentials) and re-plan the next day. It always happens.
+ *  Blockers are surfaced here, not solved here - the Scrum Master removes them outside it. The
+ *  real choice is whether you ADAPT to what it surfaced or carry on regardless (letting a
+ *  blocker grow overnight). The timebox counts down; on expiry it re-plans (the disciplined
+ *  default), so you decide within the box. In learn mode the timebox is paused. */
 export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
-  const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
-  const built = committed.filter((it) => it.status === 'done' || it.status === 'open').length;
-  const openCount = committed.filter((it) => it.status === 'open').length;
-  const pts = committed.filter((it) => it.status === 'done' || it.status === 'open').reduce((s, it) => s + it.estimate, 0);
+  const prog = sprintProgress(state);
   const daysLeft = state.sprintDays - state.dayNumber;
   const imp = state.pendingImpediment;
+  const pct = prog.pointsCommitted ? Math.round((prog.pointsDone / prog.pointsCommitted) * 100) : 0;
+
+  // The timebox: a short countdown standing in for the 15-minute box. On expiry, re-plan and
+  // continue (the disciplined default). Paused in learn mode - decide in your own time.
+  const [left, setLeft] = useState(DAILY_SCRUM_SECONDS);
+  const fired = useRef(false);
+  useEffect(() => {
+    fired.current = false;
+    setLeft(DAILY_SCRUM_SECONDS);
+    if (state.learnMode) return;
+    const id = setInterval(() => {
+      setLeft((s) => {
+        if (s <= 1) { clearInterval(id); if (!fired.current) { fired.current = true; onHold(); } return 0; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+    // Restart the box for each day's Daily Scrum; onHold is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.dayNumber, state.learnMode]);
+
+  const boxPct = Math.max(0, Math.min(100, (left / DAILY_SCRUM_SECONDS) * 100));
+  const low = boxPct <= 30;
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-10 space-y-6">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 space-y-5">
       <div className="space-y-1.5 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
           <Users className="h-3.5 w-3.5" /> Daily Scrum
         </div>
-        <h1 className="text-2xl font-bold">End of Day {state.dayNumber}</h1>
+        <h1 className="text-2xl font-bold">Day {state.dayNumber} Daily Scrum</h1>
         <p className="text-sm text-muted-foreground">
-          The Developers inspect progress toward the Sprint Goal and re-plan the next day. This event always
-          happens - it is not optional. Blockers are surfaced here and removed by the Scrum Master outside it.
+          A short, timeboxed check: inspect progress toward the Sprint Goal and re-plan the next day. It always
+          happens. Blockers are surfaced here and removed by the Scrum Master outside it.
         </p>
-        {state.sprintGoal.trim() && (
-          <p className="mx-auto max-w-md rounded-md bg-primary/5 px-3 py-1.5 text-xs text-muted-foreground">Working toward: <span className="font-medium text-foreground">{state.sprintGoal}</span></p>
-        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { label: 'Built', value: `${built}/${committed.length}` },
-          { label: 'Points Done', value: pts },
-          { label: 'Open to visitors', value: openCount },
-          { label: 'Days left', value: daysLeft },
-        ].map((s) => (
-          <div key={s.label} className="rounded-lg border border-border bg-card px-3 py-2.5 text-center">
-            <div className="text-lg font-bold tabular-nums">{s.value}</div>
-            <div className="text-[11px] text-muted-foreground">{s.label}</div>
+      {/* The timebox: a real countdown, so the event stays short. */}
+      {state.learnMode ? (
+        <div className="mx-auto flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+          <Clock className="h-3 w-3" /> Learn mode - timebox paused, re-plan when ready
+        </div>
+      ) : (
+        <div className="mx-auto max-w-xs">
+          <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Timebox (stands in for 15 min)</span>
+            <span className={cn('tabular-nums', low && 'text-red-600 dark:text-red-400')}>0:{String(left).padStart(2, '0')}</span>
           </div>
-        ))}
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className={cn('h-full rounded-full transition-[width] duration-500 ease-linear', low ? 'bg-red-500' : 'bg-primary')} style={{ width: `${boxPct}%` }} />
+          </div>
+        </div>
+      )}
+
+      {state.sprintGoal.trim() && (
+        <p className="mx-auto max-w-md rounded-md bg-primary/5 px-3 py-1.5 text-center text-xs text-muted-foreground">Working toward: <span className="font-medium text-foreground">{state.sprintGoal}</span></p>
+      )}
+
+      {/* Inspect progress toward the Goal: essentials, points, days left - and the burndown. */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Stat icon={Star} label="Essentials done" value={prog.essentialsTotal ? `${prog.essentialsDone}/${prog.essentialsTotal}` : 'none ⭐'} />
+        <Stat icon={Target} label="Points done" value={`${prog.pointsDone}/${prog.pointsCommitted}`} />
+        <Stat icon={Clock} label="Days left" value={`${daysLeft}`} />
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${pct}%` }} />
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-3">
+        <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold"><Target className="h-3.5 w-3.5 text-muted-foreground" /> Burndown <span className="font-normal text-muted-foreground">- committed points still to do</span></div>
+        <Burndown state={state} />
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {prog.remaining === 0 ? 'All committed work is done - ahead of the line.'
+            : `${prog.remaining} pts remain over ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Above the ideal line = behind; adapt by focusing the essentials.`}
+        </p>
       </div>
 
       {imp ? (
@@ -63,7 +112,6 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
               </div>
             </div>
           </div>
-
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
             <div className="flex flex-col items-center gap-1">
               <Button size="lg" onClick={onHold}>Adapt the plan</Button>
@@ -82,7 +130,9 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         <>
           <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
             <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            On track for the Sprint Goal - nothing blocking today. The Daily Scrum is how you know that.
+            {prog.essentialsTotal && prog.essentialsDone < prog.essentialsTotal
+              ? 'Nothing blocking today - but essentials are still open. Re-plan to finish those first.'
+              : 'On track for the Sprint Goal - nothing blocking today. The Daily Scrum is how you know that.'}
           </div>
           <div className="flex flex-col items-center gap-1">
             <Button size="lg" onClick={onHold}>Re-plan and continue &rarr;</Button>
@@ -90,6 +140,15 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-center">
+      <div className="flex items-center justify-center gap-1 text-lg font-bold tabular-nums"><Icon className="h-4 w-4 text-muted-foreground" />{value}</div>
+      <div className="text-[11px] text-muted-foreground">{label}</div>
     </div>
   );
 }

@@ -192,6 +192,9 @@ export interface ZooGameState {
   /** The capacity forecast the team used when it committed the current Sprint (the empirical
    *  guide, not a cap). Shown against actual delivery at the Review, so the feedback is explicit. */
   sprintForecast: number;
+  /** The Sprint burndown: committed points still remaining, sampled per day (index 0 = the full
+   *  commitment at Planning, then one entry as each day ends). Drives the burndown chart. */
+  burndown: number[];
   /** Current visitor attendance per segment; evolves via word of mouth. */
   attendance: Record<SegmentId, number>;
   /** The most recent Sprint Review's simulation output. */
