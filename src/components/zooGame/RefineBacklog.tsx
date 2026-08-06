@@ -14,6 +14,8 @@ interface RefineBacklogProps {
   onMoveBefore: (id: string, beforeId: string) => void;
   onSetUseStories: (on: boolean) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
+  onDeletePbi: (id: string) => void;
+  onDuplicatePbi: (id: string) => void;
   /** Move on to Sprint Planning with the refined Backlog. */
   onPlan: () => void;
 }
@@ -22,7 +24,7 @@ interface RefineBacklogProps {
  *  a Backlog, however rough, to start: order it and estimate the unsized items until the
  *  top items are Ready to plan. From Sprint 2 on, refinement is not a separate step - it
  *  is ongoing, done during each Sprint on the board, where it costs a little capacity. */
-export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onPlan }: RefineBacklogProps) {
+export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan }: RefineBacklogProps) {
   const items = availableItems(state);
   const ready = items.filter((it) => !it.unsized);
   const unsized = items.length - ready.length;
@@ -44,7 +46,7 @@ export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReor
       </div>
 
       <ProductBacklogSidebar state={state} mode="refine" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-        onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} />
+        onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
 
       <div className="sticky bottom-4 flex flex-col items-end gap-1">
         {!canPlan && <span className="text-[11px] text-muted-foreground">Estimate at least one item so it is Ready to plan.</span>}

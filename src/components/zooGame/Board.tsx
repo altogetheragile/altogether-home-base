@@ -7,7 +7,7 @@ import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors, CopyPlus, Trash2 } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
@@ -187,12 +187,15 @@ interface SidebarProps {
   onPull?: (id: string) => void;
   /** Refine an epic by splitting the chosen members into their own PBIs. */
   onSplitEpic?: (id: string, memberIds: string[]) => void;
+  /** Delete or duplicate a Backlog PBI. */
+  onDeletePbi?: (id: string) => void;
+  onDuplicatePbi?: (id: string) => void;
 }
 
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi }: SidebarProps) {
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
@@ -202,6 +205,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
   // PBIs render collapsed (one neat line) by default; expand on demand for the detail.
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const toggleItem = (id: string) => setExpandedItems((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // two-step delete guard
   // The estimate/refine/split panels open at the top of the list; if the clicked item was
   // scrolled down, bring the panel into view so you don't have to scroll up to find it.
   const editorRef = useRef<HTMLDivElement>(null);
@@ -271,8 +275,20 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         {isOpen && (
           <div className="mt-1.5 space-y-1.5 border-t border-border/60 pt-1.5 pl-5">
             {it.story && <div className="text-[11px] italic text-muted-foreground">{it.story}</div>}
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
               <button type="button" onClick={() => setEditingPbi(it)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /> Refine</button>
+              {onDuplicatePbi && (
+                <button type="button" onClick={() => onDuplicatePbi(it.id)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"><CopyPlus className="h-3.5 w-3.5" /> Duplicate</button>
+              )}
+              {onDeletePbi && (confirmDelete === it.id ? (
+                <span className="flex items-center gap-1.5 text-[11px] font-medium">
+                  <span className="text-muted-foreground">Delete?</span>
+                  <button type="button" onClick={() => { onDeletePbi(it.id); setConfirmDelete(null); }} className="text-destructive hover:underline">Yes</button>
+                  <button type="button" onClick={() => setConfirmDelete(null)} className="text-muted-foreground hover:text-foreground">No</button>
+                </span>
+              ) : (
+                <button type="button" onClick={() => setConfirmDelete(it.id)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+              ))}
             </div>
           </div>
         )}
@@ -303,6 +319,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi} enclosures={enclosures}
           useStories={state.useUserStories} onToggleStories={onSetUseStories}
           onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
+          onEstimate={editingPbi !== 'new' ? (pts) => onEstimate?.(editingPbi.id, pts) : undefined}
           onCancel={() => setEditingPbi(null)} />
       )}
       {splitting && (

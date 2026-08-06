@@ -16,6 +16,9 @@ interface PbiEditorProps {
   useStories: boolean;
   onToggleStories: (on: boolean) => void;
   onSave: (draft: PbiDraft) => void;
+  /** When refining an existing PBI, estimate it here too (estimation is part of refinement).
+   *  Called on Save with the chosen points; omitted for brand-new PBIs (they arrive unsized). */
+  onEstimate?: (points: number) => void;
   onCancel: () => void;
 }
 
@@ -51,8 +54,11 @@ function suggestedCategory(name: string): ItemCategory | null {
 
 /** The Product Owner writes or refines a Product Backlog Item: name, kind, zone and
  *  acceptance criteria. New PBIs arrive unsized, ready to estimate. */
-export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleStories, onSave, onCancel }: PbiEditorProps) {
+const POINTS = [1, 2, 3, 5, 8, 13, 21];
+
+export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleStories, onSave, onEstimate, onCancel }: PbiEditorProps) {
   const editing = !!item;
+  const [points, setPoints] = useState<number | null>(item && !item.unsized ? item.estimate : null);
   const [name, setName] = useState(item?.name ?? '');
   const [category, setCategory] = useState<ItemCategory>(item?.category ?? 'exhibit');
   const [zoneSel, setZoneSel] = useState(item?.zone ?? zones[0] ?? NEW_ZONE);
@@ -87,6 +93,8 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
       enclosureId: category === 'exhibit' && enclosureId !== NO_ENCLOSURE ? enclosureId : undefined,
       template: category === 'exhibit' && shape ? shape : undefined,
     });
+    // Estimation is part of refinement: apply the chosen points if they changed.
+    if (editing && onEstimate && points !== null && (item!.unsized || points !== item!.estimate)) onEstimate(points);
   };
 
   return (
@@ -223,6 +231,22 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setAcceptance((a) => [...a, ''])}><Plus className="mr-1 h-3.5 w-3.5" /> Add criterion</Button>
         </div>
       </div>
+
+      {/* Estimation is part of refinement: size the item here (or leave it unsized to size later
+          by planning poker). Only when refining an existing PBI. */}
+      {editing && onEstimate && (
+        <div className="space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Story points <span className="font-normal normal-case">- estimate as you refine</span></span>
+          <div className="flex flex-wrap gap-1.5">
+            <button type="button" onClick={() => setPoints(null)}
+              className={cn('rounded-full border px-3 py-1 text-xs', points === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>? unsized</button>
+            {POINTS.map((p) => (
+              <button key={p} type="button" onClick={() => setPoints(p)}
+                className={cn('rounded-full border px-3 py-1 text-xs tabular-nums', points === p ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{p}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end">
         <Button size="sm" disabled={!valid} onClick={save}>{editing ? 'Save' : 'Add to Backlog'}</Button>
