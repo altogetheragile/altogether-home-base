@@ -1,4 +1,4 @@
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
 import { availableItems, suggestTasks } from './engine';
 import { PlanningPoker } from './PlanningPoker';
@@ -202,6 +202,12 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
   // PBIs render collapsed (one neat line) by default; expand on demand for the detail.
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const toggleItem = (id: string) => setExpandedItems((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  // The estimate/refine/split panels open at the top of the list; if the clicked item was
+  // scrolled down, bring the panel into view so you don't have to scroll up to find it.
+  const editorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (editingPbi || estimating || splitting) editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [editingPbi, estimating, splitting]);
   const items = availableItems(state);
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
@@ -292,6 +298,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
             : 'Pull a Ready item into the Sprint by agreement, as long as it will not put the Sprint Goal at risk. Refining here (estimating, splitting, adding) is ongoing work - it takes time from the day’s build.'}
       </p>
 
+      <div ref={editorRef}>
       {editingPbi && (
         <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi} enclosures={enclosures}
           useStories={state.useUserStories} onToggleStories={onSetUseStories}
@@ -308,6 +315,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
           onCommit={(pts) => { onEstimate?.(estimatingItem.id, pts); setEstimating(null); }}
           onCancel={() => setEstimating(null)} />
       )}
+      </div>
 
       <div className="space-y-2.5">
         {items.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
