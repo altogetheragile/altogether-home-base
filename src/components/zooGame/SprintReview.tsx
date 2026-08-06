@@ -1,6 +1,7 @@
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress, dodGaps } from './engine';
+import { zooCapacity } from './config';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -63,8 +64,15 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
           <div className="grid grid-cols-3 gap-3">
             <Stat label="Visitors today" value={r.totalAttendance.toLocaleString()} />
             <Stat label="Happiness" value={`${r.overallHappiness}`} accent={barTone(r.overallHappiness)} />
-            <Stat label="Delivered" value={`${velocity} pts`} />
+            <Stat label="Forecast → Delivered" value={`${state.sprintForecast} → ${velocity} pts`} />
           </div>
+
+          {/* Empirical velocity: what we forecast vs delivered, and how it feeds the next forecast. */}
+          <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-[11px] text-muted-foreground">
+            You forecast <strong>{state.sprintForecast} pts</strong> and delivered <strong>{velocity} pts</strong>
+            {velocity > state.sprintForecast ? ' - faster than forecast' : velocity < state.sprintForecast ? ' - short of the forecast' : ' - right on forecast'}.
+            Velocity is measured, not fixed: next Sprint&rsquo;s capacity becomes your average over the last {Math.min(state.velocity.length, 3)} Sprint{Math.min(state.velocity.length, 3) === 1 ? '' : 's'} (<strong>{zooCapacity(state.velocity)} pts</strong>).
+          </p>
 
           {/* Per-segment happiness */}
           <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-4">

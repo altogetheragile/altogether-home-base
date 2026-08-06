@@ -3,8 +3,12 @@ import type { ZooItem } from './simulation/types';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
 
-/** First-Sprint capacity guess, before there is velocity. */
-export const STARTER_CAPACITY = 16;
+/** First-Sprint capacity guess, before there is velocity. A deliberate over-guess: you
+ *  cannot know velocity yet, so this is a starting point you learn away from by doing. */
+export const STARTER_CAPACITY = 22;
+/** How many recent Sprints the velocity average looks back over (a rolling window, so an
+ *  unusual early Sprint stops skewing the forecast forever). */
+export const VELOCITY_WINDOW = 3;
 
 /** How many items may be in Doing at once (a WIP limit). Limiting work-in-progress
  *  helps the team finish things rather than start many; the "finish fewer" improvement
@@ -170,6 +174,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     sprintNumber: 1,
     committedIds: [],
     velocity: [],
+    sprintForecast: STARTER_CAPACITY,
     attendance: driftAttendance(DEFAULT_CONFIG, gameSeed),
     lastReview: null,
     signals: [],
@@ -194,9 +199,10 @@ export function initialZooState(gameSeed = 1): ZooGameState {
   };
 }
 
-/** How many points the team can realistically take on: average velocity once it
- *  exists, otherwise the first-Sprint guess. */
+/** How many points the team can realistically take on: the average of the last few Sprints'
+ *  actual delivered velocity (a rolling window), or the first-Sprint guess before any exists. */
 export function zooCapacity(velocity: number[]): number {
   if (!velocity.length) return STARTER_CAPACITY;
-  return Math.round(velocity.reduce((s, v) => s + v, 0) / velocity.length);
+  const recent = velocity.slice(-VELOCITY_WINDOW);
+  return Math.round(recent.reduce((s, v) => s + v, 0) / recent.length);
 }
