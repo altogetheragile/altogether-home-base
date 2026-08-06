@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import type { ZooGameState } from './types';
 import { ParkView } from './ParkView';
+import { DayTimer } from './DayTimer';
 import { DodEditor } from './DodEditor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -105,7 +106,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine' | 'none') => void; onAddPath?: (points: { x: number; y: number }[]) => void; onDeletePath?: (id: string) => void; onClearPaths?: () => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
+export function ZooShell({ state, children, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onEndDay, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine' | 'none') => void; onAddPath?: (points: { x: number; y: number }[]) => void; onDeletePath?: (id: string) => void; onClearPaths?: () => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
   const [tab, setTab] = useState<'work' | 'park'>('work');
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
@@ -119,8 +120,12 @@ export function ZooShell({ state, children, onPlaceItem, onSetPathStyle, onSetPa
           <span title={ROLE_HINT[state.phase]} className="shrink-0 rounded-md bg-muted/60 px-2 py-1 text-xs font-semibold">
             {state.phase === 'refine'
               ? 'Initial Refinement'
-              : <>Sprint {state.sprintNumber}<span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}</>}
+              : <>Sprint {state.sprintNumber}{state.phase === 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>Day {state.dayNumber}/{state.sprintDays}</>}{state.phase !== 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}</>}</>}
           </span>
+          {/* The day clock lives here so it stays visible on both the Build and Park tabs. */}
+          {state.phase === 'sprint' && state.dayStage !== 'dailyScrum' && onEndDay && (
+            <DayTimer key={state.dayNumber} compact dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+          )}
           <span className="flex min-w-0 flex-1 items-center gap-1 text-xs">
             <Target className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className={cn('truncate', state.sprintGoal.trim() ? 'font-medium text-foreground' : 'text-muted-foreground')}>
