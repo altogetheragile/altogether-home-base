@@ -283,6 +283,8 @@ export type ZooAction =
   | { type: 'RENAME_ZONE'; oldName: string; newName: string }
   | { type: 'REORDER_IN_ZONE'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_ZONE'; zone: string; dir: 'up' | 'down' }
+  | { type: 'DELETE_PBI'; id: string }
+  | { type: 'DUPLICATE_PBI'; id: string }
   | { type: 'SET_PATH_STYLE'; style: string }
   | { type: 'SET_PATH_ROUTE'; route: 'straight' | 'elbow' | 'spine' | 'none' }
   | { type: 'ADD_PATH'; points: { x: number; y: number }[] }

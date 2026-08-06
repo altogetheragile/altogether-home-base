@@ -26,6 +26,8 @@ interface SprintBoardProps {
   onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
+  onDeletePbi: (id: string) => void;
+  onDuplicatePbi: (id: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
@@ -54,7 +56,7 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -143,7 +145,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
           {/* The board: Product Backlog (left) + To Do / Doing / Done columns. */}
           <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
             <ProductBacklogSidebar state={state} mode="sprint" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-              onEstimate={onEstimate} onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} />
+              onEstimate={onEstimate} onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
 
             <div className="min-w-0 space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-3">

@@ -283,6 +283,21 @@ export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, learnMode: on };
 }
 
+/** Delete a Backlog PBI outright (only ones not committed to a Sprint reach this from the UI). */
+export function deletePbi(state: ZooGameState, id: string): ZooGameState {
+  return { ...state, backlog: state.backlog.filter((it) => it.id !== id) };
+}
+
+/** Duplicate a PBI as a fresh Backlog item ("... (copy)"), placed right after the original.
+ *  The copy is its own item (new id, no saved park position, back in the Backlog). */
+export function duplicatePbi(state: ZooGameState, id: string): ZooGameState {
+  const idx = state.backlog.findIndex((it) => it.id === id);
+  if (idx < 0) return state;
+  const src = state.backlog[idx];
+  const copy: BacklogItem = { ...src, id: `${src.id}-copy-${state.backlog.length}`, name: `${src.name} (copy)`, status: 'backlog', sprintNumber: null, pos: undefined, design: undefined, goalCritical: false };
+  return { ...state, backlog: [...state.backlog.slice(0, idx + 1), copy, ...state.backlog.slice(idx + 1)] };
+}
+
 /** Choose the surface/colour of the park paths and roads (a key into PATH_STYLES). */
 export function setPathStyle(state: ZooGameState, style: string): ZooGameState {
   return { ...state, pathStyle: style };

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor, sprintProgress,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
@@ -187,6 +187,22 @@ describe('zoo game: arranging the park layout', () => {
     const moved = reorderInZone(s, before[1], 'up');
     const after = moved.backlog.filter((i) => i.zone === 'Big Cats').map((i) => i.id);
     expect(after[0]).toBe(before[1]);
+  });
+
+  it('deletes and duplicates Backlog PBIs', () => {
+    let s = splitAll(initialZooState(1));
+    const before = s.backlog.length;
+    const lion = s.backlog.find((i) => i.id === 'lion')!;
+    // Duplicate: a new item "... (copy)" right after the original, back in the Backlog.
+    s = duplicatePbi(s, 'lion');
+    expect(s.backlog.length).toBe(before + 1);
+    const copy = s.backlog.find((i) => i.name === `${lion.name} (copy)`)!;
+    expect(copy.id).not.toBe('lion');
+    expect(copy.status).toBe('backlog');
+    // Delete removes it outright.
+    s = deletePbi(s, copy.id);
+    expect(s.backlog.some((i) => i.id === copy.id)).toBe(false);
+    expect(s.backlog.length).toBe(before);
   });
 
   it('sets the park path style, defaulting to gravel', () => {
