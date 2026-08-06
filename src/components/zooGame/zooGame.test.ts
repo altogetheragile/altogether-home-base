@@ -77,9 +77,16 @@ describe('zoo game: setup', () => {
     expect(setProductGoal(s, '   ').productGoal).toBe(s.productGoal); // blank ignored
   });
 
-  it('capacity is the starter guess, then average velocity', () => {
+  it('capacity is the starter guess, then a rolling average of recent velocity', () => {
     expect(zooCapacity([])).toBe(STARTER_CAPACITY);
     expect(zooCapacity([10, 20])).toBe(15);
+    // Only the last 3 Sprints count, so an unusual early Sprint stops skewing the forecast.
+    expect(zooCapacity([40, 10, 20, 30])).toBe(20); // avg of [10,20,30], the 40 dropped out
+  });
+
+  it('records the capacity forecast when the Sprint is committed', () => {
+    const s = planSprint(flat(initialZooState(1)), ['lion']);
+    expect(s.sprintForecast).toBe(STARTER_CAPACITY); // Sprint 1: the first-guess capacity
   });
 });
 

@@ -171,7 +171,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                   <div className={cn('h-full rounded-full', over ? 'bg-destructive' : 'bg-primary')} style={{ width: `${Math.min(100, capacity ? (committed / capacity) * 100 : 0)}%` }} />
                 </div>
                 {over && <CoachTip>You&rsquo;re forecasting <strong>{committed} pts</strong> against a capacity of ~{capacity}. Over-committing tends to miss the Sprint Goal and carry unfinished work - forecast what you can finish to Done, not the most you could start.</CoachTip>}
-                <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over ${state.velocity.length} Sprint${state.velocity.length > 1 ? 's' : ''}.` : 'First-Sprint guess. Velocity will replace it after Sprint 1.'}</p>
+                <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over the last ${Math.min(state.velocity.length, 3)} Sprint${Math.min(state.velocity.length, 3) > 1 ? 's' : ''}.` : 'We don’t know your velocity yet — this is a first guess. You’ll learn it by doing: after each Sprint, capacity becomes your recent actual delivery.'}</p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">

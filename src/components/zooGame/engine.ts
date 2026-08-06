@@ -5,7 +5,7 @@ import { appealFromDesign } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS } from './config';
+import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, zooCapacity } from './config';
 
 /** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -431,6 +431,8 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
   );
   return {
     ...state, phase: 'sprint', committedIds: [...committed], backlog,
+    // Record the capacity forecast we committed against, to compare with actual delivery at Review.
+    sprintForecast: zooCapacity(state.velocity),
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null, refinePenalty: 0,
   };
 }
