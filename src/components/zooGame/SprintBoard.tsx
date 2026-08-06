@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
-import { enclosureReady, enclosureOf } from './engine';
+import { enclosureReady, enclosureOf, sprintProgress } from './engine';
+import { Burndown } from './Burndown';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskChecklist } from './Board';
@@ -145,9 +146,19 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               onEstimate={onEstimate} onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} />
 
             <div className="min-w-0 space-y-3">
-              <p className="text-[11px] text-muted-foreground">
-                <strong>Start</strong> → <strong>Doing</strong> (WIP {state.wipLimit}) → <strong>Design &amp; build</strong> + tick the plan → <strong>Done</strong> → open to visitors.
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="max-w-md text-[11px] text-muted-foreground">
+                  <strong>Start</strong> → <strong>Doing</strong> (WIP {state.wipLimit}) → <strong>Design &amp; build</strong> + tick the plan → <strong>Done</strong> → open to visitors.
+                </p>
+                {/* A compact burndown so progress toward the Sprint Goal is visible while building. */}
+                <div className="w-full rounded-lg border border-border bg-card px-2 py-1.5 sm:w-64">
+                  <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+                    <span>Burndown</span>
+                    <span className="tabular-nums">{sprintProgress(state).remaining} pts left</span>
+                  </div>
+                  <Burndown state={state} compact />
+                </div>
+              </div>
               {atWipLimit && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing Done yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}

@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor, sprintProgress,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -87,6 +87,17 @@ describe('zoo game: setup', () => {
   it('records the capacity forecast when the Sprint is committed', () => {
     const s = planSprint(flat(initialZooState(1)), ['lion']);
     expect(s.sprintForecast).toBe(STARTER_CAPACITY); // Sprint 1: the first-guess capacity
+  });
+
+  it('seeds the burndown at the full commitment and appends the remaining each day', () => {
+    let s = planSprint(flat(initialZooState(1)), ['lion', 'kiosk']); // 8 + 5 = 13 pts
+    expect(s.burndown).toEqual([13]); // day 0: everything remains
+    // Finish the lion (8 pts done), then end day 1: 5 pts remain.
+    s = openItem(finish(s, 'lion'), 'lion');
+    expect(sprintProgress(s)).toMatchObject({ pointsCommitted: 13, pointsDone: 8, remaining: 5 });
+    s = { ...s, dayStage: 'building' };
+    s = endDay(s);
+    expect(s.burndown).toEqual([13, 5]);
   });
 });
 

@@ -429,11 +429,28 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
   const backlog = state.backlog.map((it) =>
     committed.has(it.id) ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it,
   );
+  const committedPts = [...committed].reduce((s, id) => s + (backlog.find((it) => it.id === id)?.estimate ?? 0), 0);
   return {
     ...state, phase: 'sprint', committedIds: [...committed], backlog,
     // Record the capacity forecast we committed against, to compare with actual delivery at Review.
     sprintForecast: zooCapacity(state.velocity),
+    // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
+    burndown: [committedPts],
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null, refinePenalty: 0,
+  };
+}
+
+/** Progress toward the Sprint Goal: points and essentials (the goal-critical items) done vs
+ *  committed, and the work still remaining. Used by the Daily Scrum, the board and the burndown. */
+export function sprintProgress(state: ZooGameState): { pointsCommitted: number; pointsDone: number; remaining: number; essentialsTotal: number; essentialsDone: number } {
+  const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'));
+  const isDone = (it: BacklogItem) => it.status === 'done' || it.status === 'open';
+  const pointsCommitted = committed.reduce((s, it) => s + it.estimate, 0);
+  const pointsDone = committed.filter(isDone).reduce((s, it) => s + it.estimate, 0);
+  const essentials = committed.filter((it) => it.goalCritical);
+  return {
+    pointsCommitted, pointsDone, remaining: pointsCommitted - pointsDone,
+    essentialsTotal: essentials.length, essentialsDone: essentials.filter(isDone).length,
   };
 }
 
@@ -598,15 +615,17 @@ export function endDay(state: ZooGameState): ZooGameState {
   // The day's clock runs through the start-of-day breather and the build, so a day
   // can end from either stage (the pause uses real time).
   if (state.phase !== 'sprint' || (state.dayStage !== 'building' && state.dayStage !== 'dayStart')) return state;
+  // Sample the burndown as the day closes: committed points still remaining.
+  const s = { ...state, burndown: [...state.burndown, sprintProgress(state).remaining] };
   // The last day ends straight to the Review: there is no next day to re-plan.
-  if (state.dayNumber >= state.sprintDays) return reviewSprint(state);
-  if (state.dailyScrumAt === 'start') {
+  if (s.dayNumber >= s.sprintDays) return reviewSprint(s);
+  if (s.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
-    const next = state.dayNumber + 1;
-    return { ...state, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(state.gameSeed, state.sprintNumber, next), refinePenalty: 0 };
+    const next = s.dayNumber + 1;
+    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: 0 };
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
-  return { ...state, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(state.gameSeed, state.sprintNumber, state.dayNumber) };
+  return { ...s, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber) };
 }
 
 /** Move to the next day, or end the Sprint (open the Review) after the last day.
