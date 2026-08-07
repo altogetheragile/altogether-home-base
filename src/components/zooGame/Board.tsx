@@ -169,6 +169,34 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
   );
 }
 
+/** A board card's detail (acceptance criteria + the task plan), collapsed behind a one-line
+ *  toggle by default so cards stay short in narrow columns. `defaultOpen` keeps the active
+ *  (Doing) card expanded; `interactive` allows ticking tasks. Each card keeps its own state. */
+export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, onToggleTask }:
+  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; onToggleTask: (id: string, taskId: string) => void }) {
+  const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
+  const criteria = showAcceptance ? item.acceptance.filter(Boolean) : [];
+  const [open, setOpen] = useState(defaultOpen);
+  if (tasks.length === 0 && criteria.length === 0) return null;
+  const done = tasks.filter((t) => t.done).length;
+  return (
+    <div className="mt-1.5">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
+        className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+        <ChevronDown className={cn('h-3 w-3 shrink-0 transition-transform', !open && '-rotate-90')} />
+        {tasks.length > 0 && <span className="flex items-center gap-0.5"><ListChecks className="h-3 w-3" /> Plan {done}/{tasks.length}</span>}
+        {criteria.length > 0 && <span>{tasks.length > 0 ? '· ' : ''}{criteria.length} criteri{criteria.length === 1 ? 'on' : 'a'}</span>}
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1">
+          {criteria.length > 0 && <div className="text-[10px] text-muted-foreground">Meet: {criteria.join(', ')}</div>}
+          <TaskChecklist item={item} onToggle={onToggleTask} readOnly={!interactive} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface SidebarProps {
   state: ZooGameState;
   mode: 'plan' | 'sprint' | 'refine';
