@@ -6,7 +6,7 @@ import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
-import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskChecklist } from './Board';
+import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Board';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -193,7 +193,10 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {/* On mobile: a 2x2 grid (unchanged). At sm+: a flex row where the still-empty
+                  Deploy/Done columns yield width, so the columns holding cards read wider. */}
+              <div className="grid grid-cols-2 gap-3 sm:flex sm:items-start">
+                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: 1 }}>
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
                   {todo.map((it) => {
                     // You build the habitat before its animals: an animal can't start until
@@ -206,14 +209,15 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                     return (
                       <ItemCard key={it.id} item={it}
                         subtitle={<>
-                          <div className="mt-1 text-[10px] text-muted-foreground">Meet: {it.acceptance.join(', ')}</div>
                           {needsEnc && <div className="mt-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">Needs {encName} built first</div>}
-                          <TaskChecklist item={it} onToggle={onToggleTask} readOnly />
+                          <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />
                         </>}
                         actions={<Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
                     );
                   })}
                 </BoardColumn>
+                </div>
+                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: 1 }}>
                 <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
@@ -223,7 +227,8 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                           ? <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">built{left ? ` · ${left} task${left === 1 ? '' : 's'} left` : ''}</span>
                           : <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
                         subtitle={<>
-                          <TaskChecklist item={it} onToggle={onToggleTask} />
+                          {/* Doing is the active card, so its plan stays open by default. */}
+                          <CardDetail item={it} interactive defaultOpen onToggleTask={onToggleTask} />
                           <div className="mt-1.5 flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
@@ -233,20 +238,25 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                     );
                   })}
                 </BoardColumn>
+                </div>
+                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: deploy.length ? 1 : 0.55 }}>
                 <BoardColumn title="Deploy" count={deploy.length} hint="Built - place & open it">
                   {deploy.map((it) => (
                     <ItemCard key={it.id} item={it}
-                      subtitle={<TaskChecklist item={it} onToggle={onToggleTask} readOnly />}
+                      subtitle={<CardDetail item={it} onToggleTask={onToggleTask} />}
                       actions={deployActions(it)} />
                   ))}
                 </BoardColumn>
+                </div>
+                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: done.length ? 1 : 0.55 }}>
                 <BoardColumn title="Done ✓" count={done.length} hint="Nothing live yet" tone="done">
                   {done.map((it) => (
                     <ItemCard key={it.id} item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
-                      subtitle={<TaskChecklist item={it} onToggle={onToggleTask} readOnly />}
+                      subtitle={<CardDetail item={it} onToggleTask={onToggleTask} />}
                       actions={doneActions(it)} />
                   ))}
                 </BoardColumn>
+                </div>
               </div>
             </div>
           </div>
