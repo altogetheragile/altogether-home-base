@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
-import { enclosureReady, enclosureOf, sprintProgress } from './engine';
-import { Burndown } from './Burndown';
+import { enclosureReady, enclosureOf } from './engine';
+import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskChecklist } from './Board';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Palette, DoorOpen, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Palette, DoorOpen, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -51,6 +52,41 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
       )}
       <Button size="lg" onClick={onStart}>Start building &rarr;</Button>
     </div>
+  );
+}
+
+/** The board's two set-once settings, tucked behind a gear so they don't sit in prime space:
+ *  when the Daily Scrum is held, and whether days run on a timer (learn mode pauses the clock). */
+function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }: { dailyScrumAt: 'start' | 'end'; learnMode: boolean; onSetScrumAt: (at: 'start' | 'end') => void; onSetLearnMode: (on: boolean) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" title="Board settings" aria-label="Board settings"
+          className="rounded-md border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-60">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Board settings</div>
+        <div className="space-y-2 text-xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground">Daily Scrum</span>
+            <button type="button" onClick={() => onSetScrumAt(dailyScrumAt === 'start' ? 'end' : 'start')}
+              className="rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40">
+              {dailyScrumAt === 'start' ? 'Day start' : 'Day end'}
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground">Days</span>
+            <button type="button" onClick={() => onSetLearnMode(!learnMode)}
+              title={learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
+              className="rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40">
+              {learnMode ? 'Learn mode (paused)' : 'Timed'}
+            </button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -110,25 +146,17 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   );
 
   return (
-    <div className="space-y-4">
-      {/* The Scrum Team, made visible - the accountabilities in one strip. */}
-      <ScrumTeamStrip team={state.team} onRename={onRenameMember} />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
+    <div className="space-y-3">
+      {/* One slim board toolbar: the day + the visible Scrum Team (left), and the burndown
+          pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex items-center gap-2.5">
           <h2 className="shrink-0 text-base font-bold">Day {state.dayNumber} / {state.sprintDays}</h2>
-          {/* The live day clock now lives in the app header (always visible across tabs). */}
+          <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
         </div>
         <div className="flex items-center gap-1.5">
-          <button type="button" onClick={() => onSetScrumAt(state.dailyScrumAt === 'start' ? 'end' : 'start')}
-            title="When the Daily Scrum is held each day"
-            className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
-            Scrum: {state.dailyScrumAt === 'start' ? 'day start' : 'day end'}
-          </button>
-          <button type="button" onClick={() => onSetLearnMode(!state.learnMode)}
-            title={state.learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
-            className="rounded-full border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
-            {state.learnMode ? 'Timed mode' : 'Learn mode'}
-          </button>
+          {!dayStarting && <BurndownChip state={state} />}
+          <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} />
           {!dayStarting && (
             <Button size="sm" className="h-8" onClick={onEndDay}>
               {state.dayNumber === state.sprintDays ? 'End day → Review' : `End Day ${state.dayNumber} → Scrum`}
@@ -162,19 +190,6 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               onEstimate={onEstimate} onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
 
             <div className="min-w-0 space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <p className="max-w-md text-[11px] text-muted-foreground">
-                  <strong>Start</strong> → <strong>Doing</strong> (WIP {state.wipLimit}) → <strong>Design &amp; build</strong> + tick the plan → <strong>Deploy</strong> (place &amp; open) → <strong>Done</strong>, live to visitors.
-                </p>
-                {/* A compact burndown so progress toward the Sprint Goal is visible while building. */}
-                <div className="w-full rounded-lg border border-border bg-card px-2 py-1.5 sm:w-64">
-                  <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-                    <span>Burndown</span>
-                    <span className="tabular-nums">{sprintProgress(state).remaining} pts left</span>
-                  </div>
-                  <Burndown state={state} compact />
-                </div>
-              </div>
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}

@@ -40,21 +40,53 @@ function EditableName({ member, onRename, className }: { member: ScrumTeamMember
 }
 
 /** The Scrum Team, made visible: the three accountabilities in one strip. Names are editable
- *  (seats a future multiplayer mode can hand to real people). */
-export function ScrumTeamStrip({ team, onRename }: { team: ScrumTeam; onRename?: (id: string, name: string) => void }) {
+ *  (seats a future multiplayer mode can hand to real people). `compact` drops the border/label
+ *  so it can ride inline in the board toolbar instead of eating a full row; the full detail
+ *  (roles, names) opens in a popover. */
+export function ScrumTeamStrip({ team, onRename, compact = false }: { team: ScrumTeam; onRename?: (id: string, name: string) => void; compact?: boolean }) {
+  if (compact) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button type="button" title="The Scrum Team - tap for names and roles"
+            className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+            <Users className="h-3.5 w-3.5" />
+            <span className="rounded-full bg-primary/15 px-1 font-semibold text-primary">PO</span>
+            <span className="rounded-full bg-sky-500/15 px-1 font-semibold text-sky-600 dark:text-sky-300">SM</span>
+            <span className="flex -space-x-1">
+              {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-64">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Scrum Team</div>
+          <TeamRows team={team} onRename={onRename} />
+        </PopoverContent>
+      </Popover>
+    );
+  }
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px]">
       <span className="flex items-center gap-1 font-semibold text-muted-foreground"><Users className="h-3.5 w-3.5" /> Scrum Team</span>
+      <TeamRows team={team} onRename={onRename} inline />
+    </div>
+  );
+}
+
+/** The three accountabilities as labelled rows (popover) or an inline run (full strip). */
+function TeamRows({ team, onRename, inline = false }: { team: ScrumTeam; onRename?: (id: string, name: string) => void; inline?: boolean }) {
+  return (
+    <div className={cn(inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1.5' : 'space-y-1.5 text-[12px]')}>
       <span className="flex items-center gap-1.5" title="Product Owner - accountable for the product's value; orders the Product Backlog toward the Product Goal.">
-        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 font-semibold text-primary">PO</span>
+        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[11px] font-semibold text-primary">PO</span>
         <EditableName member={team.productOwner} onRename={onRename} className="font-medium text-foreground" />
       </span>
       <span className="flex items-center gap-1.5" title="Scrum Master - a true leader who serves the team; causes impediments to be removed and coaches self-management.">
-        <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 font-semibold text-sky-600 dark:text-sky-300">SM</span>
+        <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-sky-600 dark:text-sky-300">SM</span>
         <EditableName member={team.scrumMaster} onRename={onRename} className="font-medium text-foreground" />
       </span>
       <span className="flex items-center gap-1.5" title="Developers - build the Increment; self-managing (they decide who does what) and accountable for quality via the Definition of Done.">
-        <span className="font-semibold text-muted-foreground">Devs</span>
+        <span className="text-[11px] font-semibold text-muted-foreground">Devs</span>
         <span className="flex -space-x-1">
           {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} />)}
         </span>
