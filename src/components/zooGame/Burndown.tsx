@@ -3,27 +3,34 @@ import type { ZooGameState } from './types';
 import { sprintProgress } from './engine';
 import { cn } from '@/lib/utils';
 
-/** A tiny inline burndown for the board toolbar: "N pts left" plus a hand-drawn sparkline of
- *  remaining points against the ideal line. The full chart lives in the Daily Scrum - this is
- *  just an at-a-glance pulse so the board stays uncluttered. */
+/** An at-a-glance Sprint pace chip for the board toolbar: a slim progress bar (points done of
+ *  committed) with "N pts left", and - once the Sprint is under way - whether the team is on
+ *  track or behind the ideal burn for today. A miniature line chart is unreadable at this size,
+ *  so the full burndown lives in the Daily Scrum; this is just the pulse. */
 export function BurndownChip({ state, className }: { state: ZooGameState; className?: string }) {
-  const start = state.burndown[0] ?? state.sprintForecast;
-  const days = state.sprintDays;
+  const committed = state.burndown[0] ?? state.sprintForecast;
   const remaining = sprintProgress(state).remaining;
-  const w = 52, h = 16;
-  const x = (i: number) => (days === 0 ? 0 : (i / days) * w);
-  const y = (v: number) => h - (start === 0 ? 0 : (v / start) * h);
-  const idealD = `M ${x(0)},${y(start).toFixed(1)} L ${x(days)},${y(0).toFixed(1)}`;
-  const actualD = state.burndown.map((v, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const done = Math.max(0, committed - remaining);
+  const pct = committed > 0 ? Math.round((done / committed) * 100) : 0;
+  // Ideal points still to do at the start of today (days elapsed = dayNumber - 1). Only judge
+  // pace once a day has passed - on day 1 nothing has burned down yet.
+  const elapsed = Math.max(0, state.dayNumber - 1);
+  const idealRemaining = state.sprintDays > 0 ? (committed * (state.sprintDays - elapsed)) / state.sprintDays : 0;
+  const behind = elapsed > 0 && remaining > idealRemaining + 0.01;
+  const onTrack = elapsed > 0 && !behind;
+  const title = `Sprint pace: ${done}/${committed} pts done`
+    + (elapsed > 0 ? (behind ? ' - behind the ideal burn for today' : ' - on track') : '')
+    + '. Full burndown at the Daily Scrum.';
   return (
-    <span title="Burndown - remaining points vs the ideal line (full chart at the Daily Scrum)"
-      className={cn('flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground', className)}>
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible" aria-hidden>
-        <path d={idealD} fill="none" stroke="#94a3b8" strokeWidth={1} strokeDasharray="3 3" />
-        {state.burndown.length > 1 && <path d={actualD} fill="none" stroke="#e6842a" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />}
-        {state.burndown.length > 0 && <circle cx={x(state.burndown.length - 1)} cy={y(state.burndown[state.burndown.length - 1])} r={1.8} fill="#e6842a" />}
-      </svg>
+    <span title={title}
+      className={cn('flex items-center gap-1.5 rounded-full border bg-card px-2 py-0.5 text-[11px] font-medium',
+        behind ? 'border-amber-300 text-amber-700 dark:border-amber-700/60 dark:text-amber-300' : 'border-border text-muted-foreground', className)}>
+      <span className="h-1.5 w-12 overflow-hidden rounded-full bg-muted" aria-hidden>
+        <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: behind ? '#f59e0b' : '#e6842a' }} />
+      </span>
       <span className="tabular-nums text-foreground">{remaining}</span> pts left
+      {behind && <span className="text-amber-700 dark:text-amber-300">· behind</span>}
+      {onTrack && <span className="text-emerald-600 dark:text-emerald-400">· on track</span>}
     </span>
   );
 }
