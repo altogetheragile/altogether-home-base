@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
@@ -15,7 +17,27 @@ import { ZooShell } from '@/components/zooGame/ZooShell';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState } from '@/components/zooGame/types';
-import Navigation from '@/components/Navigation';
+
+/** A slim game-only top bar, in place of the tall marketing site nav, so the game runs close
+ *  to full-screen (built to fit a tablet without page scrolling) while still keeping the two
+ *  things the game needs from the nav: a way back to the site, and sign-in (needed to save). */
+function GameTopBar() {
+  const { user } = useAuth();
+  return (
+    <div className="flex shrink-0 items-center justify-between border-b border-border bg-background px-3 py-1">
+      <Link to="/" aria-label="Back to Altogether Agile"
+        className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground">
+        <ChevronLeft className="h-4 w-4" />
+        <span>Altogether <span className="text-primary">Agile</span></span>
+      </Link>
+      <div className="flex items-center gap-2 text-xs">
+        {user
+          ? <span className="max-w-[40vw] truncate text-muted-foreground" title={user.email}>{user.email}</span>
+          : <Link to="/auth" className="rounded-md border border-border px-2.5 py-1 font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40">Sign in</Link>}
+      </div>
+    </div>
+  );
+}
 
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
@@ -97,7 +119,7 @@ export default function ZooGame() {
     // Fixed viewport height so the game frame never scrolls - the shell scrolls internally.
     // The marketing footer is omitted here to reclaim the full screen for the game.
     <div className="flex h-dvh flex-col overflow-hidden">
-      <Navigation />
+      <GameTopBar />
       <main className="min-h-0 flex-1 overflow-hidden">{render()}</main>
       <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />
       <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
