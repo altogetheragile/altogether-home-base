@@ -75,7 +75,9 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   // or already open). Starting an item is what moves it into Doing and opens the studio.
   const todo = committed.filter((it) => it.status === 'committed' && !it.started);
   const doing = committed.filter((it) => it.status === 'committed' && it.started);
-  const done = committed.filter((it) => it.status === 'done' || it.status === 'open');
+  // Deploy = built to the Definition of Done, awaiting release; Done = deployed (live to visitors).
+  const deploy = committed.filter((it) => it.status === 'done');
+  const done = committed.filter((it) => it.status === 'open');
   const atWipLimit = doing.length >= state.wipLimit;
 
   // Built animals you can copy from when designing another of the same kind.
@@ -88,11 +90,18 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   }
   const dayStarting = state.dayStage === 'dayStart';
 
+  // Deploy column: built to the DoD, release it to the park. "Place & open" is the delivery.
+  const deployActions = (it: BacklogItem) => (
+    <>
+      <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1 h-3.5 w-3.5" /> Place &amp; open</Button>
+      <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
+      {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
+    </>
+  );
+  // Done column: deployed, live to visitors.
   const doneActions = (it: BacklogItem) => (
     <>
-      {it.status === 'done' && <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1 h-3.5 w-3.5" /> Open</Button>}
-      {it.status === 'open' && <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Open</span>}
-      <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
+      <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Live to visitors</span>
       {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
     </>
   );
@@ -150,7 +159,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
             <div className="min-w-0 space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <p className="max-w-md text-[11px] text-muted-foreground">
-                  <strong>Start</strong> → <strong>Doing</strong> (WIP {state.wipLimit}) → <strong>Design &amp; build</strong> + tick the plan → <strong>Done</strong> → open to visitors.
+                  <strong>Start</strong> → <strong>Doing</strong> (WIP {state.wipLimit}) → <strong>Design &amp; build</strong> + tick the plan → <strong>Deploy</strong> (place &amp; open) → <strong>Done</strong>, live to visitors.
                 </p>
                 {/* A compact burndown so progress toward the Sprint Goal is visible while building. */}
                 <div className="w-full rounded-lg border border-border bg-card px-2 py-1.5 sm:w-64">
@@ -161,10 +170,10 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                   <Burndown state={state} compact />
                 </div>
               </div>
-              {atWipLimit && done.length === 0 && (
-                <CoachTip>You&rsquo;re at your WIP limit with nothing Done yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
+              {atWipLimit && deploy.length === 0 && done.length === 0 && (
+                <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
                   {todo.map((it) => {
                     // You build the habitat before its animals: an animal can't start until
@@ -198,9 +207,16 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                     );
                   })}
                 </BoardColumn>
-                <BoardColumn title="Done ✓" count={done.length} hint="Nothing built yet" tone="done">
+                <BoardColumn title="Deploy" count={deploy.length} hint="Built - place & open it">
+                  {deploy.map((it) => (
+                    <ItemCard key={it.id} item={it}
+                      subtitle={<TaskChecklist item={it} onToggle={onToggleTask} readOnly />}
+                      actions={deployActions(it)} />
+                  ))}
+                </BoardColumn>
+                <BoardColumn title="Done ✓" count={done.length} hint="Nothing live yet" tone="done">
                   {done.map((it) => (
-                    <ItemCard key={it.id} item={it} className={it.status === 'open' ? 'bg-emerald-50/50 dark:bg-emerald-950/20' : undefined}
+                    <ItemCard key={it.id} item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
                       subtitle={<TaskChecklist item={it} onToggle={onToggleTask} readOnly />}
                       actions={doneActions(it)} />
                   ))}
