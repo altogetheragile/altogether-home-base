@@ -168,6 +168,15 @@ export function initialZooState(gameSeed = 1): ZooGameState {
 
   return {
     phase: 'intro',
+    team: {
+      productOwner: { id: 'po', name: 'Priya (PO)' },
+      scrumMaster: { id: 'sm', name: 'Sam (SM)' },
+      developers: [
+        { id: 'dev1', name: 'Ada' },
+        { id: 'dev2', name: 'Ben' },
+        { id: 'dev3', name: 'Cara' },
+      ],
+    },
     productGoal: PRODUCT_GOAL,
     sprintGoal: '',
     sprintGoalMet: null,

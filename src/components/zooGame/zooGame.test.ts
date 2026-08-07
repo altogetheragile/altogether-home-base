@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor, sprintProgress,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
@@ -187,6 +187,22 @@ describe('zoo game: arranging the park layout', () => {
     const moved = reorderInZone(s, before[1], 'up');
     const after = moved.backlog.filter((i) => i.zone === 'Big Cats').map((i) => i.id);
     expect(after[0]).toBe(before[1]);
+  });
+
+  it('has a visible Scrum Team, and Developers self-assign to items (swarm)', () => {
+    let s = initialZooState(1);
+    expect(s.team.productOwner.id).toBe('po');
+    expect(s.team.scrumMaster.id).toBe('sm');
+    expect(s.team.developers).toHaveLength(3);
+    // Toggle two Developers onto an item, then one off (swarm, then unassign).
+    s = assignDev(s, 'lion', 'dev1');
+    s = assignDev(s, 'lion', 'dev2');
+    expect(s.backlog.find((i) => i.id === 'lion')!.assignedDevs).toEqual(['dev1', 'dev2']);
+    s = assignDev(s, 'lion', 'dev1');
+    expect(s.backlog.find((i) => i.id === 'lion')!.assignedDevs).toEqual(['dev2']);
+    // Rename a seat (for multiplayer).
+    s = renameMember(s, 'dev2', 'Zoe');
+    expect(s.team.developers.find((d) => d.id === 'dev2')!.name).toBe('Zoe');
   });
 
   it('deletes and duplicates Backlog PBIs', () => {

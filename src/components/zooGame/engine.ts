@@ -283,6 +283,28 @@ export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, learnMode: on };
 }
 
+/** Toggle a Developer onto/off a Sprint item (self-managed - the Developers pick up work;
+ *  more than one on an item is swarming). */
+export function assignDev(state: ZooGameState, itemId: string, devId: string): ZooGameState {
+  return {
+    ...state,
+    backlog: state.backlog.map((it) => {
+      if (it.id !== itemId) return it;
+      const on = it.assignedDevs ?? [];
+      return { ...it, assignedDevs: on.includes(devId) ? on.filter((d) => d !== devId) : [...on, devId] };
+    }),
+  };
+}
+
+/** Rename a Scrum Team member by id (a future multiplayer seat can be named for its player). */
+export function renameMember(state: ZooGameState, memberId: string, name: string): ZooGameState {
+  const n = name.trim();
+  if (!n) return state;
+  const t = state.team;
+  const rn = (m: { id: string; name: string }) => (m.id === memberId ? { ...m, name: n } : m);
+  return { ...state, team: { productOwner: rn(t.productOwner), scrumMaster: rn(t.scrumMaster), developers: t.developers.map(rn) } };
+}
+
 /** Delete a Backlog PBI outright (only ones not committed to a Sprint reach this from the UI). */
 export function deletePbi(state: ZooGameState, id: string): ZooGameState {
   return { ...state, backlog: state.backlog.filter((it) => it.id !== id) };

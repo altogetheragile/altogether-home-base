@@ -3,6 +3,7 @@ import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
 import { enclosureReady, enclosureOf, sprintProgress } from './engine';
 import { Burndown } from './Burndown';
+import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskChecklist } from './Board';
@@ -28,6 +29,8 @@ interface SprintBoardProps {
   onSplitEpic: (id: string, memberIds: string[]) => void;
   onDeletePbi: (id: string) => void;
   onDuplicatePbi: (id: string) => void;
+  onAssignDev: (itemId: string, devId: string) => void;
+  onRenameMember: (memberId: string, name: string) => void;
   onOpen: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
@@ -56,7 +59,7 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -108,6 +111,8 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
 
   return (
     <div className="space-y-4">
+      {/* The Scrum Team, made visible - the accountabilities in one strip. */}
+      <ScrumTeamStrip team={state.team} onRename={onRenameMember} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <h2 className="shrink-0 text-base font-bold">Day {state.dayNumber} / {state.sprintDays}</h2>
@@ -202,7 +207,13 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                         badge={it.design
                           ? <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">built{left ? ` · ${left} task${left === 1 ? '' : 's'} left` : ''}</span>
                           : <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
-                        subtitle={<TaskChecklist item={it} onToggle={onToggleTask} />}
+                        subtitle={<>
+                          <TaskChecklist item={it} onToggle={onToggleTask} />
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            <span className="text-[10px] text-muted-foreground">Working it:</span>
+                            <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
+                          </div>
+                        </>}
                         actions={<Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Edit design' : 'Design & build'}</Button>} />
                     );
                   })}
