@@ -3,8 +3,9 @@ import type { ZooGameState, BacklogItem, ZooPath } from './types';
 import { renderDesign, presetFor, GRID_W, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees, Move, Pencil, Eraser, Undo2, Check, X } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Fish, Move, Pencil, Eraser, Undo2, Check, X, ChevronDown } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -24,6 +25,39 @@ const ROUTE_OPTIONS: { key: 'straight' | 'elbow' | 'spine' | 'none'; label: stri
   { key: 'spine', label: 'Spine' },
   { key: 'none', label: 'None' },
 ];
+
+/** A small swatch of a path surface (a gradient dot), reused in the picker trigger and list. */
+function SurfaceSwatch({ style, size = 14 }: { style: PathStyle; size?: number }) {
+  return <span className="inline-block shrink-0 rounded-full border border-black/10" style={{ width: size, height: size, background: `linear-gradient(135deg, ${style.road}, ${style.edge})` }} aria-hidden />;
+}
+
+/** The path surface picker: a labelled dropdown (current surface named + swatch) rather than a
+ *  row of anonymous colour dots, so it reads as "Surface: Gravel" and stays compact. */
+function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: string) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" title="Path surface"
+          className="flex items-center gap-1.5 rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+          <span className="text-muted-foreground/80">Surface</span>
+          <SurfaceSwatch style={current} />
+          <span className="text-foreground">{current.label}</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-40 p-1">
+        {PATH_STYLES.map((s) => (
+          <button key={s.key} type="button" onClick={() => onPick(s.key)}
+            className={cn('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs', s.key === current.key ? 'bg-primary/10 font-semibold text-primary' : 'text-foreground hover:bg-muted/50')}>
+            <SurfaceSwatch style={s} />
+            <span className="flex-1 text-left">{s.label}</span>
+            {s.key === current.key && <Check className="h-3.5 w-3.5" />}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface ZoneTheme { plot: string; plotBorder: string }
 const THEMES: Record<string, ZoneTheme> = {
@@ -426,11 +460,12 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
       `}</style>
 
       {!compact && (
-        <div className="grid grid-cols-4 gap-2">
-          <Hud icon={LayoutGrid} label="Zones" value={`${activeZones.size}/${zones.length}`} />
-          <Hud icon={Trees} label={`${amenities} amenit${amenities === 1 ? 'y' : 'ies'}`} value={`${exhibits}`} sub="exhibits" />
-          <Hud icon={Users} label="Visitors" value={total ? total.toLocaleString() : '—'} />
-          <Hud icon={Smile} label="Happiness" value={happiness === null ? '—' : `${happiness}`} />
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5">
+          <Stat icon={LayoutGrid} value={`${activeZones.size}/${zones.length}`} label="zones" />
+          <Stat icon={Fish} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
+          <Stat icon={Trees} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
+          <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors" />
+          <Stat icon={Smile} value={happiness === null ? '—' : `${happiness}`} label="happiness" title={happiness === null ? 'Measured at the Sprint Review' : undefined} />
         </div>
       )}
 
@@ -454,18 +489,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
                   ))}
                 </div>
               )}
-              {onSetPathStyle && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-medium text-muted-foreground">Paths</span>
-                  {PATH_STYLES.map((s) => (
-                    <button key={s.key} type="button" onClick={() => onSetPathStyle(s.key)} title={s.label} aria-label={`${s.label} paths`}
-                      aria-pressed={style.key === s.key}
-                      className={cn('h-5 w-5 rounded-full border-2 transition-transform hover:scale-110',
-                        style.key === s.key ? 'border-foreground' : 'border-transparent')}
-                      style={{ background: `linear-gradient(135deg, ${s.road}, ${s.edge})` }} />
-                  ))}
-                </div>
-              )}
+              {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {onAddPath && (
                 <div className="flex items-center gap-1">
                   <button type="button" onClick={() => { setDraft([]); setTool((t) => (t === 'draw' ? 'none' : 'draw')); }} title="Draw a path" aria-pressed={tool === 'draw'}
@@ -524,12 +548,13 @@ function Tree({ style }: { style: React.CSSProperties }) {
   );
 }
 
-function Hud({ icon: Icon, label, value, sub }: { icon: typeof Users; label: string; value: string; sub?: string }) {
+/** One inline park stat: icon + bold value + label, on a single slim row. */
+function Stat({ icon: Icon, label, value, title }: { icon: typeof Users; label: string; value: string; title?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 text-center">
-      <Icon className="mx-auto h-3.5 w-3.5 text-muted-foreground" />
-      <div className="mt-0.5 text-lg font-bold leading-none tabular-nums">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{sub ?? label}</div>
-    </div>
+    <span className="flex items-center gap-1.5" title={title}>
+      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span className="text-sm font-bold leading-none tabular-nums">{value}</span>
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+    </span>
   );
 }
