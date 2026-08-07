@@ -150,6 +150,9 @@ export interface BacklogItem {
   /** Marked at Planning as essential to the Sprint Goal. The Goal is met when the
    *  goal-critical items are delivered - you can drop the rest and still meet it. */
   goalCritical?: boolean;
+  /** Ids of the Developers who have picked this item up to work on (self-managed - the
+   *  Developers decide, no one assigns them). Drives the swarm/WIP teaching on the board. */
+  assignedDevs?: string[];
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -165,8 +168,18 @@ export interface ZooPath {
   points: { x: number; y: number }[];
 }
 
+/** One member of the Scrum Team. A `seat` a real person could take in a future multiplayer
+ *  mode - kept as a first-class entity with a stable id, not just a label. */
+export interface ScrumTeamMember { id: string; name: string }
+/** The one Scrum Team: a single Product Owner (accountable for value), a single Scrum Master
+ *  (a true leader who serves the team, causes impediments to be removed, coaches
+ *  self-management) and the Developers (who build the Increment). Ten or fewer, no sub-teams. */
+export interface ScrumTeam { productOwner: ScrumTeamMember; scrumMaster: ScrumTeamMember; developers: ScrumTeamMember[] }
+
 export interface ZooGameState {
   phase: ZooPhase;
+  /** The one Scrum Team - the accountabilities made visible (PO, Scrum Master, Developers). */
+  team: ScrumTeam;
   /** The long-term objective the Backlog is ordered toward (coached, editable). */
   productGoal: string;
   /** The single objective for the current Sprint (coached, outcome-shaped). Empty
@@ -285,6 +298,8 @@ export type ZooAction =
   | { type: 'MOVE_ZONE'; zone: string; dir: 'up' | 'down' }
   | { type: 'DELETE_PBI'; id: string }
   | { type: 'DUPLICATE_PBI'; id: string }
+  | { type: 'ASSIGN_DEV'; itemId: string; devId: string }
+  | { type: 'RENAME_MEMBER'; memberId: string; name: string }
   | { type: 'SET_PATH_STYLE'; style: string }
   | { type: 'SET_PATH_ROUTE'; route: 'straight' | 'elbow' | 'spine' | 'none' }
   | { type: 'ADD_PATH'; points: { x: number; y: number }[] }
